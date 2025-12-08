@@ -1,13 +1,36 @@
 # API Integration
 
-## Generated Files
+## Generated Files (REQUIRED)
 
-After backend changes: `npm run generate-types`
+**NEVER create custom interfaces for backend DTOs!**
 
 | File | Purpose |
 |------|---------|
-| `~/api-client/types.gen.ts` | DTOs, interfaces |
-| `~/api-client/sdk.gen.ts` | API functions |
+| `~/api-client/types.gen.ts` | All backend DTOs (REQUIRED) |
+| `~/api-client/sdk.gen.ts` | All API functions (REQUIRED) |
+
+### Generating Types
+
+**Prerequisites:** Backend API must be running!
+
+```bash
+# 1. Start API first (in monorepo)
+cd projects/api && npm run start:dev
+
+# 2. Wait for API to be ready (check http://localhost:3000/api)
+
+# 3. Generate types
+npm run generate-types
+```
+
+### When to Regenerate
+
+- After adding/modifying backend DTOs
+- After adding/modifying controllers
+- After changing API endpoints
+- When `types.gen.ts` is missing or outdated
+
+**NEVER create manual DTOs as a workaround!**
 
 ## Basic Usage
 

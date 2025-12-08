@@ -71,23 +71,55 @@ const emit = defineEmits<{
 }>()
 ```
 
-## Generated Types Priority
+## Generated Types (REQUIRED)
+
+**NEVER create custom interfaces for backend DTOs!**
 
 ```typescript
-// 1. Use generated types first
+// ✅ ALWAYS use generated types for backend data
 import type { SeasonDto, CreateSeasonDto } from '~/api-client/types.gen'
+import { seasonControllerGet } from '~/api-client/sdk.gen'
 
-// 2. Extend when needed
+// ✅ Extend generated types for UI-specific properties
 interface SeasonWithUI extends SeasonDto {
   isSelected: boolean
 }
 
-// 3. Custom interfaces in app/interfaces/*.interface.ts
+// ✅ Custom interfaces ONLY for frontend-only state
+// app/interfaces/filter.interface.ts
+interface FilterState {
+  searchQuery: string
+  sortBy: 'name' | 'date'
+}
 ```
+
+### If Generated Types Are Missing
+
+**Prerequisites:** Backend API must be running!
+
+```bash
+# 1. Start API
+cd projects/api && npm run start:dev
+
+# 2. Generate types
+npm run generate-types
+```
+
+**NEVER create manual DTOs as a workaround!**
 
 ## Anti-Patterns
 
 ```typescript
+// ❌ FORBIDDEN: Custom interfaces for backend DTOs
+// app/interfaces/season.interface.ts
+interface Season {
+  id: string
+  name: string
+}
+
+// ✅ Use generated types
+import type { SeasonDto } from '~/api-client/types.gen'
+
 // ❌ Implicit any
 const data = null
 function process(input) { }

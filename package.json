@@ -1,6 +1,6 @@
 {
   "name": "@lenne.tech/claude-code",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "lenne.tech Development Skills, Commands und Hooks für Claude Code",
   "private": true,
   "scripts": {

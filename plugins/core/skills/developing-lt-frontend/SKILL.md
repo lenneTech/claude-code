@@ -20,13 +20,33 @@ public/               # Static assets
 nuxt.config.ts
 ```
 
-## Type Priority
+## Type Rules
 
-1. Generated: `~/api-client/types.gen.ts`, `~/api-client/sdk.gen.ts`
-2. Nuxt UI types (auto-imported)
-3. Custom: `app/interfaces/*.interface.ts`
+**CRITICAL: Never create custom interfaces for backend DTOs!**
 
-**After backend changes:** `npm run generate-types`
+| Priority | Source | Use For |
+|----------|--------|---------|
+| 1. | `~/api-client/types.gen.ts` | All backend DTOs (REQUIRED) |
+| 2. | `~/api-client/sdk.gen.ts` | All API calls (REQUIRED) |
+| 3. | Nuxt UI types | Component props (auto-imported) |
+| 4. | `app/interfaces/*.interface.ts` | Frontend-only types (UI state, forms) |
+
+### Generating Types
+
+**Prerequisites:** Backend API must be running!
+
+```bash
+# Start API first (in monorepo)
+cd projects/api && npm run start:dev
+
+# Then generate types
+npm run generate-types
+```
+
+If `types.gen.ts` or `sdk.gen.ts` are missing or outdated:
+1. Ensure API is running at configured URL
+2. Run `npm run generate-types`
+3. Never create manual DTOs as workaround
 
 ## Core Patterns
 
@@ -104,7 +124,8 @@ const state = reactive<Schema>({ title: '' })
 | Code/Comments | English |
 | Styling | TailwindCSS only, no `<style>` |
 | Types | Explicit, no implicit `any` |
-| Interfaces | `app/interfaces/*.interface.ts` |
+| Backend Types | **Generated only** (`types.gen.ts`) |
+| Custom Interfaces | Frontend-only (`app/interfaces/*.interface.ts`) |
 | Composables | `app/composables/use*.ts` |
 | Shared State | `useState()` for SSR-safe state |
 | Local State | `ref()` / `reactive()` |
@@ -123,8 +144,9 @@ const state = reactive<Schema>({ title: '' })
 
 ## Pre-Commit
 
-- [ ] Types from `types.gen.ts`
-- [ ] API via `sdk.gen.ts`
+- [ ] **No custom interfaces for backend DTOs** (use `types.gen.ts`)
+- [ ] All API calls via `sdk.gen.ts`
+- [ ] Types regenerated after backend changes (`npm run generate-types`)
 - [ ] Logic in composables
 - [ ] Modals use `useOverlay`
 - [ ] Forms use Valibot

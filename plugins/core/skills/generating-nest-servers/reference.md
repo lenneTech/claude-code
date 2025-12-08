@@ -139,10 +139,16 @@ lt server object --name <Name> \
 
 ### Create Module
 ```bash
-lt server module --name <Name> --controller <Rest|GraphQL|Both> \
+# REST is the default! Only use GraphQL when explicitly requested.
+lt server module --name <Name> --controller Rest \
   --prop-name-0 <name> --prop-type-0 <type> [modifiers] \
   --prop-name-1 <name> --prop-type-1 <type> [modifiers]
 ```
+
+**Controller Options:**
+- `Rest` (DEFAULT) - REST API with Controllers
+- `GraphQL` - GraphQL API with Resolvers (only when explicitly requested)
+- `Both` - REST + GraphQL (only when explicitly requested)
 
 ### Add Properties
 ```bash
@@ -307,7 +313,7 @@ Model: Product
 - name: string
 - price: number
 ```
-→ `lt server module --name Product --controller Both --prop-name-0 name --prop-type-0 string --prop-name-1 price --prop-type-1 number`
+→ `lt server module --name Product --controller Rest --prop-name-0 name --prop-type-0 string --prop-name-1 price --prop-type-1 number`
 
 ### Pattern 2: Module with Reference
 ```
@@ -316,7 +322,7 @@ Model: Order
 - customer: User
 - total: number
 ```
-→ `lt server module --name Order --controller Both --prop-name-0 customer --prop-type-0 ObjectId --prop-reference-0 User --prop-name-1 total --prop-type-1 number`
+→ `lt server module --name Order --controller Rest --prop-name-0 customer --prop-type-0 ObjectId --prop-reference-0 User --prop-name-1 total --prop-type-1 number`
 
 ### Pattern 3: Module with Embedded Object
 ```
@@ -451,11 +457,12 @@ test/
 3. ✅ **Follow naming conventions** - PascalCase for types, camelCase for properties
 4. ✅ **Order matters** - Alphabetical properties, dependency-ordered creation
 5. ✅ **Describe thoroughly** - "ENGLISH (DEUTSCH)" everywhere
-6. ✅ **Test comprehensively** - All CRUD + auth + validation
-7. ✅ **Clean up tests** - Delete test data in afterAll
-8. ✅ **Commit incrementally** - After SubObjects, Modules, Tests
-9. ✅ **Verify before finishing** - Run checklist, ensure tests pass
-10. ✅ **Report observations** - Note data structure issues/improvements
+6. ✅ **Use REST by default** - Only use GraphQL when explicitly requested
+7. ✅ **Test comprehensively** - All CRUD + auth + validation
+8. ✅ **Clean up tests** - Delete test data in afterAll
+9. ✅ **Commit incrementally** - After SubObjects, Modules, Tests
+10. ✅ **Verify before finishing** - Run checklist, ensure tests pass
+11. ✅ **Report observations** - Note data structure issues/improvements
 
 ## Quick Start
 
@@ -467,8 +474,8 @@ test/
 # SubObjects
 lt server object --name Address --prop-name-0 street --prop-type-0 string ...
 
-# Modules
-lt server module --name User --controller Both --prop-name-0 email --prop-type-0 string ...
+# Modules (REST is default!)
+lt server module --name User --controller Rest --prop-name-0 email --prop-type-0 string ...
 
 # Enums
 # Create files in src/server/common/enums/

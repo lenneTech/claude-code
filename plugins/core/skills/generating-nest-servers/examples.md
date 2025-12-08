@@ -151,7 +151,8 @@ lt server object --name BaseItem \
 
 ```bash
 # Member Module (create first as it's referenced by Book)
-lt server module --name Member --controller Both \
+# REST is the default - only use GraphQL when explicitly requested
+lt server module --name Member --controller Rest \
   --prop-name-0 email --prop-type-0 string \
   --prop-name-1 firstName --prop-type-1 string \
   --prop-name-2 joinDate --prop-type-2 Date \
@@ -161,7 +162,7 @@ lt server module --name Member --controller Both \
   --prop-name-6 status --prop-enum-6 MemberStatusEnum
 
 # Book Module (references Member)
-lt server module --name Book --controller Both \
+lt server module --name Book --controller Rest \
   --prop-name-0 authors --prop-schema-0 Author --prop-array-0 true \
   --prop-name-1 borrowedBy --prop-type-1 ObjectId --prop-reference-1 Member --prop-nullable-1 true \
   --prop-name-2 coverImage --prop-type-2 string --prop-nullable-2 true \
@@ -178,7 +179,7 @@ lt server addProp --type Module --element Member \
   --prop-name-0 currentLoans --prop-type-0 ObjectId --prop-reference-0 Book --prop-array-0 true
 
 # Loan Module (references both Member and Book)
-lt server module --name Loan --controller Both \
+lt server module --name Loan --controller Rest \
   --prop-name-0 book --prop-type-0 ObjectId --prop-reference-0 Book \
   --prop-name-1 dueDate --prop-type-1 Date \
   --prop-name-2 fine --prop-type-2 number --prop-nullable-2 true \
@@ -633,8 +634,8 @@ lt server object --name ContactDetails \
   --prop-name-0 email --prop-type-0 string \
   --prop-name-1 phone --prop-type-1 string
 
-# Module
-lt server module --name Guest --controller Both \
+# Module (REST is default)
+lt server module --name Guest --controller Rest \
   --prop-name-0 checkInDate --prop-type-0 Date \
   --prop-name-1 checkOutDate --prop-type-1 Date \
   --prop-name-2 contact --prop-schema-2 ContactDetails \
@@ -696,11 +697,12 @@ Book has borrowedBy?: Member
 1. **Create SubObjects first**: Author, Publisher, Review before Book
 2. **Create referenced modules early**: Member before Book (for borrowedBy)
 3. **Handle circular refs with addProp**: Add currentLoans to Member after Book exists
-4. **Alphabetical ordering**: All properties sorted in final files
-5. **Proper descriptions**: "ENGLISH (DEUTSCH)" format throughout
-6. **Complete enum files**: Create all enums immediately after modules
-7. **Comprehensive tests**: Cover all CRUD operations and edge cases
-8. **Quality review before reporting**: ALWAYS perform comprehensive quality review
+4. **Use REST by default**: Only use `--controller GraphQL` when explicitly requested
+5. **Alphabetical ordering**: All properties sorted in final files
+6. **Proper descriptions**: "ENGLISH (DEUTSCH)" format throughout
+7. **Complete enum files**: Create all enums immediately after modules
+8. **Comprehensive tests**: Cover all CRUD operations and edge cases
+9. **Quality review before reporting**: ALWAYS perform comprehensive quality review
 
 ## Quality Review Workflow Example
 

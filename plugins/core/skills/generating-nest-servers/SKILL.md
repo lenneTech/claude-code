@@ -172,8 +172,8 @@ When debugging issues:
 
 **Quick Command Reference:**
 ```bash
-# Create complete module
-lt server module --name Product --controller Rest|GraphQL|Both|auto
+# Create complete module (REST is default!)
+lt server module --name Product --controller Rest
 
 # Create SubObject
 lt server object --name Address
@@ -184,6 +184,11 @@ lt server addProp --type Module --element User
 # New project
 lt server create <server-name>
 ```
+
+**⚠️ API Style: REST is the default!**
+- **REST** (default): Use `--controller Rest` - Standard for all modules unless explicitly requested otherwise
+- **GraphQL**: Use `--controller GraphQL` - ONLY when user explicitly requests GraphQL
+- **Both**: Use `--controller Both` - ONLY when user explicitly wants both REST and GraphQL
 
 **Essential Property Flags:**
 - `--prop-name-X / --prop-type-X` - Name and type (string|number|boolean|ObjectId|Json|Date|bigint)
@@ -289,7 +294,7 @@ After completing all tasks, provide:
 1. Create dependencies first (SubObjects before Modules)
 2. Check for circular dependencies
 3. Test incrementally, commit after major components
-4. Use appropriate controller types (Rest/GraphQL/Both)
+4. **Use REST controller by default** - Only use GraphQL when explicitly requested
 5. Validate required fields in tests
 6. Document complex relationships
 
