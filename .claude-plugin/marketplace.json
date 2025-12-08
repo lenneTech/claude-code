@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "@lenne.tech/lt-claude-plugin",
-      "source": ".",
+      "source": "./",
       "description": "Skills, Commands & Hooks for Nuxt 4, NestJS, TDD and CLI tools"
     }
   ]
