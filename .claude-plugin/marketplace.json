@@ -7,8 +7,8 @@
   },
   "plugins": [
     {
-      "name": "fullstack",
-      "source": "./plugins/fullstack",
+      "name": "lt-core",
+      "source": "./plugins/core",
       "description": "Skills, Commands & Hooks for Nuxt 4, NestJS, TDD and CLI tools"
     }
   ]
