@@ -1,6 +1,6 @@
 {
   "name": "@lenne.tech/lt-claude-plugin",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "lenne.tech Development Skills, Commands und Hooks für Claude Code - Frontend (Nuxt 4), Backend (NestJS), TDD und CLI Tools",
   "author": {
     "name": "lenne.tech GmbH",

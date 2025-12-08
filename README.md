@@ -76,11 +76,13 @@ Unterstützt Monorepo-Strukturen: `projects/`, `packages/`, `apps/`
 ## Development
 
 ```bash
-# Version bump (patch, minor, major)
-bun run version:patch   # Bumps version, commits, tags, and pushes
-bun run version:minor
-bun run version:major
+# Version bump (patch, minor, major) with change description
+bun run version:patch "Fixed hook detection for monorepos"
+bun run version:minor "Added new skill for API testing"
+bun run version:major "Breaking changes in hook configuration"
 ```
+
+Das Script aktualisiert `plugin.json` + `package.json`, erstellt Commit, Tag und pusht automatisch.
 
 ## Struktur
 

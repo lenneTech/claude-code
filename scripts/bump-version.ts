@@ -9,9 +9,15 @@ const pluginJsonPath = join(rootDir, '.claude-plugin', 'plugin.json');
 const packageJsonPath = join(rootDir, 'package.json');
 
 const bumpType = Bun.argv[2] || 'patch';
+const changeDescription = Bun.argv.slice(3).join(' ');
 
 if (!['patch', 'minor', 'major'].includes(bumpType)) {
-  console.error('Usage: bun scripts/bump-version.ts [patch|minor|major]');
+  console.error('Usage: bun scripts/bump-version.ts [patch|minor|major] [description of changes]');
+  console.error('');
+  console.error('Examples:');
+  console.error('  bun run version:patch "Fixed hook detection for monorepos"');
+  console.error('  bun run version:minor "Added new skill for API testing"');
+  console.error('  bun run version:major "Breaking changes in hook configuration"');
   process.exit(1);
 }
 
@@ -45,15 +51,24 @@ packageJson.version = newVersion;
 writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
 console.log(`✓ Updated package.json: ${oldVersion} → ${newVersion}`);
 
+// Build commit message
+let commitMessage = `chore: bump version to ${newVersion}`;
+if (changeDescription) {
+  commitMessage += `\n\n${changeDescription}`;
+}
+
 // Git commit, tag and push
 console.log(`\n📦 Committing and pushing...`);
 
 $.cwd(rootDir);
 
 await $`git add .`;
-await $`git commit -m ${'chore: bump version to ' + newVersion}`;
-await $`git tag ${'v' + newVersion}`;
+await $`git commit -m ${commitMessage}`;
+await $`git tag -a ${'v' + newVersion} -m ${changeDescription || `Version ${newVersion}`}`;
 await $`git push`;
 await $`git push --tags`;
 
 console.log(`\n🎉 Version ${newVersion} released!`);
+if (changeDescription) {
+  console.log(`📝 Changes: ${changeDescription}`);
+}
