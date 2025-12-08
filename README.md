@@ -9,12 +9,12 @@ Claude Code Plugins von lenne.tech.
 /plugin marketplace add https://github.com/lenneTech/claude-code
 
 # Plugin installieren
-/plugin install fullstack@lt
+/plugin install lt-core@lt
 ```
 
 ## Plugins
 
-### fullstack
+### lt-core
 
 Skills, Commands und Hooks für Frontend (Nuxt 4), Backend (NestJS/nest-server), TDD und CLI Tools.
 
@@ -85,7 +85,7 @@ claude-code/
 ├── .claude-plugin/
 │   └── marketplace.json
 ├── plugins/
-│   └── fullstack/
+│   └── core/
 │       ├── .claude-plugin/
 │       │   └── plugin.json
 │       ├── skills/
