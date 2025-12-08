@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
 
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { $ } from 'bun';
 
 const rootDir = join(import.meta.dir, '..');
-const pluginJsonPath = join(rootDir, '.claude-plugin', 'plugin.json');
+const pluginsDir = join(rootDir, 'plugins');
 const packageJsonPath = join(rootDir, 'package.json');
 
 const bumpType = Bun.argv[2] || 'patch';
@@ -35,21 +35,31 @@ function bumpVersion(version: string, type: string): string {
   }
 }
 
-// Read plugin.json
-const pluginJson = JSON.parse(readFileSync(pluginJsonPath, 'utf8'));
-const oldVersion = pluginJson.version;
+// Read package.json for current version
+const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+const oldVersion = packageJson.version;
 const newVersion = bumpVersion(oldVersion, bumpType);
 
-// Update plugin.json
-pluginJson.version = newVersion;
-writeFileSync(pluginJsonPath, JSON.stringify(pluginJson, null, 2) + '\n');
-console.log(`✓ Updated .claude-plugin/plugin.json: ${oldVersion} → ${newVersion}`);
-
 // Update package.json
-const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
 packageJson.version = newVersion;
 writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
 console.log(`✓ Updated package.json: ${oldVersion} → ${newVersion}`);
+
+// Update all plugin.json files in plugins/*/
+const pluginDirs = readdirSync(pluginsDir, { withFileTypes: true })
+  .filter(d => d.isDirectory())
+  .map(d => d.name);
+
+for (const pluginName of pluginDirs) {
+  const pluginJsonPath = join(pluginsDir, pluginName, '.claude-plugin', 'plugin.json');
+
+  if (existsSync(pluginJsonPath)) {
+    const pluginJson = JSON.parse(readFileSync(pluginJsonPath, 'utf8'));
+    pluginJson.version = newVersion;
+    writeFileSync(pluginJsonPath, JSON.stringify(pluginJson, null, 2) + '\n');
+    console.log(`✓ Updated plugins/${pluginName}/.claude-plugin/plugin.json: ${oldVersion} → ${newVersion}`);
+  }
+}
 
 // Build commit message
 let commitMessage = `chore: bump version to ${newVersion}`;

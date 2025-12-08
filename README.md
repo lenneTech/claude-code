@@ -1,28 +1,22 @@
-# lt-claude-plugin
+# lenne.tech Claude Code Plugins
 
-Claude Code Plugin für lenne.tech Entwicklung mit Skills, Commands und Hooks für Frontend (Nuxt 4), Backend (NestJS/nest-server), TDD und CLI Tools.
+Claude Code Plugins von lenne.tech.
 
 ## Installation
 
-### Option 1: Lokale Installation
-
 ```bash
-# Plugin als Marketplace hinzufügen
-/plugin marketplace add ~/Projekte/Intern/lt-claude-plugin
+# Marketplace hinzufügen
+/plugin marketplace add https://github.com/lenneTech/claude-code
 
 # Plugin installieren
-/plugin install lt-claude-plugin
+/plugin install fullstack@lt
 ```
 
-### Option 2: Von Git Repository
+## Plugins
 
-```bash
-# Marketplace von Git hinzufügen
-/plugin marketplace add <git-url>
+### fullstack
 
-# Plugin installieren
-/plugin install lt-claude-plugin
-```
+Skills, Commands und Hooks für Frontend (Nuxt 4), Backend (NestJS/nest-server), TDD und CLI Tools.
 
 ## Enthaltene Komponenten
 
@@ -87,23 +81,27 @@ Das Script aktualisiert `plugin.json` + `package.json`, erstellt Commit, Tag und
 ## Struktur
 
 ```
-lt-claude-plugin/
+claude-code/
 ├── .claude-plugin/
-│   └── plugin.json
-├── skills/
-│   ├── building-stories-with-tdd/
-│   ├── developing-lt-frontend/
-│   ├── generating-nest-servers/
-│   └── using-lt-cli/
-├── commands/
-│   ├── create-story.md
-│   ├── fix-issue.md
-│   ├── skill-optimize.md
-│   ├── git/
-│   ├── lt-backend/
-│   └── vibe/
-├── hooks/
-│   └── hooks.json
+│   └── marketplace.json
+├── plugins/
+│   └── fullstack/
+│       ├── .claude-plugin/
+│       │   └── plugin.json
+│       ├── skills/
+│       │   ├── building-stories-with-tdd/
+│       │   ├── developing-lt-frontend/
+│       │   ├── generating-nest-servers/
+│       │   └── using-lt-cli/
+│       ├── commands/
+│       │   ├── create-story.md
+│       │   ├── fix-issue.md
+│       │   ├── skill-optimize.md
+│       │   ├── git/
+│       │   ├── lt-backend/
+│       │   └── vibe/
+│       └── hooks/
+│           └── hooks.json
 ├── scripts/
 │   └── bump-version.ts
 ├── package.json
