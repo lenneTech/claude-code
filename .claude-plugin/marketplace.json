@@ -1,0 +1,15 @@
+{
+  "name": "lt-claude-marketplace",
+  "description": "lenne.tech Claude Code Plugin Marketplace",
+  "owner": {
+    "name": "lenne.tech GmbH",
+    "url": "https://lenne.tech"
+  },
+  "plugins": [
+    {
+      "name": "@lenne.tech/lt-claude-plugin",
+      "source": ".",
+      "description": "Skills, Commands & Hooks for Nuxt 4, NestJS, TDD and CLI tools"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "name": "@lenne.tech/lt-claude-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "lenne.tech Development Skills, Commands und Hooks für Claude Code",
   "private": true,
   "scripts": {
