@@ -1,6 +1,5 @@
 ---
 name: nest-server-generator-framework
-version: 1.0.0
 description: Complete guide to @lenne.tech/nest-server framework - CrudService base class, ServiceOptions handling, patterns for Service inheritance, and best practices for working with the framework
 ---
 

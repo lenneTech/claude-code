@@ -1,6 +1,5 @@
 ---
 name: nest-server-generator-examples
-version: 1.0.1
 description: Complete examples for generating NestJS server structures from specifications
 ---
 

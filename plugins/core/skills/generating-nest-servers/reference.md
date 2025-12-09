@@ -1,6 +1,5 @@
 ---
 name: nest-server-generator-reference
-version: 1.0.1
 description: Quick reference for ALL NestJS server development - from simple single commands to complex structure generation
 ---
 

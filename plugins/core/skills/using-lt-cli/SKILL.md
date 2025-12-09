@@ -1,6 +1,5 @@
 ---
 name: using-lt-cli
-version: 1.0.0
 description: Expert assistance with lenne.tech CLI for Git operations and Fullstack initialization. IMPORTANT - For ALL NestJS server development (modules, objects, properties), use the generating-nest-servers skill instead, even for simple tasks. This skill handles only lt git commands and lt fullstack init.
 ---
 

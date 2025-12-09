@@ -1,6 +1,5 @@
 ---
 name: nest-server-generator-configuration
-version: 1.0.0
 description: Complete guide to lt.config.json configuration file
 ---
 

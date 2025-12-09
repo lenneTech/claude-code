@@ -1,6 +1,5 @@
 ---
 name: nest-server-generator-verification
-version: 1.0.0
 description: Comprehensive verification checklist for generated NestJS modules and objects - covers code generation, descriptions, API tests with security-first approach, test coverage requirements, and security rules compliance
 ---
 

@@ -1,6 +1,5 @@
 ---
 name: story-tdd-workflow
-version: 1.0.0
 description: Complete 7-step TDD workflow with detailed implementation steps, testing guidelines, and validation process
 ---
 

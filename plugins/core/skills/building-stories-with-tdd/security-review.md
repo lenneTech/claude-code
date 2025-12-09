@@ -1,6 +1,5 @@
 ---
 name: story-tdd-security-review
-version: 1.0.0
 description: Security review checklist for Test-Driven Development - ensures no vulnerabilities are introduced
 ---
 

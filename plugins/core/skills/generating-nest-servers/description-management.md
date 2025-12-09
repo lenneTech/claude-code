@@ -1,6 +1,5 @@
 ---
 name: nest-server-generator-description-management
-version: 1.0.0
 description: Guidelines for consistent description management across all generated components
 ---
 

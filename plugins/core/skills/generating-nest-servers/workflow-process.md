@@ -1,6 +1,5 @@
 ---
 name: nest-server-generator-workflow
-version: 1.0.0
 description: Complete 7-phase workflow for NestJS module/object generation - from analysis to testing, including SubObject creation, inheritance handling, description management, enum files, and comprehensive API testing with security validation
 ---
 

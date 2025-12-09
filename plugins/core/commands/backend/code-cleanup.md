@@ -4,7 +4,7 @@ description: Clean up and optimize code quality
 
 Perform a complete code cleanup:
 
-## 📦 1. Import Optimization
+##  1. Import Optimization
 
 For all modified TypeScript files:
 - [ ] Sort imports alphabetically
@@ -19,7 +19,7 @@ For all Model/Input/Object files:
 - [ ] Decorators consistently ordered
 - [ ] Same order in Model, CreateInput, UpdateInput
 
-## 📝 3. Description Management
+##  3. Description Management
 
 Check all descriptions:
 - [ ] Format: "ENGLISH (DEUTSCH)" for German terms
@@ -28,7 +28,7 @@ Check all descriptions:
 - [ ] Class-level descriptions present (@ObjectType, @InputType)
 - [ ] No missing descriptions
 
-## ♻️ 4. Code Refactoring
+##  4. Code Refactoring
 
 Search for duplicated code:
 - [ ] Is code repeated 2+ times?
@@ -44,7 +44,7 @@ Remove development code:
 - [ ] Commented-out code
 - [ ] Review TODO/FIXME comments
 
-## ✨ 6. Formatting
+##  6. Formatting
 
 Check code formatting:
 - [ ] Consistent indentation (2 or 4 spaces)
@@ -52,7 +52,7 @@ Check code formatting:
 - [ ] Add missing blank lines between sections
 - [ ] Remove trailing whitespace
 
-## 🔧 7. Build & Lint
+##  7. Build & Lint
 
 Run automatic checks:
 ```bash
@@ -68,7 +68,7 @@ npm run lint:fix
 
 Fix all errors and warnings!
 
-## ✅ Final Check
+##  Final Check
 
 - [ ] All imports optimized
 - [ ] All properties sorted
@@ -79,4 +79,4 @@ Fix all errors and warnings!
 - [ ] Lint successful
 - [ ] Tests still passing
 
-**Only when everything is ✅: Cleanup completed!**
+**Only when everything is : Cleanup completed!**

@@ -18,4 +18,4 @@ Provide exactly 3 alternatives:
 3. [your third commit message suggestion]
 ```
 
-Then add: "💡 **Copy your preferred message to use with `git commit -am \"...\"`**"
+Then add: " **Copy your preferred message to use with `git commit -am \"...\"`**"

@@ -1,3 +1,8 @@
+---
+description: Work on a Linear issue by ID
+argument-hint: <issue-id>
+---
+
 # Issue
 
 ## Description

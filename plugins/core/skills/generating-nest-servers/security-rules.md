@@ -1,6 +1,5 @@
 ---
 name: nest-server-generator-security-rules
-version: 1.0.0
 description: Critical security and test coverage rules for NestJS development
 ---
 

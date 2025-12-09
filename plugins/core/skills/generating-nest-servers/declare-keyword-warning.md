@@ -1,6 +1,5 @@
 ---
 name: nest-server-generator-declare-keyword
-version: 1.0.0
 description: Critical warning about using the declare keyword in TypeScript classes
 ---
 

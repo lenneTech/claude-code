@@ -1,12 +1,12 @@
 ---
-description: Optimize and validate Claude skill files against best practices
+description: Optimize and validate Claude skill files
 ---
 
 Analyze and optimize skill files for better Claude Code performance and compliance with official best practices.
 
-## 🎯 Step 1: Fetch Latest Best Practices
+##  Step 1: Fetch Latest Best Practices
 
-**🚨 MANDATORY: Execute this step FIRST at every invocation!**
+** MANDATORY: Execute this step FIRST at every invocation!**
 
 Use WebFetch to download current official requirements:
 
@@ -23,7 +23,7 @@ Extract and analyze:
 - Anti-patterns to avoid
 - Any new requirements since last check
 
-## ✅ Step 2: Validate All Skills
+##  Step 2: Validate All Skills
 
 Run automated validation checks on all skills in `src/templates/claude-skills/`:
 
@@ -44,20 +44,20 @@ for skill in src/templates/claude-skills/*/SKILL.md; do
     if echo "$skill_name" | grep -qE '^[a-z0-9-]+$'; then
       len=${#skill_name}
       if [ "$len" -le 64 ]; then
-        echo "✅ name: $skill_name ($len chars)"
+        echo " name: $skill_name ($len chars)"
       else
-        echo "❌ name: $skill_name (TOO LONG: $len chars, max 64)"
+        echo " name: $skill_name (TOO LONG: $len chars, max 64)"
       fi
     else
-      echo "❌ name: $skill_name (INVALID: use lowercase, numbers, hyphens only)"
+      echo " name: $skill_name (INVALID: use lowercase, numbers, hyphens only)"
     fi
 
     # Check for reserved words
     if echo "$skill_name" | grep -qE '(anthropic|claude)'; then
-      echo "⚠️  WARNING: name contains reserved word"
+      echo "  WARNING: name contains reserved word"
     fi
   else
-    echo "❌ name: MISSING"
+    echo " name: MISSING"
   fi
 
   # Check description field
@@ -65,22 +65,22 @@ for skill in src/templates/claude-skills/*/SKILL.md; do
   if [ -n "$desc" ]; then
     desc_len=${#desc}
     if [ "$desc_len" -le 1024 ]; then
-      echo "✅ description: $desc_len chars"
+      echo " description: $desc_len chars"
 
       # Check for first/second person (should be third person)
       if echo "$desc" | grep -qiE '\b(I|you|your|my)\b'; then
-        echo "⚠️  WARNING: description uses first/second person (should be third person)"
+        echo "  WARNING: description uses first/second person (should be third person)"
       fi
 
       # Check for vagueness
       if echo "$desc" | grep -qiE '\b(helps|processes|manages|handles)\s+(with|data|files)?\s*$'; then
-        echo "⚠️  WARNING: description may be too vague (add specifics and trigger terms)"
+        echo "  WARNING: description may be too vague (add specifics and trigger terms)"
       fi
     else
-      echo "❌ description: TOO LONG ($desc_len chars, max 1024)"
+      echo " description: TOO LONG ($desc_len chars, max 1024)"
     fi
   else
-    echo "❌ description: MISSING"
+    echo " description: MISSING"
   fi
 
   echo ""
@@ -111,19 +111,19 @@ for skill in src/templates/claude-skills/*/SKILL.md; do
   printf "%-30s %5d lines " "$name:" "$body_lines"
 
   if [ "$body_lines" -lt 500 ]; then
-    echo "✅ OPTIMAL"
+    echo " OPTIMAL"
   elif [ "$body_lines" -lt 800 ]; then
-    echo "⚠️  ACCEPTABLE (consider optimization)"
+    echo "  ACCEPTABLE (consider optimization)"
   else
-    echo "❌ TOO LARGE (needs optimization)"
+    echo " TOO LARGE (needs optimization)"
   fi
 done
 ```
 
 **Size targets:**
-- ✅ **Optimal:** < 500 lines (Claude official recommendation)
-- ⚠️ **Acceptable:** 500-800 lines (borderline)
-- ❌ **Too Large:** > 800 lines (MUST optimize)
+-  **Optimal:** < 500 lines (Claude official recommendation)
+-  **Acceptable:** 500-800 lines (borderline)
+-  **Too Large:** > 800 lines (MUST optimize)
 
 ### C. Progressive Disclosure Check
 
@@ -140,7 +140,7 @@ for skill_dir in src/templates/claude-skills/*/; do
   ref_count=$(echo "$ref_files" | grep -c ".")
 
   if [ "$ref_count" -gt 0 ]; then
-    echo "📄 Reference files: $ref_count"
+    echo " Reference files: $ref_count"
     echo "$ref_files" | while read -r file; do
       filename=$(basename "$file")
       lines=$(wc -l < "$file")
@@ -148,28 +148,28 @@ for skill_dir in src/templates/claude-skills/*/; do
       # Check if file > 100 lines should have TOC
       if [ "$lines" -gt 100 ]; then
         if grep -q "^## Table of Contents" "$file" || grep -q "^# Table of Contents" "$file"; then
-          echo "  ✅ $filename ($lines lines, has TOC)"
+          echo "   $filename ($lines lines, has TOC)"
         else
-          echo "  ⚠️  $filename ($lines lines, needs TOC)"
+          echo "    $filename ($lines lines, needs TOC)"
         fi
       else
-        echo "  ✅ $filename ($lines lines)"
+        echo "   $filename ($lines lines)"
       fi
     done
   else
-    echo "📄 Reference files: 0"
+    echo " Reference files: 0"
   fi
 
   # Check for nested files (anti-pattern)
   nested=$(find "$skill_dir" -mindepth 2 -name "*.md" 2>/dev/null)
   if [ -n "$nested" ]; then
-    echo "  ❌ WARNING: Nested files found (avoid deep nesting):"
+    echo "   WARNING: Nested files found (avoid deep nesting):"
     echo "$nested" | sed 's/^/    /'
   fi
 
   # Check for Windows-style paths in SKILL.md
   if grep -q '\\' "$skill_dir/SKILL.md"; then
-    echo "  ⚠️  WARNING: Windows-style backslashes found (use forward slashes)"
+    echo "    WARNING: Windows-style backslashes found (use forward slashes)"
   fi
 
   echo ""
@@ -177,11 +177,11 @@ done
 ```
 
 **Rules:**
-- ✅ Reference files one level deep from SKILL.md
-- ✅ Files > 100 lines have table of contents
-- ✅ Forward slashes in all paths
-- ✅ Descriptive file names (not `doc1.md`, `utils.md`)
-- ❌ No nested references (file → file → file)
+-  Reference files one level deep from SKILL.md
+-  Files > 100 lines have table of contents
+-  Forward slashes in all paths
+-  Descriptive file names (not `doc1.md`, `utils.md`)
+-  No nested references (file → file → file)
 
 ### D. Naming Convention Check
 
@@ -194,19 +194,19 @@ for skill in src/templates/claude-skills/*/SKILL.md; do
 
   # Check if gerund form (-ing)
   if echo "$skill_name" | grep -qE -- '-(ing|izing|ising)(-|$)'; then
-    echo "✅ $skill_name (gerund form - recommended)"
+    echo " $skill_name (gerund form - recommended)"
   # Check if action-oriented
   elif echo "$skill_name" | grep -qE '^(process|analyze|manage|generate|create|build|test)-'; then
-    echo "⚠️  $skill_name (action-oriented - acceptable)"
+    echo "  $skill_name (action-oriented - acceptable)"
   # Check if noun phrase
   elif echo "$skill_name" | grep -qE -- '-ing$'; then
-    echo "✅ $skill_name (noun phrase with -ing - acceptable)"
+    echo " $skill_name (noun phrase with -ing - acceptable)"
   else
     # Check for anti-patterns
     if echo "$skill_name" | grep -qE '^(helper|utils|tools|common)'; then
-      echo "❌ $skill_name (VAGUE: avoid helper/utils/tools)"
+      echo " $skill_name (VAGUE: avoid helper/utils/tools)"
     else
-      echo "⚠️  $skill_name (consider gerund form: ${skill_name}ing or processing-${skill_name})"
+      echo "  $skill_name (consider gerund form: ${skill_name}ing or processing-${skill_name})"
     fi
   fi
 done
@@ -222,27 +222,27 @@ for skill in src/templates/claude-skills/*/SKILL.md; do
 
   # Check for common anti-patterns
   if grep -qi "magic number" "$skill"; then
-    echo "⚠️  Uses term 'magic number' - ensure values are justified"
+    echo "  Uses term 'magic number' - ensure values are justified"
   fi
 
   if grep -qE '\b(TODO|FIXME|XXX)\b' "$skill"; then
-    echo "⚠️  Contains TODO/FIXME markers"
+    echo "  Contains TODO/FIXME markers"
   fi
 
   if grep -q "as of [0-9][0-9][0-9][0-9]" "$skill"; then
-    echo "⚠️  Contains time-sensitive information (use 'old patterns' section)"
+    echo "  Contains time-sensitive information (use 'old patterns' section)"
   fi
 
   # Check for inconsistent terminology
   if grep -qi "repository" "$skill" && grep -qi "repo" "$skill"; then
-    echo "⚠️  Inconsistent terminology: 'repository' and 'repo' both used"
+    echo "  Inconsistent terminology: 'repository' and 'repo' both used"
   fi
 
   echo ""
 done
 ```
 
-## 📊 Step 3: Compare Against Fetched Best Practices
+##  Step 3: Compare Against Fetched Best Practices
 
 Cross-reference validation results with the best practices document from Step 1:
 
@@ -254,7 +254,7 @@ Cross-reference validation results with the best practices document from Step 1:
 
 If official guidelines have changed, update validation criteria accordingly.
 
-## 🔧 Step 4: Optimization (If Needed)
+##  Step 4: Optimization (If Needed)
 
 For skills > 500 lines, perform extraction:
 
@@ -303,7 +303,7 @@ description: Detailed [topic] for skill-name skill
 ```markdown
 ## [Topic]
 
-**📖 Complete [topic] details: `topic-name.md`**
+** Complete [topic] details: `topic-name.md`**
 
 **Quick overview:**
 - Essential point 1
@@ -331,19 +331,19 @@ description: Detailed [topic] for skill-name skill
 - Troubleshooting guides
 - Historical "old patterns" sections
 
-## 📋 Step 5: Generate Report
+##  Step 5: Generate Report
 
 ```bash
 echo "=================================="
 echo "  Skill Validation Report"
 echo "=================================="
 echo ""
-echo "📊 Summary:"
+echo " Summary:"
 total=$(find src/templates/claude-skills -name "SKILL.md" | wc -l)
 echo "Total skills validated: $total"
 echo ""
 
-echo "📏 Size Distribution:"
+echo " Size Distribution:"
 optimal=0
 acceptable=0
 too_large=0
@@ -361,12 +361,12 @@ for skill in src/templates/claude-skills/*/SKILL.md; do
   fi
 done
 
-echo "  ✅ Optimal (< 500 lines):    $optimal"
-echo "  ⚠️  Acceptable (500-800):     $acceptable"
-echo "  ❌ Too large (> 800):         $too_large"
+echo "   Optimal (< 500 lines):    $optimal"
+echo "    Acceptable (500-800):     $acceptable"
+echo "   Too large (> 800):         $too_large"
 echo ""
 
-echo "📋 Frontmatter Compliance:"
+echo " Frontmatter Compliance:"
 complete=0
 incomplete=0
 
@@ -378,11 +378,11 @@ for skill in src/templates/claude-skills/*/SKILL.md; do
   fi
 done
 
-echo "  ✅ Complete:   $complete"
-echo "  ❌ Incomplete: $incomplete"
+echo "   Complete:   $complete"
+echo "   Incomplete: $incomplete"
 echo ""
 
-echo "🔍 Issues Requiring Attention:"
+echo " Issues Requiring Attention:"
 for skill in src/templates/claude-skills/*/SKILL.md; do
   name=$(basename $(dirname "$skill"))
   issues=""
@@ -417,11 +417,11 @@ done
 
 echo ""
 echo "=================================="
-echo "✅ Validation Complete"
+echo " Validation Complete"
 echo "=================================="
 ```
 
-## 🎯 Step 6: Action Items
+##  Step 6: Action Items
 
 Based on validation, create specific action items for each skill needing work:
 
@@ -440,7 +440,7 @@ Based on validation, create specific action items for each skill needing work:
 - Add concrete examples
 - Fix inconsistent terminology
 
-## ✅ Step 7: Verification
+##  Step 7: Verification
 
 Before completing, verify:
 - [ ] All skills have valid frontmatter (name + description)
@@ -453,13 +453,13 @@ Before completing, verify:
 - [ ] No vague names (helper, utils, tools)
 - [ ] Cross-referenced with latest best practices from Step 1
 
-## 📚 References
+##  References
 
 Official documentation:
 - https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices
 - https://www.anthropic.com/engineering/claude-code-best-practices
 
-## 💡 Tips for Command Execution
+##  Tips for Command Execution
 
 **For autonomous execution:**
 1. Start with WebFetch in Step 1 (MANDATORY)

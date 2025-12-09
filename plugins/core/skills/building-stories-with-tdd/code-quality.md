@@ -1,6 +1,5 @@
 ---
 name: story-tdd-code-quality
-version: 1.0.0
 description: Code quality and refactoring guidelines for Test-Driven Development
 ---
 

@@ -1,6 +1,5 @@
 ---
 name: lt-cli-reference
-version: 1.0.0
 description: Quick reference for Git operations and Fullstack initialization commands
 ---
 

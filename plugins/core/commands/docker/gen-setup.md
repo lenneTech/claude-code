@@ -1,3 +1,7 @@
+---
+description: Generate Docker setup for development and production
+---
+
 # Docker Development & Production Setup
 
 ## Project Context
@@ -87,8 +91,8 @@ For SSR frameworks (Nuxt, Next.js, SvelteKit, Analog, etc.):
 
 | Context | Runs Where | Network | Does `http://api:3000` work? |
 |---------|------------|---------|------------------------------|
-| Server (SSR) | Docker Container | Docker Network | ✅ Yes |
-| Browser (Client) | User's Machine | Host Network | ❌ No |
+| Server (SSR) | Docker Container | Docker Network |  Yes |
+| Browser (Client) | User's Machine | Host Network |  No |
 
 **Implement Solution - One of the following options:**
 
@@ -296,14 +300,14 @@ docker compose logs --tail=200
 
 **Check for the following patterns:**
 
-✅ Success:
+ Success:
 - "listening on port"
 - "ready in"
 - "server started"
 - "database connection established"
 - "connected to"
 
-❌ Errors:
+ Errors:
 - "ECONNREFUSED"
 - "connection refused"
 - "Module not found"
@@ -322,37 +326,37 @@ echo "=== Health Checks ==="
 
 # App/Frontend
 if curl -sf http://localhost:3000 > /dev/null 2>&1; then
-  echo "✅ Frontend reachable (localhost:3000)"
+  echo " Frontend reachable (localhost:3000)"
 else
-  echo "❌ Frontend NOT reachable"
+  echo " Frontend NOT reachable"
 fi
 
 # API (if separate service)
 if curl -sf http://localhost:3001/health > /dev/null 2>&1 || curl -sf http://localhost:3001 > /dev/null 2>&1; then
-  echo "✅ API reachable (localhost:3001)"
+  echo " API reachable (localhost:3001)"
 else
-  echo "⚠️  API not on localhost:3001 (maybe different port or integrated)"
+  echo "  API not on localhost:3001 (maybe different port or integrated)"
 fi
 
 # Database UI (Adminer)
 if curl -sf http://localhost:8080 > /dev/null 2>&1; then
-  echo "✅ DB UI reachable (localhost:8080)"
+  echo " DB UI reachable (localhost:8080)"
 else
-  echo "❌ DB UI NOT reachable"
+  echo " DB UI NOT reachable"
 fi
 
 # Mailhog
 if curl -sf http://localhost:8025 > /dev/null 2>&1; then
-  echo "✅ Mailhog reachable (localhost:8025)"
+  echo " Mailhog reachable (localhost:8025)"
 else
-  echo "❌ Mailhog NOT reachable"
+  echo " Mailhog NOT reachable"
 fi
 
 # Database Connection Check
 if docker compose exec -T db pg_isready -U postgres > /dev/null 2>&1; then
-  echo "✅ PostgreSQL ready"
+  echo " PostgreSQL ready"
 else
-  echo "❌ PostgreSQL NOT ready"
+  echo " PostgreSQL NOT ready"
 fi
 ```
 
@@ -362,16 +366,16 @@ echo "=== SSR Checks ==="
 
 # Server-to-API connection (inside container)
 if docker compose exec -T web curl -sf http://api:3000/health > /dev/null 2>&1; then
-  echo "✅ SSR -> API connection OK (Docker internal)"
+  echo " SSR -> API connection OK (Docker internal)"
 else
-  echo "⚠️  Check SSR -> API connection"
+  echo "  Check SSR -> API connection"
 fi
 
 # Check that no Docker-internal URLs end up in client bundle
 if docker compose exec -T web sh -c 'find .output .next dist -name "*.js" 2>/dev/null | head -20 | xargs grep -l "api:3000" 2>/dev/null'; then
-  echo "❌ WARNING: 'api:3000' found in client bundle! SSR URLs misconfigured."
+  echo " WARNING: 'api:3000' found in client bundle! SSR URLs misconfigured."
 else
-  echo "✅ No Docker-internal URLs in client bundle"
+  echo " No Docker-internal URLs in client bundle"
 fi
 ```
 
@@ -461,11 +465,11 @@ When all checks pass, output the following summary:
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                              ║
 ║  Container Status:                                           ║
-║  ├── app/web     ✅ Running                                  ║
-║  ├── api         ✅ Running (if separate service)            ║
-║  ├── db          ✅ Running                                  ║
-║  ├── adminer     ✅ Running                                  ║
-║  └── mailhog     ✅ Running                                  ║
+║  ├── app/web      Running                                  ║
+║  ├── api          Running (if separate service)            ║
+║  ├── db           Running                                  ║
+║  ├── adminer      Running                                  ║
+║  └── mailhog      Running                                  ║
 ║                                                              ║
 ║  Available Services:                                         ║
 ║  ├── Frontend:    http://localhost:3000                      ║

@@ -1,6 +1,5 @@
 ---
 name: nest-server-generator-quality-review
-version: 1.0.0
 description: Comprehensive quality review guidelines before creating final report
 ---
 
@@ -733,12 +732,12 @@ npm run test:e2e
 2. **Add debug messages in Services**:
    ```typescript
    // In service method
-   console.log('🟢 [Service] create - Input:', input);
-   console.log('🟢 [Service] create - ServiceOptions:', serviceOptions);
+   console.log(' [Service] create - Input:', input);
+   console.log(' [Service] create - ServiceOptions:', serviceOptions);
 
    const created = await super.create(input, serviceOptions);
 
-   console.log('🟢 [Service] create - Created:', created);
+   console.log(' [Service] create - Created:', created);
    ```
 
 3. **Understand the permissions system**:
@@ -812,18 +811,18 @@ async createProduct(@Args('input') input: ProductCreateInput, @GraphQLServiceOpt
 
 // In service
 async create(input: ProductCreateInput, serviceOptions?: ServiceOptions) {
-  console.log('🟢 Service create', { input, user: serviceOptions?.user?.email });
+  console.log(' Service create', { input, user: serviceOptions?.user?.email });
 
   const created = await super.create(input, serviceOptions);
 
-  console.log('🟢 Service created', { id: created?.id, createdBy: created?.createdBy });
+  console.log(' Service created', { id: created?.id, createdBy: created?.createdBy });
   return created;
 }
 
 // 2. Run test - observe output:
 // 🔵 START createProduct { input: {...}, user: 'test@test.com' }
-// 🟢 Service create { input: {...}, user: 'test@test.com' }
-// 🟢 Service created { id: '123', createdBy: '456' }
+//  Service create { input: {...}, user: 'test@test.com' }
+//  Service created { id: '123', createdBy: '456' }
 // 🔵 END createProduct { result: undefined }  ← AHA! Result is undefined!
 
 // 3. Check model securityCheck() - likely returns undefined for non-creator (user.id !== object.createdBy)

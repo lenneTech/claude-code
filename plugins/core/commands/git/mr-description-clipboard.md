@@ -37,7 +37,7 @@ Keep it short and concise - focus on what's essential for code reviewers.
 cat << 'EOF' | pbcopy
 [PASTE THE EXACT MR DESCRIPTION HERE]
 EOF
-echo "✅ MR description copied to clipboard!"
+echo " MR description copied to clipboard!"
 ```
 
 3. User can run this command to copy the description to clipboard automatically.

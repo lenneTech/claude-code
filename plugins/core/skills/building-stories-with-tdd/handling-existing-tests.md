@@ -1,6 +1,5 @@
 ---
 name: story-tdd-handling-existing-tests
-version: 1.0.0
 description: Complete guide for handling existing tests when modifying code in TDD workflow - decision trees, git analysis, examples, and guidelines for determining when to update tests vs fix code
 ---
 

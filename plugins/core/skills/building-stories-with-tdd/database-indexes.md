@@ -1,6 +1,5 @@
 ---
 name: story-tdd-database-indexes
-version: 1.0.0
 description: Database index guidelines for @UnifiedField decorator - keep indexes visible with properties
 ---
 

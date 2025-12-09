@@ -4,7 +4,7 @@ description: Perform security review of code changes
 
 Perform a complete security review:
 
-## 🔐 1. Controller/Resolver Security
+##  1. Controller/Resolver Security
 
 Check all modified Controller/Resolver files:
 - [ ] Were @Restricted decorators removed or weakened?
@@ -12,7 +12,7 @@ Check all modified Controller/Resolver files:
 - [ ] Are there new endpoints without security decorators?
 - [ ] Are the roles appropriate (not too open)?
 
-## 🔐 2. Model Security
+##  2. Model Security
 
 Check all modified Model files:
 - [ ] Is securityCheck() method correctly implemented?
@@ -21,7 +21,7 @@ Check all modified Model files:
 - [ ] Were security checks weakened?
 - [ ] Are sensitive properties protected with @Restricted?
 
-## 🔐 3. Input Validation
+##  3. Input Validation
 
 Check all Input/DTO files:
 - [ ] Are all inputs validated?
@@ -29,7 +29,7 @@ Check all Input/DTO files:
 - [ ] Type safety ensured?
 - [ ] No unsafe data types (e.g., any)?
 
-## 🔐 4. Ownership & Authorization
+##  4. Ownership & Authorization
 
 Check service methods:
 - [ ] Update/Delete: Ownership checks present?
@@ -37,21 +37,21 @@ Check service methods:
 - [ ] serviceOptions.roles correctly set?
 - [ ] No authorization bypasses?
 
-## 🔐 5. Data Exposure
+##  5. Data Exposure
 
 Check GraphQL/REST responses:
 - [ ] Sensitive fields marked with `hideField: true`?
 - [ ] Passwords/Tokens not in responses?
 - [ ] securityCheck() filters correctly?
 
-## 🔐 6. Test Coverage
+##  6. Test Coverage
 
 Check tests:
 - [ ] Security failure tests present (403 responses)?
 - [ ] Tests with different roles (Admin, User, Other)?
 - [ ] Ownership tests present?
 
-## 📋 Report
+##  Report
 
 Create a list of all findings:
 - **Critical**: Severe security issues

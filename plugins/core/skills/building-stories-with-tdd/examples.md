@@ -1,6 +1,5 @@
 ---
 name: story-tdd-examples
-version: 1.0.1
 description: Complete examples for Test-Driven Development workflow with NestJS story tests
 ---
 

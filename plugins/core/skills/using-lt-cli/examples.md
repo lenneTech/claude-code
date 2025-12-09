@@ -1,6 +1,5 @@
 ---
 name: lt-cli-examples
-version: 1.0.0
 description: Real-world examples for Git operations and Fullstack initialization with lenne.tech CLI
 ---
 

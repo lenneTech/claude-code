@@ -1,6 +1,5 @@
 ---
 name: story-tdd-reference
-version: 1.0.1
 description: Quick reference guide for Test-Driven Development workflow
 ---
 
