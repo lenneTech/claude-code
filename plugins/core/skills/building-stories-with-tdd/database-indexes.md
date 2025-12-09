@@ -4,7 +4,7 @@ version: 1.0.0
 description: Database index guidelines for @UnifiedField decorator - keep indexes visible with properties
 ---
 
-# 🔍 Database Indexes with @UnifiedField
+#  Database Indexes with @UnifiedField
 
 ## Table of Contents
 - [When to Add Indexes](#when-to-add-indexes)
@@ -23,11 +23,11 @@ This keeps indexes visible right where properties are defined, making them easy 
 
 ## When to Add Indexes
 
-- ✅ Fields used in queries (find, filter, search)
-- ✅ Foreign keys (references to other collections)
-- ✅ Fields used in sorting operations
-- ✅ Unique constraints (email, username, etc.)
-- ✅ Fields frequently accessed together (compound indexes)
+-  Fields used in queries (find, filter, search)
+-  Foreign keys (references to other collections)
+-  Fields used in sorting operations
+-  Unique constraints (email, username, etc.)
+-  Fields frequently accessed together (compound indexes)
 
 ---
 
@@ -38,7 +38,7 @@ This keeps indexes visible right where properties are defined, making them easy 
 ```typescript
 @UnifiedField({
   description: 'User email address',
-  mongoose: { index: true, unique: true, type: String }  // ✅ Simple index + unique constraint
+  mongoose: { index: true, unique: true, type: String }  //  Simple index + unique constraint
 })
 email: string;
 ```
@@ -48,13 +48,13 @@ email: string;
 ```typescript
 @UnifiedField({
   description: 'Product category',
-  mongoose: { index: true, type: String }  // ✅ Part of compound index
+  mongoose: { index: true, type: String }  //  Part of compound index
 })
 category: string;
 
 @UnifiedField({
   description: 'Product status',
-  mongoose: { index: true, type: String }  // ✅ Part of compound index
+  mongoose: { index: true, type: String }  //  Part of compound index
 })
 status: string;
 
@@ -66,7 +66,7 @@ status: string;
 ```typescript
 @UnifiedField({
   description: 'Product name',
-  mongoose: { type: String, text: true }  // ✅ Full-text search index
+  mongoose: { type: String, text: true }  //  Full-text search index
 })
 name: string;
 ```
@@ -76,17 +76,17 @@ name: string;
 ```typescript
 @UnifiedField({
   description: 'Reference to user who created this',
-  mongoose: { index: true, type: String }  // ✅ Index for JOIN operations
+  mongoose: { index: true, type: String }  //  Index for JOIN operations
 })
 createdBy: string;
 ```
 
 ---
 
-## ⚠️ DON'T Create Indexes Separately!
+##  DON'T Create Indexes Separately!
 
 ```typescript
-// ❌ WRONG: Separate schema index definition
+//  WRONG: Separate schema index definition
 @Schema()
 export class Product {
   @UnifiedField({
@@ -96,14 +96,14 @@ export class Product {
   category: string;
 }
 
-ProductSchema.index({ category: 1 }); // ❌ Index hidden away from property
+ProductSchema.index({ category: 1 }); //  Index hidden away from property
 
-// ✅ CORRECT: Index in decorator mongoose option
+//  CORRECT: Index in decorator mongoose option
 @Schema()
 export class Product {
   @UnifiedField({
     description: 'Category',
-    mongoose: { index: true, type: String }  // ✅ Immediately visible
+    mongoose: { index: true, type: String }  //  Immediately visible
   })
   category: string;
 }
@@ -113,11 +113,11 @@ export class Product {
 
 ## Benefits of Decorator-Based Indexes
 
-- ✅ Indexes visible when reviewing properties
-- ✅ No need to search schema files
-- ✅ Clear documentation of query patterns
-- ✅ Easier to maintain and update
-- ✅ Self-documenting code
+-  Indexes visible when reviewing properties
+-  No need to search schema files
+-  Clear documentation of query patterns
+-  Easier to maintain and update
+-  Self-documenting code
 
 ---
 
@@ -137,17 +137,17 @@ const orders = await this.orderService.find({
   where: { customerId: userId, status: 'pending' }
 });
 
-// ✅ Model should have indexes:
+//  Model should have indexes:
 export class Order {
   @UnifiedField({
     description: 'Customer reference',
-    mongoose: { index: true, type: String }  // ✅ Used in queries
+    mongoose: { index: true, type: String }  //  Used in queries
   })
   customerId: string;
 
   @UnifiedField({
     description: 'Order status',
-    mongoose: { index: true, type: String }  // ✅ Used in filtering
+    mongoose: { index: true, type: String }  //  Used in filtering
   })
   status: string;
 }

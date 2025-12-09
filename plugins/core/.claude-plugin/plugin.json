@@ -1,11 +1,13 @@
 {
-  "name": "lt",
-  "version": "1.0.11",
-  "description": "lenne.tech Development Skills, Commands und Hooks für Claude Code - Frontend (Nuxt 4), Backend (NestJS), TDD und CLI Tools",
+  "name": "core",
+  "version": "2.0.0",
+  "description": "lenne.tech Development Skills, Commands and Hooks for Claude Code - Frontend (Nuxt 4), Backend (NestJS), TDD and CLI Tools",
   "author": {
     "name": "lenne.tech GmbH",
     "url": "https://lenne.tech"
   },
+  "homepage": "https://lenne.tech",
+  "repository": "https://github.com/lenneTech/claude-code",
   "license": "MIT",
   "keywords": [
     "lenne.tech",
@@ -14,8 +16,5 @@
     "tdd",
     "fullstack",
     "nest-server"
-  ],
-  "skills": "./skills/",
-  "commands": "./commands/",
-  "hooks": "./hooks/hooks.json"
+  ]
 }

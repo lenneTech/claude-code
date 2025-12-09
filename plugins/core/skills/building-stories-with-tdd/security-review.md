@@ -4,7 +4,7 @@ version: 1.0.0
 description: Security review checklist for Test-Driven Development - ensures no vulnerabilities are introduced
 ---
 
-# 🔐 Security Review Checklist
+#  Security Review Checklist
 
 ## Table of Contents
 - [Security Checklist](#security-checklist)
@@ -31,43 +31,43 @@ Security issues can be introduced during implementation without realizing it. A 
 
 ### 1. Authentication & Authorization
 
-✅ **Check decorators are NOT weakened:**
+ **Check decorators are NOT weakened:**
 
 ```typescript
-// ❌ WRONG: Removing security to make tests pass
+//  WRONG: Removing security to make tests pass
 // OLD:
 @Restricted(RoleEnum.ADMIN)
 async deleteUser(id: string) { ... }
 
 // NEW (DANGEROUS):
-async deleteUser(id: string) { ... }  // ⚠️ No restriction!
+async deleteUser(id: string) { ... }  //  No restriction!
 
-// ✅ CORRECT: Keep or strengthen security
+//  CORRECT: Keep or strengthen security
 @Restricted(RoleEnum.ADMIN)
 async deleteUser(id: string) { ... }
 ```
 
-✅ **Verify @Roles decorators:**
+ **Verify @Roles decorators:**
 
 ```typescript
-// ❌ WRONG: Making endpoint too permissive
+//  WRONG: Making endpoint too permissive
 @Roles(RoleEnum.S_USER)  // Everyone can delete!
 async deleteOrder(id: string) { ... }
 
-// ✅ CORRECT: Proper role restriction
+//  CORRECT: Proper role restriction
 @Roles(RoleEnum.ADMIN)  // Only admins can delete
 async deleteOrder(id: string) { ... }
 ```
 
-✅ **Check ownership verification:**
+ **Check ownership verification:**
 
 ```typescript
-// ❌ WRONG: No ownership check
+//  WRONG: No ownership check
 async updateProfile(userId: string, data: UpdateProfileInput, currentUser: User) {
   return this.userService.update(userId, data);  // Any user can update any profile!
 }
 
-// ✅ CORRECT: Verify ownership or admin role
+//  CORRECT: Verify ownership or admin role
 async updateProfile(userId: string, data: UpdateProfileInput, currentUser: User) {
   // Check if user is updating their own profile or is admin
   if (userId !== currentUser.id && !currentUser.roles.includes(RoleEnum.ADMIN)) {
@@ -79,15 +79,15 @@ async updateProfile(userId: string, data: UpdateProfileInput, currentUser: User)
 
 ### 2. Input Validation
 
-✅ **Verify all inputs are validated:**
+ **Verify all inputs are validated:**
 
 ```typescript
-// ❌ WRONG: No validation
+//  WRONG: No validation
 async createProduct(input: any) {
   return this.productService.create(input);  // Dangerous!
 }
 
-// ✅ CORRECT: Proper DTO with validation
+//  CORRECT: Proper DTO with validation
 export class CreateProductInput {
   @UnifiedField({
     description: 'Product name',
@@ -105,15 +105,15 @@ export class CreateProductInput {
 }
 ```
 
-✅ **Check for injection vulnerabilities:**
+ **Check for injection vulnerabilities:**
 
 ```typescript
-// ❌ WRONG: Direct string interpolation in queries
+//  WRONG: Direct string interpolation in queries
 async findByName(name: string) {
   return this.productModel.find({ $where: `this.name === '${name}'` });  // SQL Injection!
 }
 
-// ✅ CORRECT: Parameterized queries
+//  CORRECT: Parameterized queries
 async findByName(name: string) {
   return this.productModel.find({ name });  // Safe
 }
@@ -121,41 +121,41 @@ async findByName(name: string) {
 
 ### 3. Data Exposure
 
-✅ **Verify sensitive data is protected:**
+ **Verify sensitive data is protected:**
 
 ```typescript
-// ❌ WRONG: Exposing passwords
+//  WRONG: Exposing passwords
 export class User {
   @UnifiedField({ description: 'Email' })
   email: string;
 
   @UnifiedField({ description: 'Password' })
-  password: string;  // ⚠️ Will be exposed in API!
+  password: string;  //  Will be exposed in API!
 }
 
-// ✅ CORRECT: Hide sensitive fields
+//  CORRECT: Hide sensitive fields
 export class User {
   @UnifiedField({ description: 'Email' })
   email: string;
 
   @UnifiedField({
     description: 'Password hash',
-    hideField: true,  // ✅ Never expose in API
+    hideField: true,  //  Never expose in API
     mongoose: { type: String, required: true }
   })
   password: string;
 }
 ```
 
-✅ **Check error messages don't leak data:**
+ **Check error messages don't leak data:**
 
 ```typescript
-// ❌ WRONG: Exposing sensitive info in errors
+//  WRONG: Exposing sensitive info in errors
 catch (error) {
   throw new BadRequestException(`Query failed: ${error.message}, SQL: ${query}`);
 }
 
-// ✅ CORRECT: Generic error messages
+//  CORRECT: Generic error messages
 catch (error) {
   this.logger.error(`Query failed: ${error.message}`, error.stack);
   throw new BadRequestException('Invalid request');
@@ -164,15 +164,15 @@ catch (error) {
 
 ### 4. Authorization in Services
 
-✅ **Verify service methods check permissions:**
+ **Verify service methods check permissions:**
 
 ```typescript
-// ❌ WRONG: Service doesn't check who can access
+//  WRONG: Service doesn't check who can access
 async getOrder(orderId: string) {
   return this.orderModel.findById(orderId);  // Anyone can see any order!
 }
 
-// ✅ CORRECT: Service checks ownership or role
+//  CORRECT: Service checks ownership or role
 async getOrder(orderId: string, currentUser: User) {
   const order = await this.orderModel.findById(orderId);
 
@@ -187,15 +187,15 @@ async getOrder(orderId: string, currentUser: User) {
 
 ### 5. Security Model Checks
 
-✅ **Verify checkSecurity methods:**
+ **Verify checkSecurity methods:**
 
 ```typescript
 // In model file
 async checkSecurity(user: User, mode: SecurityMode): Promise<void> {
-  // ❌ WRONG: No security check
+  //  WRONG: No security check
   return;
 
-  // ✅ CORRECT: Proper security implementation
+  //  CORRECT: Proper security implementation
   if (mode === SecurityMode.CREATE && !user.roles.includes(RoleEnum.ADMIN)) {
     throw new ForbiddenException('Only admins can create');
   }
@@ -208,17 +208,17 @@ async checkSecurity(user: User, mode: SecurityMode): Promise<void> {
 
 ### 6. Cross-Cutting Concerns
 
-✅ **Rate limiting for sensitive endpoints:**
+ **Rate limiting for sensitive endpoints:**
 - Password reset endpoints
 - Authentication endpoints
 - Payment processing
 - Email sending
 
-✅ **HTTPS/TLS enforcement (production)**
+ **HTTPS/TLS enforcement (production)**
 
-✅ **Proper CORS configuration**
+ **Proper CORS configuration**
 
-✅ **No hardcoded secrets or API keys**
+ **No hardcoded secrets or API keys**
 
 ---
 
@@ -228,19 +228,19 @@ async checkSecurity(user: User, mode: SecurityMode): Promise<void> {
 Code changes made?
     │
     ├─► Modified @Restricted or @Roles?
-    │   └─► ⚠️ CRITICAL: Verify this was intentional and justified
+    │   └─►  CRITICAL: Verify this was intentional and justified
     │
     ├─► New endpoint added?
-    │   └─► ✅ Ensure proper authentication + authorization decorators
+    │   └─►  Ensure proper authentication + authorization decorators
     │
     ├─► Service method modified?
-    │   └─► ✅ Verify ownership checks still in place
+    │   └─►  Verify ownership checks still in place
     │
     ├─► New input/query parameters?
-    │   └─► ✅ Ensure validation and sanitization
+    │   └─►  Ensure validation and sanitization
     │
     └─► Sensitive data accessed?
-        └─► ✅ Verify access control and data hiding
+        └─►  Verify access control and data hiding
 ```
 
 ---

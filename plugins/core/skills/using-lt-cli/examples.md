@@ -6,7 +6,7 @@ description: Real-world examples for Git operations and Fullstack initialization
 
 # LT CLI Examples
 
-⚠️ **Note**: For NestJS server examples (modules, objects, properties), see the **nest-server-generator skill** instead.
+ **Note**: For NestJS server examples (modules, objects, properties), see the **nest-server-generator skill** instead.
 
 ## Table of Contents
 - [Git Operations](#git-operations)
@@ -121,7 +121,7 @@ lt git reset
 # Your branch now matches remote exactly
 ```
 
-**⚠️ WARNING**: This is destructive! All local commits and changes are permanently lost.
+** WARNING**: This is destructive! All local commits and changes are permanently lost.
 
 #### When to Use Reset
 

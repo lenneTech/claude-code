@@ -4,7 +4,7 @@ version: 1.0.0
 description: Critical warning about using the declare keyword in TypeScript classes
 ---
 
-# 🚨 CRITICAL: NEVER USE `declare` KEYWORD FOR PROPERTIES
+#  CRITICAL: NEVER USE `declare` KEYWORD FOR PROPERTIES
 
 ## Table of Contents
 - [WRONG - Using `declare`](#-wrong---using-declare)
@@ -15,32 +15,32 @@ description: Critical warning about using the declare keyword in TypeScript clas
 - [Examples](#examples)
 - [Remember](#remember)
 
-**⚠️ IMPORTANT RULE: DO NOT use the `declare` keyword when defining properties in classes!**
+** IMPORTANT RULE: DO NOT use the `declare` keyword when defining properties in classes!**
 
 The `declare` keyword in TypeScript signals that a property is only a type declaration without a runtime value. This prevents decorators from being properly applied and overridden.
 
 ---
 
-## ❌ WRONG - Using `declare`
+##  WRONG - Using `declare`
 
 ```typescript
 export class ProductCreateInput extends ProductInput {
-  declare name: string;  // ❌ WRONG - Decorator won't be applied!
-  declare price: number; // ❌ WRONG - Decorator won't be applied!
+  declare name: string;  //  WRONG - Decorator won't be applied!
+  declare price: number; //  WRONG - Decorator won't be applied!
 }
 ```
 
 ---
 
-## ✅ CORRECT - Without `declare`
+##  CORRECT - Without `declare`
 
 ```typescript
 export class ProductCreateInput extends ProductInput {
   @UnifiedField({ description: 'Product name' })
-  name: string;  // ✅ CORRECT - Decorator works properly
+  name: string;  //  CORRECT - Decorator works properly
 
   @UnifiedField({ description: 'Product price' })
-  price: number; // ✅ CORRECT - Decorator works properly
+  price: number; //  CORRECT - Decorator works properly
 }
 ```
 
@@ -56,9 +56,9 @@ export class ProductCreateInput extends ProductInput {
 
 ## When You Might Be Tempted to Use `declare`
 
-- ❌ When extending a class and wanting to change a decorator
-- ❌ When TypeScript shows "property is declared but never used"
-- ❌ When dealing with inheritance and property redefinition
+-  When extending a class and wanting to change a decorator
+-  When TypeScript shows "property is declared but never used"
+-  When dealing with inheritance and property redefinition
 
 ---
 
@@ -68,10 +68,10 @@ Use the `override` keyword (when appropriate) but NEVER `declare`:
 
 ```typescript
 export class ProductCreateInput extends ProductInput {
-  // ✅ Use override when useDefineForClassFields is enabled
+  //  Use override when useDefineForClassFields is enabled
   override name: string;
 
-  // ✅ Apply decorators directly - they will override parent decorators
+  //  Apply decorators directly - they will override parent decorators
   @UnifiedField({ description: 'Product name', isOptional: false })
   override price: number;
 }
@@ -81,7 +81,7 @@ export class ProductCreateInput extends ProductInput {
 
 ## Examples
 
-### ❌ WRONG - Using declare
+###  WRONG - Using declare
 
 ```typescript
 // This will BREAK decorator functionality
@@ -92,7 +92,7 @@ export class AddressInput extends Address {
 }
 ```
 
-### ✅ CORRECT - Without declare
+###  CORRECT - Without declare
 
 ```typescript
 // This works properly
@@ -108,7 +108,7 @@ export class AddressInput extends Address {
 }
 ```
 
-### ✅ CORRECT - With override
+###  CORRECT - With override
 
 ```typescript
 // This also works when extending decorated properties

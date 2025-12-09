@@ -34,7 +34,7 @@ Once all tests are passing, analyze your implementation for code quality issues.
 **Example of code duplication:**
 
 ```typescript
-// ❌ BAD: Duplicated validation logic
+//  BAD: Duplicated validation logic
 async createProduct(input: ProductInput) {
   if (!input.name || input.name.trim().length === 0) {
     throw new BadRequestException('Name is required');
@@ -55,7 +55,7 @@ async updateProduct(id: string, input: ProductInput) {
   // ... update product
 }
 
-// ✅ GOOD: Extracted to reusable function
+//  GOOD: Extracted to reusable function
 private validateProductInput(input: ProductInput) {
   if (!input.name || input.name.trim().length === 0) {
     throw new BadRequestException('Name is required');
@@ -90,7 +90,7 @@ async updateProduct(id: string, input: ProductInput) {
 **Example of extracting common functionality:**
 
 ```typescript
-// ❌ BAD: Repeated price calculation logic
+//  BAD: Repeated price calculation logic
 async createOrder(input: OrderInput) {
   let totalPrice = 0;
   for (const item of input.items) {
@@ -109,7 +109,7 @@ async estimateOrderPrice(items: OrderItem[]) {
   return totalPrice;
 }
 
-// ✅ GOOD: Extracted to reusable helper
+//  GOOD: Extracted to reusable helper
 private async calculateOrderTotal(items: OrderItem[]): Promise<number> {
   let totalPrice = 0;
   for (const item of items) {
@@ -141,7 +141,7 @@ async estimateOrderPrice(items: OrderItem[]) {
 **Example of consolidating code paths:**
 
 ```typescript
-// ❌ BAD: Similar methods with duplicated logic
+//  BAD: Similar methods with duplicated logic
 async findProductsByCategory(category: string) {
   return this.find({
     where: { category },
@@ -166,7 +166,7 @@ async findProductsByPriceRange(minPrice: number, maxPrice: number) {
   });
 }
 
-// ✅ GOOD: Unified method with flexible filtering
+//  GOOD: Unified method with flexible filtering
 async findProducts(filters: {
   category?: string;
   supplierId?: string;
@@ -242,10 +242,10 @@ npm test
 ```
 
 **Ensure:**
-- ✅ All tests still pass
-- ✅ No new failures introduced
-- ✅ Code is more maintainable
-- ✅ No functionality changed
+-  All tests still pass
+-  No new failures introduced
+-  Code is more maintainable
+-  No functionality changed
 
 ---
 

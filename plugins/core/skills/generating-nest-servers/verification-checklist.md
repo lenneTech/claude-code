@@ -46,7 +46,7 @@ After generation, verify all items in this comprehensive checklist:
 
 ## API Tests - Security First
 
-**🚨 CRITICAL: Security analysis MUST be completed BEFORE writing ANY test!**
+** CRITICAL: Security analysis MUST be completed BEFORE writing ANY test!**
 
 ### Permission Analysis (BEFORE Writing Tests)
 - [ ] **Permission analysis completed BEFORE writing tests**
@@ -77,7 +77,7 @@ After generation, verify all items in this comprehensive checklist:
 
 ## Test Coverage - Comprehensive Testing
 
-**🎯 GOAL: Achieve the HIGHEST possible test coverage**
+** GOAL: Achieve the HIGHEST possible test coverage**
 
 ### Functional Coverage
 - [ ] **Every endpoint has at least one successful test**
@@ -104,7 +104,7 @@ After generation, verify all items in this comprehensive checklist:
 
 ## Security Rules Compliance
 
-**🚨 CRITICAL: These MUST be checked before completing**
+** CRITICAL: These MUST be checked before completing**
 
 ### Security Decorator Rules
 - [ ] **NO `@Restricted()` decorators removed from Controllers/Resolvers/Models/Objects**
@@ -227,23 +227,23 @@ describe('ProductResolver', () => {
 
 ## Common Verification Failures
 
-### ❌ Missing Descriptions
+###  Missing Descriptions
 **Problem:** Forgot to add descriptions to CreateInput or UpdateInput
 **Fix:** Add SAME description from Model to ALL Input files
 
-### ❌ Wrong Test Privileges
+###  Wrong Test Privileges
 **Problem:** Using admin token when S_USER would work
 **Fix:** Review @Roles decorator, use least privileged user
 
-### ❌ Missing Security Tests
+###  Missing Security Tests
 **Problem:** No tests for unauthorized access
 **Fix:** Add describe('Security Validation') block with 401/403 tests
 
-### ❌ Inconsistent Descriptions
+###  Inconsistent Descriptions
 **Problem:** Different descriptions for same property in different files
 **Fix:** Standardize to one description across Model + CreateInput + UpdateInput
 
-### ❌ Security Decorator Removed
+###  Security Decorator Removed
 **Problem:** Removed @Restricted to make test pass
 **Fix:** Keep decorator, fix test to use proper authentication
 
@@ -251,12 +251,12 @@ describe('ProductResolver', () => {
 
 ## Success Criteria
 
-✅ **All checkboxes checked**
-✅ **All tests pass**
-✅ **No TypeScript errors**
-✅ **Lint passes**
-✅ **Coverage > 90%**
-✅ **Security rules maintained**
-✅ **Descriptions consistent**
+ **All checkboxes checked**
+ **All tests pass**
+ **No TypeScript errors**
+ **Lint passes**
+ **Coverage > 90%**
+ **Security rules maintained**
+ **Descriptions consistent**
 
-**When all criteria met → Generation complete! 🎉**
+**When all criteria met -> Generation complete! **

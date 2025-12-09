@@ -4,7 +4,7 @@ version: 1.0.0
 description: Complete guide to @lenne.tech/nest-server framework - CrudService base class, ServiceOptions handling, patterns for Service inheritance, and best practices for working with the framework
 ---
 
-# 📚 Understanding the @lenne.tech/nest-server Framework
+#  Understanding the @lenne.tech/nest-server Framework
 
 ## Table of Contents
 - [Core Service Base Class: CrudService](#core-service-base-class-crudservice)
@@ -27,11 +27,11 @@ node_modules/@lenne.tech/nest-server/src/core/common/services/crud.service.ts
 - Shows patterns for handling permissions, filtering, and pagination
 
 **When to read CrudService:**
-1. ✅ Before creating a new Service
-2. ✅ When implementing custom Service methods
-3. ✅ When debugging Service behavior
-4. ✅ When writing tests for Services
-5. ✅ When questions arise about Service functionality
+1.  Before creating a new Service
+2.  When implementing custom Service methods
+3.  When debugging Service behavior
+4.  When writing tests for Services
+5.  When questions arise about Service functionality
 
 **What CrudService provides:**
 - `create(input, options)` - Create new document
@@ -68,35 +68,35 @@ export class ProductService extends CrudService<Product> {
 
 ---
 
-## 🚨 CRITICAL: ServiceOptions When Calling Other Services
+##  CRITICAL: ServiceOptions When Calling Other Services
 
 **NEVER blindly pass all ServiceOptions when calling another Service!**
 
 When a Service method calls another Service, you must carefully analyze which options to pass:
 
-### ❌ WRONG - Blindly passing all options
+###  WRONG - Blindly passing all options
 
 ```typescript
 async createOrder(input: CreateOrderInput, serviceOptions: ServiceOptions) {
-  // ❌ BAD: Passes ALL serviceOptions without checking
+  //  BAD: Passes ALL serviceOptions without checking
   const product = await this.productService.findOne({ id: input.productId }, serviceOptions);
 
-  // ❌ BAD: inputType might be wrong for userService
+  //  BAD: inputType might be wrong for userService
   const user = await this.userService.findOne({ id: input.userId }, serviceOptions);
 }
 ```
 
-### ✅ CORRECT - Selectively passing required options
+###  CORRECT - Selectively passing required options
 
 ```typescript
 async createOrder(input: CreateOrderInput, serviceOptions: ServiceOptions) {
-  // ✅ GOOD: Only pass currentUser (needed for permissions)
+  //  GOOD: Only pass currentUser (needed for permissions)
   const product = await this.productService.findOne(
     { id: input.productId },
     { currentUser: serviceOptions.currentUser }
   );
 
-  // ✅ GOOD: Only set inputType if different Input class is needed
+  //  GOOD: Only set inputType if different Input class is needed
   const user = await this.userService.findOne(
     { id: input.userId },
     {
@@ -105,7 +105,7 @@ async createOrder(input: CreateOrderInput, serviceOptions: ServiceOptions) {
     }
   );
 
-  // ✅ ALSO GOOD: Don't pass inputType if not needed
+  //  ALSO GOOD: Don't pass inputType if not needed
   const category = await this.categoryService.findOne(
     { id: input.categoryId },
     { currentUser: serviceOptions.currentUser } // No inputType - use default

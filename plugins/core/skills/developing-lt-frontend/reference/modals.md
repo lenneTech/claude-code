@@ -140,13 +140,13 @@ async function handleDelete(season: SeasonDto): Promise<void> {
 ## Anti-Patterns
 
 ```vue
-<!-- ❌ DON'T: Inline modal -->
+<!--  DON'T: Inline modal -->
 <template>
   <UButton @click="isOpen = true">Open</UButton>
   <UModal v-model:open="isOpen">...</UModal>
 </template>
 
-<!-- ✅ DO: Programmatic modal -->
+<!--  DO: Programmatic modal -->
 <template>
   <UButton @click="openModal">Open</UButton>
 </template>

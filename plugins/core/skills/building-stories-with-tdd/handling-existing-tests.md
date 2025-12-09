@@ -4,7 +4,7 @@ version: 1.0.0
 description: Complete guide for handling existing tests when modifying code in TDD workflow - decision trees, git analysis, examples, and guidelines for determining when to update tests vs fix code
 ---
 
-# 🔄 Handling Existing Tests When Modifying Code
+#  Handling Existing Tests When Modifying Code
 
 ## Table of Contents
 - [Analysis Decision Tree](#analysis-decision-tree)
@@ -27,13 +27,13 @@ Existing test fails
     ├─► Was this change intentional and breaking?
     │   │
     │   ├─► YES: Change was deliberate and it's clear why tests break
-    │   │   └─► ✅ Update the existing tests to reflect new behavior
+    │   │   └─►  Update the existing tests to reflect new behavior
     │   │       - Modify test expectations
     │   │       - Update test data/setup if needed
     │   │       - Document why test was changed
     │   │
     │   └─► NO/UNCLEAR: Not sure why tests are breaking
-    │       └─► 🔍 Investigate potential side effect
+    │       └─►  Investigate potential side effect
     │           │
     │           ├─► Use git to review previous state:
     │           │   - git show HEAD:path/to/file.ts
@@ -42,7 +42,7 @@ Existing test fails
     │           │
     │           ├─► Compare old vs new behavior
     │           │
-    │           └─► ⚠️ Likely unintended side effect!
+    │           └─►  Likely unintended side effect!
     │               └─► Fix code to satisfy BOTH old AND new tests
     │                   - Refine implementation
     │                   - Add conditional logic if needed
@@ -52,7 +52,7 @@ Existing test fails
 
 ## Using Git for Analysis (ALLOWED)
 
-**✅ Git commands are EXPLICITLY ALLOWED for analysis:**
+** Git commands are EXPLICITLY ALLOWED for analysis:**
 
 ```bash
 # View old version of a file
@@ -86,12 +86,12 @@ git diff main..HEAD path/to/file.ts
 // Old test expects: { email, firstName }
 // New behavior requires: { email, firstName, lastName }
 
-// ✅ CORRECT: Update the test
+//  CORRECT: Update the test
 it('should create user', async () => {
   const user = await userService.create({
     email: 'test@example.com',
     firstName: 'John',
-    lastName: 'Doe', // ✅ Added required field
+    lastName: 'Doe', //  Added required field
   });
   // ...
 });
@@ -103,8 +103,8 @@ it('should create user', async () => {
 // Scenario: You changed authentication logic for new feature
 // Old tests for different feature now fail unexpectedly
 
-// ❌ WRONG: Just update the failing tests
-// ✅ CORRECT: Investigate and fix the code
+//  WRONG: Just update the failing tests
+//  CORRECT: Investigate and fix the code
 
 // 1. Use git to see old implementation
 // git show HEAD:src/server/modules/auth/auth.service.ts
@@ -126,20 +126,20 @@ async authenticate(user: User, options?: AuthOptions) {
 
 ## Guidelines
 
-**✅ DO update existing tests when:**
+** DO update existing tests when:**
 - You intentionally changed an API contract
 - You removed deprecated functionality
 - You renamed fields/methods
 - The old behavior is being replaced (not extended)
 - It's documented in your story requirements
 
-**❌ DON'T update existing tests when:**
+** DON'T update existing tests when:**
 - You're not sure why they're failing
 - The failure seems unrelated to your story
 - Multiple unrelated tests are breaking
 - The test was testing important existing functionality
 
-**🔍 INVESTIGATE when:**
+** INVESTIGATE when:**
 - More than 2-3 existing tests fail
 - Tests in unrelated modules fail
 - Test failure messages are unclear

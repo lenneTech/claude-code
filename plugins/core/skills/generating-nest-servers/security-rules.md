@@ -4,7 +4,7 @@ version: 1.0.0
 description: Critical security and test coverage rules for NestJS development
 ---
 
-# 🚨 CRITICAL SECURITY RULES
+#  CRITICAL SECURITY RULES
 
 ## Table of Contents
 - [NEVER Do This](#-never-do-this)
@@ -23,7 +23,7 @@ description: Critical security and test coverage rules for NestJS development
 
 ---
 
-## ⛔ NEVER Do This
+##  NEVER Do This
 
 1. **NEVER remove or weaken `@Restricted()` decorators** to make tests pass
 2. **NEVER change `@Roles()` decorators** to more permissive roles for test convenience
@@ -32,7 +32,7 @@ description: Critical security and test coverage rules for NestJS development
 
 ---
 
-## ✅ ALWAYS Do This
+##  ALWAYS Do This
 
 1. **ALWAYS analyze permissions BEFORE writing tests** (Controller, Model, Service layers)
 2. **ALWAYS test with the LEAST privileged user** who is authorized
@@ -56,7 +56,7 @@ export class ProductController {
 ```
 
 **Why class-level `@Restricted(ADMIN)` MUST stay:**
-- If someone forgets `@Roles()` on a new method → it's secure by default
+- If someone forgets `@Roles()` on a new method -> it's secure by default
 - Shows the class is security-sensitive
 - Fail-safe protection
 
@@ -64,7 +64,7 @@ export class ProductController {
 
 ## Rule 1: NEVER Weaken Security for Test Convenience
 
-### ❌ ABSOLUTELY FORBIDDEN
+###  ABSOLUTELY FORBIDDEN
 
 ```typescript
 // BEFORE (secure):
@@ -82,7 +82,7 @@ export class ProductController {
 }
 ```
 
-### 🚨 CRITICAL RULE
+###  CRITICAL RULE
 
 - **NEVER remove or weaken `@Restricted()` decorators** on Controllers, Resolvers, Models, or Objects
 - **NEVER change `@Roles()` decorators** to more permissive roles just to make tests pass
@@ -90,9 +90,9 @@ export class ProductController {
 
 ### If tests fail due to permissions
 
-1. ✅ **CORRECT**: Adjust the test to use the appropriate user/token
-2. ✅ **CORRECT**: Create test users with the required roles
-3. ❌ **WRONG**: Weaken security to make tests pass
+1.  **CORRECT**: Adjust the test to use the appropriate user/token
+2.  **CORRECT**: Create test users with the required roles
+3.  **WRONG**: Weaken security to make tests pass
 
 ### Any security changes MUST
 
@@ -150,7 +150,7 @@ export class Product {
 
 ## Rule 3: Adapt Tests to Security, Not Vice Versa
 
-### ❌ WRONG Approach
+###  WRONG Approach
 
 ```typescript
 // Test fails because user isn't admin
@@ -163,11 +163,11 @@ it('should create product', async () => {
   expect(result.status).toBe(201);  // Fails with 403
 });
 
-// ❌ WRONG FIX: Removing @Restricted from controller
+//  WRONG FIX: Removing @Restricted from controller
 // @Restricted(RoleEnum.ADMIN)  ← NEVER DO THIS!
 ```
 
-### ✅ CORRECT Approach
+###  CORRECT Approach
 
 ```typescript
 // Analyze first: Who is allowed to create products?
@@ -184,10 +184,10 @@ beforeAll(async () => {
 it('should create product as admin', async () => {
   const result = await request(app)
     .post('/products')
-    .set('Authorization', adminToken)  // ✅ Use admin token
+    .set('Authorization', adminToken)  //  Use admin token
     .send(productData);
 
-  expect(result.status).toBe(201);  // ✅ Passes
+  expect(result.status).toBe(201);  //  Passes
 });
 
 it('should reject product creation for regular user', async () => {
@@ -196,7 +196,7 @@ it('should reject product creation for regular user', async () => {
     .set('Authorization', regularUserToken)
     .send(productData);
 
-  expect(result.status).toBe(403);  // ✅ Test security works!
+  expect(result.status).toBe(403);  //  Test security works!
 });
 ```
 
@@ -206,7 +206,7 @@ it('should reject product creation for regular user', async () => {
 
 **Always test with the LEAST privileged user who is authorized to perform the action.**
 
-### ❌ WRONG
+###  WRONG
 
 ```typescript
 // Method allows S_USER, but testing with ADMIN
@@ -216,11 +216,11 @@ async getProducts() { }
 it('should get products', async () => {
   const result = await request(app)
     .get('/products')
-    .set('Authorization', adminToken);  // ❌ Over-privileged!
+    .set('Authorization', adminToken);  //  Over-privileged!
 });
 ```
 
-### ✅ CORRECT
+###  CORRECT
 
 ```typescript
 @Roles(RoleEnum.S_USER)
@@ -229,7 +229,7 @@ async getProducts() { }
 it('should get products as regular user', async () => {
   const result = await request(app)
     .get('/products')
-    .set('Authorization', regularUserToken);  // ✅ Least privilege
+    .set('Authorization', regularUserToken);  //  Least privilege
 });
 ```
 
@@ -304,11 +304,11 @@ describe('ProductController', () => {
 
 **For each endpoint/method:**
 
-1. ✅ Happy path (authorized user, valid data)
-2. ✅ Permission denied (unauthorized user)
-3. ✅ Validation errors (invalid input)
-4. ✅ Edge cases (empty data, boundaries)
-5. ✅ Error handling (server errors, missing resources)
+1.  Happy path (authorized user, valid data)
+2.  Permission denied (unauthorized user)
+3.  Validation errors (invalid input)
+4.  Edge cases (empty data, boundaries)
+5.  Error handling (server errors, missing resources)
 
 ### Example Comprehensive Tests
 

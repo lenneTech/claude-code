@@ -217,7 +217,7 @@ Manually update `book.input.ts` and `book-create.input.ts`:
 
 #### Step 5: Update Descriptions
 
-**⚠️ CRITICAL STEP - Extract descriptions from original specification and apply EVERYWHERE!**
+** CRITICAL STEP - Extract descriptions from original specification and apply EVERYWHERE!**
 
 **Step 5.1: Extract from specification**
 
@@ -238,45 +238,45 @@ Extends: BaseItem
 ```
 
 **Extracted mapping:**
-- Address.street → "Straße" (German)
-- Address.city → "City name" (English)
-- Address.zipCode → "Postleitzahl" (German)
-- Book.isbn → "ISBN-Nummer" (German)
-- Book.author → "Author name" (English)
-- Book.publisher → "Verlag" (German)
+- Address.street -> "Straße" (German)
+- Address.city -> "City name" (English)
+- Address.zipCode -> "Postleitzahl" (German)
+- Book.isbn -> "ISBN-Nummer" (German)
+- Book.author -> "Author name" (English)
+- Book.publisher -> "Verlag" (German)
 
 **Step 5.2: Format descriptions**
 
 Apply format rules:
-- German → Translate and add: `ENGLISH (DEUTSCH)`
-- English → Keep as-is
+- German -> Translate and add: `ENGLISH (DEUTSCH)`
+- English -> Keep as-is
 - **Fix typos only, preserve original wording!**
 
 ```
-Address.street → 'Street (Straße)'  (preserve word "Straße", don't change to "Straßenname")
-Address.city → 'City name'
-Address.zipCode → 'Postal code (Postleitzahl)'
-Book.isbn → 'ISBN number (ISBN-Nummer)'
-Book.author → 'Author name'
-Book.publisher → 'Publisher (Verlag)'  (preserve word "Verlag", don't expand)
+Address.street -> 'Street (Straße)'  (preserve word "Straße", don't change to "Straßenname")
+Address.city -> 'City name'
+Address.zipCode -> 'Postal code (Postleitzahl)'
+Book.isbn -> 'ISBN number (ISBN-Nummer)'
+Book.author -> 'Author name'
+Book.publisher -> 'Publisher (Verlag)'  (preserve word "Verlag", don't expand)
 ```
 
-**⚠️ CRITICAL - Preserve Original Wording:**
+** CRITICAL - Preserve Original Wording:**
 
 User comments may be predefined terms or referenced by external systems.
 
 **Examples of correct handling**:
 ```
-✅ CORRECT:
-// Straße → 'Street (Straße)'  (just translate)
-// Postleizahl → 'Postal code (Postleitzahl)'  (fix typo, preserve word)
-// Produkt → 'Product (Produkt)'  (don't add "name")
-// Status → 'Status (Status)'  (same word)
+ CORRECT:
+// Straße -> 'Street (Straße)'  (just translate)
+// Postleizahl -> 'Postal code (Postleitzahl)'  (fix typo, preserve word)
+// Produkt -> 'Product (Produkt)'  (don't add "name")
+// Status -> 'Status (Status)'  (same word)
 
-❌ WRONG:
-// Straße → 'Street name (Straßenname)'  (changed word!)
-// Produkt → 'Product name (Produktname)'  (added word!)
-// Titel → 'Product title (Produkttitel)'  (changed "Titel"!)
+ WRONG:
+// Straße -> 'Street name (Straßenname)'  (changed word!)
+// Produkt -> 'Product name (Produktname)'  (added word!)
+// Titel -> 'Product title (Produkttitel)'  (changed "Titel"!)
 ```
 
 **Step 5.3: Apply to ALL files**
@@ -350,10 +350,10 @@ publisher?: string;
 ```
 
 **Verification:**
-- ✅ Same description in ALL 3 files for each property
-- ✅ All German descriptions translated
-- ✅ All user comments extracted and applied
-- ✅ No inconsistencies
+-  Same description in ALL 3 files for each property
+-  All German descriptions translated
+-  All user comments extracted and applied
+-  No inconsistencies
 
 #### Step 6: Create Enum Files
 
@@ -659,38 +659,38 @@ export enum GuestStatusEnum {
 ```
 - authors: Author[] // Multiple authors
 ```
-→ `--prop-schema-X Author --prop-array-X true`
+ -> `--prop-schema-X Author --prop-array-X true`
 
 ### 2. Optional Fields
 ```
 - description?: string // Optional description
 ```
-→ `--prop-nullable-X true`
+ -> `--prop-nullable-X true`
 
 ### 3. Enum Properties
 ```
 - status: ENUM (ACTIVE, INACTIVE) // Status
 ```
-→ `--prop-enum-X StatusEnum` + create enum file
+ -> `--prop-enum-X StatusEnum` + create enum file
 
 ### 4. Module References
 ```
 - borrowedBy?: Member // Reference to member
 ```
-→ `--prop-type-X ObjectId --prop-reference-X Member --prop-nullable-X true`
+ -> `--prop-type-X ObjectId --prop-reference-X Member --prop-nullable-X true`
 
 ### 5. Inheritance
 ```
 Extends: BaseItem
 ```
-→ Manually change model to extend BaseItem and update inputs
+ -> Manually change model to extend BaseItem and update inputs
 
 ### 6. Circular References
 ```
 Member has currentLoans: Book[]
 Book has borrowedBy?: Member
 ```
-→ Create both modules first, then use `addProp` for the second reference
+ -> Create both modules first, then use `addProp` for the second reference
 
 ## Best Practices from Examples
 
@@ -763,9 +763,9 @@ npm run test:e2e
 # Example: Created Book module, need to create tests
 
 # IMPORTANT: Determine correct test location first!
-# - Module in src/server/modules/book? → tests/modules/book.e2e-spec.ts
-# - Common object/enum? → Add to tests/common.e2e-spec.ts
-# - Project-level? → Add to tests/project.e2e-spec.ts
+# - Module in src/server/modules/book? -> tests/modules/book.e2e-spec.ts
+# - Common object/enum? -> Add to tests/common.e2e-spec.ts
+# - Project-level? -> Add to tests/project.e2e-spec.ts
 
 # Create new test file EXACTLY matching the pattern observed
 # tests/modules/book.e2e-spec.ts with:
@@ -821,29 +821,29 @@ npm run test:e2e
 # - Re-run tests
 # - Repeat until all pass
 
-# Only after ALL checks pass → Create Final Report
+# Only after ALL checks pass -> Create Final Report
 ```
 
 **Example findings during quality review**:
 
 ```
 Step 2.1: Analyzed existing tests
-✅ Listed test structure: tests/modules/, tests/common.e2e-spec.ts, tests/project.e2e-spec.ts
-✅ Read 3 existing test files (user, role, profile)
-✅ Read and analyzed TestHelper source code (node_modules/@lenne.tech/nest-server/src/test/test.helper.ts)
-✅ Documented TestHelper:
+ Listed test structure: tests/modules/, tests/common.e2e-spec.ts, tests/project.e2e-spec.ts
+ Read 3 existing test files (user, role, profile)
+ Read and analyzed TestHelper source code (node_modules/@lenne.tech/nest-server/src/test/test.helper.ts)
+ Documented TestHelper:
   - graphQl() method: signature, GraphQLOptions, RequestConfig
   - rest() method: signature, HttpMethod, RestOptions
   - When to use graphQl() vs rest()
   - Authentication handling (token in config for both methods)
   - Error handling (statusCode parameter)
   - Response format and parsing
-✅ Documented patterns: Jest + TestHelper, token auth, beforeAll/afterAll cleanup
-✅ Documented prerequisites: Test users created first, then module-specific data
-✅ Verified all existing tests pass (23/23 passing)
+ Documented patterns: Jest + TestHelper, token auth, beforeAll/afterAll cleanup
+ Documented prerequisites: Test users created first, then module-specific data
+ Verified all existing tests pass (23/23 passing)
 
-❌ Found: New Book module created but no test file exists
-✅ Fixed: Created tests/modules/book.e2e-spec.ts following exact pattern
+ Found: New Book module created but no test file exists
+ Fixed: Created tests/modules/book.e2e-spec.ts following exact pattern
   - Placed in correct location: tests/modules/book.e2e-spec.ts (not tests/book/ or tests/modules/book/)
   - Matched imports structure
   - Matched beforeAll/afterAll pattern
@@ -852,33 +852,33 @@ Step 2.1: Analyzed existing tests
   - Matched authentication approach
   - Matched assertion style
 
-❌ Found: Modified User module (added 'phone' property) but tests not updated
-✅ Fixed:
+ Found: Modified User module (added 'phone' property) but tests not updated
+ Fixed:
   - Read existing tests/modules/user.e2e-spec.ts first
   - Ran tests before changes (all passing)
   - Updated test to verify 'phone' property in create/update operations
   - Ran tests after changes (all passing)
 
-❌ Found: Import ordering differs from existing modules
-✅ Fixed: Reordered imports to match project pattern
+ Found: Import ordering differs from existing modules
+ Fixed: Reordered imports to match project pattern
 
-❌ Found: Properties not alphabetically ordered in Book model
-✅ Fixed: Reordered all properties alphabetically
+ Found: Properties not alphabetically ordered in Book model
+ Fixed: Reordered all properties alphabetically
 
-❌ Found: Description format inconsistent ("German only" vs "ENGLISH (DEUTSCH)")
-✅ Fixed: Updated all descriptions to "ENGLISH (DEUTSCH)" format
+ Found: Description format inconsistent ("German only" vs "ENGLISH (DEUTSCH)")
+ Fixed: Updated all descriptions to "ENGLISH (DEUTSCH)" format
 
-❌ Found: Test missing required field validation
-✅ Fixed: Added test case for missing required fields
+ Found: Test missing required field validation
+ Fixed: Added test case for missing required fields
 
-❌ Found: Test cleanup not following project pattern
-✅ Fixed: Updated afterAll hook to match existing test cleanup patterns
+ Found: Test cleanup not following project pattern
+ Fixed: Updated afterAll hook to match existing test cleanup patterns
 
-✅ All tests passing
-✅ Linter passing
-✅ TypeScript compiling without errors
+ All tests passing
+ Linter passing
+ TypeScript compiling without errors
 
-→ Ready for Final Report
+ -> Ready for Final Report
 ```
 
 **This quality review ensures**:

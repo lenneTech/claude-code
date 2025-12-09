@@ -25,9 +25,9 @@ description: Quick reference for ALL NestJS server development - from simple sin
 ## Scope
 
 **This skill handles ALL NestJS server development tasks:**
-- ✅ Simple: Create single module, object, or add property
-- ✅ Complex: Generate complete server structures from specifications
-- ✅ Any `lt server` command
+-  Simple: Create single module, object, or add property
+-  Complex: Generate complete server structures from specifications
+-  Any `lt server` command
 
 Use this skill for **ANY** NestJS/nest-server work, no matter how simple or complex.
 
@@ -120,8 +120,8 @@ lt server create my-api
 - Clones nest-server-starter template
 - Configures package.json
 - Sets up Swagger docs
-- **Replaces ALL secrets** (`'SECRET_OR_PRIVATE_KEY...'` → unique random values)
-- **Updates database names** (`nest-server-*` → `<project-name>-*`)
+- **Replaces ALL secrets** (`'SECRET_OR_PRIVATE_KEY...'` -> unique random values)
+- **Updates database names** (`nest-server-*` -> `<project-name>-*`)
 - Installs dependencies
 - Optionally initializes git
 
@@ -168,7 +168,7 @@ lt server addProp --type Module --element <Name> \
 
 ## Description Format
 
-**⚠️ CRITICAL:** Always extract descriptions from user comments (after `//`) and apply EVERYWHERE!
+** CRITICAL:** Always extract descriptions from user comments (after `//`) and apply EVERYWHERE!
 
 **Rule**: `"ENGLISH_DESCRIPTION (DEUTSCHE_BESCHREIBUNG)"`
 
@@ -183,23 +183,23 @@ lt server addProp --type Module --element <Name> \
 | `// Postleizahl` (typo) | German | `'Postal code (Postleitzahl)'` (corrected) |
 | (no comment) | - | Create meaningful English description |
 
-**⚠️ Preserve Original Wording:**
-- ✅ Fix typos: `Postleizahl` → `Postleitzahl`, `Starße` → `Straße`
-- ❌ DON'T rephrase: `Straße` → `Straßenname` (NO!)
-- ❌ DON'T expand: `Produkt` → `Produktbezeichnung` (NO!)
+** Preserve Original Wording:**
+-  Fix typos: `Postleizahl` -> `Postleitzahl`, `Starße` -> `Straße`
+-  DON'T rephrase: `Straße` -> `Straßenname` (NO!)
+-  DON'T expand: `Produkt` -> `Produktbezeichnung` (NO!)
 - **Reason:** User comments may be predefined terms referenced by external systems
 
 ### Apply To ALL Files
 
 **For EVERY Module property** (3 files):
-1. `<module>.model.ts` → Property `@UnifiedField({ description: '...' })`
-2. `inputs/<module>-create.input.ts` → Property `@UnifiedField({ description: '...' })`
-3. `inputs/<module>.input.ts` → Property `@UnifiedField({ description: '...' })`
+1. `<module>.model.ts` -> Property `@UnifiedField({ description: '...' })`
+2. `inputs/<module>-create.input.ts` -> Property `@UnifiedField({ description: '...' })`
+3. `inputs/<module>.input.ts` -> Property `@UnifiedField({ description: '...' })`
 
 **For EVERY SubObject property** (3 files):
-1. `objects/<object>/<object>.object.ts` → Property `@UnifiedField({ description: '...' })`
-2. `objects/<object>/<object>-create.input.ts` → Property `@UnifiedField({ description: '...' })`
-3. `objects/<object>/<object>.input.ts` → Property `@UnifiedField({ description: '...' })`
+1. `objects/<object>/<object>.object.ts` -> Property `@UnifiedField({ description: '...' })`
+2. `objects/<object>/<object>-create.input.ts` -> Property `@UnifiedField({ description: '...' })`
+3. `objects/<object>/<object>.input.ts` -> Property `@UnifiedField({ description: '...' })`
 
 **For class decorators**:
 - `@ObjectType({ description: '...' })` on Models and Objects
@@ -207,18 +207,18 @@ lt server addProp --type Module --element <Name> \
 
 ### Common Mistakes
 
-❌ **WRONG:** Descriptions only in Model, missing in Inputs
-❌ **WRONG:** German-only descriptions without English translation
-❌ **WRONG:** Inconsistent descriptions (different in Model vs Input)
-❌ **WRONG:** Ignoring user-provided comments from specification
-❌ **WRONG:** Changing wording: `Straße` → `Straßenname` (rephrased!)
-❌ **WRONG:** Expanding terms: `Produkt` → `Produktbezeichnung` (added word!)
+ **WRONG:** Descriptions only in Model, missing in Inputs
+ **WRONG:** German-only descriptions without English translation
+ **WRONG:** Inconsistent descriptions (different in Model vs Input)
+ **WRONG:** Ignoring user-provided comments from specification
+ **WRONG:** Changing wording: `Straße` -> `Straßenname` (rephrased!)
+ **WRONG:** Expanding terms: `Produkt` -> `Produktbezeichnung` (added word!)
 
-✅ **CORRECT:** Same description in ALL 3 files (Model, CreateInput, UpdateInput)
-✅ **CORRECT:** Format `ENGLISH (DEUTSCH)` for German comments
-✅ **CORRECT:** All user comments extracted and applied
-✅ **CORRECT:** Fix typos only, preserve original wording: `Postleizahl` → `Postleitzahl`
-✅ **CORRECT:** Keep exact terms: `Straße` → `Street (Straße)` (not "Street name"!)
+ **CORRECT:** Same description in ALL 3 files (Model, CreateInput, UpdateInput)
+ **CORRECT:** Format `ENGLISH (DEUTSCH)` for German comments
+ **CORRECT:** All user comments extracted and applied
+ **CORRECT:** Fix typos only, preserve original wording: `Postleizahl` -> `Postleitzahl`
+ **CORRECT:** Keep exact terms: `Straße` -> `Street (Straße)` (not "Street name"!)
 
 ## Inheritance Handling
 
@@ -261,9 +261,9 @@ export enum <Name>Enum {
 ```
 
 ### Naming
-- **File**: `kebab-case.enum.ts` → `user-status.enum.ts`
-- **Enum**: `PascalCaseEnum` → `UserStatusEnum`
-- **Values**: `UPPER_SNAKE_CASE` → `ACTIVE`, `PENDING`
+- **File**: `kebab-case.enum.ts` -> `user-status.enum.ts`
+- **Enum**: `PascalCaseEnum` -> `UserStatusEnum`
+- **Values**: `UPPER_SNAKE_CASE` -> `ACTIVE`, `PENDING`
 
 ## API Test Template
 
@@ -295,14 +295,14 @@ describe('<Module> Controller', () => {
 ```
 
 ### Test Coverage
-- ✅ Create (valid data)
-- ✅ Create (missing required - fail)
-- ✅ Find all
-- ✅ Find by ID
-- ✅ Update
-- ✅ Delete
-- ✅ Authorization (fail without auth)
-- ✅ Required fields validation
+-  Create (valid data)
+-  Create (missing required - fail)
+-  Find all
+-  Find by ID
+-  Update
+-  Delete
+-  Authorization (fail without auth)
+-  Required fields validation
 
 ## Common Patterns
 
@@ -313,7 +313,7 @@ Model: Product
 - name: string
 - price: number
 ```
-→ `lt server module --name Product --controller Rest --prop-name-0 name --prop-type-0 string --prop-name-1 price --prop-type-1 number`
+ -> `lt server module --name Product --controller Rest --prop-name-0 name --prop-type-0 string --prop-name-1 price --prop-type-1 number`
 
 ### Pattern 2: Module with Reference
 ```
@@ -322,7 +322,7 @@ Model: Order
 - customer: User
 - total: number
 ```
-→ `lt server module --name Order --controller Rest --prop-name-0 customer --prop-type-0 ObjectId --prop-reference-0 User --prop-name-1 total --prop-type-1 number`
+ -> `lt server module --name Order --controller Rest --prop-name-0 customer --prop-type-0 ObjectId --prop-reference-0 User --prop-name-1 total --prop-type-1 number`
 
 ### Pattern 3: Module with Embedded Object
 ```
@@ -335,7 +335,7 @@ Model: Company
 - name: string
 - address: Address
 ```
-→ Create Address first, then Company with `--prop-schema-X Address`
+ -> Create Address first, then Company with `--prop-schema-X Address`
 
 ### Pattern 4: Module with Enum Array
 ```
@@ -344,7 +344,7 @@ Model: User
 - name: string
 - roles: ENUM (ADMIN, USER, GUEST)[]
 ```
-→ `--prop-name-1 roles --prop-enum-1 RoleEnum --prop-array-1 true`
+ -> `--prop-name-1 roles --prop-enum-1 RoleEnum --prop-array-1 true`
 
 ### Pattern 5: Inheritance
 ```
@@ -358,7 +358,7 @@ Model: UserProfile
 Extends: BaseProfile
 - username: string
 ```
-→ Create BaseProfile object, create UserProfile module, manually update to extend BaseProfile
+ -> Create BaseProfile object, create UserProfile module, manually update to extend BaseProfile
 
 ### Pattern 6: Circular References
 ```
@@ -368,7 +368,7 @@ Module: Author
 Module: Book
 - author: Author
 ```
-→ Create Author, create Book with author ref, use addProp to add books to Author
+ -> Create Author, create Book with author ref, use addProp to add books to Author
 
 ## Troubleshooting
 
@@ -393,8 +393,8 @@ Final checks before completing:
 ☐ Properties in alphabetical order
 ☐ DESCRIPTIONS - CRITICAL (check ALL):
   ☐ User comments extracted from specification
-  ☐ German descriptions → ENGLISH (DEUTSCH) format
-  ☐ English descriptions → kept as-is
+  ☐ German descriptions -> ENGLISH (DEUTSCH) format
+  ☐ English descriptions -> kept as-is
   ☐ Module Models have descriptions
   ☐ Module CreateInputs have SAME descriptions
   ☐ Module UpdateInputs have SAME descriptions
@@ -452,17 +452,17 @@ test/
 
 ## Best Practices Summary
 
-1. ✅ **Plan before executing** - Analyze full specification first
-2. ✅ **Create dependencies first** - SubObjects → Objects → Modules
-3. ✅ **Follow naming conventions** - PascalCase for types, camelCase for properties
-4. ✅ **Order matters** - Alphabetical properties, dependency-ordered creation
-5. ✅ **Describe thoroughly** - "ENGLISH (DEUTSCH)" everywhere
-6. ✅ **Use REST by default** - Only use GraphQL when explicitly requested
-7. ✅ **Test comprehensively** - All CRUD + auth + validation
-8. ✅ **Clean up tests** - Delete test data in afterAll
-9. ✅ **Commit incrementally** - After SubObjects, Modules, Tests
-10. ✅ **Verify before finishing** - Run checklist, ensure tests pass
-11. ✅ **Report observations** - Note data structure issues/improvements
+1.  **Plan before executing** - Analyze full specification first
+2.  **Create dependencies first** - SubObjects -> Objects -> Modules
+3.  **Follow naming conventions** - PascalCase for types, camelCase for properties
+4.  **Order matters** - Alphabetical properties, dependency-ordered creation
+5.  **Describe thoroughly** - "ENGLISH (DEUTSCH)" everywhere
+6.  **Use REST by default** - Only use GraphQL when explicitly requested
+7.  **Test comprehensively** - All CRUD + auth + validation
+8.  **Clean up tests** - Delete test data in afterAll
+9.  **Commit incrementally** - After SubObjects, Modules, Tests
+10.  **Verify before finishing** - Run checklist, ensure tests pass
+11.  **Report observations** - Note data structure issues/improvements
 
 ## Quick Start
 

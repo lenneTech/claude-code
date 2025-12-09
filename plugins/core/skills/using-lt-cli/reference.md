@@ -6,7 +6,7 @@ description: Quick reference for Git operations and Fullstack initialization com
 
 # LT CLI Quick Reference
 
-⚠️ **Note**: For NestJS server command reference (modules, objects, properties), see the **nest-server-generator skill** instead.
+ **Note**: For NestJS server command reference (modules, objects, properties), see the **nest-server-generator skill** instead.
 
 ## Table of Contents
 - [Command Cheat Sheet](#command-cheat-sheet)
@@ -40,9 +40,9 @@ lt git g <branch-name>
 - `<branch-name>`: Branch name to checkout/create
 
 **What it does:**
-1. Checks if branch exists locally → switches to it
-2. If not local, checks remote → checks out and tracks
-3. If neither exists → creates new branch from current
+1. Checks if branch exists locally -> switches to it
+2. If not local, checks remote -> checks out and tracks
+3. If neither exists -> creates new branch from current
 
 **Examples:**
 ```bash
@@ -64,7 +64,7 @@ lt git reset
 2. Resets current branch to `origin/<current-branch>`
 3. Discards ALL local changes and commits
 
-**⚠️ WARNING**: Destructive operation - cannot be undone!
+** WARNING**: Destructive operation - cannot be undone!
 
 ---
 
@@ -446,37 +446,37 @@ lt fullstack init \
 ### Git Operations
 
 **Branch Management:**
-- ✅ Always run `git status` before switching branches
-- ✅ Commit or stash changes before switching
-- ✅ Use meaningful branch names (DEV-123, feature/xyz)
-- ✅ Pull latest before creating feature branches
-- ❌ Don't leave uncommitted changes when switching
+-  Always run `git status` before switching branches
+-  Commit or stash changes before switching
+-  Use meaningful branch names (DEV-123, feature/xyz)
+-  Pull latest before creating feature branches
+-  Don't leave uncommitted changes when switching
 
 **Reset Operations:**
-- ✅ Verify what will be discarded with `git status` first
-- ✅ Only reset when you're certain you want to discard everything
-- ✅ Know that reset is irreversible (unless using reflog immediately)
-- ❌ Don't reset if you have valuable local commits
-- ❌ Don't reset without checking remote exists
+-  Verify what will be discarded with `git status` first
+-  Only reset when you're certain you want to discard everything
+-  Know that reset is irreversible (unless using reflog immediately)
+-  Don't reset if you have valuable local commits
+-  Don't reset without checking remote exists
 
 ### Fullstack Initialization
 
 **Project Setup:**
-- ✅ Use PascalCase for project names (MyProject, not my-project)
-- ✅ Enable git for all real projects (`--git true`)
-- ✅ Add git remote URL immediately with `--git-link`
-- ✅ Run `npm install` right after creation
-- ✅ Choose Angular for enterprise, Nuxt for flexibility
-- ❌ Don't use git for quick throwaway tests
-- ❌ Don't use spaces in project names
+-  Use PascalCase for project names (MyProject, not my-project)
+-  Enable git for all real projects (`--git true`)
+-  Add git remote URL immediately with `--git-link`
+-  Run `npm install` right after creation
+-  Choose Angular for enterprise, Nuxt for flexibility
+-  Don't use git for quick throwaway tests
+-  Don't use spaces in project names
 
 **Post-Creation:**
-- ✅ Read generated README.md files
-- ✅ Commit initial setup before making changes
-- ✅ Set up CI/CD early
-- ✅ Configure environment variables
-- ❌ Don't commit .env files
-- ❌ Don't modify generated structure without understanding it
+-  Read generated README.md files
+-  Commit initial setup before making changes
+-  Set up CI/CD early
+-  Configure environment variables
+-  Don't commit .env files
+-  Don't modify generated structure without understanding it
 
 ---
 

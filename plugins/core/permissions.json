@@ -1,0 +1,31 @@
+{
+  "$schema": "./permissions.schema.json",
+  "description": "Required Bash permissions for lenne.tech Claude Code skills. Update this file when adding new CLI commands to skills.",
+  "permissions": [
+    {
+      "pattern": "Bash(npm test:*)",
+      "description": "Run npm test commands",
+      "usedBy": ["building-stories-with-tdd"]
+    },
+    {
+      "pattern": "Bash(npm run test:*)",
+      "description": "Run npm run test commands",
+      "usedBy": ["building-stories-with-tdd"]
+    },
+    {
+      "pattern": "Bash(lt server:*)",
+      "description": "Execute lt server commands (module, object, addProp, create)",
+      "usedBy": ["generating-nest-servers"]
+    },
+    {
+      "pattern": "Bash(lt:*)",
+      "description": "Execute general lt CLI commands (git, fullstack)",
+      "usedBy": ["using-lt-cli"]
+    },
+    {
+      "pattern": "Bash(npm run generate-types:*)",
+      "description": "Generate TypeScript types from backend API",
+      "usedBy": ["developing-lt-frontend"]
+    }
+  ]
+}

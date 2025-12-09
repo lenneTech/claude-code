@@ -1,71 +1,109 @@
 # lenne.tech Claude Code Plugins
 
-Claude Code Plugins von lenne.tech.
+Claude Code Plugins by lenne.tech.
 
 ## Installation
 
-```bash
-# Marketplace hinzufügen
-/plugin marketplace add https://github.com/lenneTech/claude-code
+### Via lenne.tech CLI (recommended)
 
-# Plugin installieren
-/plugin install lt-core@lt
+```bash
+# Install CLI if not already installed
+npm i -g @lenne.tech/cli
+
+# Install plugin and configure permissions
+lt claude install-plugin
 ```
+
+### Manual Installation
+
+```bash
+# Add marketplace
+/plugin marketplace add lenneTech/claude-code
+
+# Install plugin
+/plugin install core@lenne-tech
+```
+
+**Note:** Manual installation requires you to configure permissions yourself. Copy the permission patterns from `plugins/core/permissions.json` into `~/.claude/settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      // Copy patterns from permissions.json
+    ]
+  }
+}
+```
+
+If the file already exists, merge the `allow` entries with your existing permissions. See `plugins/core/permissions.json` for the current list of required permissions.
 
 ## Plugins
 
-### lt-core
+### core
 
-Skills, Commands und Hooks für Frontend (Nuxt 4), Backend (NestJS/nest-server), TDD und CLI Tools.
+Skills, Commands and Hooks for Frontend (Nuxt 4), Backend (NestJS/nest-server), TDD and CLI Tools.
 
-## Enthaltene Komponenten
+## Included Components
 
 ### Skills (4)
 
-| Skill | Beschreibung |
-|-------|--------------|
+| Skill | Description |
+|-------|-------------|
 | `developing-lt-frontend` | Nuxt 4, Nuxt UI 4, TypeScript, Valibot Forms |
-| `generating-nest-servers` | NestJS mit @lenne.tech/nest-server |
+| `generating-nest-servers` | NestJS with @lenne.tech/nest-server |
 | `building-stories-with-tdd` | Test-Driven Development Workflow |
-| `using-lt-cli` | lenne.tech CLI für Git und Fullstack Init |
+| `using-lt-cli` | lenne.tech CLI for Git and Fullstack Init |
 
-### Commands (12)
+### Commands (13)
 
 **Root:**
-- `/create-story` - User Story für TDD erstellen (Deutsch)
-- `/fix-issue` - Linear Issue bearbeiten
-- `/skill-optimize` - Claude Skills validieren und optimieren
+- `/create-story` - Create User Story for TDD (German)
+- `/fix-issue` - Work on Linear Issue
+- `/skill-optimize` - Validate and optimize Claude Skills
+
+**Backend (`/backend/`):**
+- `/backend:code-cleanup` - Clean up and optimize code
+- `/backend:sec-review` - Perform security review
+- `/backend:test-generate` - Generate tests
+
+**Docker (`/docker/`):**
+- `/docker:gen-setup` - Generate Docker development & production setup
 
 **Git (`/git/`):**
-- `/git:commit-message` - Commit Message generieren
-- `/git:mr-description` - Merge Request Beschreibung erstellen
-- `/git:mr-description-clipboard` - MR Beschreibung in Clipboard kopieren
-
-**Backend (`/lt-backend/`):**
-- `/lt-backend:code-cleanup` - Code aufräumen und optimieren
-- `/lt-backend:sec-review` - Security Review durchführen
-- `/lt-backend:test-generate` - Tests generieren
+- `/git:commit-message` - Generate commit message
+- `/git:mr-description` - Create Merge Request description
+- `/git:mr-description-clipboard` - Copy MR description to clipboard
 
 **Vibe (`/vibe/`):**
-- `/vibe:plan` - Implementierungsplan aus SPEC.md erstellen
-- `/vibe:build` - IMPLEMENTATION_PLAN.md ausführen
-- `/vibe:build-plan` - Plan + Build in einem Schritt
+- `/vibe:plan` - Create implementation plan from SPEC.md
+- `/vibe:build` - Execute IMPLEMENTATION_PLAN.md
+- `/vibe:build-plan` - Plan + Build in one step
 
 ### Hooks (3)
 
-Automatische Projekt-Erkennung bei jedem Prompt:
+Automatic project detection on every prompt:
 
-1. **Nuxt 4 Detection** - Erkennt `nuxt.config.ts` + `app/` Struktur und empfiehlt `developing-lt-frontend` Skill
-2. **NestJS Detection** - Erkennt `@lenne.tech/nest-server` in package.json und empfiehlt `generating-nest-servers` Skill
-3. **lt CLI Detection** - Erkennt installierte `lt` CLI und empfiehlt `using-lt-cli` Skill für Git und Fullstack Operationen
+1. **Nuxt 4 Detection** - Detects `nuxt.config.ts` + `app/` structure and suggests `developing-lt-frontend` skill
+2. **NestJS Detection** - Detects `@lenne.tech/nest-server` in package.json and suggests `generating-nest-servers` skill
+3. **lt CLI Detection** - Detects installed `lt` CLI and suggests `using-lt-cli` skill for Git and Fullstack operations
 
-Unterstützt Monorepo-Strukturen: `projects/`, `packages/`, `apps/`
+Supports monorepo structures: `projects/`, `packages/`, `apps/`
 
-## Voraussetzungen
+### MCP Servers (2)
+
+The plugin includes pre-configured MCP (Model Context Protocol) servers that start automatically:
+
+| MCP Server | Description |
+|------------|-------------|
+| `chrome-devtools` | Chrome DevTools integration for debugging web applications |
+| `linear` | Linear integration for issue tracking and project management |
+
+## Requirements
 
 - Claude Code CLI
 - Node.js >= 18
-- lenne.tech CLI (`npm i -g @lenne.tech/cli`)
+- lenne.tech CLI (`npm i -g @lenne.tech/cli`) - for automatic permission setup
 
 ## Development
 
@@ -76,9 +114,32 @@ bun run version:minor "Added new skill for API testing"
 bun run version:major "Breaking changes in hook configuration"
 ```
 
-Das Script aktualisiert `plugin.json` + `package.json`, erstellt Commit, Tag und pusht automatisch.
+The script updates `plugin.json` + `package.json`, creates commit, tag and pushes automatically.
 
-## Struktur
+### Permissions Configuration
+
+The file `plugins/core/permissions.json` defines all Bash permissions required by the skills. The lenne.tech CLI reads this file during installation and automatically configures the permissions in `~/.claude/settings.json`.
+
+**Important:** When adding or modifying skills that use new CLI commands, update `permissions.json` accordingly:
+
+```json
+{
+  "permissions": [
+    {
+      "pattern": "Bash(your-command:*)",
+      "description": "Description of what this permission allows",
+      "usedBy": ["skill-name-that-uses-it"]
+    }
+  ]
+}
+```
+
+Each permission entry contains:
+- `pattern`: The permission pattern for Claude Code (e.g., `Bash(npm test:*)`)
+- `description`: Human-readable description of the permission
+- `usedBy`: Array of skill names that require this permission
+
+## Structure
 
 ```
 claude-code/
@@ -88,6 +149,8 @@ claude-code/
 │   └── core/
 │       ├── .claude-plugin/
 │       │   └── plugin.json
+│       ├── permissions.json      # Required permissions for skills
+│       ├── .mcp.json             # MCP server configurations
 │       ├── skills/
 │       │   ├── building-stories-with-tdd/
 │       │   ├── developing-lt-frontend/
@@ -97,8 +160,9 @@ claude-code/
 │       │   ├── create-story.md
 │       │   ├── fix-issue.md
 │       │   ├── skill-optimize.md
+│       │   ├── backend/
+│       │   ├── docker/
 │       │   ├── git/
-│       │   ├── lt-backend/
 │       │   └── vibe/
 │       └── hooks/
 │           └── hooks.json
@@ -109,6 +173,6 @@ claude-code/
 └── LICENSE
 ```
 
-## Lizenz
+## License
 
 MIT License - lenne.tech GmbH

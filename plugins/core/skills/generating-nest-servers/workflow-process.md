@@ -103,7 +103,7 @@ When a model extends another model (e.g., `Extends: Profile`):
    - Custom parent models: Need to find in project
 
 2. **For Core parent models**:
-   - Replace in model file: `extends CoreModel` → `extends ParentModel`
+   - Replace in model file: `extends CoreModel` -> `extends ParentModel`
    - Import: `import { ParentModel } from './path'`
 
 3. **For custom parent models (objects/other modules)**:
@@ -137,7 +137,7 @@ export class BuyerProfile extends Profile { ... }
 
 ### Phase 5: Description Management
 
-**⚠️ CRITICAL PHASE - Refer to "CRITICAL: DESCRIPTION MANAGEMENT" section at the top of this document!**
+** CRITICAL PHASE - Refer to "CRITICAL: DESCRIPTION MANAGEMENT" section at the top of this document!**
 
 This phase is often done incorrectly. Follow these steps EXACTLY:
 
@@ -162,13 +162,13 @@ SubObject: Address
 
 **Create a mapping**:
 ```
-Product.name → "Product name" (English)
-Product.price → "Produktpreis" (German)
-Product.description → "Produktbeschreibung" (German)
-Product.stock → "Current inventory" (English)
-Address.street → "Straße" (German)
-Address.city → "City name" (English)
-Address.zipCode → "Postleitzahl" (German)
+Product.name -> "Product name" (English)
+Product.price -> "Produktpreis" (German)
+Product.description -> "Produktbeschreibung" (German)
+Product.stock -> "Current inventory" (English)
+Address.street -> "Straße" (German)
+Address.city -> "City name" (English)
+Address.zipCode -> "Postleitzahl" (German)
 ```
 
 #### Step 5.2: Format Descriptions
@@ -181,68 +181,68 @@ Apply formatting rules:
    ```
    // Product name
    ```
-   → Use as: `description: 'Product name'`
+   -> Use as: `description: 'Product name'`
 
    Fix typos if needed:
    ```
    // Prodcut name  (typo)
    ```
-   → Use as: `description: 'Product name'` (typo corrected)
+   -> Use as: `description: 'Product name'` (typo corrected)
 
 2. **If comment is in German**:
    ```
    // Produktpreis
    ```
-   → Translate and add original: `description: 'Product price (Produktpreis)'`
+   -> Translate and add original: `description: 'Product price (Produktpreis)'`
 
    ```
    // Straße
    ```
-   → Translate and add original: `description: 'Street (Straße)'`
+   -> Translate and add original: `description: 'Street (Straße)'`
 
    Fix typos in original:
    ```
    // Postleizahl  (typo: missing 't')
    ```
-   → Translate and add corrected: `description: 'Postal code (Postleitzahl)'`
+   -> Translate and add corrected: `description: 'Postal code (Postleitzahl)'`
 
 3. **If no comment provided**:
-   → Create meaningful English description: `description: 'User email address'`
+   -> Create meaningful English description: `description: 'User email address'`
 
-**⚠️ CRITICAL - Preserve Original Wording**:
+** CRITICAL - Preserve Original Wording**:
 
-- ✅ **DO:** Fix spelling/typos only
-- ❌ **DON'T:** Rephrase, expand, or improve wording
-- ❌ **DON'T:** Change terms (they may be predefined/referenced by external systems)
+-  **DO:** Fix spelling/typos only
+-  **DON'T:** Rephrase, expand, or improve wording
+-  **DON'T:** Change terms (they may be predefined/referenced by external systems)
 
 **Examples**:
 ```
-✅ CORRECT:
-// Straße → 'Street (Straße)'  (preserve word)
-// Produkt → 'Product (Produkt)'  (don't add "name")
-// Status → 'Status (Status)'  (same in both languages)
+ CORRECT:
+// Straße -> 'Street (Straße)'  (preserve word)
+// Produkt -> 'Product (Produkt)'  (don't add "name")
+// Status -> 'Status (Status)'  (same in both languages)
 
-❌ WRONG:
-// Straße → 'Street name (Straßenname)'  (changed word!)
-// Produkt → 'Product name (Produktname)'  (added word!)
-// Status → 'Current status (Aktueller Status)'  (added word!)
+ WRONG:
+// Straße -> 'Street name (Straßenname)'  (changed word!)
+// Produkt -> 'Product name (Produktname)'  (added word!)
+// Status -> 'Current status (Aktueller Status)'  (added word!)
 ```
 
 #### Step 5.3: Apply Descriptions EVERYWHERE
 
-**🚨 MOST IMPORTANT: Apply SAME description to ALL files!**
+** MOST IMPORTANT: Apply SAME description to ALL files!**
 
 For **EVERY property in EVERY Module**:
 
-1. Open `<module>.model.ts` → Add description to property
-2. Open `inputs/<module>-create.input.ts` → Add SAME description to property
-3. Open `inputs/<module>.input.ts` → Add SAME description to property
+1. Open `<module>.model.ts` -> Add description to property
+2. Open `inputs/<module>-create.input.ts` -> Add SAME description to property
+3. Open `inputs/<module>.input.ts` -> Add SAME description to property
 
 For **EVERY property in EVERY SubObject**:
 
-1. Open `objects/<object>/<object>.object.ts` → Add description to property
-2. Open `objects/<object>/<object>-create.input.ts` → Add SAME description to property
-3. Open `objects/<object>/<object>.input.ts` → Add SAME description to property
+1. Open `objects/<object>/<object>.object.ts` -> Add description to property
+2. Open `objects/<object>/<object>-create.input.ts` -> Add SAME description to property
+3. Open `objects/<object>/<object>.input.ts` -> Add SAME description to property
 
 **Example for Module "Product" with property "price"**:
 
@@ -349,15 +349,15 @@ export enum StatusEnum {
 
 ### Phase 7: API Test Creation
 
-**⚠️ CRITICAL: Test Type Requirement**
+** CRITICAL: Test Type Requirement**
 
 **ONLY create API tests using TestHelper - NEVER create direct Service tests!**
 
-- ✅ **DO:** Create tests that call REST endpoints or GraphQL queries/mutations using `TestHelper`
-- ✅ **DO:** Test through the API layer (Controller/Resolver → Service → Database)
-- ❌ **DON'T:** Create tests that directly instantiate or call Service methods
-- ❌ **DON'T:** Create unit tests for Services (e.g., `user.service.spec.ts`)
-- ❌ **DON'T:** Mock dependencies or bypass the API layer
+-  **DO:** Create tests that call REST endpoints or GraphQL queries/mutations using `TestHelper`
+-  **DO:** Test through the API layer (Controller/Resolver -> Service -> Database)
+-  **DON'T:** Create tests that directly instantiate or call Service methods
+-  **DON'T:** Create unit tests for Services (e.g., `user.service.spec.ts`)
+-  **DON'T:** Mock dependencies or bypass the API layer
 
 **Why API tests only?**
 - API tests validate the complete security model (decorators, guards, permissions)
@@ -368,16 +368,16 @@ export enum StatusEnum {
 
 Direct database or service access is ONLY allowed for:
 
-- ✅ **Test Setup (beforeAll/beforeEach)**:
+-  **Test Setup (beforeAll/beforeEach)**:
   - Setting user roles in database: `await db.collection('users').updateOne({ _id: userId }, { $set: { roles: ['admin'] } })`
   - Setting verified flag: `await db.collection('users').updateOne({ _id: userId }, { $set: { verified: true } })`
   - Creating prerequisite test data that can't be created via API
 
-- ✅ **Test Cleanup (afterAll/afterEach)**:
+-  **Test Cleanup (afterAll/afterEach)**:
   - Deleting test objects: `await db.collection('products').deleteMany({ createdBy: testUserId })`
   - Cleaning up test data: `await db.collection('users').deleteOne({ email: 'test@example.com' })`
 
-- ❌ **NEVER for testing functionality**:
+-  **NEVER for testing functionality**:
   - Don't call `userService.create()` to test user creation - use API endpoint!
   - Don't call `productService.update()` to test updates - use API endpoint!
   - Don't access database to verify results - query via API instead!
@@ -390,14 +390,14 @@ describe('Product Tests', () => {
   let userId: string;
 
   beforeAll(async () => {
-    // ✅ ALLOWED: Direct DB access for setup
+    //  ALLOWED: Direct DB access for setup
     const user = await testHelper.rest('/auth/signup', {
       method: 'POST',
       payload: { email: 'admin@test.com', password: 'password' }
     });
     userId = user.id;
 
-    // ✅ ALLOWED: Direct DB manipulation for test setup
+    //  ALLOWED: Direct DB manipulation for test setup
     await db.collection('users').updateOne(
       { _id: new ObjectId(userId) },
       { $set: { roles: ['admin'], verified: true } }
@@ -412,7 +412,7 @@ describe('Product Tests', () => {
   });
 
   it('should create product', async () => {
-    // ✅ CORRECT: Test via API
+    //  CORRECT: Test via API
     const result = await testHelper.rest('/api/products', {
       method: 'POST',
       payload: { name: 'Test Product' },
@@ -421,10 +421,10 @@ describe('Product Tests', () => {
 
     expect(result.name).toBe('Test Product');
 
-    // ❌ WRONG: Don't verify via DB
+    //  WRONG: Don't verify via DB
     // const dbProduct = await db.collection('products').findOne({ _id: result.id });
 
-    // ✅ CORRECT: Verify via API
+    //  CORRECT: Verify via API
     const fetched = await testHelper.rest(`/api/products/${result.id}`, {
       method: 'GET',
       token: adminToken
@@ -433,7 +433,7 @@ describe('Product Tests', () => {
   });
 
   afterAll(async () => {
-    // ✅ ALLOWED: Direct DB access for cleanup
+    //  ALLOWED: Direct DB access for cleanup
     await db.collection('products').deleteMany({ createdBy: userId });
     await db.collection('users').deleteOne({ _id: new ObjectId(userId) });
   });
@@ -442,13 +442,13 @@ describe('Product Tests', () => {
 
 ---
 
-**⚠️ CRITICAL: Test Creation Process**
+** CRITICAL: Test Creation Process**
 
 Creating API tests is NOT just about testing functionality - it's about **validating the security model**. You MUST follow this exact process:
 
 ---
 
-#### Step 1: 🔍 MANDATORY Permission Analysis (BEFORE writing ANY test)
+#### Step 1:  MANDATORY Permission Analysis (BEFORE writing ANY test)
 
 **YOU MUST analyze these THREE layers BEFORE writing a single test:**
 
@@ -506,14 +506,14 @@ Creating API tests is NOT just about testing functionality - it's about **valida
 - [ ] I understand WHO can DELETE (usually ADMIN + S_CREATOR)
 
 **Common Permission Patterns:**
-- `S_EVERYONE` → No authentication required
-- `S_USER` → Any signed-in user
-- `ADMIN` → User with 'admin' role
-- `S_CREATOR` → User who created the resource (user.id === object.createdBy)
+- `S_EVERYONE` -> No authentication required
+- `S_USER` -> Any signed-in user
+- `ADMIN` -> User with 'admin' role
+- `S_CREATOR` -> User who created the resource (user.id === object.createdBy)
 
 ---
 
-#### Step 2: 🎯 Apply Principle of Least Privilege
+#### Step 2:  Apply Principle of Least Privilege
 
 **GOLDEN RULE**: Always test with the **LEAST privileged user** who is still authorized.
 
@@ -521,15 +521,15 @@ Creating API tests is NOT just about testing functionality - it's about **valida
 
 ```
 Is endpoint marked with @Roles(RoleEnum.S_EVERYONE)?
-├─ YES → Test WITHOUT token (unauthenticated)
-└─ NO  → Is endpoint marked with @Roles(RoleEnum.S_USER)?
-         ├─ YES → Test WITH regular user token (NOT admin, NOT creator)
-         └─ NO  → Is endpoint marked with @Roles(RoleEnum.ADMIN, RoleEnum.S_CREATOR)?
-                  ├─ For UPDATE/DELETE → Test WITH creator token (user who created it)
-                  └─ For ADMIN-only → Test WITH admin token
+├─ YES -> Test WITHOUT token (unauthenticated)
+└─ NO  -> Is endpoint marked with @Roles(RoleEnum.S_USER)?
+         ├─ YES -> Test WITH regular user token (NOT admin, NOT creator)
+         └─ NO  -> Is endpoint marked with @Roles(RoleEnum.ADMIN, RoleEnum.S_CREATOR)?
+                  ├─ For UPDATE/DELETE -> Test WITH creator token (user who created it)
+                  └─ For ADMIN-only -> Test WITH admin token
 ```
 
-**❌ WRONG Approach:**
+** WRONG Approach:**
 ```typescript
 // BAD: Using admin for everything
 it('should create product', async () => {
@@ -538,11 +538,11 @@ it('should create product', async () => {
     type: TestGraphQLType.MUTATION,
     arguments: { input: { name: 'Test' } },
     fields: ['id']
-  }, { token: adminToken }); // ❌ WRONG - Over-privileged!
+  }, { token: adminToken }); //  WRONG - Over-privileged!
 });
 ```
 
-**✅ CORRECT Approach:**
+** CORRECT Approach:**
 ```typescript
 // GOOD: Using least privileged user
 it('should create product as regular user', async () => {
@@ -551,13 +551,13 @@ it('should create product as regular user', async () => {
     type: TestGraphQLType.MUTATION,
     arguments: { input: { name: 'Test' } },
     fields: ['id']
-  }, { token: userToken }); // ✅ CORRECT - S_USER is enough!
+  }, { token: userToken }); //  CORRECT - S_USER is enough!
 });
 ```
 
 ---
 
-#### Step 3: 📋 Create Test User Matrix
+#### Step 3:  Create Test User Matrix
 
 Based on your permission analysis, create test users:
 
@@ -657,7 +657,7 @@ describe('Product API', () => {
 
 ---
 
-#### Step 4: ✅ Write Tests with Correct Privileges
+#### Step 4:  Write Tests with Correct Privileges
 
 **Example 1: S_EVERYONE endpoint (public access)**
 
@@ -747,7 +747,7 @@ describe('Update Product', () => {
 
 ---
 
-#### Step 5: 🛡️ MANDATORY: Test Permission Failures
+#### Step 5: MANDATORY: Test Permission Failures
 
 **CRITICAL**: You MUST test that unauthorized users are BLOCKED. This validates the security model.
 
@@ -812,7 +812,7 @@ describe('Security Validation', () => {
 
 ---
 
-#### Step 6: 📝 Complete Test Structure
+#### Step 6:  Complete Test Structure
 
 **Test file location**:
 ```
@@ -1045,17 +1045,17 @@ describe('Product Module E2E', () => {
 
 Before finalizing tests, verify:
 
-- [ ] ✅ I have analyzed ALL `@Roles()` decorators
-- [ ] ✅ I have read the complete `securityCheck()` method
-- [ ] ✅ I use the LEAST privileged user for each test
-- [ ] ✅ S_EVERYONE endpoints tested WITHOUT token
-- [ ] ✅ S_USER endpoints tested with REGULAR user (not admin)
-- [ ] ✅ UPDATE/DELETE tested with CREATOR token (not admin)
-- [ ] ✅ I have tests that verify unauthorized access FAILS (401/403)
-- [ ] ✅ I have tests that verify non-creators CANNOT update/delete
-- [ ] ✅ I have tests for missing required fields
-- [ ] ✅ All tests follow the security model
-- [ ] ✅ Tests validate protection mechanisms work
+- [ ]  I have analyzed ALL `@Roles()` decorators
+- [ ]  I have read the complete `securityCheck()` method
+- [ ]  I use the LEAST privileged user for each test
+- [ ]  S_EVERYONE endpoints tested WITHOUT token
+- [ ]  S_USER endpoints tested with REGULAR user (not admin)
+- [ ]  UPDATE/DELETE tested with CREATOR token (not admin)
+- [ ]  I have tests that verify unauthorized access FAILS (401/403)
+- [ ]  I have tests that verify non-creators CANNOT update/delete
+- [ ]  I have tests for missing required fields
+- [ ]  All tests follow the security model
+- [ ]  Tests validate protection mechanisms work
 
-**⚠️ NEVER use admin token when a less privileged user would work!**
+** NEVER use admin token when a less privileged user would work!**
 

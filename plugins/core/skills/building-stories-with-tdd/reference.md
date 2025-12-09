@@ -70,8 +70,8 @@ description: Quick reference guide for Test-Driven Development workflow
 ┌─────────────────────────────────────────────────────────┐
 │ Step 5: Validate                                        │
 │ - Run ALL tests                                         │
-│ - All pass? → Go to Step 5a                            │
-│ - Some fail? → Back to Step 3                          │
+│ - All pass? -> Go to Step 5a                            │
+│ - Some fail? -> Back to Step 3                          │
 └─────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────┐
@@ -81,14 +81,14 @@ description: Quick reference guide for Test-Driven Development workflow
 │ - Consolidate similar code paths                        │
 │ - Review for consistency                                │
 │ - Check database indexes                                │
-│ - 🔐 SECURITY REVIEW (CRITICAL)                         │
+│ -  SECURITY REVIEW (CRITICAL)                         │
 │ - Run tests after refactoring                           │
 └─────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────┐
 │ Step 5b: Final Validation                               │
 │ - Run ALL tests one final time                          │
-│ - Generate report → DONE! 🎉                            │
+│ - Generate report -> DONE!                             │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -134,12 +134,12 @@ lt server addProp Review comment:string? --no-interactive
 
 When many test files accumulate in `tests/stories/`, consider organizing them into subfolders for better clarity:
 
-**✅ DO use subfolders when:**
+** DO use subfolders when:**
 - Multiple tests can be logically grouped (e.g., by feature, module, or domain)
 - Each subfolder contains at least 3-5 related test files
 - The grouping improves discoverability and navigation
 
-**❌ DON'T use subfolders when:**
+** DON'T use subfolders when:**
 - Only 1-2 files would end up in each subfolder (defeats the purpose)
 - The grouping is arbitrary or unclear
 - Tests are already easy to find
@@ -148,18 +148,18 @@ When many test files accumulate in `tests/stories/`, consider organizing them in
 
 ```
 tests/stories/
-├── user-management/           # ✅ Good: 4 related tests
+├── user-management/           #  Good: 4 related tests
 │   ├── user-registration.story.test.ts
 │   ├── user-profile.story.test.ts
 │   ├── user-roles.story.test.ts
 │   └── user-deletion.story.test.ts
-├── orders/                    # ✅ Good: 3 related tests
+├── orders/                    #  Good: 3 related tests
 │   ├── order-creation.story.test.ts
 │   ├── order-fulfillment.story.test.ts
 │   └── order-cancellation.story.test.ts
-├── auth/                      # ❌ Bad: Only 1 file, should stay in root
+├── auth/                      #  Bad: Only 1 file, should stay in root
 │   └── login.story.test.ts
-└── simple-feature.story.test.ts  # ✅ OK: Single file stays in root
+└── simple-feature.story.test.ts  #  OK: Single file stays in root
 ```
 
 **Rule of thumb:** If you can't fill a subfolder with at least 3 thematically related test files, keep them in the root `tests/stories/` directory.
@@ -183,7 +183,7 @@ import envConfig from '../../src/config.env';
 import { RoleEnum } from '../../src/server/common/enums/role.enum';
 import { imports, ServerModule } from '../../src/server/server.module';
 
-// ⚠️ IMPORTANT: Do NOT import Services!
+//  IMPORTANT: Do NOT import Services!
 // Tests must ONLY use API endpoints via TestHelper.
 // Services are accessed indirectly through Controllers/Resolvers.
 
@@ -227,9 +227,9 @@ describe('[Feature Name] Story', () => {
     connection = await MongoClient.connect(envConfig.mongoose.uri);
     db = await connection.db();
 
-    // 🚨 CRITICAL: Create test user with @test.com email
+    //  CRITICAL: Create test user with @test.com email
     const password = Math.random().toString(36).substring(7);
-    // ✅ MUST end with @test.com for e2e.brevo.exclude filtering
+    //  MUST end with @test.com for e2e.brevo.exclude filtering
     // Use timestamp + random suffix for guaranteed uniqueness
     const email = `test-${Date.now()}-${Math.random().toString(36).substring(2, 8)}@test.com`;
     const signUp = await testHelper.graphQl({
@@ -272,10 +272,10 @@ describe('[Feature Name] Story', () => {
   describe('Happy Path', () => {
     it('should [expected behavior]', async () => {
       // Arrange
-      // 🚨 IMPORTANT: Make data unique per test file to avoid conflicts
+      //  IMPORTANT: Make data unique per test file to avoid conflicts
       const data = {
-        email: `entity-feature-test-${Date.now()}-${Math.random().toString(36).substring(2, 8)}@test.com`,  // ✅ @test.com + unique
-        name: `Entity-FeatureTest-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,  // ✅ Unique per test file
+        email: `entity-feature-test-${Date.now()}-${Math.random().toString(36).substring(2, 8)}@test.com`,  //  @test.com + unique
+        name: `Entity-FeatureTest-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,  //  Unique per test file
       };
 
       // Act - Using REST
@@ -290,7 +290,7 @@ describe('[Feature Name] Story', () => {
         // expected properties
       });
 
-      // ✅ Track for cleanup (CRITICAL for parallel-safe tests)
+      //  Track for cleanup (CRITICAL for parallel-safe tests)
       createdEntityIds.push(result.id);
     });
   });
@@ -320,17 +320,17 @@ describe('[Feature Name] Story', () => {
 
 ### When to Add Indexes
 
-**🔍 ALWAYS define indexes in @UnifiedField decorator via mongoose option!**
+** ALWAYS define indexes in @UnifiedField decorator via mongoose option!**
 
 ```typescript
-// ✅ CORRECT: Index in decorator mongoose option
+//  CORRECT: Index in decorator mongoose option
 @UnifiedField({
   description: 'User email',
   mongoose: { index: true, unique: true, type: String }
 })
 email: string;
 
-// ❌ WRONG: Separate schema index (hard to find)
+//  WRONG: Separate schema index (hard to find)
 UserSchema.index({ email: 1 }, { unique: true });
 ```
 
@@ -402,7 +402,7 @@ Before marking complete, verify:
 
 ## REST API Testing Patterns (using TestHelper)
 
-**🔍 IMPORTANT: Before writing tests, read the TestHelper source file to understand all available features:**
+** IMPORTANT: Before writing tests, read the TestHelper source file to understand all available features:**
 
 ```
 node_modules/@lenne.tech/nest-server/src/test/test.helper.ts
@@ -580,22 +580,22 @@ expect(() => fn()).toThrow('error message');
 import { getStringIds, getObjectIds } from '@lenne.tech/nest-server';
 
 // Convert ObjectIds to strings (works with arrays OR single values)
-const stringIds = getStringIds(objectIds);     // ObjectId[] → string[]
-const stringId = getStringIds(singleObjectId); // ObjectId → string
+const stringIds = getStringIds(objectIds);     // ObjectId[] -> string[]
+const stringId = getStringIds(singleObjectId); // ObjectId -> string
 
 // Convert strings to ObjectIds (works with arrays OR single values)
-const objectIds = getObjectIds(stringIds);     // string[] → ObjectId[]
-const objectId = getObjectIds(singleStringId); // string → ObjectId
+const objectIds = getObjectIds(stringIds);     // string[] -> ObjectId[]
+const objectId = getObjectIds(singleStringId); // string -> ObjectId
 
 // Pass objects directly - the functions extract IDs automatically!
 const stringIds = getStringIds(documents);     // Extracts _id from each document
 const objectIds = getObjectIds(documents);     // Extracts _id/id and converts
 ```
 
-**✅ ALWAYS use these utilities instead of manual conversion:**
+** ALWAYS use these utilities instead of manual conversion:**
 
 ```typescript
-// ✅ CORRECT: Use utility functions
+//  CORRECT: Use utility functions
 import { getStringIds, getObjectIds } from '@lenne.tech/nest-server';
 
 // For arrays of objects (no mapping needed - IDs are extracted automatically!)
@@ -606,7 +606,7 @@ const objectIds = getObjectIds(users);
 const objectId = getObjectIds(userId);
 const stringId = getStringIds(document);
 
-// ❌ WRONG: Manual conversion
+//  WRONG: Manual conversion
 const stringIds = documents.map(d => d._id.toString());
 const objectIds = inputIds.map(id => new ObjectId(id));
 const objectId = new ObjectId(userId);
@@ -623,7 +623,7 @@ const objectId = new ObjectId(userId);
 ## Security Testing Checklist
 
 ```typescript
-// ✅ Create users with correct roles using TestHelper
+//  Create users with correct roles using TestHelper
 const userSignUp = await testHelper.graphQl({
   arguments: {
     input: {
@@ -638,23 +638,23 @@ const userSignUp = await testHelper.graphQl({
 });
 const userToken = userSignUp.token;
 
-// ✅ Test with correct role
+//  Test with correct role
 await testHelper.rest('/api/resource', {
   token: userToken,
 });
 
-// ✅ Test without authentication
+//  Test without authentication
 await testHelper.rest('/api/resource', {
   statusCode: 401,
 });
 
-// ✅ Test with insufficient permissions
+//  Test with insufficient permissions
 await testHelper.rest('/api/admin/resource', {
   statusCode: 403,
   token: userToken, // Normal user trying admin endpoint
 });
 
-// ✅ Test access to own resources only
+//  Test access to own resources only
 await testHelper.rest(`/api/users/${userSignUp.user.id}/profile`, {
   method: 'PUT',
   payload: { firstName: 'Updated' },
@@ -668,7 +668,7 @@ await testHelper.rest(`/api/users/${otherUserId}/profile`, {
   token: userToken,
 });
 
-// ❌ NEVER do this
+//  NEVER do this
 // Don't remove @Restricted decorators
 // Don't change @Roles to more permissive
 // Don't disable security checks
@@ -684,7 +684,7 @@ await testHelper.rest(`/api/users/${otherUserId}/profile`, {
 - Multiple valid architectural approaches
 - Tests keep failing for unclear reasons
 
-✅ DON'T ASK when:
+ DON'T ASK when:
 - Creating test files
 - Running tests
 - Analyzing failures
@@ -798,27 +798,27 @@ Test fails
 **Before marking complete, check for:**
 
 1. **Code Duplication:**
-   - Repeated validation logic → Extract to private method
-   - Similar calculations in multiple places → Create helper function
-   - Duplicated query patterns → Consolidate into flexible method
+   - Repeated validation logic -> Extract to private method
+   - Similar calculations in multiple places -> Create helper function
+   - Duplicated query patterns -> Consolidate into flexible method
 
 2. **Common Functionality:**
    - Extract repeated data transformations
    - Create shared validation helpers
    - Consolidate similar query builders
 
-2a. **🔐 Guards in Controllers:**
+2a. ** Guards in Controllers:**
    - DO NOT add `@UseGuards(AuthGuard(AuthGuardStrategy.JWT))` manually
    - `@Roles()` decorator automatically activates JWT authentication
    - `@Restricted()` decorator also activates guards automatically
    - Manual guards are redundant and create duplicates
    ```typescript
-   // ✅ CORRECT
+   //  CORRECT
    @Roles(RoleEnum.ADMIN)
    @Get()
    async findAll() { ... }
 
-   // ❌ WRONG: Redundant guard
+   //  WRONG: Redundant guard
    @UseGuards(AuthGuard(AuthGuardStrategy.JWT))
    @Roles(RoleEnum.ADMIN)
    @Get()
@@ -826,12 +826,12 @@ Test fails
    ```
 
 3. **Database Indexes:**
-   - Fields used in queries → Add `mongoose: { index: true, type: String }` to @UnifiedField
-   - Foreign keys → Add index via mongoose option
-   - Unique fields → Add `mongoose: { index: true, unique: true, type: String }`
-   - Multiple query fields → Index each individually
+   - Fields used in queries -> Add `mongoose: { index: true, type: String }` to @UnifiedField
+   - Foreign keys -> Add index via mongoose option
+   - Unique fields -> Add `mongoose: { index: true, unique: true, type: String }`
+   - Multiple query fields -> Index each individually
 
-4. **🔐 Security Review (CRITICAL):**
+4. ** Security Review (CRITICAL):**
    - @Restricted/@Roles decorators NOT removed or weakened
    - Ownership checks in place for user data
    - All inputs validated with DTOs
@@ -842,9 +842,9 @@ Test fails
 
 5. **Refactoring Decision:**
    ```
-   Used in 2+ places? → Extract to private method
-   Used across services? → Consider utility class
-   Only 1 usage? → Leave as-is (don't over-engineer)
+   Used in 2+ places? -> Extract to private method
+   Used across services? -> Consider utility class
+   Only 1 usage? -> Leave as-is (don't over-engineer)
    ```
 
 6. **After Refactoring & Security Review:**
@@ -870,7 +870,7 @@ Before marking complete:
 - [ ] Documentation/comments where needed
 - [ ] **Tests still pass after refactoring**
 
-**🔐 Security Checklist:**
+** Security Checklist:**
 
 - [ ] **@Restricted/@Roles decorators NOT removed or weakened**
 - [ ] **Ownership checks in place (users can only access own data)**
@@ -885,7 +885,7 @@ Before marking complete:
 ## Final Report Template
 
 ```markdown
-# Story Implementation Complete ✅
+# Story Implementation Complete 
 
 ## Story: [Name]
 
@@ -901,36 +901,36 @@ Before marking complete:
 - Other: [list]
 
 ### Test Results
-✅ All X tests passing
+ All X tests passing
 
 ### Code Quality
-- Patterns followed: ✅
-- Security preserved: ✅
-- Dependencies: None added ✅
-- Code duplication checked: ✅
-- Database indexes added: ✅
+- Patterns followed: 
+- Security preserved: 
+- Dependencies: None added 
+- Code duplication checked: 
+- Database indexes added: 
 - Refactoring performed: [Yes/No]
 
 ### Security Review
-- Authentication/Authorization: ✅
-- Input validation: ✅
-- Data exposure prevented: ✅
-- Ownership checks: ✅
-- Injection prevention: ✅
-- Authorization tests pass: ✅
+- Authentication/Authorization: 
+- Input validation: 
+- Data exposure prevented: 
+- Ownership checks: 
+- Injection prevention: 
+- Authorization tests pass: 
 
 ### Refactoring (if performed)
 - Extracted helper functions: [list]
 - Consolidated code paths: [describe]
 - Removed duplication: [describe]
-- Tests still passing: ✅
+- Tests still passing: 
 
 ### Files Modified
 1. path/to/file.ts - description
 2. path/to/file.ts - description
 ```
 
-## 🔄 Handling Existing Tests
+##  Handling Existing Tests
 
 **When your changes break existing tests:**
 
@@ -939,14 +939,14 @@ Before marking complete:
 ```
 Existing test fails
     ├─► Intentional breaking change? (e.g., added required field)
-    │   └─► ✅ Update test to match new behavior
+    │   └─►  Update test to match new behavior
     │
     └─► Unclear/unintended side effect?
-        ├─► 🔍 Use git to investigate:
+        ├─►  Use git to investigate:
         │   - git show HEAD:path/to/file.ts
         │   - git diff HEAD path/to/file.ts
         │
-        └─► ⚠️ Fix code to satisfy BOTH old AND new tests
+        └─►  Fix code to satisfy BOTH old AND new tests
 ```
 
 ### Git Analysis (ALLOWED)
@@ -964,13 +964,13 @@ git log -p --follow path/to/file.ts
 
 ### Guidelines
 
-**✅ Update tests when:**
+** Update tests when:**
 - Intentional API contract change
 - Removed deprecated functionality
 - Renamed fields/methods
 - Documented in story requirements
 
-**❌ Don't update tests when:**
+** Don't update tests when:**
 - Unclear why they're failing
 - Unrelated to your story
 - Multiple unrelated tests breaking
@@ -986,25 +986,25 @@ git log -p --follow path/to/file.ts
 - Use git freely for investigation (NOT commits!)
 - When in doubt, preserve backward compatibility
 
-## ⛔ CRITICAL: Git Commits
+##  CRITICAL: Git Commits
 
-**🚨 NEVER create git commits unless explicitly requested by the developer.**
+** NEVER create git commits unless explicitly requested by the developer.**
 
-- ❌ DO NOT use `git add`, `git commit`, or `git push` automatically
-- ❌ DO NOT commit changes when tests pass
-- ❌ DO NOT assume developer wants changes committed
-- ✅ ONLY commit when developer explicitly asks: "commit these changes"
+-  DO NOT use `git add`, `git commit`, or `git push` automatically
+-  DO NOT commit changes when tests pass
+-  DO NOT assume developer wants changes committed
+-  ONLY commit when developer explicitly asks: "commit these changes"
 
 **Why:** Developers may want to review changes, commit in specific chunks, or have custom workflows.
 
 **Your job:**
-- ✅ Create/modify files
-- ✅ Run tests
-- ✅ Use git for analysis (git show, git diff, git log)
-- ✅ Provide comprehensive report
-- ❌ Never commit to git (unless explicitly requested)
+-  Create/modify files
+-  Run tests
+-  Use git for analysis (git show, git diff, git log)
+-  Provide comprehensive report
+-  Never commit to git (unless explicitly requested)
 
-## 🚨 CRITICAL: Database Cleanup & Test Isolation
+##  CRITICAL: Database Cleanup & Test Isolation
 
 **ALWAYS implement comprehensive cleanup in your story tests!**
 
@@ -1015,20 +1015,20 @@ Tests run in parallel, so improper test data management causes:
 - Contaminated test database
 - Hard-to-debug test failures
 
-**📋 GOLDEN RULES for Parallel-Safe Test Data:**
+** GOLDEN RULES for Parallel-Safe Test Data:**
 
 1. **Email Addresses Must End with @test.com**
    - Configuration in `src/config.env.ts` uses `e2e.brevo.exclude` to filter @test.com
    - External services (email, etc.) will exclude these addresses
    - Use timestamp + random suffix for guaranteed uniqueness
    ```typescript
-   // ✅ CORRECT: Timestamp + 6-char random suffix
+   //  CORRECT: Timestamp + 6-char random suffix
    const email = `user-${Date.now()}-${Math.random().toString(36).substring(2, 8)}@test.com`;
 
-   // ⚠️ LESS SAFE: Only timestamp (collision risk in same millisecond)
+   //  LESS SAFE: Only timestamp (collision risk in same millisecond)
    const email = `user-${Date.now()}@test.com`;
 
-   // ❌ WRONG: No @test.com suffix
+   //  WRONG: No @test.com suffix
    const email = 'testuser@example.com';
    ```
 
@@ -1037,13 +1037,13 @@ Tests run in parallel, so improper test data management causes:
    - Make ALL data unique (emails, usernames, product names, etc.)
    - Always use timestamp + random suffix
    ```typescript
-   // ✅ CORRECT: Unique per test file with timestamp + random suffix
+   //  CORRECT: Unique per test file with timestamp + random suffix
    const email = `admin-product-test-${Date.now()}-${Math.random().toString(36).substring(2, 8)}@test.com`;
 
-   // ⚠️ LESS SAFE: Only timestamp
+   //  LESS SAFE: Only timestamp
    const email = `admin-product-test-${Date.now()}@test.com`;
 
-   // ❌ WRONG: Reused across multiple test files
+   //  WRONG: Reused across multiple test files
    const email = 'admin@test.com';
    ```
 
@@ -1051,12 +1051,12 @@ Tests run in parallel, so improper test data management causes:
    - Track created IDs explicitly
    - Delete ONLY tracked entities, not by pattern
    ```typescript
-   // ✅ CORRECT: Only delete what we created
+   //  CORRECT: Only delete what we created
    await db.collection('users').deleteMany({
      _id: { $in: createdUserIds.map(id => new ObjectId(id)) }
    });
 
-   // ❌ WRONG: Deletes ALL test users (breaks parallel tests)
+   //  WRONG: Deletes ALL test users (breaks parallel tests)
    await db.collection('users').deleteMany({ email: /@test\.com$/ });
    ```
 
@@ -1069,11 +1069,11 @@ Tests run in parallel, so improper test data management causes:
    - NestJS assigns random ports automatically for parallel execution
    - Always use TestHelper - it abstracts port handling
    ```typescript
-   // ✅ CORRECT: No port specified, TestHelper handles it
+   //  CORRECT: No port specified, TestHelper handles it
    await app.init();
    const result = await testHelper.rest('/api/users', { ... });
 
-   // ❌ WRONG: Fixed port causes conflicts
+   //  WRONG: Fixed port causes conflicts
    await app.listen(3000);
    const response = await fetch('http://localhost:3000/api/users');
    ```
@@ -1091,10 +1091,10 @@ describe('Feature Story', () => {
 
   // In your tests, track IDs immediately after creation
   it('should create product', async () => {
-    // 🚨 IMPORTANT: Use unique data per test file + @test.com for emails
+    //  IMPORTANT: Use unique data per test file + @test.com for emails
     const productData = {
-      name: `Product-FeatureStory-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,  // ✅ Unique per test file
-      ownerEmail: `owner-feature-${Date.now()}-${Math.random().toString(36).substring(2, 8)}@test.com`,  // ✅ @test.com + unique
+      name: `Product-FeatureStory-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,  //  Unique per test file
+      ownerEmail: `owner-feature-${Date.now()}-${Math.random().toString(36).substring(2, 8)}@test.com`,  //  @test.com + unique
     };
 
     const product = await testHelper.rest('/api/products', {
@@ -1103,7 +1103,7 @@ describe('Feature Story', () => {
       token: adminToken,
     });
 
-    // ✅ Track for cleanup (ONLY delete what we created)
+    //  Track for cleanup (ONLY delete what we created)
     createdProductIds.push(product.id);
   });
 
@@ -1141,10 +1141,10 @@ describe('Feature Story', () => {
 
 ### Alternative: Pattern-Based Cleanup (AVOID - Not Parallel-Safe!)
 
-**❌ DO NOT USE pattern-based cleanup - it breaks parallel test execution!**
+** DO NOT USE pattern-based cleanup - it breaks parallel test execution!**
 
 ```typescript
-// ❌ WRONG: Deletes ALL test users, even from parallel tests!
+//  WRONG: Deletes ALL test users, even from parallel tests!
 afterAll(async () => {
   await db.collection('users').deleteMany({ email: /@test\.com$/ });
   await db.collection('products').deleteMany({ name: /^Test/ });
@@ -1154,15 +1154,15 @@ afterAll(async () => {
 });
 ```
 
-**⚠️ Why This is Dangerous:**
+** Why This is Dangerous:**
 - **Breaks parallel tests:** Deletes entities from other tests that are still running
 - **Race conditions:** Unpredictable failures when tests run simultaneously
 - **Flaky tests:** Tests pass/fail randomly depending on execution order
 - **Hard to debug:** Unclear why tests fail intermittently
 
-**✅ ALWAYS use ID-based cleanup instead:**
+** ALWAYS use ID-based cleanup instead:**
 ```typescript
-// ✅ CORRECT: Only deletes entities created in THIS test file
+//  CORRECT: Only deletes entities created in THIS test file
 if (createdUserIds.length > 0) {
   await db.collection('users').deleteMany({
     _id: { $in: createdUserIds.map(id => new ObjectId(id)) }
@@ -1203,9 +1203,9 @@ describe('Feature Tests', () => {
 const signUp = await testHelper.graphQl({
   arguments: {
     input: {
-      // 🚨 CRITICAL: MUST end with @test.com for e2e.brevo.exclude
+      //  CRITICAL: MUST end with @test.com for e2e.brevo.exclude
       // Use timestamp + random suffix for guaranteed uniqueness
-      email: `test-${Date.now()}-${Math.random().toString(36).substring(2, 8)}@test.com`,  // ✅ Unique + @test.com
+      email: `test-${Date.now()}-${Math.random().toString(36).substring(2, 8)}@test.com`,  //  Unique + @test.com
       password: 'testpass123',
       firstName: 'Test',
     },
@@ -1216,7 +1216,7 @@ const signUp = await testHelper.graphQl({
 });
 const token = signUp.token;
 
-// ✅ Track for cleanup
+//  Track for cleanup
 createdUserIds.push(signUp.user.id);
 ```
 
@@ -1239,26 +1239,26 @@ const token = signIn.token;
 
 ## Avoiding Test Interdependencies
 
-### ❌ DON'T: Shared state between tests
+###  DON'T: Shared state between tests
 
 ```typescript
-// ❌ BAD: Test 2 depends on Test 1
+//  BAD: Test 2 depends on Test 1
 let createdUserId;
 
 it('should create user', async () => {
   const user = await createUser(...);
-  createdUserId = user.id;  // ❌ Shared state!
+  createdUserId = user.id;  //  Shared state!
 });
 
 it('should update user', async () => {
-  await updateUser(createdUserId, ...);  // ❌ Depends on Test 1!
+  await updateUser(createdUserId, ...);  //  Depends on Test 1!
 });
 ```
 
-### ✅ DO: Independent tests
+###  DO: Independent tests
 
 ```typescript
-// ✅ GOOD: Each test is independent
+//  GOOD: Each test is independent
 describe('User CRUD', () => {
   let testUserId;
 
@@ -1274,11 +1274,11 @@ describe('User CRUD', () => {
   });
 
   it('should update user', async () => {
-    await updateUser(testUserId, ...);  // ✅ Independent!
+    await updateUser(testUserId, ...);  //  Independent!
   });
 
   it('should delete user', async () => {
-    await deleteUser(testUserId, ...);  // ✅ Independent!
+    await deleteUser(testUserId, ...);  //  Independent!
   });
 });
 ```
@@ -1288,11 +1288,11 @@ describe('User CRUD', () => {
 ### Always await async operations
 
 ```typescript
-// ❌ WRONG: Forgotten await
+//  WRONG: Forgotten await
 const user = testHelper.graphQl({...});  // Returns Promise, not user!
 expect(user.email).toBe('test@example.com');  // FAILS!
 
-// ✅ CORRECT: With await
+//  CORRECT: With await
 const user = await testHelper.graphQl({...});
 expect(user.email).toBe('test@example.com');  // Works!
 ```
@@ -1300,14 +1300,14 @@ expect(user.email).toBe('test@example.com');  // Works!
 ### Parallel vs Sequential execution
 
 ```typescript
-// ✅ Parallel execution (independent operations)
+//  Parallel execution (independent operations)
 const [user1, user2, product] = await Promise.all([
   testHelper.graphQl({...}),  // Create user 1
   testHelper.graphQl({...}),  // Create user 2
   testHelper.rest('/api/products', {...}),  // Create product
 ]);
 
-// ✅ Sequential execution (dependent operations)
+//  Sequential execution (dependent operations)
 const user = await testHelper.graphQl({...});
 const product = await testHelper.rest('/api/products', {
   token: user.token,  // Depends on user being created first
@@ -1315,7 +1315,7 @@ const product = await testHelper.rest('/api/products', {
   method: 'POST',
 });
 
-// ❌ WRONG: Sequential when parallel is possible (slower)
+//  WRONG: Sequential when parallel is possible (slower)
 const user1 = await testHelper.graphQl({...});
 const user2 = await testHelper.graphQl({...});  // Could run in parallel!
 const product = await testHelper.rest('/api/products', {...});
@@ -1342,7 +1342,7 @@ await testHelper.rest('/api/resource', {
 
 ## Common Pitfalls to Avoid
 
-❌ **Don't:**
+ **Don't:**
 - Write code before tests
 - Skip test analysis step
 - **Weaken security for passing tests**
@@ -1373,7 +1373,7 @@ await testHelper.rest('/api/resource', {
 - **Allow users to access others' data without checks**
 - **Use 'any' type instead of proper DTOs**
 
-✅ **Do:**
+ **Do:**
 - Follow the 7-step process strictly (including Step 5a security & refactoring check)
 - Ask for clarification early
 - **Preserve all security mechanisms (CRITICAL)**

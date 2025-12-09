@@ -5,13 +5,13 @@
 ### useState vs ref
 
 ```typescript
-// ✅ useState - SSR-safe, shared across components
+//  useState - SSR-safe, shared across components
 const user = useState<UserDto | null>('user', () => null)
 
-// ✅ ref - local component state only
+//  ref - local component state only
 const loading = ref<boolean>(false)
 
-// ❌ ref for shared state - not SSR-safe, creates new instance
+//  ref for shared state - not SSR-safe, creates new instance
 const user = ref<UserDto | null>(null)
 ```
 
@@ -149,22 +149,22 @@ useHead({
 ## Anti-Patterns
 
 ```typescript
-// ❌ Using ref for shared state
+//  Using ref for shared state
 const user = ref(null)
 
-// ✅ Use useState
+//  Use useState
 const user = useState('user', () => null)
 
-// ❌ Direct process.env access
+//  Direct process.env access
 const key = process.env.API_KEY
 
-// ✅ Use runtimeConfig
+//  Use runtimeConfig
 const config = useRuntimeConfig()
 const key = config.apiSecret
 
-// ❌ fetch() in components
+//  fetch() in components
 const data = await fetch('/api/users')
 
-// ✅ Use useFetch or $fetch
+//  Use useFetch or $fetch
 const { data } = await useFetch('/api/users')
 ```

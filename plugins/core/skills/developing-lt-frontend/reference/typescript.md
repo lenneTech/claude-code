@@ -76,16 +76,16 @@ const emit = defineEmits<{
 **NEVER create custom interfaces for backend DTOs!**
 
 ```typescript
-// ✅ ALWAYS use generated types for backend data
+//  ALWAYS use generated types for backend data
 import type { SeasonDto, CreateSeasonDto } from '~/api-client/types.gen'
 import { seasonControllerGet } from '~/api-client/sdk.gen'
 
-// ✅ Extend generated types for UI-specific properties
+//  Extend generated types for UI-specific properties
 interface SeasonWithUI extends SeasonDto {
   isSelected: boolean
 }
 
-// ✅ Custom interfaces ONLY for frontend-only state
+//  Custom interfaces ONLY for frontend-only state
 // app/interfaces/filter.interface.ts
 interface FilterState {
   searchQuery: string
@@ -110,22 +110,22 @@ npm run generate-types
 ## Anti-Patterns
 
 ```typescript
-// ❌ FORBIDDEN: Custom interfaces for backend DTOs
+//  FORBIDDEN: Custom interfaces for backend DTOs
 // app/interfaces/season.interface.ts
 interface Season {
   id: string
   name: string
 }
 
-// ✅ Use generated types
+//  Use generated types
 import type { SeasonDto } from '~/api-client/types.gen'
 
-// ❌ Implicit any
+//  Implicit any
 const data = null
 function process(input) { }
 const items = []
 
-// ✅ Explicit types
+//  Explicit types
 const data: SeasonDto | null = null
 function process(input: string): void { }
 const items: SeasonDto[] = []

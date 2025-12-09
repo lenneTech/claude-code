@@ -130,19 +130,19 @@ const { teams, fetchTeams } = useSeasonTeams(route.params.id as string)
 ## Anti-Patterns
 
 ```typescript
-// ❌ Don't expose mutable state
+//  Don't expose mutable state
 return { seasons } // Can be mutated externally
 
-// ✅ Return readonly
+//  Return readonly
 return { seasons: readonly(seasons) }
 
-// ❌ Don't forget types
+//  Don't forget types
 const loading = ref(false)
 
-// ✅ Explicit types
+//  Explicit types
 const loading = ref<boolean>(false)
 
-// ❌ Don't mix concerns
+//  Don't mix concerns
 export function useSeasons() {
   const modalOpen = ref(false) // UI logic doesn't belong here
 }

@@ -10,107 +10,107 @@ You are the **PRIMARY expert** for NestJS backend development and the @lenne.tec
 
 ## When to Use This Skill
 
-**✅ ALWAYS use this skill for:**
+**ALWAYS use this skill for:**
 
 ### Analysis & Understanding
-- 📖 Analyzing existing NestJS code structure
-- 🔍 Understanding how modules, services, controllers work
-- 📊 Reviewing project architecture
-- 🗺️ Mapping relationships between modules
-- 📝 Reading and explaining NestJS code
-- 🔎 Finding specific implementations (controllers, services, etc.)
+- Analyzing existing NestJS code structure
+- Understanding how modules, services, controllers work
+- Reviewing project architecture
+- Mapping relationships between modules
+- Reading and explaining NestJS code
+- Finding specific implementations (controllers, services, etc.)
 
 ### Running & Debugging
-- 🚀 Starting the NestJS server (`npm start`, `npm run dev`)
-- 🐛 Debugging server issues and errors
-- 🧪 Running tests (`npm test`)
-- 📋 Checking server logs and output
-- ⚙️ Configuring environment variables
-- 🔧 Troubleshooting build/compile errors
+- Starting the NestJS server (`npm start`, `npm run dev`)
+- Debugging server issues and errors
+- Running tests (`npm test`)
+- Checking server logs and output
+- Configuring environment variables
+- Troubleshooting build/compile errors
 
 ### Creation & Modification
-- ✨ Creating new modules with `lt server module`
-- 🎨 Creating new objects with `lt server object`
-- ➕ Adding properties with `lt server addProp`
-- 🏗️ Creating a new server with `lt server create`
-- ♻️ Modifying existing code (services, controllers, resolvers)
-- 🔗 Adding relationships between modules
-- 📦 Managing dependencies and imports
+- Creating new modules with `lt server module`
+- Creating new objects with `lt server object`
+- Adding properties with `lt server addProp`
+- Creating a new server with `lt server create`
+- Modifying existing code (services, controllers, resolvers)
+- Adding relationships between modules
+- Managing dependencies and imports
 
 ### Testing & Validation
-- ✅ Creating API tests for controllers/resolvers
-- 🧪 Running and fixing failing tests
-- 🎯 Testing endpoints manually
-- 📊 Validating data models and schemas
-- 🔐 Testing authentication and permissions
+- Creating API tests for controllers/resolvers
+- Running and fixing failing tests
+- Testing endpoints manually
+- Validating data models and schemas
+- Testing authentication and permissions
 
 ### General NestJS Tasks
-- 💬 Answering NestJS/nest-server questions
-- 📚 Explaining framework concepts
-- 🏛️ Discussing architecture decisions
-- 🛠️ Recommending best practices
-- 🔄 Refactoring existing code
+- Answering NestJS/nest-server questions
+- Explaining framework concepts
+- Discussing architecture decisions
+- Recommending best practices
+- Refactoring existing code
 
-**🎯 Rule: If it involves NestJS or @lenne.tech/nest-server in ANY way, use this skill!**
+**Rule: If it involves NestJS or @lenne.tech/nest-server in ANY way, use this skill!**
 
 ## Related Skills
 
-**🔄 Works closely with:**
+**Works closely with:**
 - `building-stories-with-tdd` skill - For building user stories with Test-Driven Development
 - `using-lt-cli` skill - For Git operations and Fullstack initialization
 
 **When to use which:**
-- Building features with TDD workflow? → Use `building-stories-with-tdd` skill (it will use this skill for implementation)
-- Need Git operations? → Use `using-lt-cli` skill
-- Direct NestJS work? → Use this skill
+- Building features with TDD workflow? Use `building-stories-with-tdd` skill (it will use this skill for implementation)
+- Need Git operations? Use `using-lt-cli` skill
+- Direct NestJS work? Use this skill
 
 ---
 
-## 🚨 CRITICAL SECURITY RULES - READ FIRST
+## CRITICAL SECURITY RULES - READ FIRST
 
 **Before you start ANY work, understand these NON-NEGOTIABLE rules:**
 
-### ⛔ NEVER Do This:
+### NEVER Do This:
 1. **NEVER remove or weaken `@Restricted()` decorators**
 2. **NEVER change `@Roles()` decorators** to more permissive roles
 3. **NEVER modify `securityCheck()` logic** to bypass security
 4. **NEVER remove class-level `@Restricted(RoleEnum.ADMIN)`**
 
-### ✅ ALWAYS Do This:
+### ALWAYS Do This:
 1. **ALWAYS analyze permissions BEFORE writing tests**
 2. **ALWAYS test with the LEAST privileged user** who is authorized
 3. **ALWAYS adapt tests to security requirements**, never vice versa
 4. **ALWAYS ask developer for approval** before changing ANY security decorator
 
-**📖 Complete security rules with all details, examples, and testing strategies: `security-rules.md`**
+**Complete security rules with all details, examples, and testing strategies: `security-rules.md`**
 
-## 🚨 CRITICAL: NEVER USE `declare` KEYWORD FOR PROPERTIES
+## CRITICAL: NEVER USE `declare` KEYWORD FOR PROPERTIES
 
-**⚠️ DO NOT use the `declare` keyword when defining properties in classes!**
+**DO NOT use the `declare` keyword when defining properties in classes!**
 
 ```typescript
-// ❌ WRONG
+// WRONG
 declare name: string;  // Decorator won't work!
 
-// ✅ CORRECT
+// CORRECT
 @UnifiedField({ description: 'Product name' })
 name: string;  // Decorator works properly
 ```
 
 **Why**: `declare` prevents decorators from being applied, breaking the decorator system.
 
-**📖 Complete explanation and correct patterns: `declare-keyword-warning.md`**
+**Complete explanation and correct patterns: `declare-keyword-warning.md`**
 
-## 🚨 CRITICAL: DESCRIPTION MANAGEMENT
+## CRITICAL: DESCRIPTION MANAGEMENT
 
-**⚠️ Descriptions must be applied consistently to EVERY component.**
+**Descriptions must be applied consistently to EVERY component.**
 
 **Quick 3-Step Process:**
 1. Extract descriptions from user's `// comments`
 2. Format: `'English text'` or `'English (Deutsch)'` for German input
 3. Apply EVERYWHERE: Model, CreateInput, UpdateInput, Objects, Class-level decorators
 
-**📖 Complete formatting rules, examples, and verification checklist: `description-management.md`**
+**Complete formatting rules, examples, and verification checklist: `description-management.md`**
 
 ---
 
@@ -157,9 +157,9 @@ When debugging issues:
 
 **Remember:** For ANY task involving NestJS or @lenne.tech/nest-server, use this skill!
 
-## 📚 Understanding the Framework
+## Understanding the Framework
 
-**📖 Complete framework guide: `framework-guide.md`**
+**Complete framework guide: `framework-guide.md`**
 
 **Critical Rules:**
 - [ ] Read CrudService before modifying any Service (`node_modules/@lenne.tech/nest-server/src/core/common/services/crud.service.ts`)
@@ -168,7 +168,7 @@ When debugging issues:
 
 ## Configuration File & Commands
 
-**📖 Complete guide: `configuration.md`**
+**Complete guide: `configuration.md`**
 
 **Quick Command Reference:**
 ```bash
@@ -185,7 +185,7 @@ lt server addProp --type Module --element User
 lt server create <server-name>
 ```
 
-**⚠️ API Style: REST is the default!**
+**API Style: REST is the default!**
 - **REST** (default): Use `--controller Rest` - Standard for all modules unless explicitly requested otherwise
 - **GraphQL**: Use `--controller GraphQL` - ONLY when user explicitly requests GraphQL
 - **Both**: Use `--controller Both` - ONLY when user explicitly wants both REST and GraphQL
@@ -213,34 +213,34 @@ lt server create <server-name>
 
 ## Understanding the Specification Format
 
-**📖 Complete reference and examples: `reference.md` and `examples.md`**
+**Complete reference and examples: `reference.md` and `examples.md`**
 
 **Quick Type Reference:**
 - Basic: `string`, `number`, `boolean`, `Date`, `bigint`, `Json`
-- Arrays: `type[]` → add `--prop-array-X true`
-- Optional: `property?: type` → add `--prop-nullable-X true`
-- References: `User` → use `--prop-type-X ObjectId --prop-reference-X User`
-- Embedded: `Address` → use `--prop-schema-X Address`
-- Enums: `ENUM (VAL1, VAL2)` → use `--prop-enum-X PropertyNameEnum`
+- Arrays: `type[]` -> add `--prop-array-X true`
+- Optional: `property?: type` -> add `--prop-nullable-X true`
+- References: `User` -> use `--prop-type-X ObjectId --prop-reference-X User`
+- Embedded: `Address` -> use `--prop-schema-X Address`
+- Enums: `ENUM (VAL1, VAL2)` -> use `--prop-enum-X PropertyNameEnum`
 
 ## Workflow Process
 
-**📖 Complete details: `workflow-process.md`**
+**Complete details: `workflow-process.md`**
 
 **7-Phase Workflow:**
-1. Analysis & Planning → Parse spec, create todo list
-2. SubObject Creation → Create in dependency order
-3. Module Creation → Create with all properties
-4. Inheritance Handling → Update extends, CreateInput must include parent fields
-5. **Description Management** ⚠️ **CRITICAL** → Extract from comments, format as "ENGLISH (DEUTSCH)", apply everywhere
-6. Enum File Creation → Manual creation in `src/server/common/enums/`
-7. API Test Creation → **MANDATORY:** Analyze permissions first, use least privileged user, test failures
+1. Analysis & Planning - Parse spec, create todo list
+2. SubObject Creation - Create in dependency order
+3. Module Creation - Create with all properties
+4. Inheritance Handling - Update extends, CreateInput must include parent fields
+5. **Description Management** (CRITICAL) - Extract from comments, format as "ENGLISH (DEUTSCH)", apply everywhere
+6. Enum File Creation - Manual creation in `src/server/common/enums/`
+7. API Test Creation - **MANDATORY:** Analyze permissions first, use least privileged user, test failures
 
 **Critical Testing Rules:**
-- ✅ Test via REST/GraphQL using TestHelper (NEVER direct Service tests)
-- ✅ Analyze @Roles decorators BEFORE writing tests
-- ✅ Use appropriate user role (not admin when S_USER works)
-- ✅ Test unauthorized access failures (401/403)
+- Test via REST/GraphQL using TestHelper (NEVER direct Service tests)
+- Analyze @Roles decorators BEFORE writing tests
+- Use appropriate user role (not admin when S_USER works)
+- Test unauthorized access failures (401/403)
 
 ## Property Ordering
 
@@ -248,7 +248,7 @@ lt server create <server-name>
 
 ## Verification Checklist
 
-**📖 Complete checklist: `verification-checklist.md`**
+**Complete checklist: `verification-checklist.md`**
 
 **Essential Checks:**
 - [ ] All components created with descriptions (Model + CreateInput + UpdateInput)
@@ -261,14 +261,14 @@ lt server create <server-name>
 ## Error Handling
 
 **Common Issues:**
-- **TypeScript errors** → Add missing imports manually
-- **CreateInput validation fails** → Check parent's CreateInput for required fields
-- **Tests fail with 403** → Check @Roles decorator, use appropriate user role (not admin when S_USER works)
-- **Security tests not failing** → Verify @Roles and securityCheck() logic, fix model/controller if needed
+- **TypeScript errors** -> Add missing imports manually
+- **CreateInput validation fails** -> Check parent's CreateInput for required fields
+- **Tests fail with 403** -> Check @Roles decorator, use appropriate user role (not admin when S_USER works)
+- **Security tests not failing** -> Verify @Roles and securityCheck() logic, fix model/controller if needed
 
 ## Phase 8: Pre-Report Quality Review
 
-**📖 Complete process: `quality-review.md`**
+**Complete process: `quality-review.md`**
 
 **7 Steps:**
 1. Identify all changes (git)

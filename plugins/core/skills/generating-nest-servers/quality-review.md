@@ -173,20 +173,20 @@ For each file, review:
   const product = {
     id: 'product-456',
     name: 'Test Product',
-    createdBy: 'user-123' // ← Matches user.id → This user is the CREATOR
+    createdBy: 'user-123' // ← Matches user.id -> This user is the CREATOR
   };
 
   // Different user (NOT the creator)
   const otherUser = { id: 'user-789', email: 'other@test.com' };
-  // otherUser.id !== product.createdBy → NOT the creator!
+  // otherUser.id !== product.createdBy -> NOT the creator!
   ```
 
 **The Three Permission Layers**:
 
 1. **Controller/Resolver Layer** (`@Roles()` decorator):
    - Controls WHO can call the endpoint
-   - Example: `@Roles(RoleEnum.ADMIN)` → Only admins can call this endpoint
-   - Example: `@Roles(RoleEnum.S_USER)` → All signed-in users can call
+   - Example: `@Roles(RoleEnum.ADMIN)` -> Only admins can call this endpoint
+   - Example: `@Roles(RoleEnum.S_USER)` -> All signed-in users can call
 
 2. **Service Layer** (`serviceOptions.roles` parameter):
    - Controls what permissions are checked during service processing
@@ -210,8 +210,8 @@ For each file, review:
      }
      ```
    - **Key checks**:
-     - `user?.hasRole(RoleEnum.ADMIN)` → Returns `true` if `user.roles.includes('admin')`
-     - `equalIds(user, this.createdBy)` → Returns `true` if `user.id === this.createdBy`
+     - `user?.hasRole(RoleEnum.ADMIN)` -> Returns `true` if `user.roles.includes('admin')`
+     - `equalIds(user, this.createdBy)` -> Returns `true` if `user.id === this.createdBy`
 
 **Default Permission Behavior**:
 - **Create**: Usually accessible to signed-in users (`RoleEnum.S_USER`)
@@ -302,7 +302,7 @@ describe('Product Module', () => {
       fields: ['token', 'user { id email roles }']
     });
     userToken = userAuth.token;
-    // When this user creates an object → object.createdBy = userAuth.user.id
+    // When this user creates an object -> object.createdBy = userAuth.user.id
 
     // Another regular user (will NOT be the creator)
     const otherUserAuth = await testHelper.graphQl({
@@ -312,7 +312,7 @@ describe('Product Module', () => {
       fields: ['token', 'user { id email roles }']
     });
     otherUserToken = otherUserAuth.token;
-    // otherUserAuth.user.id !== object.createdBy → NOT the creator
+    // otherUserAuth.user.id !== object.createdBy -> NOT the creator
   });
 });
 ```
@@ -334,7 +334,7 @@ describe('Product Module', () => {
 
       expect(result.name).toBe('Test Product');
       // result.createdBy.id now equals userAuth.user.id
-      // → userToken is the CREATOR of this product
+      // -> userToken is the CREATOR of this product
       createdProductId = result.id;
     });
   });
@@ -447,9 +447,9 @@ Before creating tests, verify:
 
 **Common Permission Test Patterns**:
 
-1. **Test with creator** (user.id === object.createdBy) → Should succeed
-2. **Test with admin** (user.roles contains 'admin') → Should succeed
-3. **Test with other user** (user.id !== object.createdBy) → Should fail (403)
+1. **Test with creator** (user.id === object.createdBy) -> Should succeed
+2. **Test with admin** (user.roles contains 'admin') -> Should succeed
+3. **Test with other user** (user.id !== object.createdBy) -> Should fail (403)
 
 **Only after understanding permissions, proceed to create tests.**
 
@@ -485,9 +485,9 @@ The project uses a specific test organization:
 
 ```bash
 # BEFORE creating a test, ask yourself:
-# - Is this a module in src/server/modules/? → tests/modules/<name>.e2e-spec.ts
-# - Is this common functionality? → Add to tests/common.e2e-spec.ts
-# - Is this project-level? → Add to tests/project.e2e-spec.ts
+# - Is this a module in src/server/modules/? -> tests/modules/<name>.e2e-spec.ts
+# - Is this common functionality? -> Add to tests/common.e2e-spec.ts
+# - Is this project-level? -> Add to tests/project.e2e-spec.ts
 
 # Check existing test structure to confirm:
 ls -la tests/
@@ -528,7 +528,7 @@ cat tests/modules/user.e2e-spec.ts
 
 **Common prerequisites to check**:
 1. **Test data dependencies**:
-   - Does the module reference other modules? (e.g., Book → User for borrowedBy)
+   - Does the module reference other modules? (e.g., Book -> User for borrowedBy)
    - Do you need to create related test data first?
    - Example: To test Book with borrowedBy: User, create test User first
 
@@ -775,8 +775,8 @@ npm run test:e2e
    ```
 
    **Step 2**: Analyze results
-   - ✅ **Works with Admin, fails with normal user** → Permission issue (check Roles, securityCheck)
-   - ❌ **Fails with Admin too** → Different issue (check logic, data, validation)
+   -  **Works with Admin, fails with normal user** -> Permission issue (check Roles, securityCheck)
+   -  **Fails with Admin too** -> Different issue (check logic, data, validation)
 
 6. **Common permission issues and solutions**:
 
@@ -828,7 +828,7 @@ async create(input: ProductCreateInput, serviceOptions?: ServiceOptions) {
 
 // 3. Check model securityCheck() - likely returns undefined for non-creator (user.id !== object.createdBy)
 // 4. Fix: Either use Admin user (user.roles contains 'admin') or adjust securityCheck logic
-// 5. Test passes → Remove console.log statements
+// 5. Test passes -> Remove console.log statements
 // 6. Verify tests still pass
 ```
 

@@ -1,13 +1,13 @@
 {
-  "name": "lt",
-  "description": "lenne.tech Claude Code Plugins",
+  "name": "lenne-tech",
+  "description": "Official lenne.tech plugins for Claude Code - Frontend (Nuxt 4), Backend (NestJS), TDD and CLI Tools",
   "owner": {
     "name": "lenne.tech GmbH",
     "url": "https://lenne.tech"
   },
   "plugins": [
     {
-      "name": "lt-core",
+      "name": "core",
       "source": "./plugins/core",
       "description": "Skills, Commands & Hooks for Nuxt 4, NestJS, TDD and CLI tools"
     }

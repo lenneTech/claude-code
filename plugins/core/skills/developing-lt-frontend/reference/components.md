@@ -104,14 +104,14 @@ function handleSave(): void {
 ## Performance
 
 ```typescript
-// ✅ Use computed for derived data (cached)
+//  Use computed for derived data (cached)
 const activeSeasons = computed<SeasonDto[]>(() =>
   seasons.value.filter(s => s.status === 'active')
 )
 
-// ✅ Use methods for actions (not cached)
+//  Use methods for actions (not cached)
 function handleClick(): void { }
 
-// ❌ Don't compute in template
+//  Don't compute in template
 // {{ seasons.filter(s => s.active).length }}
 ```

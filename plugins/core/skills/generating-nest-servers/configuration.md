@@ -124,13 +124,13 @@ lt config help
 
 ### When to Use Configuration
 
-**✅ Use configuration when:**
+** Use configuration when:**
 - Creating multiple modules with the same controller type
 - Working in a team with agreed-upon conventions
 - Automating module generation in CI/CD
 - You want to skip repetitive prompts
 
-**❌ Don't use configuration when:**
+** Don't use configuration when:**
 - Creating a single module with specific requirements
 - Each module needs a different controller type
 - You're just testing or experimenting
@@ -142,7 +142,7 @@ lt config help
 3. **Documentation**: Add a README note explaining the config choices
 4. **Override When Needed**: Use CLI parameters to override for special cases
 
-### 🎯 IMPORTANT: Configuration After Server Creation
+###  IMPORTANT: Configuration After Server Creation
 
 **CRITICAL WORKFLOW**: After creating a new server with `lt server create`, you **MUST** initialize the configuration file to set project conventions.
 
@@ -187,10 +187,10 @@ When you create a new NestJS server, immediately follow these steps:
 
 #### Why This Is Important
 
-- ✅ **Consistency**: All modules will follow the same pattern
-- ✅ **No Prompts**: Developers won't be asked for controller type repeatedly
-- ✅ **Team Alignment**: Everyone uses the same conventions
-- ✅ **Automation**: Scripts and CI/CD can create modules without interaction
+-  **Consistency**: All modules will follow the same pattern
+-  **No Prompts**: Developers won't be asked for controller type repeatedly
+-  **Team Alignment**: Everyone uses the same conventions
+-  **Automation**: Scripts and CI/CD can create modules without interaction
 
 #### Example Workflow
 
@@ -225,28 +225,28 @@ cd projects/api
 }
 
 # Confirm to user
-"✅ Configuration saved! All new modules will default to REST controllers."
+" Configuration saved! All new modules will default to REST controllers."
 "You can change this anytime by editing lt.config.json or running 'lt config init'."
 ```
 
 #### Configuration Options Explained
 
 **"Rest"**:
-- ✅ Creates REST controllers (`@Controller()`)
-- ❌ No GraphQL resolvers
-- ❌ No PubSub integration
+-  Creates REST controllers (`@Controller()`)
+-  No GraphQL resolvers
+-  No PubSub integration
 - **Best for**: Traditional REST APIs, microservices
 
 **"GraphQL"**:
-- ❌ No REST controllers
-- ✅ Creates GraphQL resolvers (`@Resolver()`)
-- ✅ Includes PubSub for subscriptions
+-  No REST controllers
+-  Creates GraphQL resolvers (`@Resolver()`)
+-  Includes PubSub for subscriptions
 - **Best for**: GraphQL-first APIs, real-time apps
 
 **"Both"**:
-- ✅ Creates REST controllers
-- ✅ Creates GraphQL resolvers
-- ✅ Includes PubSub
+-  Creates REST controllers
+-  Creates GraphQL resolvers
+-  Includes PubSub
 - **Best for**: Hybrid APIs, gradual migration
 
 **"auto"**:
@@ -258,9 +258,9 @@ cd projects/api
 #### When NOT to Create Config
 
 Skip config creation if:
-- ❌ User is just testing/experimenting
-- ❌ User explicitly says "no configuration"
-- ❌ Project already has lt.config.json
+-  User is just testing/experimenting
+-  User explicitly says "no configuration"
+-  Project already has lt.config.json
 
 ### Integration with Commands
 

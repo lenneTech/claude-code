@@ -27,7 +27,7 @@ This skill follows a rigorous 7-step iterative process (with Steps 5, 5a, 5b for
    - List all acceptance criteria
    - Note any technical constraints
 
-2. **🔍 VERIFY existing API structure - NEVER assume!**
+2. ** VERIFY existing API structure - NEVER assume!**
    - **Read actual Controller files** to verify endpoints exist:
      - Check HTTP methods (GET, POST, PUT, DELETE)
      - Verify exact endpoint paths (e.g., `/api/users` vs `/users`)
@@ -57,9 +57,9 @@ This skill follows a rigorous 7-step iterative process (with Steps 5, 5a, 5b for
    - Get confirmation on architectural decisions
    - Verify security/permission requirements
 
-**⚠️ CRITICAL:** If you find ANY contradictions or ambiguities, STOP and use AskUserQuestion to clarify BEFORE proceeding to Step 2.
+** CRITICAL:** If you find ANY contradictions or ambiguities, STOP and use AskUserQuestion to clarify BEFORE proceeding to Step 2.
 
-**⚠️ CRITICAL:** If you assume an endpoint exists but didn't verify it in the code, you are doing it WRONG! Always read the actual controller/resolver files first.
+** CRITICAL:** If you assume an endpoint exists but didn't verify it in the code, you are doing it WRONG! Always read the actual controller/resolver files first.
 
 **Step 1 Checklist:**
 - [ ] Story completely read and understood
@@ -72,7 +72,7 @@ This skill follows a rigorous 7-step iterative process (with Steps 5, 5a, 5b for
 
 ## Step 2: Create Story Test
 
-**🔍 BEFORE Creating New Tests - Check Existing Tests First!**
+** BEFORE Creating New Tests - Check Existing Tests First!**
 
 **CRITICAL:** Before writing ANY new test, verify that the functionality isn't already tested!
 
@@ -82,16 +82,16 @@ This skill follows a rigorous 7-step iterative process (with Steps 5, 5a, 5b for
    - Identify tests that might need updates due to story changes
 
 2. **If functionality is already tested:**
-   - ✅ **DO NOT** create duplicate tests
-   - ✅ **Extend** existing tests if new edge cases are needed
-   - ✅ **Update** existing tests if the story changes expected behavior
+   -  **DO NOT** create duplicate tests
+   -  **Extend** existing tests if new edge cases are needed
+   -  **Update** existing tests if the story changes expected behavior
 
 3. **If story changes require modifying existing tests:**
-   - ⚠️ **ALWAYS inform the user** about which tests will be modified and why
-   - ⚠️ **Only modify tests** when story requirements explicitly change the expected behavior
-   - ❌ **NEVER modify tests just because they fail** - failing tests indicate bugs in implementation!
+   -  **ALWAYS inform the user** about which tests will be modified and why
+   -  **Only modify tests** when story requirements explicitly change the expected behavior
+   -  **NEVER modify tests just because they fail** - failing tests indicate bugs in implementation!
 
-**🚨 CRITICAL RULE: Tests Protect Against Unintended Side Effects!**
+** CRITICAL RULE: Tests Protect Against Unintended Side Effects!**
 
 ```
 Test fails after your changes?
@@ -99,11 +99,11 @@ Test fails after your changes?
     ├─► Does the story EXPLICITLY require this behavior change?
     │   │
     │   ├─► YES (documented in story requirements):
-    │   │   └─► ✅ Update the test AND inform the user:
+    │   │   └─►  Update the test AND inform the user:
     │   │       "Updating test X because story requires behavior Y"
     │   │
     │   └─► NO (not mentioned in story):
-    │       └─► ❌ DO NOT modify the test!
+    │       └─►  DO NOT modify the test!
     │           └─► Fix your implementation instead
     │               (you introduced an unintended side effect)
 ```
@@ -111,16 +111,16 @@ Test fails after your changes?
 **Example - WRONG approach:**
 ```typescript
 // Test fails: "expected status 200, got 401"
-// ❌ WRONG: Just change the expected status
+//  WRONG: Just change the expected status
 expect(response.status).toBe(401); // Changed from 200 to make test pass
 ```
 
 **Example - CORRECT approach:**
 ```typescript
 // Test fails: "expected status 200, got 401"
-// ✅ CORRECT: Investigate WHY it fails
-// → Found: Missing authentication token in new implementation
-// → Fix: Add proper authentication, keep test expecting 200
+//  CORRECT: Investigate WHY it fails
+// -> Found: Missing authentication token in new implementation
+// -> Fix: Add proper authentication, keep test expecting 200
 ```
 
 **When to inform user about test changes:**
@@ -128,27 +128,27 @@ expect(response.status).toBe(401); // Changed from 200 to make test pass
 - "Updating expected response in `product-search.test.ts` - story adds new `category` field to response"
 - "Adjusting test data in `order-processing.test.ts` - story changes minimum order amount from 10 to 20"
 
-**📖 For detailed guidance on handling failing tests, see: `handling-existing-tests.md`**
+** For detailed guidance on handling failing tests, see: `handling-existing-tests.md`**
 
 ---
 
-**🚨 CRITICAL: ALWAYS TEST THROUGH API - NEVER DIRECT SERVICE/DB ACCESS! 🚨**
+** CRITICAL: ALWAYS TEST THROUGH API - NEVER DIRECT SERVICE/DB ACCESS! **
 
 **FUNDAMENTAL RULE - Read This First:**
 
 Tests MUST go through REST/GraphQL interfaces (Controller/Resolver) using TestHelper. Direct Service or Database access in test logic makes tests WORTHLESS because they bypass the actual API layer that users interact with.
 
-**✅ ALWAYS DO:**
-- ✅ Test via REST endpoints: `testHelper.rest('/api/users', { method: 'POST', ... })`
-- ✅ Test via GraphQL: `testHelper.graphQl('mutation { createUser(...) }', { ... })`
-- ✅ Use TestHelper for ALL functional testing
-- ✅ Test the complete chain: Controller/Resolver → Guards → Service → Database
+** ALWAYS DO:**
+-  Test via REST endpoints: `testHelper.rest('/api/users', { method: 'POST', ... })`
+-  Test via GraphQL: `testHelper.graphQl('mutation { createUser(...) }', { ... })`
+-  Use TestHelper for ALL functional testing
+-  Test the complete chain: Controller/Resolver -> Guards -> Service -> Database
 
-**❌ NEVER DO:**
-- ❌ Direct Service calls: `userService.create()` - bypasses authentication!
-- ❌ Direct DB queries in tests: `db.collection('users').findOne()` - bypasses business logic!
-- ❌ Service instantiation: `new UserService()` - bypasses dependency injection!
-- ❌ Mocking Controllers or Resolvers - defeats the purpose!
+** NEVER DO:**
+-  Direct Service calls: `userService.create()` - bypasses authentication!
+-  Direct DB queries in tests: `db.collection('users').findOne()` - bypasses business logic!
+-  Service instantiation: `new UserService()` - bypasses dependency injection!
+-  Mocking Controllers or Resolvers - defeats the purpose!
 
 **Why This Rule Is Absolute:**
 - **Security:** Direct Service access bypasses authentication, authorization, guards, decorators
@@ -156,29 +156,29 @@ Tests MUST go through REST/GraphQL interfaces (Controller/Resolver) using TestHe
 - **Business Logic:** Services might have additional validation that gets bypassed
 - **Worthless Tests:** Tests that bypass the API cannot catch real bugs
 
-**🔓 RARE Exceptions - Only for Test Setup/Cleanup (NOT for testing functionality):**
+** RARE Exceptions - Only for Test Setup/Cleanup (NOT for testing functionality):**
 
 Direct database access is ONLY allowed in these specific cases:
 
-**✅ Allowed in beforeAll/beforeEach/afterAll/afterEach:**
+** Allowed in beforeAll/beforeEach/afterAll/afterEach:**
 - Setting user roles: `await db.collection('users').updateOne({ _id: userId }, { $set: { roles: ['admin'] } })`
 - Setting verified status: `await db.collection('users').updateOne({ _id: userId }, { $set: { verified: true } })`
 - Cleanup: `await db.collection('products').deleteMany({ createdBy: testUserId })`
 - Read-only verification when NO API endpoint exists: `const count = await db.collection('logs').countDocuments()`
 
-**⚠️ Ask Yourself First:**
+** Ask Yourself First:**
 Before using direct DB/Service access, ask:
-1. Can I do this via an API endpoint? → If YES, use the API!
-2. Am I testing functionality? → If YES, MUST use API!
-3. Is this just setup/cleanup? → Only then consider direct access
-4. Am I setting roles/verified status? → Allowed exception
-5. Am I reading data that has NO API endpoint? → Allowed, but prefer API
+1. Can I do this via an API endpoint? -> If YES, use the API!
+2. Am I testing functionality? -> If YES, MUST use API!
+3. Is this just setup/cleanup? -> Only then consider direct access
+4. Am I setting roles/verified status? -> Allowed exception
+5. Am I reading data that has NO API endpoint? -> Allowed, but prefer API
 
-**❌ Still NEVER Allowed - Even in Setup:**
-- ❌ Testing functionality via Services
-- ❌ Creating test data via Services when API exists
-- ❌ Verifying results via DB when API query exists
-- ❌ Writing to DB for anything other than roles/verified/cleanup
+** Still NEVER Allowed - Even in Setup:**
+-  Testing functionality via Services
+-  Creating test data via Services when API exists
+-  Verifying results via DB when API query exists
+-  Writing to DB for anything other than roles/verified/cleanup
 
 **Example of correct usage:**
 
@@ -194,14 +194,14 @@ describe('User Registration Story', () => {
   });
 
   afterAll(async () => {
-    // ✅ ALLOWED: Direct DB access for cleanup
+    //  ALLOWED: Direct DB access for cleanup
     if (createdUserId) {
       await db.collection('users').deleteOne({ _id: new ObjectId(createdUserId) });
     }
   });
 
   it('should allow new user to register with valid data', async () => {
-    // ✅ CORRECT: Test via API
+    //  CORRECT: Test via API
     const result = await testHelper.rest('/auth/signup', {
       method: 'POST',
       payload: {
@@ -217,7 +217,7 @@ describe('User Registration Story', () => {
     expect(result.email).toBe('newuser@test.com');
     createdUserId = result.id;
 
-    // ✅ ALLOWED: Set verified flag for subsequent tests
+    //  ALLOWED: Set verified flag for subsequent tests
     await db.collection('users').updateOne(
       { _id: new ObjectId(createdUserId) },
       { $set: { verified: true } }
@@ -225,7 +225,7 @@ describe('User Registration Story', () => {
   });
 
   it('should allow verified user to sign in', async () => {
-    // ✅ CORRECT: Test via API
+    //  CORRECT: Test via API
     const result = await testHelper.rest('/auth/signin', {
       method: 'POST',
       payload: {
@@ -238,10 +238,10 @@ describe('User Registration Story', () => {
     expect(result.token).toBeDefined();
     expect(result.user.email).toBe('newuser@test.com');
 
-    // ❌ WRONG: Don't verify via direct DB access
+    //  WRONG: Don't verify via direct DB access
     // const dbUser = await db.collection('users').findOne({ email: 'newuser@test.com' });
 
-    // ✅ CORRECT: Verify via API
+    //  CORRECT: Verify via API
     const profile = await testHelper.rest('/api/users/me', {
       method: 'GET',
       token: result.token,
@@ -254,7 +254,7 @@ describe('User Registration Story', () => {
 
 ---
 
-**🔍 BEFORE Writing Any Tests - Study the TestHelper:**
+** BEFORE Writing Any Tests - Study the TestHelper:**
 
 **CRITICAL: Read the TestHelper source file to understand all available features!**
 
@@ -292,13 +292,13 @@ mkdir -p tests/stories
 
 Story tests typically require significant setup (TestHelper, database connections, test users, etc.), so files naturally grow larger. A typical story test file ranges from 400-800 lines, with complex features reaching 1000+ lines.
 
-**✅ PREFER extending existing files when:**
+** PREFER extending existing files when:**
 - The new tests relate to the same feature/module
 - The existing file is not excessively large (< 1000 lines)
 - The tests share similar setup/teardown logic
 - It makes logical sense to group them together
 
-**✅ CREATE new files when:**
+** CREATE new files when:**
 - Testing a completely different feature/module
 - The existing file would exceed ~1000-1200 lines
 - The tests require significantly different setup
@@ -314,29 +314,29 @@ tests/stories/
 ```
 
 **Why this matters:**
-- Too many small files → Hard to navigate, duplicate setup code, redundant boilerplate
-- Too few large files → Hard to read, slow to run, merge conflicts
+- Too many small files -> Hard to navigate, duplicate setup code, redundant boilerplate
+- Too few large files -> Hard to read, slow to run, merge conflicts
 - Balance: Group related tests, split when files grow beyond ~1000 lines
 
-**🔍 BEFORE Writing Tests - Verify Your Assumptions:**
+** BEFORE Writing Tests - Verify Your Assumptions:**
 
 **CRITICAL: Only write tests for endpoints that you have VERIFIED exist in the code!**
 
 1. **For REST endpoints:**
    ```typescript
-   // ✅ CORRECT: Verified endpoint exists in user.controller.ts
+   //  CORRECT: Verified endpoint exists in user.controller.ts
    await testHelper.rest('/api/users', { method: 'POST', ... });
 
-   // ❌ WRONG: Assumed endpoint without verification
+   //  WRONG: Assumed endpoint without verification
    await testHelper.rest('/api/users/profile', { method: 'PUT', ... });  // Does this exist?
    ```
 
 2. **For GraphQL mutations/queries:**
    ```typescript
-   // ✅ CORRECT: Verified 'createUser' mutation exists in user.resolver.ts
+   //  CORRECT: Verified 'createUser' mutation exists in user.resolver.ts
    await testHelper.graphQl({ name: 'createUser', type: TestGraphQLType.MUTATION, ... });
 
-   // ❌ WRONG: Assumed mutation without verification
+   //  WRONG: Assumed mutation without verification
    await testHelper.graphQl({ name: 'updateUserProfile', ... });  // Does this exist?
    ```
 
@@ -427,7 +427,7 @@ describe('User Registration Story', () => {
 });
 ```
 
-**🚨 CRITICAL: Test Data Management for Parallel Execution**
+** CRITICAL: Test Data Management for Parallel Execution**
 
 **ALWAYS follow these rules to ensure tests can run in parallel safely!**
 
@@ -438,18 +438,18 @@ Tests run in parallel, so improper test data management causes:
 - Contaminated test database
 - Hard-to-debug test failures
 
-**📋 GOLDEN RULES for Test Data:**
+** GOLDEN RULES for Test Data:**
 
 1. **Email Addresses Must End with @test.com**
    ```typescript
-   // ✅ CORRECT: Will be excluded from external services (e2e.brevo.exclude)
+   //  CORRECT: Will be excluded from external services (e2e.brevo.exclude)
    // Includes timestamp + random suffix for uniqueness even within same millisecond
    const testEmail = `user-${Date.now()}-${Math.random().toString(36).substring(2, 8)}@test.com`;
 
-   // ⚠️ LESS SAFE: Only timestamp (collision risk if tests run in same millisecond)
+   //  LESS SAFE: Only timestamp (collision risk if tests run in same millisecond)
    const testEmail = `user-${Date.now()}@test.com`;
 
-   // ❌ WRONG: Won't be excluded, may trigger external emails
+   //  WRONG: Won't be excluded, may trigger external emails
    const testEmail = 'testuser@example.com';
    ```
 
@@ -457,13 +457,13 @@ Tests run in parallel, so improper test data management causes:
 
 2. **NEVER Reuse Same Data Across Test Files**
    ```typescript
-   // ❌ WRONG: user-story-1.test.ts and user-story-2.test.ts both use:
-   const email = 'admin@test.com';  // ❌ Conflict when running in parallel!
+   //  WRONG: user-story-1.test.ts and user-story-2.test.ts both use:
+   const email = 'admin@test.com';  //  Conflict when running in parallel!
 
-   // ✅ CORRECT: Make data unique per test file with timestamp + random suffix
+   //  CORRECT: Make data unique per test file with timestamp + random suffix
    const email = `admin-user-story-1-${Date.now()}-${Math.random().toString(36).substring(2, 8)}@test.com`;
 
-   // ⚠️ LESS SAFE: Only timestamp
+   //  LESS SAFE: Only timestamp
    const email = `admin-user-story-1-${Date.now()}@test.com`;
    ```
 
@@ -471,10 +471,10 @@ Tests run in parallel, so improper test data management causes:
 
 3. **ONLY Delete What You Created in This Test File**
    ```typescript
-   // ❌ WRONG: Deletes ALL test users (affects parallel tests)
+   //  WRONG: Deletes ALL test users (affects parallel tests)
    await db.collection('users').deleteMany({ email: /@test\.com$/ });
 
-   // ✅ CORRECT: Only delete tracked entities from THIS test
+   //  CORRECT: Only delete tracked entities from THIS test
    if (createdUserIds.length > 0) {
      await db.collection('users').deleteMany({
        _id: { $in: createdUserIds.map(id => new ObjectId(id)) }
@@ -486,12 +486,12 @@ Tests run in parallel, so improper test data management causes:
 
 4. **ALL Created Entities Must Be Cleaned Up**
    ```typescript
-   // ✅ Track EVERY entity created
+   //  Track EVERY entity created
    let createdUserIds: string[] = [];
    let createdProductIds: string[] = [];
    let createdOrderIds: string[] = [];
 
-   // ✅ Clean up ALL in afterAll
+   //  Clean up ALL in afterAll
    afterAll(async () => {
      if (createdOrderIds.length > 0) {
        await db.collection('orders').deleteMany({
@@ -506,11 +506,11 @@ Tests run in parallel, so improper test data management causes:
 
 5. **NEVER Use Fixed Port Numbers**
    ```typescript
-   // ❌ WRONG: Fixed port causes conflicts in parallel tests
+   //  WRONG: Fixed port causes conflicts in parallel tests
    await app.listen(3000);
    const response = await fetch('http://localhost:3000/api/users');
 
-   // ✅ CORRECT: NestJS assigns random ports automatically
+   //  CORRECT: NestJS assigns random ports automatically
    await app.init();  // No port specified
    // Use TestHelper - it handles ports automatically
    const result = await testHelper.rest('/api/users', { ... });
@@ -534,7 +534,7 @@ Tests run in parallel, so improper test data management causes:
      payload: userData,
      token: adminToken,
    });
-   createdUserIds.push(user.id); // ✅ Track for cleanup
+   createdUserIds.push(user.id); //  Track for cleanup
    ```
 
 3. **Delete ALL created entities in afterAll:**
@@ -588,17 +588,17 @@ Tests run in parallel, so improper test data management causes:
    ```
 
 **What to clean up:**
-- ✅ Users created during tests
-- ✅ Products/Resources created during tests
-- ✅ Orders/Transactions created during tests
-- ✅ Any relationships (comments, reviews, etc.)
-- ✅ Files uploaded during tests
-- ✅ Any other test data that persists
+-  Users created during tests
+-  Products/Resources created during tests
+-  Orders/Transactions created during tests
+-  Any relationships (comments, reviews, etc.)
+-  Files uploaded during tests
+-  Any other test data that persists
 
 **What NOT to clean up:**
-- ❌ Global test users created in `beforeAll` that are reused (clean these once at the end)
-- ❌ Database connections (close these separately)
-- ❌ The app instance (close this separately)
+-  Global test users created in `beforeAll` that are reused (clean these once at the end)
+-  Database connections (close these separately)
+-  The app instance (close this separately)
 
 **Step 2 Checklist:**
 - [ ] Test file created in tests/stories/
@@ -631,8 +631,8 @@ npm test -- tests/stories/your-story.story.test.ts
    - Misunderstood requirements (needs clarification)
 
 **Decision point:**
-- If test has bugs/errors → Go to Step 3a
-- If API implementation is missing/incomplete → Go to Step 4
+- If test has bugs/errors -> Go to Step 3a
+- If API implementation is missing/incomplete -> Go to Step 4
 
 **Debugging Test Failures:**
 
@@ -664,12 +664,12 @@ See **reference.md** for detailed debugging instructions and examples.
 **Use the `nest-server-generator` skill for implementation:**
 
 1. **Analyze what's needed:**
-   - New modules? → Use `nest-server-generator`
-   - New objects? → Use `nest-server-generator`
-   - New properties? → Use `nest-server-generator`
-   - Code modifications? → Use `nest-server-generator`
+   - New modules? -> Use `nest-server-generator`
+   - New objects? -> Use `nest-server-generator`
+   - New properties? -> Use `nest-server-generator`
+   - Code modifications? -> Use `nest-server-generator`
 
-2. **🔍 Understand existing codebase first - VERIFY before using:**
+2. ** Understand existing codebase first - VERIFY before using:**
    - **Read actual Service files** before calling methods:
      - Verify method names and signatures
      - Check required parameters and types
@@ -686,24 +686,24 @@ See **reference.md** for detailed debugging instructions and examples.
      - Study MapAndValidatePipe for validation logic (automatically activated via CoreModule - see `node_modules/@lenne.tech/nest-server/src/core/common/pipes/map-and-validate.pipe.ts`)
    - **Review existing similar implementations** - don't assume, verify!
 
-   **⚠️ CRITICAL:** Don't assume methods or properties exist - READ THE CODE to verify!
+   ** CRITICAL:** Don't assume methods or properties exist - READ THE CODE to verify!
 
-2a. **🚨 CRITICAL: Property Descriptions with German Comments**
+2a. ** CRITICAL: Property Descriptions with German Comments**
 
    **When user provides German comments/descriptions for properties, you MUST preserve them correctly!**
 
    **Rule: `ENGLISH (GERMAN)` format**
-   - German: `// Produktname` → Description: `'Product name (Produktname)'`
-   - German: `// Straße` → Description: `'Street (Straße)'`
-   - English: `// Product name` → Description: `'Product name'` (no translation)
+   - German: `// Produktname` -> Description: `'Product name (Produktname)'`
+   - German: `// Straße` -> Description: `'Street (Straße)'`
+   - English: `// Product name` -> Description: `'Product name'` (no translation)
 
    **Process:**
-   1. ✅ Extract ALL comments from user requirements (after `//`)
-   2. ✅ Translate German to English, keep German in parentheses
-   3. ✅ Fix spelling errors but preserve exact wording
-   4. ✅ Apply SAME description to: Model, CreateInput, UpdateInput, @ObjectType, @InputType
-   5. ❌ NEVER change wording (e.g., `Straße` → `Straßenname` is WRONG!)
-   6. ❌ NEVER skip German original in parentheses
+   1.  Extract ALL comments from user requirements (after `//`)
+   2.  Translate German to English, keep German in parentheses
+   3.  Fix spelling errors but preserve exact wording
+   4.  Apply SAME description to: Model, CreateInput, UpdateInput, @ObjectType, @InputType
+   5.  NEVER change wording (e.g., `Straße` -> `Straßenname` is WRONG!)
+   6.  NEVER skip German original in parentheses
 
    **Example from user requirements:**
    ```
@@ -729,29 +729,29 @@ See **reference.md** for detailed debugging instructions and examples.
    price: number;
    ```
 
-   **See `nest-server-generator` skill → `description-management.md` for complete details.**
+   **See `nest-server-generator` skill -> `description-management.md` for complete details.**
 
-3. **🚨 CRITICAL: ServiceOptions when calling other Services:**
+3. ** CRITICAL: ServiceOptions when calling other Services:**
 
    **NEVER blindly pass all ServiceOptions when one Service calls another!**
 
    When implementing Service methods that call other Services, analyze which options to pass:
 
-   **❌ WRONG:**
+   ** WRONG:**
    ```typescript
-   // ❌ BAD: Blindly passing all serviceOptions
+   //  BAD: Blindly passing all serviceOptions
    const product = await this.productService.findOne({ id: input.productId }, serviceOptions);
    ```
 
-   **✅ CORRECT:**
+   ** CORRECT:**
    ```typescript
-   // ✅ GOOD: Only pass what's needed (usually just currentUser)
+   //  GOOD: Only pass what's needed (usually just currentUser)
    const product = await this.productService.findOne(
      { id: input.productId },
      { currentUser: serviceOptions.currentUser }
    );
 
-   // ✅ GOOD: Only set inputType if different Input class is needed
+   //  GOOD: Only set inputType if different Input class is needed
    const user = await this.userService.findOne(
      { id: input.userId },
      {
@@ -782,26 +782,26 @@ See **reference.md** for detailed debugging instructions and examples.
    - Follow established conventions
    - Reuse existing utilities
 
-4a. **🔐 IMPORTANT: Guards in Controllers**
+4a. ** IMPORTANT: Guards in Controllers**
 
    **DO NOT manually add `@UseGuards(AuthGuard(AuthGuardStrategy.JWT))` - it's automatically activated by `@Roles()`!**
 
    ```typescript
-   // ✅ CORRECT: @Roles automatically activates JWT guard
+   //  CORRECT: @Roles automatically activates JWT guard
    @Roles(RoleEnum.ADMIN)
    @Get()
    async findAll() {
      return this.service.find();
    }
 
-   // ✅ CORRECT: @Restricted also activates guards automatically
+   //  CORRECT: @Restricted also activates guards automatically
    @Restricted()
    @Post()
    async create(@Body() input: CreateDto) {
      return this.service.create(input);
    }
 
-   // ❌ WRONG: Redundant manual guard (already included by @Roles)
+   //  WRONG: Redundant manual guard (already included by @Roles)
    @UseGuards(AuthGuard(AuthGuardStrategy.JWT))
    @Roles(RoleEnum.ADMIN)
    @Get()
@@ -816,17 +816,17 @@ See **reference.md** for detailed debugging instructions and examples.
    - Adding `@UseGuards(AuthGuard(...))` manually is redundant and creates duplicate guards
    - Existing controllers don't use manual guards - follow this pattern
 
-5. **🔍 IMPORTANT: Database Indexes**
+5. ** IMPORTANT: Database Indexes**
 
    **Always define indexes directly in the @UnifiedField decorator via mongoose option!**
 
    **Quick Guidelines:**
-   - Fields used in queries → Add `mongoose: { index: true, type: String }`
-   - Foreign keys → Add index
-   - Unique fields → Add `mongoose: { index: true, unique: true, type: String }`
-   - ⚠️ NEVER define indexes separately in schema files
+   - Fields used in queries -> Add `mongoose: { index: true, type: String }`
+   - Foreign keys -> Add index
+   - Unique fields -> Add `mongoose: { index: true, unique: true, type: String }`
+   -  NEVER define indexes separately in schema files
 
-   **📖 For detailed index patterns and examples, see: `database-indexes.md`**
+   ** For detailed index patterns and examples, see: `database-indexes.md`**
 
 6. **Prefer existing packages:**
    - Check if @lenne.tech/nest-server provides needed functionality
@@ -847,10 +847,10 @@ npm test
 
 **Check results:**
 
-✅ **All tests pass?**
+ **All tests pass?**
 - Continue to Step 5a (Code Quality Check)
 
-❌ **Some tests still fail?**
+ **Some tests still fail?**
 - Return to Step 3 (analyze failures)
 - Continue iteration
 
@@ -868,7 +868,7 @@ Once all tests are passing, analyze your implementation for code quality issues:
 - Similar code paths (consolidate with flexible parameters)
 - Consistency with existing patterns
 
-**📖 For detailed refactoring patterns and examples, see: `code-quality.md`**
+** For detailed refactoring patterns and examples, see: `code-quality.md`**
 
 ### 4. Review for Consistency
 
@@ -883,21 +883,21 @@ Once all tests are passing, analyze your implementation for code quality issues:
 **Verify that indexes are defined where needed:**
 
 **Quick check:**
-- Fields used in find/filter → Has index?
-- Foreign keys (userId, productId, etc.) → Has index?
-- Unique fields (email, username) → Has unique: true?
-- Fields used in sorting → Has index?
+- Fields used in find/filter -> Has index?
+- Foreign keys (userId, productId, etc.) -> Has index?
+- Unique fields (email, username) -> Has unique: true?
+- Fields used in sorting -> Has index?
 
 **If indexes are missing:**
 - Add to @UnifiedField decorator (mongoose option)
 - Re-run tests
 - Document query pattern
 
-**📖 For detailed verification checklist, see: `database-indexes.md`**
+** For detailed verification checklist, see: `database-indexes.md`**
 
 ### 4b. Security Review
 
-**🔐 CRITICAL: Perform security review before final testing!**
+** CRITICAL: Perform security review before final testing!**
 
 **ALWAYS review all code changes for security vulnerabilities.**
 
@@ -923,7 +923,7 @@ Once all tests are passing, analyze your implementation for code quality issues:
 3. Re-run security checklist
 4. Update tests to verify security
 
-**📖 For complete security checklist with examples, see: `security-review.md`**
+** For complete security checklist with examples, see: `security-review.md`**
 
 ### 5. Refactoring Decision Tree
 
@@ -959,12 +959,12 @@ npm test
 ```
 
 **Ensure:**
-- ✅ All tests still pass
-- ✅ No new failures introduced
-- ✅ Code is more maintainable
-- ✅ No functionality changed
-- ✅ Indexes properly applied
-- ✅ **Security checks still working (authorization tests pass)**
+-  All tests still pass
+-  No new failures introduced
+-  Code is more maintainable
+-  No functionality changed
+-  Indexes properly applied
+-  **Security checks still working (authorization tests pass)**
 
 ### 7. When to Skip Refactoring
 
@@ -990,15 +990,15 @@ npm test
    ```
 
 2. **Verify:**
-   - ✅ All tests pass
-   - ✅ Test coverage is adequate
-   - ✅ Code follows project patterns
-   - ✅ No obvious duplication
-   - ✅ Clean and maintainable
-   - ✅ **Security review completed**
-   - ✅ **No security vulnerabilities introduced**
-   - ✅ **Authorization tests pass**
+   -  All tests pass
+   -  Test coverage is adequate
+   -  Code follows project patterns
+   -  No obvious duplication
+   -  Clean and maintainable
+   -  **Security review completed**
+   -  **No security vulnerabilities introduced**
+   -  **Authorization tests pass**
 
 3. **Generate final report for developer**
 
-4. **YOU'RE DONE!** 🎉
+4. **YOU'RE DONE!** 

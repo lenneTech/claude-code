@@ -43,21 +43,21 @@ Acceptance Criteria:
 - Can users review a product multiple times? (Assuming NO)
 - What validation for rating? (Assuming 1-5 integer)
 
-**🔍 Verification of existing API (CRITICAL - Do this BEFORE writing tests!):**
+** Verification of existing API (CRITICAL - Do this BEFORE writing tests!):**
 
 1. **Check Product endpoints:**
    ```
-   ✅ Read src/server/modules/product/product.controller.ts
-   ✅ Verified: GET /api/products exists (line 23)
-   ✅ Verified: POST /api/products exists (line 45)
-   ✅ Verified: Returns Product with id, name, price
+    Read src/server/modules/product/product.controller.ts
+    Verified: GET /api/products exists (line 23)
+    Verified: POST /api/products exists (line 45)
+    Verified: Returns Product with id, name, price
    ```
 
 2. **Check Review endpoints:**
    ```
-   ❌ Review module does NOT exist yet
-   ❌ POST /api/reviews needs to be implemented
-   ❌ GET /api/products/:id/reviews needs to be implemented
+    Review module does NOT exist yet
+    POST /api/reviews needs to be implemented
+    GET /api/products/:id/reviews needs to be implemented
    ```
 
 3. **Plan implementation:**
@@ -85,7 +85,7 @@ import envConfig from '../../src/config.env';
 import { RoleEnum } from '../../src/server/common/enums/role.enum';
 import { imports, ServerModule } from '../../src/server/server.module';
 
-// ⚠️ NOTE: No Service imports! Tests must use API endpoints only.
+//  NOTE: No Service imports! Tests must use API endpoints only.
 // Services are only accessed indirectly through Controllers/Resolvers.
 
 describe('Product Review Story', () => {
@@ -149,7 +149,7 @@ describe('Product Review Story', () => {
     gAdminId = adminSignUp.user.id;
     gAdminToken = adminSignUp.token;
 
-    // ✅ ALLOWED EXCEPTION: Set admin role via direct DB access (no API endpoint for this)
+    //  ALLOWED EXCEPTION: Set admin role via direct DB access (no API endpoint for this)
     await db.collection('users').updateOne(
       { _id: new ObjectId(gAdminId) },
       { $set: { roles: [RoleEnum.ADMIN] } }
@@ -350,8 +350,8 @@ describe('Product Review Story', () => {
 
 **First run - Expected failures:**
 ```
-❌ POST /api/reviews → 404 (endpoint doesn't exist)
-❌ GET /api/products/:id/reviews → 404 (endpoint doesn't exist)
+ POST /api/reviews -> 404 (endpoint doesn't exist)
+ GET /api/products/:id/reviews -> 404 (endpoint doesn't exist)
 ```
 
 **Implementation (using nest-server-generator):**
@@ -374,7 +374,7 @@ lt server addProp Review comment:string? --no-interactive
 
 **Final run - All tests pass:**
 ```
-✅ All tests passing (8 scenarios)
+ All tests passing (8 scenarios)
 ```
 
 ---
@@ -430,7 +430,7 @@ import envConfig from '../../src/config.env';
 import { RoleEnum } from '../../src/server/common/enums/role.enum';
 import { imports, ServerModule } from '../../src/server/server.module';
 
-// ⚠️ NOTE: No Service imports! Tests must use API endpoints only.
+//  NOTE: No Service imports! Tests must use API endpoints only.
 // Services are only accessed indirectly through Controllers/Resolvers.
 
 describe('Order Processing Story', () => {
@@ -497,7 +497,7 @@ describe('Order Processing Story', () => {
     gAdminId = adminSignUp.user.id;
     gAdminToken = adminSignUp.token;
 
-    // ✅ ALLOWED EXCEPTION: Set admin role via direct DB access (no API endpoint for this)
+    //  ALLOWED EXCEPTION: Set admin role via direct DB access (no API endpoint for this)
     await db.collection('users').updateOne(
       { _id: new ObjectId(gAdminId) },
       { $set: { roles: [RoleEnum.ADMIN] } }
@@ -812,7 +812,7 @@ describe('Order Processing Story', () => {
 export class OrderItem {
   @UnifiedField({
     description: 'Reference to product',
-    mongoose: { index: true, type: String }  // ✅ Index for queries by product
+    mongoose: { index: true, type: String }  //  Index for queries by product
   })
   productId: string;
 
@@ -838,13 +838,13 @@ export class OrderItem {
 export class Order {
   @UnifiedField({
     description: 'Customer who placed the order',
-    mongoose: { index: true, type: String }  // ✅ Frequent queries by customer
+    mongoose: { index: true, type: String }  //  Frequent queries by customer
   })
   customerId: string;
 
   @UnifiedField({
     description: 'Order status',
-    mongoose: { index: true, type: String }  // ✅ Filtering by status
+    mongoose: { index: true, type: String }  //  Filtering by status
   })
   status: string;
 
@@ -869,8 +869,8 @@ export class Order {
 ```
 
 **Why these indexes?**
-- `customerId`: Service queries orders by customer → needs index
-- `status`: Service filters by status (pending, completed) → needs index
+- `customerId`: Service queries orders by customer -> needs index
+- `status`: Service filters by status (pending, completed) -> needs index
 - Both indexed individually for flexible querying
 
 **Service logic for total calculation and stock validation:**
@@ -963,7 +963,7 @@ import envConfig from '../../src/config.env';
 import { RoleEnum } from '../../src/server/common/enums/role.enum';
 import { imports, ServerModule } from '../../src/server/server.module';
 
-// ⚠️ NOTE: No Service imports! Tests must use API endpoints only.
+//  NOTE: No Service imports! Tests must use API endpoints only.
 // Services are only accessed indirectly through Controllers/Resolvers.
 
 describe('Profile Update Story (GraphQL)', () => {
@@ -1075,7 +1075,7 @@ describe('Profile Update Story (GraphQL)', () => {
     // Track for cleanup
     createdUserIds.push(gAdminUserId);
 
-    // ✅ ALLOWED EXCEPTION: Set admin role via direct DB access (no API endpoint for this)
+    //  ALLOWED EXCEPTION: Set admin role via direct DB access (no API endpoint for this)
     await db.collection('users').updateOne(
       { _id: new ObjectId(gAdminUserId) },
       { $set: { roles: [RoleEnum.ADMIN] } }
@@ -1227,7 +1227,7 @@ describe('Profile Update Story (GraphQL)', () => {
 
 When your tests fail and error messages are unclear, enable debugging:
 
-**🔍 TIP: For all TestHelper options, read the source file:**
+** TIP: For all TestHelper options, read the source file:**
 
 ```
 node_modules/@lenne.tech/nest-server/src/test/test.helper.ts

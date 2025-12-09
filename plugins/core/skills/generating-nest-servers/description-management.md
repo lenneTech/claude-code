@@ -4,7 +4,7 @@ version: 1.0.0
 description: Guidelines for consistent description management across all generated components
 ---
 
-# 🚨 CRITICAL: Description Management
+#  CRITICAL: Description Management
 
 ## Table of Contents
 - [Step 1: ALWAYS Extract Descriptions from User Input](#-step-1-always-extract-descriptions-from-user-input)
@@ -15,11 +15,11 @@ description: Guidelines for consistent description management across all generat
 - [If You Forget](#-if-you-forget)
 - [Quick Reference](#quick-reference)
 
-**⚠️ COMMON MISTAKE:** Descriptions are often applied inconsistently or only partially. You MUST follow this process for EVERY component.
+** COMMON MISTAKE:** Descriptions are often applied inconsistently or only partially. You MUST follow this process for EVERY component.
 
 ---
 
-## 🔍 Step 1: ALWAYS Extract Descriptions from User Input
+##  Step 1: ALWAYS Extract Descriptions from User Input
 
 **BEFORE generating ANY code, scan the user's specification for description hints:**
 
@@ -36,7 +36,7 @@ description: Guidelines for consistent description management across all generat
 
 ---
 
-## 📝 Step 2: Format Descriptions Correctly
+##  Step 2: Format Descriptions Correctly
 
 **Rule**: `"ENGLISH_DESCRIPTION (DEUTSCHE_BESCHREIBUNG)"`
 
@@ -50,18 +50,18 @@ description: Guidelines for consistent description management across all generat
 | `// Postleizahl` (typo) | German | `'Postal code (Postleitzahl)'` |
 | (no comment) | - | Create meaningful English description |
 
-### ⚠️ CRITICAL - Preserving Original Text
+###  CRITICAL - Preserving Original Text
 
 **1. Fix spelling errors ONLY:**
-- ✅ Correct typos: `Postleizahl` → `Postleitzahl` (missing 't')
-- ✅ Fix character errors: `Starße` → `Straße` (wrong character)
-- ✅ Correct English typos: `Prodcut name` → `Product name`
+-  Correct typos: `Postleizahl` -> `Postleitzahl` (missing 't')
+-  Fix character errors: `Starße` -> `Straße` (wrong character)
+-  Correct English typos: `Prodcut name` -> `Product name`
 
 **2. DO NOT change the wording:**
-- ❌ NEVER rephrase: `Straße` → `Straßenname` (NO!)
-- ❌ NEVER expand: `Produkt` → `Produktbezeichnung` (NO!)
-- ❌ NEVER improve: `Name` → `Full name` (NO!)
-- ❌ NEVER translate differently: `Name` → `Title` (NO!)
+-  NEVER rephrase: `Straße` -> `Straßenname` (NO!)
+-  NEVER expand: `Produkt` -> `Produktbezeichnung` (NO!)
+-  NEVER improve: `Name` -> `Full name` (NO!)
+-  NEVER translate differently: `Name` -> `Title` (NO!)
 
 **3. Why this is critical:**
 - User comments may be **predefined terms** from requirements
@@ -71,25 +71,25 @@ description: Guidelines for consistent description management across all generat
 ### Examples
 
 ```
-✅ CORRECT:
-// Straße → 'Street (Straße)'  (only translated)
-// Starße → 'Street (Straße)'  (typo fixed, then translated)
-// Produkt → 'Product (Produkt)'  (keep original word)
-// Strasse → 'Street (Straße)'  (ss→ß corrected, then translated)
+ CORRECT:
+// Straße -> 'Street (Straße)'  (only translated)
+// Starße -> 'Street (Straße)'  (typo fixed, then translated)
+// Produkt -> 'Product (Produkt)'  (keep original word)
+// Strasse -> 'Street (Straße)'  (ss ->ß corrected, then translated)
 
-❌ WRONG:
-// Straße → 'Street name (Straßenname)'  (changed wording!)
-// Produkt → 'Product name (Produktname)'  (added word!)
-// Name → 'Full name (Vollständiger Name)'  (rephrased!)
+ WRONG:
+// Straße -> 'Street name (Straßenname)'  (changed wording!)
+// Produkt -> 'Product name (Produktname)'  (added word!)
+// Name -> 'Full name (Vollständiger Name)'  (rephrased!)
 ```
 
 **Rule Summary**: Fix typos, preserve wording, translate accurately.
 
 ---
 
-## ✅ Step 3: Apply Descriptions EVERYWHERE (Most Critical!)
+##  Step 3: Apply Descriptions EVERYWHERE (Most Critical!)
 
-**🚨 YOU MUST apply the SAME description to ALL of these locations:**
+** YOU MUST apply the SAME description to ALL of these locations:**
 
 ### For Module Properties
 
@@ -148,19 +148,19 @@ export class Product extends CoreModel { ... }
 
 ---
 
-## ⛔ Common Mistakes to AVOID
+##  Common Mistakes to AVOID
 
-1. ❌ **Partial application**: Descriptions only in Models, not in Inputs
-2. ❌ **Inconsistent format**: German-only in some places, English-only in others
-3. ❌ **Missing descriptions**: No descriptions when user provided comments
-4. ❌ **Ignoring Object inputs**: Forgetting to add descriptions to SubObject Input files
-5. ❌ **Wrong format**: Using `(ENGLISH)` instead of `ENGLISH (DEUTSCH)`
-6. ❌ **Changing wording**: Rephrasing user's original terms
-7. ❌ **Adding words**: Expanding user's terminology
+1.  **Partial application**: Descriptions only in Models, not in Inputs
+2.  **Inconsistent format**: German-only in some places, English-only in others
+3.  **Missing descriptions**: No descriptions when user provided comments
+4.  **Ignoring Object inputs**: Forgetting to add descriptions to SubObject Input files
+5.  **Wrong format**: Using `(ENGLISH)` instead of `ENGLISH (DEUTSCH)`
+6.  **Changing wording**: Rephrasing user's original terms
+7.  **Adding words**: Expanding user's terminology
 
 ---
 
-## ✅ Verification Checklist
+##  Verification Checklist
 
 After generating code, ALWAYS verify:
 
@@ -178,7 +178,7 @@ After generating code, ALWAYS verify:
 
 ---
 
-## 🔄 If You Forget
+##  If You Forget
 
 **If you generate code and realize descriptions are missing or inconsistent:**
 
@@ -200,11 +200,11 @@ After generating code, ALWAYS verify:
 ### Format Rules
 
 ```
-English input    → 'Product name'
-German input     → 'Product name (Produktname)'
-No input         → Create meaningful description
-Typo input       → Fix typo, then translate
-Mixed input      → Standardize to 'ENGLISH (DEUTSCH)'
+English input    -> 'Product name'
+German input     -> 'Product name (Produktname)'
+No input         -> Create meaningful description
+Typo input       -> Fix typo, then translate
+Mixed input      -> Standardize to 'ENGLISH (DEUTSCH)'
 ```
 
 ### Application Checklist
