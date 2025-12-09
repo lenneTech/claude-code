@@ -21,7 +21,7 @@ lt claude plugin
 /plugin marketplace add lenneTech/claude-code
 
 # Install plugin
-/plugin install core@lenne-tech
+/plugin install lt@lenne-tech
 ```
 
 **Note:** Manual installation requires you to configure permissions yourself. Copy the permission patterns from `plugins/core/permissions.json` into `~/.claude/settings.json`:
@@ -40,7 +40,7 @@ If the file already exists, merge the `allow` entries with your existing permiss
 
 ## Plugins
 
-### core
+### lt
 
 Skills, Commands and Hooks for Frontend (Nuxt 4), Backend (NestJS/nest-server), TDD and CLI Tools.
 

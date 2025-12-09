@@ -7,7 +7,7 @@
   },
   "plugins": [
     {
-      "name": "core",
+      "name": "lt",
       "source": "./plugins/core",
       "description": "Skills, Commands & Hooks for Nuxt 4, NestJS, TDD and CLI tools"
     }
