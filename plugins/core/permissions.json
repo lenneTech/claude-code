@@ -13,6 +13,36 @@
       "usedBy": ["building-stories-with-tdd"]
     },
     {
+      "pattern": "Bash(npm run test\\:e2e:*)",
+      "description": "Run end-to-end tests",
+      "usedBy": ["generating-nest-servers"]
+    },
+    {
+      "pattern": "Bash(npm start:*)",
+      "description": "Start the application",
+      "usedBy": ["generating-nest-servers"]
+    },
+    {
+      "pattern": "Bash(npm run start:*)",
+      "description": "Start the application in different modes",
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend"]
+    },
+    {
+      "pattern": "Bash(npm run build:*)",
+      "description": "Build the application",
+      "usedBy": ["generating-nest-servers"]
+    },
+    {
+      "pattern": "Bash(npm run lint:*)",
+      "description": "Run linter checks",
+      "usedBy": ["generating-nest-servers"]
+    },
+    {
+      "pattern": "Bash(npm run generate-types:*)",
+      "description": "Generate TypeScript types from backend API",
+      "usedBy": ["developing-lt-frontend"]
+    },
+    {
       "pattern": "Bash(lt server:*)",
       "description": "Execute lt server commands (module, object, addProp, create)",
       "usedBy": ["generating-nest-servers"]
@@ -21,11 +51,6 @@
       "pattern": "Bash(lt:*)",
       "description": "Execute general lt CLI commands (git, fullstack)",
       "usedBy": ["using-lt-cli"]
-    },
-    {
-      "pattern": "Bash(npm run generate-types:*)",
-      "description": "Generate TypeScript types from backend API",
-      "usedBy": ["developing-lt-frontend"]
     }
   ]
 }

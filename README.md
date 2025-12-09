@@ -10,8 +10,8 @@ Claude Code Plugins by lenne.tech.
 # Install CLI if not already installed
 npm i -g @lenne.tech/cli
 
-# Install plugin and configure permissions
-lt claude install-plugin
+# Install or update plugin and configure permissions
+lt claude plugin
 ```
 
 ### Manual Installation
