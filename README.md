@@ -21,10 +21,10 @@ lt claude plugin
 /plugin marketplace add lenneTech/claude-code
 
 # Install plugin
-/plugin install lt@lenne-tech
+/plugin install lt-dev@lenne-tech
 ```
 
-**Note:** Manual installation requires you to configure permissions yourself. Copy the permission patterns from `plugins/lt/permissions.json` into `~/.claude/settings.json`:
+**Note:** Manual installation requires you to configure permissions yourself. Copy the permission patterns from `plugins/lt-dev/permissions.json` into `~/.claude/settings.json`:
 
 ```json
 {
@@ -36,11 +36,11 @@ lt claude plugin
 }
 ```
 
-If the file already exists, merge the `allow` entries with your existing permissions. See `plugins/lt/permissions.json` for the current list of required permissions.
+If the file already exists, merge the `allow` entries with your existing permissions. See `plugins/lt-dev/permissions.json` for the current list of required permissions.
 
 ## Plugins
 
-### lt
+### lt-dev
 
 Skills, Commands and Hooks for Frontend (Nuxt 4), Backend (NestJS/nest-server), TDD and CLI Tools.
 
@@ -118,7 +118,7 @@ The script updates `plugin.json` + `package.json`, creates commit, tag and pushe
 
 ### Permissions Configuration
 
-The file `plugins/lt/permissions.json` defines all Bash permissions required by the skills. The lenne.tech CLI reads this file during installation and automatically configures the permissions in `~/.claude/settings.json`.
+The file `plugins/lt-dev/permissions.json` defines all Bash permissions required by the skills. The lenne.tech CLI reads this file during installation and automatically configures the permissions in `~/.claude/settings.json`.
 
 **Important:** When adding or modifying skills that use new CLI commands, update `permissions.json` accordingly:
 
@@ -146,7 +146,7 @@ claude-code/
 ├── .claude-plugin/
 │   └── marketplace.json
 ├── plugins/
-│   └── lt/
+│   └── lt-dev/
 │       ├── .claude-plugin/
 │       │   └── plugin.json
 │       ├── permissions.json      # Required permissions for skills
