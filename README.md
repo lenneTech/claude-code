@@ -10,9 +10,22 @@ Claude Code Plugins by lenne.tech.
 # Install CLI if not already installed
 npm i -g @lenne.tech/cli
 
-# Install or update plugin and configure permissions
-lt claude plugin
+# Install or update ALL available plugins
+lt claude plugins
+
+# Install or update specific plugin(s)
+lt claude plugins lt-dev
+lt claude plugins lt-dev another-plugin
+
+# List available plugins (shown on error if plugin not found)
+lt claude plugins non-existent
 ```
+
+The CLI automatically:
+- Fetches available plugins from this repository
+- Updates the marketplace cache to ensure latest versions
+- Installs/updates the specified plugins
+- Configures all required permissions in `~/.claude/settings.json`
 
 ### Manual Installation
 
