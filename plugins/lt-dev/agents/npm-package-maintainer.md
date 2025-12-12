@@ -162,10 +162,19 @@ npm install && npm run build && npm test
 
 **Goal**: Identify all updateable packages
 
+**Use `ncu` (npm-check-updates) instead of `npm outdated`** - it shows the actual latest versions, not just those within semver ranges.
+
 ```bash
-# Discover all update candidates
-npm outdated --long > outdated-report.txt
-cat outdated-report.txt
+# Discover all update candidates (use npx for no global install required)
+npx ncu
+
+# Or with grouping by update type (recommended)
+npx ncu --format group
+
+# Check only specific target (patch/minor/major)
+npx ncu --target patch   # Only patches
+npx ncu --target minor   # Patches + minor
+npx ncu --target latest  # All updates (default)
 ```
 
 Group packages into risk categories:
@@ -236,17 +245,17 @@ npm run build && npm test
 
 ```bash
 # Check if more updates are available
-npm outdated
+npx ncu
 
 # If output shows updateable packages:
 # → GO BACK TO PHASE 3 and repeat
 
-# Continue until npm outdated shows ONLY architectural blockers or is empty
+# Continue until ncu shows ONLY architectural blockers or is empty
 ```
 
 **DO NOT STOP UNTIL**:
-- `npm outdated` shows zero updateable packages, OR
-- `npm outdated` shows ONLY packages blocked by architectural migrations
+- `npx ncu` shows zero updateable packages, OR
+- `npx ncu` shows ONLY packages blocked by architectural migrations
 
 ### Phase 7: Final Verification (MANDATORY)
 
@@ -369,12 +378,12 @@ Before declaring success, verify ALL of these:
 - [ ] Verified build & tests pass
 
 ### Priority 3: Package Updates
-- [ ] Ran `npm outdated` to discover ALL candidates
+- [ ] Ran `npx ncu` to discover ALL candidates (shows actual latest versions)
 - [ ] Categorized packages into SAFE/MEDIUM/HIGH RISK
 - [ ] Attempted updates for ALL categories
 - [ ] Minimized code changes (preferred updates without modifications)
 - [ ] Fixed code strategically when value justified
-- [ ] ITERATED: Ran `npm outdated` again after successful updates
+- [ ] ITERATED: Ran `npx ncu` again after successful updates
 - [ ] CONTINUED ITERATING until no more fixable updates
 - [ ] Documented ALL blocked updates with reasons
 
@@ -386,7 +395,7 @@ Before declaring success, verify ALL of these:
 - [ ] `npm test` passes (all tests green)
 - [ ] `npm audit` shows 0 vulnerabilities
 - [ ] Source code changes minimized
-- [ ] Final `npm outdated` shows only blockers or empty
+- [ ] Final `npx ncu` shows only blockers or empty
 
 ## Key Principles
 
@@ -398,7 +407,7 @@ Before declaring success, verify ALL of these:
 6. **Minimize Source Changes**: Prefer updates without modifications
 7. **Security is Non-Negotiable**: Always run `npm audit fix`
 8. **Fix Code Strategically**: Type/API fixes acceptable when justified
-9. **Iterate Until Complete**: Run `npm outdated` and continue
+9. **Iterate Until Complete**: Run `npx ncu` and continue
 10. **Git is Recovery Tool**: Use for unfixable updates, not to avoid fixing
 11. **Document Blockers**: Only architectural blockers need documentation
 12. **Batch SAFE**: Group low-risk updates

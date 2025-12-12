@@ -55,7 +55,7 @@ If the file already exists, merge the `allow` entries with your existing permiss
 
 ### lt-dev
 
-Skills, Commands and Hooks for Frontend (Nuxt 4), Backend (NestJS/nest-server), TDD and CLI Tools.
+Skills, Commands, Hooks and Agents for Frontend (Nuxt 4), Backend (NestJS/nest-server), TDD and CLI Tools.
 
 ## Included Components
 
