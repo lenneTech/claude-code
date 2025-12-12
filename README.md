@@ -59,7 +59,7 @@ Skills, Commands and Hooks for Frontend (Nuxt 4), Backend (NestJS/nest-server), 
 
 ## Included Components
 
-### Skills (4)
+### Skills (5)
 
 | Skill | Description |
 |-------|-------------|
@@ -67,8 +67,15 @@ Skills, Commands and Hooks for Frontend (Nuxt 4), Backend (NestJS/nest-server), 
 | `generating-nest-servers` | NestJS with @lenne.tech/nest-server |
 | `building-stories-with-tdd` | Test-Driven Development Workflow |
 | `using-lt-cli` | lenne.tech CLI for Git and Fullstack Init |
+| `npm-package-maintenance` | Discovery skill for npm package maintenance commands |
 
-### Commands (13)
+### Agents (1)
+
+| Agent | Description |
+|-------|-------------|
+| `npm-package-maintainer` | Specialized agent for maintaining, updating, and auditing npm packages |
+
+### Commands (18)
 
 **Root:**
 - `/create-story` - Create User Story for TDD (German)
@@ -92,6 +99,13 @@ Skills, Commands and Hooks for Frontend (Nuxt 4), Backend (NestJS/nest-server), 
 - `/vibe:plan` - Create implementation plan from SPEC.md
 - `/vibe:build` - Execute IMPLEMENTATION_PLAN.md
 - `/vibe:build-plan` - Plan + Build in one step
+
+**Maintenance (`/maintenance/`):**
+- `/maintain` - Full npm package maintenance (remove unused, optimize, update)
+- `/maintain-check` - Dry-run analysis without changes
+- `/maintain-security` - Security-only updates (npm audit fixes)
+- `/maintain-pre-release` - Conservative patch-only updates before release
+- `/maintain-post-feature` - Cleanup after feature development
 
 ### Hooks (3)
 
@@ -164,10 +178,13 @@ claude-code/
 │       │   └── plugin.json
 │       ├── permissions.json      # Required permissions for skills
 │       ├── .mcp.json             # MCP server configurations
+│       ├── agents/
+│       │   └── npm-package-maintainer.md
 │       ├── skills/
 │       │   ├── building-stories-with-tdd/
 │       │   ├── developing-lt-frontend/
 │       │   ├── generating-nest-servers/
+│       │   ├── npm-package-maintenance/
 │       │   └── using-lt-cli/
 │       ├── commands/
 │       │   ├── create-story.md
@@ -176,6 +193,7 @@ claude-code/
 │       │   ├── backend/
 │       │   ├── docker/
 │       │   ├── git/
+│       │   ├── maintenance/
 │       │   └── vibe/
 │       └── hooks/
 │           └── hooks.json
