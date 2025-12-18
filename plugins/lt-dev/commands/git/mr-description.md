@@ -1,5 +1,23 @@
 ---
 description: Generate Merge Request description
+allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git status:*), Bash(git branch:*), Read
+---
+
+# Generate MR Description
+
+## When to Use This Command
+
+- Before creating a Merge/Pull Request
+- When you need a structured summary of your branch changes
+- To document changes for code reviewers
+
+## Related Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/lt-dev:git:commit-message` | Generate commit message suggestions |
+| `/lt-dev:git:mr-description-clipboard` | Same as this, but with clipboard copy |
+
 ---
 
 Create a comprehensive summary of the changes in English so I can use it as a description in a Merge Request. Only include the essential points.

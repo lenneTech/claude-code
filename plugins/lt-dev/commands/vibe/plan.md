@@ -1,8 +1,20 @@
 ---
 description: Create detailed implementation plan from SPEC.md
+argument-hint: [spec-file]
 ---
 
 # Plan
+
+## When to Use This Command
+
+- You have a `SPEC.md` with feature requirements
+- You want to create a detailed implementation plan before coding
+- You need to review and approve the plan before execution
+- Use `/vibe:build` afterwards to execute the plan
+
+**Related commands:**
+- `/vibe:build` - Execute an existing IMPLEMENTATION_PLAN.md
+- `/vibe:build-plan` - Plan + Build in one go (no interruption)
 
 ## Description
 Create detailed implementation plan from SPEC.md.

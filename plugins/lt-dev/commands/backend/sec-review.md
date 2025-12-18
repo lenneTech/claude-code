@@ -1,5 +1,26 @@
 ---
 description: Perform security review of code changes
+allowed-tools: Read, Grep, Glob, Bash(git diff:*)
+---
+
+# Security Review
+
+## When to Use This Command
+
+- After implementing new endpoints or modifying existing ones
+- Before merging changes that affect authentication or authorization
+- When reviewing code that handles sensitive data
+- As part of a pre-release security check
+
+## Related Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/lt-dev:backend:code-cleanup` | Clean up code style and formatting |
+| `/lt-dev:backend:test-generate` | Generate tests for changes |
+
+**Recommended workflow:** `test-generate` → `sec-review` → `code-cleanup`
+
 ---
 
 Perform a complete security review:

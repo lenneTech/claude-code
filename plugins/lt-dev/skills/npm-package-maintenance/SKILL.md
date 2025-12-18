@@ -5,7 +5,21 @@ description: Guides npm package maintenance tasks. Use when user mentions outdat
 
 # NPM Package Maintenance
 
+## When to Use This Skill
+
+- User mentions outdated packages or wants to update dependencies
+- Security vulnerabilities found via `npm audit`
+- Need to optimize `dependencies` vs `devDependencies`
+- Removing unused packages from `package.json`
+- Pre-release or post-feature dependency cleanup
+- General package maintenance or housekeeping tasks
+
 For comprehensive npm package maintenance, use the **npm-package-maintainer agent** via the maintenance commands.
+
+## Related Skills
+
+- `generating-nest-servers` - For NestJS development when dependencies affect the server
+- `using-lt-cli` - For Git operations after maintenance
 
 ## Available Commands
 

@@ -2,7 +2,17 @@
 description: Optimize and validate Claude skill files
 ---
 
+# Skill Optimization
+
 Analyze and optimize skill files for better Claude Code performance and compliance with official best practices.
+
+## When to Use This Command
+
+- After creating or modifying skills in this plugin
+- To validate all skills against current best practices
+- Before releasing plugin updates
+- When skills seem too large or aren't triggering correctly
+- To check frontmatter, file sizes, and naming conventions
 
 ##  Step 1: Fetch Latest Best Practices
 
@@ -11,7 +21,7 @@ Analyze and optimize skill files for better Claude Code performance and complian
 Use WebFetch to download current official requirements:
 
 ```
-https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices
+https://code.claude.com/docs/en/skills
 ```
 
 Extract and analyze:
@@ -25,7 +35,7 @@ Extract and analyze:
 
 ##  Step 2: Validate All Skills
 
-Run automated validation checks on all skills in `src/templates/claude-skills/`:
+Run automated validation checks on all skills in `plugins/lt-dev/skills/`:
 
 ### A. Frontmatter Validation
 
@@ -33,7 +43,7 @@ Check required YAML frontmatter fields:
 
 ```bash
 echo "=== Frontmatter Validation ==="
-for skill in src/templates/claude-skills/*/SKILL.md; do
+for skill in plugins/lt-dev/skills/*/SKILL.md; do
   name=$(basename $(dirname "$skill"))
   echo "--- $name ---"
 
@@ -101,7 +111,7 @@ done
 
 ```bash
 echo "=== File Size Validation ==="
-for skill in src/templates/claude-skills/*/SKILL.md; do
+for skill in plugins/lt-dev/skills/*/SKILL.md; do
   name=$(basename $(dirname "$skill"))
 
   # Count body lines (excluding frontmatter)
@@ -131,7 +141,7 @@ done
 
 ```bash
 echo "=== Progressive Disclosure Check ==="
-for skill_dir in src/templates/claude-skills/*/; do
+for skill_dir in plugins/lt-dev/skills/*/; do
   skill_name=$(basename "$skill_dir")
   echo "=== $skill_name ==="
 
@@ -189,7 +199,7 @@ done
 
 ```bash
 echo "=== Naming Convention Check ==="
-for skill in src/templates/claude-skills/*/SKILL.md; do
+for skill in plugins/lt-dev/skills/*/SKILL.md; do
   skill_name=$(grep "^name:" "$skill" | cut -d: -f2 | tr -d ' ')
 
   # Check if gerund form (-ing)
@@ -216,7 +226,7 @@ done
 
 ```bash
 echo "=== Content Quality Scan ==="
-for skill in src/templates/claude-skills/*/SKILL.md; do
+for skill in plugins/lt-dev/skills/*/SKILL.md; do
   name=$(basename $(dirname "$skill"))
   echo "--- $name ---"
 
@@ -348,7 +358,7 @@ optimal=0
 acceptable=0
 too_large=0
 
-for skill in src/templates/claude-skills/*/SKILL.md; do
+for skill in plugins/lt-dev/skills/*/SKILL.md; do
   frontmatter_end=$(grep -n "^---$" "$skill" | tail -1 | cut -d: -f1)
   body_lines=$(tail -n +$((frontmatter_end + 1)) "$skill" | wc -l)
 
@@ -370,7 +380,7 @@ echo " Frontmatter Compliance:"
 complete=0
 incomplete=0
 
-for skill in src/templates/claude-skills/*/SKILL.md; do
+for skill in plugins/lt-dev/skills/*/SKILL.md; do
   if grep -q "^name:" "$skill" && grep -q "^description:" "$skill"; then
     complete=$((complete + 1))
   else
@@ -383,7 +393,7 @@ echo "   Incomplete: $incomplete"
 echo ""
 
 echo " Issues Requiring Attention:"
-for skill in src/templates/claude-skills/*/SKILL.md; do
+for skill in plugins/lt-dev/skills/*/SKILL.md; do
   name=$(basename $(dirname "$skill"))
   issues=""
 
@@ -456,8 +466,8 @@ Before completing, verify:
 ##  References
 
 Official documentation:
-- https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices
-- https://www.anthropic.com/engineering/claude-code-best-practices
+- https://code.claude.com/docs/en/skills
+- https://code.claude.com/docs/en/plugins
 
 ##  Tips for Command Execution
 

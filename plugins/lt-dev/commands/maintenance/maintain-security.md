@@ -1,5 +1,4 @@
 ---
-name: maintain-security
 description: Fast security-focused npm package maintenance - updates only packages with known vulnerabilities
 ---
 
@@ -7,6 +6,16 @@ description: Fast security-focused npm package maintenance - updates only packag
 
 ## Description
 Fast security-focused npm package maintenance - updates only packages with known vulnerabilities
+
+## Related Commands
+
+| Command | Mode | Use Case |
+|---------|------|----------|
+| `/lt-dev:maintain` | FULL | Complete optimization |
+| `/lt-dev:maintain-check` | DRY-RUN | Analysis only - no changes |
+| `/lt-dev:maintain-security` | SECURITY | Fast security-only (this command) |
+| `/lt-dev:maintain-pre-release` | PRE-RELEASE | Conservative patch-only updates |
+| `/lt-dev:maintain-post-feature` | FULL | Clean up after feature development |
 
 ## User Prompt
 Use the npm-package-maintainer agent to perform **SECURITY-ONLY** maintenance.

@@ -1,5 +1,4 @@
 ---
-name: maintain
 description: Comprehensive npm package maintenance using the specialized npm-package-maintainer agent
 ---
 
@@ -8,13 +7,15 @@ description: Comprehensive npm package maintenance using the specialized npm-pac
 ## Description
 Comprehensive npm package maintenance using the specialized npm-package-maintainer agent
 
-## Usage
-```
-/maintain              # Full maintenance (default)
-/maintain security     # Security updates only
-/maintain check        # Analysis only (dry-run)
-/maintain pre-release  # Conservative pre-release mode
-```
+## Related Commands
+
+| Command | Mode | Use Case |
+|---------|------|----------|
+| `/lt-dev:maintain` | FULL | Complete optimization (this command) |
+| `/lt-dev:maintain-check` | DRY-RUN | Analysis only - no changes |
+| `/lt-dev:maintain-security` | SECURITY | Fast security-only updates |
+| `/lt-dev:maintain-pre-release` | PRE-RELEASE | Conservative patch-only updates |
+| `/lt-dev:maintain-post-feature` | FULL | Clean up after feature development |
 
 ## User Prompt
 Use the npm-package-maintainer agent to perform comprehensive npm package maintenance.

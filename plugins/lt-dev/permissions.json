@@ -1,16 +1,16 @@
 {
   "$schema": "./permissions.schema.json",
-  "description": "Required Bash permissions for lenne.tech Claude Code skills. Update this file when adding new CLI commands to skills.",
+  "description": "Required Bash permissions for lenne.tech Claude Code skills and agents. Update this file when adding new CLI commands.",
   "permissions": [
     {
       "pattern": "Bash(npm test:*)",
       "description": "Run npm test commands",
-      "usedBy": ["building-stories-with-tdd"]
+      "usedBy": ["building-stories-with-tdd", "npm-package-maintenance"]
     },
     {
       "pattern": "Bash(npm run test:*)",
       "description": "Run npm run test commands",
-      "usedBy": ["building-stories-with-tdd"]
+      "usedBy": ["building-stories-with-tdd", "npm-package-maintenance"]
     },
     {
       "pattern": "Bash(npm run test\\:e2e:*)",
@@ -30,12 +30,12 @@
     {
       "pattern": "Bash(npm run build:*)",
       "description": "Build the application",
-      "usedBy": ["generating-nest-servers"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "npm-package-maintenance"]
     },
     {
       "pattern": "Bash(npm run lint:*)",
       "description": "Run linter checks",
-      "usedBy": ["generating-nest-servers"]
+      "usedBy": ["generating-nest-servers", "npm-package-maintenance"]
     },
     {
       "pattern": "Bash(npm run generate-types:*)",
@@ -50,6 +50,41 @@
     {
       "pattern": "Bash(lt:*)",
       "description": "Execute general lt CLI commands (git, fullstack)",
+      "usedBy": ["using-lt-cli"]
+    },
+    {
+      "pattern": "Bash(npm audit:*)",
+      "description": "Run security audit on npm packages",
+      "usedBy": ["npm-package-maintenance"]
+    },
+    {
+      "pattern": "Bash(npm install:*)",
+      "description": "Install npm packages",
+      "usedBy": ["npm-package-maintenance"]
+    },
+    {
+      "pattern": "Bash(npm uninstall:*)",
+      "description": "Uninstall npm packages",
+      "usedBy": ["npm-package-maintenance"]
+    },
+    {
+      "pattern": "Bash(npx ncu:*)",
+      "description": "Check for npm package updates using npm-check-updates",
+      "usedBy": ["npm-package-maintenance"]
+    },
+    {
+      "pattern": "Bash(lt server module:*)",
+      "description": "Create new NestJS module",
+      "usedBy": ["generating-nest-servers"]
+    },
+    {
+      "pattern": "Bash(lt server addProp:*)",
+      "description": "Add property to NestJS module",
+      "usedBy": ["generating-nest-servers"]
+    },
+    {
+      "pattern": "Bash(lt git get:*)",
+      "description": "Checkout or create git branch",
       "usedBy": ["using-lt-cli"]
     }
   ]

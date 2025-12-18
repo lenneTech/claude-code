@@ -1,5 +1,4 @@
 ---
-name: maintain-post-feature
 description: Package maintenance after completing a feature - ensures dependencies are current and optimized
 ---
 
@@ -7,6 +6,16 @@ description: Package maintenance after completing a feature - ensures dependenci
 
 ## Description
 Package maintenance after completing a feature - ensures dependencies are current and optimized
+
+## Related Commands
+
+| Command | Mode | Use Case |
+|---------|------|----------|
+| `/lt-dev:maintain` | FULL | Complete optimization |
+| `/lt-dev:maintain-check` | DRY-RUN | Analysis only - no changes |
+| `/lt-dev:maintain-security` | SECURITY | Fast security-only updates |
+| `/lt-dev:maintain-pre-release` | PRE-RELEASE | Conservative patch-only updates |
+| `/lt-dev:maintain-post-feature` | FULL | Post-feature cleanup (this command) |
 
 ## User Prompt
 Use the npm-package-maintainer agent to perform **post-feature** maintenance.

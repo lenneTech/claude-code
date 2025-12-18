@@ -59,7 +59,7 @@ Skills, Commands, Hooks and Agents for Frontend (Nuxt 4), Backend (NestJS/nest-s
 
 ## Included Components
 
-### Skills (5)
+### Skills (6)
 
 | Skill | Description |
 |-------|-------------|
@@ -68,6 +68,7 @@ Skills, Commands, Hooks and Agents for Frontend (Nuxt 4), Backend (NestJS/nest-s
 | `building-stories-with-tdd` | Test-Driven Development Workflow |
 | `using-lt-cli` | lenne.tech CLI for Git and Fullstack Init |
 | `npm-package-maintenance` | Discovery skill for npm package maintenance commands |
+| `claude-code-plugin-expert` | Plugin development best practices and validation |
 
 ### Agents (1)
 
@@ -75,12 +76,16 @@ Skills, Commands, Hooks and Agents for Frontend (Nuxt 4), Backend (NestJS/nest-s
 |-------|-------------|
 | `npm-package-maintainer` | Specialized agent for maintaining, updating, and auditing npm packages |
 
-### Commands (18)
+### Commands (20)
 
 **Root:**
 - `/create-story` - Create User Story for TDD (German)
 - `/fix-issue` - Work on Linear Issue
 - `/skill-optimize` - Validate and optimize Claude Skills
+
+**Plugin (`/plugin/`):**
+- `/plugin:element` - Create new plugin elements (skills, commands, agents, hooks)
+- `/plugin:check` - Verify elements against best practices (use after /clear)
 
 **Backend (`/backend/`):**
 - `/backend:code-cleanup` - Clean up and optimize code
@@ -107,13 +112,20 @@ Skills, Commands, Hooks and Agents for Frontend (Nuxt 4), Backend (NestJS/nest-s
 - `/maintain-pre-release` - Conservative patch-only updates before release
 - `/maintain-post-feature` - Cleanup after feature development
 
-### Hooks (3)
+### Hooks (4)
 
-Automatic project detection on every prompt:
+**UserPromptSubmit - Project Detection:**
 
 1. **Nuxt 4 Detection** - Detects `nuxt.config.ts` + `app/` structure and suggests `developing-lt-frontend` skill
 2. **NestJS Detection** - Detects `@lenne.tech/nest-server` in package.json and suggests `generating-nest-servers` skill
 3. **lt CLI Detection** - Detects installed `lt` CLI and suggests `using-lt-cli` skill for Git and Fullstack operations
+
+**PreToolUse - Validation:**
+
+4. **Plugin Frontmatter Validation** - Validates YAML frontmatter when writing plugin files (`**/plugins/**/*.md`)
+   - Skills: requires `name`, `description`
+   - Agents: requires `name`, `description`, `model`, `tools`
+   - Commands: requires `description`
 
 Supports monorepo structures: `projects/`, `packages/`, `apps/`
 
@@ -182,6 +194,7 @@ claude-code/
 │       │   └── npm-package-maintainer.md
 │       ├── skills/
 │       │   ├── building-stories-with-tdd/
+│       │   ├── claude-code-plugin-expert/
 │       │   ├── developing-lt-frontend/
 │       │   ├── generating-nest-servers/
 │       │   ├── npm-package-maintenance/
@@ -194,9 +207,11 @@ claude-code/
 │       │   ├── docker/
 │       │   ├── git/
 │       │   ├── maintenance/
+│       │   ├── plugin/
 │       │   └── vibe/
 │       └── hooks/
-│           └── hooks.json
+│           ├── hooks.json
+│           └── scripts/
 ├── scripts/
 │   └── bump-version.ts
 ├── package.json

@@ -1,5 +1,26 @@
 ---
 description: Generate comprehensive tests for changes
+allowed-tools: Read, Grep, Glob, Edit, Write, Bash(npm run test:*), Bash(npm test:*), Bash(git diff:*), Bash(git status:*)
+---
+
+# Generate Tests
+
+## When to Use This Command
+
+- After creating new modules or modifying existing ones
+- When test coverage is missing for recent changes
+- Before merging to ensure adequate test coverage
+- To generate security tests for new endpoints
+
+## Related Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/lt-dev:backend:sec-review` | Security review of code changes |
+| `/lt-dev:backend:code-cleanup` | Clean up code style and formatting |
+
+**Recommended workflow:** `test-generate` → `sec-review` → `code-cleanup`
+
 ---
 
 Analyze recent changes and create appropriate tests:

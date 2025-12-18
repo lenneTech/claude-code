@@ -1,8 +1,19 @@
 ---
 description: Plan + Build in one go (no interruption)
+argument-hint: [spec-file]
 ---
 
 # Full Build (Plan + Build in One Go)
+
+## When to Use This Command
+
+- You have a `SPEC.md` and want complete implementation without interruption
+- You trust the automated planning and don't need to review before execution
+- You want the fastest path from spec to working implementation
+
+**Related commands:**
+- `/vibe:plan` - Create plan only (for review before execution)
+- `/vibe:build` - Execute existing plan only
 
 ## Description
 Plan + Build in one go (no interruption).

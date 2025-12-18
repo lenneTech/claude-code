@@ -1,5 +1,23 @@
 ---
 description: Generate commit message with alternatives
+allowed-tools: Bash(git diff:*), Bash(git status:*), Bash(git log:*)
+---
+
+# Generate Commit Message
+
+## When to Use This Command
+
+- After making changes and before committing
+- When you want well-crafted commit message suggestions
+- To follow consistent commit message conventions
+
+## Related Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/lt-dev:git:mr-description` | Generate MR description for branch |
+| `/lt-dev:git:mr-description-clipboard` | Generate MR description with clipboard copy |
+
 ---
 
 Analyze the current changes compared to the last git commit (`git diff`) and create a commit message.

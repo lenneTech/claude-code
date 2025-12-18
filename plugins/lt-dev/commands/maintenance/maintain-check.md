@@ -1,5 +1,4 @@
 ---
-name: maintain-check
 description: Analyze npm packages WITHOUT making any changes - generates a comprehensive report of what would be done
 ---
 
@@ -7,6 +6,16 @@ description: Analyze npm packages WITHOUT making any changes - generates a compr
 
 ## Description
 Analyze npm packages WITHOUT making any changes - generates a comprehensive report of what would be done
+
+## Related Commands
+
+| Command | Mode | Use Case |
+|---------|------|----------|
+| `/lt-dev:maintain` | FULL | Complete optimization |
+| `/lt-dev:maintain-check` | DRY-RUN | Analysis only (this command) |
+| `/lt-dev:maintain-security` | SECURITY | Fast security-only updates |
+| `/lt-dev:maintain-pre-release` | PRE-RELEASE | Conservative patch-only updates |
+| `/lt-dev:maintain-post-feature` | FULL | Clean up after feature development |
 
 ## User Prompt
 Use the npm-package-maintainer agent to perform **DRY-RUN** analysis.

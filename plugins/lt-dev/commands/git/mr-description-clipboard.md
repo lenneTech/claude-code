@@ -1,5 +1,23 @@
 ---
 description: Generate MR description and save to clipboard
+allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git status:*), Bash(git branch:*), Bash(pbcopy:*), Read
+---
+
+# Generate MR Description (Clipboard)
+
+## When to Use This Command
+
+- Before creating a Merge/Pull Request when you want quick clipboard access
+- When you prefer copying directly via command instead of manual selection
+- Same as `/mr-description` but with automatic clipboard command
+
+## Related Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/lt-dev:git:commit-message` | Generate commit message suggestions |
+| `/lt-dev:git:mr-description` | Same as this, without clipboard copy |
+
 ---
 
 Create a comprehensive summary of the changes in English for a Merge Request description.

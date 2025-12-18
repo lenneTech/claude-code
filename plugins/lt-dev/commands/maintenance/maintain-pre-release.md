@@ -1,5 +1,4 @@
 ---
-name: maintain-pre-release
 description: Ultra-conservative npm package maintenance before a release - only zero-risk patch updates
 ---
 
@@ -7,6 +6,16 @@ description: Ultra-conservative npm package maintenance before a release - only 
 
 ## Description
 Ultra-conservative npm package maintenance before a release - only zero-risk patch updates
+
+## Related Commands
+
+| Command | Mode | Use Case |
+|---------|------|----------|
+| `/lt-dev:maintain` | FULL | Complete optimization |
+| `/lt-dev:maintain-check` | DRY-RUN | Analysis only - no changes |
+| `/lt-dev:maintain-security` | SECURITY | Fast security-only updates |
+| `/lt-dev:maintain-pre-release` | PRE-RELEASE | Conservative patches (this command) |
+| `/lt-dev:maintain-post-feature` | FULL | Clean up after feature development |
 
 ## User Prompt
 Use the npm-package-maintainer agent to perform **PRE-RELEASE** maintenance.

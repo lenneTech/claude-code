@@ -5,6 +5,23 @@ description: Develops lenne.tech frontend applications with Nuxt 4, Nuxt UI 4, s
 
 # lenne.tech Frontend Development
 
+## When to Use This Skill
+
+- Working with Nuxt 4 projects (nuxt.config.ts present)
+- Editing files in `app/components/`, `app/composables/`, `app/pages/`, `app/interfaces/`
+- Creating or modifying Vue components with Nuxt UI
+- Integrating backend APIs via generated types (`types.gen.ts`, `sdk.gen.ts`)
+- Building forms with Valibot validation
+- Working in monorepos with `projects/app/` or `packages/app/` structure
+
+**NOT for:** NestJS backend development (use `generating-nest-servers` skill instead)
+
+## Related Skills
+
+- `generating-nest-servers` - For NestJS backend development (API implementation)
+- `using-lt-cli` - For Git operations and Fullstack initialization
+- `building-stories-with-tdd` - For TDD approach when backend integration is needed
+
 ## Nuxt 4 Directory Structure
 
 ```

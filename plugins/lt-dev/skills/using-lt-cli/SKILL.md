@@ -37,14 +37,14 @@ IMMEDIATELY recommend or use the generating-nest-servers skill instead
 ## Related Skills
 
 **Works closely with:**
-- `nest-server-generator` skill - For ALL NestJS server development
-- `story-tdd` skill - For Test-Driven Development with NestJS
+- `generating-nest-servers` skill - For ALL NestJS server development
+- `building-stories-with-tdd` skill - For Test-Driven Development with NestJS
 
 **When to use which:**
-- Git operations (`lt git`)? Use this skill (lt-cli)
-- Fullstack init? Use this skill (lt-cli)
-- NestJS development? Use `nest-server-generator` skill
-- TDD approach? Use `story-tdd` skill
+- Git operations (`lt git`)? Use this skill (using-lt-cli)
+- Fullstack init? Use this skill (using-lt-cli)
+- NestJS development? Use `generating-nest-servers` skill
+- TDD approach? Use `building-stories-with-tdd` skill
 
 ---
 
@@ -147,30 +147,20 @@ lt full init --name MyProject --frontend angular --git true
 
 ---
 
-## How to Redirect to nest-server-generator
+## How to Redirect to generating-nest-servers
 
 When you detect ANY NestJS server task, immediately inform the user:
 
 **Template response**:
 ```
-For NestJS server development tasks, please use the **nest-server-generator skill** instead.
+For NestJS server development tasks, please use the **generating-nest-servers skill** instead.
 
 This skill is specifically designed for all NestJS/nest-server work, including:
 - Creating modules, objects, or properties
 - Modifying existing server code
 - Generating complete server structures
 
-You can install it with:
-```bash
-lt claude install-skills nest-server-generator
-```
-
-Or install all skills:
-```bash
-lt claude install-skills
-```
-
-Then I can help you with your NestJS server task using the nest-server-generator skill.
+I can help you with your NestJS server task using the generating-nest-servers skill.
 ```
 
 ---
@@ -252,14 +242,9 @@ lt git get DEV-456
 
 **Your response**:
 ```
-For creating NestJS modules, please use the **nest-server-generator skill** instead.
+For creating NestJS modules, please use the **generating-nest-servers skill** instead.
 
 That skill is specifically designed for all NestJS/nest-server development tasks.
-
-Install it with:
-```bash
-lt claude install-skills nest-server-generator
-```
 
 Then I can help you create the User module with all necessary files and configurations.
 ```
@@ -272,7 +257,7 @@ Then I can help you create the User module with all necessary files and configur
 - **Automatically finds** the nearest git repository for git commands
 - **Creates missing directories** for fullstack init
 - **Validates inputs** before executing destructive operations
-- **Always use nest-server-generator** for NestJS server development
+- **Always use generating-nest-servers skill** for NestJS server development
 
 ---
 
@@ -280,4 +265,4 @@ Then I can help you create the User module with all necessary files and configur
 
 For detailed command syntax and all available options, see [reference.md](reference.md).
 
-For NestJS server commands (`lt server module`, `lt server object`, etc.), use the **nest-server-generator skill**.
+For NestJS server commands (`lt server module`, `lt server object`, etc.), use the **generating-nest-servers skill**.

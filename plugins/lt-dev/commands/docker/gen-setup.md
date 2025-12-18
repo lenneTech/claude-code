@@ -4,6 +4,15 @@ description: Generate Docker setup for development and production
 
 # Docker Development & Production Setup
 
+## When to Use This Command
+
+- Setting up a new project with Docker
+- Adding Docker support to an existing project
+- Configuring development environment with hot reload
+- Setting up local helper services (DB, Mailhog, DB UI)
+
+---
+
 ## Project Context
 
 Create a complete Docker setup for this project with the following requirements:

@@ -1,22 +1,37 @@
 {
-  "description": "lenne.tech project detection hooks - automatically suggests appropriate skills",
+  "description": "lenne.tech project detection and validation hooks",
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": {
+          "tool": "Write",
+          "file_path": "**/plugins/**/*.md"
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx ts-node \"$CLAUDE_PROJECT_DIR/plugins/lt-dev/hooks/scripts/validate-plugin-frontmatter.ts\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "#!/bin/bash\n# Detect Nuxt 4 frontend projects and suggest developing-lt-frontend skill\n\ncheck_nuxt() {\n  [ -f \"$1/nuxt.config.ts\" ] || [ -f \"$1/nuxt.config.js\" ]\n}\n\ncheck_app_dir() {\n  [ -d \"$1/app/components\" ] || [ -d \"$1/app/composables\" ] || [ -d \"$1/app/pages\" ]\n}\n\n# Check project root\nif check_nuxt \"$CLAUDE_PROJECT_DIR\" && check_app_dir \"$CLAUDE_PROJECT_DIR\"; then\n  echo '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"Nuxt 4 project detected. Use the developing-lt-frontend skill for frontend tasks.\"}}'\n  exit 0\nfi\n\n# Check monorepo patterns\nfor dir in \"$CLAUDE_PROJECT_DIR\"/projects/app \"$CLAUDE_PROJECT_DIR\"/packages/app \"$CLAUDE_PROJECT_DIR\"/apps/app; do\n  if [ -d \"$dir\" ] && check_nuxt \"$dir\"; then\n    echo '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"Nuxt 4 monorepo detected. Use the developing-lt-frontend skill for frontend tasks.\"}}'\n    exit 0\n  fi\ndone\n\nexit 0",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/lt-dev/hooks/scripts/detect-nuxt.sh\"",
             "timeout": 5
           },
           {
             "type": "command",
-            "command": "#!/bin/bash\n# Detect @lenne.tech/nest-server and suggest generating-nest-servers skill\n\ncheck_nest_server() {\n  [ -f \"$1\" ] && grep -q '@lenne\\.tech/nest-server' \"$1\" 2>/dev/null\n}\n\n# Check project root\nif check_nest_server \"$CLAUDE_PROJECT_DIR/package.json\"; then\n  echo '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"@lenne.tech/nest-server detected. Use the generating-nest-servers skill for backend tasks.\"}}'\n  exit 0\nfi\n\n# Check monorepo patterns\nfor pkg in \"$CLAUDE_PROJECT_DIR\"/projects/*/package.json \"$CLAUDE_PROJECT_DIR\"/packages/*/package.json \"$CLAUDE_PROJECT_DIR\"/apps/*/package.json; do\n  if check_nest_server \"$pkg\"; then\n    echo '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"@lenne.tech/nest-server detected in monorepo. Use the generating-nest-servers skill for backend tasks.\"}}'\n    exit 0\n  fi\ndone\n\nexit 0",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/lt-dev/hooks/scripts/detect-nest-server.sh\"",
             "timeout": 5
           },
           {
             "type": "command",
-            "command": "#!/bin/bash\n# Detect lenne.tech CLI and suggest using-lt-cli skill\n\nif command -v lt &>/dev/null; then\n  echo '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"lenne.tech CLI detected. Use the using-lt-cli skill for Git operations (lt git get, lt git reset) and Fullstack initialization (lt fullstack init).\"}}'\n  exit 0\nfi\n\nexit 0",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/lt-dev/hooks/scripts/detect-lt-cli.sh\"",
             "timeout": 5
           }
         ]

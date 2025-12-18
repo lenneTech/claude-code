@@ -13,6 +13,14 @@ Guide the user through creating a well-structured user story that can be used as
 - Capturing requirements in a structured format
 - Creating stories for Linear tickets or documentation
 
+## Related Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/lt-dev:fix-issue` | Work on an existing Linear issue |
+
+**Workflow:** Create story → Save to Linear → `/lt-dev:fix-issue` to implement
+
 **IMPORTANT: The generated story and all user-facing communication must ALWAYS be in German, regardless of the user's input language. Exceptions: Properties (camelCase), code snippets, and technical terms remain in English.**
 
 **ABORT HANDLING: If the user wants to cancel at any point (e.g., "abbrechen", "stop", "cancel", "nicht mehr"), acknowledge it (in German): "Okay, Story-Erstellung abgebrochen." and stop the process.**
@@ -299,9 +307,10 @@ Once the user approves the story, use the AskUserQuestion tool to ask (in German
 
 **Options:**
 1. **Linear Ticket erstellen** - Ticket in Linear via MCP erstellen (Linear MCP muss installiert sein)
-2. **Als Markdown-Datei speichern** - Story in eine .md-Datei im Projekt speichern
-3. **Direkt umsetzen** - Sofort mit TDD-Implementierung via `building-stories-with-tdd` Skill starten
-4. **Nichts davon** - Story wurde bereits angezeigt und kann kopiert werden, keine weitere Aktion nötig
+2. **Bestehendes Linear Ticket erweitern** - Ein bereits angelegtes Ticket mit der Story aktualisieren (Ticket-ID erforderlich)
+3. **Als Markdown-Datei speichern** - Story in eine .md-Datei im Projekt speichern
+4. **Direkt umsetzen** - Sofort mit TDD-Implementierung via `building-stories-with-tdd` Skill starten
+5. **Nichts davon** - Story wurde bereits angezeigt und kann kopiert werden, keine weitere Aktion nötig
 
 (If user selects "Nichts davon", confirm in German: "Alles klar! Die Story wurde oben angezeigt und kann bei Bedarf kopiert werden.")
 
@@ -331,7 +340,39 @@ Once the user approves the story, use the AskUserQuestion tool to ask (in German
 
 5. **Then ask (in German):** "Möchtest du diese Story jetzt auch mit TDD umsetzen?"
 
-### Option 2: Als Markdown-Datei speichern
+### Option 2: Bestehendes Linear Ticket erweitern
+
+**Prerequisite:** Linear MCP must be installed (`lt claude install-mcps linear`)
+
+1. First, check if Linear MCP is available. If not, inform the user (in German):
+   - "Linear MCP ist nicht installiert. Du kannst es mit `lt claude install-mcps linear` installieren."
+   - Then ask if they want to choose a different output option
+
+2. Ask for the Linear ticket ID (in German):
+   - "Bitte gib die Ticket-ID des bestehenden Linear Tickets an (z.B. `ABC-123`):"
+
+3. Fetch the existing ticket via Linear MCP:
+   - Use `get_issue` to retrieve the current ticket details
+   - If the ticket doesn't exist, inform the user (in German): "Ticket [ID] wurde nicht gefunden. Bitte überprüfe die ID."
+   - Then ask for a corrected ID or a different output option
+
+4. Show the user the current ticket state (in German):
+   - "Aktuelles Ticket [ID]: **[Titel]**"
+   - "Aktuelle Beschreibung: [kurze Zusammenfassung oder 'leer']"
+   - Ask: "Möchtest du die Beschreibung vollständig ersetzen oder die Story anhängen?"
+   - Options: "Ersetzen" (replace) or "Anhängen" (append)
+
+5. Update the ticket via Linear MCP:
+   - **Title:** Update to the optimized story title (ask user: "Soll der Titel auf '[neuer Titel]' aktualisiert werden?")
+   - **Description:** Replace or append the story in markdown format based on user choice
+   - **IMPORTANT:** Do NOT include the title as a heading in the description to avoid duplication - the description should start directly with the story statement ("**Story:** Als...")
+   - If appending, add a separator: `\n\n---\n\n[story content without title heading]`
+
+6. Report the updated ticket URL to the user (in German): "Ticket [ID] wurde erfolgreich aktualisiert: [URL]"
+
+7. **Then ask (in German):** "Möchtest du diese Story jetzt auch mit TDD umsetzen?"
+
+### Option 3: Als Markdown-Datei speichern
 
 1. Ask for the file location (in German):
    - "Wo soll die Story gespeichert werden? (z.B. `docs/stories/faq-verwaltung.md` oder `stories/STORY-001.md`)"
@@ -350,9 +391,9 @@ Once the user approves the story, use the AskUserQuestion tool to ask (in German
 
 5. **Then ask (in German):** "Möchtest du diese Story jetzt auch mit TDD umsetzen?"
 
-### Option 3: Direkt umsetzen (or TDD after Option 1/2)
+### Option 4: Direkt umsetzen (or TDD after Option 1/2/3)
 
-When the user chooses direct implementation or answers "yes" to TDD after Option 1 or 2:
+When the user chooses direct implementation or answers "yes" to TDD after Option 1, 2, or 3:
 
 1. Confirm (in German): "Starte TDD-Implementierung mit dem `building-stories-with-tdd` Skill..."
 
@@ -423,7 +464,7 @@ Und alle anderen FAQs werden entsprechend neu positioniert
 3. **Ask targeted questions** - Only for missing/unclear elements (in German)
 4. **Validate completeness** - INVEST check, coherence, emotional value, and TDD readiness
 5. **Generate and present story** - Format according to template (in German!) and present for discussion/optimization
-6. **Ask for output** - Linear ticket, Markdown file, direct implementation, or nothing
+6. **Ask for output** - Linear ticket (new or existing), Markdown file, direct implementation, or nothing
 7. **Execute choice and offer TDD** - Create output in selected format, then offer TDD implementation if not already chosen
 
 **Key behaviors:**

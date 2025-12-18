@@ -1,8 +1,19 @@
 ---
 description: Execute IMPLEMENTATION_PLAN.md completely
+argument-hint: [plan-file]
 ---
 
 # Build
+
+## When to Use This Command
+
+- You already have an `IMPLEMENTATION_PLAN.md` (created manually or via `/vibe:plan`)
+- You want to execute the plan completely without interruption
+- You've reviewed and approved the implementation plan
+
+**Related commands:**
+- `/vibe:plan` - Create a plan first (if you don't have one)
+- `/vibe:build-plan` - Plan + Build in one go (no interruption)
 
 ## Description
 Execute IMPLEMENTATION_PLAN.md completely.

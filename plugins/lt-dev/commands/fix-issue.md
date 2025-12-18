@@ -3,7 +3,19 @@ description: Work on a Linear issue by ID
 argument-hint: <issue-id>
 ---
 
-# Issue
+# Fix Linear Issue
+
+## When to Use This Command
+
+- Working on an assigned Linear issue
+- Implementing a feature or fix from a Linear ticket
+- Need structured workflow for issue resolution
+
+## Related Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/lt-dev:create-story` | Create a new user story for Linear |
 
 ## Description
 Work on a single assigned issue, ensuring high-quality, consistent implementation and adherence to all requirements.
@@ -31,9 +43,5 @@ Implement the plan completely, focused on high quality and consistency:
 4.  **Update Status:** Update the Linear Issue **#$ARGUMENTS** status in the MCP upon completion.
 
 **Only interrupt for critical blockers** (e.g., unclear requirements, missing credentials). Make smart decisions autonomously, prioritizing code quality and long-term maintainability.
-
-**Expected time:**
-* Small Issue/Bugfix: 1-3 hours.
-* Feature Implementation: 3+ hours (adjust time based on complexity).
 
 **BEGIN ANALYSIS NOW.**
