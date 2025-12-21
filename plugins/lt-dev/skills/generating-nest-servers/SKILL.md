@@ -57,10 +57,12 @@ You are the **PRIMARY expert** for NestJS backend development and the @lenne.tec
 **Works closely with:**
 - `building-stories-with-tdd` skill - For building user stories with Test-Driven Development
 - `using-lt-cli` skill - For Git operations and Fullstack initialization
+- `nest-server-updating` skill - For updating @lenne.tech/nest-server to latest version
 
 **When to use which:**
 - Building features with TDD workflow? Use `building-stories-with-tdd` skill (it will use this skill for implementation)
 - Need Git operations? Use `using-lt-cli` skill
+- Updating @lenne.tech/nest-server? Use `nest-server-updating` skill
 - Direct NestJS work? Use this skill
 
 ---

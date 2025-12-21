@@ -20,6 +20,7 @@ For comprehensive npm package maintenance, use the **npm-package-maintainer agen
 
 - `generating-nest-servers` - For NestJS development when dependencies affect the server
 - `using-lt-cli` - For Git operations after maintenance
+- `nest-server-updating` - For updating @lenne.tech/nest-server (uses this agent internally)
 
 ## Available Commands
 

@@ -5,12 +5,12 @@
     {
       "pattern": "Bash(npm test:*)",
       "description": "Run npm test commands",
-      "usedBy": ["building-stories-with-tdd", "npm-package-maintenance"]
+      "usedBy": ["building-stories-with-tdd", "npm-package-maintenance", "nest-server-updating"]
     },
     {
       "pattern": "Bash(npm run test:*)",
       "description": "Run npm run test commands",
-      "usedBy": ["building-stories-with-tdd", "npm-package-maintenance"]
+      "usedBy": ["building-stories-with-tdd", "npm-package-maintenance", "nest-server-updating"]
     },
     {
       "pattern": "Bash(npm run test\\:e2e:*)",
@@ -30,12 +30,12 @@
     {
       "pattern": "Bash(npm run build:*)",
       "description": "Build the application",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "npm-package-maintenance"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "npm-package-maintenance", "nest-server-updating"]
     },
     {
       "pattern": "Bash(npm run lint:*)",
       "description": "Run linter checks",
-      "usedBy": ["generating-nest-servers", "npm-package-maintenance"]
+      "usedBy": ["generating-nest-servers", "npm-package-maintenance", "nest-server-updating"]
     },
     {
       "pattern": "Bash(npm run generate-types:*)",
@@ -55,12 +55,12 @@
     {
       "pattern": "Bash(npm audit:*)",
       "description": "Run security audit on npm packages",
-      "usedBy": ["npm-package-maintenance"]
+      "usedBy": ["npm-package-maintenance", "nest-server-updating"]
     },
     {
       "pattern": "Bash(npm install:*)",
       "description": "Install npm packages",
-      "usedBy": ["npm-package-maintenance"]
+      "usedBy": ["npm-package-maintenance", "nest-server-updating"]
     },
     {
       "pattern": "Bash(npm uninstall:*)",
@@ -86,6 +86,31 @@
       "pattern": "Bash(lt git get:*)",
       "description": "Checkout or create git branch",
       "usedBy": ["using-lt-cli"]
+    },
+    {
+      "pattern": "Bash(npm run update:*)",
+      "description": "Run project update script",
+      "usedBy": ["nest-server-updating"]
+    },
+    {
+      "pattern": "Bash(npm list:*)",
+      "description": "List installed npm packages",
+      "usedBy": ["nest-server-updating"]
+    },
+    {
+      "pattern": "Bash(npm view:*)",
+      "description": "View npm package information",
+      "usedBy": ["nest-server-updating"]
+    },
+    {
+      "pattern": "Bash(gh release:*)",
+      "description": "Access GitHub releases via gh CLI",
+      "usedBy": ["nest-server-updating"]
+    },
+    {
+      "pattern": "Bash(gh api:*)",
+      "description": "Access GitHub API via gh CLI for migration guides",
+      "usedBy": ["nest-server-updating"]
     }
   ]
 }
