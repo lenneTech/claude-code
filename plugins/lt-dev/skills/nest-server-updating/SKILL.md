@@ -144,7 +144,7 @@ Therefore, **Minor versions are treated like Major versions** and may contain br
 ### Patch Updates (X.Y.Z → X.Y.W)
 
 - Usually safe, no breaking changes
-- Direct update via `npm install @lenne.tech/nest-server@X.Y.W --save-exact`
+- Use the standard update workflow (see Quick Reference → Update Workflow)
 - Run tests to verify
 - **Example:** `11.6.0 → 11.6.5` - direct update OK
 
@@ -250,13 +250,35 @@ npm view @lenne.tech/nest-server version
 
 # List migration guides
 gh api repos/lenneTech/nest-server/contents/migration-guides --jq '.[].name'
-
-# Update (via project script)
-npm run update
-
-# Manual update to specific version
-npm install @lenne.tech/nest-server@X.Y.Z --save-exact
 ```
+
+### Update Workflow
+
+**IMPORTANT:** The `npm run update` script requires a specific workflow:
+
+1. **First:** Update the version in `package.json` to the desired target version
+   ```
+   "@lenne.tech/nest-server": "^X.Y.Z"
+   ```
+
+2. **Then:** Run the update script
+   ```bash
+   npm run update
+   ```
+
+**What `npm run update` does:**
+- Verifies the specified version is available on npm
+- Installs `@lenne.tech/nest-server` at the version from package.json
+- Analyzes which packages inside `@lenne.tech/nest-server` were updated
+- Installs those updated dependencies if they don't exist or have a lower version
+- Ensures version consistency between nest-server and its peer dependencies
+
+**Manual update (only if `npm run update` script is not available):**
+```bash
+npm install @lenne.tech/nest-server@X.Y.Z --save-exact
+npm install
+```
+Note: This skips the automatic dependency synchronization that `npm run update` provides.
 
 ### Validation Sequence
 

@@ -52,7 +52,8 @@ Modes can be combined: `--dry-run --target-version 12.0.0`
 Initial TodoWrite (after Phase 1):
 [pending] Analyze version jump and fetch migration guides
 [pending] Fetch release notes and reference project
-[pending] Execute update (npm run update)
+[pending] Update version in package.json
+[pending] Execute npm run update
 [pending] Run package optimization
 [pending] Apply code migrations
 [pending] Validate: Build
@@ -179,11 +180,11 @@ Initial TodoWrite (after Phase 1):
 
 4. **Analyze reference project:**
    ```bash
-   git clone --depth 1 https://github.com/lenneTech/nest-server-starter.git /tmp/nest-server-starter-ref
+   git clone https://github.com/lenneTech/nest-server-starter.git /tmp/nest-server-starter-ref
    ```
-   - Compare package.json dependencies
-   - Identify code patterns
-   - Find version-related commits
+   - Compare package.json dependencies between version tags
+   - Identify code patterns via `git diff vX.Y.Z..vA.B.C`
+   - Find version-related commits via `git log --oneline vX.Y.Z..vA.B.C`
 
 5. **Create migration plan:**
    Consolidate from guides, releases, and reference project.
@@ -192,20 +193,34 @@ Initial TodoWrite (after Phase 1):
 
 ### Phase 3: Update Execution
 
-**For each version step (or single step if patch/minor):**
+**For each version step (stepwise for minor/major, direct for patch-only):**
 
-1. **Execute update:**
+1. **Update version in package.json FIRST:**
+
+   **CRITICAL:** The `npm run update` script requires the target version to be set in `package.json` before execution.
+
    ```bash
-   npm run update
-   # Or for stepwise:
-   npm install @lenne.tech/nest-server@X.Y.Z --save-exact
-   npm install
+   # Step 1: Update @lenne.tech/nest-server version in package.json to target version
+   # Use Edit tool to change: "@lenne.tech/nest-server": "^X.Y.Z" → "@lenne.tech/nest-server": "^A.B.C"
    ```
 
-2. **Package optimization** (unless `--skip-packages`):
+2. **Execute update:**
+   ```bash
+   # Step 2: Run update script AFTER package.json has the new version
+   npm run update
+   ```
+
+   **What `npm run update` does:**
+   - Checks if a package with the specified version is available on npm
+   - Installs `@lenne.tech/nest-server` at the version from package.json
+   - Analyzes which packages inside `@lenne.tech/nest-server` were updated
+   - Installs those updated peer/optional dependencies if they don't exist or have a lower version
+   - This ensures version consistency between nest-server and its dependencies
+
+3. **Package optimization** (unless `--skip-packages`):
    Use Task tool to spawn `npm-package-maintainer` agent
 
-3. **Apply code migrations:**
+4. **Apply code migrations:**
    - Follow migration guide steps exactly
    - Use `generating-nest-servers` skill for NestJS changes
    - Update imports, APIs, configurations
