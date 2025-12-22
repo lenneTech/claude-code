@@ -26,6 +26,7 @@ Execute all priorities:
 1. Remove unused packages
 2. Optimize dependency categorization
 3. Update packages to latest versions
+4. Cleanup unnecessary overrides
 
 Check for:
 - Unused dependencies that can be removed
@@ -33,5 +34,6 @@ Check for:
 - Outdated dependencies (all types: security, features, patches)
 - Security vulnerabilities
 - Compatibility issues
+- Overrides that are no longer necessary (parent packages now include fixed versions)
 
 Ensure all tests and build pass after changes.

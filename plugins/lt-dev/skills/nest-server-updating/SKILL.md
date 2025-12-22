@@ -280,6 +280,23 @@ npm install
 ```
 Note: This skips the automatic dependency synchronization that `npm run update` provides.
 
+### Package Optimization (after npm run update)
+
+After `npm run update` completes, run comprehensive package maintenance:
+
+```bash
+# Via command (recommended)
+/lt-dev:maintenance:maintain
+
+# Or via agent (Task tool with npm-package-maintainer in FULL MODE)
+```
+
+This ensures:
+- Unused dependencies are removed
+- Packages are correctly categorized (dependencies vs devDependencies)
+- All packages are updated to their latest compatible versions
+- Security vulnerabilities are addressed
+
 ### Validation Sequence
 
 ```bash

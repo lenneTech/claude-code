@@ -54,7 +54,7 @@ Initial TodoWrite (after Phase 1):
 [pending] Fetch release notes and reference project
 [pending] Update version in package.json
 [pending] Execute npm run update
-[pending] Run package optimization
+[pending] Run package optimization (npm-package-maintainer FULL MODE)
 [pending] Apply code migrations
 [pending] Validate: Build
 [pending] Validate: Lint
@@ -71,11 +71,11 @@ Initial TodoWrite (after Phase 1):
 **Example during stepwise update (11.6 → 11.8):**
 ```
 [completed] Analyze version jump: 11.6.0 → 11.8.0 (stepwise)
-[completed] Update to 11.7.0
+[completed] Update to 11.7.0 (package.json + npm run update)
 [completed] Validate 11.7.0: Build ✓ Lint ✓ Tests ✓
-[in_progress] Update to 11.8.0
+[in_progress] Update to 11.8.0 (package.json + npm run update)
 [pending] Validate 11.8.0
-[pending] Run package optimization
+[pending] Run package optimization (npm-package-maintainer FULL MODE)
 [pending] Generate report
 ```
 
@@ -102,11 +102,6 @@ Initial TodoWrite (after Phase 1):
 4. **Early exit conditions:**
    - No nest-server found → Exit: "Project does not use @lenne.tech/nest-server"
    - Already on target → Exit: "Already on version X.Y.Z"
-
-5. **Create safety branch** (skip in dry-run):
-   ```bash
-   git checkout -b update/nest-server-v${TARGET_VERSION}
-   ```
 
 ### Phase 2: Analysis
 
@@ -218,7 +213,28 @@ Initial TodoWrite (after Phase 1):
    - This ensures version consistency between nest-server and its dependencies
 
 3. **Package optimization** (unless `--skip-packages`):
-   Use Task tool to spawn `npm-package-maintainer` agent
+
+   **CRITICAL:** After `npm run update`, run comprehensive package maintenance to ensure all dependencies are optimized.
+
+   Use Task tool to spawn the `npm-package-maintainer` agent with this prompt:
+   ```
+   Perform comprehensive npm package maintenance in FULL MODE.
+
+   Execute all priorities:
+   1. Remove unused packages
+   2. Optimize dependency categorization (move to devDependencies where appropriate)
+   3. Update packages to latest versions
+   4. Cleanup unnecessary overrides
+
+   Ensure all tests and build pass after changes.
+   ```
+
+   This is equivalent to running `/lt-dev:maintenance:maintain` and ensures:
+   - Unused dependencies are removed
+   - Packages are correctly categorized (dependencies vs devDependencies)
+   - All packages are updated to their latest compatible versions
+   - Security vulnerabilities are addressed
+   - Unnecessary overrides are removed (parent packages now include fixed versions)
 
 4. **Apply code migrations:**
    - Follow migration guide steps exactly
@@ -368,14 +384,8 @@ If blocked:
 2. Try alternative from reference project
 3. If truly stuck after extensive attempts:
    - Create detailed error report
-   - Keep branch for developer review
    - Suggest manual resolution steps
-
-Recovery command:
-```bash
-git checkout main
-git branch -D update/nest-server-vX.Y.Z
-```
+   - Revert changes if requested: `git checkout .`
 
 ---
 
@@ -390,7 +400,7 @@ git branch -D update/nest-server-vX.Y.Z
 | `Write` | Create new files if needed |
 | `Edit` | Apply code migrations |
 | `WebFetch` | Fetch GitHub content |
-| `Task` | Spawn npm-package-maintainer |
+| `Task` | Spawn npm-package-maintainer agent (FULL MODE) |
 | `TodoWrite` | Progress tracking and visibility |
 
 ---

@@ -28,6 +28,7 @@ Execute all priorities:
 1. Remove unused packages (especially if feature changed dependencies)
 2. Optimize dependency categorization (ensure new deps are correctly placed)
 3. Update packages to latest versions (stay current after feature work)
+4. Cleanup unnecessary overrides
 
 Check for:
 - Unused dependencies that can be removed (especially from feature work)
@@ -35,6 +36,7 @@ Check for:
 - Outdated dependencies (all types: security, features, patches)
 - Security vulnerabilities introduced by new dependencies
 - Compatibility issues with newly added packages
+- Overrides that are no longer necessary (parent packages now include fixed versions)
 
 This is the standard comprehensive maintenance mode, ideal after completing feature development to ensure the codebase stays clean and dependencies stay current.
 

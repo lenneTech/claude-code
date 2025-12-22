@@ -26,6 +26,7 @@ Analyze and report WITHOUT making changes:
 - Analyze unused packages (what WOULD be removed)
 - Analyze categorization (what WOULD be moved to devDependencies)
 - Discover outdated packages (what WOULD be updated)
+- Analyze overrides (which COULD be removed)
 - Check security vulnerabilities
 - Estimate risk levels for all potential changes
 
@@ -35,6 +36,7 @@ Generate comprehensive report including:
 - Packages that could be removed (with usage analysis)
 - Packages that could be recategorized
 - Available updates categorized by risk (SAFE/MEDIUM/HIGH)
+- Overrides that may no longer be necessary (with analysis)
 - Security vulnerabilities found
 - Estimated impact and time requirements
 
