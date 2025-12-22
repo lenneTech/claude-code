@@ -107,7 +107,7 @@ Creates complete fullstack workspace with frontend and backend.
 
 **Non-interactive syntax**:
 ```bash
-lt fullstack init --name <WorkspaceName> --frontend <angular|nuxt> --git <true|false> [--git-link <GitURL>]
+lt fullstack init --name <WorkspaceName> --frontend <angular|nuxt> --git <true|false> [--git-link <GitURL>] [--api-branch <branch>] [--frontend-branch <branch>]
 ```
 
 **Parameters**:
@@ -115,6 +115,8 @@ lt fullstack init --name <WorkspaceName> --frontend <angular|nuxt> --git <true|f
 - `--frontend` - Frontend framework: `angular` or `nuxt`
 - `--git` - Initialize git repository: `true` or `false`
 - `--git-link` - Git repository URL (optional, only if `--git true`)
+- `--api-branch` - Branch of nest-server-starter to use for API (optional, for testing specific branches)
+- `--frontend-branch` - Branch of frontend starter to use (optional, for testing specific branches)
 
 **Examples**:
 ```bash

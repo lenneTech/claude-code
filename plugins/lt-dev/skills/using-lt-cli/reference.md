@@ -217,7 +217,9 @@ lt fullstack init \
   --name <WorkspaceName> \
   --frontend <angular|nuxt> \
   --git <true|false> \
-  [--git-link <GitURL>]
+  [--git-link <GitURL>] \
+  [--api-branch <branch>] \
+  [--frontend-branch <branch>]
 ```
 
 **Aliases:**
@@ -231,6 +233,8 @@ lt fullstack init \
 | `--frontend` | string | Yes | `angular`, `nuxt` | Frontend framework |
 | `--git` | boolean | Yes | `true`, `false` | Initialize git |
 | `--git-link` | string | No | URL | Git repository URL |
+| `--api-branch` | string | No | branch name | Branch of nest-server-starter to use for API |
+| `--frontend-branch` | string | No | branch name | Branch of frontend starter (ng-base-starter/nuxt-base-starter) |
 
 **Created Structure:**
 ```

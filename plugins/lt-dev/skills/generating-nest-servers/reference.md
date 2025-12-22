@@ -113,10 +113,17 @@ lt server create <server-name>
 
 # Example
 lt server create my-api
+
+# With specific branch (for testing starter branches)
+lt server create my-api --branch feature/new-auth
+lt server create my-api -b feature/new-auth
 ```
 
+**Options**:
+- `--branch <branch>` / `-b` - Branch of nest-server-starter to use as template
+
 **What it does**:
-- Clones nest-server-starter template
+- Clones nest-server-starter template (optionally from specific branch)
 - Configures package.json
 - Sets up Swagger docs
 - **Replaces ALL secrets** (`'SECRET_OR_PRIVATE_KEY...'` -> unique random values)
