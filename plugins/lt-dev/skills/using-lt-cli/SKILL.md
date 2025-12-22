@@ -1,38 +1,35 @@
 ---
 name: using-lt-cli
-description: Expert assistance with lenne.tech CLI for Git operations and Fullstack initialization. IMPORTANT - For ALL NestJS server development (modules, objects, properties), use the generating-nest-servers skill instead, even for simple tasks. This skill handles only lt git commands and lt fullstack init.
+description: Expert for lenne.tech CLI (lt command). ALWAYS activate when user mentions "lt", "lt CLI", "lenne.tech CLI", fullstack workspace, local templates, or any lt command. Provides comprehensive reference for all lt CLI features including fullstack init, git workflows, server creation, and advanced options. Works alongside generating-nest-servers for NestJS development tasks.
 ---
 
-# LT CLI Expert - Git & Fullstack
+# LT CLI Expert
 
-You are an expert in the lenne.tech CLI tool. This skill handles **Git operations and Fullstack initialization ONLY**.
+You are an expert in the lenne.tech CLI tool (`lt` command). This skill provides comprehensive reference for all lt CLI features.
 
 **CRITICAL:** For NestJS server development (modules, objects, properties), ALWAYS use the `generating-nest-servers` skill instead.
 
-## When to Use Which Skill
+## Skill Activation
 
-### Use the `generating-nest-servers` skill for:
-- Creating server modules (`lt server module`)
-- Creating server objects (`lt server object`)
-- Adding properties (`lt server addProp`)
-- Creating a new server (`lt server create`)
-- ANY NestJS/nest-server development task
-- Even simple tasks like adding a single property
-- Even simple tasks like creating a single module
+This skill activates whenever:
+- User mentions "lt", "lt CLI", or "lenne.tech CLI"
+- User wants to create a fullstack workspace
+- User mentions local templates, symlinks, or branch options
+- Any lt command is being used
 
-### Use this `using-lt-cli` skill ONLY for:
-- Git commands (`lt git get`, `lt git reset`, etc.)
-- Fullstack commands (`lt fullstack init`)
-- General CLI questions (not about server development)
+## Complementary Skills
 
-### Example scenarios:
-- "Create a User module with email and username" - Use **generating-nest-servers** skill
-- "Add a new property to the User module" - Use **generating-nest-servers** skill
-- "Checkout branch DEV-123" - Use this skill (using-lt-cli)
-- "Initialize a fullstack project" - Use this skill (using-lt-cli)
+For NestJS server development, this skill works **alongside** `generating-nest-servers`:
 
-**If the user mentions ANYTHING about NestJS server, modules, objects, properties, or models:**
-IMMEDIATELY recommend or use the generating-nest-servers skill instead
+| Task | Skills Used |
+|------|-------------|
+| `lt fullstack init` | **using-lt-cli** |
+| `lt git get`, `lt git reset` | **using-lt-cli** |
+| `lt server create` | **using-lt-cli** + generating-nest-servers |
+| `lt server module`, `lt server object` | **using-lt-cli** + generating-nest-servers |
+| NestJS code modifications | generating-nest-servers |
+
+Both skills can be active simultaneously - this skill provides CLI syntax reference, while `generating-nest-servers` provides NestJS development expertise
 
 ## Related Skills
 
