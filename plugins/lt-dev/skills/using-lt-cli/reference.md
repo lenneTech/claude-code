@@ -219,7 +219,11 @@ lt fullstack init \
   --git <true|false> \
   [--git-link <GitURL>] \
   [--api-branch <branch>] \
-  [--frontend-branch <branch>]
+  [--frontend-branch <branch>] \
+  [--api-copy <path>] \
+  [--api-link <path>] \
+  [--frontend-copy <path>] \
+  [--frontend-link <path>]
 ```
 
 **Aliases:**
@@ -235,6 +239,28 @@ lt fullstack init \
 | `--git-link` | string | No | URL | Git repository URL |
 | `--api-branch` | string | No | branch name | Branch of nest-server-starter to use for API |
 | `--frontend-branch` | string | No | branch name | Branch of frontend starter (ng-base-starter/nuxt-base-starter) |
+| `--api-copy` | string | No | local path | Copy API template from local directory |
+| `--api-link` | string | No | local path | Symlink API to local template (fastest for testing) |
+| `--frontend-copy` | string | No | local path | Copy frontend template from local directory |
+| `--frontend-link` | string | No | local path | Symlink frontend to local template (fastest for testing) |
+
+**Local Template Options:**
+
+Use `--*-link` for **development/testing** (instant setup, changes affect source):
+```bash
+lt fullstack init --name TestApp --frontend nuxt --git false \
+  --api-link ~/code/nest-server-starter \
+  --frontend-link ~/code/nuxt-base-starter
+```
+
+Use `--*-copy` for **independent development** (isolated copy, safe to modify):
+```bash
+lt fullstack init --name MyApp --frontend angular --git true \
+  --api-copy ~/code/nest-server-starter \
+  --frontend-copy ~/code/ng-base-starter
+```
+
+**Priority:** `--*-link` > `--*-copy` > `--*-branch` > default (clone from GitHub)
 
 **Created Structure:**
 ```

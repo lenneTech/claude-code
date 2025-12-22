@@ -107,7 +107,7 @@ Creates complete fullstack workspace with frontend and backend.
 
 **Non-interactive syntax**:
 ```bash
-lt fullstack init --name <WorkspaceName> --frontend <angular|nuxt> --git <true|false> [--git-link <GitURL>] [--api-branch <branch>] [--frontend-branch <branch>]
+lt fullstack init --name <WorkspaceName> --frontend <angular|nuxt> --git <true|false> [--git-link <GitURL>] [--api-branch <branch>] [--frontend-branch <branch>] [--api-copy <path>] [--api-link <path>] [--frontend-copy <path>] [--frontend-link <path>]
 ```
 
 **Parameters**:
@@ -117,6 +117,10 @@ lt fullstack init --name <WorkspaceName> --frontend <angular|nuxt> --git <true|f
 - `--git-link` - Git repository URL (optional, only if `--git true`)
 - `--api-branch` - Branch of nest-server-starter to use for API (optional, for testing specific branches)
 - `--frontend-branch` - Branch of frontend starter to use (optional, for testing specific branches)
+- `--api-copy` - Path to local API template directory (copies the template)
+- `--api-link` - Path to local API template directory (creates symlink for fastest testing)
+- `--frontend-copy` - Path to local frontend template directory (copies the template)
+- `--frontend-link` - Path to local frontend template directory (creates symlink for fastest testing)
 
 **Examples**:
 ```bash
@@ -128,6 +132,16 @@ lt fullstack init --name MyApp --frontend nuxt --git false
 
 # Using alias
 lt full init --name MyProject --frontend angular --git true
+
+# With local templates (symlink for fastest testing)
+lt fullstack init --name MyApp --frontend nuxt --git false \
+  --api-link ~/code/nest-server-starter \
+  --frontend-link ~/code/nuxt-base-starter
+
+# With local templates (copy for independent development)
+lt fullstack init --name MyApp --frontend angular --git true \
+  --api-copy ~/code/nest-server-starter \
+  --frontend-copy ~/code/ng-base-starter
 ```
 
 **What gets created**:

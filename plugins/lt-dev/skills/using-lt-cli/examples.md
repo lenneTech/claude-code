@@ -296,7 +296,56 @@ git push -u origin main
 
 ---
 
-### 3. Project Types
+### 3. Local Template Development
+
+Use local templates when developing or testing changes to the starter templates themselves.
+
+#### Symlink Mode (Fastest for Testing)
+```bash
+# Test changes to nest-server-starter immediately
+lt fullstack init --name TestApp --frontend nuxt --git false \
+  --api-link ~/code/nest-server-starter
+
+# Test both API and frontend template changes
+lt fullstack init --name TestApp --frontend nuxt --git false \
+  --api-link ~/code/nest-server-starter \
+  --frontend-link ~/code/nuxt-base-starter
+```
+
+**What happens:**
+1. Creates workspace directory structure
+2. Symlinks `projects/api` -> your local nest-server-starter
+3. Symlinks `projects/app` -> your local nuxt-base-starter (if specified)
+4. Changes to your local templates are instantly reflected
+
+**Use case:** Template development, quick testing, debugging
+
+#### Copy Mode (Independent Development)
+```bash
+# Create independent copy from local template
+lt fullstack init --name MyApp --frontend angular --git true \
+  --api-copy ~/code/nest-server-starter \
+  --frontend-copy ~/code/ng-base-starter
+```
+
+**What happens:**
+1. Copies entire template directory (excluding `.git`)
+2. Creates independent project you can modify freely
+3. Safe for production projects starting from local template
+
+**Use case:** Starting project from customized template, offline development
+
+#### Auto-Detection of Nuxt Subdirectory
+```bash
+# If your local repo has nuxt-base-template/ subdirectory:
+lt fullstack init --name TestApp --frontend nuxt --git false \
+  --frontend-link ~/code/nuxt-base-starter
+# CLI auto-detects and uses ~/code/nuxt-base-starter/nuxt-base-template/
+```
+
+---
+
+### 4. Project Types (Examples)
 
 #### Client Project (Angular + NestJS)
 ```bash
@@ -341,7 +390,7 @@ lt fullstack init \
 
 ---
 
-### 4. Post-Creation Workflows
+### 5. Post-Creation Workflows
 
 #### After Angular Fullstack Init
 ```bash
@@ -384,7 +433,7 @@ npm run dev
 
 ---
 
-### 5. Common Initialization Patterns
+### 6. Common Initialization Patterns
 
 #### Team Project Setup
 ```bash
