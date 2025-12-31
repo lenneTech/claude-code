@@ -22,6 +22,30 @@ description: Develops lenne.tech frontend applications with Nuxt 4, Nuxt UI 4, s
 - `using-lt-cli` - For Git operations and Fullstack initialization
 - `building-stories-with-tdd` - For TDD approach when backend integration is needed
 
+## TypeScript Language Server (Recommended)
+
+**Use the LSP tool when available** for better code intelligence in TypeScript/Vue/Nuxt projects:
+
+| Operation | Use Case |
+|-----------|----------|
+| `goToDefinition` | Find where a type, composable, or component is defined |
+| `findReferences` | Find all usages of a symbol across the codebase |
+| `hover` | Get type information for props, refs, and computed values |
+| `documentSymbol` | List all exports, functions, and types in a file |
+| `workspaceSymbol` | Search for composables, interfaces, or components |
+| `goToImplementation` | Find implementations of interfaces |
+
+**When to use LSP:**
+- Finding where a type from `types.gen.ts` is used → `findReferences`
+- Understanding composable structure → `documentSymbol`
+- Navigating to type definitions → `goToDefinition`
+- Searching for components or composables → `workspaceSymbol`
+
+**Installation (if LSP not available):**
+```bash
+claude plugins install typescript-lsp --marketplace claude-plugins-official
+```
+
 ## Nuxt 4 Directory Structure
 
 ```

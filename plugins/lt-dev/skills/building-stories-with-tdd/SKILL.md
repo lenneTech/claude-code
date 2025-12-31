@@ -27,6 +27,28 @@ You are an expert in Test-Driven Development (TDD) for NestJS applications using
 - Direct NestJS work without TDD? Use `generating-nest-servers` skill
 - Git operations? Use `using-lt-cli` skill
 
+## TypeScript Language Server (Recommended)
+
+**Use the LSP tool when available** for faster and more accurate code analysis:
+
+| Operation | Use Case in TDD |
+|-----------|-----------------|
+| `goToDefinition` | Navigate to Controller/Service/Model definitions |
+| `findReferences` | Find all usages of a method or property |
+| `hover` | Get type info for parameters and return types |
+| `documentSymbol` | List all methods in a Controller or Service |
+| `goToImplementation` | Find Service implementations of interfaces |
+
+**When to use LSP (especially Step 1 & 4):**
+- Verifying endpoint existence → `documentSymbol` on Controller
+- Finding method signatures → `hover`, `goToDefinition`
+- Understanding dependencies → `findReferences`, `goToImplementation`
+
+**Installation (if LSP not available):**
+```bash
+claude plugins install typescript-lsp --marketplace claude-plugins-official
+```
+
 ---
 
 ## GOLDEN RULES: API-First Testing

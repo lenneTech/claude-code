@@ -1,5 +1,7 @@
 ---
 description: Create a user story for TDD implementation
+argument-hint: "[optional: initial story idea]"
+allowed-tools: AskUserQuestion, Write, Read, Glob, mcp__plugin_lt-dev_linear__*, Skill
 ---
 
 # User Story erstellen
@@ -87,18 +89,20 @@ The story should convey the **user's emotional experience**, not just technical 
 
 ## Step 1: Collect Initial Thoughts
 
-**Ask the user to share their story idea (in German):**
+**Check for argument:** If the user provided an initial idea as argument (e.g., `/lt-dev:create-story "FAQ Feature"`), use that as starting point and skip directly to Step 2.
 
-"Bitte beschreibe deine User Story Idee. Teile so viele Details wie möglich mit:
-- Wer braucht dieses Feature (Rolle/Nutzertyp)?
-- Was soll erreicht werden?
-- Warum wird es benötigt?
-- Spezifische Anforderungen oder Properties?
-- Technische Hinweise?
+**If no argument provided:** Output the following prompt in German and wait for user response:
 
-Schreib einfach deine Gedanken auf - ich helfe dir, sie in eine strukturierte User Story zu bringen."
+> Bitte beschreibe deine User Story Idee. Teile so viele Details wie möglich mit:
+> - Wer braucht dieses Feature (Rolle/Nutzertyp)?
+> - Was soll erreicht werden?
+> - Warum wird es benötigt?
+> - Spezifische Anforderungen oder Properties?
+> - Technische Hinweise?
+>
+> Schreib einfach deine Gedanken auf - ich helfe dir, sie in eine strukturierte User Story zu bringen.
 
-**Wait for the user's response before proceeding.**
+**Wait for the user's response before proceeding to Step 2.**
 
 ---
 
@@ -301,18 +305,34 @@ After presenting the story, ask (in German): "Ist die Story so in Ordnung, oder 
 
 ## Step 5: Ask for Output Format
 
-Once the user approves the story, use the AskUserQuestion tool to ask (in German):
+Once the user approves the story, use AskUserQuestion with these 4 options:
 
 **Question:** "Wie möchtest du mit dieser Story fortfahren?"
 
-**Options:**
-1. **Linear Ticket erstellen** - Ticket in Linear via MCP erstellen (Linear MCP muss installiert sein)
-2. **Bestehendes Linear Ticket erweitern** - Ein bereits angelegtes Ticket mit der Story aktualisieren (Ticket-ID erforderlich)
-3. **Als Markdown-Datei speichern** - Story in eine .md-Datei im Projekt speichern
-4. **Direkt umsetzen** - Sofort mit TDD-Implementierung via `building-stories-with-tdd` Skill starten
-5. **Nichts davon** - Story wurde bereits angezeigt und kann kopiert werden, keine weitere Aktion nötig
+| Option | Label | Description |
+|--------|-------|-------------|
+| 1 | Neues Linear Ticket | Neues Ticket in Linear erstellen |
+| 2 | Bestehendes Ticket erweitern | Bereits angelegtes Linear Ticket aktualisieren |
+| 3 | Markdown-Datei | Story in eine .md-Datei im Projekt speichern |
+| 4 | Direkt umsetzen | Sofort mit TDD-Implementierung starten |
 
-(If user selects "Nichts davon", confirm in German: "Alles klar! Die Story wurde oben angezeigt und kann bei Bedarf kopiert werden.")
+**Note:** The "Other" option allows shortcuts - see below.
+
+**After user selects an option:**
+
+- **Option 1 (Neues Linear Ticket):** Proceed to Step 6, Option 1
+- **Option 2 (Bestehendes Ticket erweitern):**
+  - **MUST ask for Ticket-ID first:** "Bitte gib die Ticket-ID des bestehenden Linear Tickets an (z.B. `DEV-123` oder nur `123`):"
+  - Wait for user response with the ID
+  - Then proceed to Step 6, Option 2 with the provided ID
+- **Option 3 (Markdown-Datei):** Proceed to Step 6, Option 3
+- **Option 4 (Direkt umsetzen):** Proceed to Step 6, Option 4
+- **Other (free text input):** Parse the input:
+  - **Ticket-ID pattern detected** (e.g., `DEV-123`, `ABC-456`): Proceed directly to Step 6, Option 2 with this ID
+  - **Number only** (e.g., `123`, `456`): Assume `DEV-` prefix → Proceed to Step 6, Option 2 with `DEV-[number]`
+  - **Anything else** (e.g., "nichts", "nein", "abbrechen"): Confirm in German: "Alles klar! Die Story wurde oben angezeigt und kann bei Bedarf kopiert werden." - END
+
+**Shortcut hint (optional):** After presenting options, you may add: "Tipp: Du kannst bei 'Other' auch direkt eine Ticket-ID eingeben (z.B. `123` für DEV-123)."
 
 ---
 
@@ -344,33 +364,32 @@ Once the user approves the story, use the AskUserQuestion tool to ask (in German
 
 **Prerequisite:** Linear MCP must be installed (`lt claude install-mcps linear`)
 
+**Note:** The ticket ID was already collected in Step 5 (either via Option 2 selection or "Other" shortcut).
+
 1. First, check if Linear MCP is available. If not, inform the user (in German):
    - "Linear MCP ist nicht installiert. Du kannst es mit `lt claude install-mcps linear` installieren."
    - Then ask if they want to choose a different output option
 
-2. Ask for the Linear ticket ID (in German):
-   - "Bitte gib die Ticket-ID des bestehenden Linear Tickets an (z.B. `ABC-123`):"
-
-3. Fetch the existing ticket via Linear MCP:
+2. Fetch the existing ticket via Linear MCP:
    - Use `get_issue` to retrieve the current ticket details
    - If the ticket doesn't exist, inform the user (in German): "Ticket [ID] wurde nicht gefunden. Bitte überprüfe die ID."
    - Then ask for a corrected ID or a different output option
 
-4. Show the user the current ticket state (in German):
+3. Show the user the current ticket state (in German):
    - "Aktuelles Ticket [ID]: **[Titel]**"
    - "Aktuelle Beschreibung: [kurze Zusammenfassung oder 'leer']"
    - Ask: "Möchtest du die Beschreibung vollständig ersetzen oder die Story anhängen?"
    - Options: "Ersetzen" (replace) or "Anhängen" (append)
 
-5. Update the ticket via Linear MCP:
+4. Update the ticket via Linear MCP:
    - **Title:** Update to the optimized story title (ask user: "Soll der Titel auf '[neuer Titel]' aktualisiert werden?")
    - **Description:** Replace or append the story in markdown format based on user choice
    - **IMPORTANT:** Do NOT include the title as a heading in the description to avoid duplication - the description should start directly with the story statement ("**Story:** Als...")
    - If appending, add a separator: `\n\n---\n\n[story content without title heading]`
 
-6. Report the updated ticket URL to the user (in German): "Ticket [ID] wurde erfolgreich aktualisiert: [URL]"
+5. Report the updated ticket URL to the user (in German): "Ticket [ID] wurde erfolgreich aktualisiert: [URL]"
 
-7. **Then ask (in German):** "Möchtest du diese Story jetzt auch mit TDD umsetzen?"
+6. **Then ask (in German):** "Möchtest du diese Story jetzt auch mit TDD umsetzen?"
 
 ### Option 3: Als Markdown-Datei speichern
 
@@ -464,7 +483,9 @@ Und alle anderen FAQs werden entsprechend neu positioniert
 3. **Ask targeted questions** - Only for missing/unclear elements (in German)
 4. **Validate completeness** - INVEST check, coherence, emotional value, and TDD readiness
 5. **Generate and present story** - Format according to template (in German!) and present for discussion/optimization
-6. **Ask for output** - Linear ticket (new or existing), Markdown file, direct implementation, or nothing
+6. **Ask for output** - 4 options: Neues Linear Ticket, Bestehendes Ticket erweitern, Markdown, Direkt umsetzen
+   - If "Bestehendes Ticket erweitern": **MUST ask for Ticket-ID separately**
+   - **Shortcut:** "Other" with Ticket-ID (e.g., `123` → `DEV-123`) skips extra question
 7. **Execute choice and offer TDD** - Create output in selected format, then offer TDD implementation if not already chosen
 
 **Key behaviors:**

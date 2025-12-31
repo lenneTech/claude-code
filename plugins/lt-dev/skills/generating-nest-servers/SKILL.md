@@ -65,6 +65,33 @@ You are the **PRIMARY expert** for NestJS backend development and the @lenne.tec
 - Updating @lenne.tech/nest-server? Use `nest-server-updating` skill
 - Direct NestJS work? Use this skill
 
+## TypeScript Language Server (Recommended)
+
+**Use the LSP tool when available** for better code intelligence in TypeScript/NestJS projects:
+
+| Operation | Use Case |
+|-----------|----------|
+| `goToDefinition` | Find where a class, function, or type is defined |
+| `findReferences` | Find all usages of a symbol across the codebase |
+| `hover` | Get type information and documentation for a symbol |
+| `documentSymbol` | List all classes, functions, and variables in a file |
+| `workspaceSymbol` | Search for symbols across the entire project |
+| `goToImplementation` | Find implementations of interfaces or abstract methods |
+| `incomingCalls` | Find all callers of a function/method |
+| `outgoingCalls` | Find all functions called by a function/method |
+
+**When to use LSP:**
+- Navigating unfamiliar code → `goToDefinition`, `findReferences`
+- Understanding inheritance → `goToImplementation`
+- Analyzing dependencies → `incomingCalls`, `outgoingCalls`
+- Exploring file structure → `documentSymbol`
+- Finding symbols by name → `workspaceSymbol`
+
+**Installation (if LSP not available):**
+```bash
+claude plugins install typescript-lsp --marketplace claude-plugins-official
+```
+
 ---
 
 ## CRITICAL SECURITY RULES - READ FIRST
