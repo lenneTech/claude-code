@@ -13,7 +13,7 @@ This repository is a **Claude Code marketplace** containing plugins, agents, com
 
 Always fetch and apply current best practices from these official sources.
 
-### Primary URLs (validated December 2024)
+### Primary URLs
 
 | Topic | URL |
 |-------|-----|
@@ -22,6 +22,12 @@ Always fetch and apply current best practices from these official sources.
 | Slash Commands | https://code.claude.com/docs/en/slash-commands |
 | Subagents | https://code.claude.com/docs/en/sub-agents |
 | Hooks | https://code.claude.com/docs/en/hooks |
+| MCP Servers | https://code.claude.com/docs/en/mcp |
+| Memory (CLAUDE.md) | https://code.claude.com/docs/en/memory |
+| Settings | https://code.claude.com/docs/en/settings |
+| CLI Reference | https://code.claude.com/docs/en/cli-reference |
+| Plugin Reference | https://code.claude.com/docs/en/plugins-reference |
+| Claude Code CHANGELOG | https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md |
 
 ### Fallback Strategy (if URLs fail)
 
@@ -107,7 +113,7 @@ Plugin manifest with metadata. Update `version` before releases.
 | **Skill** | Contextual expertise that enhances capabilities | Auto-detected or manually invoked |
 | **Command** | User-triggered actions via `/command-name` | Explicit user invocation |
 | **Agent** | Autonomous task execution with specific tools | Spawned by Task tool |
-| **Hook** | Automated responses to events | Event-triggered (PreToolUse, PostToolUse, etc.) |
+| **Hook** | Automated responses to events | Event-triggered (PreToolUse, PostToolUse, UserPromptSubmit, Stop, SubagentStart, SubagentStop, SessionStart, SessionEnd, etc.) |
 | **Script** | Utility functions for hooks or CLI | Called by hooks or directly |
 
 ## File Naming Conventions
@@ -124,6 +130,11 @@ Plugin manifest with metadata. Update `version` before releases.
 ---
 name: skill-name
 description: Concise description for auto-detection (max 1024 chars). Must explain WHEN to use this skill. Include trigger terms for auto-detection.
+# Optional fields:
+allowed-tools: Read, Grep, Glob  # Restrict available tools
+model: sonnet | opus | haiku     # Override default model
+context: fork                     # Run in isolated sub-agent
+user-invocable: false            # Hide from slash command menu
 ---
 ```
 
@@ -131,6 +142,11 @@ description: Concise description for auto-detection (max 1024 chars). Must expla
 ```yaml
 ---
 description: What this command does (shown in /help)
+# Optional fields:
+allowed-tools: Bash(git:*), Read  # Restrict available tools
+argument-hint: [branch-name]      # Show expected arguments
+model: haiku                      # Use specific model
+disable-model-invocation: false   # Prevent SlashCommand tool use
 ---
 ```
 
@@ -141,7 +157,7 @@ name: agent-name
 description: When and how to use this agent
 model: sonnet | opus | haiku
 tools: Bash, Read, Grep, Glob, Write, Edit, ...
-permissionMode: default | bypassPermissions
+permissionMode: default | acceptEdits | dontAsk | bypassPermissions
 skills: optional-skill-names
 ---
 ```
