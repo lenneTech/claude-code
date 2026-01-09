@@ -4,7 +4,7 @@
 
 These are the authoritative sources for Claude Code plugin development. **Always fetch before implementation.**
 
-### Primary URLs (validated December 2024)
+### Primary URLs
 
 | Topic | URL |
 |-------|-----|

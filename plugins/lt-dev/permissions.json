@@ -1,6 +1,6 @@
 {
   "$schema": "./permissions.schema.json",
-  "description": "Required Bash permissions for lenne.tech Claude Code skills and agents. Update this file when adding new CLI commands.",
+  "description": "Bash permissions for auto-approval. Patterns support wildcards: ':*' matches any suffix.",
   "permissions": [
     {
       "pattern": "Bash(npm test:*)",

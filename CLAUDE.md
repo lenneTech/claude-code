@@ -44,6 +44,16 @@ If any URL returns 404 or fails to load:
 
 ```
 claude-code/
+├── .claude/                  # Project-level Claude Code extensions
+│   ├── skills/               # Project-specific skills
+│   │   └── marketplace-optimizer/
+│   │       ├── SKILL.md      # Marketplace optimization skill
+│   │       ├── reference.md  # URL categories and validation patterns
+│   │       └── examples.md   # Usage examples and workflows
+│   ├── agents/               # Project-specific agents
+│   │   └── marketplace-optimizer-agent.md
+│   └── commands/             # Project-specific commands
+│       └── optimize.md       # /optimize command
 ├── .claude-plugin/
 │   └── marketplace.json      # Marketplace definition
 ├── plugins/
@@ -182,6 +192,12 @@ skills: optional-skill-names
 - Document dependencies between elements
 - Test all commands and workflows manually
 
+### Content Rules
+- **No history references:** Never mention "new", "updated", "changed from", or version-specific info in descriptions
+- **Timeless documentation:** Write as if features always existed (no "since v2.1" or "added in")
+- **Compact content:** Minimize tokens while maintaining clarity and completeness
+- **No over-compression:** Never remove important information for token savings
+
 ## Creating New Elements
 
 Use the `/lt-dev:plugin:element` command to interactively create new elements with:
@@ -206,6 +222,11 @@ If the conversation was reset with `/clear` or context was summarized, run:
 
 This restores best practice awareness and validates any pending changes.
 
+For comprehensive optimization after context loss, use:
+```
+/optimize
+```
+
 ## Optimization Workflow
 
 When optimizing existing elements:
@@ -214,6 +235,11 @@ When optimizing existing elements:
 3. Propose specific improvements
 4. Implement changes with minimal disruption
 5. Verify consistency with related elements
+
+For batch optimization with user selection, use:
+```
+/optimize
+```
 
 ## Language Requirements
 
@@ -251,6 +277,11 @@ Run `/lt-dev:plugin:check` periodically or before releases to verify:
 - [ ] **permissions.json**: `usedBy` arrays are complete and accurate
 - [ ] **.mcp.json**: All required MCP servers are configured
 - [ ] **plugin.json**: Version is updated before release
+
+### Content Standards
+- [ ] No history references in any element ("new", "updated", "since vX.Y")
+- [ ] No version-specific markers in descriptions
+- [ ] Content is complete (no over-compression)
 
 ### Documentation
 - [ ] **CLAUDE.md**: Repository structure matches actual layout

@@ -28,7 +28,7 @@ You are an expert in developing Claude Code marketplaces and plugins. This skill
 
 **CRITICAL:** Before ANY implementation or optimization, fetch the current official documentation.
 
-### Primary URLs (validated December 2024)
+### Primary URLs
 
 ```
 WebFetch: https://code.claude.com/docs/en/plugins
@@ -38,13 +38,21 @@ WebFetch: https://code.claude.com/docs/en/sub-agents
 WebFetch: https://code.claude.com/docs/en/hooks
 ```
 
-### Fallback Strategy (if URLs return 404)
+**Note:** If WebFetch returns "Prompt is too long", use WebSearch with targeted queries instead.
 
-1. **WebSearch:** `"Claude Code [topic] documentation site:claude.com"`
-2. **Try alternative domains:** `docs.claude.com`, `docs.anthropic.com`
-3. **Note broken URLs** for update in CLAUDE.md
+### Fallback Strategy (if URLs fail or are too large)
 
-Apply the latest patterns and requirements from these sources.
+1. **WebSearch with targeted queries:**
+   - `"Claude Code [topic] frontmatter fields"`
+   - `"Claude Code [topic] best practices"`
+   - `"Claude Code [topic] documentation site:claude.com"`
+2. **Try alternative domains:** `docs.claude.com`, `platform.claude.com`, `docs.anthropic.com`
+3. **GitHub sources:**
+   - CHANGELOG: `https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md`
+   - Skills examples: `https://github.com/anthropics/skills`
+4. **Note broken URLs** for update in CLAUDE.md
+
+Apply the patterns and requirements from these sources.
 
 ---
 
@@ -197,26 +205,39 @@ hooks/
 **hooks.json Template:**
 ```json
 {
-  "hooks": [
-    {
-      "name": "hook-name",
-      "event": "PreToolUse | PostToolUse | UserPromptSubmit | ...",
-      "command": "/path/to/script.ts $ARGUMENTS",
-      "description": "What this hook does"
-    }
-  ]
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/path/to/script.sh"
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
+
+**Fields:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `matcher` | string | Tool filter: `"Write"`, `"Write\|Edit"`, `"Bash(npm test*)"`, or omit for all |
+| `type` | string | `"command"` (shell) or `"prompt"` (Claude evaluation) |
+| `command` | string | Shell command (for type="command") |
+| `timeout` | number | Seconds before timeout (default: 60, optional) |
 
 **Events:**
 - `PreToolUse` - Before a tool executes
 - `PostToolUse` - After a tool executes
+- `PermissionRequest` - When permission is requested
 - `UserPromptSubmit` - When user submits a prompt
-- `Notification` - For notifications
+- `SessionStart` - Session initialization
 - `Stop` - When main agent finishes
 - `SubagentStop` - When subagent finishes
-- `SessionStart` - Session initialization
-- `SessionEnd` - Session cleanup
+- `PreCompact` - Before context compaction
 
 ---
 
@@ -305,6 +326,23 @@ When optimizing existing elements:
 
 ---
 
+## Content Standards
+
+### No History References
+- **Never use** "new", "updated", "changed from", or version-specific markers
+- **Never include** "since v2.1", "added in version X", "previously"
+- **Write timelessly** as if features always existed
+- **Remove** any existing history references when optimizing
+
+### Token Efficiency
+- Keep content concise but complete
+- Avoid redundant explanations
+- Use tables and lists over prose where appropriate
+- Don't sacrifice clarity for brevity
+- **Never remove important information for token savings**
+
+---
+
 ## Anti-Patterns to Avoid
 
 1. **Overlapping Skills**: Two skills that trigger on the same conditions
@@ -313,6 +351,7 @@ When optimizing existing elements:
 4. **Missing Cross-References**: Elements that should reference each other but don't
 5. **Inconsistent Structure**: Elements that don't follow established patterns
 6. **Outdated Best Practices**: Not checking current documentation before changes
+7. **History References**: Adding "new", "updated", version markers to content
 
 ---
 
