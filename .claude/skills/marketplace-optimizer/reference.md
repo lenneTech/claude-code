@@ -1,64 +1,74 @@
 # Marketplace Optimizer Reference
 
-## Primary URL Categories
+## Primary Sources
 
-The following categories should be covered in CLAUDE.md Primary URLs:
+### Local Cache (FASTEST, HIGHEST AUTHORITY)
 
-| Category | Topic | Expected URL Pattern |
-|----------|-------|---------------------|
-| Core | Plugins & Marketplaces | `code.claude.com/docs/en/plugins` |
-| Core | Skills | `code.claude.com/docs/en/skills` |
-| Core | Slash Commands | `code.claude.com/docs/en/slash-commands` |
-| Core | Subagents | `code.claude.com/docs/en/sub-agents` |
-| Core | Hooks | `code.claude.com/docs/en/hooks` |
-| Integration | MCP Servers | `code.claude.com/docs/en/mcp` |
-| Configuration | Memory (CLAUDE.md) | `code.claude.com/docs/en/memory` |
-| Configuration | Settings | `code.claude.com/docs/en/settings` |
-| Reference | CLI Reference | `code.claude.com/docs/en/cli-reference` |
-| Reference | Plugin Reference | `code.claude.com/docs/en/plugins-reference` |
-| Updates | CHANGELOG | `github.com/anthropics/claude-code/blob/main/CHANGELOG.md` |
+| File | Content |
+|------|---------|
+| `best-practices-cache.md` | Pre-extracted constraints, schemas, valid values from official docs |
 
-## URL Validation Patterns
+### Quick-Fetch Sources (for updates/patterns)
 
-### Valid Response Indicators
-- HTTP 200 status
-- Content contains Claude Code documentation
-- No redirect to error page
+| Source | URL | Content |
+|--------|-----|---------|
+| Plugins README | `github.com/anthropics/claude-code/blob/main/plugins/README.md` | Plugin structure, examples |
+| Official Plugins | `github.com/anthropics/claude-plugins-official` | Plugin standards, quality guidelines |
+| Skills Repository | `github.com/anthropics/skills` | Skill specs, templates |
+| CHANGELOG | `github.com/anthropics/claude-code/blob/main/CHANGELOG.md` | Recent changes |
 
-### Invalid Response Indicators
-- HTTP 404 status
-- Redirect to login page
-- Generic error message
-- Empty content
+### Reference URLs (manual lookup ONLY - NOT for WebFetch)
 
-### Fallback Domains
+These URLs are React apps with heavy JavaScript - too large for WebFetch:
 
-If primary domain fails, try in order:
-1. `code.claude.com/docs/en/{topic}`
-2. `docs.claude.com/en/docs/claude-code/{topic}`
-3. `docs.anthropic.com/en/docs/claude-code/{topic}`
+| Topic | URL |
+|-------|-----|
+| Plugins & Marketplaces | `code.claude.com/docs/en/plugins` |
+| Skills | `code.claude.com/docs/en/skills` |
+| Slash Commands | `code.claude.com/docs/en/slash-commands` |
+| Subagents | `code.claude.com/docs/en/sub-agents` |
+| Hooks | `code.claude.com/docs/en/hooks` |
+| MCP Servers | `code.claude.com/docs/en/mcp` |
+| Memory (CLAUDE.md) | `code.claude.com/docs/en/memory` |
+| Settings | `code.claude.com/docs/en/settings` |
+| CLI Reference | `code.claude.com/docs/en/cli-reference` |
+| Plugin Reference | `code.claude.com/docs/en/plugins-reference` |
+
+## Source Validation
+
+### Quick-Fetch Validation
+- HTTP 200 status = valid
+- Use specific prompts for content extraction
+- Cache results if frequently needed
+
+### Fallback Strategy
+
+If Quick-Fetch sources fail:
+1. Use WebSearch: `"Claude Code [topic] site:anthropic.com OR site:claude.com"`
+2. Use Claude's built-in knowledge (Knowledge Cutoff: May 2025)
+3. Flag for manual review
 
 ## Secondary Source Validation
 
-**IMPORTANT:** Secondary sources are NEVER added to CLAUDE.md Primary URLs.
+**IMPORTANT:** Secondary sources are NEVER added to CLAUDE.md Primary Sources.
 They are only used for the current optimization session.
 
 ### Trust Indicators (Higher Confidence)
 - Published by Anthropic employees
 - Referenced in official docs
 - Recent publication date (< 6 months)
-- Technical accuracy matches primary sources
+- Technical accuracy matches local cache
 
 ### Distrust Indicators (Lower Confidence)
-- Conflicts with primary documentation
+- Conflicts with local cache
 - Outdated publication date (> 12 months)
 - Generic AI tutorials not specific to Claude Code
 - Missing citations or references
 
 ### Usage Rules
 - Secondary sources provide supplementary insights only
-- If secondary conflicts with primary: **IGNORE secondary**
-- If secondary has unique info not in primary: **FLAG for critical review**
+- If secondary conflicts with local cache: **IGNORE secondary**
+- If secondary has unique info not in cache: **FLAG for critical review**
 - Never persist secondary sources to CLAUDE.md
 
 ## Optimization Categories

@@ -29,7 +29,7 @@ This agent optimizes **both**:
 This agent should be spawned when:
 
 - **Batch Optimization**: Multiple elements need updating simultaneously
-- **Documentation Sync**: Primary URLs need validation and CLAUDE.md needs updating
+- **Cache Update**: Best-practices-cache needs refreshing from Reference URLs
 - **Best Practice Enforcement**: Elements need to be aligned with latest Claude Code patterns
 - **Parallel Workload**: Independent optimizations can run concurrently
 - **Full Scan**: Both .claude/ and plugins/ need comprehensive analysis
@@ -38,16 +38,26 @@ This agent should be spawned when:
 
 ### Source Authority Hierarchy
 
-1. **PRIMARY (Authoritative)**: Official Claude Code documentation
-   - `code.claude.com/docs/en/*`
-   - `docs.anthropic.com/en/docs/claude-code/*`
+1. **LOCAL CACHE (Highest Authority)**: Pre-extracted best practices
+   - `.claude/skills/marketplace-optimizer/best-practices-cache.md`
+   - Contains: YAML frontmatter requirements, constraints, valid values, schemas
+   - **This is the fastest and most reliable source**
+
+2. **GITHUB SOURCES (High Authority - Quick-Fetch)**:
+   - `github.com/anthropics/claude-code/blob/main/plugins/README.md`
+   - `github.com/anthropics/claude-plugins-official`
+   - `github.com/anthropics/skills`
    - `github.com/anthropics/claude-code/blob/main/CHANGELOG.md`
 
-2. **SECONDARY (Supplementary, SESSION-ONLY)**: User-provided sources
-   - Must be verified against primary sources
-   - Conflicts with primary = **IGNORE secondary**
+3. **REFERENCE URLs (For Cache-Update Only)**:
+   - `code.claude.com/docs/en/*` (React apps - too large for direct fetch)
+   - Only fetched during cache update (Step 1)
+
+4. **SECONDARY (Lowest Authority, SESSION-ONLY)**: User-provided sources
+   - Must be verified against local cache
+   - Conflicts with cache = **IGNORE secondary**
    - Unique info in secondary = **FLAG for critical review**
-   - **NEVER added to CLAUDE.md Primary URLs** - temporary use only
+   - **NEVER added to CLAUDE.md Primary Sources** - temporary use only
 
 ### Content Standards
 
@@ -113,28 +123,28 @@ When spawned with a list of optimizations:
    Parallel Group 2: [task-f, task-g]
    ```
 
-### Phase 2: URL Validation
+### Phase 2: Cache Update (if requested)
 
-For Primary URL validation tasks:
+For cache update tasks:
 
-```bash
-# Fetch each URL and extract best practices
-WebFetch: {url}
-Prompt: "Extract key requirements and patterns for Claude Code"
-```
+1. **Read Reference URLs from CLAUDE.md**
+2. **Fetch each Reference URL** (parallel where possible)
+   ```bash
+   WebFetch: {url}
+   Prompt: "Extract ONLY technical requirements: YAML frontmatter fields, valid values, constraints, schemas"
+   ```
 
-If URL fails:
-```bash
-WebSearch: "Claude Code {topic} documentation site:claude.com"
-# Try alternative domains
-WebFetch: docs.anthropic.com/en/docs/claude-code/{topic}
-```
+3. **If URL fails:**
+   ```bash
+   WebSearch: "Claude Code {topic} documentation site:claude.com"
+   # Try alternative domains
+   WebFetch: docs.anthropic.com/en/docs/claude-code/{topic}
+   ```
 
-Update CLAUDE.md with findings:
-- Add new **official** URLs only (code.claude.com, docs.anthropic.com, github.com/anthropics)
-- Update broken URLs with working alternatives
-- Note deprecated pages
-- **NEVER add secondary sources to Primary URLs**
+4. **Compile and write cache**
+   - Write to `.claude/skills/marketplace-optimizer/best-practices-cache.md`
+   - Update CLAUDE.md Reference URLs if broken/new URLs found
+   - **NEVER add secondary sources to Primary Sources**
 
 ### Phase 3: Element Optimization
 
@@ -238,7 +248,7 @@ For dependent tasks:
 After all optimizations:
 
 1. **Read Current CLAUDE.md**
-2. **Verify Primary URLs Table**
+2. **Verify Reference URLs Table**
    - All URLs working
    - No missing documentation topics
    - No deprecated URLs
@@ -312,7 +322,8 @@ grep -r "Related Skills" .claude/ plugins/ --include="*.md"
 
 ### Category 5: Documentation Updates
 - CLAUDE.md out of sync
-- Primary URLs outdated
+- Reference URLs outdated
+- Cache needs refresh
 - Missing configuration documentation
 
 ## Output Format
@@ -350,7 +361,8 @@ After completing all assigned tasks:
 - [file] Change description
 
 ### CLAUDE.md Status
-- Primary URLs: X validated, Y updated, Z added
+- Reference URLs: X validated, Y updated, Z added
+- Cache: Updated/Skipped
 - Last sync: [timestamp]
 
 ### Verification Results

@@ -32,127 +32,59 @@ This skill optimizes **both**:
 
 ## Workflow Overview
 
-### Phase 1: Source Collection
+### Phase 1: Cache & Sources (Steps 1-2)
 
-1. **Handle Secondary Sources**
-   - If `--none` argument: proceed with primary sources only (no prompts)
-   - If other arguments provided: use them as secondary sources
-   - If no arguments: ask user via **normal text output** for secondary sources (URLs and/or local files). User responds via normal prompt. Empty response or "none" means no secondary sources.
-   - Secondary sources are treated with lower authority than primary sources
-   - Conflicting information in secondary sources is ignored
+1. **Cache Update** (Step 1)
+   - Ask if cache should be updated (Default: ja)
+   - If yes: Fetch Reference URLs from CLAUDE.md, rebuild cache
+   - Flags: `--update-cache` (auto-yes), `--skip-cache` (auto-no)
 
-2. **Read Primary URLs from CLAUDE.md**
-   - Extract the Primary URLs table
-   - These are the authoritative sources directly from Claude Code developers
+2. **Secondary Sources** (Step 2)
+   - Ask for optional secondary sources (Default: keine)
+   - Flags: `--none` (skip), or provide sources as arguments
+   - Secondary sources have lower authority than cache
 
-### Phase 2: Source Validation & Update
+### Phase 2: Knowledge Building (Steps 3-5)
 
-1. **Validate Each Primary URL**
-   - Attempt to fetch each URL
-   - Check for 404 errors or redirects
-   - Note which URLs are working/broken
+1. **Read Local Cache** (Step 3 - REQUIRED)
+   - Read `best-practices-cache.md` from skill directory
+   - Contains: YAML frontmatter requirements, valid values, constraints, schemas
+   - **This is the primary knowledge source**
 
-2. **Search for Missing/Updated URLs**
-   - Use WebSearch fallback for broken URLs
-   - Check for new documentation pages
-   - Identify any gaps in coverage
+2. **Fetch Quick Sources** (Step 4 - Optional)
+   - GitHub: Plugins README, Official Plugins, Skills Repository
+   - CHANGELOG for recent updates
 
-3. **Update CLAUDE.md**
-   - Add new **official** documentation URLs discovered (only from code.claude.com, docs.anthropic.com, github.com/anthropics)
-   - Update broken URLs with working alternatives
-   - Keep the Primary URLs table current and complete
-   - **NEVER add secondary sources to Primary URLs** - they are only used for the current session
+3. **Build Knowledge Base** (Step 5)
+   - Local cache = highest authority
+   - Claude's built-in knowledge = interpretation
+   - Secondary sources = supplementary (lowest authority)
 
-### Phase 3: Knowledge Extraction
+### Phase 3: Analysis (Step 6-7)
 
-1. **Fetch All Primary Sources** (parallel)
-   - Download current best practices from each working URL
-   - Extract key patterns, requirements, and guidelines
-   - **Document the authoritative standards** for:
-     - YAML frontmatter fields and their valid values
-     - Element structure (skills, commands, agents, hooks)
-     - Naming conventions and file organization
-     - Description guidelines and trigger terms
-
-2. **Fetch Secondary Sources** (if provided)
-   - Download user-provided sources
-   - Mark information as lower authority
-
-3. **Build Knowledge Base**
-   - Primary sources = highest authority (MUST be followed)
-   - Secondary sources = supplementary, verify against primary
-   - **Merge with Content Standards** (see below) - these are mandatory
-
-### Phase 4: Analysis & Recommendations
-
-1. **Analyze Current Marketplace State**
+1. **Analyze Marketplace** (Step 6)
    - Scan all plugins, skills, commands, agents, hooks
-   - Compare against **best practices from Primary Sources**
-   - Check compliance with **Content Standards** (no history references, token efficiency)
+   - Compare against best practices from cache
+   - Check Content Standards compliance
 
-2. **Identify Optimizations**
-   - List all potential improvements
-   - Categorize by type (structure, frontmatter, content, etc.)
-   - **Reference the specific Primary Source** that supports each recommendation
-   - Flag any Content Standards violations (history references, over-verbose content)
+2. **Generate Optimization List** (Step 7)
+   - Categorize by type (structure, frontmatter, content)
+   - Reference the source that supports each recommendation
 
-3. **Handle Conflicts**
-   - If secondary source conflicts with primary: **ignore secondary**
-   - If secondary source has unique info: **mark for critical review**
-   - **Primary Sources always win** - never compromise official standards
+### Phase 4: Execution (Steps 8-10)
 
-### Phase 5: User Selection
-
-1. **Present Optimization List**
-   - Use AskUserQuestion with multiSelect checkboxes
+1. **User Confirmation** (Step 8)
+   - Present optimizations with multiSelect checkboxes
    - All options enabled by default
-   - Group by category for easier review
 
-2. **Allow Deselection**
-   - User can uncheck items they don't want
-   - Proceed only with approved optimizations
+2. **Execute Optimizations** (Step 9)
+   - Spawn agents for parallel work
+   - Track progress with TodoWrite
 
-### Phase 6: Execution & Standards Enforcement
-
-1. **Spawn Background Agents**
-   - Use Task tool for independent optimizations
-   - Run compatible tasks in parallel
-   - **Pass Primary Source standards to each agent**
-
-2. **Sequential Dependencies**
-   - Identify tasks that must run in order
-   - Execute sequentially where necessary
-
-3. **Apply Standards During Execution**
-   - **Every change MUST comply with Primary Source best practices**
-   - **Every change MUST follow Content Standards:**
-     - No history references ("new", "updated", "since vX.Y")
-     - No version-specific markers in descriptions
-     - Concise but complete content (no over-compression)
-   - Validate frontmatter against Primary Source requirements
-   - Ensure descriptions trigger auto-detection correctly
-
-4. **Progress Tracking**
-   - Use TodoWrite to track all optimizations
-   - Mark completed as work progresses
-
-### Phase 7: Final Verification
-
-1. **Standards Compliance Check**
-   - Verify ALL modified files against Primary Source best practices
-   - Verify ALL modified files against Content Standards
-   - Check for any remaining history references
-   - Validate YAML frontmatter syntax and required fields
-
-2. **Cross-Reference Validation**
-   - Ensure all element references are valid
-   - Check Related Skills sections are accurate
-   - Verify no orphaned references
-
-3. **Completeness Check**
-   - Confirm no important information was removed
-   - Ensure content is actionable and clear
-   - Verify examples are included where needed
+3. **Final Verification** (Step 10)
+   - Standards compliance check
+   - Cross-reference validation
+   - Completeness check
 
 ---
 
@@ -160,31 +92,93 @@ This skill optimizes **both**:
 
 When invoked, follow this exact sequence:
 
-### Step 1: Handle Secondary Sources
+### Step 1: Update Cache (Optional)
 
-**If `--none` argument provided** (e.g., `/optimize --none`):
+**If `--update-cache` flag provided**:
+- Execute cache update immediately (Step 1b)
+- NO interactive prompt
+
+**If `--skip-cache` flag provided**:
+- Skip to Step 2 immediately
+- NO interactive prompt
+
+**If no cache flag provided**:
+- Ask via **normal text output**
+- **Language**: Adapt to user's/system's language setting (e.g., German if configured)
+- **Suggestions**: Set "ja" (German) or "yes" (English) as suggestion
+
+**Prompt text** (adapt language as needed):
+```
+Cache aktualisieren?
+
+Soll der Best-Practices-Cache (.claude/skills/marketplace-optimizer/best-practices-cache.md)
+mit den aktuellen Reference URLs aus CLAUDE.md neu erstellt werden?
+
+(ja/nein)
+```
+
+**Processing user response**:
+- If "ja"/"yes"/empty: Execute cache update (see Step 1b)
+- If "nein"/"no": Skip to Step 2
+
+#### Step 1b: Execute Cache Update
+
+If user confirmed cache update:
+
+1. **Read Reference URLs from CLAUDE.md**
+   - Extract URLs from the "Reference URLs" table
+   - These are the code.claude.com documentation pages
+
+2. **Fetch each Reference URL** (parallel where possible)
+   - Use WebFetch with specific prompts to extract:
+     - YAML frontmatter fields and valid values
+     - Element structure requirements
+     - Naming conventions
+     - JSON schemas
+   - Use prompt: "Extract ONLY technical requirements: YAML frontmatter fields, valid values, constraints, schemas. No general explanations."
+
+3. **Compile and write cache**
+   - Combine extracted information
+   - Write to `.claude/skills/marketplace-optimizer/best-practices-cache.md`
+   - Format as structured reference document
+
+4. **Confirm completion**
+   - Output: "Cache erfolgreich aktualisiert" / "Cache updated successfully"
+
+### Step 2: Handle Secondary Sources
+
+**If `--none` flag provided** (e.g., `/optimize --none`):
 - Proceed immediately with primary sources only
-- NO interactive prompts or questions
-- Simply continue to Step 2
+- NO interactive prompt
+- Simply continue to Step 3
 
-**If other arguments provided** (e.g., `/optimize https://example.com ./docs/notes.md`):
-- Use arguments as secondary sources
+**If source arguments provided** (e.g., `/optimize https://example.com ./docs/notes.md`):
+- Use arguments as secondary sources (ignore flags like `--update-cache`)
 - Parse each argument using source detection rules
+- Continue to Step 3
 
-**If no arguments provided**:
-- Ask the user via **normal text output** (NOT AskUserQuestion tool)
-- Output a prompt asking for secondary sources and wait for user response
-- **Language**: Output should follow the user's/system's language setting (e.g., German if configured)
+**If no source arguments and no `--none` flag**:
+- Ask the user via **normal text output** for secondary sources
+- **Language**: Adapt to user's/system's language setting (e.g., German if configured)
+- **Suggestions**: Set "keine" (German) or "none" (English) as suggestion
 
-**Prompt content** (adapt language as needed):
-- Ask for URLs and/or local file paths as additional references
-- Explain the format: URLs (`https://...`) and local files (`./path` or `/absolute/path`)
-- Mention that multiple sources can be separated by commas, spaces, or line breaks
-- Clarify that an empty response or "none" means no secondary sources
+**Prompt text** (adapt language as needed):
+```
+Sekundäre Quellen für die Optimierung
 
-- User responds via normal prompt (not AskUserQuestion selection)
-- If user provides sources: parse and use them
-- If user provides empty response or "none"/"keine": proceed with primary sources only
+Möchtest du zusätzliche Referenzen (URLs oder lokale Dateien) verwenden?
+
+Eingabe:
+- URLs: https://example.com/guide.md
+- Lokale Dateien: ./docs/notes.md oder /absolute/path/file.md
+- Mehrere Quellen durch Kommas, Leerzeichen oder Zeilenumbrüche trennen
+- "keine" oder leere Eingabe = nur offizielle Quellen verwenden
+```
+
+**Processing user response**:
+- If empty or "keine"/"none": proceed with primary sources only
+- Otherwise: parse the provided text as sources (URLs and/or local files)
+- Sources can be separated by commas, spaces, or line breaks
 
 ### Source Detection Rules
 
@@ -201,32 +195,60 @@ Examples:
 - `/Users/dev/guide.md` → Local file (absolute)
 - `docs/internal.md` → Local file (relative)
 
-### Step 2: Read CLAUDE.md Primary URLs
+### Step 3: Read Local Cache (REQUIRED)
 
-Extract the Primary URLs table from CLAUDE.md:
-- Parse the markdown table
-- Store each topic-URL pair
-
-### Step 3: Validate URLs (Parallel)
-
-For each Primary URL, fetch and verify:
+Read the local best practices cache:
 ```
-WebFetch: {url}
-Prompt: "Extract key patterns, requirements, and best practices for Claude Code {topic}"
+Read: .claude/skills/marketplace-optimizer/best-practices-cache.md
 ```
 
-If 404 or error:
-```
-WebSearch: "Claude Code {topic} documentation site:claude.com"
-```
+This file contains:
+- YAML frontmatter requirements and valid values
+- Element structure definitions
+- Naming conventions
+- JSON schemas for hooks.json, plugin.json
 
-### Step 4: Update CLAUDE.md if Needed
+**This is the primary knowledge source - do NOT skip this step.**
 
-If new URLs found or broken URLs identified:
-- Edit CLAUDE.md to update the Primary URLs table
-- Add discovered new documentation pages
+### Step 4: Fetch Quick-Fetch Sources (Optional)
 
-### Step 5: Analyze All Elements
+Only fetch these if explicitly needed (e.g., checking for recent changes):
+
+1. **Plugins README** (plugin structure, examples):
+   ```
+   WebFetch: https://github.com/anthropics/claude-code/blob/main/plugins/README.md
+   Prompt: "Extract plugin structure, components, and examples"
+   ```
+
+2. **Official Plugins** (standards, quality guidelines):
+   ```
+   WebFetch: https://github.com/anthropics/claude-plugins-official
+   Prompt: "Extract plugin standards and quality guidelines"
+   ```
+
+3. **Skills Repository** (skill specs):
+   ```
+   WebFetch: https://github.com/anthropics/skills
+   Prompt: "Extract skill structure and best practices"
+   ```
+
+4. **CHANGELOG** (recent updates):
+   ```
+   WebFetch: https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md
+   Prompt: "List changes from the last 3 months"
+   ```
+
+**Do NOT fetch code.claude.com URLs directly - use cache update (Step 1) instead.**
+
+### Step 5: Build Knowledge Base
+
+Combine sources in priority order:
+1. Local cache (highest authority - constraints, schemas)
+2. GitHub sources (Plugins README, Official Plugins, Skills Repo)
+3. Claude's built-in knowledge (edge cases, interpretation)
+4. Secondary sources if provided (lowest authority)
+
+### Step 6: Analyze All Elements
 
 Use Task tool with Explore agent to analyze **both** directories:
 
@@ -249,7 +271,7 @@ General checks for both:
 - Required fields present
 ```
 
-### Step 6: Generate Optimization List
+### Step 7: Generate Optimization List
 
 Create categorized list:
 ```markdown
@@ -266,14 +288,14 @@ Create categorized list:
 - [ ] Enhancement 1 (Primary source: sub-agents docs)
 ```
 
-### Step 7: User Confirmation
+### Step 8: User Confirmation
 
 Use AskUserQuestion with multiSelect:
 - Present all optimizations as checkboxes
 - Default: all selected
 - Group by category for clarity
 
-### Step 8: Execute Approved Optimizations
+### Step 9: Execute Approved Optimizations
 
 For each approved optimization:
 1. Determine if parallelizable
@@ -283,7 +305,7 @@ For each approved optimization:
 3. Execute sequential work directly
 4. Track progress with TodoWrite
 
-### Step 9: Final Verification
+### Step 10: Final Verification
 
 After all optimizations complete:
 1. **Standards Compliance Check:**
@@ -302,25 +324,40 @@ After all optimizations complete:
 
 ## Source Authority Rules
 
-### Primary Sources (HIGHEST Authority)
-- Official Claude Code documentation at code.claude.com
-- Anthropic documentation at docs.anthropic.com
-- Claude Code CHANGELOG on GitHub
+### Local Cache (HIGHEST Authority)
+- `best-practices-cache.md` in skill directory
+- Contains pre-extracted, validated best practices
+- Includes: YAML frontmatter requirements, constraints, valid values
+- **This is the fastest and most reliable source**
 
-**Primary sources are ALWAYS trusted.**
-**Only primary sources can be added to CLAUDE.md Primary URLs table.**
+### GitHub Sources (HIGH Authority - Quick-Fetch)
+- `github.com/anthropics/claude-code/blob/main/plugins/README.md` - Plugin structure
+- `github.com/anthropics/claude-plugins-official` - Plugin standards
+- `github.com/anthropics/skills` - Skill specifications
+- `github.com/anthropics/claude-code/blob/main/CHANGELOG.md` - Recent changes
+- **Use for updates and patterns not in cache**
 
-### Secondary Sources (LOWER Authority, SESSION-ONLY)
+### Claude's Built-in Knowledge (MEDIUM Authority)
+- Claude has extensive knowledge about Claude Code best practices
+- Valid for patterns, conventions, and general guidance
+- Use for interpretation and edge cases not in cache
+
+### Reference URLs (FOR CACHE-UPDATE ONLY)
+- code.claude.com documentation pages (React apps)
+- Only fetched during cache update (Step 1)
+- **Do NOT fetch directly - too large for WebFetch**
+
+### Secondary Sources (LOWEST Authority, SESSION-ONLY)
 - User-provided URLs
 - Community blog posts
 - Third-party tutorials
 
 **Secondary sources are TEMPORARY:**
 - Used only for the current optimization session
-- **NEVER added to CLAUDE.md Primary URLs**
-- If conflicts with primary: **IGNORE secondary**
-- If not covered by primary: **FLAG for critical review**
-- If confirms primary: **USE with confidence**
+- **NEVER added to CLAUDE.md Primary Sources**
+- If conflicts with cache: **IGNORE secondary**
+- If not covered by cache: **FLAG for critical review**
+- If confirms cache: **USE with confidence**
 
 ---
 
@@ -353,7 +390,7 @@ After all optimizations, verify:
 
 1. **Trusting Secondary Over Primary**: Never let community sources override official docs
 2. **Skipping URL Validation**: Always verify URLs before using them
-3. **Not Updating CLAUDE.md**: Keep the Primary URLs current
+3. **Not Updating Cache**: Keep the best-practices-cache current
 4. **Sequential When Parallel Possible**: Maximize parallel execution
 5. **Ignoring User Preferences**: Only execute approved optimizations
 6. **History References**: Never add "new", "updated", version markers

@@ -7,48 +7,50 @@
 /optimize
 ```
 
-### Phase 1: Secondary Sources Query
+### Phase 1: Cache Update Query
 
 **Claude asks (via normal text output):**
 ```
-**Secondary Sources for Optimization**
+Cache aktualisieren?
 
-Please provide URLs and/or local file paths to be used as additional references.
+Soll der Best-Practices-Cache (.claude/skills/marketplace-optimizer/best-practices-cache.md)
+mit den aktuellen Reference URLs aus CLAUDE.md neu erstellt werden?
 
-Format:
-- URLs: https://example.com/guide.md
-- Local files: ./docs/notes.md or /absolute/path/file.md
-
-Multiple sources can be separated by commas, spaces, or line breaks.
-
-If you do not want to use secondary sources, simply respond with an empty message or "none".
+(ja/nein)
 ```
 
-**User responds:** (empty message or "none")
+**User responds:** "nein" (skip cache update)
 
-### Phase 2: Primary URL Validation
+### Phase 2: Secondary Sources Query
+
+**Claude asks (via normal text output):**
+```
+Sekundäre Quellen für die Optimierung
+
+Möchtest du zusätzliche Referenzen (URLs oder lokale Dateien) verwenden?
+
+Eingabe:
+- URLs: https://example.com/guide.md
+- Lokale Dateien: ./docs/notes.md oder /absolute/path/file.md
+- Mehrere Quellen durch Kommas, Leerzeichen oder Zeilenumbrüche trennen
+- "keine" oder leere Eingabe = nur offizielle Quellen verwenden
+```
+
+**User responds:** "keine"
+
+### Phase 3: Cache & Sources Loading
 
 **Claude reports:**
 ```
-Validating Primary URLs from CLAUDE.md...
+Loading knowledge sources...
 
-✅ https://code.claude.com/docs/en/plugins - OK
-✅ https://code.claude.com/docs/en/skills - OK
-✅ https://code.claude.com/docs/en/slash-commands - OK
-✅ https://code.claude.com/docs/en/sub-agents - OK
-✅ https://code.claude.com/docs/en/hooks - OK
-✅ https://code.claude.com/docs/en/mcp - OK
-✅ https://code.claude.com/docs/en/memory - OK
-✅ https://code.claude.com/docs/en/settings - OK
-✅ https://code.claude.com/docs/en/cli-reference - OK
-✅ https://code.claude.com/docs/en/plugins-reference - OK
-✅ https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md - OK
+✅ Local cache: best-practices-cache.md loaded
+✅ GitHub sources available for optional fetch
 
-All 11 Primary URLs validated successfully.
-No CLAUDE.md updates needed.
+Proceeding with local cache as primary knowledge source.
 ```
 
-### Phase 3: Element Analysis
+### Phase 4: Element Analysis
 
 **Claude analyzes and reports:**
 ```
@@ -68,7 +70,7 @@ Marketplace (plugins/):
 Comparing against best practices...
 ```
 
-### Phase 4: Optimization Proposals
+### Phase 5: Optimization Proposals
 
 **Claude presents checkbox list:**
 ```
@@ -94,7 +96,7 @@ Select optimizations to apply (all selected by default):
 
 **User deselects one item and confirms**
 
-### Phase 5: Parallel Execution
+### Phase 6: Parallel Execution
 
 **Claude executes:**
 ```
@@ -111,15 +113,16 @@ Sequential:
 All optimizations completed successfully.
 ```
 
-### Phase 6: Summary
+### Phase 7: Summary
 
 ```
 ## Marketplace Optimization Complete
 
 ### Sources Used
-- Primary: 11 URLs validated
+- Local cache: Loaded
+- GitHub sources: Available (not fetched)
 - Secondary: 0 (skipped by user)
-- CLAUDE.md: No changes needed
+- Cache update: Skipped by user
 
 ### Optimizations Applied
 - Total approved: 4
@@ -170,21 +173,17 @@ Proceeding with 2 secondary sources.
 /optimize
 ```
 
-### Phase 1: Secondary Sources Query
+### Phase 1: Cache Update Query
+
+**Claude asks:** (user chooses to skip)
+
+### Phase 2: Secondary Sources Query
 
 **Claude asks (via normal text output):**
 ```
-**Secondary Sources for Optimization**
+Sekundäre Quellen für die Optimierung
 
-Please provide URLs and/or local file paths to be used as additional references.
-
-Format:
-- URLs: https://example.com/guide.md
-- Local files: ./docs/notes.md or /absolute/path/file.md
-
-Multiple sources can be separated by commas, spaces, or line breaks.
-
-If you do not want to use secondary sources, simply respond with an empty message or "none".
+Möchtest du zusätzliche Referenzen (URLs oder lokale Dateien) verwenden?
 ```
 
 **User responds with sources:**
@@ -195,7 +194,7 @@ https://dev.to/article/claude-code-patterns
 /Users/dev/notes/claude-learnings.md
 ```
 
-### Phase 2: Source Processing
+### Phase 3: Source Processing
 
 **Claude reports:**
 ```
@@ -210,16 +209,16 @@ Local Files (2):
   ✅ /Users/dev/notes/claude-learnings.md - Read (1.1 KB)
 
 Total: 4 secondary sources loaded for this session.
-Note: These will NOT be added to CLAUDE.md Primary URLs.
+Note: These will NOT be added to CLAUDE.md Primary Sources.
 ```
 
-### Phase 3: Knowledge Extraction
+### Phase 4: Knowledge Extraction
 
 **Claude analyzes:**
 ```
 Analyzing all sources...
 
-Primary Sources (11): Official documentation
+Local Cache: Loaded (best-practices-cache.md)
 Secondary Sources (4):
   - 2 external URLs
   - 2 local files
@@ -227,9 +226,9 @@ Secondary Sources (4):
 Cross-referencing...
 
 ⚠️ Secondary source findings:
-  - 5 patterns confirmed by primary sources
-  - 2 patterns conflict with official docs (IGNORED)
-  - 3 unique patterns not in primary (FLAGGED for review)
+  - 5 patterns confirmed by local cache
+  - 2 patterns conflict with cache (IGNORED)
+  - 3 unique patterns not in cache (FLAGGED for review)
     • From: blog.example.com - "Consider X approach"
     • From: internal-guidelines.md - "Team prefers Y pattern"
     • From: claude-learnings.md - "Z works well in practice"
@@ -255,13 +254,15 @@ From Secondary Sources (flagged for review)
 
 ---
 
-## Example 4: Broken URL Discovery (Auto-Fix)
+## Example 4: Cache Update with Broken URL Discovery
 
-### During Validation
+### During Cache Update (Step 1)
 
-**Claude reports:**
+**User confirms cache update, Claude reports:**
 ```
-Validating Primary URLs from CLAUDE.md...
+Updating best-practices-cache...
+
+Fetching Reference URLs from CLAUDE.md...
 
 ✅ https://code.claude.com/docs/en/plugins - OK
 ✅ https://code.claude.com/docs/en/skills - OK
@@ -271,12 +272,14 @@ Searching for replacement...
   WebSearch: "Claude Code old-page documentation site:claude.com"
   Found: https://code.claude.com/docs/en/new-page
 
-Updating CLAUDE.md...
+Updating CLAUDE.md Reference URLs...
   - Replaced: old-page → new-page
 
 Also discovered new documentation page:
   + https://code.claude.com/docs/en/newly-added-topic
 
+Compiling cache...
+Cache updated successfully with 10 Reference URLs.
 CLAUDE.md updated with 2 changes.
 ```
 
@@ -290,7 +293,8 @@ CLAUDE.md updated with 2 changes.
 ## Optimization Complete
 
 ### Sources Used
-- Primary: 11 URLs validated
+- Local cache: Loaded
+- Cache update: Skipped
 - Secondary: 0
 
 ### Analysis Results
@@ -306,8 +310,6 @@ Marketplace (plugins/):
 ✅ Commands: 15/15 compliant
 ✅ Agents: 2/2 compliant
 ✅ Hooks: Valid configuration
-
-✅ CLAUDE.md: Up to date
 
 No optimizations needed. Everything is in excellent shape!
 ```

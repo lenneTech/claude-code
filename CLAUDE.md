@@ -11,9 +11,21 @@ This repository is a **Claude Code marketplace** containing plugins, agents, com
 
 ## Documentation Sources (MUST READ before implementation)
 
-Always fetch and apply current best practices from these official sources.
+Apply current best practices from these official sources.
 
-### Primary URLs
+### Primary Sources (Local & Quick-Fetch)
+
+| Source | Location/URL | Purpose |
+|--------|--------------|---------|
+| **Local Cache** | `.claude/skills/marketplace-optimizer/best-practices-cache.md` | Pre-extracted constraints, schemas, valid values (FASTEST) |
+| **Plugins README** | https://github.com/anthropics/claude-code/blob/main/plugins/README.md | Plugin structure, examples, official plugins |
+| **Official Plugins** | https://github.com/anthropics/claude-plugins-official | Plugin standards, quality guidelines |
+| **Skills Repository** | https://github.com/anthropics/skills | Skill specifications, templates, examples |
+| **CHANGELOG** | https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md | Recent changes and updates |
+
+### Reference URLs (for manual lookup, NOT for WebFetch)
+
+These URLs are React apps with heavy JavaScript - use for manual reference only:
 
 | Topic | URL |
 |-------|-----|
@@ -27,18 +39,14 @@ Always fetch and apply current best practices from these official sources.
 | Settings | https://code.claude.com/docs/en/settings |
 | CLI Reference | https://code.claude.com/docs/en/cli-reference |
 | Plugin Reference | https://code.claude.com/docs/en/plugins-reference |
-| Claude Code CHANGELOG | https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md |
 
-### Fallback Strategy (if URLs fail)
+### Fallback Strategy
 
-If any URL returns 404 or fails to load:
+If Primary Sources are insufficient:
 
-1. **WebSearch Fallback:** Use `WebSearch` with query: `"Claude Code [topic] documentation site:claude.com"`
-2. **Alternative domains to try:**
-   - `code.claude.com/docs/en/[topic]`
-   - `docs.claude.com/en/docs/claude-code/[topic]`
-   - `docs.anthropic.com/en/docs/claude-code/[topic]`
-3. **Report broken URL:** Note the broken URL so it can be updated in this file
+1. **WebSearch:** Use `WebSearch` with query: `"Claude Code [topic] documentation site:anthropic.com OR site:claude.com"`
+2. **Claude's Built-in Knowledge:** Claude knows Claude Code best practices (Knowledge Cutoff: May 2025)
+3. **Report issues:** Note any outdated information for cache update
 
 ## Repository Structure
 
@@ -48,6 +56,7 @@ claude-code/
 │   ├── skills/               # Project-specific skills
 │   │   └── marketplace-optimizer/
 │   │       ├── SKILL.md      # Marketplace optimization skill
+│   │       ├── best-practices-cache.md  # Pre-extracted best practices (PRIMARY SOURCE)
 │   │       ├── reference.md  # URL categories and validation patterns
 │   │       └── examples.md   # Usage examples and workflows
 │   ├── agents/               # Project-specific agents
@@ -230,11 +239,12 @@ For comprehensive optimization after context loss, use:
 ## Optimization Workflow
 
 When optimizing existing elements:
-1. Read current official documentation (WebFetch the URLs above)
-2. Analyze existing element against best practices
-3. Propose specific improvements
-4. Implement changes with minimal disruption
-5. Verify consistency with related elements
+1. Read the local cache (`.claude/skills/marketplace-optimizer/best-practices-cache.md`)
+2. Optionally fetch GitHub sources (Plugins README, Skills Repo) for updates
+3. Analyze existing element against best practices
+4. Propose specific improvements
+5. Implement changes with minimal disruption
+6. Verify consistency with related elements
 
 For batch optimization with user selection, use:
 ```
