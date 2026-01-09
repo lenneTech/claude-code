@@ -1,7 +1,7 @@
 # Claude Code settings
 
 > Source: https://code.claude.com/docs/en/settings
-> Generated: 2026-01-09T17:32:10.129Z
+> Generated: 2026-01-09T18:37:31.741Z
 
 ---
 

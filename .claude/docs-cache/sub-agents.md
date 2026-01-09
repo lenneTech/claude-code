@@ -1,7 +1,7 @@
 # Subagents
 
 > Source: https://code.claude.com/docs/en/sub-agents
-> Generated: 2026-01-09T17:32:10.197Z
+> Generated: 2026-01-09T18:37:31.618Z
 
 ---
 

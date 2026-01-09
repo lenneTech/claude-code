@@ -1,7 +1,7 @@
 # Slash commands
 
 > Source: https://code.claude.com/docs/en/slash-commands
-> Generated: 2026-01-09T17:32:10.175Z
+> Generated: 2026-01-09T18:37:31.601Z
 
 ---
 

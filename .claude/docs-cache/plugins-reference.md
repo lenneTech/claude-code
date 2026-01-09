@@ -1,7 +1,7 @@
 # Plugins reference
 
 > Source: https://code.claude.com/docs/en/plugins-reference
-> Generated: 2026-01-09T17:32:10.271Z
+> Generated: 2026-01-09T18:37:31.757Z
 
 ---
 

@@ -1,458 +1,264 @@
 ---
 name: marketplace-optimizer
-description: Optimizes this Claude Code marketplace based on official documentation and optional secondary sources. Use when optimizing plugins, skills, commands, agents, or the marketplace structure. Triggers on "optimize marketplace", "update documentation sources", "sync with best practices", or when user wants to improve the plugin quality.
+description: Optimizes this Claude Code marketplace using specialized sub-agents. Each agent is an expert for one element type (skills, commands, agents, hooks, mcp) and loads only relevant documentation. A marketplace agent validates cross-references and latest features. Triggers on "optimize marketplace", "sync with best practices", or when user wants to improve plugin quality.
 ---
 
 # Marketplace Optimizer
 
-You are an expert in optimizing Claude Code marketplaces and plugins. This skill ensures that all elements in this package follow current best practices from official Anthropic documentation, while optionally incorporating insights from secondary sources.
+Orchestrates specialized sub-agents to optimize Claude Code marketplaces efficiently. Each agent loads only the documentation it needs, keeping context usage minimal.
+
+## Architecture
+
+```
+marketplace-optimizer (this skill)
+    │
+    ├── optimizer-skills     → skills.md, github-skills-readme.md
+    ├── optimizer-commands   → slash-commands.md
+    ├── optimizer-agents     → sub-agents.md
+    ├── optimizer-hooks      → hooks.md
+    ├── optimizer-mcp        → mcp.md
+    │
+    └── optimizer-marketplace → plugins.md, plugins-reference.md,
+                                github-*.md, CHANGELOG
+```
 
 ## When This Skill Activates
 
 - User wants to optimize the marketplace or plugins
 - User wants to optimize project-level `.claude/` elements
-- User asks to update/verify documentation sources
-- User wants to sync with latest Claude Code best practices
-- User mentions "optimize", "update docs", or "best practices" in context of this marketplace
+- User asks to sync with latest Claude Code best practices
+- User mentions "optimize", "update docs", or "best practices"
 
 ## Scope
 
-This skill optimizes **both**:
+**Project-level** (`.claude/`):
+- Skills, Agents, Commands
 
-1. **Project-level elements** (`.claude/`)
-   - `.claude/skills/` - Project-specific skills
-   - `.claude/agents/` - Project-specific agents
-   - `.claude/commands/` - Project-specific commands (available as `/project:*`)
-
-2. **Marketplace elements** (`plugins/`)
-   - `plugins/*/skills/` - Published skills
-   - `plugins/*/agents/` - Published agents
-   - `plugins/*/commands/` - Published commands
-   - `plugins/*/hooks/` - Event hooks
-
-## Workflow Overview
-
-### Phase 1: Cache & Sources (Steps 1-2)
-
-1. **Cache Update** (Step 1)
-   - Ask if cache should be updated (Default: ja)
-   - If yes: Fetch Reference URLs from CLAUDE.md, rebuild cache
-   - Flags: `--update-cache` (auto-yes), `--skip-cache` (auto-no)
-
-2. **Secondary Sources** (Step 2)
-   - Ask for optional secondary sources (Default: keine)
-   - Flags: `--none` (skip), or provide sources as arguments
-   - Secondary sources have lower authority than cache
-
-### Phase 2: Knowledge Building (Steps 3-5)
-
-1. **Read Documentation Cache** (Step 3 - REQUIRED)
-   - Read all `.md` files from `.claude/docs-cache/`
-   - Contains: Official Claude Code documentation converted to Markdown
-   - **This is the primary knowledge source**
-
-2. **Fetch Quick Sources** (Step 4 - Optional)
-   - GitHub: Plugins README, Official Plugins, Skills Repository
-   - CHANGELOG for recent updates
-
-3. **Build Knowledge Base** (Step 5)
-   - Documentation cache = highest authority
-   - Claude's built-in knowledge = interpretation
-   - Secondary sources = supplementary (lowest authority)
-
-### Phase 3: Analysis (Step 6-7)
-
-1. **Analyze Marketplace** (Step 6)
-   - Scan all plugins, skills, commands, agents, hooks
-   - Compare against best practices from cache
-   - Check Content Standards compliance
-
-2. **Generate Optimization List** (Step 7)
-   - Categorize by type (structure, frontmatter, content)
-   - Reference the source that supports each recommendation
-
-### Phase 4: Execution (Steps 8-10)
-
-1. **User Confirmation** (Step 8)
-   - Present optimizations with multiSelect checkboxes
-   - All options enabled by default
-
-2. **Execute Optimizations** (Step 9)
-   - Spawn agents for parallel work
-   - Track progress with TodoWrite
-
-3. **Final Verification** (Step 10)
-   - Standards compliance check
-   - Cross-reference validation
-   - Completeness check
+**Marketplace** (`plugins/`):
+- Skills, Commands, Agents, Hooks, MCP configs
 
 ---
 
 ## Execution Protocol
 
-When invoked, follow this exact sequence:
+### Phase 1: Cache Update
 
-### Step 1: Update Cache (Optional)
+#### Step 1: Version Check
 
-**If `--update-cache` flag provided**:
-- Execute cache update immediately (Step 1b)
-- NO interactive prompt
+**Flags:**
+- `--update-cache`: Force update, skip check
+- `--skip-cache`: Skip update entirely
 
-**If `--skip-cache` flag provided**:
-- Skip to Step 2 immediately
-- NO interactive prompt
-
-**If no cache flag provided**:
-- Ask via **normal text output**
-- **Language**: Adapt to user's/system's language setting (e.g., German if configured)
-- **Suggestions**: Set "ja" (German) or "yes" (English) as suggestion
-
-**Prompt text** (adapt language as needed):
-```
-Dokumentations-Cache aktualisieren?
-
-Soll der Cache (.claude/docs-cache/*.md) mit den aktuellen
-Claude Code Dokumentationsseiten neu erstellt werden?
-
-Hinweis: Dies lädt 10 Seiten von code.claude.com herunter (~2 Minuten).
-
-(ja/nein)
+**Without flags:**
+```bash
+bun .claude/scripts/check-cache-version.ts
 ```
 
-**Processing user response**:
-- If "ja"/"yes"/empty: Execute cache update (see Step 1b)
-- If "nein"/"no": Skip to Step 2
+| recommendation | Action |
+|---------------|--------|
+| `"skip"` | Skip (updateBehavior: never) |
+| `"update"` | Auto-update cache |
+| `"ask"` | Ask user |
+| `"current"` | Skip (cache is current) |
 
-#### Step 1b: Execute Cache Update
-
-If user confirmed cache update:
-
-1. **Run the cache update script**
-   ```bash
-   bun .claude/scripts/update-docs-cache.ts
-   ```
-   - Reads source URLs from `.claude/docs-cache/sources.json`
-   - Downloads pages in parallel (5 concurrent) using Playwright
-   - Converts HTML to Markdown using Turndown
-   - Saves to `.claude/docs-cache/<name>.md`
-
-2. **Verify output**
-   - Script outputs success/failure count
-   - Check that `.claude/docs-cache/` contains the expected `.md` files
-
-3. **Confirm completion**
-   - Output: "Cache erfolgreich aktualisiert" / "Cache updated successfully"
-   - Show count of updated files and duration
-
-### Step 2: Handle Secondary Sources
-
-**If `--none` flag provided** (e.g., `/optimize --none`):
-- Proceed immediately with primary sources only
-- NO interactive prompt
-- Simply continue to Step 3
-
-**If source arguments provided** (e.g., `/optimize https://example.com ./docs/notes.md`):
-- Use arguments as secondary sources (ignore flags like `--update-cache`)
-- Parse each argument using source detection rules
-- Continue to Step 3
-
-**If no source arguments and no `--none` flag**:
-- Ask the user via **normal text output** for secondary sources
-- **Language**: Adapt to user's/system's language setting (e.g., German if configured)
-- **Suggestions**: Set "keine" (German) or "none" (English) as suggestion
-
-**Prompt text** (adapt language as needed):
-```
-Sekundäre Quellen für die Optimierung
-
-Möchtest du zusätzliche Referenzen (URLs oder lokale Dateien) verwenden?
-
-Eingabe:
-- URLs: https://example.com/guide.md
-- Lokale Dateien: ./docs/notes.md oder /absolute/path/file.md
-- Mehrere Quellen durch Kommas, Leerzeichen oder Zeilenumbrüche trennen
-- "keine" oder leere Eingabe = nur offizielle Quellen verwenden
-```
-
-**Processing user response**:
-- If empty or "keine"/"none": proceed with primary sources only
-- Otherwise: parse the provided text as sources (URLs and/or local files)
-- Sources can be separated by commas, spaces, or line breaks
-
-### Source Detection Rules
-
-Automatically detect source type by pattern:
-
-| Pattern | Type | Action |
-|---------|------|--------|
-| Starts with `http://` or `https://` | URL | Fetch via WebFetch |
-| Everything else | Local file | Read via Read tool |
-
-Examples:
-- `https://blog.example.com/tips.md` → URL
-- `./docs/notes.md` → Local file (relative)
-- `/Users/dev/guide.md` → Local file (absolute)
-- `docs/internal.md` → Local file (relative)
-
-### Step 3: Read Documentation Cache (REQUIRED)
-
-Read **all** `.md` files from the documentation cache directory:
+#### Step 2: Update Cache (if needed)
 
 ```bash
-# Read the entire docs-cache directory
-Glob: .claude/docs-cache/*.md
-# Then read each found .md file (excluding sources.json)
+bun .claude/scripts/update-docs-cache.ts
 ```
 
-The cached documentation contains:
-- YAML frontmatter requirements and valid values
-- Element structure definitions
-- Naming conventions
-- JSON schemas for hooks.json, plugin.json, .mcp.json
+### Phase 2: Secondary Sources (Optional)
 
-**This is the primary knowledge source - do NOT skip this step.**
-
-**Important:** Do NOT hardcode specific filenames. The available documentation is defined
-in `.claude/docs-cache/sources.json` and may change. Always read the entire directory.
-
-### Step 4: Fetch Quick-Fetch Sources (Optional)
-
-Only fetch these if explicitly needed (e.g., checking for recent changes):
-
-1. **Plugins README** (plugin structure, examples):
-   ```
-   WebFetch: https://github.com/anthropics/claude-code/blob/main/plugins/README.md
-   Prompt: "Extract plugin structure, components, and examples"
-   ```
-
-2. **Official Plugins** (standards, quality guidelines):
-   ```
-   WebFetch: https://github.com/anthropics/claude-plugins-official
-   Prompt: "Extract plugin standards and quality guidelines"
-   ```
-
-3. **Skills Repository** (skill specs):
-   ```
-   WebFetch: https://github.com/anthropics/skills
-   Prompt: "Extract skill structure and best practices"
-   ```
-
-4. **CHANGELOG** (recent updates):
-   ```
-   WebFetch: https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md
-   Prompt: "List changes from the last 3 months"
-   ```
-
-**Do NOT fetch code.claude.com URLs directly - use cache update (Step 1) instead.**
-
-### Step 5: Build Knowledge Base
-
-Combine sources in priority order:
-1. Local cache (highest authority - constraints, schemas)
-2. GitHub sources (Plugins README, Official Plugins, Skills Repo)
-3. Claude's built-in knowledge (edge cases, interpretation)
-4. Secondary sources if provided (lowest authority)
-
-### Step 6: Analyze All Elements
-
-Use Task tool with Explore agent to analyze **both** directories:
-
+**If no arguments provided**, prompt:
 ```
-Analyze .claude/ directory (project-level):
-- Skills: Check SKILL.md format, frontmatter, descriptions
-- Agents: Check frontmatter completeness, tools, permissions
-- Commands: Check frontmatter, verify /project: prefix in docs
+Sekundäre Quellen (optional)
 
-Analyze plugins/ directory (marketplace):
-- Skills: Check SKILL.md format, frontmatter, descriptions
-- Commands: Check frontmatter, allowed-tools, structure
-- Agents: Check frontmatter completeness, tools, permissions
-- Hooks: Check hooks.json validity, script references
-
-General checks for both:
-- Naming conventions (kebab-case)
-- Cross-references validity
-- YAML frontmatter syntax
-- Required fields present
+Zusätzliche Referenzen eingeben (URLs oder lokale Dateien), oder leer lassen:
 ```
 
-### Step 7: Generate Optimization List
+- Empty / "keine" / "none" / "no": Skip secondary sources
+- Otherwise: Parse as URLs and/or local file paths
 
-Create categorized list:
+### Phase 3: Parallel Analysis
+
+**Launch specialized agents in parallel** using the Task tool:
+
+```markdown
+## Agents to Spawn
+
+| Agent | Scope | Docs Loaded |
+|-------|-------|-------------|
+| `optimizer-skills` | All skills in .claude/ and plugins/ | skills.md, github-skills-readme.md |
+| `optimizer-commands` | All commands | slash-commands.md |
+| `optimizer-agents` | All agents | sub-agents.md |
+| `optimizer-hooks` | All hooks.json + scripts | hooks.md |
+| `optimizer-mcp` | All .mcp.json | mcp.md |
+```
+
+**Spawn all 5 agents in parallel:**
+
+```
+Task(subagent_type="optimizer-skills", prompt="Analyze all skills in .claude/skills/ and plugins/*/skills/. Read docs first, then check each SKILL.md.")
+
+Task(subagent_type="optimizer-commands", prompt="Analyze all commands in .claude/commands/ and plugins/*/commands/. Read docs first, then check each command.")
+
+Task(subagent_type="optimizer-agents", prompt="Analyze all agents in .claude/agents/ and plugins/*/agents/. Read docs first, then check each agent.")
+
+Task(subagent_type="optimizer-hooks", prompt="Analyze all hooks in plugins/*/hooks/. Read docs first, then check hooks.json and scripts.")
+
+Task(subagent_type="optimizer-mcp", prompt="Analyze all MCP configs in plugins/*/.mcp.json. Read docs first, then check each config.")
+```
+
+### Phase 4: Cross-Reference & Feature Analysis
+
+**After parallel agents complete**, spawn the marketplace agent:
+
+```
+Task(subagent_type="optimizer-marketplace", prompt="
+Analyze overall marketplace structure:
+1. Read plugins.md, plugins-reference.md, github-*.md, github-changelog.md
+2. Check cross-references between all elements
+3. Verify permissions.json completeness
+4. Identify opportunities to use latest features from CHANGELOG
+5. Check plugin.json validity
+")
+```
+
+### Phase 5: Consolidate Results
+
+Collect findings from all agents and create unified optimization list:
+
 ```markdown
 ## Proposed Optimizations
 
-### Structure Improvements
-- [ ] Improvement 1 (Primary source: skills docs)
-- [ ] Improvement 2 (Secondary source - verify needed)
+### Skills (from optimizer-skills)
+- [ ] Finding 1
+- [ ] Finding 2
 
-### Frontmatter Updates
-- [ ] Update 1 (Primary source: plugins docs)
+### Commands (from optimizer-commands)
+- [ ] Finding 1
 
-### Content Enhancements
-- [ ] Enhancement 1 (Primary source: sub-agents docs)
+### Agents (from optimizer-agents)
+- [ ] Finding 1
+
+### Hooks (from optimizer-hooks)
+- [ ] Finding 1
+
+### MCP (from optimizer-mcp)
+- [ ] Finding 1
+
+### Cross-References & Structure (from optimizer-marketplace)
+- [ ] Finding 1
+- [ ] New feature opportunity: ...
 ```
 
-### Step 8: User Confirmation
+### Phase 6: User Confirmation
 
 Use AskUserQuestion with multiSelect:
 - Present all optimizations as checkboxes
 - Default: all selected
-- Group by category for clarity
+- Group by agent/category
 
-### Step 9: Execute Approved Optimizations
+### Phase 7: Execute Approved Optimizations
 
 For each approved optimization:
-1. Determine if parallelizable
-2. Spawn Task agents for independent work
-   - **Pass Primary Source standards to each agent**
-   - **Include Content Standards requirements in agent prompt**
-3. Execute sequential work directly
-4. Track progress with TodoWrite
+1. Use the appropriate specialized agent to make the change
+2. Track progress with TodoWrite
+3. Execute independent changes in parallel
 
-### Step 10: Final Verification
+### Phase 8: Final Verification
 
-After all optimizations complete:
-1. **Standards Compliance Check:**
-   - Verify ALL modified files against Primary Source best practices
-   - Check YAML frontmatter matches Primary Source requirements
-   - Confirm descriptions follow auto-detection guidelines
-2. **Content Standards Check:**
-   - Scan for any history references ("new", "updated", "since vX.Y")
-   - Verify no version-specific markers in descriptions
-   - Confirm content is complete (no over-compression)
-3. **Cross-Reference Validation:**
-   - Ensure all Related Skills references are valid
-   - Check all element cross-references exist
+Spawn `optimizer-marketplace` again for final check:
+- All cross-references valid
+- No broken links between elements
+- Content standards met (no history references)
 
 ---
 
-## Source Authority Rules
+## Specialized Agents
 
-### Documentation Cache (HIGHEST Authority)
-- `.claude/docs-cache/*.md` files
-- Contains official Claude Code documentation converted to Markdown
-- Updated via `bun .claude/scripts/update-docs-cache.ts`
-- **This is the fastest and most reliable source**
+| Agent | Documentation | Expertise |
+|-------|---------------|-----------|
+| `optimizer-skills` | skills.md, github-skills-readme.md (~30 KB) | SKILL.md structure, frontmatter, auto-detection |
+| `optimizer-commands` | slash-commands.md (~19 KB) | Command frontmatter, argument-hint, organization |
+| `optimizer-agents` | sub-agents.md (~22 KB) | Agent frontmatter, tools, permissionMode |
+| `optimizer-hooks` | hooks.md (~35 KB) | hooks.json, event types, script handlers |
+| `optimizer-mcp` | mcp.md (~43 KB) | .mcp.json, server types, configuration |
+| `optimizer-marketplace` | plugins*.md, github-*.md (~180 KB) | Cross-refs, permissions, CHANGELOG features |
 
-### GitHub Sources (HIGH Authority - Quick-Fetch)
-- `github.com/anthropics/claude-code/blob/main/plugins/README.md` - Plugin structure
-- `github.com/anthropics/claude-plugins-official` - Plugin standards
-- `github.com/anthropics/skills` - Skill specifications
-- `github.com/anthropics/claude-code/blob/main/CHANGELOG.md` - Recent changes
-- **Use for updates and patterns not in cache**
-
-### Claude's Built-in Knowledge (MEDIUM Authority)
-- Claude has extensive knowledge about Claude Code best practices
-- Valid for patterns, conventions, and general guidance
-- Use for interpretation and edge cases not in cache
-
-### Reference URLs (FOR CACHE-UPDATE ONLY)
-- code.claude.com documentation pages (React apps)
-- Downloaded and converted by the cache update script
-- **Do NOT fetch directly via WebFetch - requires JavaScript rendering**
-
-### Secondary Sources (LOWEST Authority, SESSION-ONLY)
-- User-provided URLs
-- Community blog posts
-- Third-party tutorials
-
-**Secondary sources are TEMPORARY:**
-- Used only for the current optimization session
-- **NEVER added to CLAUDE.md Primary Sources**
-- If conflicts with cache: **IGNORE secondary**
-- If not covered by cache: **FLAG for critical review**
-- If confirms cache: **USE with confidence**
+**Total docs per agent:** 19-43 KB each (vs. 321 KB if loading all)
 
 ---
 
 ## Content Standards
 
-### No History References
-- **Never use** "new", "updated", "changed from", or version-specific markers
-- **Never include** "since v2.1", "added in version X", "previously"
-- **Write timelessly** as if features always existed
-- **Remove** any existing history references when optimizing
+All agents must enforce:
 
-### Token Efficiency
-- Keep content concise but complete
-- Avoid redundant explanations
-- Use tables and lists over prose where appropriate
-- Don't sacrifice clarity for brevity
-- **Never remove important information for token savings**
+1. **No History References**
+   - Never use "new", "updated", "since vX.Y"
+   - Write timelessly
 
-### Final Verification
+2. **Proper Frontmatter**
+   - All required fields present
+   - Correct types and values
 
-After all optimizations, verify:
-1. No history references in any modified files
-2. No version-specific markers in descriptions
-3. Content is complete and actionable
-4. Cross-references are valid
-
----
-
-## Anti-Patterns to Avoid
-
-1. **Trusting Secondary Over Primary**: Never let community sources override official docs
-2. **Skipping URL Validation**: Always verify URLs before using them
-3. **Not Updating Cache**: Keep `.claude/docs-cache/` current via the update script
-4. **Sequential When Parallel Possible**: Maximize parallel execution
-5. **Ignoring User Preferences**: Only execute approved optimizations
-6. **History References**: Never add "new", "updated", version markers
-7. **Over-compression**: Don't remove important information for token savings
-
----
-
-## Related Skills
-
-- `claude-code-plugin-expert` - For detailed plugin development expertise
-- Uses the `marketplace-optimizer-agent` for heavy parallel work
+3. **Cross-References**
+   - All "Related Skills/Commands" exist
+   - No broken links
 
 ---
 
 ## Output Format
 
-After completion, provide summary:
+After completion:
 
 ```markdown
 ## Marketplace Optimization Complete
 
-### Sources Used
-- Primary: X URLs validated
-- Secondary: Y URLs analyzed (Z conflicts ignored)
-- CLAUDE.md: Updated / No changes needed
-
-### Optimizations Applied
-- Total approved: N
-- Completed: X
-- Skipped (user choice): Y
-- Failed (with reasons): Z
+### Agent Results
+| Agent | Issues Found | Fixed |
+|-------|--------------|-------|
+| optimizer-skills | X | Y |
+| optimizer-commands | X | Y |
+| optimizer-agents | X | Y |
+| optimizer-hooks | X | Y |
+| optimizer-mcp | X | Y |
+| optimizer-marketplace | X | Y |
 
 ### Changes Made
 
-#### Project-level (.claude/)
-1. [Category] Description of change
+#### Skills
+1. [Change description]
 
-#### Marketplace (plugins/)
-1. [Category] Description of change
+#### Commands
+1. [Change description]
 
-### CLAUDE.md Updates (Official Sources Only)
-- Added: new-official-url-1, new-official-url-2
-- Fixed: broken-url-1 -> working-url-1
-- Removed: deprecated-url-1
-- Secondary sources used: X (not added to CLAUDE.md)
+#### Agents
+1. [Change description]
 
-### Verification (Primary Source Compliance)
-- [ ] All YAML frontmatter follows Primary Source requirements
-- [ ] Descriptions match auto-detection guidelines from Primary Sources
-- [ ] Element structure follows documented patterns
+#### Hooks
+1. [Change description]
 
-### Verification (Content Standards)
-- [ ] No history references in modified files ("new", "updated", "since vX.Y")
-- [ ] No version-specific markers in descriptions
-- [ ] Content is complete and actionable (no over-compression)
+#### MCP
+1. [Change description]
 
-### Verification (Cross-References)
-- [ ] All Related Skills references are valid
-- [ ] All element cross-references exist
+#### Cross-References & Structure
+1. [Change description]
+
+### Verification
+- [ ] All frontmatter valid
+- [ ] No history references
+- [ ] All cross-references exist
+- [ ] Latest features considered
 ```
+
+---
+
+## Related Agents
+
+- `optimizer-skills` - Skills expert
+- `optimizer-commands` - Commands expert
+- `optimizer-agents` - Agents expert
+- `optimizer-hooks` - Hooks expert
+- `optimizer-mcp` - MCP expert
+- `optimizer-marketplace` - Cross-references & features expert

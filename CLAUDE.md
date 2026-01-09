@@ -11,42 +11,53 @@ This repository is a **Claude Code marketplace** containing plugins, agents, com
 
 ## Documentation Sources (MUST READ before implementation)
 
-Apply current best practices from these official sources.
+All Claude Code best practices are cached locally in `.claude/docs-cache/*.md`. This is the **single source of truth** for this repository.
 
-### Primary Sources (Local & Quick-Fetch)
+### Documentation Cache
 
-| Source | Location/URL | Purpose |
-|--------|--------------|---------|
-| **Documentation Cache** | `.claude/docs-cache/*.md` | Cached Claude Code docs converted to Markdown (FASTEST) |
-| **Plugins README** | https://github.com/anthropics/claude-code/blob/main/plugins/README.md | Plugin structure, examples, official plugins |
-| **Official Plugins** | https://github.com/anthropics/claude-plugins-official | Plugin standards, quality guidelines |
-| **Skills Repository** | https://github.com/anthropics/skills | Skill specifications, templates, examples |
-| **CHANGELOG** | https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md | Recent changes and updates |
+| File | Content |
+|------|---------|
+| `plugins.md` | Plugin structure and manifest |
+| `plugins-reference.md` | Plugin JSON schemas and reference |
+| `skills.md` | Skill YAML frontmatter and configuration |
+| `slash-commands.md` | Command frontmatter and usage |
+| `sub-agents.md` | Agent configuration and tools |
+| `hooks.md` | Hook event types and JSON structure |
+| `mcp.md` | MCP server configuration |
+| `memory.md` | CLAUDE.md structure and usage |
+| `settings.md` | Settings reference |
+| `cli-reference.md` | CLI options and flags |
+| `github-plugins-readme.md` | Plugin structure, examples (from GitHub) |
+| `github-official-plugins.md` | Official plugin standards, quality guidelines (from GitHub) |
+| `github-skills-readme.md` | Skill specifications, templates (from GitHub) |
+| `github-changelog.md` | Recent changes and updates |
 
-### Reference URLs (for manual lookup, NOT for WebFetch)
+### Cache Management
 
-These URLs are React apps with heavy JavaScript - use for manual reference only:
+- **Configuration:** `.claude/docs-cache/sources.json` (SINGLE SOURCE OF TRUTH)
+- **Auto-Update:** The `/optimize` command checks for version changes and offers to update
 
-| Topic | URL |
-|-------|-----|
-| Plugins & Marketplaces | https://code.claude.com/docs/en/plugins |
-| Skills | https://code.claude.com/docs/en/skills |
-| Slash Commands | https://code.claude.com/docs/en/slash-commands |
-| Subagents | https://code.claude.com/docs/en/sub-agents |
-| Hooks | https://code.claude.com/docs/en/hooks |
-| MCP Servers | https://code.claude.com/docs/en/mcp |
-| Memory (CLAUDE.md) | https://code.claude.com/docs/en/memory |
-| Settings | https://code.claude.com/docs/en/settings |
-| CLI Reference | https://code.claude.com/docs/en/cli-reference |
-| Plugin Reference | https://code.claude.com/docs/en/plugins-reference |
+**Scripts:**
+
+| Script | Description | Usage |
+|--------|-------------|-------|
+| `update-docs-cache.ts` | Downloads & converts documentation | `bun .claude/scripts/update-docs-cache.ts [--source=<name>]` |
+| `check-cache-version.ts` | Checks if cache is outdated | `bun .claude/scripts/check-cache-version.ts` |
+| `check-cache-integrity.ts` | Verifies all cache files exist | `bun .claude/scripts/check-cache-integrity.ts [--fix]` |
+
+**Source types in `sources.json`:**
+- `md`: Direct Markdown files (downloaded as-is, relative links converted to absolute GitHub URLs)
+- `html`: HTML pages (converted to Markdown via Turndown)
+- `spa`: Single Page Applications (rendered with Playwright, then converted)
+
+**Error handling:** If a source fails to fetch, existing cache is preserved (no data loss)
 
 ### Fallback Strategy
 
-If Primary Sources are insufficient:
+If documentation cache is insufficient:
 
 1. **WebSearch:** Use `WebSearch` with query: `"Claude Code [topic] documentation site:anthropic.com OR site:claude.com"`
 2. **Claude's Built-in Knowledge:** Claude knows Claude Code best practices (Knowledge Cutoff: May 2025)
-3. **Report issues:** Note any outdated information for cache update
 
 ## Repository Structure
 
@@ -57,15 +68,21 @@ claude-code/
 │   │   ├── sources.json      # URL configuration (SINGLE SOURCE OF TRUTH)
 │   │   └── *.md              # Auto-generated from sources.json
 │   ├── scripts/              # Utility scripts
-│   │   └── update-docs-cache.ts # Downloads & converts docs (parallel)
+│   │   ├── update-docs-cache.ts    # Downloads & converts docs (parallel)
+│   │   ├── check-cache-version.ts  # Checks if cache is outdated
+│   │   ├── check-cache-integrity.ts # Verifies all cache files exist
+│   │   ├── types.ts                # Shared TypeScript types
+│   │   └── types.d.ts              # Module declarations
 │   ├── skills/               # Project-specific skills
 │   │   └── marketplace-optimizer/
-│   │       ├── SKILL.md      # Marketplace optimization skill
-│   │       ├── best-practices-cache.md  # Legacy cache (deprecated)
-│   │       ├── reference.md  # URL categories and validation patterns
-│   │       └── examples.md   # Usage examples and workflows
-│   ├── agents/               # Project-specific agents
-│   │   └── marketplace-optimizer-agent.md
+│   │       └── SKILL.md              # Marketplace optimization orchestrator
+│   ├── agents/               # Project-specific agents (optimizer specialists)
+│   │   ├── optimizer-skills.md       # Skills optimization expert
+│   │   ├── optimizer-commands.md     # Commands optimization expert
+│   │   ├── optimizer-agents.md       # Agents optimization expert
+│   │   ├── optimizer-hooks.md        # Hooks optimization expert
+│   │   ├── optimizer-mcp.md          # MCP optimization expert
+│   │   └── optimizer-marketplace.md  # Cross-references & features expert
 │   └── commands/             # Project-specific commands
 │       └── optimize.md       # /optimize command
 ├── .claude-plugin/
@@ -264,12 +281,11 @@ For comprehensive optimization after context loss, use:
 ## Optimization Workflow
 
 When optimizing existing elements:
-1. Read the local cache (`.claude/skills/marketplace-optimizer/best-practices-cache.md`)
-2. Optionally fetch GitHub sources (Plugins README, Skills Repo) for updates
-3. Analyze existing element against best practices
-4. Propose specific improvements
-5. Implement changes with minimal disruption
-6. Verify consistency with related elements
+1. Read the documentation cache (`.claude/docs-cache/*.md`)
+2. Analyze existing element against best practices
+3. Propose specific improvements
+4. Implement changes with minimal disruption
+5. Verify consistency with related elements
 
 For batch optimization with user selection, use:
 ```

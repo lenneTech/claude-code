@@ -1,7 +1,7 @@
 # Create plugins
 
 > Source: https://code.claude.com/docs/en/plugins
-> Generated: 2026-01-09T17:32:10.082Z
+> Generated: 2026-01-09T18:37:31.687Z
 
 ---
 

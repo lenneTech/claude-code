@@ -1,7 +1,7 @@
 # Connect Claude Code to tools via MCP
 
 > Source: https://code.claude.com/docs/en/mcp
-> Generated: 2026-01-09T17:32:10.492Z
+> Generated: 2026-01-09T18:37:31.776Z
 
 ---
 

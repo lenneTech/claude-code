@@ -1,7 +1,7 @@
 # Agent Skills
 
 > Source: https://code.claude.com/docs/en/skills
-> Generated: 2026-01-09T17:32:10.041Z
+> Generated: 2026-01-09T18:37:31.696Z
 
 ---
 

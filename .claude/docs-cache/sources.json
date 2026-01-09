@@ -1,57 +1,107 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "Central configuration for Claude Code documentation sources. Edit this file to add/remove documentation pages.",
-  "baseUrl": "https://code.claude.com/docs/en",
+  "description": "Central configuration for Claude Code documentation sources. All sources are cached locally and updated when Claude Code version changes.",
+  "cache": {
+    "claudeCodeVersion": "2.1.2",
+    "lastUpdated": "2026-01-09T18:57:36.904Z",
+    "updateBehavior": "auto"
+  },
+  "updateBehaviorOptions": {
+    "never": "Never check or update the cache",
+    "always": "Always update without asking",
+    "auto": "Update automatically when new version available (default)",
+    "ask": "Ask user when new version available",
+    "askAlways": "Always ask user (even if cache is current)"
+  },
+  "sourceTypes": {
+    "md": "Direct Markdown file - download as-is without conversion",
+    "html": "HTML page - download and convert to Markdown via Turndown",
+    "spa": "Single Page Application - render with Playwright, then convert to Markdown (default)"
+  },
   "sources": [
     {
       "name": "plugins",
-      "path": "/plugins",
+      "url": "https://code.claude.com/docs/en/plugins",
+      "type": "spa",
       "description": "Plugin structure and manifest"
     },
     {
       "name": "plugins-reference",
-      "path": "/plugins-reference",
+      "url": "https://code.claude.com/docs/en/plugins-reference",
+      "type": "spa",
       "description": "Plugin JSON schemas and reference"
     },
     {
       "name": "skills",
-      "path": "/skills",
+      "url": "https://code.claude.com/docs/en/skills",
+      "type": "spa",
       "description": "Skill YAML frontmatter and configuration"
     },
     {
       "name": "slash-commands",
-      "path": "/slash-commands",
+      "url": "https://code.claude.com/docs/en/slash-commands",
+      "type": "spa",
       "description": "Command frontmatter and usage"
     },
     {
       "name": "sub-agents",
-      "path": "/sub-agents",
+      "url": "https://code.claude.com/docs/en/sub-agents",
+      "type": "spa",
       "description": "Agent configuration and tools"
     },
     {
       "name": "hooks",
-      "path": "/hooks",
+      "url": "https://code.claude.com/docs/en/hooks",
+      "type": "spa",
       "description": "Hook event types and JSON structure"
     },
     {
       "name": "mcp",
-      "path": "/mcp",
+      "url": "https://code.claude.com/docs/en/mcp",
+      "type": "spa",
       "description": "MCP server configuration"
     },
     {
       "name": "memory",
-      "path": "/memory",
+      "url": "https://code.claude.com/docs/en/memory",
+      "type": "spa",
       "description": "CLAUDE.md structure and usage"
     },
     {
       "name": "settings",
-      "path": "/settings",
+      "url": "https://code.claude.com/docs/en/settings",
+      "type": "spa",
       "description": "Settings reference"
     },
     {
       "name": "cli-reference",
-      "path": "/cli-reference",
+      "url": "https://code.claude.com/docs/en/cli-reference",
+      "type": "spa",
       "description": "CLI options and flags"
+    },
+    {
+      "name": "github-plugins-readme",
+      "url": "https://raw.githubusercontent.com/anthropics/claude-code/main/plugins/README.md",
+      "type": "md",
+      "description": "Plugin structure, examples, official plugins"
+    },
+    {
+      "name": "github-official-plugins",
+      "url": "https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/README.md",
+      "type": "md",
+      "description": "Official plugin standards, quality guidelines"
+    },
+    {
+      "name": "github-skills-readme",
+      "url": "https://raw.githubusercontent.com/anthropics/skills/main/README.md",
+      "type": "md",
+      "description": "Skill specifications, templates, examples"
+    },
+    {
+      "name": "github-changelog",
+      "url": "https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md",
+      "type": "md",
+      "description": "Recent changes and updates"
     }
   ]
 }
