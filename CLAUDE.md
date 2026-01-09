@@ -17,7 +17,7 @@ Apply current best practices from these official sources.
 
 | Source | Location/URL | Purpose |
 |--------|--------------|---------|
-| **Local Cache** | `.claude/skills/marketplace-optimizer/best-practices-cache.md` | Pre-extracted constraints, schemas, valid values (FASTEST) |
+| **Documentation Cache** | `.claude/docs-cache/*.md` | Cached Claude Code docs converted to Markdown (FASTEST) |
 | **Plugins README** | https://github.com/anthropics/claude-code/blob/main/plugins/README.md | Plugin structure, examples, official plugins |
 | **Official Plugins** | https://github.com/anthropics/claude-plugins-official | Plugin standards, quality guidelines |
 | **Skills Repository** | https://github.com/anthropics/skills | Skill specifications, templates, examples |
@@ -53,10 +53,15 @@ If Primary Sources are insufficient:
 ```
 claude-code/
 ├── .claude/                  # Project-level Claude Code extensions
+│   ├── docs-cache/           # Cached Claude Code documentation (Markdown)
+│   │   ├── sources.json      # URL configuration (SINGLE SOURCE OF TRUTH)
+│   │   └── *.md              # Auto-generated from sources.json
+│   ├── scripts/              # Utility scripts
+│   │   └── update-docs-cache.ts # Downloads & converts docs (parallel)
 │   ├── skills/               # Project-specific skills
 │   │   └── marketplace-optimizer/
 │   │       ├── SKILL.md      # Marketplace optimization skill
-│   │       ├── best-practices-cache.md  # Pre-extracted best practices (PRIMARY SOURCE)
+│   │       ├── best-practices-cache.md  # Legacy cache (deprecated)
 │   │       ├── reference.md  # URL categories and validation patterns
 │   │       └── examples.md   # Usage examples and workflows
 │   ├── agents/               # Project-specific agents
@@ -79,6 +84,26 @@ claude-code/
 │       ├── permissions.schema.json  # JSON Schema for permissions validation
 │       └── .mcp.json         # MCP server dependencies
 ```
+
+## Important: Plugin Isolation
+
+**CRITICAL:** The `plugins/` directory is deployed to client machines and runs in isolation.
+
+| Location | Access | Can Reference |
+|----------|--------|---------------|
+| `.claude/` | This repository only | Everything in this repo |
+| `CLAUDE.md` | This repository only | Everything in this repo |
+| `plugins/` | **Client machines** | Only files within `plugins/` |
+
+**Consequences:**
+- Elements in `plugins/` **cannot** access `.claude/docs-cache/`, `.claude/scripts/`, or any other repository files
+- Elements in `plugins/` must use **external sources** (WebFetch to GitHub, WebSearch) for documentation
+- Elements in `.claude/` and `CLAUDE.md` **can** access `plugins/` and all repository files
+
+**When developing plugin elements:**
+- Use `WebFetch` with GitHub raw URLs for documentation
+- Use `WebSearch` for Claude Code documentation lookups
+- Never reference paths like `.claude/docs-cache/` or `bun .claude/scripts/...`
 
 ## Configuration Files (MUST UPDATE when adding features)
 

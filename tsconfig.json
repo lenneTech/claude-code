@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["bun-types"]
+  },
+  "include": [".claude/scripts/**/*.ts", ".claude/scripts/**/*.d.ts", "scripts/**/*.ts"]
+}

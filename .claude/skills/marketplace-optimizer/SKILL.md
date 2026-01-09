@@ -46,9 +46,9 @@ This skill optimizes **both**:
 
 ### Phase 2: Knowledge Building (Steps 3-5)
 
-1. **Read Local Cache** (Step 3 - REQUIRED)
-   - Read `best-practices-cache.md` from skill directory
-   - Contains: YAML frontmatter requirements, valid values, constraints, schemas
+1. **Read Documentation Cache** (Step 3 - REQUIRED)
+   - Read all `.md` files from `.claude/docs-cache/`
+   - Contains: Official Claude Code documentation converted to Markdown
    - **This is the primary knowledge source**
 
 2. **Fetch Quick Sources** (Step 4 - Optional)
@@ -56,7 +56,7 @@ This skill optimizes **both**:
    - CHANGELOG for recent updates
 
 3. **Build Knowledge Base** (Step 5)
-   - Local cache = highest authority
+   - Documentation cache = highest authority
    - Claude's built-in knowledge = interpretation
    - Secondary sources = supplementary (lowest authority)
 
@@ -109,10 +109,12 @@ When invoked, follow this exact sequence:
 
 **Prompt text** (adapt language as needed):
 ```
-Cache aktualisieren?
+Dokumentations-Cache aktualisieren?
 
-Soll der Best-Practices-Cache (.claude/skills/marketplace-optimizer/best-practices-cache.md)
-mit den aktuellen Reference URLs aus CLAUDE.md neu erstellt werden?
+Soll der Cache (.claude/docs-cache/*.md) mit den aktuellen
+Claude Code Dokumentationsseiten neu erstellt werden?
+
+Hinweis: Dies lädt 10 Seiten von code.claude.com herunter (~2 Minuten).
 
 (ja/nein)
 ```
@@ -125,25 +127,22 @@ mit den aktuellen Reference URLs aus CLAUDE.md neu erstellt werden?
 
 If user confirmed cache update:
 
-1. **Read Reference URLs from CLAUDE.md**
-   - Extract URLs from the "Reference URLs" table
-   - These are the code.claude.com documentation pages
+1. **Run the cache update script**
+   ```bash
+   bun .claude/scripts/update-docs-cache.ts
+   ```
+   - Reads source URLs from `.claude/docs-cache/sources.json`
+   - Downloads pages in parallel (5 concurrent) using Playwright
+   - Converts HTML to Markdown using Turndown
+   - Saves to `.claude/docs-cache/<name>.md`
 
-2. **Fetch each Reference URL** (parallel where possible)
-   - Use WebFetch with specific prompts to extract:
-     - YAML frontmatter fields and valid values
-     - Element structure requirements
-     - Naming conventions
-     - JSON schemas
-   - Use prompt: "Extract ONLY technical requirements: YAML frontmatter fields, valid values, constraints, schemas. No general explanations."
+2. **Verify output**
+   - Script outputs success/failure count
+   - Check that `.claude/docs-cache/` contains the expected `.md` files
 
-3. **Compile and write cache**
-   - Combine extracted information
-   - Write to `.claude/skills/marketplace-optimizer/best-practices-cache.md`
-   - Format as structured reference document
-
-4. **Confirm completion**
+3. **Confirm completion**
    - Output: "Cache erfolgreich aktualisiert" / "Cache updated successfully"
+   - Show count of updated files and duration
 
 ### Step 2: Handle Secondary Sources
 
@@ -195,20 +194,26 @@ Examples:
 - `/Users/dev/guide.md` → Local file (absolute)
 - `docs/internal.md` → Local file (relative)
 
-### Step 3: Read Local Cache (REQUIRED)
+### Step 3: Read Documentation Cache (REQUIRED)
 
-Read the local best practices cache:
-```
-Read: .claude/skills/marketplace-optimizer/best-practices-cache.md
+Read **all** `.md` files from the documentation cache directory:
+
+```bash
+# Read the entire docs-cache directory
+Glob: .claude/docs-cache/*.md
+# Then read each found .md file (excluding sources.json)
 ```
 
-This file contains:
+The cached documentation contains:
 - YAML frontmatter requirements and valid values
 - Element structure definitions
 - Naming conventions
-- JSON schemas for hooks.json, plugin.json
+- JSON schemas for hooks.json, plugin.json, .mcp.json
 
 **This is the primary knowledge source - do NOT skip this step.**
+
+**Important:** Do NOT hardcode specific filenames. The available documentation is defined
+in `.claude/docs-cache/sources.json` and may change. Always read the entire directory.
 
 ### Step 4: Fetch Quick-Fetch Sources (Optional)
 
@@ -324,10 +329,10 @@ After all optimizations complete:
 
 ## Source Authority Rules
 
-### Local Cache (HIGHEST Authority)
-- `best-practices-cache.md` in skill directory
-- Contains pre-extracted, validated best practices
-- Includes: YAML frontmatter requirements, constraints, valid values
+### Documentation Cache (HIGHEST Authority)
+- `.claude/docs-cache/*.md` files
+- Contains official Claude Code documentation converted to Markdown
+- Updated via `bun .claude/scripts/update-docs-cache.ts`
 - **This is the fastest and most reliable source**
 
 ### GitHub Sources (HIGH Authority - Quick-Fetch)
@@ -344,8 +349,8 @@ After all optimizations complete:
 
 ### Reference URLs (FOR CACHE-UPDATE ONLY)
 - code.claude.com documentation pages (React apps)
-- Only fetched during cache update (Step 1)
-- **Do NOT fetch directly - too large for WebFetch**
+- Downloaded and converted by the cache update script
+- **Do NOT fetch directly via WebFetch - requires JavaScript rendering**
 
 ### Secondary Sources (LOWEST Authority, SESSION-ONLY)
 - User-provided URLs
@@ -390,7 +395,7 @@ After all optimizations, verify:
 
 1. **Trusting Secondary Over Primary**: Never let community sources override official docs
 2. **Skipping URL Validation**: Always verify URLs before using them
-3. **Not Updating Cache**: Keep the best-practices-cache current
+3. **Not Updating Cache**: Keep `.claude/docs-cache/` current via the update script
 4. **Sequential When Parallel Possible**: Maximize parallel execution
 5. **Ignoring User Preferences**: Only execute approved optimizations
 6. **History References**: Never add "new", "updated", version markers

@@ -23,19 +23,16 @@ Analyze and optimize plugin elements against current Claude Code best practices.
 
 ---
 
-## Step 1: Fetch Current Best Practices
+## Step 1: Fetch Best Practices Documentation
 
-**MANDATORY:** Fetch the latest official documentation to ensure up-to-date checks:
+**MANDATORY:** Fetch the latest official documentation from GitHub:
 
 ```
-WebFetch: https://code.claude.com/docs/en/plugins
-WebFetch: https://code.claude.com/docs/en/skills
-WebFetch: https://code.claude.com/docs/en/slash-commands
-WebFetch: https://code.claude.com/docs/en/sub-agents
-WebFetch: https://code.claude.com/docs/en/hooks
+WebFetch: https://github.com/anthropics/claude-code/blob/main/plugins/README.md
+WebFetch: https://github.com/anthropics/skills/blob/main/README.md
 ```
 
-**Fallback:** If any URL returns 404, use `WebSearch: "Claude Code [topic] documentation site:claude.com"`
+**For specific topics:** Use `WebSearch: "Claude Code [topic] documentation site:claude.com"`
 
 ---
 

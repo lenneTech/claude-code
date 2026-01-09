@@ -26,31 +26,29 @@ You are an expert in developing Claude Code marketplaces and plugins. This skill
 
 ## Mandatory Pre-Work: Documentation Review
 
-**CRITICAL:** Before ANY implementation or optimization, fetch the current official documentation.
+**CRITICAL:** Before ANY implementation or optimization, fetch the latest official documentation.
 
-### Primary URLs
+### Primary Sources (GitHub - always available)
 
+Fetch these GitHub sources first:
 ```
-WebFetch: https://code.claude.com/docs/en/plugins
-WebFetch: https://code.claude.com/docs/en/skills
-WebFetch: https://code.claude.com/docs/en/slash-commands
-WebFetch: https://code.claude.com/docs/en/sub-agents
-WebFetch: https://code.claude.com/docs/en/hooks
+WebFetch: https://github.com/anthropics/claude-code/blob/main/plugins/README.md
+WebFetch: https://github.com/anthropics/skills/blob/main/README.md
 ```
 
-**Note:** If WebFetch returns "Prompt is too long", use WebSearch with targeted queries instead.
+### Secondary Sources (WebSearch)
 
-### Fallback Strategy (if URLs fail or are too large)
+For specific topics, use targeted searches:
+```
+WebSearch: "Claude Code [topic] documentation site:claude.com"
+```
 
-1. **WebSearch with targeted queries:**
-   - `"Claude Code [topic] frontmatter fields"`
-   - `"Claude Code [topic] best practices"`
-   - `"Claude Code [topic] documentation site:claude.com"`
-2. **Try alternative domains:** `docs.claude.com`, `platform.claude.com`, `docs.anthropic.com`
-3. **GitHub sources:**
-   - CHANGELOG: `https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md`
-   - Skills examples: `https://github.com/anthropics/skills`
-4. **Note broken URLs** for update in CLAUDE.md
+Topics to search when relevant:
+- Plugins & plugin.json structure
+- Skills & SKILL.md frontmatter
+- Slash commands & command frontmatter
+- Subagents & agent configuration
+- Hooks & hooks.json structure
 
 Apply the patterns and requirements from these sources.
 

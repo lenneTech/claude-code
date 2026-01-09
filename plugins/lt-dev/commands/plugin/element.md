@@ -39,21 +39,23 @@ Beispiele:
 
 ---
 
-## Step 2: Fetch Current Best Practices
+## Step 2: Fetch Best Practices Documentation
 
-**MANDATORY:** Before proceeding, fetch the current official documentation:
+**MANDATORY:** Before proceeding, fetch the latest official documentation from GitHub:
 
 ```
-WebFetch: https://code.claude.com/docs/en/plugins
+WebFetch: https://github.com/anthropics/claude-code/blob/main/plugins/README.md
+WebFetch: https://github.com/anthropics/skills/blob/main/README.md
 ```
 
-And the relevant element-specific documentation based on the determined type:
-- Skills: `https://code.claude.com/docs/en/skills`
-- Commands: `https://code.claude.com/docs/en/slash-commands`
-- Subagents: `https://code.claude.com/docs/en/sub-agents`
-- Hooks: `https://code.claude.com/docs/en/hooks`
+**For specific element types:** Use `WebSearch: "Claude Code [topic] documentation site:claude.com"`
 
-**Fallback:** If URLs fail, use `WebSearch: "Claude Code [topic] documentation site:claude.com"`
+Topics by element type:
+- Plugins: "Claude Code plugins plugin.json"
+- Skills: "Claude Code skills SKILL.md"
+- Commands: "Claude Code slash commands"
+- Subagents: "Claude Code subagents agents"
+- Hooks: "Claude Code hooks hooks.json"
 
 ---
 

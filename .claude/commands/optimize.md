@@ -10,8 +10,9 @@ Invoke the marketplace-optimizer skill to analyze and improve this Claude Code m
 ## What This Command Does
 
 1. **Cache Update** (Default: ja)
-   - Asks if best-practices-cache should be updated
-   - If yes: Fetches Reference URLs from CLAUDE.md and rebuilds cache
+   - Asks if documentation cache should be updated
+   - If yes: Runs `bun .claude/scripts/update-docs-cache.ts` to download
+     official docs from code.claude.com and convert to Markdown (~2 min)
    - Use `--update-cache` to auto-update, `--skip-cache` to skip
 
 2. **Secondary Sources** (Default: keine)
@@ -19,7 +20,7 @@ Invoke the marketplace-optimizer skill to analyze and improve this Claude Code m
    - Use `--none` to skip, or provide sources as arguments
 
 3. **Analyzes Marketplace**
-   - Reads local cache for best practices
+   - Reads cached documentation from `.claude/docs-cache/`
    - Scans all plugins, skills, commands, agents, hooks
    - Compares against current best practices
 
@@ -73,7 +74,8 @@ Sources are automatically detected by pattern:
 
 ## Notes
 
-- Local cache is the primary knowledge source
+- Documentation cache (`.claude/docs-cache/`) is the primary knowledge source
+- Cache is updated via Playwright (renders JS) + Turndown (converts to MD)
 - Secondary sources with conflicting info are ignored
 - All changes require user approval before execution
 - No history references ("new", "updated") are added to files
