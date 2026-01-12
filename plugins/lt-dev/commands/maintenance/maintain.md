@@ -1,11 +1,11 @@
 ---
-description: Comprehensive npm package maintenance using the specialized npm-package-maintainer agent
+description: Comprehensive npm package maintenance using the specialized lt-dev:npm-package-maintainer agent
 ---
 
 # NPM Package Maintenance
 
 ## Description
-Comprehensive npm package maintenance using the specialized npm-package-maintainer agent
+Comprehensive npm package maintenance using the specialized lt-dev:npm-package-maintainer agent
 
 ## Related Commands
 
@@ -18,7 +18,7 @@ Comprehensive npm package maintenance using the specialized npm-package-maintain
 | `/lt-dev:maintain-post-feature` | FULL | Clean up after feature development |
 
 ## User Prompt
-Use the npm-package-maintainer agent to perform comprehensive npm package maintenance.
+Use the lt-dev:npm-package-maintainer agent to perform comprehensive npm package maintenance.
 
 **Mode**: FULL MODE (complete optimization)
 

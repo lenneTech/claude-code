@@ -60,7 +60,7 @@ Fully automated update of @lenne.tech/nest-server with migration guide support.
 | Element | Purpose |
 |---------|---------|
 | **Skill**: `nest-server-updating` | Knowledge base for troubleshooting |
-| **Agent**: `nest-server-updater` | Execution engine (spawned by this command) |
+| **Agent**: `lt-dev:nest-server-updater` | Execution engine (spawned by this command) |
 | **Command**: `/lt-dev:maintenance:maintain` | General package maintenance |
 
 ## When to Use
@@ -76,7 +76,7 @@ Fully automated update of @lenne.tech/nest-server with migration guide support.
 
 **Spawn the nest-server-updater agent:**
 
-Use the Task tool to spawn the `nest-server-updater` agent with the following prompt:
+Use the Task tool to spawn the `lt-dev:nest-server-updater` agent with the following prompt:
 
 ```
 Update @lenne.tech/nest-server in this project.

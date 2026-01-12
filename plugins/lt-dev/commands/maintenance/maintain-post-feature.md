@@ -18,7 +18,7 @@ Package maintenance after completing a feature - ensures dependencies are curren
 | `/lt-dev:maintain-post-feature` | FULL | Post-feature cleanup (this command) |
 
 ## User Prompt
-Use the npm-package-maintainer agent to perform **post-feature** maintenance.
+Use the lt-dev:npm-package-maintainer agent to perform **post-feature** maintenance.
 
 **Mode**: FULL MODE (complete optimization)
 

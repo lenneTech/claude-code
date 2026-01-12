@@ -18,7 +18,7 @@ Fast security-focused npm package maintenance - updates only packages with known
 | `/lt-dev:maintain-post-feature` | FULL | Clean up after feature development |
 
 ## User Prompt
-Use the npm-package-maintainer agent to perform **SECURITY-ONLY** maintenance.
+Use the lt-dev:npm-package-maintainer agent to perform **SECURITY-ONLY** maintenance.
 
 **Mode**: SECURITY-ONLY MODE
 

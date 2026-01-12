@@ -216,7 +216,7 @@ Initial TodoWrite (after Phase 1):
 
    **CRITICAL:** After `npm run update`, run comprehensive package maintenance to ensure all dependencies are optimized.
 
-   Use Task tool to spawn the `npm-package-maintainer` agent with this prompt:
+   Use Task tool to spawn the `lt-dev:npm-package-maintainer` agent with this prompt:
    ```
    Perform comprehensive npm package maintenance in FULL MODE.
 
@@ -400,7 +400,7 @@ If blocked:
 | `Write` | Create new files if needed |
 | `Edit` | Apply code migrations |
 | `WebFetch` | Fetch GitHub content |
-| `Task` | Spawn npm-package-maintainer agent (FULL MODE) |
+| `Task` | Spawn lt-dev:npm-package-maintainer agent (FULL MODE) |
 | `TodoWrite` | Progress tracking and visibility |
 
 ---

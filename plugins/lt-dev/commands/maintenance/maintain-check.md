@@ -18,7 +18,7 @@ Analyze npm packages WITHOUT making any changes - generates a comprehensive repo
 | `/lt-dev:maintain-post-feature` | FULL | Clean up after feature development |
 
 ## User Prompt
-Use the npm-package-maintainer agent to perform **DRY-RUN** analysis.
+Use the lt-dev:npm-package-maintainer agent to perform **DRY-RUN** analysis.
 
 **Mode**: DRY-RUN MODE (analysis only, no changes)
 

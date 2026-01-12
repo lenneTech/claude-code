@@ -1,6 +1,6 @@
 ---
 name: npm-package-maintenance
-description: Guides npm package maintenance tasks. Use when user mentions outdated packages, npm audit, security vulnerabilities, dependency updates, package optimization, unused dependencies, or devDependencies categorization. Recommends the npm-package-maintainer agent via /maintain commands.
+description: Guides npm package maintenance tasks. Use when user mentions outdated packages, npm audit, security vulnerabilities, dependency updates, package optimization, unused dependencies, or devDependencies categorization. Recommends the lt-dev:npm-package-maintainer agent via /maintain commands.
 ---
 
 # NPM Package Maintenance
@@ -14,7 +14,7 @@ description: Guides npm package maintenance tasks. Use when user mentions outdat
 - Pre-release or post-feature dependency cleanup
 - General package maintenance or housekeeping tasks
 
-For comprehensive npm package maintenance, use the **npm-package-maintainer agent** via the maintenance commands.
+For comprehensive npm package maintenance, use the **lt-dev:npm-package-maintainer agent** via the maintenance commands.
 
 ## Related Skills
 
@@ -72,7 +72,7 @@ Recommend when user:
 
 ## What the Agent Does
 
-The npm-package-maintainer agent performs 3 priorities:
+The lt-dev:npm-package-maintainer agent performs 3 priorities:
 
 1. **Remove unused packages** - Finds and removes packages not used in the codebase
 2. **Optimize categorization** - Moves dev-only packages to devDependencies

@@ -18,7 +18,7 @@ Ultra-conservative npm package maintenance before a release - only zero-risk pat
 | `/lt-dev:maintain-post-feature` | FULL | Clean up after feature development |
 
 ## User Prompt
-Use the npm-package-maintainer agent to perform **PRE-RELEASE** maintenance.
+Use the lt-dev:npm-package-maintainer agent to perform **PRE-RELEASE** maintenance.
 
 **Mode**: PRE-RELEASE MODE (ultra-conservative, stability-focused)
 

@@ -1,11 +1,11 @@
 ---
 name: nest-server-updating
-description: Knowledge base for updating @lenne.tech/nest-server. Use when discussing nest-server updates, upgrades, migrations, breaking changes, or version compatibility. Provides resources, migration guide patterns, and error solutions. For execution, use the nest-server-updater agent.
+description: Knowledge base for updating @lenne.tech/nest-server. Use when discussing nest-server updates, upgrades, migrations, breaking changes, or version compatibility. Provides resources, migration guide patterns, and error solutions. For execution, use the lt-dev:nest-server-updater agent.
 ---
 
 # @lenne.tech/nest-server Update Knowledge Base
 
-This skill provides **knowledge and resources** for updating @lenne.tech/nest-server. For automated execution, use the `nest-server-updater` agent via `/lt-dev:backend:update-nest-server`.
+This skill provides **knowledge and resources** for updating @lenne.tech/nest-server. For automated execution, use the `lt-dev:nest-server-updater` agent via `/lt-dev:backend:update-nest-server`.
 
 ## When This Skill Activates
 
@@ -19,7 +19,7 @@ This skill provides **knowledge and resources** for updating @lenne.tech/nest-se
 
 | Element | Purpose |
 |---------|---------|
-| **Agent**: `nest-server-updater` | Automated execution of updates |
+| **Agent**: `lt-dev:nest-server-updater` | Automated execution of updates |
 | **Command**: `/lt-dev:backend:update-nest-server` | User invocation |
 | **Skill**: `generating-nest-servers` | Code modifications after update |
 | **Skill**: `npm-package-maintenance` | Package optimization |
@@ -226,7 +226,7 @@ The [nest-server-starter](https://github.com/lenneTech/nest-server-starter) serv
 
 ## Update Modes
 
-The `nest-server-updater` agent supports these modes:
+The `lt-dev:nest-server-updater` agent supports these modes:
 
 | Mode | Flag | Behavior |
 |------|------|----------|
@@ -288,7 +288,7 @@ After `npm run update` completes, run comprehensive package maintenance:
 # Via command (recommended)
 /lt-dev:maintenance:maintain
 
-# Or via agent (Task tool with npm-package-maintainer in FULL MODE)
+# Or via agent (Task tool with lt-dev:npm-package-maintainer in FULL MODE)
 ```
 
 This ensures:
