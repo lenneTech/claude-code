@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npx ts-node \"$CLAUDE_PROJECT_DIR/plugins/lt-dev/hooks/scripts/validate-plugin-frontmatter.ts\""
+            "command": "npx ts-node \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/validate-plugin-frontmatter.ts\""
           }
         ]
       }
@@ -17,15 +17,15 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/lt-dev/hooks/scripts/detect-nuxt.sh\""
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/detect-nuxt.sh\""
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/lt-dev/hooks/scripts/detect-nest-server.sh\""
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/detect-nest-server.sh\""
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/lt-dev/hooks/scripts/detect-lt-cli.sh\""
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/detect-lt-cli.sh\""
           }
         ]
       }
