@@ -29,7 +29,7 @@ function openModal(): void {
 ```vue
 <!-- app/components/ModalCreateSeason.vue -->
 <script setup lang="ts">
-import { object, string, minLength } from 'valibot'
+import { object, pipe, string, minLength } from 'valibot'
 import type { InferOutput } from 'valibot'
 
 interface Props {
@@ -46,7 +46,7 @@ const isOpen = ref<boolean>(true)
 const loading = ref<boolean>(false)
 
 const schema = object({
-  title: string([minLength(3, 'Mindestens 3 Zeichen')])
+  title: pipe(string(), minLength(3, 'Mindestens 3 Zeichen'))
 })
 
 type Schema = InferOutput<typeof schema>

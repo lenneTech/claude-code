@@ -100,7 +100,7 @@ export function useRequest() {
       const response = await requestControllerGet()
       return response.data ?? null
     } catch (e) {
-      toast.add({ title: 'Fehler', color: 'red' })
+      toast.add({ title: 'Fehler', color: 'error' })
       return null
     }
   }
@@ -127,6 +127,36 @@ export function useSeasonTeams(seasonId: string) {
 const { teams, fetchTeams } = useSeasonTeams(route.params.id as string)
 ```
 
+## Authentication Composable (Better Auth)
+
+```typescript
+// app/composables/use-better-auth.ts (pre-configured in nuxt-base-starter)
+import { authClient } from '~/lib/auth-client'
+
+export function useBetterAuth() {
+  const session = authClient.useSession(useFetch)
+
+  const user = computed(() => session.data.value?.user ?? null)
+  const isAuthenticated = computed<boolean>(() => !!session.data.value?.session)
+  const isAdmin = computed<boolean>(() => user.value?.role === 'admin')
+  const is2FAEnabled = computed<boolean>(() => !!user.value?.twoFactorEnabled)
+  const isLoading = computed<boolean>(() => session.isPending.value)
+
+  return {
+    // State
+    session, user, isAuthenticated, isAdmin, is2FAEnabled, isLoading,
+    // Methods (passwords auto-hashed via authClient wrapper)
+    passkey: authClient.passkey,
+    signIn: authClient.signIn,
+    signOut: authClient.signOut,
+    signUp: authClient.signUp,
+    twoFactor: authClient.twoFactor,
+  }
+}
+```
+
+> **Full authentication details:** See [reference/authentication.md](./authentication.md)
+
 ## Anti-Patterns
 
 ```typescript
@@ -146,4 +176,10 @@ const loading = ref<boolean>(false)
 export function useSeasons() {
   const modalOpen = ref(false) // UI logic doesn't belong here
 }
+
+//  Don't use authClient.useSession() without useFetch (SSR issues)
+const session = authClient.useSession()
+
+//  Pass useFetch for SSR support
+const session = authClient.useSession(useFetch)
 ```

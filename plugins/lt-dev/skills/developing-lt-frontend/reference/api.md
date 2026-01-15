@@ -135,12 +135,12 @@ async function create(data: CreateSeasonDto): Promise<SeasonDto | null> {
   try {
     const response = await seasonControllerCreate({ body: data })
     if (response.data) {
-      toast.add({ title: 'Erfolgreich erstellt', color: 'green' })
+      toast.add({ title: 'Erfolgreich erstellt', color: 'success' })
       return response.data
     }
     return null
   } catch (e) {
-    toast.add({ title: 'Fehler beim Erstellen', color: 'red' })
+    toast.add({ title: 'Fehler beim Erstellen', color: 'error' })
     return null
   }
 }

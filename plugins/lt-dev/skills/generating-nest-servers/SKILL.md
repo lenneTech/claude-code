@@ -55,14 +55,20 @@ You are the **PRIMARY expert** for NestJS backend development and the @lenne.tec
 ## Related Skills
 
 **Works closely with:**
+- `developing-lt-frontend` skill - For ALL Nuxt/Vue frontend development (projects/app/)
 - `building-stories-with-tdd` skill - For building user stories with Test-Driven Development
 - `using-lt-cli` skill - For Git operations and Fullstack initialization
 - `nest-server-updating` skill - For updating @lenne.tech/nest-server to latest version
 
 **When to use which:**
+- Nuxt/Vue frontend work? Use `developing-lt-frontend` skill
 - Building features with TDD workflow? Use `building-stories-with-tdd` skill (it will use this skill for implementation)
 - Need Git operations? Use `using-lt-cli` skill
 - Updating @lenne.tech/nest-server? Use `nest-server-updating` skill
+
+**In monorepo projects:**
+- `projects/api/` or `packages/api/` → This skill (generating-nest-servers)
+- `projects/app/` or `packages/app/` → `developing-lt-frontend` skill
 - Direct NestJS work? Use this skill
 
 ## TypeScript Language Server (Recommended)

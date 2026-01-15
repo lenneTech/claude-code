@@ -1,6 +1,6 @@
 ---
 name: developing-lt-frontend
-description: Develops lenne.tech frontend applications with Nuxt 4, Nuxt UI 4, strict TypeScript, and Valibot forms. Integrates backend APIs via generated types (types.gen.ts, sdk.gen.ts). Creates components with programmatic modals (useOverlay), composables per backend controller, TailwindCSS-only styling. Handles Nuxt 4 patterns including app/ directory, useFetch, useState, SSR, and hydration. Use when working with app/interfaces/, app/composables/, app/components/, app/pages/ in Nuxt projects or monorepos (projects/app/). NOT for NestJS backend (use generating-nest-servers).
+description: PRIMARY expert for ALL Nuxt and Vue frontend tasks. ALWAYS use this skill when working with Nuxt 4, Vue components, Nuxt UI, frontend pages, or files in app/components/, app/composables/, app/pages/, app/interfaces/ (supports monorepos with projects/app/, packages/app/). Handles modals (useOverlay), forms (Valibot), API integration (types.gen.ts, sdk.gen.ts), authentication (Better Auth), TailwindCSS styling, useFetch, useState, SSR. ALWAYS activate for .vue files, nuxt.config.ts, or frontend development. NOT for NestJS backend (use generating-nest-servers).
 ---
 
 # lenne.tech Frontend Development
@@ -12,15 +12,26 @@ description: Develops lenne.tech frontend applications with Nuxt 4, Nuxt UI 4, s
 - Creating or modifying Vue components with Nuxt UI
 - Integrating backend APIs via generated types (`types.gen.ts`, `sdk.gen.ts`)
 - Building forms with Valibot validation
+- Implementing authentication (login, register, 2FA, passkeys)
 - Working in monorepos with `projects/app/` or `packages/app/` structure
 
 **NOT for:** NestJS backend development (use `generating-nest-servers` skill instead)
 
 ## Related Skills
 
-- `generating-nest-servers` - For NestJS backend development (API implementation)
+**Works closely with:**
+- `generating-nest-servers` - For NestJS backend development (projects/api/)
 - `using-lt-cli` - For Git operations and Fullstack initialization
 - `building-stories-with-tdd` - For TDD approach when backend integration is needed
+
+**When to use which:**
+- .vue files, Nuxt, Vue components? Use **this skill** (developing-lt-frontend)
+- NestJS, services, controllers? Use `generating-nest-servers` skill
+- Git operations, `lt` commands? Use `using-lt-cli` skill
+
+**In monorepo projects:**
+- `projects/app/` or `packages/app/` → **This skill**
+- `projects/api/` or `packages/api/` → `generating-nest-servers` skill
 
 ## TypeScript Language Server (Recommended)
 
@@ -53,8 +64,10 @@ app/                  # Application code (srcDir)
 ├── components/       # Auto-imported components
 ├── composables/      # Auto-imported composables
 ├── interfaces/       # TypeScript interfaces
+├── lib/              # Utility libraries (auth-client, etc.)
 ├── pages/            # File-based routing
 ├── layouts/          # Layout components
+├── utils/            # Auto-imported utilities
 └── api-client/       # Generated types & SDK
 server/               # Nitro server routes
 public/               # Static assets
@@ -126,12 +139,38 @@ export function useSeasons() {
 
 ```typescript
 // For state shared across components (SSR-safe)
-export function useAuth() {
-  const user = useState<UserDto | null>('auth-user', () => null)
-  const isAuthenticated = computed<boolean>(() => !!user.value)
-  return { user: readonly(user), isAuthenticated }
+export function useSettings() {
+  const theme = useState<'light' | 'dark'>('app-theme', () => 'light')
+  return { theme }
 }
 ```
+
+### Authentication (Better Auth)
+
+```typescript
+// app/composables/use-better-auth.ts (pre-configured in nuxt-base-starter)
+import { authClient } from '~/lib/auth-client'
+
+export function useBetterAuth() {
+  const session = authClient.useSession(useFetch)
+
+  const user = computed(() => session.data.value?.user ?? null)
+  const isAuthenticated = computed<boolean>(() => !!session.data.value?.session)
+  const isAdmin = computed<boolean>(() => user.value?.role === 'admin')
+
+  return {
+    user, isAuthenticated, isAdmin,
+    signIn: authClient.signIn,   // Password auto-hashed (SHA256)
+    signUp: authClient.signUp,   // Password auto-hashed (SHA256)
+    signOut: authClient.signOut,
+    twoFactor: authClient.twoFactor,
+    passkey: authClient.passkey,
+  }
+}
+```
+
+**Preferred auth methods:** Passkey (WebAuthn) or Email/Password + 2FA (TOTP)
+**Base path:** `/iam` (must match nest-server config)
 
 ### Programmatic Modals
 
@@ -147,11 +186,11 @@ overlay.open(ModalCreate, {
 ### Valibot Forms (not Zod)
 
 ```typescript
-import { object, string, minLength } from 'valibot'
+import { object, pipe, string, minLength } from 'valibot'
 import type { InferOutput } from 'valibot'
 
 const schema = object({
-  title: string([minLength(3, 'Mindestens 3 Zeichen')])
+  title: pipe(string(), minLength(3, 'Mindestens 3 Zeichen'))
 })
 type Schema = InferOutput<typeof schema>
 const state = reactive<Schema>({ title: '' })
@@ -164,6 +203,7 @@ const state = reactive<Schema>({ title: '' })
 | UI Labels | German (`Speichern`, `Abbrechen`) |
 | Code/Comments | English |
 | Styling | TailwindCSS only, no `<style>` |
+| Colors | Semantic only (`primary`, `error`, `success`), no hardcoded |
 | Types | Explicit, no implicit `any` |
 | Backend Types | **Generated only** (`types.gen.ts`) |
 | Custom Interfaces | Frontend-only (`app/interfaces/*.interface.ts`) |
@@ -181,7 +221,9 @@ const state = reactive<Schema>({ title: '' })
 | Forms | [reference/forms.md](./reference/forms.md) |
 | Modals | [reference/modals.md](./reference/modals.md) |
 | API | [reference/api.md](./reference/api.md) |
+| Colors | [reference/colors.md](./reference/colors.md) |
 | Nuxt Patterns | [reference/nuxt.md](./reference/nuxt.md) |
+| Authentication | [reference/authentication.md](./reference/authentication.md) |
 
 ## Pre-Commit
 
@@ -192,6 +234,10 @@ const state = reactive<Schema>({ title: '' })
 - [ ] Modals use `useOverlay`
 - [ ] Forms use Valibot
 - [ ] TailwindCSS only
+- [ ] **Semantic colors only** (`primary`, `error`, `success`), no hardcoded colors
 - [ ] German UI, English code
 - [ ] No implicit `any`
 - [ ] ESLint passes
+- [ ] Auth uses `useBetterAuth()` composable (pre-configured)
+- [ ] Protected routes use `middleware: 'auth'`
+- [ ] Auth base path is `/iam` (nest-server default)

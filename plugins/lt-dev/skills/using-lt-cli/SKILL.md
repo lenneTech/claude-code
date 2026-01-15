@@ -19,7 +19,7 @@ This skill activates whenever:
 
 ## Complementary Skills
 
-For NestJS server development, this skill works **alongside** `generating-nest-servers`:
+For fullstack development, this skill works **alongside** other skills:
 
 | Task | Skills Used |
 |------|-------------|
@@ -28,20 +28,27 @@ For NestJS server development, this skill works **alongside** `generating-nest-s
 | `lt server create` | **using-lt-cli** + generating-nest-servers |
 | `lt server module`, `lt server object` | **using-lt-cli** + generating-nest-servers |
 | NestJS code modifications | generating-nest-servers |
+| Nuxt/Vue frontend development | developing-lt-frontend |
 
-Both skills can be active simultaneously - this skill provides CLI syntax reference, while `generating-nest-servers` provides NestJS development expertise
+Multiple skills can be active simultaneously - this skill provides CLI syntax reference, while other skills provide development expertise.
 
 ## Related Skills
 
 **Works closely with:**
-- `generating-nest-servers` skill - For ALL NestJS server development
+- `generating-nest-servers` skill - For ALL NestJS backend development
+- `developing-lt-frontend` skill - For ALL Nuxt/Vue frontend development
 - `building-stories-with-tdd` skill - For Test-Driven Development with NestJS
 
 **When to use which:**
 - Git operations (`lt git`)? Use this skill (using-lt-cli)
 - Fullstack init? Use this skill (using-lt-cli)
-- NestJS development? Use `generating-nest-servers` skill
+- NestJS backend? Use `generating-nest-servers` skill
+- Nuxt/Vue frontend? Use `developing-lt-frontend` skill
 - TDD approach? Use `building-stories-with-tdd` skill
+
+**After `lt fullstack init`:**
+- Backend work (projects/api/) → `generating-nest-servers`
+- Frontend work (projects/app/) → `developing-lt-frontend`
 
 ---
 

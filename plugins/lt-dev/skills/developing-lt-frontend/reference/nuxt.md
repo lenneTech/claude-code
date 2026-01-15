@@ -93,20 +93,36 @@ const { data } = await useAsyncData('dashboard', async () => {
 ## Route Middleware
 
 ```typescript
-// middleware/auth.ts
-export default defineNuxtRouteMiddleware((to) => {
-  const { isAuthenticated } = useAuth()
+// middleware/auth.ts (uses useBetterAuth - see reference/authentication.md)
+export default defineNuxtRouteMiddleware(async () => {
+  const { isAuthenticated } = useBetterAuth()
 
   if (!isAuthenticated.value) {
-    return navigateTo('/login')
+    return navigateTo('/auth/login')
   }
+})
+
+// middleware/guest.ts (redirect authenticated users)
+export default defineNuxtRouteMiddleware(() => {
+  const { isAuthenticated } = useBetterAuth()
+  if (isAuthenticated.value) return navigateTo('/dashboard')
+})
+
+// middleware/admin.ts (admin-only routes)
+export default defineNuxtRouteMiddleware(() => {
+  const { isAuthenticated, isAdmin } = useBetterAuth()
+  if (!isAuthenticated.value) return navigateTo('/auth/login')
+  if (!isAdmin.value) return navigateTo('/dashboard')
 })
 
 // Usage in page
 definePageMeta({
-  middleware: 'auth'
+  middleware: 'auth' // or 'guest' or 'admin'
 })
 ```
+
+> **Full authentication details:** See [reference/authentication.md](./authentication.md)
+> **Note:** 2FA redirect is handled automatically via `twoFactorClient` plugin
 
 ## Runtime Config
 
