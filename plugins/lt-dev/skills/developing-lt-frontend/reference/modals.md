@@ -2,6 +2,16 @@
 
 **Always use programmatic modals. Never use inline modals.**
 
+## Table of Contents
+
+- [Opening a Modal](#opening-a-modal)
+- [Modal Component](#modal-component)
+- [Confirmation Dialog](#confirmation-dialog)
+- [Rules](#rules)
+- [Anti-Patterns](#anti-patterns)
+
+---
+
 ## Opening a Modal
 
 ```typescript

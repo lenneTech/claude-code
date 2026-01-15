@@ -1,5 +1,5 @@
 ---
-name: npm-package-maintenance
+name: maintaining-npm-packages
 description: Guides npm package maintenance tasks. Use when user mentions outdated packages, npm audit, security vulnerabilities, dependency updates, package optimization, unused dependencies, or devDependencies categorization. Recommends the lt-dev:npm-package-maintainer agent via /maintain commands.
 ---
 

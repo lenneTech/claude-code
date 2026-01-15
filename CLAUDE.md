@@ -4,7 +4,7 @@ This repository is a **Claude Code marketplace** containing plugins, agents, com
 
 ## Automatic Quality Assurance
 
-**CRITICAL:** Before ANY modification to this package, use the `claude-code-plugin-expert` skill to ensure:
+**CRITICAL:** Before ANY modification to this package, use the `developing-claude-plugins` skill to ensure:
 - Consistency with existing patterns and structure
 - Adherence to current Claude Code best practices
 - Optimal configuration and naming conventions

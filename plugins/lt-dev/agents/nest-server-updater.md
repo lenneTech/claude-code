@@ -4,7 +4,7 @@ description: Autonomous agent for updating @lenne.tech/nest-server to the latest
 model: sonnet
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, Task, TodoWrite
 permissionMode: default
-skills: nest-server-updating, generating-nest-servers, npm-package-maintenance
+skills: nest-server-updating, generating-nest-servers, maintaining-npm-packages
 ---
 
 # @lenne.tech/nest-server Update Agent
@@ -18,7 +18,7 @@ Autonomous execution agent for updating @lenne.tech/nest-server.
 | **Skill**: `nest-server-updating` | Knowledge base (resources, error patterns, troubleshooting) |
 | **Command**: `/lt-dev:backend:update-nest-server` | User invocation with options |
 | **Skill**: `generating-nest-servers` | Code modifications for NestJS |
-| **Skill**: `npm-package-maintenance` | Package optimization guidance |
+| **Skill**: `maintaining-npm-packages` | Package optimization guidance |
 
 ## Operating Modes
 

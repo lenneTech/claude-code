@@ -22,7 +22,7 @@ This skill provides **knowledge and resources** for updating @lenne.tech/nest-se
 | **Agent**: `lt-dev:nest-server-updater` | Automated execution of updates |
 | **Command**: `/lt-dev:backend:update-nest-server` | User invocation |
 | **Skill**: `generating-nest-servers` | Code modifications after update |
-| **Skill**: `npm-package-maintenance` | Package optimization |
+| **Skill**: `maintaining-npm-packages` | Package optimization |
 
 ---
 

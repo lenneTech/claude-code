@@ -5,12 +5,12 @@
     {
       "pattern": "Bash(npm test:*)",
       "description": "Run npm test commands",
-      "usedBy": ["building-stories-with-tdd", "npm-package-maintenance", "nest-server-updating"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating"]
     },
     {
       "pattern": "Bash(npm run test:*)",
       "description": "Run npm run test commands",
-      "usedBy": ["building-stories-with-tdd", "npm-package-maintenance", "nest-server-updating"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating"]
     },
     {
       "pattern": "Bash(npm run test\\:e2e:*)",
@@ -30,12 +30,12 @@
     {
       "pattern": "Bash(npm run build:*)",
       "description": "Build the application",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "npm-package-maintenance", "nest-server-updating"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating"]
     },
     {
       "pattern": "Bash(npm run lint:*)",
       "description": "Run linter checks",
-      "usedBy": ["generating-nest-servers", "npm-package-maintenance", "nest-server-updating"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating"]
     },
     {
       "pattern": "Bash(npm run generate-types:*)",
@@ -55,22 +55,22 @@
     {
       "pattern": "Bash(npm audit:*)",
       "description": "Run security audit on npm packages",
-      "usedBy": ["npm-package-maintenance", "nest-server-updating"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating"]
     },
     {
       "pattern": "Bash(npm install:*)",
       "description": "Install npm packages",
-      "usedBy": ["npm-package-maintenance", "nest-server-updating"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating"]
     },
     {
       "pattern": "Bash(npm uninstall:*)",
       "description": "Uninstall npm packages",
-      "usedBy": ["npm-package-maintenance"]
+      "usedBy": ["maintaining-npm-packages"]
     },
     {
       "pattern": "Bash(npx ncu:*)",
       "description": "Check for npm package updates using npm-check-updates",
-      "usedBy": ["npm-package-maintenance"]
+      "usedBy": ["maintaining-npm-packages"]
     },
     {
       "pattern": "Bash(lt server module:*)",

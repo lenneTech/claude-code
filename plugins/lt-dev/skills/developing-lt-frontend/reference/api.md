@@ -1,5 +1,16 @@
 # API Integration
 
+## Table of Contents
+
+- [Generated Files (REQUIRED)](#generated-files-required)
+- [MANDATORY: Missing Types Workflow](#-mandatory-missing-types-workflow)
+- [Basic Usage](#basic-usage)
+- [Composable Pattern](#composable-pattern)
+- [Error Handling](#error-handling)
+- [With Toast Notifications](#with-toast-notifications)
+
+---
+
 ## Generated Files (REQUIRED)
 
 **NEVER create custom interfaces for backend DTOs!**
@@ -8,6 +19,32 @@
 |------|---------|
 | `~/api-client/types.gen.ts` | All backend DTOs (REQUIRED) |
 | `~/api-client/sdk.gen.ts` | All API functions (REQUIRED) |
+
+## ⚠️ MANDATORY: Missing Types Workflow
+
+**If generated files are missing, you MUST ask the user - NEVER create manual interfaces!**
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│  STOP! types.gen.ts or sdk.gen.ts missing?                     │
+│                                                                │
+│  Step 1: ASK USER                                              │
+│  "Die generierten API-Types fehlen. Läuft die Backend-API      │
+│   unter http://localhost:3000?"                                │
+│                                                                │
+│  Step 2: GENERATE TYPES                                        │
+│  - If API running → npm run generate-types                     │
+│  - If API not running → Ask user to start it first             │
+│                                                                │
+│  Step 3: WAIT FOR COMPLETION                                   │
+│  - Verify types.gen.ts exists after generation                 │
+│  - Then continue with implementation                           │
+│                                                                │
+│  ❌ FORBIDDEN: Creating manual interfaces                      │
+│  ❌ FORBIDDEN: Skipping this workflow                          │
+│  ❌ FORBIDDEN: "I'll create the types manually"                │
+└────────────────────────────────────────────────────────────────┘
+```
 
 ### Generating Types
 
@@ -19,7 +56,7 @@ cd projects/api && npm run start:dev
 
 # 2. Wait for API to be ready (check http://localhost:3000/api)
 
-# 3. Generate types
+# 3. Generate types (from frontend directory)
 npm run generate-types
 ```
 
@@ -29,8 +66,6 @@ npm run generate-types
 - After adding/modifying controllers
 - After changing API endpoints
 - When `types.gen.ts` is missing or outdated
-
-**NEVER create manual DTOs as a workaround!**
 
 ## Basic Usage
 

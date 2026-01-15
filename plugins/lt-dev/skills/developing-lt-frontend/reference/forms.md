@@ -2,6 +2,19 @@
 
 **Valibot is the ONLY validation library. Do NOT use Zod.**
 
+## Table of Contents
+
+- [Basic Pattern](#basic-pattern)
+- [UAuthForm (Authentication)](#uauthform-authentication)
+- [Validation Rules](#validation-rules)
+- [Cross-Field Validation](#cross-field-validation)
+- [Form with Initial Data](#form-with-initial-data)
+- [Loading State](#loading-state)
+- [Toast Feedback](#toast-feedback)
+- [Zod to Valibot Migration](#zod-to-valibot-migration)
+
+---
+
 ## Basic Pattern
 
 ```vue

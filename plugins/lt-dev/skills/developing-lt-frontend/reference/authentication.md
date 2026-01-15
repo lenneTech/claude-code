@@ -2,6 +2,21 @@
 
 lenne.tech projects use [Better Auth](https://www.better-auth.com/) for authentication, integrated with the @lenne.tech/nest-server backend.
 
+## Table of Contents
+
+- [Preferred Authentication Methods](#preferred-authentication-methods)
+- [Client Setup (nuxt-base-starter)](#client-setup-nuxt-base-starter)
+- [Crypto Utility](#crypto-utility)
+- [useBetterAuth Composable](#usebetterauth-composable)
+- [Auth Middleware](#auth-middleware)
+- [Basic Usage Examples](#basic-usage-examples)
+- [Environment Configuration](#environment-configuration)
+- [Pre-built Auth Pages (nuxt-base-starter)](#pre-built-auth-pages-nuxt-base-starter)
+- [Key Patterns](#key-patterns)
+- [Anti-Patterns](#anti-patterns)
+
+---
+
 ## Preferred Authentication Methods
 
 | Priority | Method | Description |

@@ -159,7 +159,7 @@ Was möchtest du tun?"
 
 ## Step 6: Generate Element
 
-Create the element with proper structure following the templates from the `claude-code-plugin-expert` skill.
+Create the element with proper structure following the templates from the `developing-claude-plugins` skill.
 
 ### Quality Checklist (verify before creating)
 
@@ -207,7 +207,7 @@ Möchtest du das Element direkt testen oder weitere Anpassungen vornehmen?"
 ## Templates
 
 ### Skill Template
-See: `plugins/lt-dev/skills/claude-code-plugin-expert/SKILL.md`
+See: `plugins/lt-dev/skills/developing-claude-plugins/SKILL.md`
 
 ### Command Template
 See: `plugins/lt-dev/commands/create-story.md`

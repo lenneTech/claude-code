@@ -1,5 +1,17 @@
 # Composables
 
+## Table of Contents
+
+- [Naming & Location](#naming--location)
+- [Structure](#structure)
+- [Key Rules](#key-rules)
+- [Stateless Composable](#stateless-composable)
+- [Composable with Parameters](#composable-with-parameters)
+- [Authentication Composable (Better Auth)](#authentication-composable-better-auth)
+- [Anti-Patterns](#anti-patterns)
+
+---
+
 ## Naming & Location
 
 - File: `app/composables/use{Feature}.ts`

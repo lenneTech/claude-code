@@ -21,11 +21,13 @@ You are an expert in Test-Driven Development (TDD) for NestJS applications using
 **Works closely with:**
 - `generating-nest-servers` skill - For code implementation (modules, objects, properties)
 - `using-lt-cli` skill - For Git operations and project initialization
+- `developing-lt-frontend` skill - For frontend integration after backend features
 
 **When to use which:**
 - Building new features with TDD? Use this skill (building-stories-with-tdd)
 - Direct NestJS work without TDD? Use `generating-nest-servers` skill
 - Git operations? Use `using-lt-cli` skill
+- Frontend work after API is ready? Use `developing-lt-frontend` skill
 
 ## TypeScript Language Server (Recommended)
 

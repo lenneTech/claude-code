@@ -67,8 +67,8 @@ Skills, Commands, Hooks and Agents for Frontend (Nuxt 4), Backend (NestJS/nest-s
 | `generating-nest-servers` | NestJS with @lenne.tech/nest-server |
 | `building-stories-with-tdd` | Test-Driven Development Workflow |
 | `using-lt-cli` | lenne.tech CLI for Git and Fullstack Init |
-| `npm-package-maintenance` | Discovery skill for npm package maintenance commands |
-| `claude-code-plugin-expert` | Plugin development best practices and validation |
+| `maintaining-npm-packages` | Discovery skill for npm package maintenance commands |
+| `developing-claude-plugins` | Plugin development best practices and validation |
 
 ### Agents (1)
 
@@ -194,10 +194,10 @@ claude-code/
 │       │   └── npm-package-maintainer.md
 │       ├── skills/
 │       │   ├── building-stories-with-tdd/
-│       │   ├── claude-code-plugin-expert/
+│       │   ├── developing-claude-plugins/
 │       │   ├── developing-lt-frontend/
 │       │   ├── generating-nest-servers/
-│       │   ├── npm-package-maintenance/
+│       │   ├── maintaining-npm-packages/
 │       │   └── using-lt-cli/
 │       ├── commands/
 │       │   ├── create-story.md

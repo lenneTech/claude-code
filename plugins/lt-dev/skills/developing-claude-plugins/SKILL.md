@@ -1,5 +1,5 @@
 ---
-name: claude-code-plugin-expert
+name: developing-claude-plugins
 description: Expert for Claude Code plugin and marketplace development. Use when creating, editing, or optimizing skills (SKILL.md), commands (*.md), agents, hooks (hooks.json), scripts, or plugin.json files. Ensures consistency with official best practices from code.claude.com documentation. Activates for any file in plugins/ directory.
 ---
 
@@ -359,12 +359,12 @@ When optimizing existing elements:
 - `using-lt-cli` skill - For Git operations in this package
 - `generating-nest-servers` skill - When adding NestJS-related commands or skills
 - `developing-lt-frontend` skill - When adding Nuxt-related commands or skills
-- `npm-package-maintenance` skill - When adding maintenance-related commands
+- `maintaining-npm-packages` skill - When adding maintenance-related commands
 
 **When to use which:**
 - Plugin development (this package)? Use this skill
 - NestJS server development? Use `generating-nest-servers` skill
 - Frontend development? Use `developing-lt-frontend` skill
-- Package maintenance? Use `npm-package-maintenance` skill
+- Package maintenance? Use `maintaining-npm-packages` skill
 
 When modifying any skill, command, or agent in this package, this expertise should inform the changes.

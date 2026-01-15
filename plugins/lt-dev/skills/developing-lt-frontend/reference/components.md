@@ -1,5 +1,16 @@
 # Component Patterns
 
+## Table of Contents
+
+- [Script Structure](#script-structure)
+- [Template Rules](#template-rules)
+- [Props Pattern](#props-pattern)
+- [Emit Pattern](#emit-pattern)
+- [Naming](#naming)
+- [Performance](#performance)
+
+---
+
 ## Script Structure
 
 ```vue

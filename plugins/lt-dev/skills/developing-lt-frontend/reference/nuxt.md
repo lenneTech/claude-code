@@ -1,5 +1,17 @@
 # Nuxt 4 Patterns
 
+## Table of Contents
+
+- [State Management](#state-management)
+- [Data Fetching](#data-fetching)
+- [Performance](#performance)
+- [Route Middleware](#route-middleware)
+- [Runtime Config](#runtime-config)
+- [SEO](#seo)
+- [Anti-Patterns](#anti-patterns)
+
+---
+
 ## State Management
 
 ### useState vs ref

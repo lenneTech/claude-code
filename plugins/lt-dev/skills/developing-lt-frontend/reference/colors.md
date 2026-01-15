@@ -2,6 +2,19 @@
 
 Nuxt UI uses **semantic color naming** instead of hardcoded values. This enables consistent theming and easy dark/light mode switching.
 
+## Table of Contents
+
+- [Semantic Colors](#semantic-colors)
+- [Configuration](#configuration)
+- [CSS Utility Classes](#css-utility-classes)
+- [Component Color Props](#component-color-props)
+- [Dark/Light Mode](#darklight-mode)
+- [Customizing CSS Variables](#customizing-css-variables)
+- [Anti-Patterns](#anti-patterns)
+- [Quick Reference](#quick-reference)
+
+---
+
 ## Semantic Colors
 
 | Color | Default | Use For |

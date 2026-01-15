@@ -2,6 +2,15 @@
 
 Complete, copy-paste-ready examples for each element type.
 
+## Table of Contents
+
+- [Skill Example: Code Review Standards](#skill-example-code-review-standards)
+- [Command Example: API Route Scaffolding](#command-example-api-route-scaffolding)
+- [Agent Example: Documentation Generator](#agent-example-documentation-generator)
+- [Hook Example: Format on Save](#hook-example-format-on-save)
+- [Hook Script Example: Frontmatter Validation](#hook-script-example-frontmatter-validation)
+- [Minimal Examples](#minimal-examples)
+
 ---
 
 ## Skill Example: Code Review Standards

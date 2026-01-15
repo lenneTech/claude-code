@@ -1,5 +1,20 @@
 # Claude Code Plugin Development Reference
 
+## Table of Contents
+
+- [Official Documentation URLs](#official-documentation-urls)
+- [Element Comparison Matrix](#element-comparison-matrix)
+- [Frontmatter Field Reference](#frontmatter-field-reference)
+- [Tool Names for Agents](#tool-names-for-agents)
+- [Event Types for Hooks](#event-types-for-hooks)
+- [Model Selection Guide for Agents](#model-selection-guide-for-agents)
+- [Directory Structure Conventions](#directory-structure-conventions)
+- [Naming Conventions](#naming-conventions)
+- [Description Writing Guidelines](#description-writing-guidelines)
+- [Complete Examples](#complete-examples)
+
+---
+
 ## Official Documentation URLs
 
 These are the authoritative sources for Claude Code plugin development. **Always fetch before implementation.**

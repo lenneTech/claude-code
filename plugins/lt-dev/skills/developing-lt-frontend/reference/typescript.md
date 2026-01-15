@@ -1,5 +1,17 @@
 # TypeScript Standards
 
+## Table of Contents
+
+- [Rule: No Implicit any](#rule-no-implicit-any)
+- [Variables](#variables)
+- [Functions](#functions)
+- [Vue Composition API](#vue-composition-api)
+- [Props & Emits](#props--emits)
+- [Generated Types (REQUIRED)](#generated-types-required)
+- [Anti-Patterns](#anti-patterns)
+
+---
+
 ## Rule: No Implicit `any`
 
 Every variable, parameter, and return value MUST have an explicit type.

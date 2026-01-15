@@ -17,6 +17,71 @@ description: PRIMARY expert for ALL Nuxt and Vue frontend tasks. ALWAYS use this
 
 **NOT for:** NestJS backend development (use `generating-nest-servers` skill instead)
 
+## Development Approach: Real Backend Integration FIRST
+
+**CRITICAL: Always implement with real backend integration immediately!**
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│  ❌ FORBIDDEN:                                                 │
+│  - Placeholder data: const items = ['Item 1', 'Item 2']        │
+│  - TODO comments: // TODO: Connect to API later                │
+│  - Mock functions: async function fetchData() { return [] }    │
+│  - Dummy interfaces: interface Item { name: string }           │
+│  - "We'll add the API call later"                              │
+│                                                                │
+│  ✅ REQUIRED:                                                  │
+│  - Real API calls from the start                               │
+│  - Generated types (types.gen.ts)                              │
+│  - Generated SDK functions (sdk.gen.ts)                        │
+│  - Feature-by-feature with full backend integration            │
+└────────────────────────────────────────────────────────────────┘
+```
+
+**Workflow for each feature:**
+
+1. **Ensure services are running** (API on 3000, App on 3001)
+2. **Generate types first** (`npm run generate-types`)
+3. **Create composable** with real SDK functions
+4. **Build component** using the composable
+5. **Test in browser** with real data
+6. **Move to next feature** only when current one works
+
+**Example - The RIGHT way:**
+
+```typescript
+// ✅ CORRECT: Real integration from the start
+import type { ProductDto } from '~/api-client/types.gen'
+import { productControllerFindAll } from '~/api-client/sdk.gen'
+
+export function useProducts() {
+  const products = ref<ProductDto[]>([])
+
+  async function fetchAll() {
+    const response = await productControllerFindAll()
+    if (response.data) products.value = response.data
+  }
+
+  return { products: readonly(products), fetchAll }
+}
+```
+
+```typescript
+// ❌ WRONG: Placeholder approach
+interface Product { name: string }  // Manual interface!
+const products = ref<Product[]>([
+  { name: 'Placeholder 1' },  // Fake data!
+  { name: 'Placeholder 2' }
+])
+// TODO: Connect to API  // Deferred work!
+```
+
+**Why this matters:**
+- Placeholders hide integration issues until later
+- Manual interfaces drift from backend DTOs
+- "Later" often means bugs discovered too late
+- Real data reveals edge cases immediately
+
 ## Related Skills
 
 **Works closely with:**
@@ -57,6 +122,128 @@ description: PRIMARY expert for ALL Nuxt and Vue frontend tasks. ALWAYS use this
 claude plugins install typescript-lsp --marketplace claude-plugins-official
 ```
 
+## Service Health Check (MANDATORY)
+
+**Before starting ANY frontend work, check if required services are running:**
+
+```bash
+# Check if API is running (Port 3000)
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api
+
+# Check if App is running (Port 3001)
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001
+```
+
+**Workflow:**
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│  BEFORE starting frontend work:                                │
+│                                                                │
+│  1. CHECK API (Port 3000):                                     │
+│     curl -s -o /dev/null -w "%{http_code}" localhost:3000/api  │
+│     - If NOT 200: Start API in background                      │
+│       cd projects/api && npm run start:dev &                   │
+│     - Wait until API responds (max 30s)                        │
+│                                                                │
+│  2. CHECK APP (Port 3001):                                     │
+│     curl -s -o /dev/null -w "%{http_code}" localhost:3001      │
+│     - If NOT 200: Start App in background                      │
+│       cd projects/app && npm run dev &                         │
+│     - Wait until App responds (max 30s)                        │
+│                                                                │
+│  3. ONLY THEN proceed with frontend development                │
+└────────────────────────────────────────────────────────────────┘
+```
+
+**Starting Services (if not running):**
+
+```bash
+# Start API in background (from monorepo root)
+cd projects/api && npm run start:dev &
+
+# Start App in background (from monorepo root)
+cd projects/app && npm run dev &
+```
+
+**Important:**
+- Always check BEFORE starting to avoid duplicate processes
+- Use `lsof -i :3000` or `lsof -i :3001` to check if port is already in use
+- If port is in use but service not responding, investigate before starting another instance
+
+## Browser Testing (Chrome DevTools MCP)
+
+**After implementing each feature, verify it works in the browser!**
+
+**Available Tools:**
+| Tool | Use Case |
+|------|----------|
+| `mcp__chrome-devtools__navigate_page` | Navigate to URL |
+| `mcp__chrome-devtools__take_snapshot` | Get page structure with UIDs (preferred) |
+| `mcp__chrome-devtools__take_screenshot` | Visual verification |
+| `mcp__chrome-devtools__click` / `fill` | Interact with elements |
+| `mcp__chrome-devtools__list_console_messages` | Check for JS errors |
+| `mcp__chrome-devtools__list_network_requests` | Debug API calls |
+
+**Workflow after each feature:**
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│  AFTER implementing a feature:                                 │
+│                                                                │
+│  1. NAVIGATE to the page:                                      │
+│     mcp__chrome-devtools__navigate_page(url: "localhost:3001") │
+│                                                                │
+│  2. TAKE SNAPSHOT (preferred over screenshot):                 │
+│     mcp__chrome-devtools__take_snapshot()                      │
+│     - Check if on correct page (middleware may redirect)       │
+│     - If redirected to /login: Handle authentication first     │
+│                                                                │
+│  3. CHECK CONSOLE for errors:                                  │
+│     mcp__chrome-devtools__list_console_messages(types: error)  │
+│     - Fix any JavaScript errors before proceeding              │
+│                                                                │
+│  4. VERIFY API calls work:                                     │
+│     mcp__chrome-devtools__list_network_requests()              │
+│     - Check for failed requests (4xx, 5xx)                     │
+│                                                                │
+│  5. ONLY proceed to next feature when current one works        │
+└────────────────────────────────────────────────────────────────┘
+```
+
+**Authentication Handling:**
+- Most pages require login
+- If redirected to `/login` or `/auth/login`: Ask user for credentials
+- Use `fill` and `click` tools to authenticate
+- Then navigate back to intended page
+
+## Nuxt UI MCP (Component Documentation)
+
+**Use the Nuxt UI MCP tools for component documentation:**
+
+| Tool | Use Case |
+|------|----------|
+| `mcp__nuxt-ui-remote__list-components` | List all available components |
+| `mcp__nuxt-ui-remote__get-component` | Get component documentation |
+| `mcp__nuxt-ui-remote__get-component-metadata` | Get props, slots, events |
+| `mcp__nuxt-ui-remote__search-components-by-category` | Find components by category |
+| `mcp__nuxt-ui-remote__list-composables` | List available composables |
+
+**When to use:**
+- Before using a Nuxt UI component you haven't used before
+- When unsure about available props or slots
+- When looking for the right component for a use case
+
+## Error Recovery
+
+**For detailed troubleshooting workflows, see [reference/troubleshooting.md](./reference/troubleshooting.md)**
+
+**Quick fixes:**
+- Type generation fails → Check if API is running on port 3000
+- API won't start → Check `lsof -i :3000`, kill stale processes
+- Build fails → Run `npm run generate-types`, check imports
+- Console errors → Use `mcp__chrome-devtools__list_console_messages`
+
 ## Nuxt 4 Directory Structure
 
 ```
@@ -85,6 +272,14 @@ nuxt.config.ts
 | 3. | Nuxt UI types | Component props (auto-imported) |
 | 4. | `app/interfaces/*.interface.ts` | Frontend-only types (UI state, forms) |
 
+### Missing Generated Types
+
+**If `types.gen.ts` or `sdk.gen.ts` are missing/outdated:** See [reference/troubleshooting.md](./reference/troubleshooting.md#missing-generated-types)
+
+**Key rules:**
+- ❌ NEVER create manual interfaces as workaround
+- ✅ Always run `npm run generate-types` with API running
+
 ### Generating Types
 
 **Prerequisites:** Backend API must be running!
@@ -93,14 +288,11 @@ nuxt.config.ts
 # Start API first (in monorepo)
 cd projects/api && npm run start:dev
 
-# Then generate types
+# Wait for API to be ready (check http://localhost:3000/api)
+
+# Then generate types (from frontend directory)
 npm run generate-types
 ```
-
-If `types.gen.ts` or `sdk.gen.ts` are missing or outdated:
-1. Ensure API is running at configured URL
-2. Run `npm run generate-types`
-3. Never create manual DTOs as workaround
 
 ## Core Patterns
 
@@ -224,12 +416,19 @@ const state = reactive<Schema>({ title: '' })
 | Colors | [reference/colors.md](./reference/colors.md) |
 | Nuxt Patterns | [reference/nuxt.md](./reference/nuxt.md) |
 | Authentication | [reference/authentication.md](./reference/authentication.md) |
+| Troubleshooting | [reference/troubleshooting.md](./reference/troubleshooting.md) |
 
 ## Pre-Commit
 
-- [ ] **No custom interfaces for backend DTOs** (use `types.gen.ts`)
+**Backend Integration (CRITICAL):**
+- [ ] **No placeholder data** (no fake arrays, no dummy objects)
+- [ ] **No TODO comments for API integration** (integrate immediately)
+- [ ] **No manual interfaces for backend DTOs** (use `types.gen.ts`)
 - [ ] All API calls via `sdk.gen.ts`
 - [ ] Types regenerated after backend changes (`npm run generate-types`)
+- [ ] Each feature fully integrated before starting next
+
+**Code Quality:**
 - [ ] Logic in composables
 - [ ] Modals use `useOverlay`
 - [ ] Forms use Valibot
@@ -238,6 +437,14 @@ const state = reactive<Schema>({ title: '' })
 - [ ] German UI, English code
 - [ ] No implicit `any`
 - [ ] ESLint passes
+
+**Authentication:**
 - [ ] Auth uses `useBetterAuth()` composable (pre-configured)
 - [ ] Protected routes use `middleware: 'auth'`
 - [ ] Auth base path is `/iam` (nest-server default)
+
+**Browser Verification:**
+- [ ] Feature tested in browser (Chrome DevTools MCP)
+- [ ] No console errors (`list_console_messages`)
+- [ ] API calls successful (`list_network_requests`)
+- [ ] Page renders correctly (snapshot or screenshot)
