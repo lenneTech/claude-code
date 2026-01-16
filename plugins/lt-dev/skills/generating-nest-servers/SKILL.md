@@ -117,6 +117,7 @@ claude plugins install typescript-lsp --marketplace claude-plugins-official
 4. **ALWAYS ask developer for approval** before changing ANY security decorator
 
 **Complete security rules with all details, examples, and testing strategies: `security-rules.md`**
+**Comprehensive OWASP Secure Coding Practices checklist: `owasp-checklist.md`**
 
 ## CRITICAL: NEVER USE `declare` KEYWORD FOR PROPERTIES
 

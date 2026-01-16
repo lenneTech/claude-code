@@ -417,6 +417,7 @@ const state = reactive<Schema>({ title: '' })
 | Nuxt Patterns | [reference/nuxt.md](./reference/nuxt.md) |
 | Authentication | [reference/authentication.md](./reference/authentication.md) |
 | Troubleshooting | [reference/troubleshooting.md](./reference/troubleshooting.md) |
+| **Security** | [reference/security.md](./reference/security.md) |
 
 ## Pre-Commit
 
@@ -442,6 +443,11 @@ const state = reactive<Schema>({ title: '' })
 - [ ] Auth uses `useBetterAuth()` composable (pre-configured)
 - [ ] Protected routes use `middleware: 'auth'`
 - [ ] Auth base path is `/iam` (nest-server default)
+
+**Security (OWASP):**
+- [ ] **No v-html with user content** (see [security.md](./reference/security.md))
+- [ ] **Tokens stored securely** (not in localStorage)
+- [ ] Input validation with Valibot schemas
 
 **Browser Verification:**
 - [ ] Feature tested in browser (Chrome DevTools MCP)

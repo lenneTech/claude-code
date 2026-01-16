@@ -55,7 +55,7 @@
     {
       "pattern": "Bash(npm audit:*)",
       "description": "Run security audit on npm packages",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit"]
     },
     {
       "pattern": "Bash(npm install:*)",
@@ -95,7 +95,12 @@
     {
       "pattern": "Bash(npm list:*)",
       "description": "List installed npm packages",
-      "usedBy": ["nest-server-updating"]
+      "usedBy": ["nest-server-updating", "sec-audit"]
+    },
+    {
+      "pattern": "Bash(npm outdated:*)",
+      "description": "Check for outdated npm packages",
+      "usedBy": ["sec-audit", "npm-package-maintenance"]
     },
     {
       "pattern": "Bash(npm view:*)",

@@ -31,6 +31,8 @@ All Claude Code best practices are cached locally in `.claude/docs-cache/*.md`. 
 | `github-official-plugins.md` | Official plugin standards, quality guidelines (from GitHub) |
 | `github-skills-readme.md` | Skill specifications, templates (from GitHub) |
 | `github-changelog.md` | Recent changes and updates |
+| `platform-skills-best-practices.md` | Skill authoring best practices and patterns **(primary source)** |
+| `owasp-secure-coding-checklist.md` | OWASP Secure Coding Practices (security reference) |
 
 ### Cache Management
 

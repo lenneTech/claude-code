@@ -490,6 +490,27 @@ await authClient.resetPassword({
 | Post-register | Passkey setup prompt (optional) |
 | 2FA fallback | Backup code support |
 
+## Security Considerations
+
+For comprehensive frontend security guidelines, see [security.md](./security.md).
+
+**Key security aspects already implemented:**
+
+| Aspect | Implementation |
+|--------|----------------|
+| Password transmission | SHA256 hashed client-side before sending |
+| Session management | httpOnly cookies via Better Auth |
+| 2FA | TOTP support with device trust option |
+| Passwordless | Passkey/WebAuthn support (recommended) |
+
+**Additional recommendations:**
+- Never store tokens in `localStorage` (XSS vulnerable)
+- Use `httpOnly` cookies for refresh tokens
+- Implement session timeout for sensitive applications
+- Clear all client state on logout
+
+---
+
 ## Anti-Patterns
 
 ```typescript

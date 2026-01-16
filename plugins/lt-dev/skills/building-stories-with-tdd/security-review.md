@@ -291,16 +291,203 @@ Code changes made?
 
 ---
 
+### 7. Error Handling & Logging
+
+ **Secure Error Responses:**
+
+```typescript
+//  WRONG: Exposing stack traces and internal details
+catch (error) {
+  throw new InternalServerErrorException({
+    message: error.message,
+    stack: error.stack,
+    query: queryString,
+    dbConnection: this.connectionString
+  });
+}
+
+//  CORRECT: Generic errors with internal logging
+catch (error) {
+  this.logger.error('Database query failed', {
+    error: error.message,
+    stack: error.stack,
+    userId: currentUser?.id,
+    operation: 'findUser'
+  });
+  throw new InternalServerErrorException('An error occurred processing your request');
+}
+```
+
+ **Logging Best Practices:**
+
+```typescript
+// DO: Log security-relevant events
+this.logger.warn('Failed login attempt', { email, ip, userAgent });
+this.logger.info('User role changed', { userId, oldRole, newRole, changedBy });
+this.logger.error('Unauthorized access attempt', { userId, resource, ip });
+
+// DON'T: Log sensitive data
+this.logger.info('User login', { email, password }); //  NEVER log passwords!
+this.logger.debug('Request data', { creditCard, ssn }); //  NEVER log PII!
+```
+
+ **Checklist:**
+- [ ] No stack traces in production responses
+- [ ] Security events logged (login, logout, role changes, access denied)
+- [ ] No passwords, tokens, or PII in logs
+- [ ] Log levels appropriate (error for failures, warn for suspicious activity)
+
+---
+
+### 8. Cryptographic Practices
+
+ **Password Hashing (bcrypt):**
+
+```typescript
+//  WRONG: Plain text or weak hashing
+user.password = password;  // Plain text!
+user.password = crypto.createHash('md5').update(password).digest('hex');  // MD5 is broken!
+
+//  CORRECT: bcrypt with proper cost factor
+import * as bcrypt from 'bcrypt';
+
+const SALT_ROUNDS = 12;  // Minimum 10, recommended 12+
+
+async hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, SALT_ROUNDS);
+}
+
+async verifyPassword(password: string, hash: string): Promise<boolean> {
+  return bcrypt.compare(password, hash);
+}
+```
+
+ **Secure Random Generation:**
+
+```typescript
+//  WRONG: Math.random() for security purposes
+const resetToken = Math.random().toString(36);  // Predictable!
+
+//  CORRECT: Cryptographically secure random
+import { randomBytes, randomUUID } from 'crypto';
+
+const resetToken = randomBytes(32).toString('hex');  // 256-bit token
+const apiKey = randomUUID();  // UUID v4
+```
+
+ **Key Management:**
+
+```typescript
+//  WRONG: Hardcoded secrets
+const JWT_SECRET = 'my-super-secret-key';
+
+//  CORRECT: Environment variables
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET || JWT_SECRET.length < 32) {
+  throw new Error('JWT_SECRET must be at least 32 characters');
+}
+```
+
+ **Checklist:**
+- [ ] Passwords hashed with bcrypt (cost factor ≥ 10)
+- [ ] Cryptographic randomness used for tokens/keys
+- [ ] No secrets hardcoded (use environment variables)
+- [ ] JWT secrets sufficiently long (≥ 256 bits)
+
+---
+
+### 9. Session & Token Management
+
+ **JWT Best Practices:**
+
+```typescript
+//  WRONG: Long-lived access tokens, no refresh
+const token = this.jwtService.sign(payload, { expiresIn: '30d' });  // Too long!
+
+//  CORRECT: Short access tokens + refresh tokens
+const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+const refreshToken = this.jwtService.sign(
+  { userId: user.id, tokenType: 'refresh' },
+  { expiresIn: '7d' }
+);
+
+// Store refresh token hash in DB for revocation
+await this.refreshTokenService.create({
+  userId: user.id,
+  tokenHash: await bcrypt.hash(refreshToken, 10),
+  expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+});
+```
+
+ **Token Revocation:**
+
+```typescript
+// Implement token blacklist or family rotation
+async logout(userId: string): Promise<void> {
+  // Invalidate all refresh tokens for user
+  await this.refreshTokenService.revokeAllForUser(userId);
+}
+
+async refreshAccessToken(refreshToken: string): Promise<TokenPair> {
+  const payload = this.jwtService.verify(refreshToken);
+
+  // Check if token is revoked
+  const isValid = await this.refreshTokenService.validate(refreshToken);
+  if (!isValid) {
+    throw new UnauthorizedException('Token has been revoked');
+  }
+
+  // Rotate refresh token (issue new one, revoke old)
+  return this.issueTokenPair(payload.userId);
+}
+```
+
+ **Cookie Security (if using cookies):**
+
+```typescript
+//  CORRECT: Secure cookie settings
+response.cookie('refreshToken', token, {
+  httpOnly: true,      // Prevents XSS access
+  secure: true,        // HTTPS only
+  sameSite: 'strict',  // CSRF protection
+  maxAge: 7 * 24 * 60 * 60 * 1000,  // 7 days
+  path: '/auth/refresh'  // Limit scope
+});
+```
+
+ **Checklist:**
+- [ ] Access tokens short-lived (≤ 15 minutes)
+- [ ] Refresh token rotation implemented
+- [ ] Token revocation mechanism exists (logout, password change)
+- [ ] Cookies use httpOnly, secure, sameSite flags
+- [ ] No tokens in URL parameters
+
+---
+
 ## Quick Security Checklist
 
 Before marking complete:
 
+**Authentication & Authorization:**
 - [ ] **@Restricted/@Roles decorators NOT removed or weakened**
 - [ ] **Ownership checks in place (users can only access own data)**
+- [ ] **checkSecurity methods implemented in models**
+- [ ] **Authorization tests pass**
+
+**Input & Data:**
 - [ ] **All inputs validated with proper DTOs**
 - [ ] **Sensitive fields marked with hideField: true**
 - [ ] **No SQL/NoSQL injection vulnerabilities**
-- [ ] **Error messages don't expose sensitive data**
-- [ ] **checkSecurity methods implemented in models**
-- [ ] **Authorization tests pass**
 - [ ] **No hardcoded secrets or credentials**
+
+**Error Handling & Logging:**
+- [ ] **Error messages don't expose sensitive data**
+- [ ] **No stack traces in production responses**
+- [ ] **Security events logged appropriately**
+- [ ] **No passwords/tokens/PII in logs**
+
+**Cryptography & Tokens:**
+- [ ] **Passwords hashed with bcrypt (cost ≥ 10)**
+- [ ] **Cryptographically secure random for tokens**
+- [ ] **JWT access tokens short-lived (≤ 15 min)**
+- [ ] **Token revocation mechanism implemented**

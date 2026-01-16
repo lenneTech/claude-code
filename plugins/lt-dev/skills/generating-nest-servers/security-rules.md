@@ -337,10 +337,267 @@ describe('createProduct', () => {
 
 ---
 
+## Rule 7: Input Sanitization & XSS Prevention
+
+###  Always Sanitize User Input
+
+```typescript
+//  WRONG: Direct HTML rendering without sanitization
+@UnifiedField({ description: 'User bio (supports HTML)' })
+bio: string;  // Could contain <script> tags!
+
+//  CORRECT: Sanitize HTML input
+import * as sanitizeHtml from 'sanitize-html';
+
+@UnifiedField({
+  description: 'User bio',
+  transform: (value: string) => sanitizeHtml(value, {
+    allowedTags: ['b', 'i', 'em', 'strong', 'p', 'br'],
+    allowedAttributes: {}
+  })
+})
+bio: string;
+```
+
+### URL Parameter Validation
+
+```typescript
+//  WRONG: Using URL parameters directly
+@Get(':id')
+async findOne(@Param('id') id: string) {
+  return this.service.findById(id);  // No validation!
+}
+
+//  CORRECT: Validate with ParseUUIDPipe or custom validation
+@Get(':id')
+async findOne(@Param('id', ParseUUIDPipe) id: string) {
+  return this.service.findById(id);
+}
+
+// Or custom validation
+@Get(':id')
+async findOne(@Param('id') id: string) {
+  if (!Types.ObjectId.isValid(id)) {
+    throw new BadRequestException('Invalid ID format');
+  }
+  return this.service.findById(id);
+}
+```
+
+### Query Parameter Limits
+
+```typescript
+//  WRONG: No limits on pagination
+@Get()
+async findAll(@Query('limit') limit: number) {
+  return this.service.find({}, { limit });  // User could request limit=1000000
+}
+
+//  CORRECT: Enforce limits
+@Get()
+async findAll(@Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number) {
+  const safeLimit = Math.min(Math.max(1, limit), 100);  // Clamp to 1-100
+  return this.service.find({}, { limit: safeLimit });
+}
+```
+
+---
+
+## Rule 8: File Upload Security
+
+###  Validate File Types (Magic Bytes, not just extension)
+
+```typescript
+import * as fileType from 'file-type';
+
+//  WRONG: Trust file extension
+async uploadFile(file: Express.Multer.File) {
+  if (!file.originalname.endsWith('.pdf')) {
+    throw new BadRequestException('Only PDF allowed');
+  }
+  // Attacker can rename malware.exe to malware.pdf!
+}
+
+//  CORRECT: Validate magic bytes
+async uploadFile(file: Express.Multer.File) {
+  const type = await fileType.fromBuffer(file.buffer);
+
+  const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+  if (!type || !ALLOWED_TYPES.includes(type.mime)) {
+    throw new BadRequestException('Invalid file type');
+  }
+
+  // Also check file size
+  const MAX_SIZE = 5 * 1024 * 1024;  // 5MB
+  if (file.size > MAX_SIZE) {
+    throw new BadRequestException('File too large (max 5MB)');
+  }
+}
+```
+
+### Prevent Path Traversal
+
+```typescript
+import * as path from 'path';
+
+//  WRONG: Use user-provided filename directly
+async saveFile(file: Express.Multer.File) {
+  const filePath = path.join('/uploads', file.originalname);
+  // Attacker could use: ../../../etc/passwd
+}
+
+//  CORRECT: Sanitize filename and use random names
+async saveFile(file: Express.Multer.File) {
+  // Option 1: Use only base name
+  const safeName = path.basename(file.originalname);
+
+  // Option 2: Generate random filename (recommended)
+  const ext = path.extname(file.originalname);
+  const randomName = `${randomUUID()}${ext}`;
+
+  const uploadDir = '/uploads';
+  const filePath = path.join(uploadDir, randomName);
+
+  // Verify path is within upload directory
+  if (!filePath.startsWith(uploadDir)) {
+    throw new BadRequestException('Invalid file path');
+  }
+}
+```
+
+### Serve Files Securely
+
+```typescript
+//  WRONG: Execute files or expose directory
+app.use('/uploads', express.static('uploads'));  // Could serve malicious HTML
+
+//  CORRECT: Set proper headers
+app.use('/uploads', express.static('uploads', {
+  setHeaders: (res, filePath) => {
+    res.setHeader('Content-Disposition', 'attachment');  // Force download
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Type', 'application/octet-stream');
+  }
+}));
+```
+
+---
+
+## Rule 9: Communication Security
+
+### HTTPS & TLS Enforcement
+
+```typescript
+// main.ts - Production configuration
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // Redirect HTTP to HTTPS (via reverse proxy or middleware)
+  app.use((req, res, next) => {
+    if (req.headers['x-forwarded-proto'] !== 'https' && process.env.NODE_ENV === 'production') {
+      return res.redirect(301, `https://${req.headers.host}${req.url}`);
+    }
+    next();
+  });
+}
+```
+
+### Helmet Security Headers
+
+```typescript
+import helmet from 'helmet';
+
+// main.ts
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+    },
+  },
+  hsts: {
+    maxAge: 31536000,  // 1 year
+    includeSubDomains: true,
+    preload: true
+  },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
+}));
+```
+
+### CORS Configuration
+
+```typescript
+//  WRONG: Allow all origins
+app.enableCors();  // Allows any origin!
+
+//  CORRECT: Restrict origins
+app.enableCors({
+  origin: [
+    'https://app.example.com',
+    'https://admin.example.com',
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  maxAge: 86400,  // Cache preflight for 24 hours
+});
+
+// Or dynamic origin validation
+app.enableCors({
+  origin: (origin, callback) => {
+    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+});
+```
+
+### Rate Limiting
+
+```typescript
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+
+@Module({
+  imports: [
+    ThrottlerModule.forRoot({
+      ttl: 60,      // Time window in seconds
+      limit: 100,   // Max requests per window
+    }),
+  ],
+})
+export class AppModule {}
+
+// Apply globally
+@UseGuards(ThrottlerGuard)
+@Controller('api')
+export class ApiController {}
+
+// Or per-endpoint with different limits
+@Throttle(5, 60)  // 5 requests per 60 seconds
+@Post('auth/login')
+async login() {}
+
+@Throttle(3, 3600)  // 3 requests per hour
+@Post('auth/forgot-password')
+async forgotPassword() {}
+```
+
+---
+
 ## Quick Security Checklist
 
 Before completing ANY task:
 
+**Authorization & Access Control:**
 - [ ] **All @Restricted decorators preserved**
 - [ ] **@Roles decorators NOT made more permissive**
 - [ ] **Tests use appropriate user roles**
@@ -348,6 +605,26 @@ Before completing ANY task:
 - [ ] **Least privileged user tested**
 - [ ] **Permission denial tested (403 responses)**
 - [ ] **No securityCheck() logic bypassed**
+
+**Input & Validation:**
+- [ ] **All inputs validated and sanitized**
+- [ ] **URL parameters validated (UUIDs, ObjectIds)**
+- [ ] **Query limits enforced (pagination)**
+- [ ] **HTML content sanitized**
+
+**File Uploads:**
+- [ ] **File types validated via magic bytes**
+- [ ] **File size limits enforced**
+- [ ] **Filenames sanitized (no path traversal)**
+- [ ] **Files served with safe headers**
+
+**Communication:**
+- [ ] **HTTPS enforced in production**
+- [ ] **Helmet security headers configured**
+- [ ] **CORS restricted to allowed origins**
+- [ ] **Rate limiting on sensitive endpoints**
+
+**Testing:**
 - [ ] **Test coverage ≥ 80%**
 - [ ] **All edge cases covered**
 

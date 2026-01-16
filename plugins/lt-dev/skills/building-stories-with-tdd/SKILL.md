@@ -207,6 +207,7 @@ You may remind in final report: "Implementation complete - review and commit whe
 ## CRITICAL SECURITY RULES
 
 **Complete details: `security-review.md`**
+**Extended with OWASP practices: Error Handling & Logging, Cryptographic Practices, Session & Token Management**
 
 ### NEVER:
 - Remove/weaken `@Restricted()` or `@Roles()` decorators

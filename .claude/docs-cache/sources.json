@@ -2,8 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "Central configuration for Claude Code documentation sources. All sources are cached locally and updated when Claude Code version changes.",
   "cache": {
-    "claudeCodeVersion": "2.1.2",
-    "lastUpdated": "2026-01-09T18:57:36.904Z",
+    "claudeCodeVersion": "2.1.9",
+    "lastUpdated": "2026-01-16T12:28:02.491Z",
     "updateBehavior": "auto"
   },
   "updateBehaviorOptions": {
@@ -102,6 +102,18 @@
       "url": "https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md",
       "type": "md",
       "description": "Recent changes and updates"
+    },
+    {
+      "name": "platform-skills-best-practices",
+      "url": "https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices",
+      "type": "spa",
+      "description": "Skill authoring best practices and patterns (primary source)"
+    },
+    {
+      "name": "owasp-secure-coding-checklist",
+      "url": "https://raw.githubusercontent.com/OWASP/www-project-secure-coding-practices-quick-reference-guide/refs/heads/main/stable-en/02-checklist/05-checklist.md",
+      "type": "md",
+      "description": "OWASP Secure Coding Practices Checklist - reference for security implementations"
     }
   ]
 }
