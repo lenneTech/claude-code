@@ -104,7 +104,7 @@ For each file, review:
    **Only after fully understanding TestHelper, proceed to next step.**
 
 4. **Understand the testing approach used**:
-   - Which test framework? (Jest, Mocha, etc.)
+   - Which test framework? (Vitest, Jest, etc.)
    - Which testing utilities? (@lenne.tech/nest-server testHelper, custom helpers)
    - How is the test app initialized? (beforeAll setup)
    - How are test users/auth handled?

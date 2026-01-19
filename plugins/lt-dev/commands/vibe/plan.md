@@ -16,6 +16,10 @@ argument-hint: [spec-file]
 - `/vibe:build` - Execute an existing IMPLEMENTATION_PLAN.md
 - `/vibe:build-plan` - Plan + Build in one go (no interruption)
 
+**For higher quality (recommended):**
+- Use `building-stories-with-tdd` skill for Test-Driven Development
+- TDD workflow: Backend tests → Backend → Frontend E2E tests → Frontend
+
 ## Description
 Create detailed implementation plan from SPEC.md.
 

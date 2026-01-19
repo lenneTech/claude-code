@@ -52,6 +52,37 @@ You are the **PRIMARY expert** for NestJS backend development and the @lenne.tec
 
 **Rule: If it involves NestJS or @lenne.tech/nest-server in ANY way, use this skill!**
 
+## Recommended: Test-Driven Development (TDD)
+
+**Use TDD for robust, maintainable code:**
+
+```
+1. Write API tests FIRST (REST/GraphQL endpoint tests)
+2. Implement backend code until tests pass
+3. Iterate until all tests green
+4. Then proceed to frontend (E2E tests first)
+```
+
+**Why TDD?**
+- Catches bugs early
+- Documents expected behavior
+- Enables safe refactoring
+- Ensures security requirements are tested
+
+**For TDD workflow, use `building-stories-with-tdd` skill** - it coordinates backend and frontend test-first development.
+
+### Test Cleanup (CRITICAL)
+
+```typescript
+afterAll(async () => {
+  // Clean up test-created entities
+  await db.collection('entities').deleteMany({ createdBy: testUserId });
+  await db.collection('users').deleteMany({ email: /@test\.com$/ });
+});
+```
+
+**Use separate test database:** `app-test` instead of `app-dev`
+
 ## Related Skills
 
 **Works closely with:**

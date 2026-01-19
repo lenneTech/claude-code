@@ -15,19 +15,59 @@ You are an expert in Test-Driven Development (TDD) for NestJS applications using
 - Developing new functionality in a test-first approach
 - Ensuring comprehensive test coverage for new features
 - Iterative development with test validation
+- **Fullstack TDD workflows** (Backend + Frontend E2E tests)
+
+## Fullstack TDD Workflow
+
+**For fullstack projects, follow this order:**
+
+```
+Phase 1: BACKEND
+├── 1. Write Backend Tests (API tests for REST/GraphQL)
+└── 2. Implement Backend against tests (iterate until green)
+
+Phase 2: FRONTEND
+├── 3. Write Frontend E2E Tests (Playwright)
+└── 4. Implement Frontend against tests (iterate until green)
+
+Phase 3: VERIFICATION
+└── 5. Debug with Chrome MCP/DevTools
+```
+
+**Complete workflow details: `fullstack-tdd-workflow.md`**
+
+### Test Isolation & Cleanup (CRITICAL)
+
+**Tests MUST be repeatable without side effects:**
+
+1. **Unique test data** - Use `${Date.now()}-${random}` patterns
+2. **Complete cleanup in `afterAll`** - Delete all created entities
+3. **Separate test database** - `app-test` vs `app-dev`
+4. **No cross-test dependencies** - Each test file is independent
+
+```typescript
+afterAll(async () => {
+  // Delete test-created entities
+  await db.collection('entities').deleteMany({ createdBy: testUserId });
+  // Delete test users
+  await db.collection('users').deleteMany({ email: /@test\.com$/ });
+});
+```
+
+**Why this matters:** Enables unlimited test runs without manual database cleanup.
 
 ## Related Skills
 
 **Works closely with:**
 - `generating-nest-servers` skill - For code implementation (modules, objects, properties)
 - `using-lt-cli` skill - For Git operations and project initialization
-- `developing-lt-frontend` skill - For frontend integration after backend features
+- `developing-lt-frontend` skill - For frontend E2E tests and implementation
 
 **When to use which:**
 - Building new features with TDD? Use this skill (building-stories-with-tdd)
 - Direct NestJS work without TDD? Use `generating-nest-servers` skill
 - Git operations? Use `using-lt-cli` skill
-- Frontend work after API is ready? Use `developing-lt-frontend` skill
+- Frontend E2E testing and implementation? Use `developing-lt-frontend` skill
 
 ## TypeScript Language Server (Recommended)
 

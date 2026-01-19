@@ -82,17 +82,60 @@ const products = ref<Product[]>([
 - "Later" often means bugs discovered too late
 - Real data reveals edge cases immediately
 
+## Test-Driven Development (TDD)
+
+**For frontend features, follow the TDD approach:**
+
+```
+1. Backend API must be complete (API tests pass)
+2. Write E2E tests BEFORE implementing frontend
+3. Implement components/pages until E2E tests pass
+4. Debug with Chrome DevTools MCP
+```
+
+**Complete E2E testing guide: [reference/e2e-testing.md](./reference/e2e-testing.md)**
+
+### Quick E2E Test Example
+
+```typescript
+// tests/e2e/products.spec.ts
+import { test, expect } from '@playwright/test';
+
+test('should create product', async ({ page }) => {
+  await page.goto('/products');
+  await page.click('[data-testid="create"]');
+  await page.fill('[data-testid="name"]', `Test-${Date.now()}`);
+  await page.click('[data-testid="submit"]');
+  await expect(page.locator('text=erfolgreich')).toBeVisible();
+});
+```
+
+### Test Cleanup (CRITICAL)
+
+**Every E2E test must clean up after itself:**
+
+```typescript
+test.afterAll(async ({ request }) => {
+  for (const id of createdIds) {
+    await request.delete(`/api/products/${id}`);
+  }
+});
+```
+
+**Use separate test database:** `app-test` instead of `app-dev`
+
 ## Related Skills
 
 **Works closely with:**
 - `generating-nest-servers` - For NestJS backend development (projects/api/)
 - `using-lt-cli` - For Git operations and Fullstack initialization
-- `building-stories-with-tdd` - For TDD approach when backend integration is needed
+- `building-stories-with-tdd` - For complete TDD workflow (Backend + Frontend)
 
 **When to use which:**
 - .vue files, Nuxt, Vue components? Use **this skill** (developing-lt-frontend)
 - NestJS, services, controllers? Use `generating-nest-servers` skill
 - Git operations, `lt` commands? Use `using-lt-cli` skill
+- Complete TDD workflow (tests first)? Use `building-stories-with-tdd` skill
 
 **In monorepo projects:**
 - `projects/app/` or `packages/app/` → **This skill**
@@ -416,6 +459,7 @@ const state = reactive<Schema>({ title: '' })
 | Colors | [reference/colors.md](./reference/colors.md) |
 | Nuxt Patterns | [reference/nuxt.md](./reference/nuxt.md) |
 | Authentication | [reference/authentication.md](./reference/authentication.md) |
+| **E2E Testing** | [reference/e2e-testing.md](./reference/e2e-testing.md) |
 | Troubleshooting | [reference/troubleshooting.md](./reference/troubleshooting.md) |
 | **Security** | [reference/security.md](./reference/security.md) |
 

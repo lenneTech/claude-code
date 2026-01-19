@@ -15,7 +15,22 @@
     {
       "pattern": "Bash(npm run test\\:e2e:*)",
       "description": "Run end-to-end tests",
-      "usedBy": ["generating-nest-servers"]
+      "usedBy": ["generating-nest-servers", "building-stories-with-tdd", "developing-lt-frontend"]
+    },
+    {
+      "pattern": "Bash(npx playwright:*)",
+      "description": "Run Playwright E2E tests",
+      "usedBy": ["developing-lt-frontend", "building-stories-with-tdd"]
+    },
+    {
+      "pattern": "Bash(npx vitest:*)",
+      "description": "Run Vitest tests directly",
+      "usedBy": ["building-stories-with-tdd", "generating-nest-servers"]
+    },
+    {
+      "pattern": "Bash(npm run dev:*)",
+      "description": "Run development server",
+      "usedBy": ["developing-lt-frontend", "generating-nest-servers"]
     },
     {
       "pattern": "Bash(npm start:*)",

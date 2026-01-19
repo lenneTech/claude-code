@@ -15,6 +15,11 @@ argument-hint: [spec-file]
 - `/vibe:plan` - Create plan only (for review before execution)
 - `/vibe:build` - Execute existing plan only
 
+**For higher quality (recommended):**
+- Use `building-stories-with-tdd` skill for Test-Driven Development
+- TDD workflow: Backend tests → Backend → Frontend E2E tests → Frontend
+- TDD ensures comprehensive test coverage and catches bugs early
+
 ## Description
 Plan + Build in one go (no interruption).
 

@@ -747,12 +747,12 @@ cat node_modules/@lenne.tech/nest-server/src/test/test.helper.ts
 # - When to use: graphQl() for GraphQL endpoints, rest() for REST endpoints
 
 # Document observed patterns:
-# - Test framework: Jest
+# - Test framework: Vitest (or Jest in older projects)
 # - Test helper: TestHelper from @lenne.tech/nest-server
 # - Auth: Token-based via signIn mutation
 # - Setup: beforeAll initializes app and gets admin token
 # - Cleanup: afterAll deletes test data
-# - Assertions: expect() with Jest matchers
+# - Assertions: expect() with Vitest/Jest matchers
 # - Prerequisites: How are test users/related data created?
 
 # Verify existing tests pass BEFORE making changes
@@ -837,7 +837,7 @@ Step 2.1: Analyzed existing tests
   - Authentication handling (token in config for both methods)
   - Error handling (statusCode parameter)
   - Response format and parsing
- Documented patterns: Jest + TestHelper, token auth, beforeAll/afterAll cleanup
+ Documented patterns: Vitest + TestHelper, token auth, beforeAll/afterAll cleanup
  Documented prerequisites: Test users created first, then module-specific data
  Verified all existing tests pass (23/23 passing)
 

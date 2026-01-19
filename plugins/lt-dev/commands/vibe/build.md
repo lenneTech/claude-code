@@ -15,6 +15,11 @@ argument-hint: [plan-file]
 - `/vibe:plan` - Create a plan first (if you don't have one)
 - `/vibe:build-plan` - Plan + Build in one go (no interruption)
 
+**For higher quality (recommended):**
+- Use `building-stories-with-tdd` skill for Test-Driven Development
+- TDD workflow: Backend tests → Backend → Frontend E2E tests → Frontend
+- TDD ensures tests exist BEFORE implementation, catching bugs early
+
 ## Description
 Execute IMPLEMENTATION_PLAN.md completely.
 
