@@ -357,15 +357,28 @@ Once the user approves the story, use AskUserQuestion with these 4 options:
    - Accept "Keins", "Kein Projekt", "Ohne Projekt", or similar as valid input for no project
    - If the user provides an invalid project, show available projects and ask again
 
-4. Create ticket via Linear MCP:
+4. After project selection, ask for the status (in German):
+   - "Welchen Status soll das Ticket haben? (Standard: 'Open')"
+   - Use Linear MCP to list available statuses for the selected team
+   - If the user just confirms (e.g., "Ok", "Ja", "Enter", or empty input), use "Open" as default
+   - If the user provides an invalid status, show available statuses and ask again
+
+5. Optionally ask for priority (in German):
+   - "Möchtest du eine Priorität setzen? (0=Keine, 1=Urgent, 2=High, 3=Normal, 4=Low) - Standard: Keine"
+   - Accept number (0-4) or text ("Urgent", "High", "Normal", "Low", "Keine")
+   - If the user skips or confirms without input, use 0 (No priority) as default
+
+6. Create ticket via Linear MCP:
    - Title: The story title
    - Description: The full story in markdown format
    - Project: The selected project (if specified, omit if "Keins" was chosen)
+   - State: The selected status (default: "Open")
+   - Priority: The selected priority (if specified, omit if 0/Keine was chosen)
    - Labels: Add relevant labels if applicable
 
-5. Report the created ticket URL to the user (in German)
+7. Report the created ticket URL to the user (in German)
 
-6. **Then ask (in German):** "Möchtest du diese Story jetzt auch mit TDD umsetzen?"
+8. **Then ask (in German):** "Möchtest du diese Story jetzt auch mit TDD umsetzen?"
 
 ### Option 2: Bestehendes Linear Ticket erweitern
 
