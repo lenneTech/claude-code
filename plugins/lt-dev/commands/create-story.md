@@ -346,19 +346,26 @@ Once the user approves the story, use AskUserQuestion with these 4 options:
    - "Linear MCP ist nicht installiert. Du kannst es mit `lt claude install-mcps linear` installieren."
    - Then ask if they want to choose a different output option
 
-2. If Linear MCP is available, ask for Linear project/team (in German):
-   - "In welchem Linear Team soll das Ticket erstellt werden?"
+2. If Linear MCP is available, ask for Linear team and project (in German):
+   - First ask: "In welchem Linear Team soll das Ticket erstellt werden?"
    - Use Linear MCP to list available teams to help the user choose
    - If the user provides an invalid team, show available teams and ask again
 
-3. Create ticket via Linear MCP:
+3. After team selection, ask for the project (in German):
+   - "Zu welchem Projekt soll das Ticket gehören? (oder 'Keins' wenn kein Projekt zugeordnet werden soll)"
+   - Use Linear MCP to list available projects for the selected team
+   - Accept "Keins", "Kein Projekt", "Ohne Projekt", or similar as valid input for no project
+   - If the user provides an invalid project, show available projects and ask again
+
+4. Create ticket via Linear MCP:
    - Title: The story title
    - Description: The full story in markdown format
+   - Project: The selected project (if specified, omit if "Keins" was chosen)
    - Labels: Add relevant labels if applicable
 
-4. Report the created ticket URL to the user (in German)
+5. Report the created ticket URL to the user (in German)
 
-5. **Then ask (in German):** "Möchtest du diese Story jetzt auch mit TDD umsetzen?"
+6. **Then ask (in German):** "Möchtest du diese Story jetzt auch mit TDD umsetzen?"
 
 ### Option 2: Bestehendes Linear Ticket erweitern
 
