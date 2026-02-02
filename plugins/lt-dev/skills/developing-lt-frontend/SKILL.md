@@ -446,6 +446,51 @@ const state = reactive<Schema>({ title: '' })
 | Shared State | `useState()` for SSR-safe state |
 | Local State | `ref()` / `reactive()` |
 
+## TypeScript Conventions
+
+### Options Object Pattern for Optional Parameters
+
+**Always use an options object for optional parameters instead of positional parameters:**
+
+```typescript
+// ❌ WRONG: Positional optional parameters
+function fetchProducts(
+  categoryId: string,
+  limit?: number,
+  offset?: number,
+  sortBy?: string
+) {}
+
+// Problematic - must fill previous params with null
+fetchProducts('cat-1', null, null, 'name');
+```
+
+```typescript
+// ✅ CORRECT: Options object pattern
+function fetchProducts(
+  categoryId: string,
+  options?: {
+    limit?: number;
+    offset?: number;
+    sortBy?: string;
+  }
+) {}
+
+// Clean - only set what you need
+fetchProducts('cat-1', { sortBy: 'name' });
+
+// Easy to extend without breaking existing calls
+fetchProducts('cat-1', { sortBy: 'name', includeArchived: true });
+```
+
+**Benefits:**
+- Self-documenting (parameter names visible at call site)
+- Order-independent
+- Extensible without breaking changes
+- Better IDE autocompletion
+
+**Convention:** First parameter is the main required value, second parameter is the options object.
+
 ## Reference Files
 
 | Topic | File |
