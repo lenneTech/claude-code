@@ -92,8 +92,8 @@
 ┌────────────────────────────────────────────────────────────────┐
 │  JavaScript errors in browser console?                         │
 │                                                                │
-│  1. GET error details:                                         │
-│     mcp__chrome-devtools__list_console_messages(types: error)  │
+│  1. GET error details (use Chrome DevTools MCP for debugging):   │
+│     mcp__chrome-devtools__list_console_messages(types: error)   │
 │                                                                │
 │  2. COMMON CAUSES:                                             │
 │     - API call failed → Check network requests                 │

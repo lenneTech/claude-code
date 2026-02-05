@@ -216,16 +216,18 @@ Password: Test1234!
 Role:     admin
 ```
 
-#### Browser Testing Commands (Chrome MCP)
+#### Browser Testing Commands (Chrome DevTools MCP)
+
+**For direct browser testing and debugging, always use the Chrome DevTools MCP (`mcp__chrome-devtools__*`) unless the user explicitly requests otherwise.**
 
 | Command | Purpose |
 |---------|---------|
-| `navigate_page` | Go to URL |
-| `take_snapshot` | Get page elements |
-| `fill` | Enter text in input |
-| `click` | Click element |
-| `list_console_messages` | Check for errors |
-| `list_network_requests` | Debug API calls |
+| `mcp__chrome-devtools__navigate_page` | Go to URL |
+| `mcp__chrome-devtools__take_snapshot` | Get page elements |
+| `mcp__chrome-devtools__fill` | Enter text in input |
+| `mcp__chrome-devtools__click` | Click element |
+| `mcp__chrome-devtools__list_console_messages` | Check for errors |
+| `mcp__chrome-devtools__list_network_requests` | Debug API calls |
 
 #### Completion Criteria
 

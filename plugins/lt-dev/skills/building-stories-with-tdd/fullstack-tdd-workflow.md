@@ -38,8 +38,9 @@ This document describes the recommended Test-Driven Development approach for ful
 │                                                                            │
 │  Phase 3: DEBUGGING & VERIFICATION                                         │
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │ 5. Browser Debugging (Chrome MCP/DevTools)                          │   │
-│  │    - Use Chrome DevTools MCP for live debugging                     │   │
+│  │ 5. Browser Debugging (Chrome DevTools MCP)                          │   │
+│  │    - Use Chrome DevTools MCP (mcp__chrome-devtools__*) for direct   │   │
+│  │      testing/debugging (default unless user requests otherwise)     │   │
 │  │    - Verify API calls in Network tab                                │   │
 │  │    - Check Console for errors                                       │   │
 │  │    - Take snapshots/screenshots for visual verification             │   │
@@ -444,6 +445,8 @@ npm run test:e2e
 ```
 
 ### Step 5: Browser Debugging
+
+**For direct browser testing and debugging, always use the Chrome DevTools MCP (`mcp__chrome-devtools__*`) unless the user explicitly requests otherwise.** The Playwright-based Browser MCP (`mcp__MCP_DOCKER__browser_*`) is used for creating and running Playwright E2E tests.
 
 **Use Chrome DevTools MCP for:**
 - Live debugging during development

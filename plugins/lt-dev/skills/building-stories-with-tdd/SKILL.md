@@ -31,7 +31,7 @@ Phase 2: FRONTEND
 └── 4. Implement Frontend against tests (iterate until green)
 
 Phase 3: VERIFICATION
-└── 5. Debug with Chrome MCP/DevTools
+└── 5. Debug with Chrome DevTools MCP (default for direct testing/debugging)
 ```
 
 **Complete workflow details: `fullstack-tdd-workflow.md`**

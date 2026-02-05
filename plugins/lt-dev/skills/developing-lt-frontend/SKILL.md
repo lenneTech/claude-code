@@ -216,6 +216,8 @@ cd projects/app && npm run dev &
 
 ## Browser Testing (Chrome DevTools MCP)
 
+**CRITICAL: For direct browser testing and debugging, always use the Chrome DevTools MCP (`mcp__chrome-devtools__*`) unless the user explicitly requests otherwise.** This applies to snapshots, navigation, interaction, network analysis, and performance traces. The Playwright-based Browser MCP (`mcp__MCP_DOCKER__browser_*`) is used for creating and running Playwright E2E tests.
+
 **After implementing each feature, verify it works in the browser!**
 
 **Available Tools:**

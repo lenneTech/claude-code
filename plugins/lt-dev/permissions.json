@@ -5,12 +5,12 @@
     {
       "pattern": "Bash(npm test:*)",
       "description": "Run npm test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating"]
     },
     {
       "pattern": "Bash(npm run test:*)",
       "description": "Run npm run test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating"]
     },
     {
       "pattern": "Bash(npm run test\\:e2e:*)",
@@ -45,17 +45,17 @@
     {
       "pattern": "Bash(npm run build:*)",
       "description": "Build the application",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating"]
     },
     {
       "pattern": "Bash(npm run lint:*)",
       "description": "Run linter checks",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating"]
     },
     {
       "pattern": "Bash(npm run generate-types:*)",
       "description": "Generate TypeScript types from backend API",
-      "usedBy": ["developing-lt-frontend"]
+      "usedBy": ["developing-lt-frontend", "fullstack-updating"]
     },
     {
       "pattern": "Bash(lt server:*)",
@@ -75,7 +75,7 @@
     {
       "pattern": "Bash(npm install:*)",
       "description": "Install npm packages",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updating"]
     },
     {
       "pattern": "Bash(npm uninstall:*)",
@@ -105,12 +105,12 @@
     {
       "pattern": "Bash(npm run update:*)",
       "description": "Run project update script",
-      "usedBy": ["nest-server-updating"]
+      "usedBy": ["nest-server-updating", "fullstack-updating"]
     },
     {
       "pattern": "Bash(npm list:*)",
       "description": "List installed npm packages",
-      "usedBy": ["nest-server-updating", "sec-audit"]
+      "usedBy": ["nest-server-updating", "sec-audit", "fullstack-updating"]
     },
     {
       "pattern": "Bash(npm outdated:*)",
@@ -120,17 +120,42 @@
     {
       "pattern": "Bash(npm view:*)",
       "description": "View npm package information",
-      "usedBy": ["nest-server-updating"]
+      "usedBy": ["nest-server-updating", "fullstack-updating"]
     },
     {
       "pattern": "Bash(gh release:*)",
       "description": "Access GitHub releases via gh CLI",
-      "usedBy": ["nest-server-updating"]
+      "usedBy": ["nest-server-updating", "fullstack-updating"]
     },
     {
       "pattern": "Bash(gh api:*)",
-      "description": "Access GitHub API via gh CLI for migration guides",
-      "usedBy": ["nest-server-updating"]
+      "description": "Access GitHub API via gh CLI for migration guides and changelogs",
+      "usedBy": ["nest-server-updating", "fullstack-updating"]
+    },
+    {
+      "pattern": "Bash(git clone:*)",
+      "description": "Clone repositories for comparison",
+      "usedBy": ["nest-server-updating", "fullstack-updating"]
+    },
+    {
+      "pattern": "Bash(git diff:*)",
+      "description": "Compare versions in repositories",
+      "usedBy": ["fullstack-updating"]
+    },
+    {
+      "pattern": "Bash(git log:*)",
+      "description": "Read git history of repositories",
+      "usedBy": ["fullstack-updating"]
+    },
+    {
+      "pattern": "Bash(git tag:*)",
+      "description": "List git tags for version comparison",
+      "usedBy": ["fullstack-updating"]
+    },
+    {
+      "pattern": "Bash(git fetch:*)",
+      "description": "Fetch latest changes from remote repositories",
+      "usedBy": ["fullstack-updating"]
     }
   ]
 }
