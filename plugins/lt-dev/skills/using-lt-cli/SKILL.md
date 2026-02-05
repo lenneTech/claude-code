@@ -1,6 +1,6 @@
 ---
 name: using-lt-cli
-description: Expert for lenne.tech CLI (lt command). ALWAYS activate when user mentions "lt", "lt CLI", "lenne.tech CLI", fullstack workspace, local templates, or any lt command. Provides comprehensive reference for all lt CLI features including fullstack init, git workflows, server creation, and advanced options. Works alongside generating-nest-servers for NestJS development tasks.
+description: Provides comprehensive reference for the lenne.tech CLI tool (lt command). Covers lt fullstack init (workspace creation), lt git get/reset (branch management), lt server create (project scaffolding), and all lt CLI flags and parameters. Activates when user mentions "lt", "lt CLI", "lenne.tech CLI", fullstack workspace, local templates, or any lt command syntax. NOT for NestJS application code (use generating-nest-servers). NOT for Vue/Nuxt frontend code (use developing-lt-frontend).
 ---
 
 # LT CLI Expert
@@ -16,6 +16,17 @@ This skill activates whenever:
 - User wants to create a fullstack workspace
 - User mentions local templates, symlinks, or branch options
 - Any lt command is being used
+
+## Skill Boundaries
+
+| User Intent | Correct Skill |
+|------------|---------------|
+| "lt fullstack init" | **THIS SKILL** |
+| "lt git get feature-branch" | **THIS SKILL** |
+| "lt server create my-project" | **THIS SKILL** |
+| "Create a NestJS module" | generating-nest-servers |
+| "Build a Vue component" | developing-lt-frontend |
+| "Update nest-server" | nest-server-updating |
 
 ## Complementary Skills
 

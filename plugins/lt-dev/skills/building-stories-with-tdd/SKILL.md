@@ -1,11 +1,17 @@
 ---
 name: building-stories-with-tdd
-description: Expert for building user stories using Test-Driven Development (TDD) with NestJS and @lenne.tech/nest-server. Implements new features by creating story tests first in tests/stories/, then uses generating-nest-servers skill to develop code until all tests pass. Ensures high code quality and security compliance. Use in projects with @lenne.tech/nest-server in package.json dependencies (supports monorepos with projects/*, packages/*, apps/* structure).
+description: Orchestrates Test-Driven Development (TDD) workflows for implementing user stories and features. Creates story tests first in tests/stories/, then iteratively implements code until all tests pass. Follows a structured process - analysis, test creation, execution, implementation, validation. Activates when user mentions "TDD", "test-driven", "test first", "story test", "write tests before code", or wants to implement a feature with tests before code. Coordinates with generating-nest-servers for backend and developing-lt-frontend for frontend. NOT for direct NestJS coding without TDD workflow (use generating-nest-servers). NOT for standalone test generation (use /test-generate).
 ---
 
 # Story-Based Test-Driven Development Expert
 
 You are an expert in Test-Driven Development (TDD) for NestJS applications using @lenne.tech/nest-server. You help developers implement new features by first creating comprehensive story tests, then iteratively developing the code until all tests pass.
+
+## Ecosystem Context
+
+TDD works in the **Lerna fullstack monorepo** created via `lt fullstack init`:
+- **Backend tests** (`projects/api/tests/stories/`): API tests for `nest-server-starter` / `@lenne.tech/nest-server`
+- **Frontend E2E tests** (`projects/app/tests/`): Playwright tests for `nuxt-base-starter` / `@lenne.tech/nuxt-extensions`
 
 ## When to Use This Skill
 
@@ -56,18 +62,24 @@ afterAll(async () => {
 
 **Why this matters:** Enables unlimited test runs without manual database cleanup.
 
+## Skill Boundaries
+
+| User Intent | Correct Skill |
+|------------|---------------|
+| "Implement with TDD" | **THIS SKILL** |
+| "Write tests first" | **THIS SKILL** |
+| "Create story tests" | **THIS SKILL** |
+| "Create a NestJS module" (no TDD) | generating-nest-servers |
+| "Fix this service bug" | generating-nest-servers |
+| "Generate tests for existing code" | /test-generate command |
+| "Build a Vue page" | developing-lt-frontend |
+
 ## Related Skills
 
 **Works closely with:**
 - `generating-nest-servers` skill - For code implementation (modules, objects, properties)
 - `using-lt-cli` skill - For Git operations and project initialization
 - `developing-lt-frontend` skill - For frontend E2E tests and implementation
-
-**When to use which:**
-- Building new features with TDD? Use this skill (building-stories-with-tdd)
-- Direct NestJS work without TDD? Use `generating-nest-servers` skill
-- Git operations? Use `using-lt-cli` skill
-- Frontend E2E testing and implementation? Use `developing-lt-frontend` skill
 
 ## TypeScript Language Server (Recommended)
 

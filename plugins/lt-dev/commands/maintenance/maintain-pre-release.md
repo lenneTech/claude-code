@@ -1,5 +1,5 @@
 ---
-description: Ultra-conservative npm package maintenance before a release - only zero-risk patch updates
+description: Pre-release npm maintenance - zero-risk patches only
 ---
 
 # NPM Package Pre-Release Maintenance

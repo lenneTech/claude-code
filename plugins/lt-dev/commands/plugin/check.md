@@ -1,5 +1,5 @@
 ---
-description: Verify plugin elements against current best practices and optimize for consistency
+description: Verify plugin elements against best practices
 ---
 
 # Plugin Best Practice Check

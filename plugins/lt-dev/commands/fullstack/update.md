@@ -1,5 +1,5 @@
 ---
-description: Update a lenne.tech fullstack project by synchronizing backend and frontend with latest nest-server-starter and nuxt-base-starter
+description: Sync fullstack project with latest nest-server-starter and nuxt-base-starter
 argument-hint: "[--dry-run] [--skip-backend] [--skip-frontend]"
 allowed-tools: Task
 ---

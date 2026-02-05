@@ -1,6 +1,6 @@
 ---
 name: developing-claude-plugins
-description: Expert for Claude Code plugin and marketplace development. Use when creating, editing, or optimizing skills (SKILL.md), commands (*.md), agents, hooks (hooks.json), scripts, or plugin.json files. Ensures consistency with official best practices from code.claude.com documentation. Activates for any file in plugins/ directory.
+description: Develops, optimizes, and validates Claude Code plugins, skills (SKILL.md), commands, agents, hooks (hooks.json), and scripts. Ensures consistency with official best practices. Activates when creating, editing, or reviewing files in plugins/ directory, .claude-plugin/, plugin.json, permissions.json, or marketplace.json. Covers YAML frontmatter, element structure, cross-references, naming conventions, and plugin manifest validation. NOT for application development (use domain-specific skills).
 ---
 
 # Claude Code Plugin & Marketplace Expert
@@ -353,6 +353,17 @@ When optimizing existing elements:
 
 ---
 
+## Skill Boundaries
+
+| User Intent | Correct Skill |
+|------------|---------------|
+| "Create a new skill" | **THIS SKILL** |
+| "Optimize plugin.json" | **THIS SKILL** |
+| "Add a hook for validation" | **THIS SKILL** |
+| "Create a NestJS module" | generating-nest-servers |
+| "Build a Vue component" | developing-lt-frontend |
+| "Update npm packages" | maintaining-npm-packages |
+
 ## Related Skills
 
 **Works closely with:**
@@ -360,11 +371,5 @@ When optimizing existing elements:
 - `generating-nest-servers` skill - When adding NestJS-related commands or skills
 - `developing-lt-frontend` skill - When adding Nuxt-related commands or skills
 - `maintaining-npm-packages` skill - When adding maintenance-related commands
-
-**When to use which:**
-- Plugin development (this package)? Use this skill
-- NestJS server development? Use `generating-nest-servers` skill
-- Frontend development? Use `developing-lt-frontend` skill
-- Package maintenance? Use `maintaining-npm-packages` skill
 
 When modifying any skill, command, or agent in this package, this expertise should inform the changes.

@@ -1,5 +1,5 @@
 ---
-description: Comprehensive OWASP security audit - analyzes dependencies, configuration, and code patterns for vulnerabilities
+description: OWASP security audit for dependencies, config, and code
 allowed-tools: Bash, Read, Grep, Glob, Write
 argument-hint: [--full | --deps-only | --config-only | --code-only]
 ---

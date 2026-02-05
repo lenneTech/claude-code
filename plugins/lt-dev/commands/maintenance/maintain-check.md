@@ -1,5 +1,5 @@
 ---
-description: Analyze npm packages WITHOUT making any changes - generates a comprehensive report of what would be done
+description: Dry-run npm package analysis without changes
 ---
 
 # NPM Package Maintenance Check (Dry-Run)

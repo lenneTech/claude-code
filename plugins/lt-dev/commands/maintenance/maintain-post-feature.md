@@ -1,5 +1,5 @@
 ---
-description: Package maintenance after completing a feature - ensures dependencies are current and optimized
+description: Post-feature npm maintenance and dependency optimization
 ---
 
 # NPM Package Post-Feature Maintenance

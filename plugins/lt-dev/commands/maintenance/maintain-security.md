@@ -1,5 +1,5 @@
 ---
-description: Fast security-focused npm package maintenance - updates only packages with known vulnerabilities
+description: Security-only npm updates for vulnerable packages
 ---
 
 # NPM Package Security Maintenance

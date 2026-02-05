@@ -1,5 +1,5 @@
 ---
-description: Comprehensive npm package maintenance using the specialized lt-dev:npm-package-maintainer agent
+description: Full npm package maintenance via npm-package-maintainer agent
 ---
 
 # NPM Package Maintenance

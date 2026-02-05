@@ -1,11 +1,13 @@
 ---
 name: nest-server-updating
-description: Knowledge base for updating @lenne.tech/nest-server. Use when discussing nest-server updates, upgrades, migrations, breaking changes, or version compatibility. Provides resources, migration guide patterns, and error solutions. For execution, use the lt-dev:nest-server-updater agent.
+description: Provides migration guides, release notes, and error solutions for updating @lenne.tech/nest-server to a newer version. Covers version-specific breaking changes, stepwise upgrade strategies, and starter project comparisons. Activates for nest-server version updates, upgrades, migrations, breaking changes between versions, or "npm run update". Delegates execution to the lt-dev:nest-server-updater agent. NOT for writing NestJS code or building features (use generating-nest-servers). NOT for general npm package updates (use maintaining-npm-packages).
 ---
 
 # @lenne.tech/nest-server Update Knowledge Base
 
 This skill provides **knowledge and resources** for updating @lenne.tech/nest-server. For automated execution, use the `lt-dev:nest-server-updater` agent via `/lt-dev:backend:update-nest-server`.
+
+**Important:** After updating nest-server, also check if `@lenne.tech/nuxt-extensions` in `projects/app/` needs a compatible update, as nuxt-extensions is aligned with nest-server.
 
 ## When This Skill Activates
 
@@ -14,6 +16,17 @@ This skill provides **knowledge and resources** for updating @lenne.tech/nest-se
 - Troubleshooting update-related errors
 - Planning migration strategies
 - Comparing versions or checking compatibility
+
+## Skill Boundaries
+
+| User Intent | Correct Skill |
+|------------|---------------|
+| "Update nest-server to v14" | **THIS SKILL** |
+| "Migrate to latest nest-server" | **THIS SKILL** |
+| "Breaking changes in nest-server" | **THIS SKILL** |
+| "Create a NestJS module" | generating-nest-servers |
+| "Update all npm packages" | maintaining-npm-packages |
+| "npm audit fix" | maintaining-npm-packages |
 
 ## Related Elements
 

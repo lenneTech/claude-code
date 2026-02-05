@@ -1,5 +1,5 @@
 ---
-description: Create a new plugin element (skill, command, agent, hook, or script) with best practice guidance
+description: Create plugin element (skill, command, agent, hook, script)
 ---
 
 # Create Plugin Element

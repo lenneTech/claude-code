@@ -1,6 +1,6 @@
 ---
 name: maintaining-npm-packages
-description: Guides npm package maintenance tasks. Use when user mentions outdated packages, npm audit, security vulnerabilities, dependency updates, package optimization, unused dependencies, or devDependencies categorization. Recommends the lt-dev:npm-package-maintainer agent via /maintain commands.
+description: Analyzes and optimizes npm package dependencies. Handles outdated packages, npm audit findings, security vulnerabilities, dependency updates, unused dependency removal, and devDependencies recategorization. Recommends the lt-dev:npm-package-maintainer agent via /maintain commands. Activates for "update packages", "npm audit", "check dependencies", "security fix", or package.json optimization. NOT for @lenne.tech/nest-server version updates (use nest-server-updating).
 ---
 
 # NPM Package Maintenance
@@ -15,6 +15,16 @@ description: Guides npm package maintenance tasks. Use when user mentions outdat
 - General package maintenance or housekeeping tasks
 
 For comprehensive npm package maintenance, use the **lt-dev:npm-package-maintainer agent** via the maintenance commands.
+
+## Skill Boundaries
+
+| User Intent | Correct Skill |
+|------------|---------------|
+| "Update npm packages" | **THIS SKILL** |
+| "npm audit fix" | **THIS SKILL** |
+| "Remove unused dependencies" | **THIS SKILL** |
+| "Update nest-server to v14" | nest-server-updating |
+| "Fix NestJS service" | generating-nest-servers |
 
 ## Related Skills
 

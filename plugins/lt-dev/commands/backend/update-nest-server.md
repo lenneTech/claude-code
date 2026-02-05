@@ -1,5 +1,5 @@
 ---
-description: Update @lenne.tech/nest-server to latest version with automated migration, validation, and package optimization
+description: Update @lenne.tech/nest-server with automated migration and validation
 argument-hint: "[--dry-run] [--target-version X.Y.Z] [--skip-packages] [path]"
 allowed-tools: Task
 ---
