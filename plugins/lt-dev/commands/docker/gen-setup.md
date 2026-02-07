@@ -11,6 +11,13 @@ description: Generate Docker setup for development and production
 - Configuring development environment with hot reload
 - Setting up local helper services (DB, Mailhog, DB UI)
 
+## Related Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/lt-dev:review` | Comprehensive code review across all quality dimensions |
+| `/lt-dev:fullstack:update` | Update fullstack project dependencies |
+
 ---
 
 ## Project Context

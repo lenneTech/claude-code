@@ -16,6 +16,7 @@ argument-hint: <issue-id>
 | Command | Purpose |
 |---------|---------|
 | `/lt-dev:create-story` | Create a new user story for Linear |
+| `/lt-dev:review` | Comprehensive code review after implementation |
 
 ## Description
 Work on a single assigned issue, ensuring high-quality, consistent implementation and adherence to all requirements.
@@ -43,5 +44,7 @@ Implement the plan completely, focused on high quality and consistency:
 4.  **Update Status:** Update the Linear Issue **#$ARGUMENTS** status in the MCP upon completion.
 
 **Only interrupt for critical blockers** (e.g., unclear requirements, missing credentials). Make smart decisions autonomously, prioritizing code quality and long-term maintainability.
+
+**After implementation:** Recommend running `/lt-dev:review $ARGUMENTS` for a comprehensive quality check before merging.
 
 **BEGIN ANALYSIS NOW.**

@@ -4,8 +4,11 @@ description: Full npm package maintenance via npm-package-maintainer agent
 
 # NPM Package Maintenance
 
-## Description
-Comprehensive npm package maintenance using the specialized lt-dev:npm-package-maintainer agent
+## When to Use This Command
+
+- Performing routine dependency maintenance on a Node.js project
+- After completing multiple features and dependencies need cleanup
+- When you want a comprehensive package optimization (removal, recategorization, updates)
 
 ## Related Commands
 

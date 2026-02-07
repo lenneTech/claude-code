@@ -4,8 +4,11 @@ description: Dry-run npm package analysis without changes
 
 # NPM Package Maintenance Check (Dry-Run)
 
-## Description
-Analyze npm packages WITHOUT making any changes - generates a comprehensive report of what would be done
+## When to Use This Command
+
+- Reviewing dependency state before deciding on maintenance scope
+- Getting pre-approval for package changes from stakeholders
+- Planning a maintenance window without modifying anything
 
 ## Related Commands
 

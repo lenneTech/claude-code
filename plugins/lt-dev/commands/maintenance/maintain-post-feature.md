@@ -4,8 +4,11 @@ description: Post-feature npm maintenance and dependency optimization
 
 # NPM Package Post-Feature Maintenance
 
-## Description
-Package maintenance after completing a feature - ensures dependencies are current and optimized
+## When to Use This Command
+
+- After completing a feature that added or changed dependencies
+- Cleaning up the dependency tree after feature development
+- Ensuring new dependencies are correctly categorized and current
 
 ## Related Commands
 

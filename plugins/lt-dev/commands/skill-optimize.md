@@ -14,6 +14,15 @@ Analyze and optimize skill files for better Claude Code performance and complian
 - When skills seem too large or aren't triggering correctly
 - To check frontmatter, file sizes, and naming conventions
 
+## Related Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/lt-dev:plugin:check` | Verify all plugin elements against best practices |
+| `/lt-dev:plugin:element` | Create new plugin elements with best practices |
+
+---
+
 ##  Step 1: Fetch Latest Best Practices
 
 ** MANDATORY: Execute this step FIRST at every invocation!**

@@ -4,8 +4,11 @@ description: Pre-release npm maintenance - zero-risk patches only
 
 # NPM Package Pre-Release Maintenance
 
-## Description
-Ultra-conservative npm package maintenance before a release - only zero-risk patch updates
+## When to Use This Command
+
+- Immediately before cutting a release to pick up safe patch fixes
+- When stability is paramount and only zero-risk changes are acceptable
+- Final dependency pass before production deployment
 
 ## Related Commands
 

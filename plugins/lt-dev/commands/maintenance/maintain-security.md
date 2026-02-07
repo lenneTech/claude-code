@@ -4,8 +4,11 @@ description: Security-only npm updates for vulnerable packages
 
 # NPM Package Security Maintenance
 
-## Description
-Fast security-focused npm package maintenance - updates only packages with known vulnerabilities
+## When to Use This Command
+
+- Responding to security advisories or vulnerability alerts
+- Quick security patching without full dependency overhaul
+- When stability matters more than staying on latest versions
 
 ## Related Commands
 

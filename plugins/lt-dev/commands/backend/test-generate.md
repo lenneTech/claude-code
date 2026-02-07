@@ -18,6 +18,7 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash(npm run test:*), Bash(npm tes
 |---------|---------|
 | `/lt-dev:backend:sec-review` | Security review of code changes |
 | `/lt-dev:backend:code-cleanup` | Clean up code style and formatting |
+| `/lt-dev:review` | Comprehensive code review across all quality dimensions |
 
 **Recommended workflow:** `test-generate` → `sec-review` → `code-cleanup`
 
