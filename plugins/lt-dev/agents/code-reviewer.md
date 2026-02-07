@@ -110,13 +110,12 @@ Validate that changes fulfill their purpose:
 
 Validate test coverage and quality:
 
-- [ ] Run existing test suite — all tests pass
+- [ ] Run existing test suite — **all** tests pass
 - [ ] New functionality has corresponding tests
 - [ ] Modified functionality has updated tests
 - [ ] No previously existing tests were removed without justification
 - [ ] Test naming follows project conventions
 - [ ] Tests cover success and failure paths
-- [ ] No flaky test patterns (timeouts, race conditions, order-dependent)
 
 Execute test commands:
 ```bash
@@ -125,6 +124,23 @@ npm test
 # npm run test:e2e (if available)
 # npm run test:unit (if available)
 ```
+
+**Pre-existing test failures:** Failing tests from prior code changes are still failing tests. They MUST be fixed regardless of whether they relate to the current changes. A green test suite is a non-negotiable prerequisite for any merge.
+
+**Flaky test detection:** Before reporting a test as failed, re-run it 2-3 times to determine if the failure is consistent or flaky. For each failing test, classify it:
+
+| Classification | Criteria | Action |
+|----------------|----------|--------|
+| **Consistent failure** | Fails on every run | Fix required — report in Remediation Catalog |
+| **Flaky (fixable)** | Intermittent failure with identifiable cause (timing, race condition, shared state, port conflicts) | Fix the flakiness — report cause and fix in Remediation Catalog |
+| **Flaky (environment)** | Intermittent failure tied to external factors (network, DB state, CI-specific) | Document the flakiness with reproduction steps — flag as ⚠️ |
+
+Common flaky patterns to check:
+- Hardcoded timeouts or `setTimeout` instead of event-based waits
+- Tests depending on execution order or shared mutable state
+- Port conflicts from parallel test execution
+- Missing `afterEach`/`afterAll` cleanup
+- Race conditions in async operations without proper await
 
 ### Phase 3: Formatting
 
