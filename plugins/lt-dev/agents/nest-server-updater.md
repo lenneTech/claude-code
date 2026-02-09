@@ -99,7 +99,12 @@ Initial TodoWrite (after Phase 1):
    - If `--target-version X.Y.Z` → Use specified version
    - Otherwise → Get latest: `npm view @lenne.tech/nest-server version`
 
-4. **Early exit conditions:**
+4. **Detect API mode:**
+   Read `lt.config.json` (if exists) and extract `meta.apiMode` ("Rest", "GraphQL", or "Both").
+   - If no `lt.config.json` or no `meta.apiMode` → assume "Both" (legacy project)
+   - Store as `PROJECT_API_MODE` for reference project comparison
+
+5. **Early exit conditions:**
    - No nest-server found → Exit: "Project does not use @lenne.tech/nest-server"
    - Already on target → Exit: "Already on version X.Y.Z"
 
@@ -180,6 +185,11 @@ Initial TodoWrite (after Phase 1):
    - Compare package.json dependencies between version tags
    - Identify code patterns via `git diff vX.Y.Z..vA.B.C`
    - Find version-related commits via `git log --oneline vX.Y.Z..vA.B.C`
+
+   **API Mode awareness:** The reference project (nest-server-starter) uses `// #region graphql` and `// #region rest` markers to separate mode-specific code. When comparing against a project with `PROJECT_API_MODE`:
+   - **"Rest"**: Code inside `// #region graphql` blocks is NOT expected in the project. Ignore differences in resolver files, GraphQL-specific imports/providers, and `graphql-subscriptions` package.
+   - **"GraphQL"**: Code inside `// #region rest` blocks is NOT expected. Ignore differences in controller files, Swagger setup, and `multer` package.
+   - **"Both"**: All code is expected (markers have been stripped).
 
 5. **Create migration plan:**
    Consolidate from guides, releases, and reference project.

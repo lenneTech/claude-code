@@ -5,17 +5,17 @@
     {
       "pattern": "Bash(npm test:*)",
       "description": "Run npm test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser"]
     },
     {
       "pattern": "Bash(npm run test:*)",
       "description": "Run npm run test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser"]
     },
     {
       "pattern": "Bash(npm run test\\:e2e:*)",
       "description": "Run end-to-end tests",
-      "usedBy": ["generating-nest-servers", "building-stories-with-tdd", "developing-lt-frontend", "review"]
+      "usedBy": ["generating-nest-servers", "building-stories-with-tdd", "developing-lt-frontend", "review", "branch-rebaser"]
     },
     {
       "pattern": "Bash(npx playwright:*)",
@@ -25,7 +25,7 @@
     {
       "pattern": "Bash(npx vitest:*)",
       "description": "Run Vitest tests directly",
-      "usedBy": ["building-stories-with-tdd", "generating-nest-servers"]
+      "usedBy": ["building-stories-with-tdd", "generating-nest-servers", "branch-rebaser"]
     },
     {
       "pattern": "Bash(npm run dev:*)",
@@ -50,7 +50,7 @@
     {
       "pattern": "Bash(npm run lint:*)",
       "description": "Run linter checks",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser"]
     },
     {
       "pattern": "Bash(npm run generate-types:*)",
@@ -75,7 +75,7 @@
     {
       "pattern": "Bash(npm install:*)",
       "description": "Install npm packages",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updating"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "branch-rebaser"]
     },
     {
       "pattern": "Bash(npm uninstall:*)",
@@ -155,12 +155,12 @@
     {
       "pattern": "Bash(git fetch:*)",
       "description": "Fetch latest changes from remote repositories",
-      "usedBy": ["fullstack-updating"]
+      "usedBy": ["fullstack-updating", "branch-rebaser"]
     },
     {
       "pattern": "Bash(npm run format:*)",
       "description": "Run code formatter",
-      "usedBy": ["review"]
+      "usedBy": ["review", "branch-rebaser"]
     },
     {
       "pattern": "Bash(npm run prettier:*)",
@@ -170,7 +170,67 @@
     {
       "pattern": "Bash(git status:*)",
       "description": "Check git working tree status",
-      "usedBy": ["review"]
+      "usedBy": ["review", "branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(git rebase:*)",
+      "description": "Rebase branches onto target branch",
+      "usedBy": ["branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(git checkout:*)",
+      "description": "Checkout git branches",
+      "usedBy": ["branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(git push:*)",
+      "description": "Push changes to remote (includes force push with lease)",
+      "usedBy": ["branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(git stash:*)",
+      "description": "Stash and restore working changes",
+      "usedBy": ["branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(git branch:*)",
+      "description": "List and manage git branches",
+      "usedBy": ["branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(git remote:*)",
+      "description": "Inspect remote repository configuration",
+      "usedBy": ["branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(git add:*)",
+      "description": "Stage files for commit",
+      "usedBy": ["branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(git commit:*)",
+      "description": "Create git commits",
+      "usedBy": ["branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(gh pr:*)",
+      "description": "GitHub CLI for PR management",
+      "usedBy": ["branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(glab mr:*)",
+      "description": "GitLab CLI for MR management",
+      "usedBy": ["branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(npx oxlint:*)",
+      "description": "Run oxlint for code quality checks",
+      "usedBy": ["branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(npx oxfmt:*)",
+      "description": "Run oxfmt for code formatting",
+      "usedBy": ["branch-rebaser"]
     }
   ]
 }
