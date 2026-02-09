@@ -2,8 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "Central configuration for Claude Code documentation sources. All sources are cached locally and updated when Claude Code version changes.",
   "cache": {
-    "claudeCodeVersion": "2.1.9",
-    "lastUpdated": "2026-01-16T12:28:02.491Z",
+    "claudeCodeVersion": "2.1.37",
+    "lastUpdated": "2026-02-09T12:29:09.138Z",
     "updateBehavior": "auto"
   },
   "updateBehaviorOptions": {
@@ -102,6 +102,12 @@
       "url": "https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md",
       "type": "md",
       "description": "Recent changes and updates"
+    },
+    {
+      "name": "agent-teams",
+      "url": "https://code.claude.com/docs/en/agent-teams",
+      "type": "spa",
+      "description": "Agent Teams coordination, messaging, hooks, and best practices"
     },
     {
       "name": "platform-skills-best-practices",

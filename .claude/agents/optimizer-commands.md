@@ -3,6 +3,7 @@ name: optimizer-commands
 description: Specialized agent for optimizing Claude Code slash commands. Expert in command frontmatter, argument-hint syntax, allowed-tools restrictions, and command organization.
 model: sonnet
 tools: Read, Grep, Glob, Edit, Write
+permissionMode: default
 ---
 
 # Commands Optimizer Agent

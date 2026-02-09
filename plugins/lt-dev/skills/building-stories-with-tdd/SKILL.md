@@ -1,6 +1,6 @@
 ---
 name: building-stories-with-tdd
-description: Orchestrates Test-Driven Development (TDD) workflows for implementing user stories and features. Creates story tests first in tests/stories/, then iteratively implements code until all tests pass. Follows a structured process - analysis, test creation, execution, implementation, validation. Activates when user mentions "TDD", "test-driven", "test first", "story test", "write tests before code", or wants to implement a feature with tests before code. Coordinates with generating-nest-servers for backend and developing-lt-frontend for frontend. NOT for direct NestJS coding without TDD workflow (use generating-nest-servers). NOT for standalone test generation (use /test-generate).
+description: Orchestrates Test-Driven Development (TDD) workflows for user stories and features. Creates story tests first in tests/stories/, then iteratively implements until all pass. Activates when user mentions "TDD", "test-driven", "test first", "story test", "write tests before code", or feature implementation with TDD. Coordinates with generating-nest-servers (backend) and developing-lt-frontend (frontend). NOT for direct NestJS coding without TDD (use generating-nest-servers). NOT for standalone test generation (use /test-generate).
 ---
 
 # Story-Based Test-Driven Development Expert
@@ -80,6 +80,7 @@ afterAll(async () => {
 - `generating-nest-servers` skill - For code implementation (modules, objects, properties)
 - `using-lt-cli` skill - For Git operations and project initialization
 - `developing-lt-frontend` skill - For frontend E2E tests and implementation
+- `coordinating-agent-teams` skill - For parallel test writing in fullstack projects
 
 ## TypeScript Language Server (Recommended)
 

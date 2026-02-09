@@ -3,6 +3,7 @@ name: optimizer-marketplace
 description: General marketplace optimizer agent. Expert in plugin structure, cross-references between elements, plugin.json manifests, permissions.json, and latest Claude Code features from CHANGELOG.
 model: sonnet
 tools: Read, Grep, Glob, Edit, Write
+permissionMode: default
 ---
 
 # Marketplace Optimizer Agent

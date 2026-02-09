@@ -1,6 +1,6 @@
 ---
 name: developing-lt-frontend
-description: Handles ALL Nuxt 4 and Vue frontend development tasks. Activates when working with .vue files, nuxt.config.ts, Nuxt UI components, TailwindCSS styling, or files in app/components/, app/composables/, app/pages/, app/interfaces/, app/layouts/. Supports monorepos (projects/app/, packages/app/). Covers composables (useFetch, useState, useOverlay), form validation (Valibot), API integration (types.gen.ts, sdk.gen.ts), authentication (Better Auth), SSR, and E2E testing with Playwright. NOT for NestJS backend (use generating-nest-servers). NOT for framework-agnostic security theory (use general-frontend-security).
+description: Handles ALL Nuxt 4 and Vue frontend development tasks. Activates for .vue files, nuxt.config.ts, Nuxt UI, TailwindCSS, or files in app/components/, app/composables/, app/pages/, app/interfaces/, app/layouts/. Supports monorepos (projects/app/, packages/app/). Covers composables, forms (Valibot), API integration (types.gen.ts, sdk.gen.ts), authentication (Better Auth), SSR, and Playwright E2E testing. NOT for NestJS backend (use generating-nest-servers). NOT for security theory (use general-frontend-security).
 ---
 
 # lenne.tech Frontend Development

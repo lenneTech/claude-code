@@ -1,37 +1,81 @@
 # Manage Claude's memory
 
 > Source: https://code.claude.com/docs/en/memory
-> Generated: 2026-01-09T18:37:31.668Z
+> Generated: 2026-02-09T12:26:31.098Z
 
 ---
 
-Claude Code can remember your preferences across sessions, like style guidelines and common commands in your workflow.
+Claude Code has two kinds of memory that persist across sessions:
+
+-   **Auto memory**: Claude automatically saves useful context like project patterns, key commands, and your preferences. This persists across sessions.
+-   **CLAUDE.md files**: Markdown files you write and maintain with instructions, rules, and preferences for Claude to follow.
+
+Both are loaded into Claude’s context at the start of every session, though auto memory loads only the first 200 lines of its main file.
 
 
 Determine memory type
 
-Claude Code offers four memory locations in a hierarchical structure, each serving a different purpose:
+Claude Code offers several memory locations in a hierarchical structure, each serving a different purpose:
 
 | Memory Type | Location | Purpose | Use Case Examples | Shared With |
 | --- | --- | --- | --- | --- |
-| **Enterprise policy** | • macOS:`/Library/Application Support/ClaudeCode/CLAUDE.md`• Linux:`/etc/claude-code/CLAUDE.md`• Windows:`C:\Program Files\ClaudeCode\CLAUDE.md`| Organization-wide instructions managed by IT/DevOps | Company coding standards, security policies, compliance requirements | All users in organization |
+| **Managed policy** | • macOS:`/Library/Application Support/ClaudeCode/CLAUDE.md`• Linux:`/etc/claude-code/CLAUDE.md`• Windows:`C:\Program Files\ClaudeCode\CLAUDE.md`| Organization-wide instructions managed by IT/DevOps | Company coding standards, security policies, compliance requirements | All users in organization |
 | **Project memory** |`./CLAUDE.md`or`./.claude/CLAUDE.md`| Team-shared instructions for the project | Project architecture, coding standards, common workflows | Team members via source control |
 | **Project rules** |`./.claude/rules/*.md`| Modular, topic-specific project instructions | Language-specific guidelines, testing conventions, API standards | Team members via source control |
 | **User memory** |`~/.claude/CLAUDE.md`| Personal preferences for all projects | Code styling preferences, personal tooling shortcuts | Just you (all projects) |
 | **Project memory (local)** |`./CLAUDE.local.md`| Personal project-specific preferences | Your sandbox URLs, preferred test data | Just you (current project) |
+| **Auto memory** |`~/.claude/projects/<project>/memory/`| Claude’s automatic notes and learnings | Project patterns, debugging insights, architecture notes | Just you (per project) |
 
-All memory files are automatically loaded into Claude Code’s context when launched. Files higher in the hierarchy take precedence and are loaded first, providing a foundation that more specific memories build upon.
+CLAUDE.md files in the directory hierarchy above the working directory are loaded in full at launch. CLAUDE.md files in child directories load on demand when Claude reads files in those directories. Auto memory loads only the first 200 lines of`MEMORY.md`. More specific instructions take precedence over broader ones.
 
 CLAUDE.local.md files are automatically added to .gitignore, making them ideal for private project-specific preferences that shouldn’t be checked into version control.
 
 
-CLAUDE.md imports
+Auto memory
+
+Auto memory is a persistent directory where Claude records learnings, patterns, and insights as it works. Unlike CLAUDE.md files that contain instructions you write for Claude, auto memory contains notes Claude writes for itself based on what it discovers during sessions.
+
+Auto memory is being rolled out gradually. If you aren’t seeing auto memory, you can opt in by setting`CLAUDE_CODE_DISABLE_AUTO_MEMORY=0`in your environment.
+
+
+What Claude remembers
+
+As Claude works, it may save things like:
+
+-   Project patterns: build commands, test conventions, code style preferences
+-   Debugging insights: solutions to tricky problems, common error causes
+-   Architecture notes: key files, module relationships, important abstractions
+-   Your preferences: communication style, workflow habits, tool choices
+
+
+Where auto memory is stored
+
+Each project gets its own memory directory at`~/.claude/projects/<project>/memory/`. The`<project>`path is derived from the git repository root, so all subdirectories within the same repo share one auto memory directory. Git worktrees get separate memory directories. Outside a git repo, the working directory is used instead. The directory contains a`MEMORY.md`entrypoint and optional topic files:```~/.claude/projects/<project>/memory/
+├── MEMORY.md          # Concise index, loaded into every session
+├── debugging.md       # Detailed notes on debugging patterns
+├── api-conventions.md # API design decisions
+└── ...                # Any other topic files Claude creates````MEMORY.md`acts as an index of the memory directory. Claude reads and writes files in this directory throughout your session, using`MEMORY.md`to keep track of what’s stored where.
+
+
+How it works
+
+-   The first 200 lines of`MEMORY.md`are loaded into Claude’s system prompt at the start of every session. Content beyond 200 lines is not loaded automatically, and Claude is instructed to keep it concise by moving detailed notes into separate topic files.
+-   Topic files like`debugging.md`or`patterns.md`are not loaded at startup. Claude reads them on demand using its standard file tools when it needs the information.
+-   Claude reads and writes memory files during your session, so you’ll see memory updates happen as you work.
+
+
+Manage auto memory
+
+Auto memory files are markdown files you can edit at any time. Use`/memory`to open the file selector, which includes your auto memory entrypoint alongside your CLAUDE.md files. To ask Claude to save something specific, tell it directly: “remember that we use pnpm, not npm” or “save to memory that the API tests require a local Redis instance”. When neither variable is set, auto memory follows the gradual rollout. The variable name uses double-negative logic:`DISABLE=0`means “don’t disable” and forces auto memory on.```export CLAUDE_CODE_DISABLE_AUTO_MEMORY=1  # Force off
+export CLAUDE_CODE_DISABLE_AUTO_MEMORY=0  # Force on```CLAUDE.md imports
 
 CLAUDE.md files can import additional files using`@path/to/import`syntax. The following example imports 3 files:```See @README for project overview and @package.json for available npm commands for this project.
 
 # Additional Instructions
-- git workflow @docs/git-instructions.md```Both relative and absolute paths are allowed. In particular, importing files in user’s home dir is a convenient way for your team members to provide individual instructions that are not checked into the repository. Imports are an alternative to CLAUDE.local.md that work better across multiple git worktrees.```# Individual Preferences
-- @~/.claude/my-project-instructions.md```To avoid potential collisions, imports are not evaluated inside markdown code spans and code blocks.```This code span will not be treated as an import:`@anthropic-ai/claude-code````Imported files can recursively import additional files, with a max-depth of 5 hops. You can see what memory files are loaded by running`/memory`command.
+- git workflow @docs/git-instructions.md```Both relative and absolute paths are allowed. Relative paths resolve relative to the file containing the import, not the working directory. For private per-project preferences that shouldn’t be checked into version control, prefer`CLAUDE.local.md`: it is automatically loaded and added to`.gitignore`. If you work across multiple git worktrees,`CLAUDE.local.md`only exists in one. Use a home-directory import instead so all worktrees share the same personal instructions:```# Individual Preferences
+- @~/.claude/my-project-instructions.md```The first time Claude Code encounters external imports in a project, it shows an approval dialog listing the specific files. Approve to load them; decline to skip them. This is a one-time decision per project: once declined, the dialog does not resurface and the imports remain disabled.
+
+To avoid potential collisions, imports are not evaluated inside markdown code spans and code blocks.```This code span will not be treated as an import:`@anthropic-ai/claude-code````Imported files can recursively import additional files, with a max-depth of 5 hops. You can see what memory files are loaded by running`/memory`command.
 
 
 How Claude looks up memories
@@ -39,7 +83,9 @@ How Claude looks up memories
 Claude Code reads memories recursively: starting in the cwd, Claude Code recurses up to (but not including) the root directory */* and reads any CLAUDE.md or CLAUDE.local.md files it finds. This is especially convenient when working in large repositories where you run Claude Code in *foo/bar/*, and have memories in both *foo/CLAUDE.md* and *foo/bar/CLAUDE.md*. Claude will also discover CLAUDE.md nested in subtrees under your current working directory. Instead of loading them at launch, they are only included when Claude reads files in those subtrees.
 
 
-Directly edit memories with`/memory`Use the`/memory`slash command during a session to open any memory file in your system editor for more extensive additions or organization.
+Load memory from additional directories
+
+The`--add-dir`flag gives Claude access to additional directories outside your main working directory. By default, CLAUDE.md files from these directories are not loaded. To also load memory files (CLAUDE.md, .claude/CLAUDE.md, and .claude/rules/\*.md) from additional directories, set the`CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD`environment variable:```CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config```Directly edit memories with`/memory`Use the`/memory`command during a session to open any memory file in your system editor for more extensive additions or organization.
 
 
 Set up project memory
@@ -69,7 +115,8 @@ Place markdown files in your project’s`.claude/rules/`directory:```your-projec
 Path-specific rules
 
 Rules can be scoped to specific files using YAML frontmatter with the`paths`field. These conditional rules only apply when Claude is working with files matching the specified patterns.```---
-paths: src/api/**/*.ts
+paths:
+  - "src/api/**/*.ts"
 
 # API Development Rules
 
@@ -89,12 +136,20 @@ The`paths`field supports standard glob patterns:
 |`*.md`| Markdown files in the project root |
 |`src/components/*.tsx`| React components in a specific directory |
 
-You can use braces to match multiple patterns efficiently:```---
-paths: src/**/*.{ts,tsx}
+You can specify multiple patterns:```---
+paths:
+  - "src/**/*.ts"
+  - "lib/**/*.ts"
+  - "tests/**/*.test.ts"
+---```Brace expansion is supported for matching multiple extensions or directories:```---
+paths:
+  - "src/**/*.{ts,tsx}"
+  - "{src,lib}/**/*.ts"
 
-# TypeScript/React Rules```This expands to match both`src/**/*.ts`and`src/**/*.tsx`. You can also combine multiple patterns with commas:```---
-paths: {src,lib}/**/*.ts, tests/**/*.test.ts
----```Subdirectories
+# TypeScript/React Rules```This expands`src/**/*.{ts,tsx}`to match both`.ts`and`.tsx`files.
+
+
+Subdirectories
 
 Rules can be organized into subdirectories for better structure:```.claude/rules/
 ├── frontend/
@@ -145,6 +200,6 @@ Memory best practices
 
 Was this page helpful?
 
-[Model configuration](/docs/en/model-config)[Status line configuration](/docs/en/statusline)
+[Speed up responses with fast mode](/docs/en/fast-mode)[Customize status line](/docs/en/statusline)
 
 ⌘I

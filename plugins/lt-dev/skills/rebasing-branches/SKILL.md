@@ -28,7 +28,7 @@ This skill provides **knowledge and strategy** for rebasing feature branches ont
 | "Update nest-server" | nest-server-updating |
 | "npm audit fix" | maintaining-npm-packages |
 
-## Related Elements
+## Related Skills
 
 | Element | Purpose |
 |---------|---------|
@@ -38,6 +38,7 @@ This skill provides **knowledge and strategy** for rebasing feature branches ont
 | **Command**: `/lt-dev:review` | Code review after rebase |
 | **Skill**: `generating-nest-servers` | Backend code patterns |
 | **Skill**: `developing-lt-frontend` | Frontend code patterns |
+| **Skill**: `coordinating-agent-teams` | Parallel worktree execution for batch rebase (>2 branches) |
 
 ---
 

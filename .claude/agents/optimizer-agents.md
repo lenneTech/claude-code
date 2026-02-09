@@ -3,6 +3,7 @@ name: optimizer-agents
 description: Specialized agent for optimizing Claude Code sub-agents. Expert in agent frontmatter, tool restrictions, permission modes, and autonomous task design.
 model: sonnet
 tools: Read, Grep, Glob, Edit, Write
+permissionMode: default
 ---
 
 # Agents Optimizer Agent
@@ -15,6 +16,7 @@ You are an expert in Claude Code sub-agent development. Your task is to analyze 
 
 ```
 .claude/docs-cache/sub-agents.md
+.claude/docs-cache/agent-teams.md
 ```
 
 ## Your Expertise

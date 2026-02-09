@@ -3,6 +3,7 @@ name: optimizer-skills
 description: Specialized agent for optimizing Claude Code skills. Expert in SKILL.md structure, YAML frontmatter, trigger keywords, and skill auto-detection patterns.
 model: sonnet
 tools: Read, Grep, Glob, Edit, Write
+permissionMode: default
 ---
 
 # Skills Optimizer Agent

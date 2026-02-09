@@ -5,22 +5,22 @@
     {
       "pattern": "Bash(npm test:*)",
       "description": "Run npm test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(npm run test:*)",
       "description": "Run npm run test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(npm run test\\:e2e:*)",
       "description": "Run end-to-end tests",
-      "usedBy": ["generating-nest-servers", "building-stories-with-tdd", "developing-lt-frontend", "review", "branch-rebaser"]
+      "usedBy": ["generating-nest-servers", "building-stories-with-tdd", "developing-lt-frontend", "review", "branch-rebaser", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(npx playwright:*)",
       "description": "Run Playwright E2E tests",
-      "usedBy": ["developing-lt-frontend", "building-stories-with-tdd"]
+      "usedBy": ["developing-lt-frontend", "building-stories-with-tdd", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(npx vitest:*)",
@@ -45,12 +45,12 @@
     {
       "pattern": "Bash(npm run build:*)",
       "description": "Build the application",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(npm run lint:*)",
       "description": "Run linter checks",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(npm run generate-types:*)",
@@ -70,7 +70,7 @@
     {
       "pattern": "Bash(npm audit:*)",
       "description": "Run security audit on npm packages",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit", "review"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit", "review", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(npm install:*)",
@@ -140,12 +140,12 @@
     {
       "pattern": "Bash(git diff:*)",
       "description": "Compare versions in repositories",
-      "usedBy": ["fullstack-updating", "review"]
+      "usedBy": ["fullstack-updating", "review", "debug", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(git log:*)",
       "description": "Read git history of repositories",
-      "usedBy": ["fullstack-updating", "review"]
+      "usedBy": ["fullstack-updating", "review", "debug", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(git tag:*)",
@@ -160,17 +160,17 @@
     {
       "pattern": "Bash(npm run format:*)",
       "description": "Run code formatter",
-      "usedBy": ["review", "branch-rebaser"]
+      "usedBy": ["review", "branch-rebaser", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(npm run prettier:*)",
       "description": "Run Prettier code formatter",
-      "usedBy": ["review"]
+      "usedBy": ["review", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(git status:*)",
       "description": "Check git working tree status",
-      "usedBy": ["review", "branch-rebaser"]
+      "usedBy": ["review", "branch-rebaser", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(git rebase:*)",
@@ -231,6 +231,16 @@
       "pattern": "Bash(npx oxfmt:*)",
       "description": "Run oxfmt for code formatting",
       "usedBy": ["branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(git blame:*)",
+      "description": "Show line-by-line commit history for debugging",
+      "usedBy": ["debug", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(git worktree:*)",
+      "description": "Manage git worktrees for parallel branch operations",
+      "usedBy": ["branch-rebaser", "coordinating-agent-teams"]
     }
   ]
 }

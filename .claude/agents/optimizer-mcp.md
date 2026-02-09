@@ -3,6 +3,7 @@ name: optimizer-mcp
 description: Specialized agent for optimizing Claude Code MCP server configurations. Expert in .mcp.json structure, server types (stdio, http, sse), and MCP tool integration.
 model: sonnet
 tools: Read, Grep, Glob, Edit, Write
+permissionMode: default
 ---
 
 # MCP Optimizer Agent

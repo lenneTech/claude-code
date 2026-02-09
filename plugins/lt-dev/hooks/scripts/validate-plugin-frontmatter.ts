@@ -21,7 +21,7 @@ interface HookInput {
 }
 
 interface ValidationResult {
-  decision: 'allow' | 'block';
+  decision: 'allow' | 'deny';
   reason?: string;
 }
 
@@ -81,7 +81,7 @@ function validateFrontmatter(filePath: string, content: string): ValidationResul
   // Check for YAML frontmatter presence
   if (!content.trim().startsWith('---')) {
     return {
-      decision: 'block',
+      decision: 'deny',
       reason: 'Plugin markdown files require YAML frontmatter (file must start with ---)'
     };
   }
@@ -90,7 +90,7 @@ function validateFrontmatter(filePath: string, content: string): ValidationResul
   const frontmatter = parseYamlFrontmatter(content);
   if (!frontmatter) {
     return {
-      decision: 'block',
+      decision: 'deny',
       reason: 'YAML frontmatter is not properly closed (missing closing ---)'
     };
   }
@@ -104,7 +104,7 @@ function validateFrontmatter(filePath: string, content: string): ValidationResul
 
     if (missing.length > 0) {
       return {
-        decision: 'block',
+        decision: 'deny',
         reason: `SKILL.md requires these fields in frontmatter: ${missing.join(', ')}`
       };
     }
@@ -112,7 +112,7 @@ function validateFrontmatter(filePath: string, content: string): ValidationResul
     // Validate description length (max 1024 chars per official docs)
     if (frontmatter.description && frontmatter.description.length > 1024) {
       return {
-        decision: 'block',
+        decision: 'deny',
         reason: `Skill description too long (${frontmatter.description.length} chars). Maximum is 1024 characters.`
       };
     }
@@ -125,7 +125,7 @@ function validateFrontmatter(filePath: string, content: string): ValidationResul
 
     if (missing.length > 0) {
       return {
-        decision: 'block',
+        decision: 'deny',
         reason: `Agent file missing required fields: ${missing.join(', ')}`
       };
     }
@@ -135,7 +135,7 @@ function validateFrontmatter(filePath: string, content: string): ValidationResul
     const model = frontmatter.model?.toLowerCase();
     if (model && !validModels.some(m => model.includes(m))) {
       return {
-        decision: 'block',
+        decision: 'deny',
         reason: `Invalid model "${frontmatter.model}". Use: haiku, sonnet, or opus`
       };
     }
@@ -145,7 +145,7 @@ function validateFrontmatter(filePath: string, content: string): ValidationResul
   if (filePath.includes('/commands/')) {
     if (!frontmatter.description) {
       return {
-        decision: 'block',
+        decision: 'deny',
         reason: 'Command file requires "description" field in frontmatter'
       };
     }
@@ -165,8 +165,14 @@ function main(): void {
 
     const result = validateFrontmatter(filePath, content);
 
-    if (result.decision === 'block') {
-      console.log(JSON.stringify(result));
+    if (result.decision === 'deny') {
+      console.log(JSON.stringify({
+        hookSpecificOutput: {
+          hookEventName: "PreToolUse",
+          permissionDecision: "deny",
+          permissionDecisionReason: result.reason
+        }
+      }));
     }
 
     process.exit(0);

@@ -28,7 +28,7 @@ This skill provides **knowledge and resources** for updating @lenne.tech/nest-se
 | "Update all npm packages" | maintaining-npm-packages |
 | "npm audit fix" | maintaining-npm-packages |
 
-## Related Elements
+## Related Skills
 
 | Element | Purpose |
 |---------|---------|

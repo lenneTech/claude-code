@@ -4,6 +4,7 @@ description: Specialized agent for maintaining, updating, and auditing npm packa
 model: sonnet
 tools: Bash, Read, Grep, Glob, Write, Edit
 permissionMode: default
+memory: project
 skills: maintaining-npm-packages
 ---
 

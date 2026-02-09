@@ -31,6 +31,7 @@ All Claude Code best practices are cached locally in `.claude/docs-cache/*.md`. 
 | `github-official-plugins.md` | Official plugin standards, quality guidelines (from GitHub) |
 | `github-skills-readme.md` | Skill specifications, templates (from GitHub) |
 | `github-changelog.md` | Recent changes and updates |
+| `agent-teams.md` | Agent Teams coordination, messaging, hooks, and best practices |
 | `platform-skills-best-practices.md` | Skill authoring best practices and patterns **(primary source)** |
 | `owasp-secure-coding-checklist.md` | OWASP Secure Coding Practices (security reference) |
 
@@ -163,8 +164,8 @@ Defines MCP (Model Context Protocol) servers required by the plugin.
 **Current servers:**
 | Server | Type | Used By |
 |--------|------|---------|
-| `chrome-devtools` | stdio | vibe commands (browser testing) |
-| `linear` | http | fix-issue, create-story (issue management) |
+| `chrome-devtools` | stdio | vibe commands, developing-lt-frontend, building-stories-with-tdd (browser testing & debugging) |
+| `linear` | http | fix-issue, create-story, review, debug (issue tracking & project management) |
 
 ### plugin.json
 Plugin manifest with metadata. Update `version` before releases.

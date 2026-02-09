@@ -59,28 +59,38 @@ Skills, Commands, Hooks and Agents for Frontend (Nuxt 4), Backend (NestJS/nest-s
 
 ## Included Components
 
-### Skills (6)
+### Skills (10)
 
 | Skill | Description |
 |-------|-------------|
 | `developing-lt-frontend` | Nuxt 4, Nuxt UI 4, TypeScript, Valibot Forms |
 | `generating-nest-servers` | NestJS with @lenne.tech/nest-server |
 | `building-stories-with-tdd` | Test-Driven Development Workflow |
+| `nest-server-updating` | Migration guides and strategies for @lenne.tech/nest-server updates |
+| `rebasing-branches` | Rebase workflows for feature branches onto dev/develop |
+| `general-frontend-security` | OWASP-based frontend security (XSS, CSRF, CSP) |
+| `coordinating-agent-teams` | Agent Teams coordination and parallel workflows |
 | `using-lt-cli` | lenne.tech CLI for Git and Fullstack Init |
 | `maintaining-npm-packages` | Discovery skill for npm package maintenance commands |
 | `developing-claude-plugins` | Plugin development best practices and validation |
 
-### Agents (1)
+### Agents (5)
 
 | Agent | Description |
 |-------|-------------|
-| `npm-package-maintainer` | Specialized agent for maintaining, updating, and auditing npm packages |
+| `npm-package-maintainer` | Maintaining, updating, and auditing npm packages |
+| `nest-server-updater` | Automated @lenne.tech/nest-server version updates with migration |
+| `fullstack-updater` | Synchronize fullstack project with latest starter templates |
+| `branch-rebaser` | Autonomous rebase execution for feature branches |
+| `code-reviewer` | Code review across 7 quality dimensions |
 
-### Commands (20)
+### Commands (27)
 
 **Root:**
 - `/create-story` - Create User Story for TDD (German)
 - `/fix-issue` - Work on Linear Issue
+- `/review` - Comprehensive code review across 7 quality dimensions
+- `/debug` - Adversarial debugging with competing hypotheses using Agent Teams
 - `/skill-optimize` - Validate and optimize Claude Skills
 
 **Plugin (`/plugin/`):**
@@ -88,9 +98,14 @@ Skills, Commands, Hooks and Agents for Frontend (Nuxt 4), Backend (NestJS/nest-s
 - `/plugin:check` - Verify elements against best practices (use after /clear)
 
 **Backend (`/backend/`):**
-- `/backend:code-cleanup` - Clean up and optimize code
+- `/backend:update-nest-server` - Update @lenne.tech/nest-server with automated migration
+- `/backend:sec-audit` - OWASP security audit for dependencies, config, and code
 - `/backend:sec-review` - Perform security review
+- `/backend:code-cleanup` - Clean up and optimize code
 - `/backend:test-generate` - Generate tests
+
+**Fullstack (`/fullstack/`):**
+- `/fullstack:update` - Sync fullstack project with latest starter templates
 
 **Docker (`/docker/`):**
 - `/docker:gen-setup` - Generate Docker development & production setup
@@ -99,6 +114,8 @@ Skills, Commands, Hooks and Agents for Frontend (Nuxt 4), Backend (NestJS/nest-s
 - `/git:commit-message` - Generate commit message
 - `/git:mr-description` - Create Merge Request description
 - `/git:mr-description-clipboard` - Copy MR description to clipboard
+- `/git:rebase` - Rebase current branch onto dev/develop
+- `/git:rebase-mrs` - Batch rebase for open MRs/PRs
 
 **Vibe (`/vibe/`):**
 - `/vibe:plan` - Create implementation plan from SPEC.md
@@ -112,20 +129,31 @@ Skills, Commands, Hooks and Agents for Frontend (Nuxt 4), Backend (NestJS/nest-s
 - `/maintain-pre-release` - Conservative patch-only updates before release
 - `/maintain-post-feature` - Cleanup after feature development
 
-### Hooks (4)
+### Hooks (9)
 
-**UserPromptSubmit - Project Detection:**
+**UserPromptSubmit - Project Detection (6):**
 
 1. **Nuxt 4 Detection** - Detects `nuxt.config.ts` + `app/` structure and suggests `developing-lt-frontend` skill
 2. **NestJS Detection** - Detects `@lenne.tech/nest-server` in package.json and suggests `generating-nest-servers` skill
-3. **lt CLI Detection** - Detects installed `lt` CLI and suggests `using-lt-cli` skill for Git and Fullstack operations
+3. **lt CLI Detection** - Detects installed `lt` CLI and suggests `using-lt-cli` skill
+4. **Plugin Dev Detection** - Detects Claude Code plugin projects and suggests `developing-claude-plugins` skill
+5. **Security Context Detection** - Detects web projects and suggests `general-frontend-security` skill for security keywords
+6. **npm Maintenance Detection** - Detects Node.js projects and suggests `maintaining-npm-packages` skill
 
-**PreToolUse - Validation:**
+**PreToolUse - Validation (1):**
 
-4. **Plugin Frontmatter Validation** - Validates YAML frontmatter when writing plugin files (`**/plugins/**/*.md`)
+7. **Plugin Frontmatter Validation** - Validates YAML frontmatter when writing plugin files (`**/plugins/**/*.md`)
    - Skills: requires `name`, `description`
    - Agents: requires `name`, `description`, `model`, `tools`
    - Commands: requires `description`
+
+**TeammateIdle (1):**
+
+8. **Teammate Idle Gate** - Agent Teams coordination hook for idle teammate detection
+
+**TaskCompleted (1):**
+
+9. **Task Completed Gate** - Agent Teams coordination hook for task completion
 
 Supports monorepo structures: `projects/`, `packages/`, `apps/`
 
@@ -191,20 +219,31 @@ claude-code/
 │       ├── permissions.json      # Required permissions for skills
 │       ├── .mcp.json             # MCP server configurations
 │       ├── agents/
+│       │   ├── branch-rebaser.md
+│       │   ├── code-reviewer.md
+│       │   ├── fullstack-updater.md
+│       │   ├── nest-server-updater.md
 │       │   └── npm-package-maintainer.md
 │       ├── skills/
 │       │   ├── building-stories-with-tdd/
+│       │   ├── coordinating-agent-teams/
 │       │   ├── developing-claude-plugins/
 │       │   ├── developing-lt-frontend/
+│       │   ├── general-frontend-security/
 │       │   ├── generating-nest-servers/
 │       │   ├── maintaining-npm-packages/
+│       │   ├── nest-server-updating/
+│       │   ├── rebasing-branches/
 │       │   └── using-lt-cli/
 │       ├── commands/
 │       │   ├── create-story.md
+│       │   ├── debug.md
 │       │   ├── fix-issue.md
+│       │   ├── review.md
 │       │   ├── skill-optimize.md
 │       │   ├── backend/
 │       │   ├── docker/
+│       │   ├── fullstack/
 │       │   ├── git/
 │       │   ├── maintenance/
 │       │   ├── plugin/

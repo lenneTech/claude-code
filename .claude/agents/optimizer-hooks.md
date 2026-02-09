@@ -3,6 +3,7 @@ name: optimizer-hooks
 description: Specialized agent for optimizing Claude Code hooks. Expert in hooks.json structure, event types, matchers, script handlers, and hook lifecycle.
 model: sonnet
 tools: Read, Grep, Glob, Edit, Write, Bash
+permissionMode: default
 ---
 
 # Hooks Optimizer Agent

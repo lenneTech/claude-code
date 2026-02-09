@@ -11,7 +11,7 @@ document: OWASP Secure Coding Practices - Quick Reference Guide
 # Secure Coding Practices Checklist
 
 > **Source:** https://raw.githubusercontent.com/OWASP/www-project-secure-coding-practices-quick-reference-guide/refs/heads/main/stable-en/02-checklist/05-checklist.md
-> **Generated:** 2026-01-16T12:28:02.447Z
+> **Generated:** 2026-02-09T12:26:27.877Z
 
 ---
 

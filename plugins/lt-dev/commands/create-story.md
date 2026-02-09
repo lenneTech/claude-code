@@ -21,6 +21,12 @@ Guide the user through creating a well-structured user story that can be used as
 |---------|---------|
 | `/lt-dev:fix-issue` | Work on an existing Linear issue |
 
+**Related Skills:**
+
+| Skill | Purpose |
+|-------|---------|
+| `coordinating-agent-teams` | Parallel test writing coordination for fullstack stories |
+
 **Workflow:** Create story → Save to Linear → `/lt-dev:fix-issue` to implement
 
 **IMPORTANT: The generated story and all user-facing communication must ALWAYS be in German, regardless of the user's input language. Exceptions: Properties (camelCase), code snippets, and technical terms remain in English.**
@@ -434,11 +440,65 @@ Once the user approves the story, use AskUserQuestion with these 4 options:
 
 When the user chooses direct implementation or answers "yes" to TDD after Option 1, 2, or 3:
 
+#### Team Mode Decision (for test writing phase)
+
+1. **Check feature flag:**
+   ```bash
+   echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS
+   ```
+   If empty or 0 → **Single Mode**
+
+2. **Check fullstack monorepo:**
+   - Does `projects/api/` AND `projects/app/` exist?
+   - If no → **Single Mode**
+
+3. **Check story scope:**
+   - Does the story involve both backend (API, endpoints, models) AND frontend (pages, components, UI)?
+   - If no → **Single Mode**
+
+4. **All checks pass** → **Team Mode** for test writing
+
+#### Execution - Single Mode
+
 1. Confirm (in German): "Starte TDD-Implementierung mit dem `building-stories-with-tdd` Skill..."
-
 2. Invoke the `building-stories-with-tdd` skill with the generated story as context
-
 3. The skill will handle: test creation, implementation, validation
+
+#### Execution - Team Mode (Parallel Test Writing)
+
+Inform the user: "Fullstack-Story erkannt - schreibe Backend- und Frontend-Tests parallel."
+
+Create an agent team with 2 teammates using Sonnet:
+
+**Teammate "backend-tests":**
+Write API tests for this story in `projects/api/tests/stories/`.
+Use TestHelper patterns from existing tests in that directory.
+Define API contracts: endpoints, request/response shapes, status codes.
+Share contracts via message to frontend-tests teammate when ready.
+
+Story context:
+```
+<the generated story>
+```
+
+**Teammate "frontend-tests":**
+Write E2E tests for this story in `projects/app/tests/e2e/`.
+Use Playwright patterns from existing tests in that directory.
+Wait for API contract messages from backend-tests before writing tests that depend on API responses.
+
+Story context:
+```
+<the generated story>
+```
+
+Lead coordinates and validates contract consistency between backend and frontend tests.
+
+**CRITICAL:** Only test writing is parallel. After team completes and tests are written:
+
+1. Clean up team
+2. Confirm (in German): "Tests geschrieben. Starte sequentielle Implementierung..."
+3. Invoke the `building-stories-with-tdd` skill with the generated story as context
+4. The skill handles implementation until all tests pass
 
 ---
 

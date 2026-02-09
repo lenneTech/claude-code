@@ -4,6 +4,7 @@ description: Autonomous agent for rebasing feature branches onto the development
 model: sonnet
 tools: Bash, Read, Grep, Glob, Write, Edit, Task, TodoWrite, Skill, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
 permissionMode: default
+memory: project
 skills: generating-nest-servers, developing-lt-frontend, rebasing-branches
 ---
 

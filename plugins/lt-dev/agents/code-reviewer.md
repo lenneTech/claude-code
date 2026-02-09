@@ -4,6 +4,7 @@ description: Autonomous code review agent. Analyzes changes against 7 quality di
 model: sonnet
 tools: Bash, Read, Grep, Glob, Task, TodoWrite, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
 permissionMode: default
+memory: project
 skills: generating-nest-servers, building-stories-with-tdd, general-frontend-security
 ---
 
