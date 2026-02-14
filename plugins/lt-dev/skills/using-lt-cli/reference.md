@@ -524,12 +524,75 @@ lt fullstack init \
 
 ---
 
+## Server Commands
+
+### lt server permissions
+
+**Syntax:**
+```bash
+lt server permissions \
+  [--format <md|json|html>] \
+  [--output <file>] \
+  [--path <project-path>] \
+  [--open] \
+  [--failOnWarnings] \
+  [--console]
+```
+
+**Aliases:**
+- `lt server p`
+
+**Parameters:**
+
+| Parameter | Type | Required | Options | Description |
+|-----------|------|----------|---------|-------------|
+| `--format` | string | No | `md`, `json`, `html` | Output format (default: `md`) |
+| `--output` | string | No | file path | Output file path |
+| `--path` | string | No | directory path | Path to NestJS project (default: cwd) |
+| `--open` | boolean | No | - | Open report in browser after generation |
+| `--failOnWarnings` | boolean | No | - | Exit code 1 when warnings found (CI/CD) |
+| `--console` | boolean | No | - | Print summary to console |
+
+**What it does:**
+1. Scans all modules in `src/server/modules/` using `ts-morph` AST analysis
+2. Detects `@Roles`, `@Restricted` decorators on controllers, resolvers, models
+3. Detects `securityCheck()` methods in models
+4. Identifies security gaps (missing decorators, unrestricted fields/methods)
+5. Generates report with coverage statistics and warnings
+
+**Format defaults:**
+- **Interactive (TTY):** Defaults to `html` with auto-open in browser
+- **Non-interactive (pipe/CI/AI agent):** Defaults to `md` (Markdown) — AI agents process Markdown better than JSON
+
+**Examples:**
+```bash
+# Default: Markdown report (non-interactive) or HTML (interactive)
+lt server permissions
+
+# HTML report, open in browser
+lt server permissions --format html --open
+
+# JSON for programmatic analysis
+lt server permissions --format json --output report.json
+
+# CI/CD: fail pipeline on security warnings
+lt server permissions --failOnWarnings
+
+# Scan specific project
+lt server permissions --path ./projects/api --format md --output permissions.md
+```
+
+**Note:** The scanner is also available as a built-in runtime module in `@lenne.tech/nest-server`. Enable `permissions: true` in `config.env.ts` for a live dashboard at `GET /permissions` with JSON, Markdown, and rescan endpoints.
+
+---
+
 ## Related Commands
 
 For NestJS server development commands, use the **nest-server-generator skill**:
 - `lt server module` - Create modules
 - `lt server object` - Create objects
 - `lt server addProp` - Add properties
+- `lt server permissions` - Permissions audit report
 
 ---
 

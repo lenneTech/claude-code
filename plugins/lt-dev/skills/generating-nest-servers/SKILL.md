@@ -66,6 +66,7 @@ project/
 2. **NEVER** modify `securityCheck()` to bypass security
 3. **ALWAYS** analyze permissions BEFORE writing tests
 4. **ALWAYS** test with the LEAST privileged authorized user
+5. **VERIFY** decorator coverage with `lt server permissions` after creating modules
 
 **Complete security rules: [security-rules.md](security-rules.md)** | **OWASP checklist: [owasp-checklist.md](owasp-checklist.md)**
 
@@ -102,6 +103,11 @@ lt server addProp --type Module --element User
 
 # New project
 lt server create <server-name>
+
+# Permissions report (audit @Roles, @Restricted, securityCheck)
+lt server permissions --format html --open
+lt server permissions --format json --output permissions.json
+lt server permissions --failOnWarnings  # CI/CD mode
 ```
 
 **API Style:** REST is default. Use `--controller GraphQL` only when explicitly requested.
@@ -154,6 +160,15 @@ afterAll(async () => {
 
 **ALL properties must be in alphabetical order** in Model, Input, and Output files.
 
+## Permissions Report
+
+The `@lenne.tech/nest-server` includes a built-in permissions scanner that audits `@Roles`, `@Restricted`, and `securityCheck()` usage across all modules.
+
+- **CLI**: `lt server permissions` (generates MD/JSON/HTML report via AST scan — preferred)
+- **Runtime**: Enable `permissions: true` in `config.env.ts` for a live dashboard at `GET /permissions`
+
+The scanner detects: missing class-level `@Restricted`, endpoints without `@Roles`, models without `securityCheck()`, unrestricted fields, and unrestricted methods. **Use after creating new modules** to verify decorator coverage.
+
 ## Verification Checklist
 
 - [ ] All components created with descriptions (Model + CreateInput + UpdateInput)
@@ -161,6 +176,7 @@ afterAll(async () => {
 - [ ] Permission analysis BEFORE writing tests
 - [ ] Least privileged user used in tests
 - [ ] Security validation tests (401/403 failures)
+- [ ] Permissions report shows no new warnings (`lt server permissions --failOnWarnings`)
 - [ ] All tests pass
 
 **Complete checklist: [verification-checklist.md](verification-checklist.md)**
@@ -169,6 +185,7 @@ afterAll(async () => {
 
 | Topic | File |
 |-------|------|
+| Permissions Report | Built-in: `lt server permissions` / `GET /permissions` |
 | Service Health Check | [service-health-check.md](service-health-check.md) |
 | Framework Guide | [framework-guide.md](framework-guide.md) |
 | Configuration & Commands | [configuration.md](configuration.md) |

@@ -59,8 +59,8 @@
     },
     {
       "pattern": "Bash(lt server:*)",
-      "description": "Execute lt server commands (module, object, addProp, create)",
-      "usedBy": ["generating-nest-servers"]
+      "description": "Execute lt server commands (module, object, addProp, create, permissions)",
+      "usedBy": ["generating-nest-servers", "code-reviewer", "sec-audit"]
     },
     {
       "pattern": "Bash(lt:*)",

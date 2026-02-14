@@ -38,6 +38,7 @@ For fullstack development, this skill works **alongside** other skills:
 | `lt git get`, `lt git reset` | **using-lt-cli** |
 | `lt server create` | **using-lt-cli** + generating-nest-servers |
 | `lt server module`, `lt server object` | **using-lt-cli** + generating-nest-servers |
+| `lt server permissions` | **using-lt-cli** + generating-nest-servers |
 | NestJS code modifications | generating-nest-servers |
 | Nuxt/Vue frontend development | developing-lt-frontend |
 
@@ -175,6 +176,25 @@ lt fullstack init --name MyApp --frontend angular --git true \
 2. Install dependencies: `npm install`
 3. Start backend: `cd projects/api && npm start`
 4. Start frontend: `cd frontend && npm start`
+
+### 3. Server Permissions Report
+
+**Command**: `lt server permissions` (alias: `lt server p`)
+
+Scans a NestJS project for `@Roles`, `@Restricted`, and `securityCheck()` usage. Generates a report showing decorator coverage, security gaps, and warnings.
+
+```bash
+# HTML report, open in browser
+lt server permissions --format html --open
+
+# CI/CD mode: fail if security warnings found
+lt server permissions --failOnWarnings
+
+# Scan specific project path
+lt server permissions --path ./projects/api
+```
+
+**Full parameter reference:** [reference.md](reference.md#lt-server-permissions)
 
 ---
 

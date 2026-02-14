@@ -221,6 +221,7 @@ describe('ProductResolver', () => {
    - Run all tests: `npm test` (NODE_ENV=e2e is set in package.json scripts)
    - Check TypeScript: `npm run build`
    - Run linter: `npm run lint`
+   - Verify permissions: `lt server permissions --failOnWarnings`
 
 ---
 

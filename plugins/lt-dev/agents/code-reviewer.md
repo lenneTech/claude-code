@@ -99,6 +99,10 @@ All examples below use `npm` notation. **Adapt all commands** to the detected pa
 
 5. **Identify test commands** from package.json scripts (test, test:e2e, test:unit, etc.)
 6. **Identify lint/format commands** from package.json scripts (lint, format, prettier, etc.)
+7. **Draft Change Summary** based on the diff and issue context:
+   - **What** was changed (files, modules, features affected)
+   - **How** it changes the codebase (adds, optimizes, extends, refactors, or removes functionality)
+   - **Why** the changes are meaningful (problem solved, improvement achieved, feature enabled)
 
 ### Project-Type Adaptation
 
@@ -108,6 +112,7 @@ Based on the project type detected in Phase 0, adapt checks per phase:
 |-------|---------|----------|-----------|---------|
 | @Restricted/@Roles decorators | ✅ | Skip | ✅ (API only) | Skip |
 | securityCheck() model methods | ✅ | Skip | ✅ (API only) | Skip |
+| Permissions scanner analysis | ✅ | Skip | ✅ (API only) | Skip |
 | XSS/CSP/CSRF browser checks | Skip | ✅ | ✅ (App only) | ✅ |
 | N+1 query patterns | ✅ | Skip | ✅ (API only) | Context-dependent |
 | SSR performance concerns | Skip | ✅ | ✅ (App only) | Skip |
@@ -266,6 +271,30 @@ Validate security posture (references security-review.md patterns):
 - [ ] XSS prevention, CSP headers, secure cookie config (Frontend/Fullstack)
 - [ ] No secrets or credentials in code
 - [ ] Dependencies free of known vulnerabilities (`npm audit`)
+- [ ] Permissions coverage validated via scanner (Backend/Fullstack)
+
+#### Permissions Scanner Analysis (Backend/Fullstack)
+
+For projects using `@lenne.tech/nest-server`, run the permissions scanner to validate decorator coverage:
+
+```bash
+# Run permissions scanner via CLI (default: Markdown, optimal for AI agent analysis)
+lt server permissions --path .
+```
+
+**Always use CLI** — it scans via AST without requiring a running server.
+
+**What to check in the permissions report:**
+1. **Warnings**: Any `NO_RESTRICTION`, `NO_ROLES`, `NO_SECURITY_CHECK`, `UNRESTRICTED_FIELD`, or `UNRESTRICTED_METHOD` warnings for NEW or MODIFIED modules
+2. **Endpoint coverage**: Percentage of endpoints with explicit `@Roles` decorators (should be close to 100%)
+3. **Security coverage**: Percentage of models with `securityCheck()` methods
+4. **New modules**: Every new module from the diff should appear in the report with proper decorators
+
+**Scoring impact:**
+- New module without `@Restricted` class decorator → High severity finding
+- New endpoint without `@Roles` → Medium severity finding
+- New model without `securityCheck()` → Medium severity finding
+- Warnings only for pre-existing code → Note, no score impact
 
 ### Phase 7: Documentation
 
@@ -346,6 +375,9 @@ Generate a structured report in the following format:
 ```markdown
 ## Code Review Report
 
+### Change Summary
+[2-4 sentences describing: WHAT was changed (files, modules, features), WHETHER it adds, optimizes, extends, or removes functionality, and WHY the changes are meaningful (problem solved, improvement achieved, feature enabled)]
+
 ### Overview
 | Category | Fulfillment | Status |
 |----------|-------------|--------|
@@ -390,6 +422,7 @@ Generate a structured report in the following format:
 Based on findings, suggest applicable commands:
 - Tests ⚠️/❌ → "Run `/lt-dev:backend:test-generate` to generate missing tests"
 - Security ⚠️/❌ → "Run `/lt-dev:backend:sec-review` for detailed security analysis"
+- Security (permissions) ⚠️/❌ → "Run `lt server permissions --failOnWarnings` to audit decorator coverage"
 - Formatting ⚠️/❌ → "Run `/lt-dev:backend:code-cleanup` to fix formatting issues"
 - Security + Dependencies → "Run `/lt-dev:backend:sec-audit` for full OWASP audit"
 ```

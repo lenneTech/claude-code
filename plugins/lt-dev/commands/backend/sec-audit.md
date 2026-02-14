@@ -98,6 +98,12 @@ Search and analyze:
 - Password hashing (bcrypt cost factor)
 - Session/token management
 
+For projects using `@lenne.tech/nest-server`, run the permissions scanner:
+```bash
+lt server permissions --failOnWarnings
+```
+Check for missing `@Restricted` class decorators, endpoints without `@Roles`, and models without `securityCheck()`.
+
 ### 5. OWASP Checklist Validation
 
 Cross-reference with `owasp-checklist.md`:

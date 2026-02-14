@@ -605,6 +605,7 @@ Before completing ANY task:
 - [ ] **Least privileged user tested**
 - [ ] **Permission denial tested (403 responses)**
 - [ ] **No securityCheck() logic bypassed**
+- [ ] **Permissions report clean** (`lt server permissions --failOnWarnings`)
 
 **Input & Validation:**
 - [ ] **All inputs validated and sanitized**
