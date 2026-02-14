@@ -123,6 +123,246 @@
       "usedBy": ["nest-server-updating", "fullstack-updating"]
     },
     {
+      "pattern": "Bash(pnpm test:*)",
+      "description": "Run pnpm test commands",
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(pnpm run test:*)",
+      "description": "Run pnpm run test commands",
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(pnpm run test\\:e2e:*)",
+      "description": "Run end-to-end tests via pnpm",
+      "usedBy": ["generating-nest-servers", "building-stories-with-tdd", "developing-lt-frontend", "review", "branch-rebaser", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(pnpm dlx playwright:*)",
+      "description": "Run Playwright E2E tests via pnpm",
+      "usedBy": ["developing-lt-frontend", "building-stories-with-tdd", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(pnpm dlx vitest:*)",
+      "description": "Run Vitest tests via pnpm",
+      "usedBy": ["building-stories-with-tdd", "generating-nest-servers", "branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(pnpm run dev:*)",
+      "description": "Run development server via pnpm",
+      "usedBy": ["developing-lt-frontend", "generating-nest-servers"]
+    },
+    {
+      "pattern": "Bash(pnpm start:*)",
+      "description": "Start the application via pnpm",
+      "usedBy": ["generating-nest-servers"]
+    },
+    {
+      "pattern": "Bash(pnpm run start:*)",
+      "description": "Start the application in different modes via pnpm",
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend"]
+    },
+    {
+      "pattern": "Bash(pnpm run build:*)",
+      "description": "Build the application via pnpm",
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(pnpm run lint:*)",
+      "description": "Run linter checks via pnpm",
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(pnpm run generate-types:*)",
+      "description": "Generate TypeScript types via pnpm",
+      "usedBy": ["developing-lt-frontend", "fullstack-updating"]
+    },
+    {
+      "pattern": "Bash(pnpm audit:*)",
+      "description": "Run security audit via pnpm",
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit", "review", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(pnpm install:*)",
+      "description": "Install packages via pnpm",
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(pnpm add:*)",
+      "description": "Add packages via pnpm",
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(pnpm remove:*)",
+      "description": "Remove packages via pnpm",
+      "usedBy": ["maintaining-npm-packages"]
+    },
+    {
+      "pattern": "Bash(pnpm dlx ncu:*)",
+      "description": "Check for package updates via pnpm",
+      "usedBy": ["maintaining-npm-packages"]
+    },
+    {
+      "pattern": "Bash(pnpm run update:*)",
+      "description": "Run project update script via pnpm",
+      "usedBy": ["nest-server-updating", "fullstack-updating"]
+    },
+    {
+      "pattern": "Bash(pnpm list:*)",
+      "description": "List installed packages via pnpm",
+      "usedBy": ["nest-server-updating", "sec-audit", "fullstack-updating"]
+    },
+    {
+      "pattern": "Bash(pnpm outdated:*)",
+      "description": "Check for outdated packages via pnpm",
+      "usedBy": ["sec-audit", "npm-package-maintenance"]
+    },
+    {
+      "pattern": "Bash(pnpm view:*)",
+      "description": "View package information via pnpm",
+      "usedBy": ["nest-server-updating", "fullstack-updating"]
+    },
+    {
+      "pattern": "Bash(pnpm run format:*)",
+      "description": "Run code formatter via pnpm",
+      "usedBy": ["review", "branch-rebaser", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(pnpm run prettier:*)",
+      "description": "Run Prettier via pnpm",
+      "usedBy": ["review", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(pnpm dlx oxlint:*)",
+      "description": "Run oxlint via pnpm",
+      "usedBy": ["branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(pnpm dlx oxfmt:*)",
+      "description": "Run oxfmt via pnpm",
+      "usedBy": ["branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(yarn test:*)",
+      "description": "Run yarn test commands",
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(yarn run test:*)",
+      "description": "Run yarn run test commands",
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(yarn run test\\:e2e:*)",
+      "description": "Run end-to-end tests via yarn",
+      "usedBy": ["generating-nest-servers", "building-stories-with-tdd", "developing-lt-frontend", "review", "branch-rebaser", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(yarn dlx playwright:*)",
+      "description": "Run Playwright E2E tests via yarn",
+      "usedBy": ["developing-lt-frontend", "building-stories-with-tdd", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(yarn dlx vitest:*)",
+      "description": "Run Vitest tests via yarn",
+      "usedBy": ["building-stories-with-tdd", "generating-nest-servers", "branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(yarn run dev:*)",
+      "description": "Run development server via yarn",
+      "usedBy": ["developing-lt-frontend", "generating-nest-servers"]
+    },
+    {
+      "pattern": "Bash(yarn start:*)",
+      "description": "Start the application via yarn",
+      "usedBy": ["generating-nest-servers"]
+    },
+    {
+      "pattern": "Bash(yarn run start:*)",
+      "description": "Start the application in different modes via yarn",
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend"]
+    },
+    {
+      "pattern": "Bash(yarn run build:*)",
+      "description": "Build the application via yarn",
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(yarn run lint:*)",
+      "description": "Run linter checks via yarn",
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(yarn run generate-types:*)",
+      "description": "Generate TypeScript types via yarn",
+      "usedBy": ["developing-lt-frontend", "fullstack-updating"]
+    },
+    {
+      "pattern": "Bash(yarn audit:*)",
+      "description": "Run security audit via yarn",
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit", "review", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(yarn install:*)",
+      "description": "Install packages via yarn",
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(yarn add:*)",
+      "description": "Add packages via yarn",
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(yarn remove:*)",
+      "description": "Remove packages via yarn",
+      "usedBy": ["maintaining-npm-packages"]
+    },
+    {
+      "pattern": "Bash(yarn dlx ncu:*)",
+      "description": "Check for package updates via yarn",
+      "usedBy": ["maintaining-npm-packages"]
+    },
+    {
+      "pattern": "Bash(yarn run update:*)",
+      "description": "Run project update script via yarn",
+      "usedBy": ["nest-server-updating", "fullstack-updating"]
+    },
+    {
+      "pattern": "Bash(yarn list:*)",
+      "description": "List installed packages via yarn",
+      "usedBy": ["nest-server-updating", "sec-audit", "fullstack-updating"]
+    },
+    {
+      "pattern": "Bash(yarn outdated:*)",
+      "description": "Check for outdated packages via yarn",
+      "usedBy": ["sec-audit", "npm-package-maintenance"]
+    },
+    {
+      "pattern": "Bash(yarn info:*)",
+      "description": "View package information via yarn",
+      "usedBy": ["nest-server-updating", "fullstack-updating"]
+    },
+    {
+      "pattern": "Bash(yarn run format:*)",
+      "description": "Run code formatter via yarn",
+      "usedBy": ["review", "branch-rebaser", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(yarn run prettier:*)",
+      "description": "Run Prettier via yarn",
+      "usedBy": ["review", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(yarn dlx oxlint:*)",
+      "description": "Run oxlint via yarn",
+      "usedBy": ["branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(yarn dlx oxfmt:*)",
+      "description": "Run oxfmt via yarn",
+      "usedBy": ["branch-rebaser"]
+    },
+    {
       "pattern": "Bash(gh release:*)",
       "description": "Access GitHub releases via gh CLI",
       "usedBy": ["nest-server-updating", "fullstack-updating"]

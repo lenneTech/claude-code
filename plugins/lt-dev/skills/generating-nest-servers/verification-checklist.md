@@ -218,7 +218,7 @@ describe('ProductResolver', () => {
    - Confirm tests adapted to security (not vice versa)
 
 5. **Final Validation:**
-   - Run all tests: `npm test`
+   - Run all tests: `npm test` (NODE_ENV=e2e is set in package.json scripts)
    - Check TypeScript: `npm run build`
    - Run linter: `npm run lint`
 

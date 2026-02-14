@@ -73,6 +73,27 @@ Initial TodoWrite (after Phase 1):
 
 ## Execution Protocol
 
+### Package Manager Detection
+
+Before executing any commands, detect the project's package manager:
+
+```bash
+ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
+```
+
+| Lockfile | Package Manager | Run scripts | Execute binaries |
+|----------|----------------|-------------|-----------------|
+| `pnpm-lock.yaml` | `pnpm` | `pnpm run X` | `pnpm dlx X` |
+| `yarn.lock` | `yarn` | `yarn run X` | `yarn dlx X` |
+| `package-lock.json` / none | `npm` | `npm run X` | `npx X` |
+
+**Key differences from npm:**
+- Install package: `pnpm add pkg` / `yarn add pkg` (not `install pkg`)
+- Remove package: `pnpm remove pkg` / `yarn remove pkg` (not `uninstall pkg`)
+- Package info: `yarn info pkg` (not `yarn view pkg`)
+
+All examples below use `npm` notation. **Adapt all commands** to the detected package manager.
+
 ### Phase 1: Project Analysis
 
 1. **Detect project structure:**

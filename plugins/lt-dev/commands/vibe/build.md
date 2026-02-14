@@ -38,6 +38,12 @@ Read IMPLEMENTATION_PLAN.md and SPEC.md.
 6. **DO NOT STOP** until all checkboxes are checked AND browser testing passes
 7. **Only interrupt** for critical blockers (missing credentials, major ambiguities)
 
+### Package Manager
+
+Detect from lockfile (`pnpm-lock.yaml` / `yarn.lock` / `package-lock.json`).
+All examples use `npm` notation - adapt to detected package manager.
+`npx` → `pnpm dlx` / `yarn dlx`.
+
 ### Workflow
 
 ```

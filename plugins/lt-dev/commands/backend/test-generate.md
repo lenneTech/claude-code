@@ -49,7 +49,7 @@ Analyze recent changes and create appropriate tests:
    - Test with Other User (should fail with 403)
    - Test permission failures
 
-5. **Test Execution**:
+5. **Test Execution** (NODE_ENV=e2e is set in package.json scripts):
    ```bash
    npm run test:e2e
    ```

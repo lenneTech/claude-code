@@ -141,26 +141,52 @@ const uniqueName = `Test-Entity-${Date.now()}`;
 
 ## Test Environment Configuration
 
+### NODE_ENV Values
+
+**CRITICAL: Understand the NODE_ENV values and their purpose!**
+
+| NODE_ENV | Purpose | Used By |
+|----------|---------|---------|
+| `e2e` | **Local tests** (vitest, e2e-spec) | Developers running tests locally |
+| `ci` | **CI/CD tests** | GitHub Actions, GitLab CI pipelines |
+| `develop` | **Development server** | Deployed server for developers |
+| `test` | **Customer staging server** | Deployed server for customer testing |
+| `production` | **Production server** | Live production deployment |
+
+**Key rule: `NODE_ENV=e2e` for ALL local backend tests!**
+- `NODE_ENV=test` is **NOT** for running tests - it configures the customer-facing staging server
+- `NODE_ENV=ci` is for CI/CD pipelines only, not for local execution
+
 ### Separate Test Database
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
 │  ENVIRONMENT SEPARATION                                                    │
 │                                                                            │
-│  Development:                                                              │
+│  Local Development:                                                        │
 │  ├── Database: mongodb://localhost:27017/app-dev                           │
 │  ├── Port: 3000 (API), 3001 (App)                                          │
-│  └── .env.development                                                      │
+│  └── NODE_ENV=develop (or unset)                                           │
 │                                                                            │
-│  Testing:                                                                  │
-│  ├── Database: mongodb://localhost:27017/app-test (SEPARATE!)              │
-│  ├── Port: 3100 (API), 3101 (App)                                          │
-│  └── .env.test                                                             │
+│  Local Testing (vitest):                                                   │
+│  ├── Database: mongodb://localhost:27017/app-e2e (SEPARATE!)               │
+│  ├── Port: assigned by TestHelper (random)                                 │
+│  └── NODE_ENV=e2e                                                          │
+│                                                                            │
+│  CI/CD Testing:                                                            │
+│  ├── Database: mongodb://localhost:27017/app-ci                            │
+│  ├── Port: assigned by TestHelper (random)                                 │
+│  └── NODE_ENV=ci                                                           │
+│                                                                            │
+│  Customer Staging Server:                                                  │
+│  ├── Database: Staging MongoDB                                             │
+│  ├── Port: configured                                                      │
+│  └── NODE_ENV=test                                                         │
 │                                                                            │
 │  Production:                                                               │
 │  ├── Database: Production MongoDB (Atlas/Self-hosted)                      │
 │  ├── Port: 3000 (or configured)                                            │
-│  └── .env.production                                                       │
+│  └── NODE_ENV=production                                                   │
 │                                                                            │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -172,16 +198,17 @@ const uniqueName = `Test-Entity-${Date.now()}`;
 ```json
 {
   "scripts": {
-    "start:dev": "NODE_ENV=development nest start --watch",
-    "start:test": "NODE_ENV=test nest start --watch",
-    "test": "NODE_ENV=test vitest run",
-    "test:watch": "NODE_ENV=test vitest",
-    "test:cov": "NODE_ENV=test vitest run --coverage",
-    "test:e2e": "NODE_ENV=test vitest run --config ./vitest.e2e.config.ts",
-    "test:stories": "NODE_ENV=test vitest run --dir tests/stories"
+    "start:dev": "NODE_ENV=develop nest start --watch",
+    "test": "NODE_ENV=e2e vitest run",
+    "test:watch": "NODE_ENV=e2e vitest",
+    "test:cov": "NODE_ENV=e2e vitest run --coverage",
+    "test:e2e": "NODE_ENV=e2e vitest run --config ./vitest.e2e.config.ts",
+    "test:stories": "NODE_ENV=e2e vitest run --dir tests/stories"
   }
 }
 ```
+
+**Note:** `NODE_ENV=e2e` is for local test execution. CI/CD pipelines override this with `NODE_ENV=ci`.
 
 #### Frontend (projects/app/package.json)
 
@@ -205,9 +232,7 @@ const uniqueName = `Test-Entity-${Date.now()}`;
   "scripts": {
     "test:backend": "npm test --workspace=projects/api",
     "test:frontend": "npm run test:e2e --workspace=projects/app",
-    "test:all": "npm run test:backend && npm run test:frontend",
-    "start:test:api": "npm run start:test --workspace=projects/api",
-    "start:test:app": "npm run dev:test --workspace=projects/app"
+    "test:all": "npm run test:backend && npm run test:frontend"
   }
 }
 ```
@@ -220,25 +245,33 @@ const uniqueName = `Test-Entity-${Date.now()}`;
 import { ConfigEnv } from '@lenne.tech/nest-server';
 
 // Environment-specific configuration
+// NODE_ENV values: e2e (local tests), ci (CI/CD tests), develop, test (staging), production
 const envConfig: Record<string, Partial<ConfigEnv>> = {
-  development: {
+  develop: {
     mongoose: {
       uri: 'mongodb://localhost:27017/app-dev',
     },
     port: 3000,
   },
-  test: {
+  e2e: {
+    // Local test execution (vitest)
     mongoose: {
-      uri: 'mongodb://localhost:27017/app-test',
+      uri: 'mongodb://localhost:27017/app-e2e',
     },
-    port: 3100,
-    // Disable email sending in tests
-    email: {
-      smtp: {
-        host: 'localhost',
-        port: 1025, // Mailhog
-      },
+    // Port assigned by TestHelper (random) - do not hardcode
+  },
+  ci: {
+    // CI/CD pipeline tests (GitHub Actions, GitLab CI)
+    mongoose: {
+      uri: 'mongodb://localhost:27017/app-ci',
     },
+  },
+  test: {
+    // Customer-facing staging server (NOT for running tests!)
+    mongoose: {
+      uri: process.env.MONGODB_URI,
+    },
+    port: parseInt(process.env.PORT) || 3000,
   },
   production: {
     mongoose: {
@@ -249,7 +282,7 @@ const envConfig: Record<string, Partial<ConfigEnv>> = {
 };
 
 export function getConfig(): ConfigEnv {
-  const env = process.env.NODE_ENV || 'development';
+  const env = process.env.NODE_ENV || 'develop';
   return {
     ...defaultConfig,
     ...envConfig[env],
@@ -262,10 +295,10 @@ export function getConfig(): ConfigEnv {
 ```typescript
 import { TestHelper } from '@lenne.tech/nest-server/test';
 
-// TestHelper automatically uses NODE_ENV=test configuration
+// TestHelper automatically uses NODE_ENV=e2e configuration (set via npm scripts)
 export async function createTestHelper(): Promise<TestHelper> {
   const testHelper = await TestHelper.create({
-    // Uses src/config.env.ts with NODE_ENV=test
+    // Uses src/config.env.ts with NODE_ENV=e2e
   });
   return testHelper;
 }
@@ -301,17 +334,17 @@ export default defineConfig({
     },
   ],
 
-  // Start both API and App in test mode
+  // Start both API and App for E2E tests
   webServer: [
     {
-      command: 'npm run start:test --workspace=projects/api',
-      url: 'http://localhost:3100/api',
+      command: 'NODE_ENV=e2e npm run start:dev --workspace=projects/api',
+      url: 'http://localhost:3000/api',
       reuseExistingServer: !process.env.CI,
       timeout: 120 * 1000,
     },
     {
-      command: 'npm run dev:test --workspace=projects/app',
-      url: 'http://localhost:3101',
+      command: 'npm run dev --workspace=projects/app',
+      url: 'http://localhost:3001',
       reuseExistingServer: !process.env.CI,
       timeout: 120 * 1000,
     },

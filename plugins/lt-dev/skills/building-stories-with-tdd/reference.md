@@ -95,8 +95,18 @@ description: Quick reference guide for Test-Driven Development workflow
 
 ### Running Tests
 
+**IMPORTANT: Backend tests MUST run with `NODE_ENV=e2e` (set in npm scripts).**
+
+| NODE_ENV | Purpose |
+|----------|---------|
+| `e2e` | Local tests (vitest) |
+| `ci` | CI/CD tests (GitHub/GitLab) |
+| `develop` | Dev server |
+| `test` | Customer staging server (NOT for running tests!) |
+| `production` | Production server |
+
 ```bash
-# Run all tests
+# Run all tests (NODE_ENV=e2e is set in package.json scripts)
 npm test
 
 # Run specific story test
@@ -107,6 +117,9 @@ npm run test:cov
 
 # Run tests in watch mode
 npm run test:watch
+
+# If running vitest directly (without npm scripts), set NODE_ENV explicitly:
+NODE_ENV=e2e npx vitest run
 ```
 
 ### Using nest-server-generator Skill
@@ -737,7 +750,7 @@ export default {
 Enable validation debugging via environment variable:
 
 ```bash
-# In your terminal or test script
+# In your terminal or test script (NODE_ENV=e2e is set via npm scripts)
 DEBUG_VALIDATION=true npm test
 
 # Or in your test file

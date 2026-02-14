@@ -53,6 +53,27 @@ Initial TodoWrite:
 
 ## Execution Protocol
 
+### Package Manager Detection
+
+Before executing any commands, detect the project's package manager:
+
+```bash
+ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
+```
+
+| Lockfile | Package Manager | Run scripts | Execute binaries |
+|----------|----------------|-------------|-----------------|
+| `pnpm-lock.yaml` | `pnpm` | `pnpm run X` | `pnpm dlx X` |
+| `yarn.lock` | `yarn` | `yarn run X` | `yarn dlx X` |
+| `package-lock.json` / none | `npm` | `npm run X` | `npx X` |
+
+**Key differences from npm:**
+- Install package: `pnpm add pkg` / `yarn add pkg` (not `install pkg`)
+- Remove package: `pnpm remove pkg` / `yarn remove pkg` (not `uninstall pkg`)
+- Package info: `yarn info pkg` (not `yarn view pkg`)
+
+All examples below use `npm` notation. **Adapt all commands** to the detected package manager.
+
 ### Phase 0: Context Analysis
 
 1. **Get the diff:**
@@ -111,20 +132,67 @@ Validate that changes fulfill their purpose:
 
 Validate test coverage and quality:
 
-- [ ] Run existing test suite — **all** tests pass
-- [ ] New functionality has corresponding tests
-- [ ] Modified functionality has updated tests
+- [ ] Run existing test suite — **all** tests pass (regression check)
+- [ ] New functionality has corresponding tests (coverage check)
+- [ ] Modified functionality has updated tests (coverage check)
 - [ ] No previously existing tests were removed without justification
 - [ ] Test naming follows project conventions
 - [ ] Tests cover success and failure paths
 
-Execute test commands:
+#### Step 1: Run Test Suite (Regression Check)
+
+Execute test commands (NODE_ENV=e2e is set in package.json scripts for local execution):
 ```bash
 # Run ALL test commands identified in Phase 0
 npm test
 # npm run test:e2e (if available)
 # npm run test:unit (if available)
 ```
+
+**NODE_ENV reference:** `e2e` = local tests, `ci` = CI/CD, `develop` = dev server, `test` = customer staging, `production` = live.
+
+**IMPORTANT:** A green test suite is a necessary but NOT sufficient condition for 100% fulfillment. All tests passing only proves no regression — it does NOT prove new functionality is tested.
+
+#### Step 2: Verify New Code Has Tests (Coverage Check)
+
+**This step is MANDATORY and CRITICAL for accurate scoring.**
+
+For each changed file from the diff (excluding config files, lockfiles, .npmrc, etc.):
+
+1. **Identify new/modified logic** — functions, methods, branches, conditions added or changed
+2. **Search for tests that exercise this logic:**
+   ```bash
+   # Search for test files referencing changed functions/classes
+   grep -r "functionName\|ClassName\|methodName" tests/ --include="*.ts" -l
+   ```
+3. **Read matching test files** to verify they actually test the new behavior, not just reference the class
+4. **Check for untested paths** — especially:
+   - New conditional branches (if/else, ternary)
+   - New configuration options
+   - New parameters or function signatures
+   - Edge cases (null, undefined, empty values)
+
+**Scoring Rules:**
+
+| Scenario | Score |
+|----------|-------|
+| All tests pass AND all new logic has dedicated tests | 100% ✅ |
+| All tests pass AND some new logic has tests, some doesn't | 70-90% ⚠️ |
+| All tests pass BUT no new logic is tested (regression only) | 50-60% ⚠️ |
+| Tests fail | <50% ❌ |
+
+**Common Trap — DO NOT fall for these justifications:**
+- ❌ "It's a passthrough to a library" — The glue code (config reading, parameter passing, conditional logic) is YOUR code and needs tests
+- ❌ "The library handles it internally" — Tests verify YOUR integration, not the library
+- ❌ "It's backward compatible/optional" — Optional features still need tests proving they work when enabled
+- ❌ "Existing tests cover it implicitly" — Verify this claim by reading the actual test code; if no test explicitly exercises the new path, it's untested
+
+**What to report for untested code:**
+- List each untested function/method/branch with file path and line numbers
+- Classify severity: High (business logic, security), Medium (configuration, integration), Low (cosmetic, logging)
+- Add to Remediation Catalog with specific test suggestions
+
+#### Step 3: Flaky Test Detection
 
 **Pre-existing test failures:** Failing tests from prior code changes are still failing tests. They MUST be fixed regardless of whether they relate to the current changes. A green test suite is a non-negotiable prerequisite for any merge.
 
@@ -206,8 +274,68 @@ Validate documentation completeness:
 - [ ] Complex logic has explanatory comments
 - [ ] Public API functions/methods have descriptions
 - [ ] README or docs updated if user-facing behavior changed
-- [ ] Migration guide provided if breaking changes introduced
-- [ ] Configuration changes documented
+- [ ] Migration guide provided if changes require user action or introduce new features
+- [ ] Configuration changes documented (interfaces, JSDoc, README)
+
+#### Documentation Verification Steps
+
+**This is MANDATORY for any changes that introduce new features, config options, or behavioral changes.**
+
+##### Step 1: Check Module Documentation
+
+For each changed module in `src/core/modules/*/`:
+1. **Read the module's README.md** — does it document the new feature/option?
+2. **Check interface JSDoc** — are new config options documented with examples?
+3. **Check INTEGRATION-CHECKLIST.md** — does it need updates for new integration steps?
+
+```bash
+# Find module documentation for changed files
+ls src/core/modules/*/README.md
+ls src/core/modules/*/INTEGRATION-CHECKLIST.md
+```
+
+##### Step 2: Check Migration Guide
+
+Determine if a migration guide is needed:
+
+| Change Type | Migration Guide Required? |
+|-------------|--------------------------|
+| New config option (opt-in) | Yes — developers need to know it exists |
+| New feature with new API | Yes |
+| Breaking change | Yes (mandatory) |
+| Bugfix (no user action) | No |
+| Internal refactoring | No |
+| New dependency | Yes — `pnpm install` needed |
+
+If required, check if a guide exists:
+```bash
+ls migration-guides/
+```
+
+Compare the latest guide version with the current `package.json` version. If the changes are for a version not yet covered, flag it.
+
+##### Step 3: Check Interface Documentation
+
+For changes that add new config options:
+1. **Read the relevant interface** in `src/core/common/interfaces/server-options.interface.ts`
+2. Verify JSDoc comments include:
+   - Description of the new option
+   - Example usage in `@example` block
+   - `@see` links if applicable
+
+**Scoring Rules:**
+
+| Scenario | Score |
+|----------|-------|
+| All docs updated (README, interface, migration guide where applicable) | 100% ✅ |
+| Code comments present, but README/migration guide missing | 60-80% ⚠️ |
+| No documentation for new user-facing features | <60% ❌ |
+| Internal-only changes, no user-facing docs needed | 100% ✅ |
+
+**Common Trap — DO NOT fall for these justifications:**
+- ❌ "The feature is optional" — Optional features still need documentation so developers know they exist
+- ❌ "It's a passthrough to a library" — The configuration path through YOUR interface needs to be documented
+- ❌ "Code comments are sufficient" — Developers look in README and migration guides first, not source code
 
 ---
 
@@ -235,7 +363,7 @@ Generate a structured report in the following format:
 [Findings with file references and line numbers]
 
 ### 2. Tests
-[Findings including test execution results]
+[Findings split into: Regression (pass/fail), Coverage (new logic tested?), with untested code listed]
 
 ### 3. Formatting
 [Findings including linter/formatter output]
@@ -250,7 +378,7 @@ Generate a structured report in the following format:
 [Findings with severity classification]
 
 ### 7. Documentation
-[Findings with suggestions]
+[Findings split into: Code comments, README/module docs, interface JSDoc, migration guide — with specific files checked]
 
 ### Remediation Catalog (only for non-fulfilled items)
 | # | Category | Priority | Action |
@@ -280,6 +408,12 @@ Each phase has a set of checklist items. The fulfillment percentage is:
 `(passed items / total applicable items) * 100`
 
 Items not applicable to the project type are excluded from the total.
+
+**Special Rule for Tests Phase:** The test phase has TWO sub-scores that are weighted:
+- **Regression** (40%): Do all existing tests pass?
+- **Coverage** (60%): Is new/modified logic covered by dedicated tests?
+
+A green test suite with zero new tests for new functionality scores at most ~60% (40% regression + partial coverage credit), NOT 100%. This prevents the common error of equating "no regression" with "fully tested".
 
 ---
 

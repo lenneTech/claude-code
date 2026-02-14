@@ -193,6 +193,7 @@ claude plugins install typescript-lsp --marketplace claude-plugins-official
 **Details: `workflow.md` -> Step 3**
 
 ```bash
+# NODE_ENV=e2e is set in package.json scripts for local test execution
 npm test  # Or: npm test -- tests/stories/your-story.story.test.ts
 ```
 

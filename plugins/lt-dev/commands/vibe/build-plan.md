@@ -48,6 +48,12 @@ Read SPEC.md deeply and create **IMPLEMENTATION_PLAN.md**.
 5. **Quality Assurance** - Lint + Build must pass
 6. **Browser Testing** - Test with Chrome MCP using initial user
 
+#### Package Manager
+
+Detect from lockfile (`pnpm-lock.yaml` / `yarn.lock` / `package-lock.json`).
+All examples use `npm` notation - adapt to detected package manager.
+`npx` → `pnpm dlx` / `yarn dlx`.
+
 **All development runs in Docker!**
 
 #### Docker Check
@@ -134,6 +140,12 @@ Ultrathink: What's the cleanest, most maintainable way to build this?
 4. **No mock data** - Frontend always uses real backend API
 5. **Checkbox after EVERY task** - Mark `- [x]` immediately after completing
 6. **DO NOT STOP** until all checkboxes are checked AND browser testing passes
+
+#### Package Manager
+
+Detect from lockfile (`pnpm-lock.yaml` / `yarn.lock` / `package-lock.json`).
+All examples use `npm` notation - adapt to detected package manager.
+`npx` → `pnpm dlx` / `yarn dlx`.
 
 #### Workflow
 

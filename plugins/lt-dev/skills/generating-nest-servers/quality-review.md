@@ -122,7 +122,7 @@ For each file, review:
    - **Cleanup patterns**: How is afterAll/afterEach structured?
    - **Error testing**: How are failures/validations tested?
 
-6. **Verify existing tests run successfully**:
+6. **Verify existing tests run successfully (NODE_ENV=e2e is set in package.json scripts):**
    ```bash
    # Run existing tests to ensure they pass
    npm run test:e2e
@@ -692,7 +692,7 @@ afterAll(async () => {
 
 ## Step 6: Pre-Report Testing
 
-**MANDATORY**: Run all tests before reporting:
+**MANDATORY**: Run all tests before reporting (NODE_ENV=e2e is set in package.json scripts):
 
 ```bash
 # Run TypeScript compilation

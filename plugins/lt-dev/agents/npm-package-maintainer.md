@@ -80,10 +80,31 @@ This agent should be used when:
 2. **API Stability**: Function signatures and return values MUST NOT change
 3. **Minimal Source Changes**: Source code modifications should be minimal
 4. **Exact Versioning**: All packages MUST use exact versions (no ^, ~, or ranges)
-5. **Security Guarantee**: ALWAYS run `npm audit fix` after package updates
-6. **Final Verification**: `npm run build` and `npm test` MUST pass - NON-NEGOTIABLE
+5. **Security Guarantee**: ALWAYS run `npm audit fix` after package updates (adapt to detected package manager)
+6. **Final Verification**: `npm run build` and `npm test` MUST pass - NON-NEGOTIABLE (adapt to detected package manager)
 
 ## Execution Protocol
+
+### Package Manager Detection
+
+Before executing any commands, detect the project's package manager:
+
+```bash
+ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
+```
+
+| Lockfile | Package Manager | Run scripts | Execute binaries |
+|----------|----------------|-------------|-----------------|
+| `pnpm-lock.yaml` | `pnpm` | `pnpm run X` | `pnpm dlx X` |
+| `yarn.lock` | `yarn` | `yarn run X` | `yarn dlx X` |
+| `package-lock.json` / none | `npm` | `npm run X` | `npx X` |
+
+**Key differences from npm:**
+- Install package: `pnpm add pkg` / `yarn add pkg` (not `install pkg`)
+- Remove package: `pnpm remove pkg` / `yarn remove pkg` (not `uninstall pkg`)
+- Package info: `yarn info pkg` (not `yarn view pkg`)
+
+All examples below use `npm` notation. **Adapt all commands** to the detected package manager.
 
 ### Phase 0: Baseline & Package Inventory
 

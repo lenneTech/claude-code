@@ -612,7 +612,7 @@ Tests run in parallel, so improper test data management causes:
 
 ## Step 3: Run Tests & Analyze Failures
 
-**Execute all tests:**
+**Execute all tests (NODE_ENV=e2e is set in package.json scripts):**
 ```bash
 npm test
 ```
@@ -839,7 +839,7 @@ See **reference.md** for detailed debugging instructions and examples.
 
 ## Step 5: Validate & Iterate
 
-**Run ALL tests:**
+**Run ALL tests (NODE_ENV=e2e is set in package.json scripts):**
 ```bash
 npm test
 ```
@@ -951,7 +951,7 @@ Code duplication detected?
 
 ### 6. Run Tests After Refactoring & Security Review
 
-**CRITICAL: After any refactoring, adding indexes, or security fixes:**
+**CRITICAL: After any refactoring, adding indexes, or security fixes (NODE_ENV=e2e via npm scripts):**
 
 ```bash
 npm test
@@ -983,7 +983,7 @@ npm test
 
 **After refactoring (or deciding not to refactor):**
 
-1. **Run ALL tests one final time:**
+1. **Run ALL tests one final time (NODE_ENV=e2e via npm scripts):**
    ```bash
    npm test
    ```
