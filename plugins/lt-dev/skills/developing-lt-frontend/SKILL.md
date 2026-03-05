@@ -63,6 +63,7 @@ project/
 - `generating-nest-servers` - For NestJS backend development (projects/api/)
 - `using-lt-cli` - For Git operations and Fullstack initialization
 - `building-stories-with-tdd` - For complete TDD workflow (Backend + Frontend)
+- `/lt-dev:frontend:env-migrate` - Migrate env variables to `NUXT_` prefix convention
 
 **In monorepo projects:**
 - `projects/app/` or `packages/app/` → **This skill**
