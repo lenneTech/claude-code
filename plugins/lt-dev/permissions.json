@@ -45,12 +45,12 @@
     {
       "pattern": "Bash(npm run build:*)",
       "description": "Build the application",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "coordinating-agent-teams"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "coordinating-agent-teams", "env-migrate"]
     },
     {
       "pattern": "Bash(npm run lint:*)",
       "description": "Run linter checks",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate"]
     },
     {
       "pattern": "Bash(npm run generate-types:*)",
@@ -165,12 +165,12 @@
     {
       "pattern": "Bash(pnpm run build:*)",
       "description": "Build the application via pnpm",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "coordinating-agent-teams"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "coordinating-agent-teams", "env-migrate"]
     },
     {
       "pattern": "Bash(pnpm run lint:*)",
       "description": "Run linter checks via pnpm",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate"]
     },
     {
       "pattern": "Bash(pnpm run generate-types:*)",
@@ -285,12 +285,12 @@
     {
       "pattern": "Bash(yarn run build:*)",
       "description": "Build the application via yarn",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "coordinating-agent-teams"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "coordinating-agent-teams", "env-migrate"]
     },
     {
       "pattern": "Bash(yarn run lint:*)",
       "description": "Run linter checks via yarn",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate"]
     },
     {
       "pattern": "Bash(yarn run generate-types:*)",
