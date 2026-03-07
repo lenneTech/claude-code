@@ -1,9 +1,9 @@
 ---
 name: branch-rebaser
-description: Autonomous agent for rebasing feature branches onto the development branch. Handles conflict resolution, Linear ticket analysis, code optimization, linting (oxfmt/oxlint), testing, and code review. Spawned by /lt-dev:git:rebase and /lt-dev:git:rebase-mrs commands.
+description: Autonomous agent for rebasing feature branches onto the development branch. Handles conflict resolution, Linear ticket analysis, code optimization, linting (oxfmt/oxlint), testing, and code review.
 model: sonnet
-tools: Bash, Read, Grep, Glob, Write, Edit, Task, TodoWrite, Skill, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
-permissionMode: default
+tools: Bash, Read, Grep, Glob, Write, Edit, TodoWrite, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
+permissionMode: acceptEdits
 memory: project
 skills: generating-nest-servers, developing-lt-frontend, rebasing-branches
 ---

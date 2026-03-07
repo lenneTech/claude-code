@@ -108,56 +108,12 @@ claude plugins install typescript-lsp --marketplace claude-plugins-official
 
 ---
 
-## GOLDEN RULES: API-First Testing
+## GOLDEN RULES
 
-**READ THIS BEFORE WRITING ANY TEST!**
+1. **Test through API only** — Use `testHelper.rest()` / `testHelper.graphQl()`. NEVER call Services directly or query DB in test logic. Exception: DB access only for setup/cleanup (roles, verified status).
+2. **Verify before assuming** — ALWAYS read Controllers/Services/Models before writing tests. Never assume endpoints, methods, or properties exist.
 
-### Rule 1: Test Through API Only
-
-**Tests MUST go through REST/GraphQL interfaces using TestHelper. Direct Service or Database access in test logic makes tests WORTHLESS.**
-
-**Why this rule is absolute:**
-- **Security**: Direct Service calls bypass authentication, authorization, guards, decorators
-- **Reality**: Tests must verify what actual users experience through the API
-- **Worthless**: Tests bypassing the API cannot catch real bugs in the security layer
-
-**ALWAYS:**
-- Use `testHelper.rest()` for REST endpoints
-- Use `testHelper.graphQl()` for GraphQL operations
-- Test the complete chain: API -> Guards -> Service -> Database
-
-**NEVER:**
-- Call Services directly: `userService.create()`
-- Query DB in tests: `db.collection('users').findOne()`
-- Mock Controllers/Resolvers
-
-**Only Exception: Setup/Cleanup**
-- Setting roles: `db.collection('users').updateOne({ _id: id }, { $set: { roles: ['admin'] } })`
-- Setting verified: `db.collection('users').updateOne({ _id: id }, { $set: { verified: true } })`
-- Cleanup: `db.collection('entities').deleteMany({ createdBy: userId })`
-
-### Rule 2: Verify Before Assuming
-
-**NEVER assume endpoints, methods, or properties exist - ALWAYS verify by reading the actual code!**
-
-**BEFORE writing tests:**
-- Read Controller files to verify endpoints exist
-- Read Resolver files to verify GraphQL operations exist
-- Read existing tests to understand patterns
-- Document what you verified with file references
-
-**BEFORE implementing:**
-- Read Service files to verify method signatures
-- Read Model files to verify properties and types
-- Read CrudService base class to understand inherited methods
-- Check actual code, don't assume!
-
-**NEVER:**
-- Assume an endpoint exists without reading the controller
-- Assume a method signature without reading the service
-- Guess property names without reading the model
-
-**Full details in Steps 1, 2, and 4 below.**
+**Full details: [workflow.md](workflow.md) -> Steps 1, 2, and 4**
 
 ---
 
@@ -330,17 +286,3 @@ When all tests pass, provide comprehensive report including:
 
 **Best Practice:** Invoke skill for NestJS component work rather than manual editing.
 
-## Remember
-
-1. Tests first, code second - write tests before implementation
-2. Iterate until green - all tests must pass
-3. Security review mandatory - check before final tests
-4. Refactor before done - extract common functionality
-5. Security is sacred - never compromise for passing tests
-6. Quality over speed - good tests and clean code
-7. Ask when uncertain - clarify early
-8. Autonomous execution - work independently, report comprehensively
-9. Match existing patterns - equivalent implementation
-10. Clean up test data - comprehensive cleanup in afterAll
-
-**Goal:** Deliver fully tested, high-quality, maintainable, secure features that integrate seamlessly with existing codebase.

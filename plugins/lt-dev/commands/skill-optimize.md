@@ -1,5 +1,6 @@
 ---
 description: Optimize and validate Claude skill files
+disable-model-invocation: true
 ---
 
 # Skill Optimization

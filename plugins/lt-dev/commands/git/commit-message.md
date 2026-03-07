@@ -1,6 +1,7 @@
 ---
 description: Generate commit message with alternatives
 allowed-tools: Bash(git diff:*), Bash(git status:*), Bash(git log:*)
+disable-model-invocation: true
 ---
 
 # Generate Commit Message

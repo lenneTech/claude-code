@@ -1,6 +1,7 @@
 ---
 description: Generate comprehensive tests for changes
 allowed-tools: Read, Grep, Glob, Edit, Write, Bash(npm run test:*), Bash(npm test:*), Bash(git diff:*), Bash(git status:*)
+disable-model-invocation: true
 ---
 
 # Generate Tests

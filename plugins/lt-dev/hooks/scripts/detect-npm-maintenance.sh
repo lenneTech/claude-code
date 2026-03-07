@@ -2,8 +2,9 @@
 # Detect npm maintenance prompts regardless of framework
 # Suggests maintaining-npm-packages skill for any Node.js project
 
-# Skip if no user prompt
+# Skip if no user prompt or project dir
 [ -z "$CLAUDE_USER_PROMPT" ] && exit 0
+[ -z "$CLAUDE_PROJECT_DIR" ] && exit 0
 
 # Check for npm maintenance keywords in prompt
 if echo "$CLAUDE_USER_PROMPT" | grep -iqE '(npm audit|update.*packages|outdated.*packages|packages.*update|packages.*outdated|dependency.*update|update.*dependenc|security.*fix.*package|vulnerabilit.*package|maintain.*package|package.*maintain|unused.*dependenc|devDependenc|package.json.*(optimiz|aufräum|clean))'; then

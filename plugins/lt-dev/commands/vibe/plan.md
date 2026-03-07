@@ -1,6 +1,7 @@
 ---
 description: Create detailed implementation plan from SPEC.md
 argument-hint: [spec-file]
+disable-model-invocation: true
 ---
 
 # Plan

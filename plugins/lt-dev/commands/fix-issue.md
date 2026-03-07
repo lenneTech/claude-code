@@ -1,6 +1,7 @@
 ---
 description: Work on a Linear issue by ID
-argument-hint: <issue-id>
+argument-hint: [issue-id]
+disable-model-invocation: true
 ---
 
 # Fix Linear Issue

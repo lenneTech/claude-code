@@ -1,5 +1,6 @@
 ---
 description: Create plugin element (skill, command, agent, hook, script)
+disable-model-invocation: true
 ---
 
 # Create Plugin Element

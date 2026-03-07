@@ -1,7 +1,8 @@
 ---
 description: Comprehensive code review across 7 quality dimensions
 argument-hint: [issue-id] [--base=main] [--team] [--no-team]
-allowed-tools: Read, Grep, Glob, Bash, Task, AskUserQuestion
+allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(echo:*), Task, AskUserQuestion
+disable-model-invocation: true
 ---
 
 # Code Review

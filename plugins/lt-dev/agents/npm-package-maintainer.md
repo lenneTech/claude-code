@@ -1,9 +1,9 @@
 ---
 name: npm-package-maintainer
-description: Specialized agent for maintaining, updating, and auditing npm packages. Use when performing package maintenance, security audits, dependency optimization, or before/after releases. Invoked via /maintain commands.
+description: Specialized agent for maintaining, updating, and auditing npm packages. Use when performing package maintenance, security audits, dependency optimization, or before/after releases.
 model: sonnet
-tools: Bash, Read, Grep, Glob, Write, Edit
-permissionMode: default
+tools: Bash, Read, Grep, Glob, Write, Edit, TodoWrite
+permissionMode: acceptEdits
 memory: project
 skills: maintaining-npm-packages
 ---

@@ -1,6 +1,6 @@
 ---
 name: coordinating-agent-teams
-description: Provides auto-detection heuristics and coordination patterns for Claude Code Agent Teams. Determines when parallel team workflows outperform single-agent execution. Activates when user mentions "agent team", "parallel review", "team debug", or when commands auto-detect team suitability. NOT for single-agent workflows (use Task tool subagents). NOT for subagent coordination within one session.
+description: Provides auto-detection heuristics and coordination patterns for Claude Code Agent Teams. Runs independent review agents, parallel backend+frontend test writers, adversarial debuggers, or parallel git worktree rebases. Activates when user mentions "agent team", "parallel review", "team debug", "parallel worktrees", "batch rebase", or when commands auto-detect team suitability. NOT for single-agent Task tool subagents. NOT for subagent coordination within one session.
 ---
 
 # Coordinating Agent Teams
@@ -62,12 +62,6 @@ Each pattern is described in detail in `patterns.md`. Summary:
 - **message** (1:1): Direct communication between specific teammates. Use for contract sharing, targeted challenges
 - **broadcast** (1:all): Message to all teammates. Use sparingly - only for coordination signals (e.g., "Phase 1 complete, starting Phase 2")
 
-## Quality Gates
-
-- **TeammateIdle hook**: Validates teammate produced meaningful output before going idle
-- **TaskCompleted hook**: Validates task deliverables before allowing completion
-- Both hooks are conservative by default (exit 0) and can be extended as the API stabilizes
-
 ## Token Cost Guidance
 
 Agent Teams cost approximately 3-5x a single agent run. This is justified when:
@@ -89,7 +83,7 @@ Not justified when:
 - **No nested teams**: A teammate cannot spawn its own team
 - **Shared filesystem**: Teammates share the same filesystem (use worktrees for parallel git operations)
 
-## Related Elements
+## Related Skills & Commands
 
 | Element | Relationship |
 |---------|-------------|

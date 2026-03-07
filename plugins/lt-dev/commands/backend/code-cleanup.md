@@ -1,6 +1,7 @@
 ---
 description: Clean up and optimize code quality
 allowed-tools: Read, Grep, Glob, Edit, Bash(npm run build:*), Bash(npm run lint:*), Bash(git diff:*), Bash(git status:*)
+disable-model-invocation: true
 ---
 
 # Code Cleanup

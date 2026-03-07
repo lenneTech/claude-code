@@ -1,6 +1,7 @@
 ---
 description: Migrate Nuxt env variables to NUXT_ prefix convention with automatic useRuntimeConfig() mapping
 allowed-tools: Read, Grep, Glob, Edit, Write, Bash(npm run lint:*), Bash(npm run build:*)
+disable-model-invocation: true
 ---
 
 # Nuxt Environment Variable Migration

@@ -1,6 +1,6 @@
 ---
 name: using-lt-cli
-description: Provides comprehensive reference for the lenne.tech CLI tool (lt command). Covers lt fullstack init (workspace creation), lt git get/reset (branch management), lt server create (project scaffolding), and all lt CLI flags and parameters. Activates when user mentions "lt", "lt CLI", "lenne.tech CLI", fullstack workspace, local templates, or any lt command syntax. NOT for NestJS application code (use generating-nest-servers). NOT for Vue/Nuxt frontend code (use developing-lt-frontend).
+description: Provides comprehensive reference for the lenne.tech CLI tool (lt command). Covers lt fullstack init (workspace creation with local template symlinks), lt git get/reset (branch management), lt server create (project scaffolding), and lt server permissions (security audits). Activates when user mentions "lt", "lt CLI", "lenne.tech CLI", "fullstack workspace", "local templates", "--api-link", "--frontend-link", or any lt command syntax. NOT for NestJS application code (use generating-nest-servers). NOT for Vue/Nuxt frontend code (use developing-lt-frontend).
 ---
 
 # LT CLI Expert
@@ -198,24 +198,6 @@ lt server permissions --path ./projects/api
 
 ---
 
-## How to Redirect to generating-nest-servers
-
-When you detect ANY NestJS server task, immediately inform the user:
-
-**Template response**:
-```
-For NestJS server development tasks, please use the **generating-nest-servers skill** instead.
-
-This skill is specifically designed for all NestJS/nest-server work, including:
-- Creating modules, objects, or properties
-- Modifying existing server code
-- Generating complete server structures
-
-I can help you with your NestJS server task using the generating-nest-servers skill.
-```
-
----
-
 ## Best Practices
 
 ### Git Operations
@@ -259,56 +241,6 @@ git stash        # Save changes temporarily
 lt git get <branch>
 git stash pop    # Restore changes
 ```
-
----
-
-## Working with This Skill
-
-When helping users:
-
-1. **Clarify intent**: Is this a git operation or fullstack setup?
-2. **Redirect server tasks**: Immediately suggest nest-server-generator for any NestJS work
-3. **Provide complete commands**: Include all necessary flags
-4. **Warn about destructive operations**: Always warn before `lt git reset`
-5. **Explain side effects**: Describe what will happen
-
-### Example Response Pattern
-
-**User**: "Switch to branch DEV-456"
-
-**Your response**:
-```bash
-# Switch to branch DEV-456 (creates if it doesn't exist)
-lt git get DEV-456
-
-# This will:
-# ✓ Check if DEV-456 exists locally
-# ✓ If not, check remote
-# ✓ If remote exists, checkout and track
-# ✓ If neither exists, create new branch
-# ✓ Switch to the branch
-```
-
-**User**: "Create a User module"
-
-**Your response**:
-```
-For creating NestJS modules, please use the **generating-nest-servers skill** instead.
-
-That skill is specifically designed for all NestJS/nest-server development tasks.
-
-Then I can help you create the User module with all necessary files and configurations.
-```
-
----
-
-## Important Notes
-
-- **CLI works from anywhere** in your project directory
-- **Automatically finds** the nearest git repository for git commands
-- **Creates missing directories** for fullstack init
-- **Validates inputs** before executing destructive operations
-- **Always use generating-nest-servers skill** for NestJS server development
 
 ---
 

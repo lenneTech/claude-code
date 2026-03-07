@@ -2,6 +2,7 @@
 description: Sync fullstack project with latest nest-server-starter and nuxt-base-starter
 argument-hint: "[--dry-run] [--skip-backend] [--skip-frontend]"
 allowed-tools: Task
+disable-model-invocation: true
 ---
 
 # Update Fullstack Project

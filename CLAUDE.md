@@ -17,6 +17,7 @@ All Claude Code best practices are cached locally in `.claude/docs-cache/*.md`. 
 
 | File | Content |
 |------|---------|
+| `skill-building-guide.md` | Anthropic's official complete guide to building skills **(primary reference)** |
 | `plugins.md` | Plugin structure and manifest |
 | `plugins-reference.md` | Plugin JSON schemas and reference |
 | `skills.md` | Skill YAML frontmatter and configuration |
@@ -52,6 +53,7 @@ All Claude Code best practices are cached locally in `.claude/docs-cache/*.md`. 
 - `md`: Direct Markdown files (downloaded as-is, relative links converted to absolute GitHub URLs)
 - `html`: HTML pages (converted to Markdown via Turndown)
 - `spa`: Single Page Applications (rendered with Playwright, then converted)
+- `pdf`: PDF documents (manually converted to Markdown, not auto-updated by scripts)
 
 **Error handling:** If a source fails to fetch, existing cache is preserved (no data loss)
 

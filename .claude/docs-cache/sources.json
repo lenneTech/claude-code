@@ -20,6 +20,12 @@
   },
   "sources": [
     {
+      "name": "skill-building-guide",
+      "url": "https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf",
+      "type": "pdf",
+      "description": "Anthropic's official complete guide to building skills for Claude - primary reference for skill design, description field formula, progressive disclosure, testing, patterns, and troubleshooting"
+    },
+    {
       "name": "plugins",
       "url": "https://code.claude.com/docs/en/plugins",
       "type": "spa",

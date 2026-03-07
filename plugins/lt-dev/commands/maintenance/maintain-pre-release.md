@@ -1,5 +1,7 @@
 ---
 description: Pre-release npm maintenance - zero-risk patches only
+allowed-tools: Task
+disable-model-invocation: true
 ---
 
 # NPM Package Pre-Release Maintenance

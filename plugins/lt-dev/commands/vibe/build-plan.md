@@ -1,6 +1,7 @@
 ---
 description: Plan + Build in one go (no interruption)
 argument-hint: [spec-file]
+disable-model-invocation: true
 ---
 
 # Full Build (Plan + Build in One Go)

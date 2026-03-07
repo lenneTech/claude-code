@@ -73,7 +73,7 @@ skills/
 ```yaml
 ---
 name: skill-name-kebab-case
-description: Concise description (max 280 chars) focusing on WHEN to use this skill. Must trigger auto-detection correctly.
+description: Concise description (max 1024 chars, ideal 500-700). Formula: [What it does] + [When to use it] + [Key capabilities]. Must trigger auto-detection correctly.
 ---
 
 # Skill Title
@@ -233,8 +233,12 @@ hooks/
 - `PermissionRequest` - When permission is requested
 - `UserPromptSubmit` - When user submits a prompt
 - `SessionStart` - Session initialization
+- `SessionEnd` - Session teardown
 - `Stop` - When main agent finishes
+- `SubagentStart` - When subagent starts
 - `SubagentStop` - When subagent finishes
+- `TeammateIdle` - Agent Teams: teammate waiting for work
+- `TaskCompleted` - Agent Teams: task finished
 - `PreCompact` - Before context compaction
 
 ---

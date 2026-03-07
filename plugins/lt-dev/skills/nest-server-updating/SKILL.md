@@ -1,6 +1,6 @@
 ---
 name: nest-server-updating
-description: Provides migration guides, release notes, and error solutions for updating @lenne.tech/nest-server to a newer version. Covers version-specific breaking changes, stepwise upgrade strategies, and starter project comparisons. Activates for nest-server version updates, upgrades, migrations, breaking changes between versions, or "npm run update". Delegates execution to the lt-dev:nest-server-updater agent. NOT for writing NestJS code or building features (use generating-nest-servers). NOT for general npm package updates (use maintaining-npm-packages).
+description: Provides migration guides, release notes, and error solutions for updating @lenne.tech/nest-server to a newer version. Covers version-specific breaking changes, stepwise upgrade strategies, and starter project comparisons. Activates for nest-server version updates, upgrades, migrations, breaking changes between versions, "npm run update", TypeScript errors after upgrading, or stepwise migration planning. Delegates execution to the lt-dev:nest-server-updater agent. NOT for writing NestJS code or building features (use generating-nest-servers). NOT for general npm package updates (use maintaining-npm-packages).
 ---
 
 # @lenne.tech/nest-server Update Knowledge Base
@@ -67,85 +67,7 @@ npm view @lenne.tech/nest-server versions --json
 
 ## Migration Guide System
 
-### File Naming Convention
-
-Migration guides in `migration-guides/` follow these patterns:
-
-| Pattern | Example | Scope |
-|---------|---------|-------|
-| `X.Y.x-to-A.B.x.md` | `11.6.x-to-11.7.x.md` | Minor version step |
-| `X.x-to-Y.x.md` | `11.x-to-12.x.md` | Major version jump |
-| `X.Y.x-to-A.B.x.md` | `11.6.x-to-12.0.x.md` | Spanning multiple versions |
-
-### Guide Selection Logic
-
-For an update from version `CURRENT` to `TARGET`:
-
-1. **List available guides:**
-   ```bash
-   gh api repos/lenneTech/nest-server/contents/migration-guides --jq '.[].name'
-   ```
-
-2. **Select applicable guides:**
-
-   | Condition | Guides to load |
-   |-----------|----------------|
-   | Same major, sequential minor | Each `X.Y.x-to-X.Z.x.md` in sequence |
-   | Major version jump | All minor guides + `X.x-to-Y.x.md` |
-   | Spanning guide exists | Include it (may consolidate steps) |
-
-3. **Load order (example 11.6.0 → 12.1.0):**
-   ```
-   1. 11.6.x-to-11.7.x.md
-   2. 11.7.x-to-11.8.x.md
-   3. ... (all minor steps to 11.x latest)
-   4. 11.x-to-12.x.md (major jump)
-   5. 12.0.x-to-12.1.x.md
-   6. 11.6.x-to-12.x.md (if exists - consolidated)
-   ```
-
-4. **Fetch guide content:**
-   ```bash
-   gh api repos/lenneTech/nest-server/contents/migration-guides/11.6.x-to-11.7.x.md \
-     --jq '.content' | base64 -d
-   ```
-   Or via URL:
-   ```
-   https://raw.githubusercontent.com/lenneTech/nest-server/main/migration-guides/11.6.x-to-11.7.x.md
-   ```
-
-### Fallback When No Guides Available
-
-If `migration-guides/` is empty or no matching guides exist for the version range:
-
-**Fallback Priority Order:**
-
-| Priority | Source | How to Use |
-|----------|--------|------------|
-| 1 | **Release Notes** | Extract breaking changes from GitHub Releases |
-| 2 | **Reference Project** | Compare nest-server-starter between version tags |
-| 3 | **CHANGELOG.md** | Check nest-server repo for changelog entries |
-
-**Fallback Commands:**
-
-```bash
-# Get all releases between versions
-gh release list --repo lenneTech/nest-server --limit 50
-
-# View specific release details
-gh release view v11.7.0 --repo lenneTech/nest-server
-
-# Compare reference project between versions
-cd /tmp/nest-server-starter-ref
-git log --oneline v11.6.0..v11.8.0
-git diff v11.6.0..v11.8.0 -- package.json src/
-```
-
-**When using fallback:**
-- Proceed with extra caution
-- Validate more frequently (after each minor change)
-- Document assumptions in the update report
-- Recommend manual review before merging
+**Complete guide selection logic, fallback strategy, and fetch commands: [reference/migration-guides.md](reference/migration-guides.md)**
 
 ---
 
@@ -181,82 +103,21 @@ Therefore, **Minor versions are treated like Major versions** and may contain br
 
 ---
 
-## Common Error Patterns & Solutions
+## Common Error Patterns
 
-### TypeScript Errors
-
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `Cannot find module '@lenne.tech/nest-server/...'` | Import path changed | Check migration guide for new paths |
-| `Type 'X' is not assignable to type 'Y'` | API type changed | Update to new type signature per guide |
-| `Property 'X' does not exist` | API removed/renamed | Check migration guide for replacement |
-
-### Runtime Errors
-
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `Decorator not found` | Decorator moved | Import from new location |
-| `Cannot read property of undefined` | Initialization changed | Check startup sequence in reference project |
-| `Module not found` | Peer dependency missing | Compare package.json with reference project |
-
-### Test Failures
-
-| Symptom | Cause | Solution |
-|---------|-------|----------|
-| Timeout errors | Async behavior changed | Check test patterns in reference project |
-| Auth failures | Auth mechanism updated | Review auth changes in migration guide |
-| Validation errors | DTO changes | Update DTOs per migration guide |
+**TypeScript errors, runtime errors, and test failures after update: [reference/error-patterns.md](reference/error-patterns.md)**
 
 ---
 
 ## Reference Project Usage
 
-The [nest-server-starter](https://github.com/lenneTech/nest-server-starter) serves as the source of truth:
-
-### What to Check
-
-1. **package.json**
-   - Compatible dependency versions
-   - New/removed dependencies
-   - Script changes
-
-2. **src/config.env.ts**
-   - New configuration options
-   - Changed defaults
-
-3. **src/server/modules/**
-   - Updated patterns for modules/services
-   - New decorators or utilities
-
-4. **Git history**
-   ```bash
-   git log --oneline --all --grep="nest-server" | head -20
-   ```
-   - Find commits related to version updates
-   - See exactly what changed
+**How to use nest-server-starter as source of truth: [reference/reference-project.md](reference/reference-project.md)**
 
 ---
 
 ## API Mode Awareness
 
-Projects can operate in different API modes: **Rest**, **GraphQL**, or **Both**. The mode is stored in `lt.config.json` under `meta.apiMode`. If absent, assume "Both" (legacy).
-
-### Impact on Updates
-
-| API Mode | Missing Files (expected) | Missing Packages (expected) |
-|----------|--------------------------|----------------------------|
-| **Rest** | Resolvers (`*.resolver.ts`), `schema.gql` | `graphql-subscriptions`, `graphql-upload` |
-| **GraphQL** | Controllers (`*.controller.ts` except `server.controller.ts`), `multer-config.service.ts` | `multer` |
-| **Both** | None | None |
-
-### Reference Project Comparison
-
-The nest-server-starter uses `// #region graphql` and `// #region rest` markers. When comparing:
-- **Rest project**: Ignore code inside `// #region graphql` blocks and resolver files
-- **GraphQL project**: Ignore code inside `// #region rest` blocks and controller files
-- **Both project**: All code applies (markers have been stripped)
-
-The `config.env.ts` in Rest projects uses `graphQl: false` instead of `graphQl: { ... }`.
+**Impact of Rest/GraphQL/Both modes on updates: [reference/api-modes.md](reference/api-modes.md)**
 
 ---
 

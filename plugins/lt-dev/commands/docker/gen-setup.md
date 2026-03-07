@@ -1,5 +1,6 @@
 ---
 description: Generate Docker setup for development and production
+disable-model-invocation: true
 ---
 
 # Docker Development & Production Setup

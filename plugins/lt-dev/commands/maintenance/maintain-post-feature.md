@@ -1,5 +1,7 @@
 ---
 description: Post-feature npm maintenance and dependency optimization
+allowed-tools: Task
+disable-model-invocation: true
 ---
 
 # NPM Package Post-Feature Maintenance

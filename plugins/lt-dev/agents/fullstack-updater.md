@@ -1,9 +1,9 @@
 ---
 name: fullstack-updater
-description: Autonomous agent for updating a lenne.tech fullstack project. Synchronizes backend and frontend with latest nest-server-starter and nuxt-base-starter. Analyzes version drift, generates update plan with user approval, coordinates backend (nest-server-updater) and frontend updates, validates across subprojects. Supports --dry-run, --skip-backend, --skip-frontend modes.
+description: Autonomous agent for updating a lenne.tech fullstack project. Synchronizes backend and frontend with latest nest-server-starter and nuxt-base-starter. Analyzes version drift, generates update plan with user approval, coordinates backend (nest-server-updater) and frontend updates, validates across subprojects.
 model: sonnet
-tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, Task, TodoWrite
-permissionMode: default
+tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, TodoWrite
+permissionMode: acceptEdits
 skills: nest-server-updating, developing-lt-frontend, maintaining-npm-packages, using-lt-cli
 ---
 

@@ -1,5 +1,6 @@
 ---
 description: Verify plugin elements against best practices
+disable-model-invocation: true
 ---
 
 # Plugin Best Practice Check

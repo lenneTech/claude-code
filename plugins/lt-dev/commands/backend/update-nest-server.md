@@ -2,6 +2,7 @@
 description: Update @lenne.tech/nest-server with automated migration and validation
 argument-hint: "[--dry-run] [--target-version X.Y.Z] [--skip-packages] [path]"
 allowed-tools: Task
+disable-model-invocation: true
 ---
 
 # Update @lenne.tech/nest-server

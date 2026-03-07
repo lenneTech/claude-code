@@ -1,6 +1,7 @@
 ---
 description: Generate and post a testing comment on a Linear issue
 argument-hint: [issue-id]
+disable-model-invocation: true
 ---
 
 # Generate Linear Issue Comment

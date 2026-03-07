@@ -1,12 +1,10 @@
-#!/usr/bin/env npx ts-node
-
 /**
  * Plugin Frontmatter Validation Hook
  *
  * Validates YAML frontmatter in plugin markdown files (skills, commands, agents).
  * Called as PreToolUse hook for Write operations on plugin files.
  *
- * Usage: Called automatically by hooks.json when writing to **/plugins/**/*.md
+ * Invoked via hooks.json: npx ts-node <this-file>
  */
 
 import * as fs from 'fs';
@@ -119,7 +117,7 @@ function validateFrontmatter(filePath: string, content: string): ValidationResul
   }
 
   // Validate agent files
-  if (filePath.includes('/agents/') && !filePath.includes('/skills/')) {
+  if (filePath.includes('/agents/')) {
     const required = ['name', 'description', 'model', 'tools'];
     const missing = required.filter(field => !frontmatter[field]);
 

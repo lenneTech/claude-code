@@ -1,6 +1,7 @@
 ---
 description: Execute IMPLEMENTATION_PLAN.md completely
 argument-hint: [plan-file]
+disable-model-invocation: true
 ---
 
 # Build

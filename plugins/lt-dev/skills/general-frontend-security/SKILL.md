@@ -27,7 +27,7 @@ Framework-agnostic security practices for web applications based on OWASP guidel
 | "Fix @Restricted decorator in NestJS" | generating-nest-servers |
 | "Run npm audit fix" | maintaining-npm-packages |
 
-## Related Commands
+## Related Skills & Commands
 
 | Command | Purpose |
 |---------|---------|
@@ -39,7 +39,7 @@ Framework-agnostic security practices for web applications based on OWASP guidel
 
 | Framework | Reference File |
 |-----------|---------------|
-| Nuxt/Vue | [../developing-lt-frontend/reference/security.md](../developing-lt-frontend/reference/security.md) |
+| Nuxt/Vue | See `developing-lt-frontend` skill (reference/security.md) |
 | Angular | [angular-security.md](angular-security.md) |
 
 ## Key Principles

@@ -1,5 +1,7 @@
 ---
 description: Security-only npm updates for vulnerable packages
+allowed-tools: Task
+disable-model-invocation: true
 ---
 
 # NPM Package Security Maintenance

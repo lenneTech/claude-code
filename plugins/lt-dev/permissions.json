@@ -5,12 +5,12 @@
     {
       "pattern": "Bash(npm test:*)",
       "description": "Run npm test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(npm run test:*)",
       "description": "Run npm run test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(npm run test\\:e2e:*)",
@@ -45,17 +45,17 @@
     {
       "pattern": "Bash(npm run build:*)",
       "description": "Build the application",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "coordinating-agent-teams", "env-migrate"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate"]
     },
     {
       "pattern": "Bash(npm run lint:*)",
       "description": "Run linter checks",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate"]
     },
     {
       "pattern": "Bash(npm run generate-types:*)",
       "description": "Generate TypeScript types from backend API",
-      "usedBy": ["developing-lt-frontend", "fullstack-updating"]
+      "usedBy": ["developing-lt-frontend", "fullstack-updater"]
     },
     {
       "pattern": "Bash(lt server:*)",
@@ -75,7 +75,7 @@
     {
       "pattern": "Bash(npm install:*)",
       "description": "Install npm packages",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "branch-rebaser"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "branch-rebaser"]
     },
     {
       "pattern": "Bash(npm uninstall:*)",
@@ -105,32 +105,32 @@
     {
       "pattern": "Bash(npm run update:*)",
       "description": "Run project update script",
-      "usedBy": ["nest-server-updating", "fullstack-updating"]
+      "usedBy": ["nest-server-updating", "fullstack-updater"]
     },
     {
       "pattern": "Bash(npm list:*)",
       "description": "List installed npm packages",
-      "usedBy": ["nest-server-updating", "sec-audit", "fullstack-updating"]
+      "usedBy": ["nest-server-updating", "sec-audit", "fullstack-updater"]
     },
     {
       "pattern": "Bash(npm outdated:*)",
       "description": "Check for outdated npm packages",
-      "usedBy": ["sec-audit", "npm-package-maintenance"]
+      "usedBy": ["sec-audit", "npm-package-maintainer"]
     },
     {
       "pattern": "Bash(npm view:*)",
       "description": "View npm package information",
-      "usedBy": ["nest-server-updating", "fullstack-updating"]
+      "usedBy": ["nest-server-updating", "fullstack-updater"]
     },
     {
       "pattern": "Bash(pnpm test:*)",
       "description": "Run pnpm test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(pnpm run test:*)",
       "description": "Run pnpm run test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(pnpm run test\\:e2e:*)",
@@ -165,17 +165,17 @@
     {
       "pattern": "Bash(pnpm run build:*)",
       "description": "Build the application via pnpm",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "coordinating-agent-teams", "env-migrate"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate"]
     },
     {
       "pattern": "Bash(pnpm run lint:*)",
       "description": "Run linter checks via pnpm",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate"]
     },
     {
       "pattern": "Bash(pnpm run generate-types:*)",
       "description": "Generate TypeScript types via pnpm",
-      "usedBy": ["developing-lt-frontend", "fullstack-updating"]
+      "usedBy": ["developing-lt-frontend", "fullstack-updater"]
     },
     {
       "pattern": "Bash(pnpm audit:*)",
@@ -185,12 +185,12 @@
     {
       "pattern": "Bash(pnpm install:*)",
       "description": "Install packages via pnpm",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "branch-rebaser"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "branch-rebaser"]
     },
     {
       "pattern": "Bash(pnpm add:*)",
       "description": "Add packages via pnpm",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "branch-rebaser"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "branch-rebaser"]
     },
     {
       "pattern": "Bash(pnpm remove:*)",
@@ -205,22 +205,22 @@
     {
       "pattern": "Bash(pnpm run update:*)",
       "description": "Run project update script via pnpm",
-      "usedBy": ["nest-server-updating", "fullstack-updating"]
+      "usedBy": ["nest-server-updating", "fullstack-updater"]
     },
     {
       "pattern": "Bash(pnpm list:*)",
       "description": "List installed packages via pnpm",
-      "usedBy": ["nest-server-updating", "sec-audit", "fullstack-updating"]
+      "usedBy": ["nest-server-updating", "sec-audit", "fullstack-updater"]
     },
     {
       "pattern": "Bash(pnpm outdated:*)",
       "description": "Check for outdated packages via pnpm",
-      "usedBy": ["sec-audit", "npm-package-maintenance"]
+      "usedBy": ["sec-audit", "npm-package-maintainer"]
     },
     {
       "pattern": "Bash(pnpm view:*)",
       "description": "View package information via pnpm",
-      "usedBy": ["nest-server-updating", "fullstack-updating"]
+      "usedBy": ["nest-server-updating", "fullstack-updater"]
     },
     {
       "pattern": "Bash(pnpm run format:*)",
@@ -245,12 +245,12 @@
     {
       "pattern": "Bash(yarn test:*)",
       "description": "Run yarn test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(yarn run test:*)",
       "description": "Run yarn run test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(yarn run test\\:e2e:*)",
@@ -285,17 +285,17 @@
     {
       "pattern": "Bash(yarn run build:*)",
       "description": "Build the application via yarn",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "coordinating-agent-teams", "env-migrate"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate"]
     },
     {
       "pattern": "Bash(yarn run lint:*)",
       "description": "Run linter checks via yarn",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate"]
     },
     {
       "pattern": "Bash(yarn run generate-types:*)",
       "description": "Generate TypeScript types via yarn",
-      "usedBy": ["developing-lt-frontend", "fullstack-updating"]
+      "usedBy": ["developing-lt-frontend", "fullstack-updater"]
     },
     {
       "pattern": "Bash(yarn audit:*)",
@@ -305,12 +305,12 @@
     {
       "pattern": "Bash(yarn install:*)",
       "description": "Install packages via yarn",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "branch-rebaser"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "branch-rebaser"]
     },
     {
       "pattern": "Bash(yarn add:*)",
       "description": "Add packages via yarn",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updating", "branch-rebaser"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "branch-rebaser"]
     },
     {
       "pattern": "Bash(yarn remove:*)",
@@ -325,22 +325,22 @@
     {
       "pattern": "Bash(yarn run update:*)",
       "description": "Run project update script via yarn",
-      "usedBy": ["nest-server-updating", "fullstack-updating"]
+      "usedBy": ["nest-server-updating", "fullstack-updater"]
     },
     {
       "pattern": "Bash(yarn list:*)",
       "description": "List installed packages via yarn",
-      "usedBy": ["nest-server-updating", "sec-audit", "fullstack-updating"]
+      "usedBy": ["nest-server-updating", "sec-audit", "fullstack-updater"]
     },
     {
       "pattern": "Bash(yarn outdated:*)",
       "description": "Check for outdated packages via yarn",
-      "usedBy": ["sec-audit", "npm-package-maintenance"]
+      "usedBy": ["sec-audit", "npm-package-maintainer"]
     },
     {
       "pattern": "Bash(yarn info:*)",
       "description": "View package information via yarn",
-      "usedBy": ["nest-server-updating", "fullstack-updating"]
+      "usedBy": ["nest-server-updating", "fullstack-updater"]
     },
     {
       "pattern": "Bash(yarn run format:*)",
@@ -365,37 +365,37 @@
     {
       "pattern": "Bash(gh release:*)",
       "description": "Access GitHub releases via gh CLI",
-      "usedBy": ["nest-server-updating", "fullstack-updating"]
+      "usedBy": ["nest-server-updating", "fullstack-updater"]
     },
     {
       "pattern": "Bash(gh api:*)",
       "description": "Access GitHub API via gh CLI for migration guides and changelogs",
-      "usedBy": ["nest-server-updating", "fullstack-updating"]
+      "usedBy": ["nest-server-updating", "fullstack-updater"]
     },
     {
       "pattern": "Bash(git clone:*)",
       "description": "Clone repositories for comparison",
-      "usedBy": ["nest-server-updating", "fullstack-updating"]
+      "usedBy": ["nest-server-updating", "fullstack-updater"]
     },
     {
       "pattern": "Bash(git diff:*)",
       "description": "Compare versions in repositories",
-      "usedBy": ["fullstack-updating", "review", "debug", "coordinating-agent-teams"]
+      "usedBy": ["fullstack-updater", "review", "debug", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(git log:*)",
       "description": "Read git history of repositories",
-      "usedBy": ["fullstack-updating", "review", "debug", "coordinating-agent-teams"]
+      "usedBy": ["fullstack-updater", "review", "debug", "coordinating-agent-teams"]
     },
     {
       "pattern": "Bash(git tag:*)",
       "description": "List git tags for version comparison",
-      "usedBy": ["fullstack-updating"]
+      "usedBy": ["fullstack-updater"]
     },
     {
       "pattern": "Bash(git fetch:*)",
       "description": "Fetch latest changes from remote repositories",
-      "usedBy": ["fullstack-updating", "branch-rebaser"]
+      "usedBy": ["fullstack-updater", "branch-rebaser"]
     },
     {
       "pattern": "Bash(npm run format:*)",

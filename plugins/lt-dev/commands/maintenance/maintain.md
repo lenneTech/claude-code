@@ -1,5 +1,7 @@
 ---
 description: Full npm package maintenance via npm-package-maintainer agent
+allowed-tools: Task
+disable-model-invocation: true
 ---
 
 # NPM Package Maintenance

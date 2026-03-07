@@ -44,7 +44,7 @@ project/
 - Run `npm run generate-types` with API running before starting frontend work
 - Implement feature-by-feature with full backend integration
 
-**Before starting:** Ensure services are running. See [reference/service-health-check.md](./reference/service-health-check.md)
+**Before starting:** Ensure services are running. See [reference/service-health-check.md](reference/service-health-check.md)
 
 ## Skill Boundaries
 
@@ -120,7 +120,7 @@ nuxt.config.ts
 4. Debug with Chrome DevTools MCP
 ```
 
-**Complete E2E testing guide: [reference/e2e-testing.md](./reference/e2e-testing.md)**
+**Complete E2E testing guide: [reference/e2e-testing.md](reference/e2e-testing.md)**
 
 ## Reference Files
 

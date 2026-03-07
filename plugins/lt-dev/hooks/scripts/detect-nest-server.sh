@@ -24,15 +24,6 @@ check_tdd_keywords() {
   return 1
 }
 
-# Check if user prompt contains npm maintenance keywords
-check_npm_keywords() {
-  local prompt="$CLAUDE_USER_PROMPT"
-  if echo "$prompt" | grep -iqE '(npm audit|update.*packages|outdated.*packages|packages.*update|packages.*outdated|dependency.*update|update.*dependency|security.*fix.*package|vulnerability.*package|maintain.*package|package.*maintain)'; then
-    return 0
-  fi
-  return 1
-}
-
 emit_context() {
   local location="$1"  # "" or " in monorepo"
 
@@ -40,8 +31,6 @@ emit_context() {
     echo "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"@lenne.tech/nest-server detected${location}. Use the nest-server-updating skill for version updates, migrations, and breaking changes. Use /lt-dev:backend:update-nest-server for automated execution.\"}}"
   elif check_tdd_keywords; then
     echo "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"@lenne.tech/nest-server detected${location} with TDD intent. Use the building-stories-with-tdd skill for test-first development. It coordinates with generating-nest-servers for implementation.\"}}"
-  elif check_npm_keywords; then
-    echo "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"@lenne.tech/nest-server detected${location}. Use the maintaining-npm-packages skill for package updates, audits, and optimization. Use /lt-dev:maintain commands.\"}}"
   else
     echo "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"@lenne.tech/nest-server detected${location}. Use the generating-nest-servers skill for backend tasks (modules, services, controllers, resolvers). For version updates, use nest-server-updating skill instead.\"}}"
   fi

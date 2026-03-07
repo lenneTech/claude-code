@@ -71,7 +71,7 @@ project/
 4. **ALWAYS** test with the LEAST privileged authorized user
 5. **VERIFY** decorator coverage with `lt server permissions` after creating modules
 
-**Complete security rules: [security-rules.md](security-rules.md)** | **OWASP checklist: [owasp-checklist.md](owasp-checklist.md)**
+**Complete security rules: [reference/security-rules.md](reference/security-rules.md)** | **OWASP checklist: [reference/owasp-checklist.md](reference/owasp-checklist.md)**
 
 ### Never Use `declare` Keyword
 
@@ -84,13 +84,13 @@ declare name: string;
 name: string;
 ```
 
-**Details: [declare-keyword-warning.md](declare-keyword-warning.md)**
+**Details: [reference/declare-keyword-warning.md](reference/declare-keyword-warning.md)**
 
 ### Description Management
 
 Apply descriptions consistently to EVERY component (Model, CreateInput, UpdateInput, Objects, Class-level decorators). Format: `'English text'` or `'English (Deutsch)'` for German input.
 
-**Complete guide: [description-management.md](description-management.md)**
+**Complete guide: [reference/description-management.md](reference/description-management.md)**
 
 ## Quick Command Reference
 
@@ -115,7 +115,7 @@ lt server permissions --failOnWarnings  # CI/CD mode
 
 **API Style:** REST is default. Use `--controller GraphQL` only when explicitly requested.
 
-**Complete configuration & property flags: [configuration.md](configuration.md)**
+**Complete configuration & property flags: [reference/configuration.md](reference/configuration.md)**
 
 ## TDD Recommendation
 
@@ -145,7 +145,7 @@ afterAll(async () => {
 - [ ] NEVER blindly pass all serviceOptions to other Services (only pass `currentUser`)
 - [ ] Check if CrudService already provides needed functionality
 
-**Complete framework guide: [framework-guide.md](framework-guide.md)**
+**Complete framework guide: [reference/framework-guide.md](reference/framework-guide.md)**
 
 ## Workflow (7 Phases)
 
@@ -157,7 +157,7 @@ afterAll(async () => {
 6. **Enum File Creation** - Manual creation in `src/server/common/enums/`
 7. **API Test Creation** - Analyze permissions first, use least privileged user
 
-**Complete workflow: [workflow-process.md](workflow-process.md)**
+**Complete workflow: [reference/workflow-process.md](reference/workflow-process.md)**
 
 ## Property Ordering
 
@@ -183,26 +183,26 @@ The scanner detects: missing class-level `@Restricted`, endpoints without `@Role
 - [ ] Security review passed (`/lt-dev:backend:sec-review`)
 - [ ] All tests pass
 
-**Complete checklist: [verification-checklist.md](verification-checklist.md)**
+**Complete checklist: [reference/verification-checklist.md](reference/verification-checklist.md)**
 
 ## Reference Files
 
 | Topic | File |
 |-------|------|
 | Permissions Report | Built-in: `lt server permissions` / `GET /permissions` |
-| Service Health Check | [service-health-check.md](service-health-check.md) |
-| Framework Guide | [framework-guide.md](framework-guide.md) |
-| Configuration & Commands | [configuration.md](configuration.md) |
-| Specification Format | [reference.md](reference.md) |
-| Examples | [examples.md](examples.md) |
-| Workflow Process | [workflow-process.md](workflow-process.md) |
-| Description Management | [description-management.md](description-management.md) |
-| Security Rules | [security-rules.md](security-rules.md) |
-| OWASP Checklist | [owasp-checklist.md](owasp-checklist.md) |
-| Declare Keyword Warning | [declare-keyword-warning.md](declare-keyword-warning.md) |
-| Quality Review | [quality-review.md](quality-review.md) |
-| Verification Checklist | [verification-checklist.md](verification-checklist.md) |
-| TypeScript Conventions | [typescript-conventions.md](typescript-conventions.md) |
+| Service Health Check | [reference/service-health-check.md](reference/service-health-check.md) |
+| Framework Guide | [reference/framework-guide.md](reference/framework-guide.md) |
+| Configuration & Commands | [reference/configuration.md](reference/configuration.md) |
+| Specification Format | [reference/reference.md](reference/reference.md) |
+| Examples | [reference/examples.md](reference/examples.md) |
+| Workflow Process | [reference/workflow-process.md](reference/workflow-process.md) |
+| Description Management | [reference/description-management.md](reference/description-management.md) |
+| Security Rules | [reference/security-rules.md](reference/security-rules.md) |
+| OWASP Checklist | [reference/owasp-checklist.md](reference/owasp-checklist.md) |
+| Declare Keyword Warning | [reference/declare-keyword-warning.md](reference/declare-keyword-warning.md) |
+| Quality Review | [reference/quality-review.md](reference/quality-review.md) |
+| Verification Checklist | [reference/verification-checklist.md](reference/verification-checklist.md) |
+| TypeScript Conventions | [reference/typescript-conventions.md](reference/typescript-conventions.md) |
 
 ## TypeScript Language Server (Recommended)
 

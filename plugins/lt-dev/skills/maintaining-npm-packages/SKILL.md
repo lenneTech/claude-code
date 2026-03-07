@@ -1,6 +1,6 @@
 ---
 name: maintaining-npm-packages
-description: Analyzes and optimizes npm package dependencies. Handles outdated packages, npm audit findings, security vulnerabilities, dependency updates, unused dependency removal, and devDependencies recategorization. Recommends the lt-dev:npm-package-maintainer agent via /maintain commands. Activates for "update packages", "npm audit", "check dependencies", "security fix", or package.json optimization. NOT for @lenne.tech/nest-server version updates (use nest-server-updating).
+description: Analyzes and optimizes npm package dependencies. Selects between 5 maintenance modes: FULL (update all), DRY-RUN (analysis only), SECURITY-ONLY (urgent CVE fixes), PRE-RELEASE (conservative patch-only), POST-FEATURE (cleanup after development). Activates for "update packages", "npm audit", "check dependencies", "security fix", "outdated dependencies", "devDependencies", "pre-release cleanup", "post-feature housekeeping", "remove unused packages", or package.json optimization. NOT for @lenne.tech/nest-server version updates (use nest-server-updating).
 ---
 
 # NPM Package Maintenance

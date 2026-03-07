@@ -1,5 +1,7 @@
 ---
 description: Dry-run npm package analysis without changes
+allowed-tools: Task
+disable-model-invocation: true
 ---
 
 # NPM Package Maintenance Check (Dry-Run)

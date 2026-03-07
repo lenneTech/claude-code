@@ -1,7 +1,8 @@
 ---
 description: OWASP security audit for dependencies, config, and code
-allowed-tools: Bash, Read, Grep, Glob, Write
+allowed-tools: Bash(npm audit:*), Bash(npm outdated:*), Bash(npm list:*), Bash(lt server:*), Read, Grep, Glob, Write
 argument-hint: [--full | --deps-only | --config-only | --code-only]
+disable-model-invocation: true
 ---
 
 # OWASP Security Audit

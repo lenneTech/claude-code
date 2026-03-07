@@ -2,7 +2,7 @@
 name: code-reviewer
 description: Autonomous code review agent. Analyzes changes against 7 quality dimensions (content, tests, formatting, code quality, performance, security, documentation). Produces structured report with fulfillment grades and remediation catalog.
 model: sonnet
-tools: Bash, Read, Grep, Glob, Task, TodoWrite, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
+tools: Bash, Read, Grep, Glob, TodoWrite, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
 permissionMode: default
 memory: project
 skills: generating-nest-servers, building-stories-with-tdd, general-frontend-security
@@ -262,15 +262,15 @@ Validate performance characteristics:
 
 ### Phase 6: Security
 
-#### Step 1: Run `/security-review` (MANDATORY)
+#### Step 1: Security Analysis (MANDATORY)
 
-**Always run the built-in `/security-review` command first.** It performs a comprehensive, framework-agnostic security analysis of the branch diff with Sub-Task-based false-positive filtering.
+Perform a comprehensive security analysis of the branch diff directly:
 
-Spawn a sub-task via Task tool:
-
-```
-Run /security-review on the current branch changes. Return the full findings report.
-```
+1. Run `git diff` to get all changes
+2. Analyze for HIGH confidence (>80%) vulnerabilities: injection, auth bypass, data exposure, hardcoded secrets
+3. Check OWASP Top 10 patterns in all changed files
+4. Use the preloaded `general-frontend-security` skill knowledge for frontend-specific checks
+5. Filter false positives: verify each finding has concrete evidence in the diff
 
 Incorporate all HIGH and MEDIUM findings into Phase 6 results.
 
