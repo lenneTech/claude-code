@@ -900,21 +900,25 @@ Once all tests are passing, analyze your implementation for code quality issues:
 
 **ALWAYS review all code changes for security vulnerabilities.**
 
-**Quick Security Check:**
+#### Run `/security-review` (MANDATORY)
+
+Run the built-in `/security-review` command to perform a comprehensive, framework-agnostic security analysis of all changes. Fix any HIGH or MEDIUM findings before proceeding.
+
+#### nest-server Specific Checks
+
 - [ ] @Restricted/@Roles decorators NOT removed or weakened
 - [ ] Ownership checks in place (users can only access own data)
 - [ ] All inputs validated with proper DTOs
 - [ ] Sensitive fields marked with hideField: true
-- [ ] No injection vulnerabilities
 - [ ] Error messages don't expose sensitive data
 - [ ] Authorization tests pass
 
 **Red Flags (STOP if found):**
-- 🚩 @Restricted decorator removed
-- 🚩 @Roles changed to more permissive
-- 🚩 Missing ownership checks
-- 🚩 Sensitive fields exposed
-- 🚩 'any' type instead of DTO
+- @Restricted decorator removed
+- @Roles changed to more permissive
+- Missing ownership checks
+- Sensitive fields exposed
+- 'any' type instead of DTO
 
 **If ANY red flag found:**
 1. STOP implementation

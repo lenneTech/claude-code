@@ -20,6 +20,7 @@ Autonomous execution agent that reviews code changes across 7 quality dimensions
 | **Skill**: `building-stories-with-tdd` | TDD methodology and test expectations |
 | **Skill**: `general-frontend-security` | Frontend security checklist |
 | **Command**: `/lt-dev:review` | User invocation with options |
+| **Command**: `/security-review` | Claude Code built-in general security review |
 | **Command**: `/lt-dev:backend:sec-review` | Detailed security review checklist |
 | **Command**: `/lt-dev:backend:code-cleanup` | Formatting and cleanup checklist |
 | **Command**: `/lt-dev:backend:test-generate` | Test generation checklist |
@@ -261,15 +262,27 @@ Validate performance characteristics:
 
 ### Phase 6: Security
 
-Validate security posture (references security-review.md patterns):
+#### Step 1: Run `/security-review` (MANDATORY)
 
-- [ ] No new security vulnerabilities introduced (injection, XSS, CSRF)
-- [ ] Authentication/authorization checks intact and correct
-- [ ] Sensitive data not exposed in logs, responses, or error messages
-- [ ] Input validation present at system boundaries
+**Always run the built-in `/security-review` command first.** It performs a comprehensive, framework-agnostic security analysis of the branch diff with Sub-Task-based false-positive filtering.
+
+Spawn a sub-task via Task tool:
+
+```
+Run /security-review on the current branch changes. Return the full findings report.
+```
+
+Incorporate all HIGH and MEDIUM findings into Phase 6 results.
+
+#### Step 2: Additional Security Checks
+
+Validate security posture beyond `/security-review` (nest-server and project-specific patterns):
+
 - [ ] Security decorators (@Restricted, @Roles) appropriate (Backend/Fullstack)
+- [ ] securityCheck() methods intact in models (Backend/Fullstack)
+- [ ] Ownership checks present (createdBy, userId) (Backend/Fullstack)
+- [ ] hideField: true on sensitive model properties (Backend/Fullstack)
 - [ ] XSS prevention, CSP headers, secure cookie config (Frontend/Fullstack)
-- [ ] No secrets or credentials in code
 - [ ] Dependencies free of known vulnerabilities (`npm audit`)
 - [ ] Permissions coverage validated via scanner (Backend/Fullstack)
 
@@ -407,7 +420,7 @@ Generate a structured report in the following format:
 [Findings with impact assessment]
 
 ### 6. Security
-[Findings with severity classification]
+[`/security-review` findings + additional nest-server/project-specific findings with severity classification]
 
 ### 7. Documentation
 [Findings split into: Code comments, README/module docs, interface JSDoc, migration guide — with specific files checked]
@@ -421,7 +434,7 @@ Generate a structured report in the following format:
 ### Recommended Next Steps
 Based on findings, suggest applicable commands:
 - Tests ⚠️/❌ → "Run `/lt-dev:backend:test-generate` to generate missing tests"
-- Security ⚠️/❌ → "Run `/lt-dev:backend:sec-review` for detailed security analysis"
+- Security ⚠️/❌ → "Run `/lt-dev:backend:sec-review` for detailed nest-server security analysis"
 - Security (permissions) ⚠️/❌ → "Run `lt server permissions --failOnWarnings` to audit decorator coverage"
 - Formatting ⚠️/❌ → "Run `/lt-dev:backend:code-cleanup` to fix formatting issues"
 - Security + Dependencies → "Run `/lt-dev:backend:sec-audit` for full OWASP audit"

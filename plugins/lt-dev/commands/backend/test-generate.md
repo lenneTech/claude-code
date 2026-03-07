@@ -16,11 +16,12 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash(npm run test:*), Bash(npm tes
 
 | Command | Purpose |
 |---------|---------|
+| `/security-review` | Claude Code built-in: general security review of branch diff |
 | `/lt-dev:backend:sec-review` | Security review of code changes |
 | `/lt-dev:backend:code-cleanup` | Clean up code style and formatting |
 | `/lt-dev:review` | Comprehensive code review across all quality dimensions |
 
-**Recommended workflow:** `test-generate` → `sec-review` → `code-cleanup`
+**Recommended workflow:** `test-generate` → `sec-review` → `/security-review` → `code-cleanup`
 
 ---
 

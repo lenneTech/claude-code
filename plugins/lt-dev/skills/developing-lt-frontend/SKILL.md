@@ -151,4 +151,5 @@ nuxt.config.ts
 - [ ] German UI, English code, no implicit `any`
 - [ ] Auth uses `useBetterAuth()`, protected routes use `middleware: 'auth'`
 - [ ] No `v-html` with user content, tokens stored securely
+- [ ] Security review passed (`/security-review` for general scan)
 - [ ] Feature tested in browser (Chrome DevTools MCP), no console errors

@@ -208,7 +208,8 @@ Generate a markdown report with the following structure:
 
 ## Related Commands
 
-- `/lt-dev:backend:sec-review` - Quick security review of code changes
+- `/security-review` - Claude Code built-in: general security review of branch diff (framework-agnostic)
+- `/lt-dev:backend:sec-review` - Quick security review of code changes (@lenne.tech/nest-server focused)
 - `/lt-dev:maintenance:maintain-security` - Security-focused package updates
 
 ## Post-Audit Actions

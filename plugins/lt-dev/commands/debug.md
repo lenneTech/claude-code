@@ -20,6 +20,7 @@ allowed-tools: Read, Grep, Glob, Bash, Task, AskUserQuestion
 |---------|---------|
 | `/lt-dev:review` | Code review after fix |
 | `/lt-dev:fix-issue` | Implement fix for a Linear issue |
+| `/lt-dev:backend:sec-review` | Security review if fix touches auth/authz code |
 
 **Related Skills:**
 

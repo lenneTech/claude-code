@@ -18,6 +18,8 @@ argument-hint: <issue-id>
 | `/lt-dev:create-story` | Create a new user story for Linear |
 | `/lt-dev:review` | Comprehensive code review after implementation |
 | `/lt-dev:comment` | Generate testing comment for the issue |
+| `/lt-dev:backend:sec-review` | Security review of code changes |
+| `/lt-dev:backend:test-generate` | Generate tests for changes |
 
 ## Description
 Work on a single assigned issue, ensuring high-quality, consistent implementation and adherence to all requirements.
@@ -46,6 +48,6 @@ Implement the plan completely, focused on high quality and consistency:
 
 **Only interrupt for critical blockers** (e.g., unclear requirements, missing credentials). Make smart decisions autonomously, prioritizing code quality and long-term maintainability.
 
-**After implementation:** Recommend running `/lt-dev:review $ARGUMENTS` for a comprehensive quality check, then `/lt-dev:comment $ARGUMENTS` to post a testing comment on the ticket.
+**After implementation:** Recommend running `/lt-dev:backend:sec-review` for security-critical changes, `/security-review` for a general security scan, then `/lt-dev:review $ARGUMENTS` for a comprehensive quality check, then `/lt-dev:comment $ARGUMENTS` to post a testing comment on the ticket.
 
 **BEGIN ANALYSIS NOW.**

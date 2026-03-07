@@ -17,7 +17,8 @@ allowed-tools: Read, Grep, Glob, Bash, Task, AskUserQuestion
 
 | Command | Purpose |
 |---------|---------|
-| `/lt-dev:backend:sec-review` | Focused security review only |
+| `/security-review` | Claude Code built-in: general security review of branch diff |
+| `/lt-dev:backend:sec-review` | Focused security review (@lenne.tech/nest-server specific) |
 | `/lt-dev:backend:code-cleanup` | Code style and formatting cleanup |
 | `/lt-dev:backend:test-generate` | Generate tests for changes |
 | `/lt-dev:backend:sec-audit` | OWASP security audit for dependencies |
@@ -30,7 +31,7 @@ allowed-tools: Read, Grep, Glob, Bash, Task, AskUserQuestion
 |-------|---------|
 | `coordinating-agent-teams` | Auto-detection heuristics and team coordination patterns |
 
-**Recommended workflow:** `fix-issue` → `review` → address findings → `code-cleanup`
+**Recommended workflow:** `fix-issue` → `review` → `/security-review` → address findings → `code-cleanup`
 
 ---
 

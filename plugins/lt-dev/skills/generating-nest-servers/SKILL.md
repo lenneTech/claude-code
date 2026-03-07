@@ -47,12 +47,15 @@ project/
 | "Build a Vue component" | developing-lt-frontend |
 | "Run lt fullstack init" | using-lt-cli |
 
-## Related Skills
+## Related Skills & Commands
 
 - `developing-lt-frontend` - For ALL Nuxt/Vue frontend development (projects/app/)
 - `building-stories-with-tdd` - For TDD workflow (tests first, then implementation)
 - `using-lt-cli` - For Git operations and Fullstack initialization
 - `nest-server-updating` - For updating @lenne.tech/nest-server versions
+- `/security-review` - Claude Code built-in: general security review of branch diff
+- `/lt-dev:backend:sec-review` - Security review after implementing endpoints or modifying auth/authz
+- `/lt-dev:backend:sec-audit` - Full OWASP security audit for dependencies, config, and code
 
 **In monorepo projects:**
 - `projects/api/` or `packages/api/` → This skill
@@ -177,6 +180,7 @@ The scanner detects: missing class-level `@Restricted`, endpoints without `@Role
 - [ ] Least privileged user used in tests
 - [ ] Security validation tests (401/403 failures)
 - [ ] Permissions report shows no new warnings (`lt server permissions --failOnWarnings`)
+- [ ] Security review passed (`/lt-dev:backend:sec-review`)
 - [ ] All tests pass
 
 **Complete checklist: [verification-checklist.md](verification-checklist.md)**

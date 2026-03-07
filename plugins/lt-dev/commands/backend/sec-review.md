@@ -16,11 +16,13 @@ allowed-tools: Read, Grep, Glob, Bash(git diff:*)
 
 | Command | Purpose |
 |---------|---------|
+| `/security-review` | Claude Code built-in: general security review of branch diff (framework-agnostic) |
+| `/lt-dev:backend:sec-audit` | Full OWASP security audit (dependencies, config, code) |
 | `/lt-dev:backend:code-cleanup` | Clean up code style and formatting |
 | `/lt-dev:backend:test-generate` | Generate tests for changes |
 | `/lt-dev:review` | Comprehensive code review across all quality dimensions |
 
-**Recommended workflow:** `test-generate` → `sec-review` → `code-cleanup`
+**Recommended workflow:** `test-generate` → `sec-review` → `/security-review` → `code-cleanup`
 
 ---
 

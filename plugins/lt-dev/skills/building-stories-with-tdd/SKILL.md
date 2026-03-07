@@ -81,6 +81,8 @@ afterAll(async () => {
 - `using-lt-cli` skill - For Git operations and project initialization
 - `developing-lt-frontend` skill - For frontend E2E tests and implementation
 - `coordinating-agent-teams` skill - For parallel test writing in fullstack projects
+- `/security-review` command - General security scan of branch diff (Step 5a)
+- `/lt-dev:backend:sec-review` command - nest-server specific security review
 
 ## TypeScript Language Server (Recommended)
 
@@ -227,7 +229,7 @@ All pass -> Step 5a | Fail -> Return to Step 3
 ### Step 5a: Code Quality & Refactoring Check
 **Details: `workflow.md` -> Step 5a**
 
-Review: Code quality (`code-quality.md`), Database indexes (`database-indexes.md`), Security (`security-review.md`). Run tests after changes.
+Review: Code quality (`code-quality.md`), Database indexes (`database-indexes.md`), Security (`security-review.md`). Run `/security-review` for general security scan. Run tests after changes.
 
 ### Step 5b: Final Validation
 **Details: `workflow.md` -> Step 5b**
@@ -305,6 +307,7 @@ When all tests pass, provide comprehensive report including:
 - Code quality (patterns followed, security preserved, dependencies, refactoring, indexes)
 - Security review (auth/authz, validation, data exposure, ownership, injection prevention, errors, security tests)
 - Files modified (with changes description)
+- `/security-review` results (general security scan findings)
 - Next steps (recommendations)
 
 ## Common Patterns

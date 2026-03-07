@@ -27,6 +27,14 @@ Framework-agnostic security practices for web applications based on OWASP guidel
 | "Fix @Restricted decorator in NestJS" | generating-nest-servers |
 | "Run npm audit fix" | maintaining-npm-packages |
 
+## Related Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/security-review` | Claude Code built-in: general security review of branch diff (framework-agnostic) |
+| `/lt-dev:backend:sec-review` | Security review of backend code changes (auth, decorators, models) |
+| `/lt-dev:backend:sec-audit` | Full OWASP security audit (dependencies, config, code) |
+
 ## Framework-Specific References
 
 | Framework | Reference File |

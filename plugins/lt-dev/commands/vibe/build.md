@@ -30,7 +30,7 @@ Read IMPLEMENTATION_PLAN.md and SPEC.md.
 
 ### CRITICAL: Execution Rules
 
-1. **Follow the order** - Docker → Backend → Types → Frontend → QA → Browser Test
+1. **Follow the order** - Docker → Backend → Types → Frontend → Security Review → QA → Browser Test
 2. **Docker setup first** - Hot reload, DB UI, Mailhog before any code
 3. **Initial user migration** - Create test user for browser testing
 4. **No mock data** - Frontend always uses real backend API
@@ -65,13 +65,18 @@ Phase 5: Frontend
 1. Implement using ~/api-client/ types
 2. Mark checkboxes after each feature
 
-Phase 6: Quality Assurance
+Phase 6: Security Review
+1. Run /security-review for general security scan of branch diff
+2. Run /lt-dev:backend:sec-review on backend changes (nest-server specific)
+3. Fix any Critical/Warning findings
+
+Phase 7: Quality Assurance
 1. Run: npm run lint
 2. Fix all lint errors
 3. Run: npm run build
 4. Fix all build errors
 
-Phase 7: Browser Testing (Chrome MCP)
+Phase 8: Browser Testing (Chrome MCP)
 1. Navigate to http://localhost:3001
 2. Take snapshot to see page
 3. Login with initial user (admin@test.local / Test1234!)
@@ -80,12 +85,13 @@ Phase 7: Browser Testing (Chrome MCP)
 6. Fix any bugs found
 7. Re-test until everything works
 
-Phase 8: Final Verification
+Phase 9: Final Verification
 1. All features working in browser
 2. No console errors
-3. Lint passes
-4. Build passes
-5. ALL checkboxes marked [x]
+3. Security review passed
+4. Lint passes
+5. Build passes
+6. ALL checkboxes marked [x]
 ```
 
 ### Docker Commands
@@ -143,6 +149,7 @@ Role:     admin
 **DO NOT STOP until:**
 - All `- [ ]` in IMPLEMENTATION_PLAN.md are `- [x]`
 - All features from SPEC.md are implemented
+- Security review passed (`/lt-dev:backend:sec-review`)
 - `npm run lint` passes
 - `npm run build` passes
 - Browser testing completed with Chrome MCP

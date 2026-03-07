@@ -19,7 +19,7 @@ if echo "$CLAUDE_USER_PROMPT" | grep -iqE '(security.audit|xss|csrf|csp|owasp|vu
   done
 
   if [ "$has_web_project" = true ]; then
-    echo '{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"Security context detected. Use the general-frontend-security skill for OWASP-based security audits, XSS/CSRF prevention, CSP, and secure coding practices."}}'
+    echo '{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"Security context detected. Use /security-review for general security scan of branch diff. Use the general-frontend-security skill for OWASP-based frontend security. For backend: /lt-dev:backend:sec-review (nest-server focused) or /lt-dev:backend:sec-audit (full OWASP audit)."}}'
   fi
 fi
 
