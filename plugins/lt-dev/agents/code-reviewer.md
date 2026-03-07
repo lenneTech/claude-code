@@ -20,6 +20,7 @@ Autonomous execution agent that reviews code changes across 7 quality dimensions
 | **Skill**: `building-stories-with-tdd` | TDD methodology and test expectations |
 | **Skill**: `general-frontend-security` | Frontend security checklist |
 | **Command**: `/lt-dev:review` | User invocation with options |
+| **Command**: `/review` | Claude Code built-in PR-level review (quick, after PR creation) |
 | **Command**: `/security-review` | Claude Code built-in general security review |
 | **Command**: `/lt-dev:backend:sec-review` | Detailed security review checklist |
 | **Command**: `/lt-dev:backend:code-cleanup` | Formatting and cleanup checklist |
@@ -438,6 +439,7 @@ Based on findings, suggest applicable commands:
 - Security (permissions) ⚠️/❌ → "Run `lt server permissions --failOnWarnings` to audit decorator coverage"
 - Formatting ⚠️/❌ → "Run `/lt-dev:backend:code-cleanup` to fix formatting issues"
 - Security + Dependencies → "Run `/lt-dev:backend:sec-audit` for full OWASP audit"
+- All ✅ → "Create PR and run `/review` for final PR-level check"
 ```
 
 ### Status Thresholds

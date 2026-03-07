@@ -17,7 +17,8 @@ disable-model-invocation: true
 | Command | Purpose |
 |---------|---------|
 | `/lt-dev:create-story` | Create a new user story for Linear |
-| `/lt-dev:review` | Comprehensive code review after implementation |
+| `/lt-dev:review` | Comprehensive 7-dimension code review after implementation |
+| `/review` | Claude Code built-in: quick PR-level review (after PR creation) |
 | `/lt-dev:comment` | Generate testing comment for the issue |
 | `/lt-dev:backend:sec-review` | Security review of code changes |
 | `/lt-dev:backend:test-generate` | Generate tests for changes |
@@ -49,6 +50,12 @@ Implement the plan completely, focused on high quality and consistency:
 
 **Only interrupt for critical blockers** (e.g., unclear requirements, missing credentials). Make smart decisions autonomously, prioritizing code quality and long-term maintainability.
 
-**After implementation:** Recommend running `/lt-dev:backend:sec-review` for security-critical changes, `/security-review` for a general security scan, then `/lt-dev:review $ARGUMENTS` for a comprehensive quality check, then `/lt-dev:comment $ARGUMENTS` to post a testing comment on the ticket.
+**After implementation, guide the user through the quality pipeline:**
+
+1. `/lt-dev:review $ARGUMENTS` — Comprehensive 7-dimension quality check
+2. Address any findings from the review
+3. `/lt-dev:comment $ARGUMENTS` — Post testing comment on the ticket
+4. Ask the user: "Soll ich eine PR erstellen?" — If yes, create PR with `gh pr create` using the issue title and a summary of changes
+5. After PR creation: suggest running `/review` for a final PR-level check
 
 **BEGIN ANALYSIS NOW.**

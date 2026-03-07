@@ -157,6 +157,8 @@ Role:     admin
 - All bugs found during testing are fixed
 - App works end-to-end (login → use features → logout)
 
+**After all criteria met:** Ask the user: "Soll ich eine PR erstellen?" — If yes, create PR with `gh pr create`, then suggest running `/review` for a final PR-level check.
+
 Ultrathink.
 
 **START IMPLEMENTATION NOW. CONTINUE UNTIL 100% COMPLETE INCLUDING BROWSER TESTING.**

@@ -18,6 +18,7 @@ disable-model-invocation: true
 |---------|---------|
 | `/lt-dev:git:commit-message` | Generate commit message suggestions |
 | `/lt-dev:git:mr-description-clipboard` | Same as this, but with clipboard copy |
+| `/review` | Claude Code built-in: PR-level review (after PR creation) |
 
 ---
 
@@ -50,3 +51,5 @@ Present the final MR description in a clearly marked code block that is easy to 
 ```
 
 Then add: "✂️ **Copy the markdown block above to use it in your Merge Request.**"
+
+After the description is presented, suggest: "💡 After creating the PR, run `/review` for an automated PR-level review."

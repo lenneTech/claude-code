@@ -18,6 +18,7 @@ disable-model-invocation: true
 |---------|---------|
 | `/lt-dev:git:commit-message` | Generate commit message suggestions |
 | `/lt-dev:git:mr-description` | Same as this, without clipboard copy |
+| `/review` | Claude Code built-in: PR-level review (after PR creation) |
 
 ---
 
@@ -65,3 +66,5 @@ echo " MR description copied to clipboard!"
 - macOS: `pbcopy`
 - Linux: `xclip -selection clipboard` or `xsel --clipboard`
 - Windows: `clip`
+
+After the clipboard command is presented, suggest: "💡 After creating the PR, run `/review` for an automated PR-level review."

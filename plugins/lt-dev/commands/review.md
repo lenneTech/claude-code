@@ -18,6 +18,7 @@ disable-model-invocation: true
 
 | Command | Purpose |
 |---------|---------|
+| `/review` | Claude Code built-in: quick PR-level review (requires `gh` CLI) |
 | `/security-review` | Claude Code built-in: general security review of branch diff |
 | `/lt-dev:backend:sec-review` | Focused security review (@lenne.tech/nest-server specific) |
 | `/lt-dev:backend:code-cleanup` | Code style and formatting cleanup |
@@ -32,7 +33,7 @@ disable-model-invocation: true
 |-------|---------|
 | `coordinating-agent-teams` | Auto-detection heuristics and team coordination patterns |
 
-**Recommended workflow:** `fix-issue` → `review` → `/security-review` → address findings → `code-cleanup`
+**Recommended workflow:** `fix-issue` → `/lt-dev:review` → `/security-review` → address findings → `code-cleanup` → create PR → `/review`
 
 ---
 
