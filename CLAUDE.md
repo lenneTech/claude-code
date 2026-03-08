@@ -167,7 +167,7 @@ Defines MCP (Model Context Protocol) servers required by the plugin.
 | Server | Type | Used By |
 |--------|------|---------|
 | `chrome-devtools` | stdio | vibe commands, developing-lt-frontend, building-stories-with-tdd (browser testing & debugging) |
-| `linear` | http | fix-issue, create-story, review, debug (issue tracking & project management) |
+| `linear` | http | resolve-ticket, create-story, create-ticket, create-task, create-bug, review, debug, comment (issue tracking & project management) |
 
 ### plugin.json
 Plugin manifest with metadata. Update `version` before releases.

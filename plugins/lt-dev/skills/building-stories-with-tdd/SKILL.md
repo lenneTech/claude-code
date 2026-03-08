@@ -83,6 +83,7 @@ afterAll(async () => {
 - `using-lt-cli` skill - For Git operations and project initialization
 - `developing-lt-frontend` skill - For frontend E2E tests and implementation
 - `coordinating-agent-teams` skill - For parallel test writing in fullstack projects
+- `/lt-dev:create-ticket` command - Create any ticket type (Story, Task, Bug)
 - `/lt-dev:create-story` command - Create a story, then implement with TDD
 - `/lt-dev:review` command - Comprehensive quality check after implementation
 - `/security-review` command - General security scan of branch diff (Step 5a)

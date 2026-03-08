@@ -84,13 +84,17 @@ Skills, Commands, Hooks and Agents for Frontend (Nuxt 4), Backend (NestJS/nest-s
 | `branch-rebaser` | Autonomous rebase execution for feature branches |
 | `code-reviewer` | Code review across 7 quality dimensions |
 
-### Commands (27)
+### Commands (32)
 
 **Root:**
+- `/create-ticket` - Create Linear Ticket (Story, Task, or Bug)
 - `/create-story` - Create User Story for TDD (German)
-- `/fix-issue` - Work on Linear Issue
+- `/create-task` - Create Technical Task
+- `/create-bug` - Create Bug Report
+- `/resolve-ticket` - Resolve ticket end-to-end with TDD
 - `/review` - Comprehensive code review across 7 quality dimensions
 - `/debug` - Adversarial debugging with competing hypotheses using Agent Teams
+- `/comment` - Generate and post testing comment on Linear issue
 - `/skill-optimize` - Validate and optimize Claude Skills
 
 **Plugin (`/plugin/`):**
@@ -103,6 +107,9 @@ Skills, Commands, Hooks and Agents for Frontend (Nuxt 4), Backend (NestJS/nest-s
 - `/backend:sec-review` - Perform security review
 - `/backend:code-cleanup` - Clean up and optimize code
 - `/backend:test-generate` - Generate tests
+
+**Frontend (`/frontend/`):**
+- `/frontend:env-migrate` - Migrate environment configuration
 
 **Fullstack (`/fullstack/`):**
 - `/fullstack:update` - Sync fullstack project with latest starter templates
@@ -236,9 +243,12 @@ claude-code/
 │       │   ├── rebasing-branches/
 │       │   └── using-lt-cli/
 │       ├── commands/
+│       │   ├── create-bug.md
 │       │   ├── create-story.md
+│       │   ├── create-task.md
+│       │   ├── create-ticket.md
 │       │   ├── debug.md
-│       │   ├── fix-issue.md
+│       │   ├── resolve-ticket.md
 │       │   ├── review.md
 │       │   ├── skill-optimize.md
 │       │   ├── backend/

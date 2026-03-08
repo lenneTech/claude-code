@@ -10,13 +10,13 @@ disable-model-invocation: true
 
 - After completing work on a Linear issue
 - To provide testers with clear, non-technical testing instructions
-- As part of the workflow: `fix-issue` -> `review` -> `comment`
+- As part of the workflow: `resolve-ticket` -> `review` -> `comment`
 
 ## Related Commands
 
 | Command | Purpose |
 |---------|---------|
-| `/lt-dev:fix-issue` | Implement a Linear issue |
+| `/lt-dev:resolve-ticket` | Resolve a ticket end-to-end |
 | `/lt-dev:review` | Code review before merging |
 | `/lt-dev:git:mr-description` | Generate MR description |
 

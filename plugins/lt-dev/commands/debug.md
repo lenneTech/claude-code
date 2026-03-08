@@ -20,7 +20,7 @@ disable-model-invocation: true
 | Command | Purpose |
 |---------|---------|
 | `/lt-dev:review` | Code review after fix |
-| `/lt-dev:fix-issue` | Implement fix for a Linear issue |
+| `/lt-dev:resolve-ticket` | Resolve ticket end-to-end with TDD |
 | `/lt-dev:backend:sec-review` | Security review if fix touches auth/authz code |
 
 **Related Skills:**
@@ -45,7 +45,7 @@ Inform the user:
 >
 > Aktivierung: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 claude`
 >
-> Alternativ kannst du den Bug konventionell mit `/lt-dev:fix-issue` untersuchen.
+> Alternativ kannst du den Bug konventionell mit `/lt-dev:resolve-ticket` untersuchen.
 
 **Stop execution if Agent Teams is not enabled.** This command has no single-agent fallback - the team IS the workflow.
 

@@ -11,7 +11,7 @@ disable-model-invocation: true
 
 - Before merging changes to validate overall quality
 - After completing a feature or fix implementation
-- As a final quality gate after `fix-issue`
+- As a final quality gate after `resolve-ticket`
 - When you want a structured assessment across all quality dimensions
 
 ## Related Commands
@@ -24,7 +24,7 @@ disable-model-invocation: true
 | `/lt-dev:backend:code-cleanup` | Code style and formatting cleanup |
 | `/lt-dev:backend:test-generate` | Generate tests for changes |
 | `/lt-dev:backend:sec-audit` | OWASP security audit for dependencies |
-| `/lt-dev:fix-issue` | Implement a Linear issue (run review after) |
+| `/lt-dev:resolve-ticket` | Resolve a ticket (run review after) |
 | `/lt-dev:debug` | Adversarial debugging with competing hypotheses |
 
 **Related Skills:**
@@ -33,7 +33,7 @@ disable-model-invocation: true
 |-------|---------|
 | `coordinating-agent-teams` | Auto-detection heuristics and team coordination patterns |
 
-**Recommended workflow:** `fix-issue` → `/lt-dev:review` → `/security-review` → address findings → `code-cleanup` → create PR → `/review`
+**Recommended workflow:** `resolve-ticket` → `/lt-dev:review` → `/security-review` → address findings → `code-cleanup` → create PR → `/review`
 
 ---
 

@@ -20,7 +20,9 @@ Guide the user through creating a well-structured user story that can be used as
 
 | Command | Purpose |
 |---------|---------|
-| `/lt-dev:fix-issue` | Work on an existing Linear issue |
+| `/lt-dev:create-ticket` | Smart router for all ticket types (Story, Task, Bug) |
+| `/lt-dev:create-task` | Create a technical task |
+| `/lt-dev:create-bug` | Create a bug report |
 | `/lt-dev:resolve-ticket` | Resolve ticket end-to-end with TDD |
 
 **Related Skills:**
@@ -29,7 +31,7 @@ Guide the user through creating a well-structured user story that can be used as
 |-------|---------|
 | `coordinating-agent-teams` | Parallel test writing coordination for fullstack stories |
 
-**Workflow:** Create story → Save to Linear → `/lt-dev:fix-issue` to implement
+**Workflow:** Create story → Save to Linear → `/lt-dev:resolve-ticket` to implement
 
 **IMPORTANT: The generated story and all user-facing communication must ALWAYS be in German, regardless of the user's input language. Exceptions: Properties (camelCase), code snippets, and technical terms remain in English.**
 
@@ -354,10 +356,12 @@ Once the user approves the story, use AskUserQuestion with these 4 options:
    - "Linear MCP ist nicht installiert. Du kannst es mit `lt claude install-mcps linear` installieren."
    - Then ask if they want to choose a different output option
 
-2. If Linear MCP is available, ask for Linear team and project (in German):
-   - First ask: "In welchem Linear Team soll das Ticket erstellt werden?"
-   - Use Linear MCP to list available teams to help the user choose
-   - If the user provides an invalid team, show available teams and ask again
+2. **Team selection (default: "Entwicklung"):**
+   - Use Linear MCP to list available teams
+   - If only one team exists, use it automatically without asking
+   - If "Entwicklung" exists, use it as default: "Team: **Entwicklung** — Soll ich ein anderes Team verwenden?"
+   - If the user confirms (e.g., "ja", "passt", "ok", or empty input), use the default
+   - Otherwise, let the user choose from available teams
 
 3. After team selection, ask for the project (in German):
    - "Zu welchem Projekt soll das Ticket gehören? (oder 'Keins' wenn kein Projekt zugeordnet werden soll)"
@@ -365,11 +369,9 @@ Once the user approves the story, use AskUserQuestion with these 4 options:
    - Accept "Keins", "Kein Projekt", "Ohne Projekt", or similar as valid input for no project
    - If the user provides an invalid project, show available projects and ask again
 
-4. After project selection, ask for the status (in German):
-   - "Welchen Status soll das Ticket haben? (Standard: 'Open')"
-   - Use Linear MCP to list available statuses for the selected team
-   - If the user just confirms (e.g., "Ok", "Ja", "Enter", or empty input), use "Open" as default
-   - If the user provides an invalid status, show available statuses and ask again
+4. **Status (default: "Open"):**
+   - Use "Open" as default status without asking
+   - Mention it in the creation summary so the user can request a change if needed
 
 5. Optionally ask for priority (in German):
    - "Möchtest du eine Priorität setzen? (0=Keine, 1=Urgent, 2=High, 3=Normal, 4=Low) - Standard: Keine"
