@@ -21,6 +21,7 @@ Guide the user through creating a well-structured user story that can be used as
 | Command | Purpose |
 |---------|---------|
 | `/lt-dev:fix-issue` | Work on an existing Linear issue |
+| `/lt-dev:resolve-ticket` | Resolve ticket end-to-end with TDD |
 
 **Related Skills:**
 

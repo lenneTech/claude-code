@@ -17,6 +17,7 @@ disable-model-invocation: true
 | Command | Purpose |
 |---------|---------|
 | `/lt-dev:create-story` | Create a new user story for Linear |
+| `/lt-dev:resolve-ticket` | Resolve ticket end-to-end with TDD |
 | `/lt-dev:review` | Comprehensive 7-dimension code review after implementation |
 | `/review` | Claude Code built-in: quick PR-level review (after PR creation) |
 | `/lt-dev:comment` | Generate testing comment for the issue |
