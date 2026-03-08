@@ -38,6 +38,7 @@ Execute all priorities:
 Check for:
 - Unused dependencies that can be removed (especially from feature work)
 - New dependencies that should be in devDependencies vs dependencies
+- Deprecated packages and available replacements (especially newly added ones)
 - Outdated dependencies (all types: security, features, patches)
 - Security vulnerabilities introduced by new dependencies
 - Compatibility issues with newly added packages

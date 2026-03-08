@@ -214,9 +214,61 @@ npm install && npm run build && npm test
 
 ### Phase 3: Update Discovery & Categorization (Priority 3)
 
-**Goal**: Identify all updateable packages
+**Goal**: Identify all updateable and deprecated packages
 
-**Use `ncu` (npm-check-updates) instead of `npm outdated`** - it shows the actual latest versions, not just those within semver ranges.
+#### Step A: Deprecated Package Detection
+
+**Check ALL installed packages for deprecation notices:**
+
+```bash
+# Check each dependency for deprecation
+for pkg in $(node -e "const p=require('./package.json'); console.log([...Object.keys(p.dependencies||{}), ...Object.keys(p.devDependencies||{})].join(' '))"); do
+  dep_msg=$(npm view "$pkg" deprecated 2>/dev/null)
+  if [ -n "$dep_msg" ]; then
+    echo "⚠️ DEPRECATED: $pkg → $dep_msg"
+  fi
+done
+```
+
+**For each deprecated package:**
+
+1. **Read the deprecation message** — it usually names a replacement
+2. **Search for the recommended replacement:**
+   ```bash
+   # Check deprecation message for replacement hint
+   npm view deprecated-package deprecated
+   # Check package homepage/repository for migration guide
+   npm view deprecated-package homepage repository
+   ```
+3. **Evaluate the replacement:**
+   - Is the replacement API-compatible (drop-in)?
+   - Does it require code changes? How many files affected?
+   - Is the replacement actively maintained? (`npm view replacement-pkg time modified`)
+4. **Execute replacement:**
+   ```bash
+   # Install replacement
+   npm install replacement-pkg@version --save-exact
+   # Remove deprecated package
+   npm uninstall deprecated-pkg
+   # Update imports in source code
+   # Verify
+   npm run build && npm test
+   ```
+5. **If no replacement exists:** Document the package as a risk and check if the functionality can be achieved with built-in Node.js APIs or other established packages.
+
+**Classify deprecated packages:**
+
+| Situation | Action |
+|-----------|--------|
+| Drop-in replacement available | Replace immediately (SAFE) |
+| Replacement with minor API changes | Replace with code fixes (MEDIUM) |
+| Replacement with major API changes | Evaluate effort vs. risk (HIGH RISK) |
+| No replacement, package still works | Document risk, keep for now |
+| No replacement, package broken | Find alternative or implement inline |
+
+#### Step B: Update Discovery
+
+**Use `ncu` (npm-check-updates) instead of `npm outdated`** — it shows the actual latest versions, not just those within semver ranges.
 
 ```bash
 # Discover all update candidates (use npx for no global install required)
@@ -468,7 +520,15 @@ Provide comprehensive report after all optimizations:
   [List with reasons]
 **Result**: Build ✅, Tests ✅
 
-### Phase 3 & 4: Package Updates
+### Phase 3A: Deprecated Packages
+- Deprecated packages found: X
+- Replaced: Y
+  [List with old → new package and migration notes]
+- Kept (no replacement): Z
+  [List with risk assessment]
+**Result**: Build ✅, Tests ✅
+
+### Phase 3B & 4: Package Updates
 
 #### SAFE Updates (Batch) - ✅ X packages
 [List]
@@ -537,7 +597,10 @@ Before declaring success, verify ALL of these:
 - [ ] Moved ALL development-only packages
 - [ ] Verified build & tests pass
 
-### Priority 3: Package Updates
+### Priority 3: Deprecated & Package Updates
+- [ ] Checked ALL packages for deprecation notices (`npm view <pkg> deprecated`)
+- [ ] Replaced deprecated packages with recommended alternatives
+- [ ] Documented deprecated packages without replacements as risks
 - [ ] Ran `npx ncu` to discover ALL candidates (shows actual latest versions)
 - [ ] Categorized packages into SAFE/MEDIUM/HIGH RISK
 - [ ] Attempted updates for ALL categories
@@ -588,8 +651,9 @@ Before declaring success, verify ALL of these:
 **Success is measured by**:
 1. How many packages you removed (not kept)
 2. How many packages you moved to devDependencies (not left in dependencies)
-3. How many packages you updated with minimal/no code changes
-4. How many unnecessary overrides you removed
+3. How many deprecated packages you replaced with maintained alternatives
+4. How many packages you updated with minimal/no code changes
+5. How many unnecessary overrides you removed
 5. Whether source code changes were kept to minimum
 
 **Your job priorities**:

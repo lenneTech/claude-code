@@ -1,6 +1,6 @@
 ---
 name: maintaining-npm-packages
-description: Analyzes and optimizes npm package dependencies. Selects between 5 maintenance modes: FULL (update all), DRY-RUN (analysis only), SECURITY-ONLY (urgent CVE fixes), PRE-RELEASE (conservative patch-only), POST-FEATURE (cleanup after development). Activates for "update packages", "npm audit", "check dependencies", "security fix", "outdated dependencies", "devDependencies", "pre-release cleanup", "post-feature housekeeping", "remove unused packages", or package.json optimization. NOT for @lenne.tech/nest-server version updates (use nest-server-updating).
+description: Analyzes and optimizes npm package dependencies. Selects between 5 maintenance modes: FULL (update all), DRY-RUN (analysis only), SECURITY-ONLY (urgent CVE fixes), PRE-RELEASE (conservative patch-only), POST-FEATURE (cleanup after development). Activates for "update packages", "npm audit", "check dependencies", "security fix", "outdated dependencies", "deprecated packages", "find replacements", "devDependencies", "pre-release cleanup", "post-feature housekeeping", "remove unused packages", or package.json optimization. NOT for @lenne.tech/nest-server version updates (use nest-server-updating).
 ---
 
 # NPM Package Maintenance
@@ -82,11 +82,12 @@ Recommend when user:
 
 ## What the Agent Does
 
-The lt-dev:npm-package-maintainer agent performs 3 priorities:
+The lt-dev:npm-package-maintainer agent performs 4 priorities:
 
 1. **Remove unused packages** - Finds and removes packages not used in the codebase
 2. **Optimize categorization** - Moves dev-only packages to devDependencies
-3. **Update packages** - Updates to latest versions with risk-based approach
+3. **Replace deprecated packages** - Detects deprecated packages and replaces them with maintained alternatives
+4. **Update packages** - Updates to latest versions with risk-based approach
 
 All operations ensure `npm run build` and `npm test` pass before completion.
 

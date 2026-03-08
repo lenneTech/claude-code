@@ -36,6 +36,7 @@ Execute all priorities:
 Check for:
 - Unused dependencies that can be removed
 - Packages that should be moved to devDependencies
+- Deprecated packages and available replacements
 - Outdated dependencies (all types: security, features, patches)
 - Security vulnerabilities
 - Compatibility issues

@@ -37,6 +37,7 @@ Focus exclusively on security updates:
 Check for:
 - Security vulnerabilities (npm audit)
 - Security-critical package updates only
+- Deprecated packages (these are a security risk — replace with maintained alternatives where possible)
 
 This is a faster, minimal-change mode for urgent security fixes.
 

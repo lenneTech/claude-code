@@ -30,6 +30,7 @@ Use the lt-dev:npm-package-maintainer agent to perform **DRY-RUN** analysis.
 Analyze and report WITHOUT making changes:
 - Analyze unused packages (what WOULD be removed)
 - Analyze categorization (what WOULD be moved to devDependencies)
+- Detect deprecated packages (what WOULD be replaced and with which alternatives)
 - Discover outdated packages (what WOULD be updated)
 - Analyze overrides (which COULD be removed)
 - Check security vulnerabilities
@@ -40,6 +41,7 @@ Analyze and report WITHOUT making changes:
 Generate comprehensive report including:
 - Packages that could be removed (with usage analysis)
 - Packages that could be recategorized
+- Deprecated packages with recommended replacements
 - Available updates categorized by risk (SAFE/MEDIUM/HIGH)
 - Overrides that may no longer be necessary (with analysis)
 - Security vulnerabilities found
