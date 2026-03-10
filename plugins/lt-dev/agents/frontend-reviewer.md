@@ -42,7 +42,8 @@ Initial TodoWrite:
 [pending] Phase 5: SSR safety
 [pending] Phase 6: Performance
 [pending] Phase 7: Styling & conventions
-[pending] Phase 8: Tests & formatting
+[pending] Phase 8: Tailwind & CSS quality
+[pending] Phase 9: Tests & formatting
 [pending] Generate report
 ```
 
@@ -287,9 +288,14 @@ Validate styling and naming:
 - [ ] Feature-based folder organization
 - [ ] Loading/Empty/Error state handling on every data-driven component
 - [ ] Toast notifications with German messages and color codes
-- [ ] No `console.log` — use `consola.withTag()`
+- [ ] No `console.log` — use `consola.withTag()` (tagged loggers)
 - [ ] No `alert()` for user feedback — use `useToast()`
 - [ ] UI labels in German, code in English
+- [ ] **Valibot ONLY** for form validation — no Zod imports
+- [ ] **Programmatic modals** via `useOverlay()` — no inline `v-model:open`
+- [ ] **Options object pattern** for optional parameters — no positional optionals
+- [ ] **`NuxtErrorBoundary`** for independent page sections that may fail
+- [ ] **consola** with `withTag()` — never raw `console.*` calls
 
 **Grep patterns:**
 ```bash
@@ -297,12 +303,16 @@ Validate styling and naming:
 grep -n "text-red-\|text-blue-\|text-green-\|bg-red-\|bg-blue-\|bg-green-\|text-gray-\|bg-gray-" <vue-files>
 # Style blocks
 grep -n "<style" <vue-files>
-# Console.log
+# Console.log (must use consola.withTag())
 grep -n "console\.\(log\|warn\|error\)" <vue-files> <ts-files>
 # Alert
 grep -n "alert(" <vue-files>
-# Inline modals
+# Inline modals (must use useOverlay)
 grep -n "v-model:open" <vue-files>
+# Zod imports (must use Valibot)
+grep -n "from 'zod'\|from \"zod\"" <vue-files> <ts-files>
+# Positional optional params (must use options object)
+grep -n "function.*?:.*?,.*?:.*?)" <ts-files>
 ```
 
 **Scoring:**
@@ -314,7 +324,45 @@ grep -n "v-model:open" <vue-files>
 | Missing state handling or style blocks | 60-75% |
 | Widespread convention violations | <50% |
 
-### Phase 8: Tests & Formatting
+### Phase 8: Tailwind & CSS Quality
+
+Validate CSS/Tailwind usage quality:
+
+- [ ] **Minimize custom classes** — prefer Nuxt UI component props over raw Tailwind
+- [ ] **No `@apply` in components** — if `@apply` is needed, extract to `assets/css/` global styles
+- [ ] **No inline `style` attributes** — use Tailwind classes
+- [ ] **No magic numbers** in spacing — use Tailwind scale (`gap-4`, not `gap-[13px]`)
+- [ ] **Consistent spacing scale** — stick to Tailwind defaults (2, 4, 6, 8, 12, 16)
+- [ ] **No arbitrary values** unless truly necessary — prefer Tailwind tokens over `text-[#ff6600]` or `w-[437px]`
+- [ ] **Responsive patterns** — mobile-first with `sm:`, `md:`, `lg:` breakpoints
+- [ ] **Dark mode compatible** — use semantic colors, avoid `bg-white`/`text-black`
+- [ ] **No duplicate utility patterns** — repeated class combinations (3+ times) → extract to component
+- [ ] **Max class string length** — if class string exceeds ~10 utilities, consider component extraction
+
+**Grep patterns:**
+```bash
+# @apply in components (should be in assets/css/)
+grep -rn "@apply" <vue-files>
+# Inline style attributes
+grep -n "style=" <vue-files> | grep -v ":style"
+# Arbitrary values (potential magic numbers)
+grep -n "\[.*px\]\|\[.*rem\]\|\[#" <vue-files>
+# Hardcoded light/dark colors
+grep -n "bg-white\|bg-black\|text-white\|text-black" <vue-files>
+# Long class strings (rough check)
+grep -n 'class="[^"]\{150,\}"' <vue-files>
+```
+
+**Scoring:**
+
+| Scenario | Score |
+|----------|-------|
+| Clean Tailwind usage, no arbitrary values | 100% |
+| Few arbitrary values with justification | 80-90% |
+| @apply in components or magic numbers | 60-75% |
+| Inline styles or widespread arbitrary values | <50% |
+
+### Phase 9: Tests & Formatting
 
 #### Tests
 
@@ -351,6 +399,7 @@ npm test 2>/dev/null || npm run test:unit 2>/dev/null
 | SSR Safety | X% | ✅/⚠️/❌ |
 | Performance | X% | ✅/⚠️/❌ |
 | Styling & Conventions | X% | ✅/⚠️/❌ |
+| Tailwind & CSS Quality | X% | ✅/⚠️/❌ |
 | Tests & Formatting | X% | ✅/⚠️/❌ |
 
 **Overall: X%**
@@ -376,7 +425,10 @@ npm test 2>/dev/null || npm run test:unit 2>/dev/null
 ### 7. Styling & Conventions
 [Findings with hardcoded colors, style blocks, console.log]
 
-### 8. Tests & Formatting
+### 8. Tailwind & CSS Quality
+[Findings with @apply, arbitrary values, inline styles, magic numbers]
+
+### 9. Tests & Formatting
 [Test results, lint output, debug artifacts]
 
 ### Remediation Catalog

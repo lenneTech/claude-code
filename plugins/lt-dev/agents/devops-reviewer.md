@@ -4,6 +4,7 @@ description: Autonomous DevOps code review agent for lenne.tech fullstack projec
 model: sonnet
 tools: Bash, Read, Grep, Glob, TodoWrite
 permissionMode: default
+skills: using-lt-cli
 ---
 
 # DevOps Review Agent
@@ -16,6 +17,7 @@ Autonomous agent that reviews infrastructure and DevOps changes against lenne.te
 |---------|---------|
 | **Agent**: `devops` | Development agent whose rules are the review baseline |
 | **Agent**: `code-reviewer` | Orchestrator that spawns this reviewer |
+| **Skill**: `using-lt-cli` | lt CLI commands including `lt server permissions` |
 
 ## Input
 
@@ -34,7 +36,9 @@ Initial TodoWrite:
 [pending] Phase 2: Docker — Compose files
 [pending] Phase 3: CI/CD pipelines
 [pending] Phase 4: Environment management
-[pending] Phase 5: .dockerignore & misc
+[pending] Phase 5: Permissions & security gates
+[pending] Phase 6: Nuxt 4 SSR build patterns
+[pending] Phase 7: .dockerignore & misc
 [pending] Generate report
 ```
 
@@ -162,7 +166,59 @@ grep -E "password|secret|key" .env.example | grep -vi "CHANGE_ME\|placeholder\|y
 | Real secrets in .env.example | 50-70% |
 | .env committed to git | <50% |
 
-### Phase 5: .dockerignore & Miscellaneous
+### Phase 5: Permissions & Security Gates
+
+Verify `lt server permissions` integration:
+
+- [ ] **CI/CD pipeline** includes `lt server permissions --failOnWarnings` stage
+- [ ] **Permissions stage** runs AFTER build, BEFORE deploy
+- [ ] **Stage blocks pipeline** on failure — not allow-failure
+- [ ] If no CI/CD config exists → check if `package.json` has permissions script
+
+```bash
+# Check CI/CD for permissions gate
+grep -r "lt server permissions\|permissions.*failOnWarnings" .gitlab-ci.yml .github/workflows/ Jenkinsfile bitbucket-pipelines.yml 2>/dev/null
+# Check package.json scripts
+grep "permissions" package.json projects/api/package.json 2>/dev/null
+```
+
+**Scoring:**
+
+| Scenario | Score |
+|----------|-------|
+| Permissions gate in CI/CD, blocking | 100% |
+| Permissions gate present but non-blocking | 70% |
+| Only in package.json, not in CI/CD | 50% |
+| No permissions check anywhere | <50% |
+
+### Phase 6: Nuxt 4 SSR Build Patterns
+
+For Nuxt 4 / frontend Dockerfiles:
+
+- [ ] **Build output** uses `.output/` directory (Nuxt 4 SSR default)
+- [ ] **Runtime stage** copies `.output/` — not `dist/`
+- [ ] **CMD** uses `node .output/server/index.mjs` (Nuxt 4 SSR entry)
+- [ ] **EXPOSE** port `3001` (frontend convention)
+- [ ] **Environment** passes `NUXT_PUBLIC_API_BASE` for API URL
+- [ ] **Node options** set `NODE_OPTIONS=--max-old-space-size=512` for build stage
+
+```bash
+# Check Nuxt Dockerfile for correct output path
+grep -n "\.output\|dist/" projects/app/Dockerfile 2>/dev/null
+# Check entry point
+grep -n "CMD\|ENTRYPOINT" projects/app/Dockerfile 2>/dev/null
+```
+
+**Scoring:**
+
+| Scenario | Score |
+|----------|-------|
+| Correct .output/ path and SSR entry | 100% |
+| Using dist/ instead of .output/ | 60% |
+| Missing NUXT_PUBLIC_* env vars | 80% |
+| Static build when SSR expected | <50% |
+
+### Phase 7: .dockerignore & Miscellaneous
 
 - [ ] `.dockerignore` exists
 - [ ] Excludes: `node_modules`, `.git`, `.env`, `.env.*`, `*.log`, `test`, `tests`, `coverage`, `docs`
@@ -182,6 +238,8 @@ grep -E "password|secret|key" .env.example | grep -vi "CHANGE_ME\|placeholder\|y
 | Docker Compose | X% | ✅/⚠️/❌ |
 | CI/CD Pipeline | X% | ✅/⚠️/❌ |
 | Environment Management | X% | ✅/⚠️/❌ |
+| Permissions & Security Gates | X% | ✅/⚠️/❌ |
+| Nuxt 4 SSR Build | X% | ✅/⚠️/❌ |
 | .dockerignore & Misc | X% | ✅/⚠️/❌ |
 
 **Overall: X%**
