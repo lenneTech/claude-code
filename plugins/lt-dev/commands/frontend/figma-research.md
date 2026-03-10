@@ -8,7 +8,7 @@ allowed-tools: Bash, Read, Write, Glob, Grep, AskUserQuestion, mcp__figma-deskto
 
 **IMPORTANT: This command is RESEARCH ONLY. Do NOT implement any code, pages, or components. Do NOT use `get_design_context`. Only discover the Figma file structure and save configuration files.**
 
-Discover the structure of a Figma file and generate project-local configuration for the `/lt-dev:frontend:figma-init` and `/figma-to-code` workflow.
+Discover the structure of a Figma file and generate project-local configuration for the `/lt-dev:frontend:figma-init` and `/lt-dev:frontend:figma-to-code` workflow.
 
 ## Input
 
@@ -162,9 +162,9 @@ Generierte Dateien:
 - .claude/skills/figma-to-code/reference/figma-sections.md (Section-Uebersicht)
 
 Naechste Schritte:
-1. /lt-dev:frontend:figma-init <url>     -- Design System extrahieren (Farben, Spacing, Layouts)
-2. /figma-to-code <section-name>         -- Section implementieren
-3. /figma-to-code <section-name> --team  -- Mit Agent-Team implementieren
+1. /lt-dev:frontend:figma-init <url>               -- Design System extrahieren (Farben, Spacing, Layouts)
+2. /lt-dev:frontend:figma-to-code <section-name>   -- Section implementieren
+3. /lt-dev:frontend:figma-to-code <section> --team  -- Mit Agent-Team implementieren
 ```
 
 ## Important Notes

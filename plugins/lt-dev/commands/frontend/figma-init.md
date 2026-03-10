@@ -19,12 +19,12 @@ You receive: `$ARGUMENTS`
 ## Step 1: Validate Prerequisites
 
 1. Check if Figma MCP tools are available
-2. Check if `.claude/figma-project.json` exists (run `/figma-research` first if not)
+2. Check if `.claude/figma-project.json` exists (run `/lt-dev:frontend:figma-research` first if not)
 3. Check if design system is already configured (unless `--force`)
 
 ```
 Falls .claude/figma-project.json nicht existiert:
--> "Fuehre zuerst /figma-research <figma-url> aus, um die Projekt-Konfiguration zu generieren."
+-> "Fuehre zuerst /lt-dev:frontend:figma-research <figma-url> aus, um die Projekt-Konfiguration zu generieren."
 ```
 
 ## Step 2: Extract Design Tokens from Figma
@@ -430,9 +430,10 @@ Generierte/Aktualisierte Dateien:
 - .claude/figma-project.json (Design System + Global Components)
 
 Naechste Schritte:
-1. npm run dev                        -- Dev-Server starten
-2. Browser-Test via Chrome DevTools   -- Layout pruefen
-3. /figma-to-code <section>           -- Einzelne Screens implementieren
+1. npm run dev                                      -- Dev-Server starten
+2. Browser-Test via Chrome DevTools                  -- Layout pruefen
+3. /lt-dev:frontend:figma-to-code <section>          -- Einzelne Screens implementieren
+4. /lt-dev:frontend:figma-to-code <section> --team   -- Mit Agent-Team implementieren
 ```
 
 ## Important Rules
