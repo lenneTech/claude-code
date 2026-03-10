@@ -75,6 +75,7 @@ Initial TodoWrite:
    | Frontend | Any `.vue` files or files in `projects/app/`, `packages/app/`, `app/` | `frontend-reviewer` |
    | Infrastructure | Any Dockerfile, docker-compose, CI/CD config, .env changes | `devops-reviewer` |
    | Tests | Any `.spec.ts`, `.test.ts`, `.e2e.ts` files OR source files without tests | `test-reviewer` |
+   | UX Patterns | Any `.vue` files or page/component changes | `ux-reviewer` |
    | Security | **Always** — runs on every review regardless of domain | `security-reviewer` |
 
 4. **Load issue details** (if Issue ID provided):
@@ -186,6 +187,24 @@ API-first testing patterns, permission & security testing, and test naming & str
 Produce your structured test review report with fulfillment grades.
 ```
 
+**UX Reviewer (if frontend/page changes):**
+```
+Use Agent tool with subagent_type "lt-dev:ux-reviewer":
+
+Review UX patterns on the current branch.
+
+Base branch: <base-branch>
+App URL: http://localhost:3001
+Changed files:
+<list of frontend files>
+
+Check state handling (Loading/Empty/Error), user feedback (Toast consistency),
+navigation patterns, form UX, destructive action safety, optimistic UI,
+cross-page consistency, error recovery, and responsive behavior.
+Include bonus checks for skeleton loading, keyboard navigation, pagination, and onboarding.
+Produce your structured UX review report with fulfillment grades.
+```
+
 ### Phase 3: Collect & Merge Reports
 
 All Agent teammates return their reports automatically. Collect all reports.
@@ -215,6 +234,7 @@ Merge all reviewer reports into a single unified report.
 | frontend-reviewer | Frontend (Nuxt/Vue) | ✅ Complete / ⚠️ Partial / ❌ Failed / — N/A |
 | backend-reviewer | Backend (NestJS) | ✅ / ⚠️ / ❌ / — |
 | test-reviewer | Tests (Quality/Coverage) | ✅ / ⚠️ / ❌ / — |
+| ux-reviewer | UX Patterns (Interaction) | ✅ / ⚠️ / ❌ / — |
 | security-reviewer | Security (OWASP) | ✅ / ⚠️ / ❌ / — |
 | devops-reviewer | DevOps (Docker/CI) | ✅ / ⚠️ / ❌ / — |
 
@@ -253,6 +273,16 @@ Merge all reviewer reports into a single unified report.
 | | API-First Testing | X% | ✅/⚠️/❌ |
 | | Permission & Security Testing | X% | ✅/⚠️/❌ |
 | | Test Naming & Structure | X% | ✅/⚠️/❌ |
+| **UX Patterns** | | | |
+| | State Handling | X% | ✅/⚠️/❌ |
+| | User Feedback | X% | ✅/⚠️/❌ |
+| | Navigation Patterns | X% | ✅/⚠️/❌ |
+| | Form UX | X% | ✅/⚠️/❌ |
+| | Destructive Action Safety | X% | ✅/⚠️/❌ |
+| | Optimistic UI & Loading | X% | ✅/⚠️/❌ |
+| | Cross-Page Consistency | X% | ✅/⚠️/❌ |
+| | Error Recovery | X% | ✅/⚠️/❌ |
+| | Responsive Behavior | X% | ✅/⚠️/❌ |
 | **DevOps** | | | |
 | | Dockerfiles | X% | ✅/⚠️/❌ |
 | | Docker Compose | X% | ✅/⚠️/❌ |
@@ -271,6 +301,9 @@ Merge all reviewer reports into a single unified report.
 
 #### Tests
 [Findings from test-reviewer, or "N/A — no test/source changes"]
+
+#### UX Patterns
+[Findings from ux-reviewer, or "N/A — no frontend changes"]
 
 #### Security
 [Findings from security-reviewer]
@@ -305,9 +338,10 @@ The overall score is the **weighted average** across all active domains:
 
 | Domain | Weight | Condition |
 |--------|--------|-----------|
-| Backend | 25% | If backend changes detected |
-| Frontend | 25% | If frontend changes detected |
-| Tests | 15% | If test or source files changed |
+| Backend | 20% | If backend changes detected |
+| Frontend | 20% | If frontend changes detected |
+| Tests | 10% | If test or source files changed |
+| UX Patterns | 15% | If frontend/page changes detected |
 | Security | 25% | Always active |
 | DevOps | 10% | If infrastructure changes detected |
 

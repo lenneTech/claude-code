@@ -81,6 +81,9 @@ Launch ALL applicable reviewers simultaneously using Agent tool calls in a singl
 3. **Backend Reviewer** (only if api/ or src/server/ files changed) — Agent tool with `subagent_type: "lt-dev:backend-reviewer"`:
    - Prompt: "Quick backend review of recent code changes. Focus on: missing @Restricted/@Roles, missing securityCheck, implicit any, missing input validation, blind serviceOptions passthrough. Only report High severity findings. Be concise."
 
+4. **UX Reviewer** (only if .vue or app/ files changed) — Agent tool with `subagent_type: "lt-dev:ux-reviewer"`:
+   - Prompt: "Quick UX pattern review of recent code changes. Focus on: missing Loading/Empty/Error states, missing toast feedback after actions, dead-end navigation, forms without loading on submit, destructive actions without confirmation. Only report High severity findings. Be concise."
+
 ### Step 3: Handle Review Findings
 
 After all reviews complete:
