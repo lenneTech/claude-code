@@ -5,12 +5,12 @@
     {
       "pattern": "Bash(npm test:*)",
       "description": "Run npm test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "backend-dev", "backend-reviewer", "branch-rebaser", "coordinating-agent-teams", "refactor-frontend"]
     },
     {
       "pattern": "Bash(npm run test:*)",
       "description": "Run npm run test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "backend-dev", "backend-reviewer", "branch-rebaser", "coordinating-agent-teams", "refactor-frontend"]
     },
     {
       "pattern": "Bash(npm run test\\:e2e:*)",
@@ -45,22 +45,22 @@
     {
       "pattern": "Bash(npm run build:*)",
       "description": "Build the application",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "refactor-frontend"]
     },
     {
       "pattern": "Bash(npm run lint:*)",
       "description": "Run linter checks",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "refactor-frontend"]
     },
     {
       "pattern": "Bash(npm run generate-types:*)",
       "description": "Generate TypeScript types from backend API",
-      "usedBy": ["developing-lt-frontend", "fullstack-updater"]
+      "usedBy": ["developing-lt-frontend", "fullstack-updater", "frontend-dev"]
     },
     {
       "pattern": "Bash(lt server:*)",
       "description": "Execute lt server commands (module, object, addProp, create, permissions)",
-      "usedBy": ["generating-nest-servers", "code-reviewer", "sec-audit"]
+      "usedBy": ["generating-nest-servers", "code-reviewer", "backend-reviewer", "security-reviewer", "sec-audit", "backend-dev"]
     },
     {
       "pattern": "Bash(lt:*)",
@@ -90,12 +90,12 @@
     {
       "pattern": "Bash(lt server module:*)",
       "description": "Create new NestJS module",
-      "usedBy": ["generating-nest-servers"]
+      "usedBy": ["generating-nest-servers", "backend-dev"]
     },
     {
       "pattern": "Bash(lt server addProp:*)",
       "description": "Add property to NestJS module",
-      "usedBy": ["generating-nest-servers"]
+      "usedBy": ["generating-nest-servers", "backend-dev"]
     },
     {
       "pattern": "Bash(lt git get:*)",
@@ -125,12 +125,12 @@
     {
       "pattern": "Bash(pnpm test:*)",
       "description": "Run pnpm test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "refactor-frontend"]
     },
     {
       "pattern": "Bash(pnpm run test:*)",
       "description": "Run pnpm run test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "refactor-frontend"]
     },
     {
       "pattern": "Bash(pnpm run test\\:e2e:*)",
@@ -165,17 +165,17 @@
     {
       "pattern": "Bash(pnpm run build:*)",
       "description": "Build the application via pnpm",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "refactor-frontend"]
     },
     {
       "pattern": "Bash(pnpm run lint:*)",
       "description": "Run linter checks via pnpm",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "refactor-frontend"]
     },
     {
       "pattern": "Bash(pnpm run generate-types:*)",
       "description": "Generate TypeScript types via pnpm",
-      "usedBy": ["developing-lt-frontend", "fullstack-updater"]
+      "usedBy": ["developing-lt-frontend", "fullstack-updater", "frontend-dev"]
     },
     {
       "pattern": "Bash(pnpm audit:*)",
@@ -225,7 +225,7 @@
     {
       "pattern": "Bash(pnpm run format:*)",
       "description": "Run code formatter via pnpm",
-      "usedBy": ["review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": ["review", "branch-rebaser", "coordinating-agent-teams", "refactor-frontend"]
     },
     {
       "pattern": "Bash(pnpm run prettier:*)",
@@ -245,12 +245,12 @@
     {
       "pattern": "Bash(yarn test:*)",
       "description": "Run yarn test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "refactor-frontend"]
     },
     {
       "pattern": "Bash(yarn run test:*)",
       "description": "Run yarn run test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "refactor-frontend"]
     },
     {
       "pattern": "Bash(yarn run test\\:e2e:*)",
@@ -285,17 +285,17 @@
     {
       "pattern": "Bash(yarn run build:*)",
       "description": "Build the application via yarn",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "refactor-frontend"]
     },
     {
       "pattern": "Bash(yarn run lint:*)",
       "description": "Run linter checks via yarn",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "refactor-frontend"]
     },
     {
       "pattern": "Bash(yarn run generate-types:*)",
       "description": "Generate TypeScript types via yarn",
-      "usedBy": ["developing-lt-frontend", "fullstack-updater"]
+      "usedBy": ["developing-lt-frontend", "fullstack-updater", "frontend-dev"]
     },
     {
       "pattern": "Bash(yarn audit:*)",
@@ -345,7 +345,7 @@
     {
       "pattern": "Bash(yarn run format:*)",
       "description": "Run code formatter via yarn",
-      "usedBy": ["review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": ["review", "branch-rebaser", "coordinating-agent-teams", "refactor-frontend"]
     },
     {
       "pattern": "Bash(yarn run prettier:*)",
@@ -400,7 +400,7 @@
     {
       "pattern": "Bash(npm run format:*)",
       "description": "Run code formatter",
-      "usedBy": ["review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": ["review", "branch-rebaser", "coordinating-agent-teams", "refactor-frontend"]
     },
     {
       "pattern": "Bash(npm run prettier:*)",
@@ -481,6 +481,46 @@
       "pattern": "Bash(git worktree:*)",
       "description": "Manage git worktrees for parallel branch operations",
       "usedBy": ["branch-rebaser", "coordinating-agent-teams"]
+    },
+    {
+      "pattern": "Bash(docker compose:*)",
+      "description": "Run docker compose commands",
+      "usedBy": ["devops", "devops-reviewer"]
+    },
+    {
+      "pattern": "Bash(docker build:*)",
+      "description": "Build Docker images",
+      "usedBy": ["devops"]
+    },
+    {
+      "pattern": "Bash(docker stats:*)",
+      "description": "Show Docker container resource usage",
+      "usedBy": ["devops", "devops-reviewer"]
+    },
+    {
+      "pattern": "Bash(docker volume:*)",
+      "description": "Manage Docker volumes",
+      "usedBy": ["devops"]
+    },
+    {
+      "pattern": "Bash(docker ps:*)",
+      "description": "List Docker containers",
+      "usedBy": ["devops", "devops-reviewer"]
+    },
+    {
+      "pattern": "Bash(docker logs:*)",
+      "description": "View Docker container logs",
+      "usedBy": ["devops", "devops-reviewer"]
+    },
+    {
+      "pattern": "Bash(docker exec:*)",
+      "description": "Execute commands in Docker containers",
+      "usedBy": ["devops"]
+    },
+    {
+      "pattern": "Bash(docker images:*)",
+      "description": "List Docker images",
+      "usedBy": ["devops", "devops-reviewer"]
     }
   ]
 }

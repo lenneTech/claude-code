@@ -1,5 +1,5 @@
 {
-  "description": "Project detection and validation hooks",
+  "description": "Project detection, safety guards, and automatic quality gates",
   "hooks": {
     "PreToolUse": [
       {
@@ -10,11 +10,27 @@
             "command": "npx ts-node \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/validate-plugin-frontmatter.ts\""
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/block-dangerous-bash.sh\"",
+            "timeout": 5,
+            "statusMessage": "Checking for dangerous commands"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
       {
         "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/quality-gate-reset.sh\"",
+            "timeout": 3
+          },
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/detect-nuxt.sh\""
@@ -38,6 +54,18 @@
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/detect-npm-maintenance.sh\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/quality-gate.sh\"",
+            "timeout": 10,
+            "statusMessage": "Checking for source code changes"
           }
         ]
       }
