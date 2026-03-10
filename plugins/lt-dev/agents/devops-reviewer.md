@@ -5,6 +5,7 @@ model: sonnet
 tools: Bash, Read, Grep, Glob, TodoWrite
 permissionMode: default
 skills: using-lt-cli
+memory: project
 ---
 
 # DevOps Review Agent

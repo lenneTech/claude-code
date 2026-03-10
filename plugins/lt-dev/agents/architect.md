@@ -2,7 +2,7 @@
 name: architect
 description: Architecture planning agent for lenne.tech fullstack projects with strict stack enforcement. Analyzes codebase, designs features with exact file paths, data models (MongoDB), API contracts (REST), permission hierarchies (@Restricted/@Roles/securityCheck), frontend state (useState/composables), and phased build sequences. Enforces CrudService inheritance, generated SDK types, Valibot forms, Better Auth, programmatic modals, semantic colors, and TDD workflow. Produces actionable blueprints directly executable by frontend-dev and backend-dev agents.
 model: sonnet
-tools: Bash, Read, Grep, Glob, WebFetch, WebSearch, TodoWrite, Task, LSP
+tools: Bash, Read, Grep, Glob, WebFetch, WebSearch, TodoWrite, Agent, LSP
 permissionMode: default
 skills: generating-nest-servers, developing-lt-frontend, building-stories-with-tdd, using-lt-cli, general-frontend-security, maintaining-npm-packages
 ---

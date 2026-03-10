@@ -74,6 +74,7 @@ Initial TodoWrite:
    | Backend | Any files in `projects/api/`, `packages/api/`, or `src/server/` | `backend-reviewer` |
    | Frontend | Any `.vue` files or files in `projects/app/`, `packages/app/`, `app/` | `frontend-reviewer` |
    | Infrastructure | Any Dockerfile, docker-compose, CI/CD config, .env changes | `devops-reviewer` |
+   | Tests | Any `.spec.ts`, `.test.ts`, `.e2e.ts` files OR source files without tests | `test-reviewer` |
    | Security | **Always** — runs on every review regardless of domain | `security-reviewer` |
 
 4. **Load issue details** (if Issue ID provided):
@@ -166,8 +167,23 @@ Changed files:
 <list of infrastructure files>
 
 Check Dockerfiles, docker-compose configurations, CI/CD pipelines, environment management,
-and .dockerignore completeness.
+permissions gates, Nuxt 4 SSR build patterns, and .dockerignore completeness.
 Produce your structured DevOps review report with fulfillment grades.
+```
+
+**Test Reviewer (if test or source files changed):**
+```
+Use Agent tool with subagent_type "lt-dev:test-reviewer":
+
+Review the test quality and coverage on the current branch.
+
+Base branch: <base-branch>
+Changed files:
+<full list of changed files>
+
+Check test coverage gaps, test quality & assertions, test isolation & data safety,
+API-first testing patterns, permission & security testing, and test naming & structure.
+Produce your structured test review report with fulfillment grades.
 ```
 
 ### Phase 3: Collect & Merge Reports
@@ -198,6 +214,7 @@ Merge all reviewer reports into a single unified report.
 |----------|--------|--------|
 | frontend-reviewer | Frontend (Nuxt/Vue) | ✅ Complete / ⚠️ Partial / ❌ Failed / — N/A |
 | backend-reviewer | Backend (NestJS) | ✅ / ⚠️ / ❌ / — |
+| test-reviewer | Tests (Quality/Coverage) | ✅ / ⚠️ / ❌ / — |
 | security-reviewer | Security (OWASP) | ✅ / ⚠️ / ❌ / — |
 | devops-reviewer | DevOps (Docker/CI) | ✅ / ⚠️ / ❌ / — |
 
@@ -229,6 +246,13 @@ Merge all reviewer reports into a single unified report.
 | | Data Exposure & Secrets | X% | ✅/⚠️/❌ |
 | | Dependencies | X% | ✅/⚠️/❌ |
 | | Infrastructure Security | X% | ✅/⚠️/❌ |
+| **Tests** | | | |
+| | Test Coverage | X% | ✅/⚠️/❌ |
+| | Test Quality & Assertions | X% | ✅/⚠️/❌ |
+| | Test Isolation & Data Safety | X% | ✅/⚠️/❌ |
+| | API-First Testing | X% | ✅/⚠️/❌ |
+| | Permission & Security Testing | X% | ✅/⚠️/❌ |
+| | Test Naming & Structure | X% | ✅/⚠️/❌ |
 | **DevOps** | | | |
 | | Dockerfiles | X% | ✅/⚠️/❌ |
 | | Docker Compose | X% | ✅/⚠️/❌ |
@@ -244,6 +268,9 @@ Merge all reviewer reports into a single unified report.
 
 #### Backend
 [Findings from backend-reviewer, or "N/A — no backend changes"]
+
+#### Tests
+[Findings from test-reviewer, or "N/A — no test/source changes"]
 
 #### Security
 [Findings from security-reviewer]
@@ -278,9 +305,10 @@ The overall score is the **weighted average** across all active domains:
 
 | Domain | Weight | Condition |
 |--------|--------|-----------|
-| Backend | 30% | If backend changes detected |
-| Frontend | 30% | If frontend changes detected |
-| Security | 30% | Always active |
+| Backend | 25% | If backend changes detected |
+| Frontend | 25% | If frontend changes detected |
+| Tests | 15% | If test or source files changed |
+| Security | 25% | Always active |
 | DevOps | 10% | If infrastructure changes detected |
 
 Only active domains count toward the total. Weights are redistributed proportionally if a domain is N/A.

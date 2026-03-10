@@ -59,13 +59,14 @@ REASON=$(cat <<'ENDOFPASS1'
 
 Source files were modified. Running full quality gate.
 
-### Step 1: Build & Lint
+### Step 1: Build, Lint & Test
 
 Detect the package manager (pnpm/yarn/npm via lockfile), then run in each affected subproject:
 
 1. `npm run lint:fix` (or equivalent) — auto-fix lint issues
 2. `npm run format` (if available) — auto-format code
 3. `npm run build` — verify build succeeds
+4. `npm test` (if test script exists) — run test suite, report failures but do NOT block on test failures (tests may need updates after code changes)
 
 ### Step 2: Parallel Reviews via Agent Team
 
@@ -103,10 +104,11 @@ REASON=$(cat <<'ENDOFPASS2'
 
 Fixes were applied from review findings. Verify everything is clean.
 
-### Step 1: Verify Build & Lint
+### Step 1: Verify Build, Lint & Test
 
 1. `npm run lint` — must pass with zero errors
 2. `npm run build` — must succeed
+3. `npm test` (if available) — run tests, report results
 
 ### Step 2: Summary Report
 
@@ -116,6 +118,7 @@ Present a final summary to the user:
 |-----------------|--------|
 | Lint            | .../... |
 | Build           | .../... |
+| Tests           | .../... |
 | Security Review | .../... |
 | Code Review     | .../... |
 

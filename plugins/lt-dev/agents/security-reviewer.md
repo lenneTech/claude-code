@@ -5,6 +5,7 @@ model: sonnet
 tools: Bash, Read, Grep, Glob, TodoWrite
 permissionMode: default
 skills: generating-nest-servers, general-frontend-security, developing-lt-frontend
+memory: project
 ---
 
 # Security Review Agent

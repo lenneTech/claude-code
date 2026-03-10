@@ -4,7 +4,8 @@ description: Autonomous backend code review agent for NestJS / @lenne.tech/nest-
 model: sonnet
 tools: Bash, Read, Grep, Glob, TodoWrite, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
 permissionMode: default
-skills: generating-nest-servers, building-stories-with-tdd
+skills: generating-nest-servers, building-stories-with-tdd, using-lt-cli
+memory: project
 ---
 
 # Backend Review Agent
@@ -17,6 +18,7 @@ Autonomous agent that reviews backend code changes against lenne.tech NestJS / @
 |---------|---------|
 | **Skill**: `generating-nest-servers` | Backend patterns and quality standards |
 | **Skill**: `building-stories-with-tdd` | TDD methodology and test expectations |
+| **Skill**: `using-lt-cli` | lt CLI commands including `lt server permissions` |
 | **Agent**: `backend-dev` | Development agent whose rules are the review baseline |
 | **Agent**: `code-reviewer` | Orchestrator that spawns this reviewer |
 
