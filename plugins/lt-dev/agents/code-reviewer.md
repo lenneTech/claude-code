@@ -76,6 +76,7 @@ Initial TodoWrite:
    | Infrastructure | Any Dockerfile, docker-compose, CI/CD config, .env changes | `devops-reviewer` |
    | Tests | Any `.spec.ts`, `.test.ts`, `.e2e.ts` files OR source files without tests | `test-reviewer` |
    | UX Patterns | Any `.vue` files or page/component changes | `ux-reviewer` |
+   | A11y & SEO | Any `.vue` files or page/component changes | `a11y-reviewer` |
    | Security | **Always** — runs on every review regardless of domain | `security-reviewer` |
 
 4. **Load issue details** (if Issue ID provided):
@@ -205,6 +206,24 @@ Include bonus checks for skeleton loading, keyboard navigation, pagination, and 
 Produce your structured UX review report with fulfillment grades.
 ```
 
+**A11y & SEO Reviewer (if frontend/page changes):**
+```
+Use Agent tool with subagent_type "lt-dev:a11y-reviewer":
+
+Review accessibility, form autocomplete, and SEO on the current branch.
+
+Base branch: <base-branch>
+App URL: http://localhost:3001
+Changed files:
+<list of frontend files>
+
+Check ARIA labels & roles, semantic HTML, keyboard navigation, color & contrast,
+images & media, forms & autocomplete attributes, dynamic content accessibility,
+SEO essentials (useHead, OG tags), and crawlability (SSR, sitemap, robots.txt).
+Run Lighthouse audit if dev server is available.
+Produce your structured a11y & SEO review report with fulfillment grades.
+```
+
 ### Phase 3: Collect & Merge Reports
 
 All Agent teammates return their reports automatically. Collect all reports.
@@ -235,6 +254,7 @@ Merge all reviewer reports into a single unified report.
 | backend-reviewer | Backend (NestJS) | ✅ / ⚠️ / ❌ / — |
 | test-reviewer | Tests (Quality/Coverage) | ✅ / ⚠️ / ❌ / — |
 | ux-reviewer | UX Patterns (Interaction) | ✅ / ⚠️ / ❌ / — |
+| a11y-reviewer | A11y & SEO (HTML Quality) | ✅ / ⚠️ / ❌ / — |
 | security-reviewer | Security (OWASP) | ✅ / ⚠️ / ❌ / — |
 | devops-reviewer | DevOps (Docker/CI) | ✅ / ⚠️ / ❌ / — |
 
@@ -283,6 +303,16 @@ Merge all reviewer reports into a single unified report.
 | | Cross-Page Consistency | X% | ✅/⚠️/❌ |
 | | Error Recovery | X% | ✅/⚠️/❌ |
 | | Responsive Behavior | X% | ✅/⚠️/❌ |
+| **A11y & SEO** | | | |
+| | ARIA & Roles | X% | ✅/⚠️/❌ |
+| | Semantic HTML | X% | ✅/⚠️/❌ |
+| | Keyboard & Focus | X% | ✅/⚠️/❌ |
+| | Color & Contrast | X% | ✅/⚠️/❌ |
+| | Images & Media | X% | ✅/⚠️/❌ |
+| | Forms & Autocomplete | X% | ✅/⚠️/❌ |
+| | Dynamic Content | X% | ✅/⚠️/❌ |
+| | SEO Essentials | X% | ✅/⚠️/❌ |
+| | Crawlability | X% | ✅/⚠️/❌ |
 | **DevOps** | | | |
 | | Dockerfiles | X% | ✅/⚠️/❌ |
 | | Docker Compose | X% | ✅/⚠️/❌ |
@@ -304,6 +334,9 @@ Merge all reviewer reports into a single unified report.
 
 #### UX Patterns
 [Findings from ux-reviewer, or "N/A — no frontend changes"]
+
+#### A11y & SEO
+[Findings from a11y-reviewer, or "N/A — no frontend changes"]
 
 #### Security
 [Findings from security-reviewer]
@@ -339,9 +372,10 @@ The overall score is the **weighted average** across all active domains:
 | Domain | Weight | Condition |
 |--------|--------|-----------|
 | Backend | 20% | If backend changes detected |
-| Frontend | 20% | If frontend changes detected |
+| Frontend | 15% | If frontend changes detected |
 | Tests | 10% | If test or source files changed |
-| UX Patterns | 15% | If frontend/page changes detected |
+| UX Patterns | 10% | If frontend/page changes detected |
+| A11y & SEO | 10% | If frontend/page changes detected |
 | Security | 25% | Always active |
 | DevOps | 10% | If infrastructure changes detected |
 
