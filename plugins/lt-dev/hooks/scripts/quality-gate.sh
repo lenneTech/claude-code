@@ -65,8 +65,11 @@ Detect the package manager (pnpm/yarn/npm via lockfile), then run in each affect
 
 1. `npm run lint:fix` (or equivalent) — auto-fix lint issues
 2. `npm run format` (if available) — auto-format code
-3. `npm run build` — verify build succeeds
-4. `npm test` (if test script exists) — run test suite, report failures but do NOT block on test failures (tests may need updates after code changes)
+3. `npx tsc --noEmit` (in each subproject) — zero TypeScript errors, no implicit any
+4. `npm run build` — verify build succeeds
+5. `npm test` (if test script exists) — run test suite, report failures but do NOT block on test failures (tests may need updates after code changes)
+
+**TypeScript errors are blocking** — fix all TS errors before proceeding to reviews.
 
 ### Step 2: Parallel Reviews via Agent Team
 
@@ -110,8 +113,9 @@ Fixes were applied from review findings. Verify everything is clean.
 ### Step 1: Verify Build, Lint & Test
 
 1. `npm run lint` — must pass with zero errors
-2. `npm run build` — must succeed
-3. `npm test` (if available) — run tests, report results
+2. `npx tsc --noEmit` — must pass with zero TypeScript errors
+3. `npm run build` — must succeed
+4. `npm test` (if available) — run tests, report results
 
 ### Step 2: Summary Report
 
@@ -120,6 +124,7 @@ Present a final summary to the user:
 | Check           | Status |
 |-----------------|--------|
 | Lint            | .../... |
+| TypeScript      | .../... |
 | Build           | .../... |
 | Tests           | .../... |
 | Security Review | .../... |
