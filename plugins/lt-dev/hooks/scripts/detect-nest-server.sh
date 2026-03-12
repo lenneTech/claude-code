@@ -32,6 +32,10 @@ emit_context() {
   elif check_tdd_keywords; then
     echo "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"@lenne.tech/nest-server detected${location} with TDD intent. Use the building-stories-with-tdd skill for test-first development. It coordinates with generating-nest-servers for implementation.\"}}"
   else
+    # Default: only inject context when prompt contains backend-related terms
+    if [ -n "$CLAUDE_USER_PROMPT" ]; then
+      echo "$CLAUDE_USER_PROMPT" | grep -iqE '(module|service|controller|resolver|guard|decorator|dto|model|graphql|rest|api|endpoint|migration|database|backend|server|nestjs|nest)' || return 0
+    fi
     echo "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"@lenne.tech/nest-server detected${location}. Use the generating-nest-servers skill for backend tasks (modules, services, controllers, resolvers). For version updates, use nest-server-updating skill instead.\"}}"
   fi
 }

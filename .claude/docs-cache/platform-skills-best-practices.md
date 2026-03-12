@@ -1,7 +1,7 @@
 # Skill authoring best practices - Claude API Docs
 
 > Source: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices
-> Generated: 2026-02-09T12:26:31.901Z
+> Generated: 2026-03-12T14:48:14.386Z
 
 ---
 

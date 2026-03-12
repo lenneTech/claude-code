@@ -6,6 +6,7 @@ tools: Bash, Read, Grep, Glob, TodoWrite
 permissionMode: default
 skills: using-lt-cli
 memory: project
+maxTurns: 40
 ---
 
 # DevOps Review Agent
@@ -17,12 +18,12 @@ Autonomous agent that reviews infrastructure and DevOps changes against lenne.te
 | Element | Purpose |
 |---------|---------|
 | **Agent**: `devops` | Development agent whose rules are the review baseline |
-| **Agent**: `code-reviewer` | Orchestrator that spawns this reviewer |
+| **Command**: `/lt-dev:review` | Parallel orchestrator that spawns this reviewer |
 | **Skill**: `using-lt-cli` | lt CLI commands including `lt server permissions` |
 
 ## Input
 
-Received from the `code-reviewer` orchestrator:
+Received from the `/lt-dev:review` command:
 - **Base branch**: Branch to diff against (default: `main`)
 - **Changed files**: Infrastructure files from the diff (Dockerfile*, docker-compose*, .env*, CI/CD configs, .dockerignore)
 
@@ -122,7 +123,7 @@ For any CI/CD configuration in the diff:
 - [ ] **Stage order**: lint → build → test → permissions → security → deploy
 - [ ] **All gates blocking**: lint/build/test failures block pipeline
 - [ ] **Permissions gate**: `lt server permissions --failOnWarnings` included
-- [ ] **Security scan**: `npm audit --production` included
+- [ ] **Security scan**: `pnpm audit --prod` included
 - [ ] **Parallel stages**: API and App lint/build run in parallel
 - [ ] **Cache strategy**: `node_modules` cached between runs
 - [ ] **Pinned images**: CI runner images pinned (not `:latest`)

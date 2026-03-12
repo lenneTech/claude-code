@@ -1,6 +1,7 @@
 ---
 name: general-frontend-security
 description: Framework-agnostic frontend security guide based on OWASP Secure Coding Practices. Covers XSS prevention, CSRF protection, Content Security Policy (CSP), secure cookie configuration, client-side authentication patterns, input validation, secure storage, and security headers. Activates for security audits, vulnerability reviews, or browser security questions in any web application. NOT for backend/NestJS security (use generating-nest-servers). NOT for Nuxt-specific implementation (use developing-lt-frontend).
+user-invocable: false
 ---
 
 # General Frontend Security
@@ -31,7 +32,7 @@ Framework-agnostic security practices for web applications based on OWASP guidel
 
 | Command | Purpose |
 |---------|---------|
-| `/security-review` | Claude Code built-in: general security review of branch diff (framework-agnostic) |
+| `/lt-dev:review` | General security review of branch diff (framework-agnostic) |
 | `/lt-dev:backend:sec-review` | Security review of backend code changes (auth, decorators, models) |
 | `/lt-dev:backend:sec-audit` | Full OWASP security audit (dependencies, config, code) |
 
@@ -40,7 +41,7 @@ Framework-agnostic security practices for web applications based on OWASP guidel
 | Framework | Reference File |
 |-----------|---------------|
 | Nuxt/Vue | See `developing-lt-frontend` skill (reference/security.md) |
-| Angular | [angular-security.md](angular-security.md) |
+| Angular | [angular-security.md](${CLAUDE_SKILL_DIR}/angular-security.md) |
 
 ## Key Principles
 
@@ -49,9 +50,9 @@ Framework-agnostic security practices for web applications based on OWASP guidel
 3. **Prevent XSS** - Never use `innerHTML` with user input; use `textContent` or DOMPurify
 4. **Protect against CSRF** - Use CSRF tokens for state-changing requests + `SameSite` cookies
 5. **Configure CSP** - Restrict script/style sources, use nonces, block framing
-6. **Minimize dependencies** - Fewer deps = smaller attack surface; always run `npm audit`
+6. **Minimize dependencies** - Fewer deps = smaller attack surface; always run `pnpm audit`
 
-**Complete OWASP reference with code examples: [owasp-reference.md](owasp-reference.md)**
+**Complete OWASP reference with code examples: [owasp-reference.md](${CLAUDE_SKILL_DIR}/owasp-reference.md)**
 
 ## Security Checklist
 
@@ -80,8 +81,8 @@ Framework-agnostic security practices for web applications based on OWASP guidel
 
 ### Dependencies
 
-- [ ] npm audit clean (or accepted risks)
-- [ ] package-lock.json committed
+- [ ] pnpm audit clean (or accepted risks)
+- [ ] pnpm-lock.yaml committed
 - [ ] SRI for external resources
 - [ ] Regular dependency updates
 

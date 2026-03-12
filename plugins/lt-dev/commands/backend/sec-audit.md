@@ -1,6 +1,6 @@
 ---
 description: OWASP security audit for dependencies, config, and code
-allowed-tools: Bash(npm audit:*), Bash(npm outdated:*), Bash(npm list:*), Bash(lt server:*), Read, Grep, Glob, Write
+allowed-tools: Bash(npm audit:*), Bash(npm outdated:*), Bash(npm list:*), Bash(pnpm audit:*), Bash(pnpm outdated:*), Bash(pnpm list:*), Bash(yarn audit:*), Bash(yarn outdated:*), Bash(yarn list:*), Bash(lt server:*), Read, Grep, Glob, Write
 argument-hint: [--full | --deps-only | --config-only | --code-only]
 disable-model-invocation: true
 ---
@@ -25,15 +25,15 @@ Execute the following audit steps and generate a structured report.
 ### 1. Dependency Analysis
 
 ```bash
-# Run npm audit
-npm audit --json > /tmp/npm-audit.json 2>/dev/null || true
-npm audit
+# Run pnpm audit
+pnpm audit --json > /tmp/pnpm-audit.json 2>/dev/null || true
+pnpm audit
 
 # Check for outdated packages
-npm outdated
+pnpm outdated
 
 # List all dependencies
-npm list --depth=0
+pnpm list --depth=0
 ```
 
 **Check for:**

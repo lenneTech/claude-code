@@ -314,7 +314,7 @@ API_URL=http://localhost:3000
 
 ## Pre-built Auth Pages (nuxt-base-starter)
 
-**These pages are already included in `npx create-nuxt-base` projects!**
+**These pages are already included in `pnpm dlx create-nuxt-base` projects!**
 
 | Page | Path | Features |
 |------|------|----------|

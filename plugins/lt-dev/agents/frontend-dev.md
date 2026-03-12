@@ -2,9 +2,12 @@
 name: frontend-dev
 description: Autonomous frontend development agent for Nuxt 4 / Vue applications with strict TypeScript enforcement. Builds components, pages, composables, forms (Valibot), layouts, and integrates APIs via generated types (types.gen.ts, sdk.gen.ts). Enforces zero implicit any, readonly state returns, semantic colors, programmatic modals, and SSR-safe patterns. Operates in projects/app/ or packages/app/ monorepo structures.
 model: sonnet
-tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, WebSearch, Agent, TodoWrite, mcp__nuxt-ui-remote__get-component, mcp__nuxt-ui-remote__get-component-metadata, mcp__nuxt-ui-remote__search-components-by-category, mcp__nuxt-ui-remote__get-example, mcp__nuxt-ui-remote__list-components, mcp__better-auth__search, mcp__better-auth__chat, mcp__chrome-devtools__take_snapshot, mcp__chrome-devtools__click, mcp__chrome-devtools__fill, mcp__chrome-devtools__navigate_page, mcp__chrome-devtools__list_console_messages, mcp__chrome-devtools__list_network_requests, mcp__chrome-devtools__take_screenshot
-permissionMode: default
+tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, WebSearch, TodoWrite, mcp__nuxt-ui-remote__get-component, mcp__nuxt-ui-remote__get-component-metadata, mcp__nuxt-ui-remote__search-components-by-category, mcp__nuxt-ui-remote__get-example, mcp__nuxt-ui-remote__list-components, mcp__better-auth__search, mcp__better-auth__chat, mcp__chrome-devtools__take_snapshot, mcp__chrome-devtools__click, mcp__chrome-devtools__fill, mcp__chrome-devtools__navigate_page, mcp__chrome-devtools__list_console_messages, mcp__chrome-devtools__list_network_requests, mcp__chrome-devtools__take_screenshot
+permissionMode: acceptEdits
 skills: developing-lt-frontend
+memory: project
+mcpServers: nuxt-ui-remote, better-auth, chrome-devtools
+maxTurns: 80
 ---
 
 # Frontend Development Agent
@@ -30,7 +33,7 @@ You are a senior frontend engineer enforcing strict lenne.tech conventions for N
 Before writing any code:
 
 1. Verify `~/api-client/types.gen.ts` and `~/api-client/sdk.gen.ts` exist
-2. If missing: **STOP** — ask user if API is running at `http://localhost:3000`, then run `npm run generate-types`
+2. If missing: **STOP** — ask user if API is running at `http://localhost:3000`, then run `pnpm run generate-types`
 3. **NEVER** create manual DTO interfaces as a workaround — this is FORBIDDEN
 
 ## Execution Protocol
@@ -49,8 +52,8 @@ Before writing any code:
 ### 3. Quality Gate
 
 ```
-1. npm run lint:fix
-2. npm run build
+1. pnpm run lint:fix
+2. pnpm run build
 3. Browser verify via Chrome DevTools MCP (if applicable)
 ```
 
@@ -770,8 +773,8 @@ console.error('failed', err)            // USE: logger.error('failed', err)
 |-------|-----|
 | Build fails | Read error output, fix TS/template issues, rebuild |
 | SSR error | Wrap browser APIs in `onMounted()` or `<ClientOnly>` |
-| Missing types | Run `npm run generate-types` (API must be running) |
-| Lint errors | Run `npm run lint:fix`, fix remaining manually |
+| Missing types | Run `pnpm run generate-types` (API must be running) |
+| Lint errors | Run `pnpm run lint:fix`, fix remaining manually |
 | Console errors | Check via `list_console_messages`, fix source |
 | Failed API calls | Check via `list_network_requests`, verify endpoint + auth |
 

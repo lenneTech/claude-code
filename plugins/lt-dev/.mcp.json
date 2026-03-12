@@ -3,7 +3,7 @@
     "chrome-devtools": {
       "type": "stdio",
       "command": "npx",
-      "args": ["chrome-devtools-mcp@latest"]
+      "args": ["-y", "chrome-devtools-mcp@latest"]
     },
     "linear": {
       "type": "http",
@@ -18,6 +18,11 @@
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "@nicepkg/aide-mcp-server@latest", "--url=https://www.better-auth.com"]
+    },
+    "figma-desktop": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/claude-code-figma-mcp@latest"]
     }
   }
 }

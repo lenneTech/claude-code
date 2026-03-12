@@ -5,12 +5,12 @@
     {
       "pattern": "Bash(npm test:*)",
       "description": "Run npm test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "backend-dev", "backend-reviewer", "branch-rebaser", "coordinating-agent-teams", "refactor-frontend"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "backend-dev", "backend-reviewer", "test-reviewer", "frontend-reviewer", "branch-rebaser", "coordinating-agent-teams", "refactor-frontend"]
     },
     {
       "pattern": "Bash(npm run test:*)",
       "description": "Run npm run test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "backend-dev", "backend-reviewer", "branch-rebaser", "coordinating-agent-teams", "refactor-frontend"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "backend-dev", "backend-reviewer", "test-reviewer", "frontend-reviewer", "branch-rebaser", "coordinating-agent-teams", "refactor-frontend"]
     },
     {
       "pattern": "Bash(npm run test\\:e2e:*)",
@@ -45,17 +45,32 @@
     {
       "pattern": "Bash(npm run build:*)",
       "description": "Build the application",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "refactor-frontend"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend"]
     },
     {
       "pattern": "Bash(npm run lint:*)",
       "description": "Run linter checks",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "refactor-frontend"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend"]
     },
     {
       "pattern": "Bash(npm run generate-types:*)",
       "description": "Generate TypeScript types from backend API",
       "usedBy": ["developing-lt-frontend", "fullstack-updater", "frontend-dev"]
+    },
+    {
+      "pattern": "Bash(npx tsc:*)",
+      "description": "Run TypeScript compiler checks",
+      "usedBy": ["quality-gate"]
+    },
+    {
+      "pattern": "Bash(pnpm exec tsc:*)",
+      "description": "Run TypeScript compiler checks",
+      "usedBy": ["quality-gate"]
+    },
+    {
+      "pattern": "Bash(yarn tsc:*)",
+      "description": "Run TypeScript compiler checks",
+      "usedBy": ["quality-gate"]
     },
     {
       "pattern": "Bash(lt server:*)",
@@ -70,7 +85,7 @@
     {
       "pattern": "Bash(npm audit:*)",
       "description": "Run security audit on npm packages",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit", "review", "coordinating-agent-teams"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit", "review", "coordinating-agent-teams", "security-reviewer"]
     },
     {
       "pattern": "Bash(npm install:*)",
@@ -110,7 +125,7 @@
     {
       "pattern": "Bash(npm list:*)",
       "description": "List installed npm packages",
-      "usedBy": ["nest-server-updating", "sec-audit", "fullstack-updater"]
+      "usedBy": ["nest-server-updating", "sec-audit", "fullstack-updater", "backend-reviewer", "architect"]
     },
     {
       "pattern": "Bash(npm outdated:*)",
@@ -125,12 +140,12 @@
     {
       "pattern": "Bash(pnpm test:*)",
       "description": "Run pnpm test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "refactor-frontend"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend"]
     },
     {
       "pattern": "Bash(pnpm run test:*)",
       "description": "Run pnpm run test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "refactor-frontend"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend"]
     },
     {
       "pattern": "Bash(pnpm run test\\:e2e:*)",
@@ -165,12 +180,12 @@
     {
       "pattern": "Bash(pnpm run build:*)",
       "description": "Build the application via pnpm",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "refactor-frontend"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend"]
     },
     {
       "pattern": "Bash(pnpm run lint:*)",
       "description": "Run linter checks via pnpm",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "refactor-frontend"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend"]
     },
     {
       "pattern": "Bash(pnpm run generate-types:*)",
@@ -180,7 +195,7 @@
     {
       "pattern": "Bash(pnpm audit:*)",
       "description": "Run security audit via pnpm",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit", "review", "coordinating-agent-teams"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit", "review", "coordinating-agent-teams", "security-reviewer"]
     },
     {
       "pattern": "Bash(pnpm install:*)",
@@ -210,7 +225,7 @@
     {
       "pattern": "Bash(pnpm list:*)",
       "description": "List installed packages via pnpm",
-      "usedBy": ["nest-server-updating", "sec-audit", "fullstack-updater"]
+      "usedBy": ["nest-server-updating", "sec-audit", "fullstack-updater", "backend-reviewer", "architect"]
     },
     {
       "pattern": "Bash(pnpm outdated:*)",
@@ -245,12 +260,12 @@
     {
       "pattern": "Bash(yarn test:*)",
       "description": "Run yarn test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "refactor-frontend"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend"]
     },
     {
       "pattern": "Bash(yarn run test:*)",
       "description": "Run yarn run test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "refactor-frontend"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend"]
     },
     {
       "pattern": "Bash(yarn run test\\:e2e:*)",
@@ -285,12 +300,12 @@
     {
       "pattern": "Bash(yarn run build:*)",
       "description": "Build the application via yarn",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "refactor-frontend"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend"]
     },
     {
       "pattern": "Bash(yarn run lint:*)",
       "description": "Run linter checks via yarn",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "refactor-frontend"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend"]
     },
     {
       "pattern": "Bash(yarn run generate-types:*)",
@@ -300,7 +315,7 @@
     {
       "pattern": "Bash(yarn audit:*)",
       "description": "Run security audit via yarn",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit", "review", "coordinating-agent-teams"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit", "review", "coordinating-agent-teams", "security-reviewer"]
     },
     {
       "pattern": "Bash(yarn install:*)",
@@ -330,7 +345,7 @@
     {
       "pattern": "Bash(yarn list:*)",
       "description": "List installed packages via yarn",
-      "usedBy": ["nest-server-updating", "sec-audit", "fullstack-updater"]
+      "usedBy": ["nest-server-updating", "sec-audit", "fullstack-updater", "backend-reviewer", "architect"]
     },
     {
       "pattern": "Bash(yarn outdated:*)",
@@ -380,12 +395,12 @@
     {
       "pattern": "Bash(git diff:*)",
       "description": "Compare versions in repositories",
-      "usedBy": ["fullstack-updater", "review", "debug", "coordinating-agent-teams"]
+      "usedBy": ["fullstack-updater", "review", "debug", "coordinating-agent-teams", "code-reviewer", "test-reviewer", "frontend-reviewer", "backend-reviewer", "ux-reviewer", "docs-reviewer", "a11y-reviewer", "architect"]
     },
     {
       "pattern": "Bash(git log:*)",
       "description": "Read git history of repositories",
-      "usedBy": ["fullstack-updater", "review", "debug", "coordinating-agent-teams"]
+      "usedBy": ["fullstack-updater", "review", "debug", "coordinating-agent-teams", "code-reviewer", "architect"]
     },
     {
       "pattern": "Bash(git tag:*)",
@@ -410,7 +425,7 @@
     {
       "pattern": "Bash(git status:*)",
       "description": "Check git working tree status",
-      "usedBy": ["review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": ["review", "branch-rebaser", "coordinating-agent-teams", "code-reviewer"]
     },
     {
       "pattern": "Bash(git rebase:*)",
@@ -521,6 +536,11 @@
       "pattern": "Bash(docker images:*)",
       "description": "List Docker images",
       "usedBy": ["devops", "devops-reviewer"]
+    },
+    {
+      "pattern": "Bash(curl:*)",
+      "description": "Check dev server availability for browser-based reviews",
+      "usedBy": ["ux-reviewer", "a11y-reviewer", "frontend-reviewer"]
     }
   ]
 }

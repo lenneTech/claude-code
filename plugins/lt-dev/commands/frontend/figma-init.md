@@ -1,7 +1,8 @@
 ---
 description: Extract design system from Figma (colors, spacing, radius, fonts, global components) and configure NuxtUI + Tailwind v4 theme
-argument-hint: "<figma-url-or-node-id> [--force]"
-allowed-tools: Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion, mcp__figma-desktop__get_metadata, mcp__figma-desktop__get_variable_defs, mcp__figma-desktop__get_screenshot, mcp__figma-desktop__get_design_context
+argument-hint: [figma-url-or-node-id] [--force]
+allowed-tools: Bash(pnpm:*), Bash(npm:*), Bash(yarn:*), Bash(npx:*), Bash(git:*), Bash(ls:*), Bash(cat:*), Bash(find:*), Read, Write, Edit, Glob, Grep, AskUserQuestion, mcp__figma-desktop__get_metadata, mcp__figma-desktop__get_variable_defs, mcp__figma-desktop__get_screenshot, mcp__figma-desktop__get_design_context
+disable-model-invocation: true
 ---
 
 # Figma Design System Initialization
@@ -430,7 +431,7 @@ Generierte/Aktualisierte Dateien:
 - .claude/figma-project.json (Design System + Global Components)
 
 Naechste Schritte:
-1. npm run dev                                      -- Dev-Server starten
+1. pnpm run dev                                     -- Dev-Server starten
 2. Browser-Test via Chrome DevTools                  -- Layout pruefen
 3. /lt-dev:frontend:figma-to-code <section>          -- Einzelne Screens implementieren
 4. /lt-dev:frontend:figma-to-code <section> --team   -- Mit Agent-Team implementieren

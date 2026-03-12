@@ -6,6 +6,8 @@ tools: Bash, Read, Grep, Glob, TodoWrite, mcp__plugin_lt-dev_linear__get_issue, 
 permissionMode: default
 skills: generating-nest-servers, building-stories-with-tdd, using-lt-cli
 memory: project
+maxTurns: 50
+mcpServers: linear
 ---
 
 # Backend Review Agent
@@ -20,11 +22,11 @@ Autonomous agent that reviews backend code changes against lenne.tech NestJS / @
 | **Skill**: `building-stories-with-tdd` | TDD methodology and test expectations |
 | **Skill**: `using-lt-cli` | lt CLI commands including `lt server permissions` |
 | **Agent**: `backend-dev` | Development agent whose rules are the review baseline |
-| **Agent**: `code-reviewer` | Orchestrator that spawns this reviewer |
+| **Command**: `/lt-dev:review` | Parallel orchestrator that spawns this reviewer |
 
 ## Input
 
-Received from the `code-reviewer` orchestrator:
+Received from the `/lt-dev:review` command:
 - **Base branch**: Branch to diff against (default: `main`)
 - **Changed files**: List of backend files from the diff
 - **API root**: Path to the backend project (e.g., `projects/api/`)
@@ -44,8 +46,9 @@ Initial TodoWrite:
 [pending] Phase 3: Controller & service patterns
 [pending] Phase 4: Type strictness & input validation
 [pending] Phase 5: Code quality (DRY, naming, complexity)
-[pending] Phase 6: Test coverage
-[pending] Phase 7: Formatting & lint
+[pending] Phase 6: Performance (N+1 queries, memory leaks, async, pagination)
+[pending] Phase 7: Test coverage
+[pending] Phase 8: Formatting & lint
 [pending] Generate report
 ```
 
@@ -70,7 +73,7 @@ ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
 
 2. **Read nest-server version:**
    ```bash
-   npm list @lenne.tech/nest-server --depth=0
+   pnpm list @lenne.tech/nest-server --depth=0
    ```
 
 3. **Identify changed modules** from the diff (which `src/server/modules/*` are affected)
@@ -207,6 +210,9 @@ Flag: `NO_RESTRICTION`, `NO_ROLES`, `NO_SECURITY_CHECK`, `UNRESTRICTED_FIELD`, `
 - [ ] Naming is clear and descriptive (English)
 - [ ] No overly complex logic (cyclomatic complexity)
 - [ ] No hardcoded values that should be configurable
+- [ ] Backward compatibility maintained (or breaking changes documented)
+- [ ] Public API interfaces are well-designed and consistent (parameter naming, return types, error responses)
+- [ ] Code style consistent with surrounding codebase (follow existing patterns for error handling, service calls, guard usage)
 - [ ] Enum conventions: `PascalCaseEnum`, `UPPER_SNAKE_CASE` values, `kebab-case.enum.ts` files
 - [ ] Module structure follows mandatory layout (module, controller, service, model, inputs/, outputs/)
 - [ ] No leftover TODO/FIXME from implementation
@@ -220,38 +226,76 @@ Flag: `NO_RESTRICTION`, `NO_ROLES`, `NO_SECURITY_CHECK`, `UNRESTRICTED_FIELD`, `
 | Significant complexity or structure violations | 60-75% |
 | Major DRY violations or wrong module structure | <50% |
 
-### Phase 6: Test Coverage
+### Phase 6: Performance
 
-#### Step 1: Run Test Suite (Regression)
+Validate performance characteristics of backend code:
 
+- [ ] No N+1 query patterns (loading related entities in loops)
+- [ ] No unnecessary database calls or redundant API requests
+- [ ] No memory leaks (unclosed streams, missing cleanup, event listener leaks)
+- [ ] No synchronous operations that should be async (file I/O, crypto, compression)
+- [ ] Large data sets handled with pagination/streaming where appropriate
+- [ ] No expensive operations in hot paths (loops, frequent calls)
+- [ ] Proper use of `populate()` — only load needed fields, avoid deep nesting
+- [ ] Bulk operations (`insertMany`, `updateMany`) used instead of loops with `.save()`
+
+**Grep patterns:**
 ```bash
-npm test
+# N+1 patterns (find/save in loops)
+grep -rn "for.*await.*find\|for.*await.*save\|forEach.*await" src/server/
+# Missing pagination
+grep -rn "\.find({" src/server/ | grep -v "limit\|skip\|paginate"
+# Sync operations
+grep -rn "readFileSync\|writeFileSync\|execSync\|crypto\..*Sync" src/server/
 ```
 
-#### Step 2: Verify New Code Has Tests
-
-For each changed module:
-
-1. **Check for test files** covering the module
-2. **Verify permission tests**: least-privileged user, denial tests (401/403)
-3. **Verify CRUD completeness**: create, find, findOne, update, delete
-4. **Verify validation tests**: missing fields, invalid types
-5. **Check test cleanup**: `afterAll` with proper data removal
-6. **Test database**: must use `app-test` — never `app-dev`
-
-**Scoring (weighted: Regression 40% + Coverage 60%):**
+**Scoring:**
 
 | Scenario | Score |
 |----------|-------|
-| All tests pass AND all new logic has dedicated tests | 100% |
-| All tests pass AND some new logic tested | 70-90% |
-| All tests pass BUT no new tests written | 50-60% |
-| Tests fail | <50% |
+| No performance issues found | 100% |
+| Minor issues (1-2 missing pagination) | 80-90% |
+| N+1 patterns or sync in async context | 50-70% |
+| Memory leaks or widespread performance issues | <50% |
 
-### Phase 7: Formatting & Lint
+### Phase 7: Test Coverage (Static Analysis Only)
+
+**Note:** Test execution is handled by `test-reviewer`. This phase only validates test file existence and coverage patterns statically.
+
+#### Step 1: Verify Test Files Exist
+
+For each changed module, check for corresponding `*.spec.ts` files:
 
 ```bash
-npm run lint
+# Find modules without tests
+for dir in $(git diff <base>...HEAD --name-only | grep "src/server/modules/" | cut -d/ -f1-4 | sort -u); do
+  ls "$dir"/*.spec.ts 2>/dev/null || echo "MISSING TEST: $dir"
+done
+```
+
+#### Step 2: Verify Test Patterns (Static Read)
+
+For each existing test file, **read** (do not execute) and check:
+
+1. **Permission tests exist**: grep for least-privileged user, 401/403 assertions
+2. **CRUD completeness**: grep for create, find, findOne, update, delete test blocks
+3. **Validation tests**: grep for missing fields, invalid types test cases
+4. **Test cleanup**: verify `afterAll` with data removal exists
+5. **Test database**: verify `app-test` usage — never `app-dev`
+
+**Scoring:**
+
+| Scenario | Score |
+|----------|-------|
+| Test files exist AND cover all new modules with permission/CRUD/validation tests | 100% |
+| Test files exist but missing some coverage areas | 70-90% |
+| Test files exist but no permission or CRUD tests | 50-60% |
+| No test files for new modules | <50% |
+
+### Phase 8: Formatting & Lint
+
+```bash
+pnpm run lint
 ```
 
 - [ ] Zero lint errors
@@ -275,6 +319,7 @@ npm run lint
 | Controller & Service Patterns | X% | ✅/⚠️/❌ |
 | Type Strictness & Validation | X% | ✅/⚠️/❌ |
 | Code Quality | X% | ✅/⚠️/❌ |
+| Performance | X% | ✅/⚠️/❌ |
 | Test Coverage | X% | ✅/⚠️/❌ |
 | Formatting & Lint | X% | ✅/⚠️/❌ |
 
@@ -295,10 +340,13 @@ npm run lint
 ### 5. Code Quality
 [Findings with DRY, naming, complexity]
 
-### 6. Test Coverage
-[Test results + coverage analysis of new code]
+### 6. Performance
+[Findings with N+1, memory leaks, async, pagination]
 
-### 7. Formatting & Lint
+### 7. Test Coverage
+[Test file existence, coverage patterns — static analysis only]
+
+### 8. Formatting & Lint
 [Lint output, debug artifacts]
 
 ### Remediation Catalog

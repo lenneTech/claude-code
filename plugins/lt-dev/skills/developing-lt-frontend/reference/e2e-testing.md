@@ -51,7 +51,7 @@ export default defineConfig({
 
   // Start dev server before tests
   webServer: {
-    command: 'npm run dev',
+    command: 'pnpm run dev',
     url: 'http://localhost:3001',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
@@ -68,7 +68,7 @@ export default defineConfig({
     baseURL: 'http://localhost:3101', // Different port for tests
   },
   webServer: {
-    command: 'npm run dev:test', // Uses test environment
+    command: 'pnpm run dev:test', // Uses test environment
     url: 'http://localhost:3101',
   },
 });
@@ -429,22 +429,22 @@ test('complete order workflow', async ({ page }) => {
 
 ```bash
 # Run all E2E tests
-npm run test:e2e
+pnpm run test:e2e
 
 # Run specific test file
-npx playwright test tests/e2e/products.spec.ts
+pnpm dlx playwright test tests/e2e/products.spec.ts
 
 # Run with UI mode (debugging)
-npm run test:e2e:ui
+pnpm run test:e2e:ui
 
 # Run with visible browser
-npm run test:e2e:headed
+pnpm run test:e2e:headed
 
 # Run specific test by name
-npx playwright test -g "should create product"
+pnpm dlx playwright test -g "should create product"
 
 # Generate test report
-npx playwright show-report
+pnpm dlx playwright show-report
 ```
 
 ### CI/CD Integration
@@ -467,19 +467,19 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+        run: pnpm dlx playwright install --with-deps
 
       - name: Start API (test environment)
         run: |
           cd ../api
-          npm run start:test &
-          npx wait-on http://localhost:3100/api
+          pnpm run start:test &
+          pnpm dlx wait-on http://localhost:3100/api
 
       - name: Run E2E tests
-        run: npm run test:e2e
+        run: pnpm run test:e2e
 
       - name: Upload report
         if: always()

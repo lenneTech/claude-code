@@ -1,6 +1,6 @@
 ---
 description: Generate MR description and save to clipboard
-allowed-tools: Bash(git diff:*), Bash(git log:*), Bash(git status:*), Bash(git branch:*), Bash(pbcopy:*), Read
+allowed-tools: Bash(git:*), Bash(pbcopy:*), Read
 disable-model-invocation: true
 ---
 

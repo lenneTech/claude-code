@@ -1,18 +1,16 @@
 # Plugins reference
 
 > Source: https://code.claude.com/docs/en/plugins-reference
-> Generated: 2026-02-09T12:26:31.218Z
+> Generated: 2026-03-12T14:48:14.978Z
 
 ---
 
 Looking to install plugins? See [Discover and install plugins](/docs/en/discover-plugins). For creating plugins, see [Plugins](/docs/en/plugins). For distributing plugins, see [Plugin marketplaces](/docs/en/plugin-marketplaces).
 
-This reference provides complete technical specifications for the Claude Code plugin system, including component schemas, CLI commands, and development tools.
+This reference provides complete technical specifications for the Claude Code plugin system, including component schemas, CLI commands, and development tools. A **plugin** is a self-contained directory of components that extends Claude Code with custom functionality. Plugin components include skills, agents, hooks, MCP servers, and LSP servers.
 
 
 Plugin components reference
-
-This section documents the types of components that plugins can provide.
 
 
 Skills
@@ -188,7 +186,7 @@ When you install a plugin, you choose a **scope** that determines where the plug
 |`user`|`~/.claude/settings.json`| Personal plugins available across all projects (default) |
 |`project`|`.claude/settings.json`| Team plugins shared via version control |
 |`local`|`.claude/settings.local.json`| Project-specific plugins, gitignored |
-|`managed`|`managed-settings.json`| Managed plugins (read-only, update only) |
+|`managed`| [Managed settings](/docs/en/settings#settings-files) | Managed plugins (read-only, update only) |
 
 Plugins use the same scope system as other Claude Code configurations. For installation instructions and scope flags, see [Install plugins](/docs/en/discover-plugins#install-plugins). For a complete explanation of scopes, see [Configuration scopes](/docs/en/settings#configuration-scopes).
 
@@ -294,43 +292,23 @@ Path behavior rules
 
 Plugin caching and file resolution
 
-For security and verification purposes, Claude Code copies plugins to a cache directory rather than using them in-place. Understanding this behavior is important when developing plugins that reference external files.
-
-
-How plugin caching works
-
 Plugins are specified in one of two ways:
 
 -   Through`claude --plugin-dir`, for the duration of a session.
--   Through a marketplace, installed to the local plugin cache.
+-   Through a marketplace, installed for future sessions.
 
-When you install a plugin, Claude Code locates its marketplace and the plugin’s`source`field within that marketplace. The source can be one of five types:
-
--   Relative path: copied recursively to the plugin cache. For example, if your marketplace entry specifies`"source": "./plugins/my-plugin"`, the entire`./plugins/my-plugin`directory is copied.
--   npm - copied to the plugin cache from npm
--   pip - copied to the plugin cache from pip
--   url - any https:// URL ending in .git
--   github - any owner/repo shorthand
+For security and verification purposes, Claude Code copies *marketplace* plugins to the user’s local **plugin cache** (`~/.claude/plugins/cache`) rather than using them in-place. Understanding this behavior is important when developing plugins that reference external files.
 
 
 Path traversal limitations
 
-Plugins cannot reference files outside their copied directory structure. Paths that traverse outside the plugin root (such as`../shared-utils`) will not work after installation because those external files are not copied to the cache.
+Installed plugins cannot reference files outside their directory. Paths that traverse outside the plugin root (such as`../shared-utils`) will not work after installation because those external files are not copied to the cache.
 
 
 Working with external dependencies
 
-If your plugin needs to access files outside its directory, you have two options: **Option 1: Use symlinks** Create symbolic links to external files within your plugin directory. Symlinks are honored during the copy process:```# Inside your plugin directory
-ln -s /path/to/shared-utils ./shared-utils```The symlinked content will be copied into the plugin cache. **Option 2: Restructure your marketplace** Set the plugin path to a parent directory that contains all required files, then provide the rest of the plugin manifest directly in the marketplace entry:```{
-  "name": "my-plugin",
-  "source": "./",
-  "description": "Plugin that needs root-level access",
-  "commands": ["./plugins/my-plugin/commands/"],
-  "agents": ["./plugins/my-plugin/agents/"],
-  "strict": false
-}```This approach copies the entire marketplace root, giving your plugin access to sibling directories.
-
-Symlinks that point to locations outside the plugin’s logical root are followed during copying. This provides flexibility while maintaining the security benefits of the caching system.
+If your plugin needs to access files outside its directory, you can create symbolic links to external files within your plugin directory. Symlinks are honored during the copy process:```# Inside your plugin directory
+ln -s /path/to/shared-utils ./shared-utils```The symlinked content will be copied into the plugin cache. This provides flexibility while maintaining the security benefits of the caching system.
 
 * * *
 
@@ -359,6 +337,7 @@ A complete plugin follows this structure:```enterprise-plugin/
 ├── hooks/                    # Hook configurations
 │   ├── hooks.json           # Main hook config
 │   └── security-hooks.json  # Additional hooks
+├── settings.json            # Default settings for the plugin
 ├── .mcp.json                # MCP server definitions
 ├── .lsp.json                # LSP server configurations
 ├── scripts/                 # Hook and utility scripts
@@ -380,6 +359,7 @@ File locations reference
 | **Hooks** |`hooks/hooks.json`| Hook configuration |
 | **MCP servers** |`.mcp.json`| MCP server definitions |
 | **LSP servers** |`.lsp.json`| Language server configurations |
+| **Settings** |`settings.json`| Default configuration applied when the plugin is enabled. Only [`agent`](/docs/en/sub-agents) settings are currently supported |
 
 * * *
 
@@ -554,6 +534,8 @@ Follow semantic versioning for plugin releases:```{
 -   Update the version in`plugin.json`before distributing changes
 -   Document changes in a`CHANGELOG.md`file
 -   Use pre-release versions like`2.0.0-beta.1`for testing
+
+Claude Code uses the version to determine whether to update your plugin. If you change your plugin’s code but don’t bump the version in`plugin.json`, your plugin’s existing users won’t see your changes due to caching.If your plugin is within a [marketplace](/docs/en/plugin-marketplaces) directory, you can manage the version through`marketplace.json`instead and omit the`version`field from`plugin.json`.
 
 * * *
 

@@ -6,6 +6,7 @@ tools: Bash, Read, Grep, Glob, TodoWrite
 permissionMode: default
 skills: generating-nest-servers, general-frontend-security, developing-lt-frontend
 memory: project
+maxTurns: 50
 ---
 
 # Security Review Agent
@@ -19,11 +20,11 @@ Autonomous agent that audits code changes against OWASP Secure Coding Practices 
 | **Skill**: `generating-nest-servers` | Backend security patterns (decorators, securityCheck) |
 | **Skill**: `general-frontend-security` | Frontend security checklist (XSS, CSRF, CSP) |
 | **Skill**: `developing-lt-frontend` | Frontend auth patterns (Better Auth, httpOnly) |
-| **Agent**: `code-reviewer` | Orchestrator that spawns this reviewer |
+| **Command**: `/lt-dev:review` | Parallel orchestrator that spawns this reviewer |
 
 ## Input
 
-Received from the `code-reviewer` orchestrator:
+Received from the `/lt-dev:review` command:
 - **Base branch**: Branch to diff against (default: `main`)
 - **Project type**: Backend / Frontend / Fullstack
 - **Changed files**: All files from the diff
@@ -39,7 +40,7 @@ Initial TodoWrite:
 [pending] Phase 3: XSS & frontend security (Frontend/Fullstack)
 [pending] Phase 4: Auth & session security
 [pending] Phase 5: Data exposure & secrets
-[pending] Phase 6: Dependency audit (npm audit)
+[pending] Phase 6: Dependency audit
 [pending] Phase 7: Infrastructure security (Docker, env, CORS)
 [pending] Generate report
 ```
@@ -47,6 +48,20 @@ Initial TodoWrite:
 ---
 
 ## Execution Protocol
+
+### Package Manager Detection
+
+Before executing any commands, detect the project's package manager:
+
+```bash
+ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
+```
+
+| Lockfile | Package Manager | Run scripts | Execute binaries | Audit command |
+|----------|----------------|-------------|-----------------|---------------|
+| `pnpm-lock.yaml` | `pnpm` | `pnpm run X` | `pnpm dlx X` | `pnpm audit` |
+| `yarn.lock` | `yarn` | `yarn run X` | `yarn dlx X` | `yarn audit` |
+| `package-lock.json` / none | `npm` | `npm run X` | `npx X` | `npm audit` |
 
 ### Phase 1: Permission Model Audit (Backend/Fullstack)
 
@@ -203,14 +218,16 @@ grep "JWT_SECRET\|BETTER_AUTH_SECRET" .env.example
 
 ### Phase 6: Dependency Audit
 
+Use the detected package manager to run audit in each subproject:
+
 ```bash
-# Backend
-cd projects/api && npm audit 2>/dev/null
-# Frontend
-cd projects/app && npm audit 2>/dev/null
+# Backend (substitute detected PM)
+cd projects/api && pnpm audit 2>/dev/null || npm audit 2>/dev/null || yarn audit 2>/dev/null
+# Frontend (substitute detected PM)
+cd projects/app && pnpm audit 2>/dev/null || npm audit 2>/dev/null || yarn audit 2>/dev/null
 ```
 
-| npm audit severity | Report severity |
+| Audit severity | Report severity |
 |-------------------|-----------------|
 | critical | CRITICAL |
 | high | HIGH |
@@ -310,6 +327,6 @@ cd projects/app && npm audit 2>/dev/null
 | Issue | Workaround |
 |-------|------------|
 | Permissions scanner unavailable | Manual Grep for @Restricted, @Roles, securityCheck |
-| npm audit fails | Try `--registry https://registry.npmjs.org` |
+| Audit command fails | Try `--registry https://registry.npmjs.org` |
 | Cannot access project dir | Report scope limitation, audit accessible files only |
 | Ambiguous finding | Classify conservatively (higher severity) |

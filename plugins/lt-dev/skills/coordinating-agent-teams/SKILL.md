@@ -1,11 +1,12 @@
 ---
 name: coordinating-agent-teams
-description: Provides auto-detection heuristics and coordination patterns for Claude Code Agent Teams. Runs independent review agents, parallel backend+frontend test writers, adversarial debuggers, or parallel git worktree rebases. Activates when user mentions "agent team", "parallel review", "team debug", "parallel worktrees", "batch rebase", or when commands auto-detect team suitability. NOT for single-agent Task tool subagents. NOT for subagent coordination within one session.
+description: Provides auto-detection heuristics and coordination patterns for Claude Code Agent Teams. Runs independent review agents, parallel backend+frontend test writers, adversarial debuggers, or parallel git worktree rebases. Activates when user mentions "agent team", "parallel review", "parallel agents", "team debug", "parallel worktrees", "batch rebase", or when commands evaluate team suitability via CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS. NOT for single-agent Agent tool subagents. NOT for subagent coordination within one session.
+user-invocable: false
 ---
 
 # Coordinating Agent Teams
 
-Claude Code Agent Teams (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) coordinate multiple independent Claude Code sessions with inter-agent messaging and a shared task list. Unlike subagents (Task tool), teammates communicate directly and challenge each other.
+Claude Code Agent Teams (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) coordinate multiple independent Claude Code sessions with inter-agent messaging and a shared task list. Unlike subagents (Agent tool), teammates communicate directly and challenge each other.
 
 ## Auto-Detection Protocol
 
@@ -50,7 +51,7 @@ Every team-capable command follows this decision tree:
 
 ## Core Patterns
 
-Each pattern is described in detail in `patterns.md`. Summary:
+Each pattern is described in detail in [patterns.md](${CLAUDE_SKILL_DIR}/patterns.md). Summary:
 
 1. **Independent Then Challenge** (Review) - Teammates review independently, then cross-challenge findings
 2. **Parallel With Handoff** (TDD) - Backend defines contracts, frontend consumes them, implementation stays sequential

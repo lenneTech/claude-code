@@ -1,6 +1,6 @@
 ---
 name: using-lt-cli
-description: Provides comprehensive reference for the lenne.tech CLI tool (lt command). Covers lt fullstack init (workspace creation with local template symlinks), lt git get/reset (branch management), lt server create (project scaffolding), and lt server permissions (security audits). Activates when user mentions "lt", "lt CLI", "lenne.tech CLI", "fullstack workspace", "local templates", "--api-link", "--frontend-link", or any lt command syntax. NOT for NestJS application code (use generating-nest-servers). NOT for Vue/Nuxt frontend code (use developing-lt-frontend).
+description: Provides comprehensive reference for the lenne.tech CLI tool (lt command). Covers lt fullstack init (workspace creation with local template symlinks), lt git get/reset (branch management), lt server create (project scaffolding), and lt server permissions (security audits). Activates when user mentions "lt", "lt CLI", "lenne.tech CLI", "lt fullstack", "lt git", "lt server", "fullstack workspace", "local templates", "--api-link", "--frontend-link", or any lt command syntax. NOT for NestJS application code (use generating-nest-servers). NOT for Vue/Nuxt frontend code (use developing-lt-frontend).
 ---
 
 # LT CLI Expert
@@ -173,9 +173,9 @@ lt fullstack init --name MyApp --frontend angular --git true \
 
 **Post-creation steps**:
 1. `cd <workspace-name>`
-2. Install dependencies: `npm install`
-3. Start backend: `cd projects/api && npm start`
-4. Start frontend: `cd frontend && npm start`
+2. Install dependencies: `pnpm install`
+3. Start backend: `cd projects/api && pnpm start`
+4. Start frontend: `cd frontend && pnpm start`
 
 ### 3. Server Permissions Report
 
@@ -194,7 +194,7 @@ lt server permissions --failOnWarnings
 lt server permissions --path ./projects/api
 ```
 
-**Full parameter reference:** [reference.md](reference.md#lt-server-permissions)
+**Full parameter reference:** [reference.md](${CLAUDE_SKILL_DIR}/reference.md#lt-server-permissions)
 
 ---
 
@@ -246,6 +246,6 @@ git stash pop    # Restore changes
 
 ## Command Reference
 
-For detailed command syntax and all available options, see [reference.md](reference.md).
+For detailed command syntax and all available options, see [reference.md](${CLAUDE_SKILL_DIR}/reference.md).
 
 For NestJS server commands (`lt server module`, `lt server object`, etc.), use the **generating-nest-servers skill**.

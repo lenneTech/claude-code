@@ -168,6 +168,9 @@ Defines MCP (Model Context Protocol) servers required by the plugin.
 |--------|------|---------|
 | `chrome-devtools` | stdio | vibe commands, developing-lt-frontend, building-stories-with-tdd (browser testing & debugging) |
 | `linear` | http | resolve-ticket, create-story, create-ticket, create-task, create-bug, review, debug, comment (issue tracking & project management) |
+| `nuxt-ui-remote` | stdio | developing-lt-frontend, frontend-dev agent (Nuxt UI component reference) |
+| `better-auth` | stdio | frontend-dev agent (Better Auth documentation reference) |
+| `figma-desktop` | stdio | figma-init, figma-research, figma-to-code (Figma design extraction) |
 
 ### plugin.json
 Plugin manifest with metadata. Update `version` before releases.

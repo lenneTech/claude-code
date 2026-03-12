@@ -22,13 +22,13 @@ lsof -i :3000
 │     - If port free: Start API                                  │
 │                                                                │
 │  2. START API (if not running):                                │
-│     cd projects/api && npm run start:dev &                     │
+│     cd projects/api && pnpm run start:dev &                    │
 │     - Wait until API responds (max 30s)                        │
 │     - Verify: curl -s http://localhost:3000/api                │
 │                                                                │
 │  3. FOR FULLSTACK WORK (API + Frontend):                       │
 │     Also check Port 3001 for frontend                          │
-│     cd projects/app && npm run dev &                           │
+│     cd projects/app && pnpm run dev &                          │
 │                                                                │
 │  4. ONLY THEN proceed with development                         │
 └────────────────────────────────────────────────────────────────┘
@@ -38,10 +38,10 @@ lsof -i :3000
 
 ```bash
 # Start API in background (from monorepo root)
-cd projects/api && npm run start:dev &
+cd projects/api && pnpm run start:dev &
 
 # Optional: Start Frontend too (Port 3001)
-cd projects/app && npm run dev &
+cd projects/app && pnpm run dev &
 ```
 
 **Important:**
@@ -53,7 +53,7 @@ cd projects/app && npm run dev &
 
 ```bash
 lt --version  # Check CLI installation
-npm install -g @lenne.tech/cli  # If needed
+pnpm add -g @lenne.tech/cli  # If needed
 ls src/server/modules  # Verify project structure
 ```
 

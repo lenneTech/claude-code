@@ -756,7 +756,7 @@ cat node_modules/@lenne.tech/nest-server/src/test/test.helper.ts
 # - Prerequisites: How are test users/related data created?
 
 # Verify existing tests pass BEFORE making changes
-npm run test:e2e
+pnpm run test:e2e
 
 # Step 2.2: For new modules - create test files in correct location
 # Example: Created Book module, need to create tests
@@ -782,11 +782,11 @@ find tests -name "*user*.e2e-spec.ts"
 cat tests/modules/user.e2e-spec.ts  # Read first!
 
 # Run tests before modifying
-npm run test:e2e
+pnpm run test:e2e
 
 # If you added a property to User, update tests to verify it
 # Run tests after modifying to ensure nothing broke
-npm run test:e2e
+pnpm run test:e2e
 
 # Step 3: Compare with existing code
 # Read existing modules to understand project patterns
@@ -809,9 +809,9 @@ cat src/server/modules/user/inputs/user-create.input.ts
 # - Improve descriptions
 
 # Step 5: Run all tests
-npm run build
-npm run lint
-npm run test:e2e
+pnpm run build
+pnpm run lint
+pnpm run test:e2e
 
 # Step 6: Fix any failures and repeat
 # If tests fail:

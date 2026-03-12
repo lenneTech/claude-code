@@ -1,6 +1,6 @@
 ---
 description: Batch rebase multiple MRs/PRs onto dev (with conflict resolution, linting, testing, review, commit and force push)
-allowed-tools: Bash(git:*), Bash(gh:*), Bash(glab:*), Read, Grep, Glob, Task, AskUserQuestion, Skill
+allowed-tools: Bash(git:*), Bash(gh:*), Bash(glab:*), Read, Grep, Glob, Agent, AskUserQuestion
 argument-hint: [project-url] [--team] [--no-team]
 disable-model-invocation: true
 ---
@@ -79,7 +79,7 @@ disable-model-invocation: true
 For each selected branch, sequentially:
 
    a. **Save current branch** to restore later
-   b. **Spawn branch-rebaser agent** via Task tool:
+   b. **Spawn branch-rebaser agent** via Agent tool:
       ```
       Rebase branch <branch-name> onto <base-branch>.
 

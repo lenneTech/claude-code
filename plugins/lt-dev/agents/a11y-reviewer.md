@@ -6,6 +6,8 @@ tools: Bash, Read, Grep, Glob, TodoWrite, mcp__chrome-devtools__take_snapshot, m
 permissionMode: default
 skills: developing-lt-frontend
 memory: project
+mcpServers: chrome-devtools
+maxTurns: 60
 ---
 
 # Accessibility, Autocomplete & SEO Review Agent
@@ -19,7 +21,7 @@ Autonomous agent that reviews HTML output quality — accessibility, form autoco
 | **Skill**: `developing-lt-frontend` | Frontend patterns and component conventions |
 | **Agent**: `frontend-reviewer` | Code quality reviewer (this agent reviews HTML output quality) |
 | **Agent**: `ux-reviewer` | UX pattern reviewer (complementary — UX reviews interaction, this reviews markup) |
-| **Agent**: `code-reviewer` | Orchestrator that may spawn this reviewer |
+| **Command**: `/lt-dev:review` | Parallel orchestrator that spawns this reviewer |
 
 ## Input
 
@@ -63,9 +65,14 @@ Initial TodoWrite:
 2. **Map changed files to routes** — check `app/pages/` to determine which URLs to visit
 
 3. **Check dev server availability:**
-   - Try to connect to `http://localhost:3001`
-   - If not running → static code analysis only, skip browser phases
-   - If running → plan Lighthouse audit for changed pages
+   ```bash
+   curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 http://localhost:3001 2>/dev/null || echo "UNAVAILABLE"
+   ```
+   - HTTP 200/301/302 → dev server is running, browser phases and Lighthouse audit enabled
+   - UNAVAILABLE/connection refused → **no dev server detected**
+     - Fall back to **static code analysis only** for all phases
+     - Skip all Chrome DevTools MCP tool calls (including Lighthouse)
+     - Append to report header: "**Note:** Browser verification and Lighthouse audit skipped — no dev server detected at localhost:3001. Run `pnpm run dev` and re-run review for full browser-based analysis."
 
 4. **Read existing patterns:**
    - Check `nuxt.config.ts` for SEO config, head defaults, sitemap module
@@ -452,7 +459,7 @@ Report Lighthouse scores alongside manual findings:
 
 **If dev server not available:**
 - Mark as "Skipped — dev server not running"
-- Recommend running locally: `npm run dev && lighthouse http://localhost:3001`
+- Recommend running locally: `pnpm run dev && lighthouse http://localhost:3001`
 
 ---
 

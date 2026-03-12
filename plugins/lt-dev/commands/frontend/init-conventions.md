@@ -1,6 +1,7 @@
 ---
 description: Add a Code Conventions section to the project's CLAUDE.md with sensible defaults for Nuxt 4 / TailwindCSS projects
 allowed-tools: Read, Write, Edit, Grep, Glob
+disable-model-invocation: true
 ---
 
 # Initialize Code Conventions

@@ -1,6 +1,7 @@
 ---
 name: building-stories-with-tdd
 description: Orchestrates Test-Driven Development (TDD) workflows for user stories and features. Creates story tests first in tests/stories/, then iteratively implements until all pass. Activates when user mentions "TDD", "test-driven", "test first", "story test", "write tests before code", or feature implementation with TDD. Coordinates with generating-nest-servers (backend) and developing-lt-frontend (frontend). NOT for direct NestJS coding without TDD (use generating-nest-servers). NOT for standalone test generation (use /test-generate).
+disable-model-invocation: true
 ---
 
 # Story-Based Test-Driven Development Expert
@@ -40,7 +41,34 @@ Phase 3: VERIFICATION
 └── 5. Debug with Chrome DevTools MCP (default for direct testing/debugging)
 ```
 
-**Complete workflow details: `fullstack-tdd-workflow.md`**
+**Complete workflow details: [fullstack-tdd-workflow.md](${CLAUDE_SKILL_DIR}/fullstack-tdd-workflow.md)**
+
+### Parallel Test Writing (Agent Teams)
+
+When ALL of these conditions are met, use **parallel test writing** via `coordinating-agent-teams` Pattern 2 (Parallel With Handoff):
+
+1. Agent Teams feature flag is enabled (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`)
+2. Fullstack monorepo detected (`projects/api/` AND `projects/app/`)
+3. Story scope involves both backend AND frontend changes
+
+**Parallel workflow:**
+```
+Phase 0: CONTRACT DEFINITION (Lead)
+└── Define API contracts from story requirements (endpoints, request/response shapes)
+
+Phase 1: PARALLEL TEST WRITING (2 teammates, simultaneous)
+├── Teammate "backend-tests": Write API tests using contracts → share via message
+└── Teammate "frontend-tests": Write E2E tests using contracts → consume API shapes
+
+Phase 2: CONTRACT VALIDATION (Lead)
+└── Verify backend and frontend tests reference consistent contracts
+
+Phase 3: SEQUENTIAL IMPLEMENTATION (standard TDD)
+├── Backend implementation (iterate until API tests green)
+└── Frontend implementation (iterate until E2E tests green)
+```
+
+**Key:** Only test *writing* is parallelized. Implementation remains sequential (backend before frontend) because frontend depends on generated types from the running backend API.
 
 ### Test Isolation & Cleanup (CRITICAL)
 
@@ -86,7 +114,7 @@ afterAll(async () => {
 - `/lt-dev:create-ticket` command - Create any ticket type (Story, Task, Bug)
 - `/lt-dev:create-story` command - Create a story, then implement with TDD
 - `/lt-dev:review` command - Comprehensive quality check after implementation
-- `/security-review` command - General security scan of branch diff (Step 5a)
+- `/lt-dev:review` command - General security scan of branch diff (Step 5a)
 - `/lt-dev:backend:sec-review` command - nest-server specific security review
 
 ## TypeScript Language Server (Recommended)
@@ -118,27 +146,27 @@ claude plugins install typescript-lsp --marketplace claude-plugins-official
 1. **Test through API only** — Use `testHelper.rest()` / `testHelper.graphQl()`. NEVER call Services directly or query DB in test logic. Exception: DB access only for setup/cleanup (roles, verified status).
 2. **Verify before assuming** — ALWAYS read Controllers/Services/Models before writing tests. Never assume endpoints, methods, or properties exist.
 
-**Full details: [workflow.md](workflow.md) -> Steps 1, 2, and 4**
+**Full details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md) -> Steps 1, 2, and 4**
 
 ---
 
 ## Core TDD Workflow - The Seven Steps
 
-**Complete workflow details: `workflow.md`**
+**Complete workflow details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md)**
 
 **Process:** Step 1 (Analysis) -> Step 2 (Create Test) -> Step 3 (Run Tests) -> [Step 3a: Fix Tests if needed] -> Step 4 (Implement) -> Step 5 (Validate) -> Step 5a (Quality Check) -> Step 5b (Final Validation)
 
 ---
 
 ### Step 1: Story Analysis & Validation
-**Details: `workflow.md` -> Step 1**
+**Details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md) -> Step 1**
 
 - Read story, verify existing API structure (read Controllers/Resolvers)
 - Document what exists vs what needs creation
 - Ask for clarification if ambiguous (use AskUserQuestion)
 
 ### Step 2: Create Story Test
-**Details: `workflow.md` -> Step 2**
+**Details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md) -> Step 2**
 
 **CRITICAL: Test through API only - NEVER direct Service/DB access!**
 
@@ -153,22 +181,22 @@ claude plugins install typescript-lsp --marketplace claude-plugins-official
 4. Implement complete cleanup in `afterAll`
 
 ### Step 3: Run Tests & Analyze
-**Details: `workflow.md` -> Step 3**
+**Details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md) -> Step 3**
 
 ```bash
 # NODE_ENV=e2e is set in package.json scripts for local test execution
-npm test  # Or: npm test -- tests/stories/your-story.story.test.ts
+pnpm test  # Or: pnpm test -- tests/stories/your-story.story.test.ts
 ```
 
 **Decide:** Test bugs -> Step 3a | Implementation missing -> Step 4
 
 ### Step 3a: Fix Test Errors
-**Details: `workflow.md` -> Step 3a**
+**Details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md) -> Step 3a**
 
 Fix test logic/errors. NEVER "fix" by removing security. Return to Step 3 after fixing.
 
 ### Step 4: Implement/Extend API Code
-**Details: `workflow.md` -> Step 4**
+**Details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md) -> Step 4**
 
 **Use `generating-nest-servers` skill for:** Module/object creation, understanding existing code
 
@@ -179,27 +207,27 @@ Fix test logic/errors. NEVER "fix" by removing security. Return to Step 3 after 
 4. **Database indexes:** Define in @UnifiedField decorator (see `database-indexes.md`)
 
 ### Step 5: Validate & Iterate
-**Details: `workflow.md` -> Step 5**
+**Details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md) -> Step 5**
 
 ```bash
-npm test
+pnpm test
 ```
 
 All pass -> Step 5a | Fail -> Return to Step 3
 
 ### Step 5a: Code Quality & Refactoring Check
-**Details: `workflow.md` -> Step 5a**
+**Details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md) -> Step 5a**
 
-Review: Code quality (`code-quality.md`), Database indexes (`database-indexes.md`), Security (`security-review.md`). Run `/security-review` for general security scan. Run tests after changes.
+Review: Code quality (`code-quality.md`), Database indexes (`database-indexes.md`), Security (`security-review.md`). Run `/lt-dev:review` for general security scan. Run tests after changes.
 
 ### Step 5b: Final Validation
-**Details: `workflow.md` -> Step 5b**
+**Details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md) -> Step 5b**
 
 Run all tests, verify quality checks, generate final report. DONE!
 
 ## Handling Existing Tests When Modifying Code
 
-**Complete details: `handling-existing-tests.md`**
+**Complete details: [handling-existing-tests.md](${CLAUDE_SKILL_DIR}/handling-existing-tests.md)**
 
 **When your changes break existing tests:**
 - Intentional change? -> Update tests + document why
@@ -223,7 +251,7 @@ You may remind in final report: "Implementation complete - review and commit whe
 
 ## CRITICAL SECURITY RULES
 
-**Complete details: `security-review.md`**
+**Complete details: [security-review.md](${CLAUDE_SKILL_DIR}/security-review.md)**
 **Extended with OWASP practices: Error Handling & Logging, Cryptographic Practices, Session & Token Management**
 
 ### NEVER:
@@ -241,7 +269,7 @@ You may remind in final report: "Implementation complete - review and commit whe
 
 ## Code Quality Standards
 
-**Complete details: `code-quality.md`**
+**Complete details: [code-quality.md](${CLAUDE_SKILL_DIR}/code-quality.md)**
 
 **Must follow:**
 - File organization, naming conventions, import statements from existing code
@@ -268,12 +296,12 @@ When all tests pass, provide comprehensive report including:
 - Code quality (patterns followed, security preserved, dependencies, refactoring, indexes)
 - Security review (auth/authz, validation, data exposure, ownership, injection prevention, errors, security tests)
 - Files modified (with changes description)
-- `/security-review` results (general security scan findings)
+- `/lt-dev:review` results (general security scan findings)
 - Next steps (recommendations)
 
 ## Common Patterns
 
-**Complete patterns and examples: `examples.md` and `reference.md`**
+**Complete patterns and examples: [examples.md](${CLAUDE_SKILL_DIR}/examples.md) and [reference.md](${CLAUDE_SKILL_DIR}/reference.md)**
 
 **Study existing tests first!** Common patterns:
 - Create test users via `/auth/signin`, set roles/verified via DB

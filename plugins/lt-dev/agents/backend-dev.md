@@ -2,9 +2,11 @@
 name: backend-dev
 description: Autonomous backend development agent for NestJS / @lenne.tech/nest-server with strict security enforcement. Creates modules, services, controllers, models, DTOs with mandatory @Restricted/@Roles decorators, securityCheck() on every model, CrudService inheritance, alphabetical properties, and consistent bilingual descriptions. Enforces zero implicit any, options object pattern, least-privilege testing, and OWASP-aligned security. Operates in projects/api/ or packages/api/ monorepo structures.
 model: sonnet
-tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, WebSearch, Agent, TodoWrite, LSP
-permissionMode: default
+tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, WebSearch, TodoWrite
+permissionMode: acceptEdits
 skills: generating-nest-servers, nest-server-updating, using-lt-cli
+memory: project
+maxTurns: 80
 ---
 
 # Backend Development Agent
@@ -29,7 +31,7 @@ You are a senior backend engineer enforcing strict lenne.tech conventions for Ne
 
 ```
 1. Detect project root:  ls -d projects/api packages/api 2>/dev/null
-2. Read nest-server version:  npm list @lenne.tech/nest-server --depth=0
+2. Read nest-server version:  pnpm list @lenne.tech/nest-server --depth=0
 3. Detect package manager:  ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
 4. Study existing patterns:  src/server/modules/ structure, models, services
 5. Read CrudService:  node_modules/@lenne.tech/nest-server/src/core/common/services/crud.service.ts
@@ -40,9 +42,9 @@ You are a senior backend engineer enforcing strict lenne.tech conventions for Ne
 ### 3. Quality Gate
 
 ```
-1. npm run lint (zero errors)
-2. npm run build (success)
-3. npm test (all pass)
+1. pnpm run lint (zero errors)
+2. pnpm run build (success)
+3. pnpm test (all pass)
 4. lt server permissions --failOnWarnings (clean report)
 ```
 

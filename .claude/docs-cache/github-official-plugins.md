@@ -1,7 +1,7 @@
 # Claude Code Plugins Directory
 
 > **Source:** https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/README.md
-> **Generated:** 2026-02-09T12:26:27.835Z
+> **Generated:** 2026-03-12T14:48:10.154Z
 
 ---
 
@@ -47,6 +47,10 @@ plugin-name/
 ├── skills/              # Skill definitions (optional)
 └── README.md            # Documentation
 ```
+
+## License
+
+Please see each linked plugin for the relevant LICENSE file.
 
 ## Documentation
 

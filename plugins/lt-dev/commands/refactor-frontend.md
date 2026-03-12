@@ -225,8 +225,8 @@ If shared components are not yet available, create local placeholders and note t
 6. Functions
 
 ## After Refactoring
-1. Run: npm run lint:fix
-2. Run: npm run build
+1. Run: pnpm run lint:fix
+2. Run: pnpm run build
 3. Fix any errors before reporting done
 4. List ALL files created, modified, or moved
 
@@ -244,16 +244,16 @@ Run all checks sequentially in the app root:
 
 ```bash
 # 1. Format (if script exists)
-npm run format 2>/dev/null || true
+pnpm run format 2>/dev/null || true
 
 # 2. Lint
-npm run lint:fix
+pnpm run lint:fix
 
 # 3. Build
-npm run build
+pnpm run build
 
 # 4. Tests (if script exists)
-npm test 2>/dev/null || npm run test 2>/dev/null
+pnpm test 2>/dev/null || pnpm run test 2>/dev/null
 ```
 
 **Gate Rules:**

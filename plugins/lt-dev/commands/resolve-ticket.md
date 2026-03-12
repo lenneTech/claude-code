@@ -1,6 +1,7 @@
 ---
 description: Resolve a Linear ticket or story file with TDD-based implementation
 argument-hint: [issue-id | story-file]
+allowed-tools: Agent, Read, Grep, Glob, Bash(git:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, AskUserQuestion
 disable-model-invocation: true
 ---
 

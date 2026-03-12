@@ -2,9 +2,11 @@
 name: devops
 description: Autonomous DevOps agent for lenne.tech fullstack projects with strict infrastructure enforcement. Manages Docker configurations (multi-stage builds, non-root containers, health checks), docker-compose setups (dev hot-reload, production hardening), CI/CD pipelines (lint/build/test/security/deploy), environment management (.env isolation, secret injection), and monitoring. Enforces pinned base images, layer caching, volume-based node_modules, port conventions (API 3000, App 3001, MongoDB 27017), lt CLI integration, and OWASP-aligned infrastructure security. Produces reproducible, secure, minimal configurations.
 model: sonnet
-tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, WebSearch, Agent, TodoWrite
-permissionMode: default
+tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, WebSearch, TodoWrite
+permissionMode: acceptEdits
 skills: using-lt-cli
+memory: project
+maxTurns: 60
 ---
 
 # DevOps Agent
@@ -147,12 +149,12 @@ volumes:
 FROM node:20.11-alpine3.19 AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # ── Stage 2: Build ────────────────────────────────────────
 FROM deps AS build
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 # ── Stage 3: Runtime ──────────────────────────────────────
 FROM node:20.11-alpine3.19 AS runtime
@@ -267,11 +269,11 @@ lint → build → test → permissions → security-scan → deploy
 
 | Stage | Actions | Fail Behavior |
 |-------|---------|---------------|
-| **lint** | `npm run lint` (api + app) | Block pipeline |
-| **build** | `npm run build` (api + app), Docker image build | Block pipeline |
-| **test** | `npm test` (api), `npm run test:e2e` (app) | Block pipeline |
+| **lint** | `pnpm run lint` (api + app) | Block pipeline |
+| **build** | `pnpm run build` (api + app), Docker image build | Block pipeline |
+| **test** | `pnpm test` (api), `pnpm run test:e2e` (app) | Block pipeline |
 | **permissions** | `lt server permissions --failOnWarnings` | Block pipeline |
-| **security** | `npm audit --production`, Docker image scan | Block on critical/high |
+| **security** | `pnpm audit --prod`, Docker image scan | Block on critical/high |
 | **deploy** | Push images, update deployment | Rollback on health failure |
 
 #### CI/CD Rules
@@ -385,7 +387,7 @@ environment:
 # FORBIDDEN: Single-stage production build
 FROM node:20-alpine
 COPY . .
-RUN npm install && npm run build
+RUN pnpm install && pnpm run build
 CMD ["node", "dist/main.js"]    # USE: Multi-stage build (deps → build → runtime)
 
 # FORBIDDEN: Mounting host node_modules
@@ -413,5 +415,5 @@ MONGO_URI=mongodb://mongo:27017/app  # USE: app-dev, app-test, app-staging, app-
 | Volume permissions | Check USER directive matches volume owner, verify mount paths |
 | CI/CD fails | Check runner config, verify secrets, review stage dependencies |
 | Permissions scanner fails | Install lt CLI, verify `projects/api/` path, fallback to manual grep |
-| npm audit critical | Update package immediately, verify fix doesn't break build |
+| pnpm audit critical | Update package immediately, verify fix doesn't break build |
 | Health check failing | Check endpoint path (`/health`), verify service is listening on correct port |

@@ -1,7 +1,7 @@
 ---
 description: Adversarial debugging with competing hypotheses using Agent Teams - multiple investigators challenge each other to find root cause (requires CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1)
 argument-hint: "[bug-description or issue-id]"
-allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(echo:*), Task, AskUserQuestion
+allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(echo:*), Agent, AskUserQuestion, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
 disable-model-invocation: true
 ---
 

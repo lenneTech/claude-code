@@ -368,6 +368,11 @@ When optimizing existing elements:
 | "Build a Vue component" | developing-lt-frontend |
 | "Update npm packages" | maintaining-npm-packages |
 
+## Reference Files
+
+- For complete reference documentation and schemas, see [reference.md](${CLAUDE_SKILL_DIR}/reference.md)
+- For practical examples and templates, see [examples.md](${CLAUDE_SKILL_DIR}/examples.md)
+
 ## Related Skills
 
 **Works closely with:**

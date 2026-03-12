@@ -1,8 +1,9 @@
 ---
 description: Implement Figma designs as Nuxt 4 pages using project-local config
-argument-hint: "<section-name-or-node-id> [--screen <name>] [--team] [--globals]"
-allowed-tools: Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion, Agent, mcp__figma-desktop__get_metadata, mcp__figma-desktop__get_design_context, mcp__figma-desktop__get_screenshot, mcp__figma-desktop__get_variable_defs, mcp__nuxt-ui-remote__list-components, mcp__nuxt-ui-remote__get-component-metadata, mcp__nuxt-ui-remote__search-components-by-category, mcp__nuxt-ui-remote__get-example
+argument-hint: [section-name-or-node-id] [--screen name] [--team] [--globals]
+allowed-tools: Bash(pnpm:*), Bash(npm:*), Bash(yarn:*), Bash(npx:*), Bash(git:*), Bash(ls:*), Bash(cat:*), Bash(find:*), Read, Write, Edit, Glob, Grep, AskUserQuestion, Agent, mcp__figma-desktop__get_metadata, mcp__figma-desktop__get_design_context, mcp__figma-desktop__get_screenshot, mcp__figma-desktop__get_variable_defs, mcp__nuxt-ui-remote__list-components, mcp__nuxt-ui-remote__get-component-metadata, mcp__nuxt-ui-remote__search-components-by-category, mcp__nuxt-ui-remote__get-example
 skills: developing-lt-frontend
+disable-model-invocation: true
 ---
 
 # Figma-to-Code Implementation
@@ -250,8 +251,8 @@ The design is the ONLY truth. If something is missing, it's missing.
 After all screens are implemented:
 
 1. **Update config** — Mark section status in `figma-project.json`
-2. **Lint** — Run `npm run lint:fix` in the frontend project directory
-3. **Type check** — Run `npx tsc --noEmit` to verify zero TypeScript errors
+2. **Lint** — Run `pnpm run lint:fix` in the frontend project directory
+3. **Type check** — Run `pnpm dlx tsc --noEmit` to verify zero TypeScript errors
 4. **Report:**
 
 ```
@@ -266,7 +267,7 @@ Erstellte Dateien:
 - ...
 
 Naechste Schritte:
-1. npm run dev                        -- Dev-Server starten
+1. pnpm run dev                       -- Dev-Server starten
 2. Browser-Test via Chrome DevTools   -- Visuellen Vergleich mit Figma
 3. /lt-dev:review                     -- Code Review starten
 ```

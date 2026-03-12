@@ -1,7 +1,7 @@
 ---
 description: Create a bug report ticket for Linear
 argument-hint: [bug-description]
-allowed-tools: AskUserQuestion, Write, Read, Glob, mcp__plugin_lt-dev_linear__*, Skill
+allowed-tools: AskUserQuestion, Write, Read, Glob, mcp__plugin_lt-dev_linear__*
 disable-model-invocation: true
 ---
 

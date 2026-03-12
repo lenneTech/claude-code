@@ -1,6 +1,7 @@
 ---
 description: Plan + Build in one go (no interruption)
 argument-hint: [spec-file]
+allowed-tools: Read, Write, Edit, Glob, Grep, Agent, Bash(docker:*), Bash(docker-compose:*), Bash(pnpm:*), Bash(npm:*), Bash(yarn:*), Bash(git:*), Bash(curl:*), mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__evaluate_script, AskUserQuestion
 disable-model-invocation: true
 ---
 
@@ -44,7 +45,7 @@ Read SPEC.md deeply and create **IMPLEMENTATION_PLAN.md**.
 **ALWAYS follow this sequence:**
 1. **Docker setup first** - Hot reload, DB UI, Mailhog
 2. **Backend second** - Models, Services, Controllers + Initial User
-3. **Generate types** - `npm run generate-types`
+3. **Generate types** - `pnpm run generate-types`
 4. **Frontend** - Using generated types, NO mock data
 5. **Quality Assurance** - Lint + Build must pass
 6. **Browser Testing** - Test with Chrome MCP using initial user
@@ -52,8 +53,8 @@ Read SPEC.md deeply and create **IMPLEMENTATION_PLAN.md**.
 #### Package Manager
 
 Detect from lockfile (`pnpm-lock.yaml` / `yarn.lock` / `package-lock.json`).
-All examples use `npm` notation - adapt to detected package manager.
-`npx` → `pnpm dlx` / `yarn dlx`.
+All examples use `pnpm` notation - adapt to detected package manager.
+`pnpm dlx` → `npx` / `yarn dlx`.
 
 **All development runs in Docker!**
 
@@ -61,7 +62,7 @@ All examples use `npm` notation - adapt to detected package manager.
 
 If no `docker-compose.yml` exists in the project:
 - Ask: "Kein Docker-Setup gefunden. Soll ich eines erstellen, oder möchtest du ohne Docker entwickeln?"
-- If user chooses non-Docker: Skip Docker phases, use local `npm run dev` commands instead
+- If user chooses non-Docker: Skip Docker phases, use local `pnpm run dev` commands instead
 
 #### Plan Structure (with checkboxes!)
 
@@ -89,7 +90,7 @@ If no `docker-compose.yml` exists in the project:
 
 ## Phase 4: Types Generation
 - [ ] Verify API running (`docker compose logs api`)
-- [ ] Generate types (`npm run generate-types`)
+- [ ] Generate types (`pnpm run generate-types`)
 
 ## Phase 5: Frontend Integration
 - [ ] Feature A - Frontend (with real API)
@@ -101,9 +102,9 @@ If no `docker-compose.yml` exists in the project:
 - [ ] Fix Critical/Warning findings
 
 ## Phase 7: Quality Assurance
-- [ ] Run lint (`npm run lint`)
+- [ ] Run lint (`pnpm run lint`)
 - [ ] Fix lint errors
-- [ ] Run build (`npm run build`)
+- [ ] Run build (`pnpm run build`)
 - [ ] Fix build errors
 
 ## Phase 8: Browser Testing (Chrome MCP)
@@ -151,8 +152,8 @@ Ultrathink: What's the cleanest, most maintainable way to build this?
 #### Package Manager
 
 Detect from lockfile (`pnpm-lock.yaml` / `yarn.lock` / `package-lock.json`).
-All examples use `npm` notation - adapt to detected package manager.
-`npx` → `pnpm dlx` / `yarn dlx`.
+All examples use `pnpm` notation - adapt to detected package manager.
+`pnpm dlx` → `npx` / `yarn dlx`.
 
 #### Workflow
 
@@ -169,7 +170,7 @@ Phase 2-3: Backend
 
 Phase 4: Types
 1. Verify API: docker compose logs api
-2. Generate: npm run generate-types
+2. Generate: pnpm run generate-types
 
 Phase 5: Frontend
 1. Implement using ~/api-client/ types
@@ -181,9 +182,9 @@ Phase 6: Security Review
 3. Fix any Critical/Warning findings
 
 Phase 7: Quality Assurance
-1. Run: npm run lint
+1. Run: pnpm run lint
 2. Fix all lint errors
-3. Run: npm run build
+3. Run: pnpm run build
 4. Fix all build errors
 
 Phase 8: Browser Testing (Chrome MCP)
@@ -260,8 +261,8 @@ Role:     admin
 - All `- [ ]` in IMPLEMENTATION_PLAN.md are `- [x]`
 - All features from SPEC.md are implemented
 - Security review passed (`/lt-dev:backend:sec-review`)
-- `npm run lint` passes
-- `npm run build` passes
+- `pnpm run lint` passes
+- `pnpm run build` passes
 - Browser testing completed with Chrome MCP
 - All bugs found during testing are fixed
 - App works end-to-end (login → use features → logout)
@@ -276,6 +277,6 @@ Only interrupt for critical blockers.
 |---------|--------|
 | `generate-types` fails | Check if API is running: `docker compose logs api` |
 | Docker won't start | Check ports: `lsof -i :3000 -i :3001` |
-| Lint errors | Run `npm run lint:fix` first, then re-run lint |
+| Lint errors | Run `pnpm run lint:fix` first, then re-run lint |
 | Build fails | Check console output, often missing imports or type errors |
 | API not responding | `docker compose restart api` and check logs |

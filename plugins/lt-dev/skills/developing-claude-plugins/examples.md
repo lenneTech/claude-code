@@ -220,7 +220,7 @@ Automatic formatting hook that runs after file writes.
         "hooks": [
           {
             "type": "command",
-            "command": "npx prettier --write $CLAUDE_FILE_PATH",
+            "command": "pnpm dlx prettier --write $CLAUDE_FILE_PATH",
             "timeout": 10
           }
         ]
@@ -233,7 +233,7 @@ Automatic formatting hook that runs after file writes.
         "hooks": [
           {
             "type": "command",
-            "command": "npx eslint $CLAUDE_FILE_PATH --fix",
+            "command": "pnpm dlx eslint $CLAUDE_FILE_PATH --fix",
             "timeout": 15
           }
         ]
@@ -263,7 +263,7 @@ TypeScript validation script for PreToolUse hooks.
 **File:** `hooks/scripts/validate-frontmatter.ts`
 
 ```typescript
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env pnpm dlx ts-node
 
 import * as fs from 'fs';
 

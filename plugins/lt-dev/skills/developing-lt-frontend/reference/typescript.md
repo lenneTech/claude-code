@@ -111,10 +111,10 @@ interface FilterState {
 
 ```bash
 # 1. Start API
-cd projects/api && npm run start:dev
+cd projects/api && pnpm run start:dev
 
 # 2. Generate types
-npm run generate-types
+pnpm run generate-types
 ```
 
 **NEVER create manual DTOs as a workaround!**

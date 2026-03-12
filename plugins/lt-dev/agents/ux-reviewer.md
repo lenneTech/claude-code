@@ -6,6 +6,8 @@ tools: Bash, Read, Grep, Glob, TodoWrite, mcp__chrome-devtools__take_snapshot, m
 permissionMode: default
 skills: developing-lt-frontend
 memory: project
+mcpServers: chrome-devtools
+maxTurns: 80
 ---
 
 # UX Pattern Review Agent
@@ -18,7 +20,7 @@ Autonomous agent that reviews UX patterns and interaction quality in lenne.tech 
 |---------|---------|
 | **Skill**: `developing-lt-frontend` | Frontend patterns and component conventions |
 | **Agent**: `frontend-reviewer` | Code quality reviewer (this agent reviews the UX result) |
-| **Agent**: `code-reviewer` | Orchestrator that may spawn this reviewer |
+| **Command**: `/lt-dev:review` | Parallel orchestrator that spawns this reviewer |
 
 ## Input
 
@@ -63,12 +65,19 @@ Initial TodoWrite:
 2. **Map changed files to routes** — check `app/pages/` to determine which URLs to visit
 
 3. **Detect dev server:**
-   - Check if dev server is running: try to connect to `http://localhost:3001`
-   - If not running → fall back to **static code analysis only** (mark browser phases as "Skipped — dev server not available")
+   ```bash
+   curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 http://localhost:3001 2>/dev/null || echo "UNAVAILABLE"
+   ```
+   - HTTP 200/301/302 → dev server is running, browser phases enabled
+   - UNAVAILABLE/connection refused → **no dev server detected**
+     - Fall back to **static code analysis only** for all phases
+     - Skip all Chrome DevTools MCP tool calls
+     - Append to report header: "**Note:** Browser verification skipped — no dev server detected at localhost:3001. Run `pnpm run dev` and re-run review for full browser-based analysis."
 
-4. **Authenticate if needed:**
+4. **Authenticate if needed** (only if dev server running):
    - Navigate to app URL, take snapshot
-   - If redirected to login → ask user for credentials or skip browser phases
+   - If redirected to login → skip browser phases (do not ask user interactively, this is a sub-agent)
+   - Log: "Authentication required — browser verification skipped. Continuing with static analysis."
 
 5. **Read existing UX patterns:**
    - Check for shared components: `LoadingState.vue`, `EmptyState.vue`, `ErrorState.vue`

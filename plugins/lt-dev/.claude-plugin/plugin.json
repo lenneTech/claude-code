@@ -32,6 +32,10 @@
     "agent-teams",
     "parallel",
     "debugging",
-    "worktrees"
+    "worktrees",
+    "figma",
+    "a11y",
+    "accessibility",
+    "review"
   ]
 }

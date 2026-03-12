@@ -231,10 +231,10 @@ MyAngularApp/
 **Next steps:**
 ```bash
 cd MyAngularApp
-npm install              # Install all dependencies
-cd projects/api && npm start  # Start backend (port 3000)
+pnpm install              # Install all dependencies
+cd projects/api && pnpm start  # Start backend (port 3000)
 # In another terminal:
-cd frontend && npm start      # Start frontend (port 4200)
+cd frontend && pnpm start      # Start frontend (port 4200)
 ```
 
 #### Local Development Angular App
@@ -395,16 +395,16 @@ lt fullstack init \
 #### After Angular Fullstack Init
 ```bash
 cd MyAngularApp
-npm install
+pnpm install
 
 # Terminal 1: Start backend
 cd projects/api
-npm start
+pnpm start
 # API runs on http://localhost:3000
 
 # Terminal 2: Start frontend
 cd frontend
-npm start
+pnpm start
 # Frontend runs on http://localhost:4200
 # Auto-proxies API calls to backend
 
@@ -416,16 +416,16 @@ cd projects/api
 #### After Nuxt Fullstack Init
 ```bash
 cd MyNuxtApp
-npm install
+pnpm install
 
 # Terminal 1: Start backend
 cd projects/api
-npm start
+pnpm start
 # API runs on http://localhost:3000
 
 # Terminal 2: Start frontend
 cd frontend
-npm run dev
+pnpm run dev
 # Frontend runs on http://localhost:3000 (or 3001 if 3000 taken)
 
 # Configure proxy in nuxt.config.ts if needed
@@ -445,7 +445,7 @@ lt fullstack init \
   --git-link https://github.com/team/team-project.git
 
 cd TeamProject
-npm install
+pnpm install
 # ... initial setup, create base modules
 git add .
 git commit -m "Initial project setup"
@@ -454,7 +454,7 @@ git push -u origin main
 # Team members clone
 # git clone https://github.com/team/team-project.git
 # cd team-project
-# npm install
+# pnpm install
 ```
 
 #### Monorepo with Multiple Projects
@@ -583,7 +583,7 @@ lt full init --name MyApp --frontend angular --git true
 2. **Enable git from start**: Use `--git true` for all real projects
 3. **Follow naming conventions**: PascalCase for project names
 4. **Read generated READMEs**: Each project has setup instructions
-5. **Install dependencies immediately**: Run `npm install` after creation
+5. **Install dependencies immediately**: Run `pnpm install` after creation
 
 ---
 

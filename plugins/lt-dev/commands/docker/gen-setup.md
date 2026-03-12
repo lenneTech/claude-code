@@ -1,5 +1,6 @@
 ---
 description: Generate Docker setup for development and production
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash(docker:*), Bash(docker-compose:*), Bash(curl:*), Bash(ls:*), Bash(mkdir:*), Bash(cp:*), Bash(cat:*), Bash(git:*)
 disable-model-invocation: true
 ---
 
@@ -76,7 +77,7 @@ Create two compose files:
   - Improve performance
   - Keep platform-specific dependencies correct
 - On package.json/lock changes: trigger container rebuild
-- Use `npm ci` in container for consistent installs
+- Use `pnpm install --frozen-lockfile` in container for consistent installs
 
 ### 4. Local Helper Services
 
@@ -259,7 +260,7 @@ db-reset:
 	docker compose down -v
 	docker compose up -d db
 	sleep 5
-	docker compose exec app npm run db:migrate
+	docker compose exec app pnpm run db:migrate
 
 clean:
 	docker compose down -v --remove-orphans

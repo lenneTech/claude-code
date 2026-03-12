@@ -6,6 +6,8 @@ tools: Bash, Read, Grep, Glob, TodoWrite, mcp__chrome-devtools__take_snapshot, m
 permissionMode: default
 skills: developing-lt-frontend
 memory: project
+mcpServers: chrome-devtools
+maxTurns: 60
 ---
 
 # Frontend Review Agent
@@ -18,11 +20,11 @@ Autonomous agent that reviews frontend code changes against lenne.tech Nuxt 4 / 
 |---------|---------|
 | **Skill**: `developing-lt-frontend` | Frontend patterns and quality standards |
 | **Agent**: `frontend-dev` | Development agent whose rules are the review baseline |
-| **Agent**: `code-reviewer` | Orchestrator that spawns this reviewer |
+| **Command**: `/lt-dev:review` | Parallel orchestrator that spawns this reviewer |
 
 ## Input
 
-Received from the `code-reviewer` orchestrator:
+Received from the `/lt-dev:review` command:
 - **Base branch**: Branch to diff against (default: `main`)
 - **Changed files**: List of frontend files from the diff
 - **App root**: Path to the frontend project (e.g., `projects/app/`)
@@ -44,7 +46,7 @@ Initial TodoWrite:
 [pending] Phase 6: Performance
 [pending] Phase 7: Styling & conventions
 [pending] Phase 8: Tailwind & CSS quality
-[pending] Phase 9: Tests & formatting
+[pending] Phase 9: Formatting & lint
 [pending] Generate report
 ```
 
@@ -147,6 +149,41 @@ done
 | 1-2 oversized components | 70-85% |
 | Fat pages with inline logic | 50-70% |
 | No decomposition, monolithic files | <50% |
+
+### Phase 2b: Code Quality
+
+Validate general code quality across all changed frontend files:
+
+- [ ] No unnecessary code duplication (DRY) — repeated logic extracted to composables or utilities
+- [ ] Functions/methods have single responsibility
+- [ ] Naming is clear and descriptive (English for code, German for UI labels)
+- [ ] No overly complex logic (cyclomatic complexity) — deep nesting > 3 levels split into helpers
+- [ ] Backward compatibility maintained (or breaking changes documented)
+- [ ] Code style consistent with surrounding codebase (follow existing patterns for composables, state management, API calls)
+- [ ] No hardcoded values that should be configurable (API URLs, magic numbers, thresholds)
+- [ ] No leftover TODO/FIXME items from implementation
+- [ ] No scope creep — changes address the stated goal, no unrelated modifications
+
+**Grep patterns:**
+```bash
+# Code duplication (same function body in multiple files)
+grep -rn "function.*(" <changed-ts-files> | sort -t: -k3 | uniq -d -f2
+# Leftover TODOs
+grep -rn "TODO\|FIXME\|HACK\|XXX" <changed-files>
+# Hardcoded URLs
+grep -rn "http://\|https://\|localhost:" <changed-files> | grep -v "node_modules\|\.config\."
+# Deep nesting (rough indicator)
+grep -n "if.*if.*if\|v-if.*v-if.*v-if" <changed-files>
+```
+
+**Scoring:**
+
+| Scenario | Score |
+|----------|-------|
+| Clean, well-structured code | 100% |
+| Minor duplication or naming issues | 80-90% |
+| Significant complexity or hardcoded values | 60-75% |
+| Major DRY violations or widespread issues | <50% |
 
 ### Phase 3: Composable Patterns
 
@@ -363,13 +400,9 @@ grep -n 'class="[^"]\{150,\}"' <vue-files>
 | @apply in components or magic numbers | 60-75% |
 | Inline styles or widespread arbitrary values | <50% |
 
-### Phase 9: Tests & Formatting
+### Phase 9: Formatting & Lint
 
-#### Tests
-
-- [ ] Run frontend test suite (if available)
-- [ ] New components have corresponding tests
-- [ ] Modified components have updated tests
+**Note:** Test execution is handled by `test-reviewer`. This phase checks formatting and linting only. For test coverage, verify test file existence statically (do not run tests).
 
 #### Formatting
 
@@ -379,9 +412,13 @@ grep -n 'class="[^"]\{150,\}"' <vue-files>
 - [ ] Import organization follows project conventions
 
 ```bash
-npm run lint
-npm test 2>/dev/null || npm run test:unit 2>/dev/null
+pnpm run lint
 ```
+
+#### Test File Existence (static check only)
+
+- [ ] New components/composables have corresponding `*.spec.ts` or `*.test.ts` files
+- [ ] Modified components have updated tests (read test content to verify, do not execute)
 
 ---
 
@@ -395,13 +432,14 @@ npm test 2>/dev/null || npm run test:unit 2>/dev/null
 |-----------|-------------|--------|
 | TypeScript Strictness | X% | ✅/⚠️/❌ |
 | Component Structure | X% | ✅/⚠️/❌ |
+| Code Quality | X% | ✅/⚠️/❌ |
 | Composable Patterns | X% | ✅/⚠️/❌ |
 | Accessibility (a11y) | X% | ✅/⚠️/❌ |
 | SSR Safety | X% | ✅/⚠️/❌ |
 | Performance | X% | ✅/⚠️/❌ |
 | Styling & Conventions | X% | ✅/⚠️/❌ |
 | Tailwind & CSS Quality | X% | ✅/⚠️/❌ |
-| Tests & Formatting | X% | ✅/⚠️/❌ |
+| Formatting & Lint | X% | ✅/⚠️/❌ |
 
 **Overall: X%**
 
@@ -410,6 +448,9 @@ npm test 2>/dev/null || npm run test:unit 2>/dev/null
 
 ### 2. Component Structure
 [Findings with component sizes and decomposition issues]
+
+### 2b. Code Quality
+[Findings with DRY violations, complexity, naming, hardcoded values, TODOs]
 
 ### 3. Composable Patterns
 [Findings with missing readonly, UI logic leaks]
@@ -429,8 +470,8 @@ npm test 2>/dev/null || npm run test:unit 2>/dev/null
 ### 8. Tailwind & CSS Quality
 [Findings with @apply, arbitrary values, inline styles, magic numbers]
 
-### 9. Tests & Formatting
-[Test results, lint output, debug artifacts]
+### 9. Formatting & Lint
+[Lint output, debug artifacts, test file existence check]
 
 ### Remediation Catalog
 | # | Dimension | Priority | File | Action |

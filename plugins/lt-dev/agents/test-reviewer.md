@@ -5,6 +5,8 @@ model: sonnet
 tools: Bash, Read, Grep, Glob, TodoWrite
 permissionMode: default
 skills: building-stories-with-tdd, generating-nest-servers, developing-lt-frontend
+memory: project
+maxTurns: 50
 ---
 
 # Test Review Agent
@@ -18,11 +20,11 @@ Autonomous agent that reviews test quality and coverage against lenne.tech conve
 | **Skill**: `building-stories-with-tdd` | TDD methodology and test workflow |
 | **Skill**: `generating-nest-servers` | Backend patterns for API test expectations |
 | **Skill**: `developing-lt-frontend` | Frontend patterns for component/E2E test expectations |
-| **Agent**: `code-reviewer` | Orchestrator that may spawn this reviewer |
+| **Command**: `/lt-dev:review` | Parallel orchestrator that spawns this reviewer |
 
 ## Input
 
-Received from the `code-reviewer` orchestrator or standalone:
+Received from the `/lt-dev:review` command or standalone:
 - **Base branch**: Branch to diff against (default: `main`)
 - **Changed files**: All changed source files from the diff
 - **Project root**: Path to the project
@@ -42,6 +44,7 @@ Initial TodoWrite:
 [pending] Phase 4: API-first testing patterns
 [pending] Phase 5: Permission & security testing
 [pending] Phase 6: Test naming & structure
+[pending] Phase 7: Flaky test detection
 [pending] Generate report
 ```
 
@@ -100,14 +103,22 @@ for f in $(git diff <base>...HEAD --name-only | grep -E '\.(ts|vue)$' | grep -v 
 done
 ```
 
-**Scoring:**
+**Scoring (weighted: Regression 40% + Coverage 60%):**
 
 | Scenario | Score |
 |----------|-------|
-| All changed files have tests | 100% |
-| Most files covered, minor gaps | 70-85% |
-| Major features without tests | 50-70% |
-| No tests for changed code | <50% |
+| All tests pass AND all new logic has dedicated tests | 100% |
+| All tests pass AND some new logic has tests, some doesn't | 70-90% |
+| All tests pass BUT no new tests written (regression only) | 50-60% |
+| Tests fail | <50% |
+
+**IMPORTANT:** A green test suite is a necessary but NOT sufficient condition for 100%. All tests passing only proves no regression — it does NOT prove new functionality is tested.
+
+**Common Trap — DO NOT fall for these justifications:**
+- "It's a passthrough to a library" — The glue code (config reading, parameter passing, conditional logic) is YOUR code and needs tests
+- "The library handles it internally" — Tests verify YOUR integration, not the library
+- "It's backward compatible/optional" — Optional features still need tests proving they work when enabled
+- "Existing tests cover it implicitly" — Verify by reading the actual test code; if no test explicitly exercises the new path, it's untested
 
 ### Phase 2: Test Quality & Assertions
 
@@ -256,6 +267,50 @@ grep -L "describe(" <test-files>
 | Vague names or flat structure | 60-75% |
 | No describe blocks, test1/test2 naming | <50% |
 
+### Phase 7: Flaky Test Detection
+
+Before reporting tests as failed, verify whether failures are consistent or flaky:
+
+1. **Re-run failing tests 2-3 times** to determine consistency
+2. **Classify each failure:**
+
+| Classification | Criteria | Action |
+|----------------|----------|--------|
+| **Consistent failure** | Fails on every run | Fix required — report in Remediation Catalog |
+| **Flaky (fixable)** | Intermittent failure with identifiable cause | Fix the flakiness — report cause and fix |
+| **Flaky (environment)** | Intermittent failure tied to external factors | Document with reproduction steps — flag as ⚠️ |
+
+3. **Check for common flaky patterns:**
+
+```bash
+# Hardcoded timeouts
+grep -rn "setTimeout\|sleep\|delay\|waitFor.*[0-9]" <test-files>
+# Shared mutable state
+grep -rn "let .*=" <test-files> | grep -v "const\|beforeEach\|beforeAll"
+# Port conflicts
+grep -rn "listen\|PORT\|3000\|3001" <test-files>
+# Missing cleanup
+grep -L "afterAll\|afterEach" <test-files>
+```
+
+**Common flaky patterns to check:**
+- Hardcoded timeouts or `setTimeout` instead of event-based waits
+- Tests depending on execution order or shared mutable state
+- Port conflicts from parallel test execution
+- Missing `afterEach`/`afterAll` cleanup
+- Race conditions in async operations without proper await
+
+**Pre-existing test failures:** Failing tests from prior code changes are still failing tests. They MUST be fixed regardless of whether they relate to the current changes. A green test suite is a non-negotiable prerequisite for any merge.
+
+**Scoring:**
+
+| Scenario | Score |
+|----------|-------|
+| All tests consistently pass | 100% |
+| Flaky tests identified with fix suggestions | 70-85% |
+| Consistent failures in changed code | 50-70% |
+| Widespread failures or unfixable flakiness | <50% |
+
 ---
 
 ## Output Format
@@ -272,6 +327,7 @@ grep -L "describe(" <test-files>
 | API-First Testing | X% | ✅/⚠️/❌ |
 | Permission & Security Testing | X% | ✅/⚠️/❌ |
 | Test Naming & Structure | X% | ✅/⚠️/❌ |
+| Flaky Test Detection | X% | ✅/⚠️/❌ |
 
 **Overall: X%**
 
@@ -292,6 +348,9 @@ grep -L "describe(" <test-files>
 
 ### 6. Test Naming & Structure
 [Naming issues, structural gaps]
+
+### 7. Flaky Test Detection
+[Re-run results, classification per failing test, common patterns found]
 
 ### Remediation Catalog
 | # | Dimension | Priority | File | Action |

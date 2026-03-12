@@ -1,6 +1,7 @@
 ---
 description: Execute IMPLEMENTATION_PLAN.md completely
 argument-hint: [plan-file]
+allowed-tools: Read, Write, Edit, Glob, Grep, Agent, Bash(docker:*), Bash(docker-compose:*), Bash(pnpm:*), Bash(npm:*), Bash(yarn:*), Bash(git:*), Bash(curl:*), mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__evaluate_script, AskUserQuestion
 disable-model-invocation: true
 ---
 
@@ -42,8 +43,8 @@ Read IMPLEMENTATION_PLAN.md and SPEC.md.
 ### Package Manager
 
 Detect from lockfile (`pnpm-lock.yaml` / `yarn.lock` / `package-lock.json`).
-All examples use `npm` notation - adapt to detected package manager.
-`npx` → `pnpm dlx` / `yarn dlx`.
+All examples use `pnpm` notation - adapt to detected package manager.
+`pnpm dlx` → `npx` / `yarn dlx`.
 
 ### Workflow
 
@@ -60,7 +61,7 @@ Phase 2-3: Backend
 
 Phase 4: Types
 1. Verify API: docker compose logs api
-2. Generate: npm run generate-types
+2. Generate: pnpm run generate-types
 
 Phase 5: Frontend
 1. Implement using ~/api-client/ types
@@ -72,9 +73,9 @@ Phase 6: Security Review
 3. Fix any Critical/Warning findings
 
 Phase 7: Quality Assurance
-1. Run: npm run lint
+1. Run: pnpm run lint
 2. Fix all lint errors
-3. Run: npm run build
+3. Run: pnpm run build
 4. Fix all build errors
 
 Phase 8: Browser Testing (Chrome MCP)
@@ -151,8 +152,8 @@ Role:     admin
 - All `- [ ]` in IMPLEMENTATION_PLAN.md are `- [x]`
 - All features from SPEC.md are implemented
 - Security review passed (`/lt-dev:backend:sec-review`)
-- `npm run lint` passes
-- `npm run build` passes
+- `pnpm run lint` passes
+- `pnpm run build` passes
 - Browser testing completed with Chrome MCP
 - All bugs found during testing are fixed
 - App works end-to-end (login → use features → logout)
@@ -169,6 +170,6 @@ Ultrathink.
 |---------|--------|
 | `generate-types` fails | Check if API is running: `docker compose logs api` |
 | Docker won't start | Check ports: `lsof -i :3000 -i :3001` |
-| Lint errors | Run `npm run lint:fix` first, then re-run lint |
+| Lint errors | Run `pnpm run lint:fix` first, then re-run lint |
 | Build fails | Check console output, often missing imports or type errors |
 | API not responding | `docker compose restart api` and check logs |

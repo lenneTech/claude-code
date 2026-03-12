@@ -1,6 +1,6 @@
 ---
 description: Dry-run npm package analysis without changes
-allowed-tools: Task
+allowed-tools: Agent
 disable-model-invocation: true
 ---
 
@@ -36,7 +36,7 @@ Analyze and report WITHOUT making changes:
 - Check security vulnerabilities
 - Estimate risk levels for all potential changes
 
-**CRITICAL**: Do NOT modify package.json, do NOT run npm install/uninstall, do NOT make any changes.
+**CRITICAL**: Do NOT modify package.json, do NOT run pnpm install/remove, do NOT make any changes.
 
 Generate comprehensive report including:
 - Packages that could be removed (with usage analysis)

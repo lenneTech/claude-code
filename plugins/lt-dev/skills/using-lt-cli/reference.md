@@ -285,13 +285,13 @@ lt fullstack init --name MyApp --frontend angular --git true \
 **Post-Creation Setup:**
 ```bash
 cd <workspace-name>
-npm install                        # Install dependencies
+pnpm install                        # Install dependencies
 
 # Terminal 1: Start backend
-cd projects/api && npm start       # Runs on port 3000
+cd projects/api && pnpm start       # Runs on port 3000
 
 # Terminal 2: Start frontend
-cd frontend && npm start           # Angular: 4200, Nuxt: 3000/3001
+cd frontend && pnpm start           # Angular: 4200, Nuxt: 3000/3001
 ```
 
 **Git Remote Configuration:**
@@ -365,7 +365,7 @@ lt fullstack init \
   --git-link https://github.com/company/production-app.git
 
 cd ProductionApp
-npm install
+pnpm install
 # ... setup, create modules, commit, push
 ```
 
@@ -377,7 +377,7 @@ lt fullstack init \
   --git false
 
 cd LocalTest
-npm install
+pnpm install
 # ... quick testing without git overhead
 ```
 
@@ -494,7 +494,7 @@ lt fullstack init \
 -  Use PascalCase for project names (MyProject, not my-project)
 -  Enable git for all real projects (`--git true`)
 -  Add git remote URL immediately with `--git-link`
--  Run `npm install` right after creation
+-  Run `pnpm install` right after creation
 -  Choose Angular for enterprise, Nuxt for flexibility
 -  Don't use git for quick throwaway tests
 -  Don't use spaces in project names
@@ -518,7 +518,7 @@ lt fullstack init \
 5. **PascalCase names**: `MyProject`, not `my_project` or `myproject`
 6. **Git from start**: Use `--git true` for all real projects
 7. **Track branches**: Let `lt git get` handle remote tracking
-8. **Install immediately**: Run `npm install` after init
+8. **Install immediately**: Run `pnpm install` after init
 9. **Commit often**: Save work after each logical step
 10. **Read READMEs**: Each generated project has setup instructions
 

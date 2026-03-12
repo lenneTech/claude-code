@@ -48,4 +48,18 @@ echo "$COMMAND" | grep -qE 'sudo\s+rm|sudo\s+chmod|sudo\s+chown.*/' \
 echo "$COMMAND" | grep -qE 'cat\s+\.env\s*$|cat\s+\.env\s*\|' \
   && deny "Blocked: Printing .env to stdout may expose secrets in logs. Use grep for specific vars."
 
+# ── Code injection vectors ──
+echo "$COMMAND" | grep -qE '\beval\s+"?\$\{?(COMMAND|INPUT|ARG|PARAM|QUERY|USER|DATA|BODY|PAYLOAD)\b' \
+  && deny "Blocked: eval with user-controlled variable expansion is a code injection risk. Use explicit commands."
+
+echo "$COMMAND" | grep -qE '\bsource\s+/dev/stdin|\.\s+/dev/stdin' \
+  && deny "Blocked: Sourcing from stdin can execute injected code."
+
+echo "$COMMAND" | grep -qE 'bash\s+-c\s+"?\$\{?(COMMAND|INPUT|ARG|PARAM|QUERY|USER|DATA|BODY|PAYLOAD)\b' \
+  && deny "Blocked: bash -c with user-controlled variable expansion is a code injection risk. Use explicit commands."
+
+# ── System file tampering ──
+echo "$COMMAND" | grep -qE '>\s*/etc/|>>\s*/etc/|>\s*/usr/' \
+  && deny "Blocked: Writing to system directories requires manual confirmation."
+
 exit 0

@@ -14,7 +14,7 @@
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
-│  npm run generate-types fails?                                 │
+│  pnpm run generate-types fails?                                │
 │                                                                │
 │  1. CHECK if API is actually running:                          │
 │     curl -s http://localhost:3000/api                          │
@@ -48,14 +48,14 @@
 │     kill $(lsof -t -i :3000)                                   │
 │                                                                │
 │  3. CHECK for TypeScript/Build errors:                         │
-│     cd projects/api && npm run build                           │
+│     cd projects/api && pnpm run build                          │
 │                                                                │
 │  4. CHECK environment:                                         │
 │     - MongoDB running? (check docker compose ps)               │
 │     - .env file exists with correct values?                    │
 │                                                                │
 │  5. RESTART cleanly:                                           │
-│     cd projects/api && npm run start:dev                       │
+│     cd projects/api && pnpm run start:dev                      │
 └────────────────────────────────────────────────────────────────┘
 ```
 
@@ -68,19 +68,19 @@
 │  Frontend build/dev fails?                                     │
 │                                                                │
 │  1. CHECK for TypeScript errors:                               │
-│     npm run typecheck (or check terminal output)               │
+│     pnpm run typecheck (or check terminal output)              │
 │                                                                │
 │  2. COMMON ISSUES:                                             │
-│     - Missing types → Run npm run generate-types               │
+│     - Missing types → Run pnpm run generate-types              │
 │     - Import errors → Check file paths and exports             │
 │     - Nuxt module errors → Check nuxt.config.ts                │
 │                                                                │
 │  3. CLEAR CACHE if weird errors:                               │
 │     rm -rf .nuxt .output node_modules/.cache                   │
-│     npm run dev                                                │
+│     pnpm run dev                                               │
 │                                                                │
 │  4. CHECK dependencies:                                        │
-│     npm install (in case packages missing)                     │
+│     pnpm install (in case packages missing)                    │
 └────────────────────────────────────────────────────────────────┘
 ```
 
@@ -120,16 +120,16 @@
 │     http://localhost:3000?"                                 │
 │                                                             │
 │  2. IF API RUNNING:                                         │
-│     → Run: npm run generate-types                           │
+│     → Run: pnpm run generate-types                          │
 │     → Wait for completion                                   │
 │     → Continue with generated types                         │
 │                                                             │
 │  3. IF API NOT RUNNING:                                     │
 │     → Ask user to start API first:                          │
 │       "Bitte starte die API mit: cd projects/api &&         │
-│        npm run start:dev"                                   │
+│        pnpm run start:dev"                                  │
 │     → Wait for user confirmation                            │
-│     → Then run: npm run generate-types                      │
+│     → Then run: pnpm run generate-types                     │
 │                                                             │
 │  ❌ NEVER create manual interfaces as workaround!           │
 │  ❌ NEVER skip this workflow!                               │
@@ -162,7 +162,7 @@ kill $(lsof -t -i :3000)
 rm -rf .nuxt .output node_modules/.cache
 
 # Regenerate types
-npm run generate-types
+pnpm run generate-types
 
 # Check Docker containers
 docker compose ps

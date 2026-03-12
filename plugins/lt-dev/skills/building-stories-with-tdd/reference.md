@@ -49,7 +49,7 @@ description: Quick reference guide for Test-Driven Development workflow
                           ↓
 ┌─────────────────────────────────────────────────────────┐
 │ Step 3: Run Tests & Analyze                             │
-│ - npm test                                              │
+│ - pnpm test                                             │
 │ - Record failures and reasons                           │
 │ - Decide: Test bug OR Missing implementation            │
 └─────────────────────────────────────────────────────────┘
@@ -107,19 +107,19 @@ description: Quick reference guide for Test-Driven Development workflow
 
 ```bash
 # Run all tests (NODE_ENV=e2e is set in package.json scripts)
-npm test
+pnpm test
 
 # Run specific story test
-npm test -- tests/stories/feature-name.story.test.ts
+pnpm test -- tests/stories/feature-name.story.test.ts
 
 # Run tests with coverage
-npm run test:cov
+pnpm run test:cov
 
 # Run tests in watch mode
-npm run test:watch
+pnpm run test:watch
 
-# If running vitest directly (without npm scripts), set NODE_ENV explicitly:
-NODE_ENV=e2e npx vitest run
+# If running vitest directly (without package.json scripts), set NODE_ENV explicitly:
+NODE_ENV=e2e pnpm dlx vitest run
 ```
 
 ### Using nest-server-generator Skill
@@ -750,8 +750,8 @@ export default {
 Enable validation debugging via environment variable:
 
 ```bash
-# In your terminal or test script (NODE_ENV=e2e is set via npm scripts)
-DEBUG_VALIDATION=true npm test
+# In your terminal or test script (NODE_ENV=e2e is set via package.json scripts)
+DEBUG_VALIDATION=true pnpm test
 
 # Or in your test file
 process.env.DEBUG_VALIDATION = 'true';
@@ -861,7 +861,7 @@ Test fails
 
 6. **After Refactoring & Security Review:**
    ```bash
-   npm test  # MUST still pass!
+   pnpm test  # MUST still pass!
    ```
 
 ### Code Quality Checklist

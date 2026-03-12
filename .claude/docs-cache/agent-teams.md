@@ -1,7 +1,7 @@
 # Orchestrate teams of Claude Code sessions
 
 > Source: https://code.claude.com/docs/en/agent-teams
-> Generated: 2026-02-09T12:29:08.944Z
+> Generated: 2026-03-12T14:48:14.930Z
 
 ---
 
@@ -31,6 +31,10 @@ Compare with subagents
 
 Both agent teams and [subagents](/docs/en/sub-agents) let you parallelize work, but they operate differently. Choose based on whether your workers need to communicate with each other:
 
+![Diagram comparing subagent and agent team architectures. Subagents are spawned by the main agent, do work, and report results back. Agent teams coordinate through a shared task list, with teammates communicating directly with each other.](https://mintcdn.com/claude-code/nsvRFSDNfpSU5nT7/images/subagents-vs-agent-teams-light.png?fit=max&auto=format&n=nsvRFSDNfpSU5nT7&q=85&s=2f8db9b4f3705dd3ab931fbe2d96e42a)![Diagram comparing subagent and agent team architectures. Subagents are spawned by the main agent, do work, and report results back. Agent teams coordinate through a shared task list, with teammates communicating directly with each other.](https://mintcdn.com/claude-code/nsvRFSDNfpSU5nT7/images/subagents-vs-agent-teams-dark.png?fit=max&auto=format&n=nsvRFSDNfpSU5nT7&q=85&s=d573a037540f2ada6a9ae7d8285b46fd)
+
+Subagents only report results back to the main agent and never talk to each other. In agent teams, teammates share a task list, claim work, and communicate directly with each other.
+
 |  | Subagents | Agent teams |
 | --- | --- | --- |
 | **Context** | Own context window; results return to the caller | Own context window; fully independent |
@@ -54,7 +58,7 @@ settings.json```{
 
 After enabling agent teams, tell Claude to create an agent team and describe the task and the team structure you want in natural language. Claude creates the team, spawns teammates, and coordinates work based on your prompt. This example works well because the three roles are independent and can explore the problem without waiting on each other:```I'm designing a CLI tool that helps developers track TODO comments across
 their codebase. Create an agent team to explore this from different angles: one
-teammate on UX, one on technical architecture, one playing devil's advocate.```From there, Claude creates a team with a [shared task list](/docs/en/interactive-mode#task-list), spawns teammates for each perspective, has them explore the problem, synthesizes findings, and attempts to [clean up the team](#clean-up-the-team) when finished. The lead’s terminal lists all teammates and what they’re working on. Use Shift+Up/Down to select a teammate and message them directly. If you want each teammate in its own split pane, see [Choose a display mode](#choose-a-display-mode).
+teammate on UX, one on technical architecture, one playing devil's advocate.```From there, Claude creates a team with a [shared task list](/docs/en/interactive-mode#task-list), spawns teammates for each perspective, has them explore the problem, synthesizes findings, and attempts to [clean up the team](#clean-up-the-team) when finished. The lead’s terminal lists all teammates and what they’re working on. Use Shift+Down to cycle through teammates and message them directly. After the last teammate, Shift+Down wraps back to the lead. If you want each teammate in its own split pane, see [Choose a display mode](#choose-a-display-mode).
 
 
 Control your agent team
@@ -66,7 +70,7 @@ Choose a display mode
 
 Agent teams support two display modes:
 
--   **In-process**: all teammates run inside your main terminal. Use Shift+Up/Down to select a teammate and type to message them directly. Works in any terminal, no extra setup required.
+-   **In-process**: all teammates run inside your main terminal. Use Shift+Down to cycle through teammates and type to message them directly. Works in any terminal, no extra setup required.
 -   **Split panes**: each teammate gets its own pane. You can see everyone’s output at once and click into a pane to interact directly. Requires tmux, or iTerm2.`tmux`has known limitations on certain operating systems and traditionally works best on macOS. Using`tmux -CC`in iTerm2 is the suggested entrypoint into`tmux`.
 
 The default is`"auto"`, which uses split panes if you’re already running inside a tmux session, and in-process otherwise. The`"tmux"`setting enables split-pane mode and auto-detects whether to use tmux or iTerm2 based on your terminal. To override, set`teammateMode`in your [settings.json](/docs/en/settings):```{
@@ -86,16 +90,11 @@ For complex or risky tasks, you can require teammates to plan before implementin
 Require plan approval before they make any changes.```When a teammate finishes planning, it sends a plan approval request to the lead. The lead reviews the plan and either approves it or rejects it with feedback. If rejected, the teammate stays in plan mode, revises based on the feedback, and resubmits. Once approved, the teammate exits plan mode and begins implementation. The lead makes approval decisions autonomously. To influence the lead’s judgment, give it criteria in your prompt, such as “only approve plans that include test coverage” or “reject plans that modify the database schema.”
 
 
-Use delegate mode
-
-Without delegate mode, the lead sometimes starts implementing tasks itself instead of waiting for teammates. Delegate mode prevents this by restricting the lead to coordination-only tools: spawning, messaging, shutting down teammates, and managing tasks. This is useful when you want the lead to focus entirely on orchestration, such as breaking down work, assigning tasks, and synthesizing results, without touching code directly. To enable it, start a team first, then press Shift+Tab to cycle into delegate mode.
-
-
 Talk to teammates directly
 
 Each teammate is a full, independent Claude Code session. You can message any teammate directly to give additional instructions, ask follow-up questions, or redirect their approach.
 
--   **In-process mode**: use Shift+Up/Down to select a teammate, then type to send them a message. Press Enter to view a teammate’s session, then Escape to interrupt their current turn. Press Ctrl+T to toggle the task list.
+-   **In-process mode**: use Shift+Down to cycle through teammates, then type to send them a message. Press Enter to view a teammate’s session, then Escape to interrupt their current turn. Press Ctrl+T to toggle the task list.
 -   **Split-pane mode**: click into a teammate’s pane to interact with their session directly. Each teammate has a full view of their own terminal.
 
 
@@ -214,7 +213,18 @@ Give teammates enough context
 Teammates load project context automatically, including CLAUDE.md, MCP servers, and skills, but they don’t inherit the lead’s conversation history. See [Context and communication](#context-and-communication) for details. Include task-specific details in the spawn prompt:```Spawn a security reviewer teammate with the prompt: "Review the authentication module
 at src/auth/ for security vulnerabilities. Focus on token handling, session
 management, and input validation. The app uses JWT tokens stored in
-httpOnly cookies. Report any issues with severity ratings."```Size tasks appropriately
+httpOnly cookies. Report any issues with severity ratings."```Choose an appropriate team size
+
+There’s no hard limit on the number of teammates, but practical constraints apply:
+
+-   **Token costs scale linearly**: each teammate has its own context window and consumes tokens independently. See [agent team token costs](/docs/en/costs#agent-team-token-costs) for details.
+-   **Coordination overhead increases**: more teammates means more communication, task coordination, and potential for conflicts
+-   **Diminishing returns**: beyond a certain point, additional teammates don’t speed up work proportionally
+
+Start with 3-5 teammates for most workflows. This balances parallel work with manageable coordination. The examples in this guide use 3-5 teammates because that range works well across different task types. Having 5-6 [tasks](/docs/en/agent-teams#architecture) per teammate keeps everyone productive without excessive context switching. If you have 15 independent tasks, 3 teammates is a good starting point. Scale up only when the work genuinely benefits from having teammates work simultaneously. Three focused teammates often outperform five scattered ones.
+
+
+Size tasks appropriately
 
 -   **Too small**: coordination overhead exceeds the benefit
 -   **Too large**: teammates work too long without check-ins, increasing risk of wasted effort
@@ -259,7 +269,7 @@ Teammate permission requests bubble up to the lead, which can create friction. P
 
 Teammates stopping on errors
 
-Teammates may stop after encountering errors instead of recovering. Check their output using Shift+Up/Down in in-process mode or by clicking the pane in split mode, then either:
+Teammates may stop after encountering errors instead of recovering. Check their output using Shift+Down in in-process mode or by clicking the pane in split mode, then either:
 
 -   Give them additional instructions directly
 -   Spawn a replacement teammate to continue the work

@@ -1,6 +1,6 @@
 ---
 description: Clean up and optimize code quality
-allowed-tools: Read, Grep, Glob, Edit, Bash(npm run build:*), Bash(npm run lint:*), Bash(git diff:*), Bash(git status:*)
+allowed-tools: Read, Grep, Glob, Edit, Bash(npm run build:*), Bash(npm run lint:*), Bash(pnpm run build:*), Bash(pnpm run lint:*), Bash(yarn run build:*), Bash(yarn run lint:*), Bash(git:*)
 disable-model-invocation: true
 ---
 
@@ -81,13 +81,13 @@ Check code formatting:
 Run automatic checks:
 ```bash
 # TypeScript Compilation
-npm run build
+pnpm run build
 
 # Linting
-npm run lint
+pnpm run lint
 
 # Optional: Auto-Fix
-npm run lint:fix
+pnpm run lint:fix
 ```
 
 Fix all errors and warnings!

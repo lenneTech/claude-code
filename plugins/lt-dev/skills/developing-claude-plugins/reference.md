@@ -52,7 +52,7 @@ If URLs return 404 or fail to load:
 
 | Feature | Skill | Command | Agent | Hook |
 |---------|-------|---------|-------|------|
-| **Activation** | Auto/Manual | User `/command` | Task tool | Event |
+| **Activation** | Auto/Manual | User `/command` | Agent tool | Event |
 | **Persistence** | Session | One-time | Isolated | Event-scoped |
 | **Tool Access** | All | All | Specified | Script-based |
 | **User Interaction** | Yes | Yes | Limited | No |
@@ -135,7 +135,7 @@ Available tools that can be specified in agent `tools` field:
 | `Grep` | Search file contents |
 | `WebFetch` | Fetch and analyze URLs |
 | `WebSearch` | Search the web |
-| `Task` | Spawn sub-agents |
+| `Agent` | Spawn sub-agents |
 | `TodoWrite` | Manage task lists |
 | `AskUserQuestion` | Get user input |
 
@@ -221,7 +221,7 @@ Focus on **WHAT** - describes the action:
 - "Perform security review of code changes"
 
 ### Agents
-Focus on **WHAT + WHEN** - for Task tool matching:
+Focus on **WHAT + WHEN** - for Agent tool matching:
 - "Specialized agent for maintaining npm packages. Use when..."
 - "Expert agent for code review. Spawned after significant changes..."
 

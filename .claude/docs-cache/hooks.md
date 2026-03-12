@@ -1,20 +1,20 @@
 # Hooks reference
 
 > Source: https://code.claude.com/docs/en/hooks
-> Generated: 2026-02-09T12:26:31.135Z
+> Generated: 2026-03-12T14:48:14.743Z
 
 ---
 
 For a quickstart guide with examples, see [Automate workflows with hooks](/docs/en/hooks-guide).
 
-Hooks are user-defined shell commands or LLM prompts that execute automatically at specific points in Claude Code’s lifecycle. Use this reference to look up event schemas, configuration options, JSON input/output formats, and advanced features like async hooks and MCP tool hooks. If you’re setting up hooks for the first time, start with the [guide](/docs/en/hooks-guide) instead.
+Hooks are user-defined shell commands, HTTP endpoints, or LLM prompts that execute automatically at specific points in Claude Code’s lifecycle. Use this reference to look up event schemas, configuration options, JSON input/output formats, and advanced features like async hooks, HTTP hooks, and MCP tool hooks. If you’re setting up hooks for the first time, start with the [guide](/docs/en/hooks-guide) instead.
 
 
 Hook lifecycle
 
-Hooks fire at specific points during a Claude Code session. When an event fires and a matcher matches, Claude Code passes JSON context about the event to your hook handler. For command hooks, this arrives on stdin. Your handler can then inspect the input, take action, and optionally return a decision. Some events fire once per session, while others fire repeatedly inside the agentic loop:
+Hooks fire at specific points during a Claude Code session. When an event fires and a matcher matches, Claude Code passes JSON context about the event to your hook handler. For command hooks, input arrives on stdin. For HTTP hooks, it arrives as the POST request body. Your handler can then inspect the input, take action, and optionally return a decision. Some events fire once per session, while others fire repeatedly inside the agentic loop:
 
-![Hook lifecycle diagram showing the sequence of hooks from SessionStart through the agentic loop to SessionEnd](https://mintcdn.com/claude-code/tpQvD9DKENFo4zX_/images/hooks-lifecycle.svg?fit=max&auto=format&n=tpQvD9DKENFo4zX_&q=85&s=7a351ea1cc3d5da7a2176bf51196bc1a)
+![Hook lifecycle diagram showing the sequence of hooks from SessionStart through the agentic loop to SessionEnd, with WorktreeCreate, WorktreeRemove, and InstructionsLoaded as standalone async events](https://mintcdn.com/claude-code/JWoaQLhotXStH4d2/images/hooks-lifecycle.svg?fit=max&auto=format&n=JWoaQLhotXStH4d2&q=85&s=9310bd002ef90ca32ac668455f5580a0)
 
 The table below summarizes when each event fires. The [Hook events](#hook-events) section documents the full input schema and decision control options for each one.
 
@@ -32,6 +32,10 @@ The table below summarizes when each event fires. The [Hook events](#hook-events
 |`Stop`| When Claude finishes responding |
 |`TeammateIdle`| When an [agent team](/docs/en/agent-teams) teammate is about to go idle |
 |`TaskCompleted`| When a task is being marked as completed |
+|`InstructionsLoaded`| When a CLAUDE.md or`.claude/rules/*.md`file is loaded into context. Fires at session start and when files are lazily loaded during a session |
+|`ConfigChange`| When a configuration file changes during a session |
+|`WorktreeCreate`| When a worktree is being created via`--worktree`or`isolation: "worktree"`. Replaces default git behavior |
+|`WorktreeRemove`| When a worktree is being removed, either at session exit or when a subagent finishes |
 |`PreCompact`| Before context compaction |
 |`SessionEnd`| When a session terminates |
 
@@ -68,7 +72,7 @@ else
   exit 0  # allow the command
 fi```Now suppose Claude Code decides to run`Bash "rm -rf /tmp/build"`. Here’s what happens:
 
-![Hook resolution flow: PreToolUse event fires, matcher checks for Bash match, hook handler runs, result returns to Claude Code](https://mintcdn.com/claude-code/s7NM0vfd_wres2nf/images/hook-resolution.svg?fit=max&auto=format&n=s7NM0vfd_wres2nf&q=85&s=7c13f51ffcbc37d22a593b27e2f2de72)
+![Hook resolution flow: PreToolUse event fires, matcher checks for Bash match, hook handler runs, result returns to Claude Code](https://mintcdn.com/claude-code/TBPmHzr19mDCuhZi/images/hook-resolution.svg?fit=max&auto=format&n=TBPmHzr19mDCuhZi&q=85&s=5bb890134390ecd0581477cf41ef730b)
 
 1
 
@@ -110,7 +114,7 @@ Hooks are defined in JSON settings files. The configuration has three levels of 
 
 See [How a hook resolves](#how-a-hook-resolves) above for a complete walkthrough with an annotated example.
 
-This page uses specific terms for each level: **hook event** for the lifecycle point, **matcher group** for the filter, and **hook handler** for the shell command, prompt, or agent that runs. “Hook” on its own refers to the general feature.
+This page uses specific terms for each level: **hook event** for the lifecycle point, **matcher group** for the filter, and **hook handler** for the shell command, HTTP endpoint, prompt, or agent that runs. “Hook” on its own refers to the general feature.
 
 
 Hook locations
@@ -142,7 +146,8 @@ The`matcher`field is a regex string that filters when hooks fire. Use`"*"`,`""`,
 |`SubagentStart`| agent type |`Bash`,`Explore`,`Plan`, or custom agent names |
 |`PreCompact`| what triggered compaction |`manual`,`auto`|
 |`SubagentStop`| agent type | same values as`SubagentStart`|
-|`UserPromptSubmit`,`Stop`,`TeammateIdle`,`TaskCompleted`| no matcher support | always fires on every occurrence |
+|`ConfigChange`| configuration source |`user_settings`,`project_settings`,`local_settings`,`policy_settings`,`skills`|
+|`UserPromptSubmit`,`Stop`,`TeammateIdle`,`TaskCompleted`,`WorktreeCreate`,`WorktreeRemove`,`InstructionsLoaded`| no matcher support | always fires on every occurrence |
 
 The matcher is a regex, so`Edit|Write`matches either tool and`Notebook.*`matches any tool starting with Notebook. The matcher runs against a field from the [JSON input](#hook-input-and-output) that Claude Code sends to your hook on stdin. For tool events, that field is`tool_name`. Each [hook event](#hook-events) section lists the full set of matcher values and the input schema for that event. This example runs a linting script only when Claude writes or edits a file:```{
   "hooks": {
@@ -158,7 +163,7 @@ The matcher is a regex, so`Edit|Write`matches either tool and`Notebook.*`matches
       }
     ]
   }
-}````UserPromptSubmit`and`Stop`don’t support matchers and always fire on every occurrence. If you add a`matcher`field to these events, it is silently ignored.
+}````UserPromptSubmit`,`Stop`,`TeammateIdle`,`TaskCompleted`,`WorktreeCreate`,`WorktreeRemove`, and`InstructionsLoaded`don’t support matchers and always fire on every occurrence. If you add a`matcher`field to these events, it is silently ignored.
 
 
 Match MCP tools
@@ -199,9 +204,10 @@ This example logs all memory server operations and validates write operations fr
   }
 }```Hook handler fields
 
-Each object in the inner`hooks`array is a hook handler: the shell command, LLM prompt, or agent that runs when the matcher matches. There are three types:
+Each object in the inner`hooks`array is a hook handler: the shell command, HTTP endpoint, LLM prompt, or agent that runs when the matcher matches. There are four types:
 
 -   **[Command hooks](#command-hook-fields)** (`type: "command"`): run a shell command. Your script receives the event’s [JSON input](#hook-input-and-output) on stdin and communicates results back through exit codes and stdout.
+-   **[HTTP hooks](#http-hook-fields)** (`type: "http"`): send the event’s JSON input as an HTTP POST request to a URL. The endpoint communicates results back through the response body using the same [JSON output format](#json-output) as command hooks.
 -   **[Prompt hooks](#prompt-and-agent-hook-fields)** (`type: "prompt"`): send a prompt to a Claude model for single-turn evaluation. The model returns a yes/no decision as JSON. See [Prompt-based hooks](#prompt-based-hooks).
 -   **[Agent hooks](#prompt-and-agent-hook-fields)** (`type: "agent"`): spawn a subagent that can use tools like Read, Grep, and Glob to verify conditions before returning a decision. See [Agent-based hooks](#agent-based-hooks).
 
@@ -212,7 +218,7 @@ These fields apply to all hook types:
 
 | Field | Required | Description |
 | --- | --- | --- |
-|`type`| yes |`"command"`,`"prompt"`, or`"agent"`|
+|`type`| yes |`"command"`,`"http"`,`"prompt"`, or`"agent"`|
 |`timeout`| no | Seconds before canceling. Defaults: 600 for command, 30 for prompt, 60 for agent |
 |`statusMessage`| no | Custom spinner message displayed while the hook runs |
 |`once`| no | If`true`, runs only once per session then is removed. Skills only, not agents. See [Hooks in skills and agents](#hooks-in-skills-and-agents) |
@@ -228,6 +234,38 @@ In addition to the [common fields](#common-fields), command hooks accept these f
 |`async`| no | If`true`, runs in the background without blocking. See [Run hooks in the background](#run-hooks-in-the-background) |
 
 
+HTTP hook fields
+
+In addition to the [common fields](#common-fields), HTTP hooks accept these fields:
+
+| Field | Required | Description |
+| --- | --- | --- |
+|`url`| yes | URL to send the POST request to |
+|`headers`| no | Additional HTTP headers as key-value pairs. Values support environment variable interpolation using`$VAR_NAME`or`${VAR_NAME}`syntax. Only variables listed in`allowedEnvVars`are resolved |
+|`allowedEnvVars`| no | List of environment variable names that may be interpolated into header values. References to unlisted variables are replaced with empty strings. Required for any env var interpolation to work |
+
+Claude Code sends the hook’s [JSON input](#hook-input-and-output) as the POST request body with`Content-Type: application/json`. The response body uses the same [JSON output format](#json-output) as command hooks. Error handling differs from command hooks: non-2xx responses, connection failures, and timeouts all produce non-blocking errors that allow execution to continue. To block a tool call or deny a permission, return a 2xx response with a JSON body containing`decision: "block"`or a`hookSpecificOutput`with`permissionDecision: "deny"`. This example sends`PreToolUse`events to a local validation service, authenticating with a token from the`MY_TOKEN`environment variable:```{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://localhost:8080/hooks/pre-tool-use",
+            "timeout": 30,
+            "headers": {
+              "Authorization": "Bearer $MY_TOKEN"
+            },
+            "allowedEnvVars": ["MY_TOKEN"]
+          }
+        ]
+      }
+    ]
+  }
+}```HTTP hooks must be configured by editing settings JSON directly. The`/hooks`interactive menu only supports adding command hooks.
+
+
 Prompt and agent hook fields
 
 In addition to the [common fields](#common-fields), prompt and agent hooks accept these fields:
@@ -237,7 +275,7 @@ In addition to the [common fields](#common-fields), prompt and agent hooks accep
 |`prompt`| yes | Prompt text to send to the model. Use`$ARGUMENTS`as a placeholder for the hook input JSON |
 |`model`| no | Model to use for evaluation. Defaults to a fast model |
 
-All matching hooks run in parallel, and identical handlers are deduplicated automatically. Handlers run in the current directory with Claude Code’s environment. The`$CLAUDE_CODE_REMOTE`environment variable is set to`"true"`in remote web environments and not set in the local CLI.
+All matching hooks run in parallel, and identical handlers are deduplicated automatically. Command hooks are deduplicated by command string, and HTTP hooks are deduplicated by URL. Handlers run in the current directory with Claude Code’s environment. The`$CLAUDE_CODE_REMOTE`environment variable is set to`"true"`in remote web environments and not set in the local CLI.
 
 
 Reference scripts by path
@@ -308,17 +346,17 @@ Type`/hooks`in Claude Code to open the interactive hooks manager, where you can 
 
 Disable or remove hooks
 
-To remove a hook, delete its entry from the settings JSON file, or use the`/hooks`menu and select the hook to delete it. To temporarily disable all hooks without removing them, set`"disableAllHooks": true`in your settings file or use the toggle in the`/hooks`menu. There is no way to disable an individual hook while keeping it in the configuration. Direct edits to hooks in settings files don’t take effect immediately. Claude Code captures a snapshot of hooks at startup and uses it throughout the session. This prevents malicious or accidental hook modifications from taking effect mid-session without your review. If hooks are modified externally, Claude Code warns you and requires review in the`/hooks`menu before changes apply.
+To remove a hook, delete its entry from the settings JSON file, or use the`/hooks`menu and select the hook to delete it. To temporarily disable all hooks without removing them, set`"disableAllHooks": true`in your settings file or use the toggle in the`/hooks`menu. There is no way to disable an individual hook while keeping it in the configuration. The`disableAllHooks`setting respects the managed settings hierarchy. If an administrator has configured hooks through managed policy settings,`disableAllHooks`set in user, project, or local settings cannot disable those managed hooks. Only`disableAllHooks`set at the managed settings level can disable managed hooks. Direct edits to hooks in settings files don’t take effect immediately. Claude Code captures a snapshot of hooks at startup and uses it throughout the session. This prevents malicious or accidental hook modifications from taking effect mid-session without your review. If hooks are modified externally, Claude Code warns you and requires review in the`/hooks`menu before changes apply.
 
 
 Hook input and output
 
-Hooks receive JSON data via stdin and communicate results through exit codes, stdout, and stderr. This section covers fields and behavior common to all events. Each event’s section under [Hook events](#hook-events) includes its specific input schema and decision control options.
+Command hooks receive JSON data via stdin and communicate results through exit codes, stdout, and stderr. HTTP hooks receive the same JSON as the POST request body and communicate results through the HTTP response body. This section covers fields and behavior common to all events. Each event’s section under [Hook events](#hook-events) includes its specific input schema and decision control options.
 
 
 Common input fields
 
-All hook events receive these fields via stdin as JSON, in addition to event-specific fields documented in each [hook event](#hook-events) section:
+All hook events receive these fields as JSON, in addition to event-specific fields documented in each [hook event](#hook-events) section. For command hooks, this JSON arrives via stdin. For HTTP hooks, it arrives as the POST request body.
 
 | Field | Description |
 | --- | --- |
@@ -327,6 +365,13 @@ All hook events receive these fields via stdin as JSON, in addition to event-spe
 |`cwd`| Current working directory when the hook is invoked |
 |`permission_mode`| Current [permission mode](/docs/en/permissions#permission-modes):`"default"`,`"plan"`,`"acceptEdits"`,`"dontAsk"`, or`"bypassPermissions"`|
 |`hook_event_name`| Name of the event that fired |
+
+When running with`--agent`or inside a subagent, two additional fields are included:
+
+| Field | Description |
+| --- | --- |
+|`agent_id`| Unique identifier for the subagent. Present only when the hook fires inside a subagent call. Use this to distinguish subagent hook calls from main-thread calls. |
+|`agent_type`| Agent name (for example,`"Explore"`or`"security-reviewer"`). Present when the session uses`--agent`or the hook fires inside a subagent. For subagents, the subagent’s type takes precedence over the session’s`--agent`value. |
 
 For example, a`PreToolUse`hook for a Bash command receives this on stdin:```{
   "session_id": "abc123",
@@ -365,6 +410,7 @@ Exit code 2 is the way a hook signals “stop, don’t do this.” The effect de
 |`SubagentStop`| Yes | Prevents the subagent from stopping |
 |`TeammateIdle`| Yes | Prevents the teammate from going idle (teammate continues working) |
 |`TaskCompleted`| Yes | Prevents the task from being marked as completed |
+|`ConfigChange`| Yes | Blocks the configuration change from taking effect (except`policy_settings`) |
 |`PostToolUse`| No | Shows stderr to Claude (tool already ran) |
 |`PostToolUseFailure`| No | Shows stderr to Claude (tool already failed) |
 |`Notification`| No | Shows stderr to user only |
@@ -372,6 +418,22 @@ Exit code 2 is the way a hook signals “stop, don’t do this.” The effect de
 |`SessionStart`| No | Shows stderr to user only |
 |`SessionEnd`| No | Shows stderr to user only |
 |`PreCompact`| No | Shows stderr to user only |
+|`WorktreeCreate`| Yes | Any non-zero exit code causes worktree creation to fail |
+|`WorktreeRemove`| No | Failures are logged in debug mode only |
+|`InstructionsLoaded`| No | Exit code is ignored |
+
+
+HTTP response handling
+
+HTTP hooks use HTTP status codes and response bodies instead of exit codes and stdout:
+
+-   **2xx with an empty body**: success, equivalent to exit code 0 with no output
+-   **2xx with a plain text body**: success, the text is added as context
+-   **2xx with a JSON body**: success, parsed using the same [JSON output](#json-output) schema as command hooks
+-   **Non-2xx status**: non-blocking error, execution continues
+-   **Connection failure or timeout**: non-blocking error, execution continues
+
+Unlike command hooks, HTTP hooks cannot signal a blocking error through status codes alone. To block a tool call or deny a permission, return a 2xx response with a JSON body containing the appropriate decision fields.
 
 
 JSON output
@@ -399,10 +461,12 @@ Not every event supports blocking or controlling behavior through JSON. The even
 
 | Events | Decision pattern | Key fields |
 | --- | --- | --- |
-| UserPromptSubmit, PostToolUse, PostToolUseFailure, Stop, SubagentStop | Top-level`decision`|`decision: "block"`,`reason`|
-| TeammateIdle, TaskCompleted | Exit code only | Exit code 2 blocks the action, stderr is fed back as feedback |
+| UserPromptSubmit, PostToolUse, PostToolUseFailure, Stop, SubagentStop, ConfigChange | Top-level`decision`|`decision: "block"`,`reason`|
+| TeammateIdle, TaskCompleted | Exit code or`continue: false`| Exit code 2 blocks the action with stderr feedback. JSON`{"continue": false, "stopReason": "..."}`also stops the teammate entirely, matching`Stop`hook behavior |
 | PreToolUse |`hookSpecificOutput`|`permissionDecision`(allow/deny/ask),`permissionDecisionReason`|
 | PermissionRequest |`hookSpecificOutput`|`decision.behavior`(allow/deny) |
+| WorktreeCreate | stdout path | Hook prints absolute path to created worktree. Non-zero exit fails creation |
+| WorktreeRemove, Notification, SessionEnd, PreCompact, InstructionsLoaded | None | No decision control. Used for side effects like logging or cleanup |
 
 Here are examples of each pattern in action:
 
@@ -413,7 +477,7 @@ Here are examples of each pattern in action:
 -   PermissionRequest
 
 
-Used by`UserPromptSubmit`,`PostToolUse`,`PostToolUseFailure`,`Stop`, and`SubagentStop`. The only value is`"block"`. To allow the action to proceed, omit`decision`from your JSON, or exit 0 without any JSON at all:```{
+Used by`UserPromptSubmit`,`PostToolUse`,`PostToolUseFailure`,`Stop`,`SubagentStop`, and`ConfigChange`. The only value is`"block"`. To allow the action to proceed, omit`decision`from your JSON, or exit 0 without any JSON at all:```{
   "decision": "block",
   "reason": "Test suite must pass before proceeding"
 }```Uses`hookSpecificOutput`for richer control: allow, deny, or escalate to the user. You can also modify tool input before it runs or inject additional context for Claude. See [PreToolUse decision control](#pretooluse-decision-control) for the full set of options.```{
@@ -442,7 +506,7 @@ Each event corresponds to a point in Claude Code’s lifecycle where hooks can r
 
 SessionStart
 
-Runs when Claude Code starts a new session or resumes an existing session. Useful for loading development context like existing issues or recent changes to your codebase, or setting up environment variables. For static context that does not require a script, use [CLAUDE.md](/docs/en/memory) instead. SessionStart runs on every session, so keep these hooks fast. The matcher value corresponds to how the session was initiated:
+Runs when Claude Code starts a new session or resumes an existing session. Useful for loading development context like existing issues or recent changes to your codebase, or setting up environment variables. For static context that does not require a script, use [CLAUDE.md](/docs/en/memory) instead. SessionStart runs on every session, so keep these hooks fast. Only`type: "command"`hooks are supported. The matcher value corresponds to how the session was initiated:
 
 | Matcher | When it fires |
 | --- | --- |
@@ -461,7 +525,7 @@ In addition to the [common input fields](#common-input-fields), SessionStart hoo
   "permission_mode": "default",
   "hook_event_name": "SessionStart",
   "source": "startup",
-  "model": "claude-sonnet-4-5-20250929"
+  "model": "claude-sonnet-4-6"
 }```SessionStart decision control
 
 Any text your hook script prints to stdout is added as context for Claude. In addition to the [JSON output fields](#json-output) available to all hooks, you can return these event-specific fields:
@@ -497,6 +561,36 @@ if [ -n "$CLAUDE_ENV_FILE" ]; then
 fi
 
 exit 0```Any variables written to this file will be available in all subsequent Bash commands that Claude Code executes during the session.`CLAUDE_ENV_FILE`is available for SessionStart hooks. Other hook types do not have access to this variable.
+
+
+InstructionsLoaded
+
+Fires when a`CLAUDE.md`or`.claude/rules/*.md`file is loaded into context. This event fires at session start for eagerly-loaded files and again later when files are lazily loaded, for example when Claude accesses a subdirectory that contains a nested`CLAUDE.md`or when conditional rules with`paths:`frontmatter match. The hook does not support blocking or decision control. It runs asynchronously for observability purposes. InstructionsLoaded does not support matchers and fires on every load occurrence.
+
+
+InstructionsLoaded input
+
+In addition to the [common input fields](#common-input-fields), InstructionsLoaded hooks receive these fields:
+
+| Field | Description |
+| --- | --- |
+|`file_path`| Absolute path to the instruction file that was loaded |
+|`memory_type`| Scope of the file:`"User"`,`"Project"`,`"Local"`, or`"Managed"`|
+|`load_reason`| Why the file was loaded:`"session_start"`,`"nested_traversal"`,`"path_glob_match"`, or`"include"`|
+|`globs`| Path glob patterns from the file’s`paths:`frontmatter, if any. Present only for`path_glob_match`loads |
+|`trigger_file_path`| Path to the file whose access triggered this load, for lazy loads |
+|`parent_file_path`| Path to the parent instruction file that included this one, for`include`loads |```{
+  "session_id": "abc123",
+  "transcript_path": "/Users/.../.claude/projects/.../transcript.jsonl",
+  "cwd": "/Users/my-project",
+  "permission_mode": "default",
+  "hook_event_name": "InstructionsLoaded",
+  "file_path": "/Users/my-project/CLAUDE.md",
+  "memory_type": "Project",
+  "load_reason": "session_start"
+}```InstructionsLoaded decision control
+
+InstructionsLoaded hooks have no decision control. They cannot block or modify instruction loading. Use this event for audit logging, compliance tracking, or observability.
 
 
 UserPromptSubmit
@@ -536,7 +630,7 @@ Plain stdout is shown as hook output in the transcript. The`additionalContext`fi
 
 PreToolUse
 
-Runs after Claude creates tool parameters and before processing the tool call. Matches on tool name:`Bash`,`Edit`,`Write`,`Read`,`Glob`,`Grep`,`Task`,`WebFetch`,`WebSearch`, and any [MCP tool names](#match-mcp-tools). Use [PreToolUse decision control](#pretooluse-decision-control) to allow, deny, or ask for permission to use the tool.
+Runs after Claude creates tool parameters and before processing the tool call. Matches on tool name:`Bash`,`Edit`,`Write`,`Read`,`Glob`,`Grep`,`Agent`,`WebFetch`,`WebSearch`, and any [MCP tool names](#match-mcp-tools). Use [PreToolUse decision control](#pretooluse-decision-control) to allow, deny, or ask for permission to use the tool.
 
 
 PreToolUse input
@@ -625,7 +719,7 @@ Searches the web.
 |`allowed_domains`| array |`["docs.example.com"]`| Optional: only include results from these domains |
 |`blocked_domains`| array |`["spam.example.com"]`| Optional: exclude results from these domains |
 
-##### Task
+##### Agent
 
 Spawns a [subagent](/docs/en/sub-agents).
 
@@ -812,7 +906,7 @@ In addition to the [common input fields](#common-input-fields), Notification hoo
 
 SubagentStart
 
-Runs when a Claude Code subagent is spawned via the Task tool. Supports matchers to filter by agent type name (built-in agents like`Bash`,`Explore`,`Plan`, or custom agent names from`.claude/agents/`).
+Runs when a Claude Code subagent is spawned via the Agent tool. Supports matchers to filter by agent type name (built-in agents like`Bash`,`Explore`,`Plan`, or custom agent names from`.claude/agents/`).
 
 
 SubagentStart input
@@ -841,7 +935,7 @@ Runs when a Claude Code subagent has finished responding. Matches on agent type,
 
 SubagentStop input
 
-In addition to the [common input fields](#common-input-fields), SubagentStop hooks receive`stop_hook_active`,`agent_id`,`agent_type`, and`agent_transcript_path`. The`agent_type`field is the value used for matcher filtering. The`transcript_path`is the main session’s transcript, while`agent_transcript_path`is the subagent’s own transcript stored in a nested`subagents/`folder.```{
+In addition to the [common input fields](#common-input-fields), SubagentStop hooks receive`stop_hook_active`,`agent_id`,`agent_type`,`agent_transcript_path`, and`last_assistant_message`. The`agent_type`field is the value used for matcher filtering. The`transcript_path`is the main session’s transcript, while`agent_transcript_path`is the subagent’s own transcript stored in a nested`subagents/`folder. The`last_assistant_message`field contains the text content of the subagent’s final response, so hooks can access it without parsing the transcript file.```{
   "session_id": "abc123",
   "transcript_path": "~/.claude/projects/.../abc123.jsonl",
   "cwd": "/Users/...",
@@ -850,7 +944,8 @@ In addition to the [common input fields](#common-input-fields), SubagentStop hoo
   "stop_hook_active": false,
   "agent_id": "def456",
   "agent_type": "Explore",
-  "agent_transcript_path": "~/.claude/projects/.../abc123/subagents/agent-def456.jsonl"
+  "agent_transcript_path": "~/.claude/projects/.../abc123/subagents/agent-def456.jsonl",
+  "last_assistant_message": "Analysis complete. Found 3 potential issues..."
 }```SubagentStop hooks use the same decision control format as [Stop hooks](#stop-decision-control).
 
 
@@ -861,13 +956,14 @@ Runs when the main Claude Code agent has finished responding. Does not run if th
 
 Stop input
 
-In addition to the [common input fields](#common-input-fields), Stop hooks receive`stop_hook_active`. This field is`true`when Claude Code is already continuing as a result of a stop hook. Check this value or process the transcript to prevent Claude Code from running indefinitely.```{
+In addition to the [common input fields](#common-input-fields), Stop hooks receive`stop_hook_active`and`last_assistant_message`. The`stop_hook_active`field is`true`when Claude Code is already continuing as a result of a stop hook. Check this value or process the transcript to prevent Claude Code from running indefinitely. The`last_assistant_message`field contains the text content of Claude’s final response, so hooks can access it without parsing the transcript file.```{
   "session_id": "abc123",
   "transcript_path": "~/.claude/projects/.../00893aaf-19fa-41d2-8238-13269b9b3ca0.jsonl",
   "cwd": "/Users/...",
   "permission_mode": "default",
   "hook_event_name": "Stop",
-  "stop_hook_active": true
+  "stop_hook_active": true,
+  "last_assistant_message": "I've completed the refactoring. Here's a summary..."
 }```Stop decision control`Stop`and`SubagentStop`hooks can control whether Claude continues. In addition to the [JSON output fields](#json-output) available to all hooks, your hook script can return these event-specific fields:
 
 | Field | Description |
@@ -878,7 +974,7 @@ In addition to the [common input fields](#common-input-fields), Stop hooks recei
   "reason": "Must be provided when Claude is blocked from stopping"
 }```TeammateIdle
 
-Runs when an [agent team](/docs/en/agent-teams) teammate is about to go idle after finishing its turn. Use this to enforce quality gates before a teammate stops working, such as requiring passing lint checks or verifying that output files exist. When a`TeammateIdle`hook exits with code 2, the teammate receives the stderr message as feedback and continues working instead of going idle. TeammateIdle hooks do not support matchers and fire on every occurrence.
+Runs when an [agent team](/docs/en/agent-teams) teammate is about to go idle after finishing its turn. Use this to enforce quality gates before a teammate stops working, such as requiring passing lint checks or verifying that output files exist. When a`TeammateIdle`hook exits with code 2, the teammate receives the stderr message as feedback and continues working instead of going idle. To stop the teammate entirely instead of re-running it, return JSON with`{"continue": false, "stopReason": "..."}`. TeammateIdle hooks do not support matchers and fire on every occurrence.
 
 
 TeammateIdle input
@@ -899,7 +995,12 @@ In addition to the [common input fields](#common-input-fields), TeammateIdle hoo
 
 TeammateIdle decision control
 
-TeammateIdle hooks use exit codes only, not JSON decision control. This example checks that a build artifact exists before allowing a teammate to go idle:```#!/bin/bash
+TeammateIdle hooks support two ways to control teammate behavior:
+
+-   **Exit code 2**: the teammate receives the stderr message as feedback and continues working instead of going idle.
+-   **JSON`{"continue": false, "stopReason": "..."}`**: stops the teammate entirely, matching`Stop`hook behavior. The`stopReason`is shown to the user.
+
+This example checks that a build artifact exists before allowing a teammate to go idle:```#!/bin/bash
 
 if [ ! -f "./dist/output.js" ]; then
   echo "Build artifact missing. Run the build before stopping." >&2
@@ -908,7 +1009,7 @@ fi
 
 exit 0```TaskCompleted
 
-Runs when a task is being marked as completed. This fires in two situations: when any agent explicitly marks a task as completed through the TaskUpdate tool, or when an [agent team](/docs/en/agent-teams) teammate finishes its turn with in-progress tasks. Use this to enforce completion criteria like passing tests or lint checks before a task can close. When a`TaskCompleted`hook exits with code 2, the task is not marked as completed and the stderr message is fed back to the model as feedback. TaskCompleted hooks do not support matchers and fire on every occurrence.
+Runs when a task is being marked as completed. This fires in two situations: when any agent explicitly marks a task as completed through the TaskUpdate tool, or when an [agent team](/docs/en/agent-teams) teammate finishes its turn with in-progress tasks. Use this to enforce completion criteria like passing tests or lint checks before a task can close. When a`TaskCompleted`hook exits with code 2, the task is not marked as completed and the stderr message is fed back to the model as feedback. To stop the teammate entirely instead of re-running it, return JSON with`{"continue": false, "stopReason": "..."}`. TaskCompleted hooks do not support matchers and fire on every occurrence.
 
 
 TaskCompleted input
@@ -935,7 +1036,12 @@ In addition to the [common input fields](#common-input-fields), TaskCompleted ho
 
 TaskCompleted decision control
 
-TaskCompleted hooks use exit codes only, not JSON decision control. This example runs tests and blocks task completion if they fail:```#!/bin/bash
+TaskCompleted hooks support two ways to control task completion:
+
+-   **Exit code 2**: the task is not marked as completed and the stderr message is fed back to the model as feedback.
+-   **JSON`{"continue": false, "stopReason": "..."}`**: stops the teammate entirely, matching`Stop`hook behavior. The`stopReason`is shown to the user.
+
+This example runs tests and blocks task completion if they fail:```#!/bin/bash
 INPUT=$(cat)
 TASK_SUBJECT=$(echo "$INPUT" | jq -r '.task_subject')
 
@@ -945,7 +1051,112 @@ if ! npm test 2>&1; then
   exit 2
 fi
 
-exit 0```PreCompact
+exit 0```ConfigChange
+
+Runs when a configuration file changes during a session. Use this to audit settings changes, enforce security policies, or block unauthorized modifications to configuration files. ConfigChange hooks fire for changes to settings files, managed policy settings, and skill files. The`source`field in the input tells you which type of configuration changed, and the optional`file_path`field provides the path to the changed file. The matcher filters on the configuration source:
+
+| Matcher | When it fires |
+| --- | --- |
+|`user_settings`|`~/.claude/settings.json`changes |
+|`project_settings`|`.claude/settings.json`changes |
+|`local_settings`|`.claude/settings.local.json`changes |
+|`policy_settings`| Managed policy settings change |
+|`skills`| A skill file in`.claude/skills/`changes |
+
+This example logs all configuration changes for security auditing:```{
+  "hooks": {
+    "ConfigChange": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/audit-config-change.sh"
+          }
+        ]
+      }
+    ]
+  }
+}```ConfigChange input
+
+In addition to the [common input fields](#common-input-fields), ConfigChange hooks receive`source`and optionally`file_path`. The`source`field indicates which configuration type changed, and`file_path`provides the path to the specific file that was modified.```{
+  "session_id": "abc123",
+  "transcript_path": "/Users/.../.claude/projects/.../00893aaf-19fa-41d2-8238-13269b9b3ca0.jsonl",
+  "cwd": "/Users/...",
+  "permission_mode": "default",
+  "hook_event_name": "ConfigChange",
+  "source": "project_settings",
+  "file_path": "/Users/.../my-project/.claude/settings.json"
+}```ConfigChange decision control
+
+ConfigChange hooks can block configuration changes from taking effect. Use exit code 2 or a JSON`decision`to prevent the change. When blocked, the new settings are not applied to the running session.
+
+| Field | Description |
+| --- | --- |
+|`decision`|`"block"`prevents the configuration change from being applied. Omit to allow the change |
+|`reason`| Explanation shown to the user when`decision`is`"block"`|```{
+  "decision": "block",
+  "reason": "Configuration changes to project settings require admin approval"
+}````policy_settings`changes cannot be blocked. Hooks still fire for`policy_settings`sources, so you can use them for audit logging, but any blocking decision is ignored. This ensures enterprise-managed settings always take effect.
+
+
+WorktreeCreate
+
+When you run`claude --worktree`or a [subagent uses`isolation: "worktree"`](/docs/en/sub-agents#choose-the-subagent-scope), Claude Code creates an isolated working copy using`git worktree`. If you configure a WorktreeCreate hook, it replaces the default git behavior, letting you use a different version control system like SVN, Perforce, or Mercurial. The hook must print the absolute path to the created worktree directory on stdout. Claude Code uses this path as the working directory for the isolated session. This example creates an SVN working copy and prints the path for Claude Code to use. Replace the repository URL with your own:```{
+  "hooks": {
+    "WorktreeCreate": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'NAME=$(jq -r .name); DIR=\"$HOME/.claude/worktrees/$NAME\"; svn checkout https://svn.example.com/repo/trunk \"$DIR\" >&2 && echo \"$DIR\"'"
+          }
+        ]
+      }
+    ]
+  }
+}```The hook reads the worktree`name`from the JSON input on stdin, checks out a fresh copy into a new directory, and prints the directory path. The`echo`on the last line is what Claude Code reads as the worktree path. Redirect any other output to stderr so it doesn’t interfere with the path.
+
+
+WorktreeCreate input
+
+In addition to the [common input fields](#common-input-fields), WorktreeCreate hooks receive the`name`field. This is a slug identifier for the new worktree, either specified by the user or auto-generated (for example,`bold-oak-a3f2`).```{
+  "session_id": "abc123",
+  "transcript_path": "/Users/.../.claude/projects/.../00893aaf-19fa-41d2-8238-13269b9b3ca0.jsonl",
+  "cwd": "/Users/...",
+  "hook_event_name": "WorktreeCreate",
+  "name": "feature-auth"
+}```WorktreeCreate output
+
+The hook must print the absolute path to the created worktree directory on stdout. If the hook fails or produces no output, worktree creation fails with an error. WorktreeCreate hooks do not use the standard allow/block decision model. Instead, the hook’s success or failure determines the outcome. Only`type: "command"`hooks are supported.
+
+
+WorktreeRemove
+
+The cleanup counterpart to [WorktreeCreate](#worktreecreate). This hook fires when a worktree is being removed, either when you exit a`--worktree`session and choose to remove it, or when a subagent with`isolation: "worktree"`finishes. For git-based worktrees, Claude handles cleanup automatically with`git worktree remove`. If you configured a WorktreeCreate hook for a non-git version control system, pair it with a WorktreeRemove hook to handle cleanup. Without one, the worktree directory is left on disk. Claude Code passes the path that WorktreeCreate printed on stdout as`worktree_path`in the hook input. This example reads that path and removes the directory:```{
+  "hooks": {
+    "WorktreeRemove": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'jq -r .worktree_path | xargs rm -rf'"
+          }
+        ]
+      }
+    ]
+  }
+}```WorktreeRemove input
+
+In addition to the [common input fields](#common-input-fields), WorktreeRemove hooks receive the`worktree_path`field, which is the absolute path to the worktree being removed.```{
+  "session_id": "abc123",
+  "transcript_path": "/Users/.../.claude/projects/.../00893aaf-19fa-41d2-8238-13269b9b3ca0.jsonl",
+  "cwd": "/Users/...",
+  "hook_event_name": "WorktreeRemove",
+  "worktree_path": "/Users/.../my-project/.claude/worktrees/feature-auth"
+}```WorktreeRemove hooks have no decision control. They cannot block worktree removal but can perform cleanup tasks like removing version control state or archiving changes. Hook failures are logged in debug mode only. Only`type: "command"`hooks are supported.
+
+
+PreCompact
 
 Runs before Claude Code is about to run a compact operation. The matcher value indicates whether compaction was triggered manually or automatically:
 
@@ -992,10 +1203,11 @@ In addition to the [common input fields](#common-input-fields), SessionEnd hooks
 
 Prompt-based hooks
 
-In addition to Bash command hooks (`type: "command"`), Claude Code supports prompt-based hooks (`type: "prompt"`) that use an LLM to evaluate whether to allow or block an action. Prompt-based hooks work with the following events:`PreToolUse`,`PostToolUse`,`PostToolUseFailure`,`PermissionRequest`,`UserPromptSubmit`,`Stop`,`SubagentStop`, and`TaskCompleted`.`TeammateIdle`does not support prompt-based or agent-based hooks.
+In addition to command and HTTP hooks, Claude Code supports prompt-based hooks (`type: "prompt"`) that use an LLM to evaluate whether to allow or block an action, and agent hooks (`type: "agent"`) that spawn an agentic verifier with tool access. Not all events support every hook type. Events that support all four hook types (`command`,`http`,`prompt`, and`agent`):
 
+-`PermissionRequest`-`PostToolUse`-`PostToolUseFailure`-`PreToolUse`-`Stop`-`SubagentStop`-`TaskCompleted`-`UserPromptSubmit`Events that only support`type: "command"`hooks:
 
-How prompt-based hooks work
+-`ConfigChange`-`InstructionsLoaded`-`Notification`-`PreCompact`-`SessionEnd`-`SessionStart`-`SubagentStart`-`TeammateIdle`-`WorktreeCreate`-`WorktreeRemove`How prompt-based hooks work
 
 Instead of executing a Bash command, prompt-based hooks:
 
@@ -1180,9 +1392,9 @@ Security considerations
 
 Disclaimer
 
-Hooks run with your system user’s full permissions.
+Command hooks run with your system user’s full permissions.
 
-Hooks execute shell commands with your full user permissions. They can modify, delete, or access any files your user account can access. Review and test all hook commands before adding them to your configuration.
+Command hooks execute shell commands with your full user permissions. They can modify, delete, or access any files your user account can access. Review and test all hook commands before adding them to your configuration.
 
 
 Security best practices

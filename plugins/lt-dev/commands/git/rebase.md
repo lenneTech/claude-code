@@ -1,6 +1,6 @@
 ---
 description: Rebase current branch onto dev (with conflict resolution, linting, testing and review)
-allowed-tools: Bash(git:*), Bash(gh:*), Bash(glab:*), Read, Grep, Glob, Task, AskUserQuestion, Skill
+allowed-tools: Bash(git:*), Bash(gh:*), Bash(glab:*), Read, Grep, Glob, Agent, AskUserQuestion
 argument-hint: [--base=<branch>]
 disable-model-invocation: true
 ---
@@ -35,7 +35,7 @@ disable-model-invocation: true
 
 3. **Confirm with user** if base branch detection was ambiguous.
 
-4. **Spawn branch-rebaser agent** via Task tool:
+4. **Spawn branch-rebaser agent** via Agent tool:
 
    ```
    Rebase the current branch onto <base-branch>.

@@ -2,9 +2,11 @@
 name: architect
 description: Architecture planning agent for lenne.tech fullstack projects with strict stack enforcement. Analyzes codebase, designs features with exact file paths, data models (MongoDB), API contracts (REST), permission hierarchies (@Restricted/@Roles/securityCheck), frontend state (useState/composables), and phased build sequences. Enforces CrudService inheritance, generated SDK types, Valibot forms, Better Auth, programmatic modals, semantic colors, and TDD workflow. Produces actionable blueprints directly executable by frontend-dev and backend-dev agents.
 model: sonnet
-tools: Bash, Read, Grep, Glob, WebFetch, WebSearch, TodoWrite, Agent, LSP
+tools: Bash, Read, Grep, Glob, WebFetch, WebSearch, TodoWrite
 permissionMode: default
 skills: generating-nest-servers, developing-lt-frontend, building-stories-with-tdd, using-lt-cli, general-frontend-security, maintaining-npm-packages
+memory: project
+maxTurns: 80
 ---
 
 # Architecture Planning Agent
@@ -43,7 +45,7 @@ Before designing anything, understand what exists.
 2. Backend modules:       ls projects/api/src/server/modules/
 3. Frontend pages:        ls projects/app/app/pages/
 4. Frontend composables:  ls projects/app/app/composables/
-5. nest-server version:   cd projects/api && npm list @lenne.tech/nest-server --depth=0
+5. nest-server version:   cd projects/api && pnpm list @lenne.tech/nest-server --depth=0
 6. Docker setup:          ls docker-compose*.yml Dockerfile* 2>/dev/null
 7. Package manager:       ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
 8. Existing patterns:     Read 2-3 existing modules + components for conventions
@@ -216,15 +218,15 @@ Always backend-first, TDD approach:
 - [ ] Controller: @Roles on every endpoint
 - [ ] Permissions: lt server permissions --failOnWarnings
 - [ ] Tests: API tests with least-privilege users + permission denial tests
-- [ ] Verify: npm run build && npm test
+- [ ] Verify: pnpm run build && pnpm test
 
 ## Phase 2: Frontend Integration
-- [ ] Generate types: cd projects/app && npm run generate-types
+- [ ] Generate types: cd projects/app && pnpm run generate-types
 - [ ] Composable: useProducts.ts with readonly returns
 - [ ] Page: products/index.vue with useAsyncData
 - [ ] Components: ProductCard, ModalCreateProduct (Valibot + useOverlay)
 - [ ] Auth: definePageMeta({ middleware: 'auth' })
-- [ ] Verify: npm run lint:fix && npm run build
+- [ ] Verify: pnpm run lint:fix && pnpm run build
 
 ## Phase 3: Testing & Review
 - [ ] E2E: Playwright tests for critical flows

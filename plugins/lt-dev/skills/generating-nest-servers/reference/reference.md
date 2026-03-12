@@ -490,8 +490,8 @@ lt server module --name User --controller Rest --prop-name-0 email --prop-type-0
 # Create test files for each module
 
 # 4. Verify and report
-npm test
-npm run lint
+pnpm test
+pnpm run lint
 # Provide summary
 ```
 

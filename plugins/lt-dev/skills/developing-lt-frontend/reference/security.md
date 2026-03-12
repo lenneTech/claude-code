@@ -508,7 +508,7 @@ function getHumanReadableError(status?: number): string {
 ### Nuxt Security Module
 
 ```bash
-npm install nuxt-security
+pnpm add nuxt-security
 ```
 
 ```typescript
@@ -728,16 +728,16 @@ function handleUpdate(value: unknown): void {
 
 ```bash
 # Check for vulnerabilities
-npm audit
+pnpm audit
 
 # Fix automatically where possible
-npm audit fix
+pnpm audit --fix
 
 # Check specific package
-npm audit --package-lock-only
+pnpm audit --dev
 
 # In CI/CD pipeline
-npm audit --audit-level=high || exit 1
+pnpm audit --audit-level=high || exit 1
 ```
 
 ### Subresource Integrity (SRI)
@@ -762,7 +762,7 @@ npm audit --audit-level=high || exit 1
   }
 }
 
-// Always commit package-lock.json
+// Always commit pnpm-lock.yaml
 // Review dependency updates before merging
 ```
 
@@ -807,6 +807,6 @@ npm audit --audit-level=high || exit 1
 - [ ] Cookies configured with security flags
 
 **Dependencies:**
-- [ ] npm audit clean (or known issues accepted)
-- [ ] package-lock.json committed
+- [ ] pnpm audit clean (or known issues accepted)
+- [ ] pnpm-lock.yaml committed
 - [ ] No deprecated packages with known vulnerabilities
