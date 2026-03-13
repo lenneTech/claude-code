@@ -237,7 +237,7 @@ Code duplication detected?
 **CRITICAL: After any refactoring:**
 
 ```bash
-npm test
+pnpm test
 ```
 
 **Ensure:**

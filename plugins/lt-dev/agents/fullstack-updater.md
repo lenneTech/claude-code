@@ -5,6 +5,8 @@ model: sonnet
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, TodoWrite
 permissionMode: acceptEdits
 skills: nest-server-updating, developing-lt-frontend, maintaining-npm-packages, using-lt-cli
+memory: project
+maxTurns: 120
 ---
 
 # Fullstack Update Agent
@@ -20,8 +22,8 @@ Autonomous execution agent for updating lenne.tech fullstack projects by synchro
 | **Skill**: `maintaining-npm-packages` | Package optimization guidance |
 | **Skill**: `using-lt-cli` | CLI context and commands |
 | **Command**: `/lt-dev:fullstack:update` | User invocation with options |
-| **Agent**: `lt-dev:nest-server-updater` | Spawned for backend update |
-| **Agent**: `lt-dev:npm-package-maintainer` | Spawned for package optimization |
+| **Agent**: `lt-dev:nest-server-updater` | Backend update (spawned by `/lt-dev:fullstack:update` command) |
+| **Agent**: `lt-dev:npm-package-maintainer` | Package optimization (spawned by `/lt-dev:fullstack:update` command) |
 
 ## Operating Modes
 
@@ -87,12 +89,12 @@ ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
 | `yarn.lock` | `yarn` | `yarn run X` | `yarn dlx X` |
 | `package-lock.json` / none | `npm` | `npm run X` | `npx X` |
 
-**Key differences from npm:**
+**Key differences between package managers:**
 - Install package: `pnpm add pkg` / `yarn add pkg` (not `install pkg`)
 - Remove package: `pnpm remove pkg` / `yarn remove pkg` (not `uninstall pkg`)
 - Package info: `yarn info pkg` (not `yarn view pkg`)
 
-All examples below use `npm` notation. **Adapt all commands** to the detected package manager.
+All examples below use `pnpm` notation. **Adapt all commands** to the detected package manager.
 
 ### Phase 1: Project Analysis
 
@@ -115,15 +117,15 @@ All examples below use `npm` notation. **Adapt all commands** to the detected pa
 4. **Get current versions:**
    ```bash
    # Backend
-   cd <backend-path> && npm list @lenne.tech/nest-server --depth=0 2>/dev/null
+   cd <backend-path> && pnpm list @lenne.tech/nest-server --depth=0 2>/dev/null
    # Frontend
-   cd <frontend-path> && npm list @lenne.tech/nuxt-extensions --depth=0 2>/dev/null
+   cd <frontend-path> && pnpm list @lenne.tech/nuxt-extensions --depth=0 2>/dev/null
    ```
 
 5. **Determine target versions:**
    ```bash
-   npm view @lenne.tech/nest-server version
-   npm view @lenne.tech/nuxt-extensions version
+   pnpm view @lenne.tech/nest-server version
+   pnpm view @lenne.tech/nuxt-extensions version
    ```
 
 6. **Early exit conditions:**
@@ -236,7 +238,7 @@ All examples below use `npm` notation. **Adapt all commands** to the detected pa
    3. Backend validation (build, lint, test)
    4. Frontend update (nuxt-extensions)
    5. Frontend starter synchronization
-   6. Type regeneration (npm run generate-types)
+   6. Type regeneration (pnpm run generate-types)
    7. Frontend validation (build, lint)
    8. Cross-project validation
    ```
@@ -259,19 +261,17 @@ All examples below use `npm` notation. **Adapt all commands** to the detected pa
 
 ### Phase 4: Backend Update (unless --skip-backend)
 
-1. **Spawn nest-server-updater agent:**
+1. **nest-server version update:**
 
-   Use Task tool to spawn `lt-dev:nest-server-updater` with:
-   ```
-   Update @lenne.tech/nest-server in this project.
+   > **Note:** When spawned by `/lt-dev:fullstack:update`, backend update is handled by the command via `lt-dev:nest-server-updater` agent. This phase is only relevant for standalone usage.
 
-   Arguments: <backend-path>
+   Apply the `nest-server-updating` skill knowledge to update `@lenne.tech/nest-server`:
+   - Update version in package.json
+   - Run `pnpm run update`
+   - Apply migration guide changes
+   - Validate build/lint/test
 
-   Execute the update workflow according to the detected mode.
-   Work fully autonomously without asking questions.
-   ```
-
-2. **Apply additional starter changes** not covered by nest-server-updater:
+2. **Apply additional starter changes** not covered by nest-server update:
    - Compare project files against latest nest-server-starter
    - Update configuration files (tsconfig.json, nest-cli.json, .eslintrc.js)
    - Add new scripts from starter (package.json scripts section)
@@ -281,9 +281,9 @@ All examples below use `npm` notation. **Adapt all commands** to the detected pa
 3. **Validate backend:**
    ```bash
    cd <backend-path>
-   npm run build
-   npm run lint
-   npm test
+   pnpm run build
+   pnpm run lint
+   pnpm test
    ```
    Fix issues until all pass.
 
@@ -292,7 +292,7 @@ All examples below use `npm` notation. **Adapt all commands** to the detected pa
 1. **Update @lenne.tech/nuxt-extensions:**
    ```bash
    cd <frontend-path>
-   npm install @lenne.tech/nuxt-extensions@latest
+   pnpm add @lenne.tech/nuxt-extensions@latest
    ```
 
 2. **Apply nuxt-base-starter changes:**
@@ -306,14 +306,14 @@ All examples below use `npm` notation. **Adapt all commands** to the detected pa
 3. **Regenerate types from updated API:**
    ```bash
    cd <frontend-path>
-   npm run generate-types
+   pnpm run generate-types
    ```
 
 4. **Validate frontend:**
    ```bash
    cd <frontend-path>
-   npm run build
-   npm run lint
+   pnpm run build
+   pnpm run lint
    ```
    Fix issues until all pass.
 
@@ -326,11 +326,11 @@ All examples below use `npm` notation. **Adapt all commands** to the detected pa
 1. **Cross-project validation:**
    ```bash
    # Build both projects
-   cd <backend-path> && npm run build
-   cd <frontend-path> && npm run build
+   cd <backend-path> && pnpm run build
+   cd <frontend-path> && pnpm run build
 
    # Run all tests
-   cd <backend-path> && npm test
+   cd <backend-path> && pnpm test
    ```
 
 2. **Generate comprehensive report:**
@@ -421,14 +421,13 @@ If blocked at any phase:
 
 | Tool | Purpose |
 |------|---------|
-| `Bash` | npm, git, gh CLI commands |
+| `Bash` | pnpm, git, gh CLI commands |
 | `Read` | package.json, config files, starter files |
 | `Grep` | Find patterns, detect versions |
 | `Glob` | Locate project files |
 | `Write` | Create UPDATE_PLAN.md, report |
 | `Edit` | Apply configuration changes, code updates |
 | `WebFetch` | Fetch GitHub content, changelogs |
-| `Task` | Spawn lt-dev:nest-server-updater and lt-dev:npm-package-maintainer |
 | `TodoWrite` | Progress tracking and visibility |
 
 ---

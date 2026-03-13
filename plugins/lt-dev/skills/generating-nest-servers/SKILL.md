@@ -1,6 +1,6 @@
 ---
 name: generating-nest-servers
-description: Handles ALL NestJS and @lenne.tech/nest-server development tasks including module creation, service implementation, controller/resolver development, model definition, and debugging. Activates when working with src/server/ files, NestJS modules, services, controllers, resolvers, models, DTOs, guards, decorators, or REST/GraphQL endpoints. Supports monorepos (projects/api/, packages/api/). Covers lt server commands, @Roles/@Restricted security, CrudService patterns, and API tests. NOT for nest-server version updates (use nest-server-updating). NOT for TDD workflow orchestration (use building-stories-with-tdd).
+description: Handles ALL NestJS and @lenne.tech/nest-server development tasks including module creation, service implementation, controller/resolver development, model definition, and debugging. Covers lt server commands, @Roles/@Restricted security, CrudService patterns, and API tests. Supports monorepos (projects/api/, packages/api/). Activates when working with src/server/ files, NestJS modules, services, controllers, resolvers, models, DTOs, guards, decorators, or REST/GraphQL endpoints. NOT for Vue/Nuxt frontend (use developing-lt-frontend). NOT for nest-server version updates (use nest-server-updating). NOT for TDD workflow orchestration (use building-stories-with-tdd).
 ---
 
 # NestJS Server Development Expert
@@ -26,7 +26,7 @@ project/
 ## When to Use This Skill
 
 - Creating/modifying NestJS modules, services, controllers, resolvers, models
-- Running/debugging the NestJS server (`npm start`, `npm run dev`, `npm test`)
+- Running/debugging the NestJS server (`pnpm start`, `pnpm run dev`, `pnpm test`)
 - Using `lt server module`, `lt server object`, `lt server addProp`, `lt server create`
 - Creating API tests for controllers/resolvers
 - Analyzing existing NestJS code, architecture, relationships
@@ -53,7 +53,7 @@ project/
 - `building-stories-with-tdd` - For TDD workflow (tests first, then implementation)
 - `using-lt-cli` - For Git operations and Fullstack initialization
 - `nest-server-updating` - For updating @lenne.tech/nest-server versions
-- `/security-review` - Claude Code built-in: general security review of branch diff
+- `/lt-dev:review` - General security review of branch diff
 - `/lt-dev:backend:sec-review` - Security review after implementing endpoints or modifying auth/authz
 - `/lt-dev:backend:sec-audit` - Full OWASP security audit for dependencies, config, and code
 
@@ -71,7 +71,7 @@ project/
 4. **ALWAYS** test with the LEAST privileged authorized user
 5. **VERIFY** decorator coverage with `lt server permissions` after creating modules
 
-**Complete security rules: [reference/security-rules.md](reference/security-rules.md)** | **OWASP checklist: [reference/owasp-checklist.md](reference/owasp-checklist.md)**
+**Complete security rules: [reference/security-rules.md](${CLAUDE_SKILL_DIR}/reference/security-rules.md)** | **OWASP checklist: [reference/owasp-checklist.md](${CLAUDE_SKILL_DIR}/reference/owasp-checklist.md)**
 
 ### Never Use `declare` Keyword
 
@@ -84,13 +84,13 @@ declare name: string;
 name: string;
 ```
 
-**Details: [reference/declare-keyword-warning.md](reference/declare-keyword-warning.md)**
+**Details: [reference/declare-keyword-warning.md](${CLAUDE_SKILL_DIR}/reference/declare-keyword-warning.md)**
 
 ### Description Management
 
 Apply descriptions consistently to EVERY component (Model, CreateInput, UpdateInput, Objects, Class-level decorators). Format: `'English text'` or `'English (Deutsch)'` for German input.
 
-**Complete guide: [reference/description-management.md](reference/description-management.md)**
+**Complete guide: [reference/description-management.md](${CLAUDE_SKILL_DIR}/reference/description-management.md)**
 
 ## Quick Command Reference
 
@@ -115,7 +115,7 @@ lt server permissions --failOnWarnings  # CI/CD mode
 
 **API Style:** REST is default. Use `--controller GraphQL` only when explicitly requested.
 
-**Complete configuration & property flags: [reference/configuration.md](reference/configuration.md)**
+**Complete configuration & property flags: [reference/configuration.md](${CLAUDE_SKILL_DIR}/reference/configuration.md)**
 
 ## TDD Recommendation
 
@@ -145,7 +145,7 @@ afterAll(async () => {
 - [ ] NEVER blindly pass all serviceOptions to other Services (only pass `currentUser`)
 - [ ] Check if CrudService already provides needed functionality
 
-**Complete framework guide: [reference/framework-guide.md](reference/framework-guide.md)**
+**Complete framework guide: [reference/framework-guide.md](${CLAUDE_SKILL_DIR}/reference/framework-guide.md)**
 
 ## Workflow (7 Phases)
 
@@ -157,7 +157,7 @@ afterAll(async () => {
 6. **Enum File Creation** - Manual creation in `src/server/common/enums/`
 7. **API Test Creation** - Analyze permissions first, use least privileged user
 
-**Complete workflow: [reference/workflow-process.md](reference/workflow-process.md)**
+**Complete workflow: [reference/workflow-process.md](${CLAUDE_SKILL_DIR}/reference/workflow-process.md)**
 
 ## Property Ordering
 
@@ -183,26 +183,26 @@ The scanner detects: missing class-level `@Restricted`, endpoints without `@Role
 - [ ] Security review passed (`/lt-dev:backend:sec-review`)
 - [ ] All tests pass
 
-**Complete checklist: [reference/verification-checklist.md](reference/verification-checklist.md)**
+**Complete checklist: [reference/verification-checklist.md](${CLAUDE_SKILL_DIR}/reference/verification-checklist.md)**
 
 ## Reference Files
 
 | Topic | File |
 |-------|------|
 | Permissions Report | Built-in: `lt server permissions` / `GET /permissions` |
-| Service Health Check | [reference/service-health-check.md](reference/service-health-check.md) |
-| Framework Guide | [reference/framework-guide.md](reference/framework-guide.md) |
-| Configuration & Commands | [reference/configuration.md](reference/configuration.md) |
-| Specification Format | [reference/reference.md](reference/reference.md) |
-| Examples | [reference/examples.md](reference/examples.md) |
-| Workflow Process | [reference/workflow-process.md](reference/workflow-process.md) |
-| Description Management | [reference/description-management.md](reference/description-management.md) |
-| Security Rules | [reference/security-rules.md](reference/security-rules.md) |
-| OWASP Checklist | [reference/owasp-checklist.md](reference/owasp-checklist.md) |
-| Declare Keyword Warning | [reference/declare-keyword-warning.md](reference/declare-keyword-warning.md) |
-| Quality Review | [reference/quality-review.md](reference/quality-review.md) |
-| Verification Checklist | [reference/verification-checklist.md](reference/verification-checklist.md) |
-| TypeScript Conventions | [reference/typescript-conventions.md](reference/typescript-conventions.md) |
+| Service Health Check | [reference/service-health-check.md](${CLAUDE_SKILL_DIR}/reference/service-health-check.md) |
+| Framework Guide | [reference/framework-guide.md](${CLAUDE_SKILL_DIR}/reference/framework-guide.md) |
+| Configuration & Commands | [reference/configuration.md](${CLAUDE_SKILL_DIR}/reference/configuration.md) |
+| Specification Format | [reference/reference.md](${CLAUDE_SKILL_DIR}/reference/reference.md) |
+| Examples | [reference/examples.md](${CLAUDE_SKILL_DIR}/reference/examples.md) |
+| Workflow Process | [reference/workflow-process.md](${CLAUDE_SKILL_DIR}/reference/workflow-process.md) |
+| Description Management | [reference/description-management.md](${CLAUDE_SKILL_DIR}/reference/description-management.md) |
+| Security Rules | [reference/security-rules.md](${CLAUDE_SKILL_DIR}/reference/security-rules.md) |
+| OWASP Checklist | [reference/owasp-checklist.md](${CLAUDE_SKILL_DIR}/reference/owasp-checklist.md) |
+| Declare Keyword Warning | [reference/declare-keyword-warning.md](${CLAUDE_SKILL_DIR}/reference/declare-keyword-warning.md) |
+| Quality Review | [reference/quality-review.md](${CLAUDE_SKILL_DIR}/reference/quality-review.md) |
+| Verification Checklist | [reference/verification-checklist.md](${CLAUDE_SKILL_DIR}/reference/verification-checklist.md) |
+| TypeScript Conventions | [reference/typescript-conventions.md](${CLAUDE_SKILL_DIR}/reference/typescript-conventions.md) |
 
 ## TypeScript Language Server (Recommended)
 

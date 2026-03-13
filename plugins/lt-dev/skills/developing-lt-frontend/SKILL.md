@@ -1,6 +1,6 @@
 ---
 name: developing-lt-frontend
-description: Handles ALL Nuxt 4 and Vue frontend development tasks. Activates for .vue files, nuxt.config.ts, Nuxt UI, TailwindCSS, or files in app/components/, app/composables/, app/pages/, app/interfaces/, app/layouts/. Supports monorepos (projects/app/, packages/app/). Covers composables, forms (Valibot), API integration (types.gen.ts, sdk.gen.ts), authentication (Better Auth), SSR, and Playwright E2E testing. NOT for NestJS backend (use generating-nest-servers). NOT for security theory (use general-frontend-security).
+description: Handles ALL Nuxt 4 and Vue frontend development tasks including composables, forms (Valibot), API integration (types.gen.ts, sdk.gen.ts), authentication (Better Auth), SSR, and Playwright E2E testing. Supports monorepos (projects/app/, packages/app/). Activates when working with .vue files, nuxt.config.ts, Nuxt UI, TailwindCSS, or files in app/components/, app/composables/, app/pages/, app/interfaces/, app/layouts/. NOT for NestJS backend (use generating-nest-servers). NOT for security theory (use general-frontend-security).
 ---
 
 # lenne.tech Frontend Development
@@ -41,10 +41,10 @@ project/
 
 - Always use real API calls via `sdk.gen.ts` from the start
 - Always use generated types from `types.gen.ts` (never manual interfaces for DTOs)
-- Run `npm run generate-types` with API running before starting frontend work
+- Run `pnpm run generate-types` with API running before starting frontend work
 - Implement feature-by-feature with full backend integration
 
-**Before starting:** Ensure services are running. See [reference/service-health-check.md](reference/service-health-check.md)
+**Before starting:** Ensure services are running. See [reference/service-health-check.md](${CLAUDE_SKILL_DIR}/reference/service-health-check.md)
 
 ## Skill Boundaries
 
@@ -120,27 +120,27 @@ nuxt.config.ts
 4. Debug with Chrome DevTools MCP
 ```
 
-**Complete E2E testing guide: [reference/e2e-testing.md](reference/e2e-testing.md)**
+**Complete E2E testing guide: [reference/e2e-testing.md](${CLAUDE_SKILL_DIR}/reference/e2e-testing.md)**
 
 ## Reference Files
 
 | Topic | File |
 |-------|------|
-| Core Patterns | [reference/patterns.md](./reference/patterns.md) |
-| Service Health Check | [reference/service-health-check.md](./reference/service-health-check.md) |
-| Browser Testing | [reference/browser-testing.md](./reference/browser-testing.md) |
-| TypeScript | [reference/typescript.md](./reference/typescript.md) |
-| Components | [reference/components.md](./reference/components.md) |
-| Composables | [reference/composables.md](./reference/composables.md) |
-| Forms | [reference/forms.md](./reference/forms.md) |
-| Modals | [reference/modals.md](./reference/modals.md) |
-| API | [reference/api.md](./reference/api.md) |
-| Colors | [reference/colors.md](./reference/colors.md) |
-| Nuxt Patterns | [reference/nuxt.md](./reference/nuxt.md) |
-| Authentication | [reference/authentication.md](./reference/authentication.md) |
-| E2E Testing | [reference/e2e-testing.md](./reference/e2e-testing.md) |
-| Troubleshooting | [reference/troubleshooting.md](./reference/troubleshooting.md) |
-| Security | [reference/security.md](./reference/security.md) |
+| Core Patterns | [reference/patterns.md](${CLAUDE_SKILL_DIR}/reference/patterns.md) |
+| Service Health Check | [reference/service-health-check.md](${CLAUDE_SKILL_DIR}/reference/service-health-check.md) |
+| Browser Testing | [reference/browser-testing.md](${CLAUDE_SKILL_DIR}/reference/browser-testing.md) |
+| TypeScript | [reference/typescript.md](${CLAUDE_SKILL_DIR}/reference/typescript.md) |
+| Components | [reference/components.md](${CLAUDE_SKILL_DIR}/reference/components.md) |
+| Composables | [reference/composables.md](${CLAUDE_SKILL_DIR}/reference/composables.md) |
+| Forms | [reference/forms.md](${CLAUDE_SKILL_DIR}/reference/forms.md) |
+| Modals | [reference/modals.md](${CLAUDE_SKILL_DIR}/reference/modals.md) |
+| API | [reference/api.md](${CLAUDE_SKILL_DIR}/reference/api.md) |
+| Colors | [reference/colors.md](${CLAUDE_SKILL_DIR}/reference/colors.md) |
+| Nuxt Patterns | [reference/nuxt.md](${CLAUDE_SKILL_DIR}/reference/nuxt.md) |
+| Authentication | [reference/authentication.md](${CLAUDE_SKILL_DIR}/reference/authentication.md) |
+| E2E Testing | [reference/e2e-testing.md](${CLAUDE_SKILL_DIR}/reference/e2e-testing.md) |
+| Troubleshooting | [reference/troubleshooting.md](${CLAUDE_SKILL_DIR}/reference/troubleshooting.md) |
+| Security | [reference/security.md](${CLAUDE_SKILL_DIR}/reference/security.md) |
 
 ## Pre-Commit Checklist
 
@@ -151,5 +151,5 @@ nuxt.config.ts
 - [ ] German UI, English code, no implicit `any`
 - [ ] Auth uses `useBetterAuth()`, protected routes use `middleware: 'auth'`
 - [ ] No `v-html` with user content, tokens stored securely
-- [ ] Security review passed (`/security-review` for general scan)
+- [ ] Security review passed (`/lt-dev:review` for general scan)
 - [ ] Feature tested in browser (Chrome DevTools MCP), no console errors

@@ -1,7 +1,7 @@
 # Create plugins
 
 > Source: https://code.claude.com/docs/en/plugins
-> Generated: 2026-02-09T12:26:30.922Z
+> Generated: 2026-03-12T14:48:14.900Z
 
 ---
 
@@ -22,7 +22,7 @@ Claude Code supports two ways to add custom skills, agents, and hooks:
 -   You’re customizing Claude Code for a single project
 -   The configuration is personal and doesn’t need to be shared
 -   You’re experimenting with skills or hooks before packaging them
--   You want short skill names like`/hello`or`/review`**Use plugins when**:
+-   You want short skill names like`/hello`or`/deploy`**Use plugins when**:
 
 -   You want to share functionality with your team or community
 -   You need the same skills/agents across multiple projects
@@ -88,7 +88,7 @@ Greet the user warmly and ask how you can help them today.```4
 
 Test your plugin
 
-Run Claude Code with the`--plugin-dir`flag to load your plugin:```claude --plugin-dir ./my-first-plugin```Once Claude Code starts, try your new command:```/my-first-plugin:hello```You’ll see Claude respond with a greeting. Run`/help`to see your command listed under the plugin namespace.
+Run Claude Code with the`--plugin-dir`flag to load your plugin:```claude --plugin-dir ./my-first-plugin```Once Claude Code starts, try your new skill:```/my-first-plugin:hello```You’ll see Claude respond with a greeting. Run`/help`to see your skill listed under the plugin namespace.
 
 **Why namespacing?** Plugin skills are always namespaced (like`/greet:hello`) to prevent conflicts when multiple plugins have skills with the same name.To change the namespace prefix, update the`name`field in`plugin.json`.
 
@@ -96,19 +96,19 @@ Run Claude Code with the`--plugin-dir`flag to load your plugin:```claude --plugi
 
 Add skill arguments
 
-Make your skill dynamic by accepting user input. The`$ARGUMENTS`placeholder captures any text the user provides after the skill name.Update your`hello.md`file:
+Make your skill dynamic by accepting user input. The`$ARGUMENTS`placeholder captures any text the user provides after the skill name.Update your`SKILL.md`file:
 
-my-first-plugin/commands/hello.md```---
+my-first-plugin/skills/hello/SKILL.md```---
 description: Greet the user with a personalized message
 
-# Hello Command
+# Hello Skill
 
-Greet the user named "$ARGUMENTS" warmly and ask how you can help them today. Make the greeting personal and encouraging.```Restart Claude Code to pick up the changes, then try the command with your name:```/my-first-plugin:hello Alex```Claude will greet you by name. For more on passing arguments to skills, see [Skills](/docs/en/skills#pass-arguments-to-skills).
+Greet the user named "$ARGUMENTS" warmly and ask how you can help them today. Make the greeting personal and encouraging.```Run`/reload-plugins`to pick up the changes, then try the skill with your name:```/my-first-plugin:hello Alex```Claude will greet you by name. For more on passing arguments to skills, see [Skills](/docs/en/skills#pass-arguments-to-skills).
 
 You’ve successfully created and tested a plugin with these key components:
 
 -   **Plugin manifest** (`.claude-plugin/plugin.json`): describes your plugin’s metadata
--   **Commands directory** (`commands/`): contains your custom skills
+-   **Skills directory** (`skills/`): contains your custom skills
 -   **Skill arguments** (`$ARGUMENTS`): captures user input for dynamic behavior
 
 The`--plugin-dir`flag is useful for development and testing. When you’re ready to share your plugin with others, see [Create and distribute a plugin marketplace](/docs/en/plugin-marketplaces).
@@ -129,6 +129,7 @@ You’ve created a plugin with a skill, but plugins can include much more: custo
 |`hooks/`| Plugin root | Event handlers in`hooks.json`|
 |`.mcp.json`| Plugin root | MCP server configurations |
 |`.lsp.json`| Plugin root | LSP server configurations for code intelligence |
+|`settings.json`| Plugin root | Default [settings](/docs/en/settings) applied when the plugin is enabled |
 
 **Next steps**: Ready to add more features? Jump to [Develop more complex plugins](#develop-more-complex-plugins) to add agents, hooks, MCP servers, and LSP servers. For complete technical specifications of all plugin components, see [Plugins reference](/docs/en/plugins-reference).
 
@@ -153,7 +154,7 @@ When reviewing code, check for:
 1. Code organization and structure
 2. Error handling
 3. Security concerns
-4. Test coverage```After installing the plugin, restart Claude Code to load the Skills. For complete Skill authoring guidance including progressive disclosure and tool restrictions, see [Agent Skills](/docs/en/skills).
+4. Test coverage```After installing the plugin, run`/reload-plugins`to load the Skills. For complete Skill authoring guidance including progressive disclosure and tool restrictions, see [Agent Skills](/docs/en/skills).
 
 
 Add LSP servers to your plugin
@@ -173,6 +174,15 @@ LSP (Language Server Protocol) plugins give Claude real-time code intelligence. 
 }```Users installing your plugin must have the language server binary installed on their machine. For complete LSP configuration options, see [LSP servers](/docs/en/plugins-reference#lsp-servers).
 
 
+Ship default settings with your plugin
+
+Plugins can include a`settings.json`file at the plugin root to apply default configuration when the plugin is enabled. Currently, only the`agent`key is supported. Setting`agent`activates one of the plugin’s [custom agents](/docs/en/sub-agents) as the main thread, applying its system prompt, tool restrictions, and model. This lets a plugin change how Claude Code behaves by default when enabled.
+
+settings.json```{
+  "agent": "security-reviewer"
+}```This example activates the`security-reviewer`agent defined in the plugin’s`agents/`directory. Settings from`settings.json`take priority over`settings`declared in`plugin.json`. Unknown keys are silently ignored.
+
+
 Organize complex plugins
 
 For plugins with many components, organize your directory structure by functionality. For complete directory layouts and organization patterns, see [Plugin directory structure](/docs/en/plugins-reference#plugin-directory-structure).
@@ -180,9 +190,9 @@ For plugins with many components, organize your directory structure by functiona
 
 Test your plugins locally
 
-Use the`--plugin-dir`flag to test plugins during development. This loads your plugin directly without requiring installation.```claude --plugin-dir ./my-plugin```As you make changes to your plugin, restart Claude Code to pick up the updates. Test your plugin components:
+Use the`--plugin-dir`flag to test plugins during development. This loads your plugin directly without requiring installation.```claude --plugin-dir ./my-plugin```As you make changes to your plugin, run`/reload-plugins`to pick up the updates without restarting. Changes to LSP server configuration still require a full restart. Test your plugin components:
 
--   Try your commands with`/command-name`-   Check that agents appear in`/agents`-   Verify hooks work as expected
+-   Try your skills with`/plugin-name:skill-name`-   Check that agents appear in`/agents`-   Verify hooks work as expected
 
 You can load multiple plugins at once by specifying the flag multiple times:```claude --plugin-dir ./plugin-one --plugin-dir ./plugin-two```Debug plugin issues
 
@@ -201,6 +211,14 @@ When your plugin is ready to share:
 4.  **Test with others**: Have team members test the plugin before wider distribution
 
 Once your plugin is in a marketplace, others can install it using the instructions in [Discover and install plugins](/docs/en/discover-plugins).
+
+
+Submit your plugin to the official marketplace
+
+To submit a plugin to the official Anthropic marketplace, use one of the in-app submission forms:
+
+-   **Claude.ai**: [claude.ai/settings/plugins/submit](https://claude.ai/settings/plugins/submit)
+-   **Console**: [platform.claude.com/plugins/submit](https://platform.claude.com/plugins/submit)
 
 For complete technical specifications, debugging techniques, and distribution strategies, see [Plugins reference](/docs/en/plugins-reference).
 

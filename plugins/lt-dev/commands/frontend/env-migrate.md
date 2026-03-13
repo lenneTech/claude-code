@@ -1,6 +1,6 @@
 ---
 description: Migrate Nuxt env variables to NUXT_ prefix convention with automatic useRuntimeConfig() mapping
-allowed-tools: Read, Grep, Glob, Edit, Write, Bash(npm run lint:*), Bash(npm run build:*)
+allowed-tools: Read, Grep, Glob, Edit, Write, Bash(npm run lint:*), Bash(npm run build:*), Bash(pnpm run lint:*), Bash(pnpm run build:*), Bash(yarn run lint:*), Bash(yarn run build:*)
 disable-model-invocation: true
 ---
 
@@ -127,8 +127,8 @@ Update all references to use the new `NUXT_*` / `NUXT_PUBLIC_*` variable names.
 Run automatic checks:
 
 ```bash
-npm run lint
-npm run build
+pnpm run lint
+pnpm run build
 ```
 
 Fix all errors and warnings.
@@ -143,5 +143,5 @@ Fix all errors and warnings.
 - [ ] External configs use updated `NUXT_*` variable names
 - [ ] No `process.env` in Vue components or composables
 - [ ] Docker, CI/CD, and deployment env files use updated variable names
-- [ ] `npm run lint` passes
-- [ ] `npm run build` passes
+- [ ] `pnpm run lint` passes
+- [ ] `pnpm run build` passes

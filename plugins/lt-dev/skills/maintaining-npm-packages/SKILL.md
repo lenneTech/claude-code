@@ -1,6 +1,6 @@
 ---
 name: maintaining-npm-packages
-description: Analyzes and optimizes npm package dependencies. Selects between 5 maintenance modes: FULL (update all), DRY-RUN (analysis only), SECURITY-ONLY (urgent CVE fixes), PRE-RELEASE (conservative patch-only), POST-FEATURE (cleanup after development). Activates for "update packages", "npm audit", "check dependencies", "security fix", "outdated dependencies", "deprecated packages", "find replacements", "devDependencies", "pre-release cleanup", "post-feature housekeeping", "remove unused packages", or package.json optimization. NOT for @lenne.tech/nest-server version updates (use nest-server-updating).
+description: Analyzes and optimizes npm package dependencies across 5 maintenance modes: FULL (update all), DRY-RUN (analysis only), SECURITY-ONLY (urgent CVE fixes), PRE-RELEASE (conservative patch-only), POST-FEATURE (cleanup after development). Activates when user mentions "update packages", "pnpm audit", "npm audit", "check dependencies", "security fix", "outdated dependencies", "deprecated packages", "devDependencies", "pre-release cleanup", "post-feature housekeeping", "remove unused packages", or package.json optimization. NOT for @lenne.tech/nest-server version updates (use nest-server-updating).
 ---
 
 # NPM Package Maintenance
@@ -8,7 +8,7 @@ description: Analyzes and optimizes npm package dependencies. Selects between 5 
 ## When to Use This Skill
 
 - User mentions outdated packages or wants to update dependencies
-- Security vulnerabilities found via `npm audit`
+- Security vulnerabilities found via `pnpm audit`
 - Need to optimize `dependencies` vs `devDependencies`
 - Removing unused packages from `package.json`
 - Pre-release or post-feature dependency cleanup
@@ -36,22 +36,22 @@ For comprehensive npm package maintenance, use the **lt-dev:npm-package-maintain
 
 | Command | Mode | Use Case |
 |---------|------|----------|
-| `/lt-dev:maintain` | FULL | Complete optimization (remove unused, recategorize, update all) |
-| `/lt-dev:maintain-check` | DRY-RUN | Analysis only - see what would be done without changes |
-| `/lt-dev:maintain-security` | SECURITY | Fast security-only updates (npm audit vulnerabilities) |
-| `/lt-dev:maintain-pre-release` | PRE-RELEASE | Conservative patch-only updates before a release |
-| `/lt-dev:maintain-post-feature` | FULL | Clean up after feature development |
+| `/lt-dev:maintenance:maintain` | FULL | Complete optimization (remove unused, recategorize, update all) |
+| `/lt-dev:maintenance:maintain-check` | DRY-RUN | Analysis only - see what would be done without changes |
+| `/lt-dev:maintenance:maintain-security` | SECURITY | Fast security-only updates (audit vulnerabilities) |
+| `/lt-dev:maintenance:maintain-pre-release` | PRE-RELEASE | Conservative patch-only updates before a release |
+| `/lt-dev:maintenance:maintain-post-feature` | FULL | Clean up after feature development |
 
 ## When to Recommend Each Command
 
-### `/lt-dev:maintain` (FULL MODE)
+### `/lt-dev:maintenance:maintain` (FULL MODE)
 Recommend when user wants:
 - Complete dependency optimization
 - General maintenance / housekeeping
 - "Clean up my dependencies"
 - "Update all packages"
 
-### `/lt-dev:maintain-check` (DRY-RUN)
+### `/lt-dev:maintenance:maintain-check` (DRY-RUN)
 Recommend when user wants:
 - To see what would change without making changes
 - Analysis or audit of current state
@@ -59,22 +59,22 @@ Recommend when user wants:
 - "Check my dependencies"
 - Pre-approval before making changes
 
-### `/lt-dev:maintain-security` (SECURITY-ONLY)
+### `/lt-dev:maintenance:maintain-security` (SECURITY-ONLY)
 Recommend when user mentions:
-- `npm audit` vulnerabilities
+- `pnpm audit` vulnerabilities
 - Security issues
 - CVEs or security advisories
 - "Fix security vulnerabilities"
 - Quick/urgent security fixes
 
-### `/lt-dev:maintain-pre-release` (PRE-RELEASE)
+### `/lt-dev:maintenance:maintain-pre-release` (PRE-RELEASE)
 Recommend when user mentions:
 - Preparing for a release
 - "Before release"
 - Wanting minimal/safe changes only
 - Risk-averse updates
 
-### `/lt-dev:maintain-post-feature` (POST-FEATURE)
+### `/lt-dev:maintenance:maintain-post-feature` (POST-FEATURE)
 Recommend when user:
 - Just finished implementing a feature
 - Added new dependencies
@@ -89,11 +89,11 @@ The lt-dev:npm-package-maintainer agent performs 4 priorities:
 3. **Replace deprecated packages** - Detects deprecated packages and replaces them with maintained alternatives
 4. **Update packages** - Updates to latest versions with risk-based approach
 
-All operations ensure `npm run build` and `npm test` pass before completion.
+All operations ensure `pnpm run build` and `pnpm test` pass before completion.
 
 ## Quick Guidance
 
-- **User unsure?** → Recommend `/lt-dev:maintain-check` first (safe, no changes)
-- **Security urgent?** → Recommend `/lt-dev:maintain-security` (fast, focused)
-- **Before release?** → Recommend `/lt-dev:maintain-pre-release` (conservative)
-- **General cleanup?** → Recommend `/lt-dev:maintain` (comprehensive)
+- **User unsure?** → Recommend `/lt-dev:maintenance:maintain-check` first (safe, no changes)
+- **Security urgent?** → Recommend `/lt-dev:maintenance:maintain-security` (fast, focused)
+- **Before release?** → Recommend `/lt-dev:maintenance:maintain-pre-release` (conservative)
+- **General cleanup?** → Recommend `/lt-dev:maintenance:maintain` (comprehensive)

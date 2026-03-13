@@ -1,5 +1,6 @@
 ---
 description: Optimize and validate Claude skill files
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash(wc:*), Bash(echo:*), Bash(find:*)
 disable-model-invocation: true
 ---
 

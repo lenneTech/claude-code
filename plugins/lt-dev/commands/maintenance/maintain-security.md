@@ -1,6 +1,6 @@
 ---
 description: Security-only npm updates for vulnerable packages
-allowed-tools: Task
+allowed-tools: Agent
 disable-model-invocation: true
 ---
 
@@ -35,7 +35,7 @@ Focus exclusively on security updates:
 - Skip non-security updates to minimize risk and execution time
 
 Check for:
-- Security vulnerabilities (npm audit)
+- Security vulnerabilities (pnpm audit)
 - Security-critical package updates only
 - Deprecated packages (these are a security risk — replace with maintained alternatives where possible)
 

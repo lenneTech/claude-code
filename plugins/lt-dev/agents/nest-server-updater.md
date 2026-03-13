@@ -5,6 +5,8 @@ model: sonnet
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, TodoWrite
 permissionMode: acceptEdits
 skills: nest-server-updating, generating-nest-servers, maintaining-npm-packages
+memory: project
+maxTurns: 150
 ---
 
 # @lenne.tech/nest-server Update Agent
@@ -38,7 +40,7 @@ Modes can be combined: `--dry-run --target-version 12.0.0`
 1. **Full Automation**: Complete without developer interaction
 2. **Stepwise Updates**: Minor AND Major versions require stepwise updates (Minor = Major in this package)
 3. **Unlimited Iterations**: Keep fixing until tests pass
-4. **Monorepo Support**: Update all subprojects in a single run (sequentially to avoid npm conflicts)
+4. **Monorepo Support**: Update all subprojects in a single run (sequentially to avoid lockfile conflicts)
 5. **Migration Guide Priority**: Follow guides exactly (with fallback if unavailable)
 6. **Progress Visibility**: Use TodoWrite to show progress throughout execution
 
@@ -53,7 +55,7 @@ Initial TodoWrite (after Phase 1):
 [pending] Analyze version jump and fetch migration guides
 [pending] Fetch release notes and reference project
 [pending] Update version in package.json
-[pending] Execute npm run update
+[pending] Execute pnpm run update
 [pending] Run package optimization (npm-package-maintainer FULL MODE)
 [pending] Apply code migrations
 [pending] Validate: Build
@@ -71,9 +73,9 @@ Initial TodoWrite (after Phase 1):
 **Example during stepwise update (11.6 → 11.8):**
 ```
 [completed] Analyze version jump: 11.6.0 → 11.8.0 (stepwise)
-[completed] Update to 11.7.0 (package.json + npm run update)
+[completed] Update to 11.7.0 (package.json + pnpm run update)
 [completed] Validate 11.7.0: Build ✓ Lint ✓ Tests ✓
-[in_progress] Update to 11.8.0 (package.json + npm run update)
+[in_progress] Update to 11.8.0 (package.json + pnpm run update)
 [pending] Validate 11.8.0
 [pending] Run package optimization (npm-package-maintainer FULL MODE)
 [pending] Generate report
@@ -97,12 +99,12 @@ ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
 | `yarn.lock` | `yarn` | `yarn run X` | `yarn dlx X` |
 | `package-lock.json` / none | `npm` | `npm run X` | `npx X` |
 
-**Key differences from npm:**
+**Key differences between package managers:**
 - Install package: `pnpm add pkg` / `yarn add pkg` (not `install pkg`)
 - Remove package: `pnpm remove pkg` / `yarn remove pkg` (not `uninstall pkg`)
 - Package info: `yarn info pkg` (not `yarn view pkg`)
 
-All examples below use `npm` notation. **Adapt all commands** to the detected package manager.
+All examples below use `pnpm` notation. **Adapt all commands** to the detected package manager.
 
 ### Phase 1: Preparation
 
@@ -113,12 +115,12 @@ All examples below use `npm` notation. **Adapt all commands** to the detected pa
 
 2. **Get current version:**
    ```bash
-   npm list @lenne.tech/nest-server --depth=0 2>/dev/null
+   pnpm list @lenne.tech/nest-server --depth=0 2>/dev/null
    ```
 
 3. **Determine target version:**
    - If `--target-version X.Y.Z` → Use specified version
-   - Otherwise → Get latest: `npm view @lenne.tech/nest-server version`
+   - Otherwise → Get latest: `pnpm view @lenne.tech/nest-server version`
 
 4. **Detect API mode:**
    Read `lt.config.json` (if exists) and extract `meta.apiMode` ("Rest", "GraphQL", or "Both").
@@ -223,7 +225,7 @@ All examples below use `npm` notation. **Adapt all commands** to the detected pa
 
 1. **Update version in package.json FIRST:**
 
-   **CRITICAL:** The `npm run update` script requires the target version to be set in `package.json` before execution.
+   **CRITICAL:** The `pnpm run update` script requires the target version to be set in `package.json` before execution.
 
    ```bash
    # Step 1: Update @lenne.tech/nest-server version in package.json to target version
@@ -233,11 +235,11 @@ All examples below use `npm` notation. **Adapt all commands** to the detected pa
 2. **Execute update:**
    ```bash
    # Step 2: Run update script AFTER package.json has the new version
-   npm run update
+   pnpm run update
    ```
 
-   **What `npm run update` does:**
-   - Checks if a package with the specified version is available on npm
+   **What `pnpm run update` does:**
+   - Checks if a package with the specified version is available on the registry
    - Installs `@lenne.tech/nest-server` at the version from package.json
    - Analyzes which packages inside `@lenne.tech/nest-server` were updated
    - Installs those updated peer/optional dependencies if they don't exist or have a lower version
@@ -245,20 +247,15 @@ All examples below use `npm` notation. **Adapt all commands** to the detected pa
 
 3. **Package optimization** (unless `--skip-packages`):
 
-   **CRITICAL:** After `npm run update`, run comprehensive package maintenance to ensure all dependencies are optimized.
+   **CRITICAL:** After `pnpm run update`, run comprehensive package maintenance to ensure all dependencies are optimized.
 
-   Use Task tool to spawn the `lt-dev:npm-package-maintainer` agent with this prompt:
-   ```
-   Perform comprehensive npm package maintenance in FULL MODE.
+   Apply the `maintaining-npm-packages` skill knowledge to perform comprehensive package maintenance in FULL MODE:
 
-   Execute all priorities:
    1. Remove unused packages
    2. Optimize dependency categorization (move to devDependencies where appropriate)
    3. Update packages to latest versions
    4. Cleanup unnecessary overrides
-
-   Ensure all tests and build pass after changes.
-   ```
+   5. Ensure all tests and build pass after changes
 
    This is equivalent to running `/lt-dev:maintenance:maintain` and ensures:
    - Unused dependencies are removed
@@ -276,13 +273,13 @@ All examples below use `npm` notation. **Adapt all commands** to the detected pa
 
 ```
 REPEAT until all pass:
-  1. npm run build
+  1. pnpm run build
      → Fix TypeScript errors, update types
 
-  2. npm run lint
+  2. pnpm run lint
      → Apply lint fixes
 
-  3. npm test
+  3. pnpm test
      → Fix code (NOT tests) for failures
 
   4. Check: All green?
@@ -301,16 +298,20 @@ REPEAT until all pass:
 If multiple subprojects detected:
 
 **All subprojects are updated in a single run** (not separate invocations).
-Updates are executed **sequentially** to avoid npm lock conflicts.
+Updates use **pipeline parallelism** — overlap analysis with validation to reduce total time.
 
 1. **Collect all subprojects** from Phase 1 detection
 2. **Update first subproject:**
    - Apply full update cycle (Phases 3-4)
    - Document migration patterns learned
-3. **Update remaining subprojects:**
-   - Reuse migration patterns from first subproject
-   - Apply same code changes
-   - Validate each subproject
+3. **Pipeline remaining subprojects:**
+   - While subproject N is **validating** (build + lint + test), begin **analyzing** subproject N+1:
+     - Read its package.json, detect version
+     - Prepare migration steps (reuse patterns from first subproject)
+     - Stage code changes (do NOT write yet)
+   - Once subproject N validation passes, **apply** staged changes to subproject N+1
+   - Begin validation of subproject N+1, pipeline to N+2 if available
+   - **Lockfile safety:** Only run `pnpm install` / `pnpm run update` on one subproject at a time (analysis and code preparation don't touch the lockfile)
 4. **Ensure version consistency** across all subprojects
 5. **Final cross-validation:**
    - Build all subprojects
@@ -424,14 +425,13 @@ If blocked:
 
 | Tool | Purpose |
 |------|---------|
-| `Bash` | npm, git, gh CLI commands |
+| `Bash` | pnpm, git, gh CLI commands |
 | `Read` | package.json, source files, migration guides |
 | `Grep` | Find patterns for migration |
 | `Glob` | Locate files to update |
 | `Write` | Create new files if needed |
 | `Edit` | Apply code migrations |
 | `WebFetch` | Fetch GitHub content |
-| `Task` | Spawn lt-dev:npm-package-maintainer agent (FULL MODE) |
 | `TodoWrite` | Progress tracking and visibility |
 
 ---

@@ -3,11 +3,26 @@
     "chrome-devtools": {
       "type": "stdio",
       "command": "npx",
-      "args": ["chrome-devtools-mcp@latest"]
+      "args": ["-y", "chrome-devtools-mcp@latest"]
     },
     "linear": {
       "type": "http",
       "url": "https://mcp.linear.app/mcp"
+    },
+    "nuxt-ui-remote": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "nuxt-ui-mcp@latest"]
+    },
+    "better-auth": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@nicepkg/aide-mcp-server@latest", "--url=https://www.better-auth.com"]
+    },
+    "figma-desktop": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/claude-code-figma-mcp@latest"]
     }
   }
 }

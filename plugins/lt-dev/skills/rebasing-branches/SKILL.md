@@ -1,6 +1,7 @@
 ---
 name: rebasing-branches
 description: Guides rebase workflows for updating feature branches onto the current development branch (dev/develop). Handles conflict resolution with priority ordering, extracts Linear ticket context from branch names for smarter conflict decisions, performs post-rebase optimization, and uses force-push-with-lease for safety. Activates when user mentions "rebase", "branch aktualisieren", "dev stand", "feature branch updaten", "merge conflicts", "rebase MRs", "force push", or "git rebase". NOT for merge request descriptions (use git:mr-description). NOT for general git operations.
+disable-model-invocation: true
 ---
 
 # Rebase Workflow Knowledge Base
@@ -154,20 +155,20 @@ After successful rebase, check if new dev code makes parts of the feature branch
 
 ```bash
 # Format all files in a project
-npx oxfmt .
+pnpm dlx oxfmt .
 
 # Format specific files
-npx oxfmt src/path/to/file.ts
+pnpm dlx oxfmt src/path/to/file.ts
 ```
 
 ### oxlint (Linter)
 
 ```bash
 # Lint all files
-npx oxlint .
+pnpm dlx oxlint .
 
 # Lint with auto-fix
-npx oxlint --fix .
+pnpm dlx oxlint --fix .
 ```
 
 ---

@@ -2,8 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "Central configuration for Claude Code documentation sources. All sources are cached locally and updated when Claude Code version changes.",
   "cache": {
-    "claudeCodeVersion": "2.1.37",
-    "lastUpdated": "2026-02-09T12:29:09.138Z",
+    "claudeCodeVersion": "2.1.74",
+    "lastUpdated": "2026-03-12T14:48:15.149Z",
     "updateBehavior": "auto"
   },
   "updateBehaviorOptions": {

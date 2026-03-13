@@ -1,6 +1,6 @@
 ---
 name: nest-server-updating
-description: Provides migration guides, release notes, and error solutions for updating @lenne.tech/nest-server to a newer version. Covers version-specific breaking changes, stepwise upgrade strategies, and starter project comparisons. Activates for nest-server version updates, upgrades, migrations, breaking changes between versions, "npm run update", TypeScript errors after upgrading, or stepwise migration planning. Delegates execution to the lt-dev:nest-server-updater agent. NOT for writing NestJS code or building features (use generating-nest-servers). NOT for general npm package updates (use maintaining-npm-packages).
+description: Provides migration guides, release notes, and error solutions for updating @lenne.tech/nest-server to a newer version. Covers version-specific breaking changes, stepwise upgrade strategies, and starter project comparisons. Activates for nest-server version updates, upgrades, migrations, breaking changes between versions, "pnpm run update", TypeScript errors after upgrading, or stepwise migration planning. Delegates execution to the lt-dev:nest-server-updater agent. NOT for writing NestJS code or building features (use generating-nest-servers). NOT for general npm package updates (use maintaining-npm-packages).
 ---
 
 # @lenne.tech/nest-server Update Knowledge Base
@@ -54,13 +54,13 @@ This skill provides **knowledge and resources** for updating @lenne.tech/nest-se
 
 ```bash
 # Package info
-npm view @lenne.tech/nest-server
+pnpm view @lenne.tech/nest-server
 
 # Current installed version
-npm list @lenne.tech/nest-server --depth=0
+pnpm list @lenne.tech/nest-server --depth=0
 
 # All available versions
-npm view @lenne.tech/nest-server versions --json
+pnpm view @lenne.tech/nest-server versions --json
 ```
 
 ---
@@ -140,10 +140,10 @@ The `lt-dev:nest-server-updater` agent supports these modes:
 
 ```bash
 # Check current version
-npm list @lenne.tech/nest-server --depth=0
+pnpm list @lenne.tech/nest-server --depth=0
 
 # Check latest version
-npm view @lenne.tech/nest-server version
+pnpm view @lenne.tech/nest-server version
 
 # List migration guides
 gh api repos/lenneTech/nest-server/contents/migration-guides --jq '.[].name'
@@ -151,7 +151,7 @@ gh api repos/lenneTech/nest-server/contents/migration-guides --jq '.[].name'
 
 ### Update Workflow
 
-**IMPORTANT:** The `npm run update` script requires a specific workflow:
+**IMPORTANT:** The `pnpm run update` script requires a specific workflow:
 
 1. **First:** Update the version in `package.json` to the desired target version
    ```
@@ -160,32 +160,32 @@ gh api repos/lenneTech/nest-server/contents/migration-guides --jq '.[].name'
 
 2. **Then:** Run the update script
    ```bash
-   npm run update
+   pnpm run update
    ```
 
-**What `npm run update` does:**
+**What `pnpm run update` does:**
 - Verifies the specified version is available on npm
 - Installs `@lenne.tech/nest-server` at the version from package.json
 - Analyzes which packages inside `@lenne.tech/nest-server` were updated
 - Installs those updated dependencies if they don't exist or have a lower version
 - Ensures version consistency between nest-server and its peer dependencies
 
-**Manual update (only if `npm run update` script is not available):**
+**Manual update (only if `pnpm run update` script is not available):**
 ```bash
-npm install @lenne.tech/nest-server@X.Y.Z --save-exact
-npm install
+pnpm add -E @lenne.tech/nest-server@X.Y.Z
+pnpm install
 ```
-Note: This skips the automatic dependency synchronization that `npm run update` provides.
+Note: This skips the automatic dependency synchronization that `pnpm run update` provides.
 
-### Package Optimization (after npm run update)
+### Package Optimization (after pnpm run update)
 
-After `npm run update` completes, run comprehensive package maintenance:
+After `pnpm run update` completes, run comprehensive package maintenance:
 
 ```bash
 # Via command (recommended)
 /lt-dev:maintenance:maintain
 
-# Or via agent (Task tool with lt-dev:npm-package-maintainer in FULL MODE)
+# Or via agent (Agent tool with lt-dev:npm-package-maintainer in FULL MODE)
 ```
 
 This ensures:
@@ -197,10 +197,10 @@ This ensures:
 ### Validation Sequence
 
 ```bash
-npm run build    # Must pass
-npm run lint     # Must pass
-npm test         # Must pass (no skips)
-npm audit        # Should show no new vulnerabilities
+pnpm run build    # Must pass
+pnpm run lint     # Must pass
+pnpm test         # Must pass (no skips)
+pnpm audit        # Should show no new vulnerabilities
 ```
 
 ---

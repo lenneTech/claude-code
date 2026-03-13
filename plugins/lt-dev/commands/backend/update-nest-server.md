@@ -1,7 +1,7 @@
 ---
 description: Update @lenne.tech/nest-server with automated migration and validation
 argument-hint: "[--dry-run] [--target-version X.Y.Z] [--skip-packages] [path]"
-allowed-tools: Task
+allowed-tools: Agent
 disable-model-invocation: true
 ---
 
@@ -77,7 +77,7 @@ Fully automated update of @lenne.tech/nest-server with migration guide support.
 
 **Spawn the nest-server-updater agent:**
 
-Use the Task tool to spawn the `lt-dev:nest-server-updater` agent with the following prompt:
+Use the Agent tool to spawn the `lt-dev:nest-server-updater` agent with the following prompt:
 
 ```
 Update @lenne.tech/nest-server in this project.

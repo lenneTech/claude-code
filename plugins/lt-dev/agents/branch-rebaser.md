@@ -6,6 +6,8 @@ tools: Bash, Read, Grep, Glob, Write, Edit, TodoWrite, mcp__plugin_lt-dev_linear
 permissionMode: acceptEdits
 memory: project
 skills: generating-nest-servers, developing-lt-frontend, rebasing-branches
+mcpServers: linear
+maxTurns: 100
 ---
 
 # Branch Rebaser Agent
@@ -76,12 +78,12 @@ ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
 | `yarn.lock` | `yarn` | `yarn run X` | `yarn dlx X` |
 | `package-lock.json` / none | `npm` | `npm run X` | `npx X` |
 
-**Key differences from npm:**
+**Key differences between package managers:**
 - Install package: `pnpm add pkg` / `yarn add pkg` (not `install pkg`)
 - Remove package: `pnpm remove pkg` / `yarn remove pkg` (not `uninstall pkg`)
 - Package info: `yarn info pkg` (not `yarn view pkg`)
 
-All examples below use `npm` notation. **Adapt all commands** to the detected package manager.
+All examples below use `pnpm` notation. **Adapt all commands** to the detected package manager.
 
 ### Phase 0: Analysis
 
@@ -172,7 +174,7 @@ git rebase origin/<base-branch>
 
 7. **Regenerate lock files if package.json was conflicted:**
    ```bash
-   npm install
+   pnpm install
    ```
 
 ### Phase 4: Linear Ticket Analysis
@@ -213,24 +215,24 @@ With the context of the new dev state and the Linear ticket:
 cd <project-path>
 
 # Format
-npx oxfmt .
+pnpm dlx oxfmt .
 
 # Lint with auto-fix
-npx oxlint --fix .
+pnpm dlx oxlint --fix .
 ```
 
 If the project has subprojects (monorepo):
 ```bash
 # API
-cd <project-path>/projects/api && npx oxfmt . && npx oxlint --fix .
+cd <project-path>/projects/api && pnpm dlx oxfmt . && pnpm dlx oxlint --fix .
 # App
-cd <project-path>/projects/app && npx oxfmt . && npx oxlint --fix .
+cd <project-path>/projects/app && pnpm dlx oxfmt . && pnpm dlx oxlint --fix .
 ```
 
 **If oxfmt/oxlint not available**, fall back to project scripts:
 ```bash
-npm run lint -- --fix
-npm run format
+pnpm run lint -- --fix
+pnpm run format
 ```
 
 ### Phase 7: Tests
@@ -238,16 +240,16 @@ npm run format
 Run all available test suites (NODE_ENV=e2e is set in package.json scripts for local execution):
 
 ```bash
-# API tests (NODE_ENV=e2e via npm scripts)
+# API tests (NODE_ENV=e2e via package.json scripts)
 cd <project-path>/projects/api
-npm test
-npm run test:e2e  # if available
+pnpm test
+pnpm run test:e2e  # if available
 
 # App tests
 cd <project-path>/projects/app
-npm test           # if available
-npm run test:e2e   # if available
-npx vitest run     # if available
+pnpm test           # if available
+pnpm run test:e2e   # if available
+pnpm dlx vitest run     # if available
 ```
 
 **NODE_ENV reference:** `e2e` = local tests, `ci` = CI/CD, `develop` = dev server, `test` = customer staging, `production` = live.
@@ -275,15 +277,13 @@ If Phase 6 or 7 produced changes or failures:
 
 ### Phase 10: Code Review
 
-Execute review via Skill tool:
-```
-Invoke Skill: review
-```
+Apply the `rebasing-branches` skill review guidelines (loaded via `skills:` frontmatter) to perform an inline code review of all changes made during this rebase:
 
-Analyze review findings and address actionable items:
-- Fix issues classified as High priority
-- Document Medium/Low issues in the report
-- Re-run tests after fixes
+1. Read all modified files and assess them against the review criteria from the skill
+2. Identify issues by priority (High / Medium / Low)
+3. Fix issues classified as High priority
+4. Document Medium/Low issues in the report
+5. Re-run tests after fixes
 
 ---
 
@@ -379,14 +379,12 @@ If blocked during any phase:
 
 | Tool | Purpose |
 |------|---------|
-| `Bash` | git, npm, npx, gh, glab commands |
+| `Bash` | git, pnpm, gh, glab commands |
 | `Read` | Source files, package.json, config files |
 | `Grep` | Find patterns, conflict markers, ticket IDs |
 | `Glob` | Locate project files, test files |
 | `Write` | Create reports |
 | `Edit` | Resolve conflicts, apply optimizations |
-| `Task` | Delegate sub-analyses if needed |
 | `TodoWrite` | Progress tracking and visibility |
-| `Skill` | Invoke /lt-dev:review for code review |
 | `mcp__plugin_lt-dev_linear__get_issue` | Load Linear ticket details |
 | `mcp__plugin_lt-dev_linear__list_comments` | Load ticket comments |

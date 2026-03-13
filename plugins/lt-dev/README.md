@@ -39,7 +39,7 @@ These plugins are **optional** but enhance the experience when working with this
 - **5 Agents** - Autonomous task execution
 - **27 Commands** - User-triggered actions via `/command-name`
 - **9 Hooks** - Automated project detection and validation
-- **2 MCP Servers** - Chrome DevTools and Linear integration
+- **5 MCP Servers** - Chrome DevTools, Linear, Nuxt UI, Better Auth, and Figma Desktop integration
 
 ## License
 

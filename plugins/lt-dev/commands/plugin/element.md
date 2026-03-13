@@ -1,5 +1,6 @@
 ---
 description: Create plugin element (skill, command, agent, hook, script)
+allowed-tools: Read, Write, Edit, Glob, Bash(ls:*), AskUserQuestion, WebFetch, WebSearch
 disable-model-invocation: true
 ---
 

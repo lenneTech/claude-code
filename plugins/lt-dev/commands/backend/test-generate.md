@@ -1,6 +1,6 @@
 ---
 description: Generate comprehensive tests for changes
-allowed-tools: Read, Grep, Glob, Edit, Write, Bash(npm run test:*), Bash(npm test:*), Bash(git diff:*), Bash(git status:*)
+allowed-tools: Read, Grep, Glob, Edit, Write, Bash(npm run test:*), Bash(npm test:*), Bash(pnpm run test:*), Bash(pnpm test:*), Bash(yarn run test:*), Bash(yarn test:*), Bash(git:*)
 disable-model-invocation: true
 ---
 
@@ -53,7 +53,7 @@ Analyze recent changes and create appropriate tests:
 
 5. **Test Execution** (NODE_ENV=e2e is set in package.json scripts):
    ```bash
-   npm run test:e2e
+   pnpm run test:e2e
    ```
    - On errors: Debug with console.log
    - Fix errors

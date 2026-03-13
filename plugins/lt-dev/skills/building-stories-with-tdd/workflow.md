@@ -614,12 +614,12 @@ Tests run in parallel, so improper test data management causes:
 
 **Execute all tests (NODE_ENV=e2e is set in package.json scripts):**
 ```bash
-npm test
+pnpm test
 ```
 
 **Or run specific story test:**
 ```bash
-npm test -- tests/stories/your-story.story.test.ts
+pnpm test -- tests/stories/your-story.story.test.ts
 ```
 
 **Analyze results:**
@@ -841,7 +841,7 @@ See **reference.md** for detailed debugging instructions and examples.
 
 **Run ALL tests (NODE_ENV=e2e is set in package.json scripts):**
 ```bash
-npm test
+pnpm test
 ```
 
 **Check results:**
@@ -900,9 +900,9 @@ Once all tests are passing, analyze your implementation for code quality issues:
 
 **ALWAYS review all code changes for security vulnerabilities.**
 
-#### Run `/security-review` (MANDATORY)
+#### Run `/lt-dev:review` (MANDATORY)
 
-Run the built-in `/security-review` command to perform a comprehensive, framework-agnostic security analysis of all changes. Fix any HIGH or MEDIUM findings before proceeding.
+Run the `/lt-dev:review` command to perform a comprehensive, framework-agnostic security analysis of all changes. Fix any HIGH or MEDIUM findings before proceeding.
 
 #### nest-server Specific Checks
 
@@ -955,10 +955,10 @@ Code duplication detected?
 
 ### 6. Run Tests After Refactoring & Security Review
 
-**CRITICAL: After any refactoring, adding indexes, or security fixes (NODE_ENV=e2e via npm scripts):**
+**CRITICAL: After any refactoring, adding indexes, or security fixes (NODE_ENV=e2e via package.json scripts):**
 
 ```bash
-npm test
+pnpm test
 ```
 
 **Ensure:**
@@ -987,9 +987,9 @@ npm test
 
 **After refactoring (or deciding not to refactor):**
 
-1. **Run ALL tests one final time (NODE_ENV=e2e via npm scripts):**
+1. **Run ALL tests one final time (NODE_ENV=e2e via package.json scripts):**
    ```bash
-   npm test
+   pnpm test
    ```
 
 2. **Verify:**

@@ -148,7 +148,7 @@ async authenticate(user: User, options?: AuthOptions) {
 
 1. **Run ALL tests** (not just story tests)
    ```bash
-   npm test
+   pnpm test
    ```
 
 2. **If existing tests fail:**
@@ -171,7 +171,7 @@ async authenticate(user: User, options?: AuthOptions) {
 5. **Validate:**
    ```bash
    # All tests (old + new) should pass
-   npm test
+   pnpm test
    ```
 
 ## Red Flags

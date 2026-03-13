@@ -125,7 +125,7 @@ For each file, review:
 6. **Verify existing tests run successfully (NODE_ENV=e2e is set in package.json scripts):**
    ```bash
    # Run existing tests to ensure they pass
-   npm run test:e2e
+   pnpm run test:e2e
 
    # If any fail, understand why before proceeding
    # Your new/modified tests MUST NOT break existing tests
@@ -586,7 +586,7 @@ afterAll(async () => {
 
 3. **Run existing tests to ensure they pass BEFORE your changes**:
    ```bash
-   npm run test:e2e
+   pnpm run test:e2e
    ```
 
 4. **Review and update tests**:
@@ -604,7 +604,7 @@ afterAll(async () => {
 
 6. **Run tests again to ensure your changes don't break anything**:
    ```bash
-   npm run test:e2e
+   pnpm run test:e2e
    ```
 
 ## Step 3: Compare with Existing Code
@@ -696,13 +696,13 @@ afterAll(async () => {
 
 ```bash
 # Run TypeScript compilation
-npm run build
+pnpm run build
 
 # Run linting
-npm run lint
+pnpm run lint
 
 # Run all tests
-npm run test:e2e
+pnpm run test:e2e
 
 # If any fail, fix issues and repeat
 ```
@@ -793,7 +793,7 @@ npm run test:e2e
 
    # Remove them manually or with sed
    # Then verify tests still pass
-   npm run test:e2e
+   pnpm run test:e2e
    ```
 
 **Debugging workflow example**:

@@ -1,5 +1,6 @@
 ---
 description: Verify plugin elements against best practices
+allowed-tools: Read, Glob, Grep, Bash(find:*), Bash(cat:*), Bash(ls:*), Bash(grep:*), AskUserQuestion, WebFetch, Write, Edit
 disable-model-invocation: true
 ---
 

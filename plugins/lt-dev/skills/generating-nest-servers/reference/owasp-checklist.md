@@ -367,7 +367,7 @@ app.use(helmet({
 | # | Practice | NestJS Implementation |
 |---|----------|----------------------|
 | 10.1 | Servers/frameworks configured securely | Follow NestJS security guide |
-| 10.2 | Third-party components up to date | Regular `npm audit`, `npm update` |
+| 10.2 | Third-party components up to date | Regular `pnpm audit`, `pnpm update` |
 | 10.3 | Non-essential features disabled | Disable GraphQL playground in prod |
 | 10.4 | Appropriate access controls for server files | chmod 640 for configs |
 | 10.5 | Separate environments (dev/staging/prod) | NODE_ENV based configuration |
@@ -500,7 +500,7 @@ function processPassword(password: string): void {
 
 | # | Practice | NestJS Implementation |
 |---|----------|----------------------|
-| 14.1 | Tested and approved managed code | `npm audit`, code review |
+| 14.1 | Tested and approved managed code | `pnpm audit`, code review |
 | 14.2 | Use task-specific tested libraries | Well-maintained packages only |
 | 14.3 | Don't use client-side code for security | Server-side validation always |
 | 14.4 | Use checksums for integrity | Package lock files, SRI |
@@ -572,6 +572,6 @@ if (url.hostname !== 'example.com') {
 - [ ] External Storage (S3)
 
 **Dependencies:**
-- [ ] `npm audit` clean
+- [ ] `pnpm audit` clean
 - [ ] No deprecated packages
 - [ ] Lock file committed

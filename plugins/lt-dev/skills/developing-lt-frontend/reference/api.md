@@ -33,7 +33,7 @@
 │   unter http://localhost:3000?"                                │
 │                                                                │
 │  Step 2: GENERATE TYPES                                        │
-│  - If API running → npm run generate-types                     │
+│  - If API running → pnpm run generate-types                    │
 │  - If API not running → Ask user to start it first             │
 │                                                                │
 │  Step 3: WAIT FOR COMPLETION                                   │
@@ -52,12 +52,12 @@
 
 ```bash
 # 1. Start API first (in monorepo)
-cd projects/api && npm run start:dev
+cd projects/api && pnpm run start:dev
 
 # 2. Wait for API to be ready (check http://localhost:3000/api)
 
 # 3. Generate types (from frontend directory)
-npm run generate-types
+pnpm run generate-types
 ```
 
 ### When to Regenerate

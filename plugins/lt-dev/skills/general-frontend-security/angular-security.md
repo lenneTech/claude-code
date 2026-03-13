@@ -535,13 +535,13 @@ export class SessionService {
 
 ```bash
 # Check for vulnerabilities
-npm audit
+pnpm audit
 
 # Auto-fix where possible
-npm audit fix
+pnpm audit --fix
 
 # In CI/CD
-npm audit --audit-level=high || exit 1
+pnpm audit --audit-level=high || exit 1
 ```
 
 ### Angular Update
@@ -554,8 +554,8 @@ ng update
 ng update @angular/core @angular/cli
 
 # Always test after updates
-npm test
-npm run build
+pnpm test
+pnpm run build
 ```
 
 ---
@@ -597,7 +597,7 @@ npm run build
 - [ ] AOT compilation enabled
 - [ ] Production mode enabled
 - [ ] Source maps disabled in production
-- [ ] npm audit clean
+- [ ] pnpm audit clean
 
 **CSP:**
 - [ ] Content Security Policy configured

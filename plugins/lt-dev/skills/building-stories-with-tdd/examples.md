@@ -1272,7 +1272,7 @@ export default {
 **Enable validation debugging** via environment variable:
 ```bash
 # Run tests with validation debugging
-DEBUG_VALIDATION=true npm test
+DEBUG_VALIDATION=true pnpm test
 ```
 
 Or set in your test file:

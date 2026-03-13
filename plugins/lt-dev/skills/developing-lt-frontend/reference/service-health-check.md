@@ -19,13 +19,13 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:3001
 │  1. CHECK API (Port 3000):                                     │
 │     curl -s -o /dev/null -w "%{http_code}" localhost:3000/api  │
 │     - If NOT 200: Start API in background                      │
-│       cd projects/api && npm run start:dev &                   │
+│       cd projects/api && pnpm run start:dev &                  │
 │     - Wait until API responds (max 30s)                        │
 │                                                                │
 │  2. CHECK APP (Port 3001):                                     │
 │     curl -s -o /dev/null -w "%{http_code}" localhost:3001      │
 │     - If NOT 200: Start App in background                      │
-│       cd projects/app && npm run dev &                         │
+│       cd projects/app && pnpm run dev &                        │
 │     - Wait until App responds (max 30s)                        │
 │                                                                │
 │  3. ONLY THEN proceed with frontend development                │
@@ -36,10 +36,10 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:3001
 
 ```bash
 # Start API in background (from monorepo root)
-cd projects/api && npm run start:dev &
+cd projects/api && pnpm run start:dev &
 
 # Start App in background (from monorepo root)
-cd projects/app && npm run dev &
+cd projects/app && pnpm run dev &
 ```
 
 **Important:**

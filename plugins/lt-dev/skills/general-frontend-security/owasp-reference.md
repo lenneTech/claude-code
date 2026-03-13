@@ -367,22 +367,22 @@ class RateLimitedClient {
 
 ```bash
 # Check for vulnerabilities
-npm audit
+pnpm audit
 
 # Auto-fix where safe
-npm audit fix
+pnpm audit --fix
 
 # Check outdated packages
-npm outdated
+pnpm outdated
 
 # Update to latest (careful with major versions)
-npm update
+pnpm update
 ```
 
 ### Dependency Best Practices
 
-1. **Lock versions**: Always commit `package-lock.json`
-2. **Regular audits**: Run `npm audit` in CI/CD
+1. **Lock versions**: Always commit `pnpm-lock.yaml`
+2. **Regular audits**: Run `pnpm audit` in CI/CD
 3. **Minimal dependencies**: Fewer deps = smaller attack surface
 4. **Review before adding**: Check package popularity, maintenance, and security
 5. **CDN integrity**: Always use SRI for CDN resources

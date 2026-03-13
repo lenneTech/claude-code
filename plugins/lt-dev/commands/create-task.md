@@ -1,7 +1,7 @@
 ---
 description: Create a technical task ticket for Linear
 argument-hint: [task-idea]
-allowed-tools: AskUserQuestion, Write, Read, Glob, mcp__plugin_lt-dev_linear__*, Skill
+allowed-tools: AskUserQuestion, Write, Read, Glob, mcp__plugin_lt-dev_linear__*
 disable-model-invocation: true
 ---
 

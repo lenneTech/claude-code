@@ -8,42 +8,57 @@ This document describes the recommended Test-Driven Development approach for ful
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
-│  FULLSTACK TDD WORKFLOW                                                    │
+│  FULLSTACK TDD WORKFLOW (Standard — Sequential)                            │
 │                                                                            │
 │  Phase 1: BACKEND                                                          │
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
 │  │ 1. Write Backend Tests (API Tests)                                  │   │
-│  │    - REST endpoint tests (using TestHelper)                         │   │
-│  │    - GraphQL mutation/query tests (if applicable)                   │   │
-│  │    - Test all expected API behavior BEFORE implementation           │   │
-│  │                                                                     │   │
 │  │ 2. Implement Backend Against Tests                                  │   │
-│  │    - Create modules, services, controllers                          │   │
-│  │    - Iterate until ALL tests pass                                   │   │
-│  │    - Use `generating-nest-servers` skill                            │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                            │
 │  Phase 2: FRONTEND                                                         │
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
 │  │ 3. Write Frontend Tests (E2E Tests)                                 │   │
-│  │    - Playwright E2E tests for user workflows                        │   │
-│  │    - Test complete user journeys BEFORE implementation              │   │
-│  │    - Include authentication flows                                   │   │
-│  │                                                                     │   │
 │  │ 4. Implement Frontend Against Tests                                 │   │
-│  │    - Create components, pages, composables                          │   │
-│  │    - Iterate until ALL E2E tests pass                               │   │
-│  │    - Use `developing-lt-frontend` skill                             │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                            │
 │  Phase 3: DEBUGGING & VERIFICATION                                         │
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
 │  │ 5. Browser Debugging (Chrome DevTools MCP)                          │   │
-│  │    - Use Chrome DevTools MCP (mcp__chrome-devtools__*) for direct   │   │
-│  │      testing/debugging (default unless user requests otherwise)     │   │
-│  │    - Verify API calls in Network tab                                │   │
-│  │    - Check Console for errors                                       │   │
-│  │    - Take snapshots/screenshots for visual verification             │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────────────┐
+│  FULLSTACK TDD WORKFLOW (Agent Teams — Parallel Test Writing)              │
+│  Requires: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1                          │
+│  Trigger: Fullstack monorepo + story involves backend AND frontend         │
+│                                                                            │
+│  Phase 0: CONTRACT DEFINITION (Lead)                                       │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ Define API contracts from story (endpoints, request/response shapes)│   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                            │
+│  Phase 1: PARALLEL TEST WRITING (2 teammates, simultaneous)                │
+│  ┌──────────────────────────┐  ┌──────────────────────────┐               │
+│  │ Teammate: backend-tests  │  │ Teammate: frontend-tests │               │
+│  │ Write API tests          │  │ Write E2E tests          │               │
+│  │ Share contracts via msg   │→│ Consume API contracts     │               │
+│  └──────────────────────────┘  └──────────────────────────┘               │
+│                                                                            │
+│  Phase 2: CONTRACT VALIDATION (Lead)                                       │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ Verify backend + frontend tests reference consistent contracts      │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                            │
+│  Phase 3: SEQUENTIAL IMPLEMENTATION (standard TDD)                         │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ Backend → Frontend (frontend needs generated types from API)        │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                            │
+│  Phase 4: DEBUGGING & VERIFICATION                                         │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ Browser Debugging (Chrome DevTools MCP)                             │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                            │
 └────────────────────────────────────────────────────────────────────────────┘
@@ -204,6 +219,7 @@ const uniqueName = `Test-Entity-${Date.now()}`;
     "test:cov": "NODE_ENV=e2e vitest run --coverage",
     "test:e2e": "NODE_ENV=e2e vitest run --config ./vitest.e2e.config.ts",
     "test:stories": "NODE_ENV=e2e vitest run --dir tests/stories"
+
   }
 }
 ```
@@ -230,9 +246,9 @@ const uniqueName = `Test-Entity-${Date.now()}`;
 ```json
 {
   "scripts": {
-    "test:backend": "npm test --workspace=projects/api",
-    "test:frontend": "npm run test:e2e --workspace=projects/app",
-    "test:all": "npm run test:backend && npm run test:frontend"
+    "test:backend": "pnpm test --filter=projects/api",
+    "test:frontend": "pnpm run test:e2e --filter=projects/app",
+    "test:all": "pnpm run test:backend && pnpm run test:frontend"
   }
 }
 ```
@@ -337,13 +353,13 @@ export default defineConfig({
   // Start both API and App for E2E tests
   webServer: [
     {
-      command: 'NODE_ENV=e2e npm run start:dev --workspace=projects/api',
+      command: 'NODE_ENV=e2e pnpm run start:dev --filter=projects/api',
       url: 'http://localhost:3000/api',
       reuseExistingServer: !process.env.CI,
       timeout: 120 * 1000,
     },
     {
-      command: 'npm run dev --workspace=projects/app',
+      command: 'pnpm run dev --filter=projects/app',
       url: 'http://localhost:3001',
       reuseExistingServer: !process.env.CI,
       timeout: 120 * 1000,
@@ -384,7 +400,7 @@ volumes:
 docker compose -f docker-compose.test.yml up -d
 
 # Run tests
-npm run test:all
+pnpm run test:all
 ```
 
 ## Workflow Steps in Detail
@@ -426,7 +442,7 @@ describe('Product API', () => {
 
 **Iterate until all tests pass:**
 ```bash
-npm test -- tests/stories/product.story.test.ts
+pnpm test -- tests/stories/product.story.test.ts
 ```
 
 ### Step 3: Write Frontend E2E Tests
@@ -474,7 +490,7 @@ test.describe('Product Management', () => {
 
 **Iterate until all E2E tests pass:**
 ```bash
-npm run test:e2e
+pnpm run test:e2e
 ```
 
 ### Step 5: Browser Debugging
@@ -502,36 +518,36 @@ npm run test:e2e
 ### Backend Tests
 ```bash
 # All backend tests
-npm test
+pnpm test
 
 # Specific story test
-npm test -- tests/stories/product.story.test.ts
+pnpm test -- tests/stories/product.story.test.ts
 
 # With coverage
-npm test -- --coverage
+pnpm test -- --coverage
 ```
 
 ### Frontend E2E Tests
 ```bash
 # All E2E tests
-npm run test:e2e
+pnpm run test:e2e
 
 # Specific test file
-npx playwright test tests/e2e/product.spec.ts
+pnpm dlx playwright test tests/e2e/product.spec.ts
 
 # With UI mode (debugging)
-npx playwright test --ui
+pnpm dlx playwright test --ui
 
 # With headed browser
-npx playwright test --headed
+pnpm dlx playwright test --headed
 ```
 
 ### Full Suite
 ```bash
 # Run everything (CI)
-npm run test:all
+pnpm run test:all
 # or
-npm test && npm run test:e2e
+pnpm test && pnpm run test:e2e
 ```
 
 ## Checklist
@@ -549,7 +565,7 @@ npm test && npm run test:e2e
 - [ ] Refactoring with tests passing (Refactor phase)
 
 ### After Completion
-- [ ] All tests pass (`npm test && npm run test:e2e`)
+- [ ] All tests pass (`pnpm test && pnpm run test:e2e`)
 - [ ] Test cleanup verified (run tests twice without issues)
 - [ ] No hardcoded test data in production code
 - [ ] Coverage acceptable (aim for >80%)

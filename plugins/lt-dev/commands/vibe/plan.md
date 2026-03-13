@@ -1,6 +1,7 @@
 ---
 description: Create detailed implementation plan from SPEC.md
 argument-hint: [spec-file]
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash(docker:*), Bash(docker-compose:*), Bash(git:*), AskUserQuestion
 disable-model-invocation: true
 ---
 
@@ -40,7 +41,7 @@ Read SPEC.md and create a comprehensive implementation plan.
 **ALWAYS follow this sequence for each feature:**
 1. **Backend first** - Models, Services, Controllers
 2. **Start Docker** - `docker compose up -d` (API + DB)
-3. **Generate types** - `npm run generate-types`
+3. **Generate types** - `pnpm run generate-types`
 4. **Frontend last** - Using generated types, NO mock data
 
 **All development runs in Docker!**
@@ -49,7 +50,7 @@ Read SPEC.md and create a comprehensive implementation plan.
 
 If no `docker-compose.yml` exists in the project:
 - Ask: "Kein Docker-Setup gefunden. Soll ich eines erstellen, oder möchtest du ohne Docker entwickeln?"
-- If user chooses non-Docker: Skip Docker phases, use local `npm run dev` commands instead
+- If user chooses non-Docker: Skip Docker phases, use local `pnpm run dev` commands instead
 
 ### Plan Structure
 
@@ -80,7 +81,7 @@ Create **IMPLEMENTATION_PLAN.md** with checkboxes:
 
 ## Phase 4: Types Generation
 - [ ] Verify API running (`docker compose logs api`)
-- [ ] Generate types (`npm run generate-types`)
+- [ ] Generate types (`pnpm run generate-types`)
 
 ## Phase 5: Frontend Integration
 - [ ] Feature A - Frontend (with real API)
@@ -88,9 +89,9 @@ Create **IMPLEMENTATION_PLAN.md** with checkboxes:
 - [ ] ...
 
 ## Phase 6: Quality Assurance
-- [ ] Run lint (`npm run lint`)
+- [ ] Run lint (`pnpm run lint`)
 - [ ] Fix lint errors
-- [ ] Run build (`npm run build`)
+- [ ] Run build (`pnpm run build`)
 - [ ] Fix build errors
 
 ## Phase 7: Browser Testing (Chrome MCP)
@@ -166,6 +167,6 @@ Save as **IMPLEMENTATION_PLAN.md**
 |---------|--------|
 | `generate-types` fails | Check if API is running: `docker compose logs api` |
 | Docker won't start | Check ports: `lsof -i :3000 -i :3001` |
-| Lint errors | Run `npm run lint:fix` first, then re-run lint |
+| Lint errors | Run `pnpm run lint:fix` first, then re-run lint |
 | Build fails | Check console output, often missing imports or type errors |
 | API not responding | `docker compose restart api` and check logs |

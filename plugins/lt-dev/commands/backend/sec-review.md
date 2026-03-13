@@ -1,6 +1,6 @@
 ---
 description: Perform security review of code changes
-allowed-tools: Read, Grep, Glob, Bash(git diff:*)
+allowed-tools: Read, Grep, Glob, Bash(git:*)
 disable-model-invocation: true
 ---
 
