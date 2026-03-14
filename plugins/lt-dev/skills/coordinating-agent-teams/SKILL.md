@@ -1,6 +1,6 @@
 ---
 name: coordinating-agent-teams
-description: Provides auto-detection heuristics and coordination patterns for Claude Code Agent Teams. Runs independent review agents, parallel backend+frontend test writers, adversarial debuggers, or parallel git worktree rebases. Activates when user mentions "agent team", "parallel review", "parallel agents", "team debug", "parallel worktrees", "batch rebase", or when commands evaluate team suitability via CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS. NOT for single-agent Agent tool subagents. NOT for subagent coordination within one session.
+description: Provides auto-detection heuristics, coordination patterns, and worktree isolation guidance for parallel Claude Code operations. Covers Agent Teams (independent sessions with messaging) and parallel subagent spawning (Agent tool with isolation worktree). Activates when user mentions "agent team", "parallel review", "parallel agents", "team debug", "parallel worktrees", "batch rebase", "parallel backend frontend", "implement in parallel", or when commands evaluate team suitability via CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS. Also activates when spawning multiple file-modifying subagents concurrently. NOT for single sequential subagent invocations.
 user-invocable: false
 ---
 
@@ -76,6 +76,41 @@ Not justified when:
 - A single agent can complete the task in <5 minutes
 - The task is straightforward with one obvious approach
 - Token budget is constrained
+
+## Parallel Subagent Isolation
+
+When spawning multiple file-modifying subagents concurrently via the Agent tool (not Agent Teams), use `isolation: "worktree"` to prevent file conflicts:
+
+```
+Agent tool call:
+  subagent_type: "lt-dev:backend-dev"
+  isolation: "worktree"         ← each gets its own working copy
+  prompt: "Implement feature X in projects/api/..."
+
+Agent tool call:
+  subagent_type: "lt-dev:frontend-dev"
+  isolation: "worktree"
+  prompt: "Implement feature X in projects/app/..."
+```
+
+### When to use `isolation: "worktree"`
+
+| Scenario | Isolation needed? |
+|----------|-------------------|
+| Multiple file-modifying agents in parallel | Yes |
+| Single agent (sequential) | No |
+| Read-only agents (reviewers) in parallel | No |
+| Agent modifying lockfiles/dependencies | No — needs in-place access |
+
+### Agent compatibility
+
+| Supports worktree | No worktree (in-place only) |
+|-------------------|-----------------------------|
+| `backend-dev`, `frontend-dev`, `devops`, `branch-rebaser` | `fullstack-updater`, `nest-server-updater`, `npm-package-maintainer`, all reviewers |
+
+## Worktree Operations Reference
+
+See [worktree-guide.md](${CLAUDE_SKILL_DIR}/worktree-guide.md) for setup, cleanup, naming conventions, performance settings (`worktree.sparsePaths`, `worktree.symlinkDirectories`), dependency isolation, and known limitations.
 
 ## Limitations
 

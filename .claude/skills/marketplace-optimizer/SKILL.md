@@ -124,40 +124,53 @@ Analyze overall marketplace structure:
 ")
 ```
 
-### Phase 5: Consolidate Results
+### Phase 5: Present Results to User
 
-Collect findings from all agents and create unified optimization list:
+**CRITICAL:** Before asking the user which optimizations to apply, you MUST first output the full findings as readable text. The user needs to understand what was found before making a selection.
+
+**Output the consolidated findings as Markdown:**
 
 ```markdown
-## Proposed Optimizations
+## Identified Optimizations
 
-### Skills (from optimizer-skills)
-- [ ] Finding 1
-- [ ] Finding 2
+### Skills (X found)
+1. **[Element-Name]**: [Concrete description of what should be optimized and why]
+2. ...
 
-### Commands (from optimizer-commands)
-- [ ] Finding 1
+### Commands (X found)
+1. **[Element-Name]**: [Concrete description]
+2. ...
 
-### Agents (from optimizer-agents)
-- [ ] Finding 1
+### Agents (X found)
+1. **[Element-Name]**: [Concrete description]
+2. ...
 
-### Hooks (from optimizer-hooks)
-- [ ] Finding 1
+### Hooks (X found)
+1. **[Element-Name]**: [Concrete description]
+2. ...
 
-### MCP (from optimizer-mcp)
-- [ ] Finding 1
+### MCP (X found)
+1. **[Element-Name]**: [Concrete description]
+2. ...
 
-### Cross-References & Structure (from optimizer-marketplace)
-- [ ] Finding 1
-- [ ] New feature opportunity: ...
+### Cross-References & Structure (X found)
+1. **[Element-Name]**: [Concrete description]
+2. ...
 ```
+
+**Rules:**
+- Show concrete details for each finding (what, where, why)
+- Group by category with count in heading
+- Skip categories with zero findings
+- Number each finding for easy reference
 
 ### Phase 6: User Confirmation
 
-Use AskUserQuestion with multiSelect:
+**After showing the findings**, use AskUserQuestion with multiSelect:
 - Present all optimizations as checkboxes
 - Default: all selected
 - Group by agent/category
+- Each option text should match the numbered finding above
 
 ### Phase 7: Execute Approved Optimizations
 

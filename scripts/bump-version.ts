@@ -45,6 +45,18 @@ packageJson.version = newVersion;
 writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
 console.log(`✓ Updated package.json: ${oldVersion} → ${newVersion}`);
 
+// Update package-lock.json (version field in root and packages[""])
+const packageLockPath = join(rootDir, 'package-lock.json');
+if (existsSync(packageLockPath)) {
+  const packageLock = JSON.parse(readFileSync(packageLockPath, 'utf8'));
+  packageLock.version = newVersion;
+  if (packageLock.packages?.['']) {
+    packageLock.packages[''].version = newVersion;
+  }
+  writeFileSync(packageLockPath, JSON.stringify(packageLock, null, 2) + '\n');
+  console.log(`✓ Updated package-lock.json: ${oldVersion} → ${newVersion}`);
+}
+
 // Update all plugin.json files in plugins/*/
 const pluginDirs = readdirSync(pluginsDir, { withFileTypes: true })
   .filter(d => d.isDirectory())

@@ -1,7 +1,7 @@
 # Hooks reference
 
 > Source: https://code.claude.com/docs/en/hooks
-> Generated: 2026-03-12T14:48:14.743Z
+> Generated: 2026-03-14T12:58:55.878Z
 
 ---
 
@@ -14,7 +14,7 @@ Hook lifecycle
 
 Hooks fire at specific points during a Claude Code session. When an event fires and a matcher matches, Claude Code passes JSON context about the event to your hook handler. For command hooks, input arrives on stdin. For HTTP hooks, it arrives as the POST request body. Your handler can then inspect the input, take action, and optionally return a decision. Some events fire once per session, while others fire repeatedly inside the agentic loop:
 
-![Hook lifecycle diagram showing the sequence of hooks from SessionStart through the agentic loop to SessionEnd, with WorktreeCreate, WorktreeRemove, and InstructionsLoaded as standalone async events](https://mintcdn.com/claude-code/JWoaQLhotXStH4d2/images/hooks-lifecycle.svg?fit=max&auto=format&n=JWoaQLhotXStH4d2&q=85&s=9310bd002ef90ca32ac668455f5580a0)
+![Hook lifecycle diagram showing the sequence of hooks from SessionStart through the agentic loop (PreToolUse, PermissionRequest, PostToolUse, SubagentStart/Stop, TaskCompleted) to PostCompact and SessionEnd, with Elicitation and ElicitationResult nested inside MCP tool execution and WorktreeCreate, WorktreeRemove, Notification, ConfigChange, and InstructionsLoaded as standalone async events](https://mintcdn.com/claude-code/lBsitdsGyD9caWJQ/images/hooks-lifecycle.svg?fit=max&auto=format&n=lBsitdsGyD9caWJQ&q=85&s=be3486ef2cf2563eb213b6cbbce93982)
 
 The table below summarizes when each event fires. The [Hook events](#hook-events) section documents the full input schema and decision control options for each one.
 
@@ -37,6 +37,9 @@ The table below summarizes when each event fires. The [Hook events](#hook-events
 |`WorktreeCreate`| When a worktree is being created via`--worktree`or`isolation: "worktree"`. Replaces default git behavior |
 |`WorktreeRemove`| When a worktree is being removed, either at session exit or when a subagent finishes |
 |`PreCompact`| Before context compaction |
+|`PostCompact`| After context compaction completes |
+|`Elicitation`| When an MCP server requests user input during a tool call |
+|`ElicitationResult`| After a user responds to an MCP elicitation, before the response is sent back to the server |
 |`SessionEnd`| When a session terminates |
 
 
@@ -72,7 +75,7 @@ else
   exit 0  # allow the command
 fi```Now suppose Claude Code decides to run`Bash "rm -rf /tmp/build"`. Here’s what happens:
 
-![Hook resolution flow: PreToolUse event fires, matcher checks for Bash match, hook handler runs, result returns to Claude Code](https://mintcdn.com/claude-code/TBPmHzr19mDCuhZi/images/hook-resolution.svg?fit=max&auto=format&n=TBPmHzr19mDCuhZi&q=85&s=5bb890134390ecd0581477cf41ef730b)
+![Hook resolution flow: PreToolUse event fires, matcher checks for Bash match, hook handler runs, result returns to Claude Code](https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/images/hook-resolution.svg?fit=max&auto=format&n=c5r9_6tjPMzFdDDT&q=85&s=ad667ee6d86ab2276aa48a4e73e220df)
 
 1
 
@@ -263,10 +266,7 @@ Claude Code sends the hook’s [JSON input](#hook-input-and-output) as the POST 
       }
     ]
   }
-}```HTTP hooks must be configured by editing settings JSON directly. The`/hooks`interactive menu only supports adding command hooks.
-
-
-Prompt and agent hook fields
+}```Prompt and agent hook fields
 
 In addition to the [common fields](#common-fields), prompt and agent hooks accept these fields:
 
@@ -339,14 +339,17 @@ hooks:
 
 The`/hooks`menu
 
-Type`/hooks`in Claude Code to open the interactive hooks manager, where you can view, add, and delete hooks without editing settings files directly. For a step-by-step walkthrough, see [Set up your first hook](/docs/en/hooks-guide#set-up-your-first-hook) in the guide. Each hook in the menu is labeled with a bracket prefix indicating its source:
+Type`/hooks`in Claude Code to open a read-only browser for your configured hooks. The menu shows every hook event with a count of configured hooks, lets you drill into matchers, and shows the full details of each hook handler. Use it to verify configuration, check which settings file a hook came from, or inspect a hook’s command, prompt, or URL. The menu displays all four hook types:`command`,`prompt`,`agent`, and`http`. Each hook is labeled with a`[type]`prefix and a source indicating where it was defined:
 
--`[User]`: from`~/.claude/settings.json`-`[Project]`: from`.claude/settings.json`-`[Local]`: from`.claude/settings.local.json`-`[Plugin]`: from a plugin’s`hooks/hooks.json`, read-only
+-`User`: from`~/.claude/settings.json`-`Project`: from`.claude/settings.json`-`Local`: from`.claude/settings.local.json`-`Plugin`: from a plugin’s`hooks/hooks.json`-`Session`: registered in memory for the current session
+-`Built-in`: registered internally by Claude Code
+
+Selecting a hook opens a detail view showing its event, matcher, type, source file, and the full command, prompt, or URL. The menu is read-only: to add, modify, or remove hooks, edit the settings JSON directly or ask Claude to make the change.
 
 
 Disable or remove hooks
 
-To remove a hook, delete its entry from the settings JSON file, or use the`/hooks`menu and select the hook to delete it. To temporarily disable all hooks without removing them, set`"disableAllHooks": true`in your settings file or use the toggle in the`/hooks`menu. There is no way to disable an individual hook while keeping it in the configuration. The`disableAllHooks`setting respects the managed settings hierarchy. If an administrator has configured hooks through managed policy settings,`disableAllHooks`set in user, project, or local settings cannot disable those managed hooks. Only`disableAllHooks`set at the managed settings level can disable managed hooks. Direct edits to hooks in settings files don’t take effect immediately. Claude Code captures a snapshot of hooks at startup and uses it throughout the session. This prevents malicious or accidental hook modifications from taking effect mid-session without your review. If hooks are modified externally, Claude Code warns you and requires review in the`/hooks`menu before changes apply.
+To remove a hook, delete its entry from the settings JSON file. To temporarily disable all hooks without removing them, set`"disableAllHooks": true`in your settings file. There is no way to disable an individual hook while keeping it in the configuration. The`disableAllHooks`setting respects the managed settings hierarchy. If an administrator has configured hooks through managed policy settings,`disableAllHooks`set in user, project, or local settings cannot disable those managed hooks. Only`disableAllHooks`set at the managed settings level can disable managed hooks. Direct edits to hooks in settings files don’t take effect immediately. Claude Code captures a snapshot of hooks at startup and uses it throughout the session. This prevents malicious or accidental hook modifications from taking effect mid-session without your review. If hooks are modified externally, Claude Code warns you and requires review in the`/hooks`menu before changes apply.
 
 
 Hook input and output
@@ -418,6 +421,9 @@ Exit code 2 is the way a hook signals “stop, don’t do this.” The effect de
 |`SessionStart`| No | Shows stderr to user only |
 |`SessionEnd`| No | Shows stderr to user only |
 |`PreCompact`| No | Shows stderr to user only |
+|`PostCompact`| No | Shows stderr to user only |
+|`Elicitation`| Yes | Denies the elicitation |
+|`ElicitationResult`| Yes | Blocks the response (action becomes decline) |
 |`WorktreeCreate`| Yes | Any non-zero exit code causes worktree creation to fail |
 |`WorktreeRemove`| No | Failures are logged in debug mode only |
 |`InstructionsLoaded`| No | Exit code is ignored |
@@ -466,7 +472,9 @@ Not every event supports blocking or controlling behavior through JSON. The even
 | PreToolUse |`hookSpecificOutput`|`permissionDecision`(allow/deny/ask),`permissionDecisionReason`|
 | PermissionRequest |`hookSpecificOutput`|`decision.behavior`(allow/deny) |
 | WorktreeCreate | stdout path | Hook prints absolute path to created worktree. Non-zero exit fails creation |
-| WorktreeRemove, Notification, SessionEnd, PreCompact, InstructionsLoaded | None | No decision control. Used for side effects like logging or cleanup |
+| Elicitation |`hookSpecificOutput`|`action`(accept/decline/cancel),`content`(form field values for accept) |
+| ElicitationResult |`hookSpecificOutput`|`action`(accept/decline/cancel),`content`(form field values override) |
+| WorktreeRemove, Notification, SessionEnd, PreCompact, PostCompact, InstructionsLoaded | None | No decision control. Used for side effects like logging or cleanup |
 
 Here are examples of each pattern in action:
 
@@ -738,7 +746,9 @@ PreToolUse decision control`PreToolUse`hooks can control whether a tool call pro
 |`permissionDecision`|`"allow"`bypasses the permission system,`"deny"`prevents the tool call,`"ask"`prompts the user to confirm |
 |`permissionDecisionReason`| For`"allow"`and`"ask"`, shown to the user but not Claude. For`"deny"`, shown to Claude |
 |`updatedInput`| Modifies the tool’s input parameters before execution. Combine with`"allow"`to auto-approve, or`"ask"`to show the modified input to the user |
-|`additionalContext`| String added to Claude’s context before the tool executes |```{
+|`additionalContext`| String added to Claude’s context before the tool executes |
+
+When a hook returns`"ask"`, the permission prompt displayed to the user includes a label identifying where the hook came from: for example,`[User]`,`[Project]`,`[Plugin]`, or`[Local]`. This helps users understand which configuration source is requesting confirmation.```{
   "hookSpecificOutput": {
     "hookEventName": "PreToolUse",
     "permissionDecision": "allow",
@@ -1176,7 +1186,30 @@ In addition to the [common input fields](#common-input-fields), PreCompact hooks
   "hook_event_name": "PreCompact",
   "trigger": "manual",
   "custom_instructions": ""
-}```SessionEnd
+}```PostCompact
+
+Runs after Claude Code completes a compact operation. Use this event to react to the new compacted state, for example to log the generated summary or update external state. The same matcher values apply as for`PreCompact`:
+
+| Matcher | When it fires |
+| --- | --- |
+|`manual`| After`/compact`|
+|`auto`| After auto-compact when the context window is full |
+
+
+PostCompact input
+
+In addition to the [common input fields](#common-input-fields), PostCompact hooks receive`trigger`and`compact_summary`. The`compact_summary`field contains the conversation summary generated by the compact operation.```{
+  "session_id": "abc123",
+  "transcript_path": "/Users/.../.claude/projects/.../00893aaf-19fa-41d2-8238-13269b9b3ca0.jsonl",
+  "cwd": "/Users/...",
+  "permission_mode": "default",
+  "hook_event_name": "PostCompact",
+  "trigger": "manual",
+  "compact_summary": "Summary of the compacted conversation..."
+}```PostCompact hooks have no decision control. They cannot affect the compaction result but can perform follow-up tasks.
+
+
+SessionEnd
 
 Runs when a Claude Code session ends. Useful for cleanup tasks, logging session statistics, or saving session state. Supports matchers to filter by exit reason. The`reason`field in the hook input indicates why the session ended:
 
@@ -1198,7 +1231,88 @@ In addition to the [common input fields](#common-input-fields), SessionEnd hooks
   "permission_mode": "default",
   "hook_event_name": "SessionEnd",
   "reason": "other"
-}```SessionEnd hooks have no decision control. They cannot block session termination but can perform cleanup tasks.
+}```SessionEnd hooks have no decision control. They cannot block session termination but can perform cleanup tasks. SessionEnd hooks have a default timeout of 1.5 seconds. This applies to both session exit and`/clear`. If your hooks need more time, set the`CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS`environment variable to a higher value in milliseconds. Any per-hook`timeout`setting is also capped by this value.```CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS=5000 claude```Elicitation
+
+Runs when an MCP server requests user input mid-task. By default, Claude Code shows an interactive dialog for the user to respond. Hooks can intercept this request and respond programmatically, skipping the dialog entirely. The matcher field matches against the MCP server name.
+
+
+Elicitation input
+
+In addition to the [common input fields](#common-input-fields), Elicitation hooks receive`mcp_server_name`,`message`, and optional`mode`,`url`,`elicitation_id`, and`requested_schema`fields. For form-mode elicitation (the most common case):```{
+  "session_id": "abc123",
+  "transcript_path": "/Users/.../.claude/projects/.../00893aaf-19fa-41d2-8238-13269b9b3ca0.jsonl",
+  "cwd": "/Users/...",
+  "permission_mode": "default",
+  "hook_event_name": "Elicitation",
+  "mcp_server_name": "my-mcp-server",
+  "message": "Please provide your credentials",
+  "mode": "form",
+  "requested_schema": {
+    "type": "object",
+    "properties": {
+      "username": { "type": "string", "title": "Username" }
+    }
+  }
+}```For URL-mode elicitation (browser-based authentication):```{
+  "session_id": "abc123",
+  "transcript_path": "/Users/.../.claude/projects/.../00893aaf-19fa-41d2-8238-13269b9b3ca0.jsonl",
+  "cwd": "/Users/...",
+  "permission_mode": "default",
+  "hook_event_name": "Elicitation",
+  "mcp_server_name": "my-mcp-server",
+  "message": "Please authenticate",
+  "mode": "url",
+  "url": "https://auth.example.com/login"
+}```Elicitation output
+
+To respond programmatically without showing the dialog, return a JSON object with`hookSpecificOutput`:```{
+  "hookSpecificOutput": {
+    "hookEventName": "Elicitation",
+    "action": "accept",
+    "content": {
+      "username": "alice"
+    }
+  }
+}```| Field | Values | Description |
+| --- | --- | --- |
+|`action`|`accept`,`decline`,`cancel`| Whether to accept, decline, or cancel the request |
+|`content`| object | Form field values to submit. Only used when`action`is`accept`|
+
+Exit code 2 denies the elicitation and shows stderr to the user.
+
+
+ElicitationResult
+
+Runs after a user responds to an MCP elicitation. Hooks can observe, modify, or block the response before it is sent back to the MCP server. The matcher field matches against the MCP server name.
+
+
+ElicitationResult input
+
+In addition to the [common input fields](#common-input-fields), ElicitationResult hooks receive`mcp_server_name`,`action`, and optional`mode`,`elicitation_id`, and`content`fields.```{
+  "session_id": "abc123",
+  "transcript_path": "/Users/.../.claude/projects/.../00893aaf-19fa-41d2-8238-13269b9b3ca0.jsonl",
+  "cwd": "/Users/...",
+  "permission_mode": "default",
+  "hook_event_name": "ElicitationResult",
+  "mcp_server_name": "my-mcp-server",
+  "action": "accept",
+  "content": { "username": "alice" },
+  "mode": "form",
+  "elicitation_id": "elicit-123"
+}```ElicitationResult output
+
+To override the user’s response, return a JSON object with`hookSpecificOutput`:```{
+  "hookSpecificOutput": {
+    "hookEventName": "ElicitationResult",
+    "action": "decline",
+    "content": {}
+  }
+}```| Field | Values | Description |
+| --- | --- | --- |
+|`action`|`accept`,`decline`,`cancel`| Overrides the user’s action |
+|`content`| object | Overrides form field values. Only meaningful when`action`is`accept`|
+
+Exit code 2 blocks the response, changing the effective action to`decline`.
 
 
 Prompt-based hooks
@@ -1207,7 +1321,7 @@ In addition to command and HTTP hooks, Claude Code supports prompt-based hooks (
 
 -`PermissionRequest`-`PostToolUse`-`PostToolUseFailure`-`PreToolUse`-`Stop`-`SubagentStop`-`TaskCompleted`-`UserPromptSubmit`Events that only support`type: "command"`hooks:
 
--`ConfigChange`-`InstructionsLoaded`-`Notification`-`PreCompact`-`SessionEnd`-`SessionStart`-`SubagentStart`-`TeammateIdle`-`WorktreeCreate`-`WorktreeRemove`How prompt-based hooks work
+-`ConfigChange`-`Elicitation`-`ElicitationResult`-`InstructionsLoaded`-`Notification`-`PostCompact`-`PreCompact`-`SessionEnd`-`SessionStart`-`SubagentStart`-`TeammateIdle`-`WorktreeCreate`-`WorktreeRemove`How prompt-based hooks work
 
 Instead of executing a Bash command, prompt-based hooks:
 
@@ -1336,7 +1450,7 @@ Add`"async": true`to a command hook’s configuration to run it in the backgroun
 
 How async hooks execute
 
-When an async hook fires, Claude Code starts the hook process and immediately continues without waiting for it to finish. The hook receives the same JSON input via stdin as a synchronous hook. After the background process exits, if the hook produced a JSON response with a`systemMessage`or`additionalContext`field, that content is delivered to Claude as context on the next conversation turn.
+When an async hook fires, Claude Code starts the hook process and immediately continues without waiting for it to finish. The hook receives the same JSON input via stdin as a synchronous hook. After the background process exits, if the hook produced a JSON response with a`systemMessage`or`additionalContext`field, that content is delivered to Claude as context on the next conversation turn. Async hook completion notifications are suppressed by default. To see them, enable verbose mode with`Ctrl+O`or start Claude Code with`--verbose`.
 
 
 Example: run tests after file changes

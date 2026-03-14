@@ -200,6 +200,10 @@ git worktree prune
 - Each teammate must work exclusively in its assigned worktree path
 - Lead must NOT work in the main worktree during parallel operations
 - Force push operations must be serialized (one at a time) to avoid race conditions
+- **Dependencies must be installed per worktree** - they do not carry over from the main directory
+- For monorepos, consider `worktree.sparsePaths` and `worktree.symlinkDirectories` settings for faster setup
+
+See [worktree-guide.md](${CLAUDE_SKILL_DIR}/worktree-guide.md) for complete operational best practices.
 
 ### Team Creation Template
 

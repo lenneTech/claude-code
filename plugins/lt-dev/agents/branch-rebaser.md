@@ -5,6 +5,7 @@ model: sonnet
 tools: Bash, Read, Grep, Glob, Write, Edit, TodoWrite, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
 permissionMode: acceptEdits
 memory: project
+isolation: worktree
 skills: generating-nest-servers, developing-lt-frontend, rebasing-branches
 mcpServers: linear
 maxTurns: 100

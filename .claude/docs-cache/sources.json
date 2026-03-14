@@ -2,8 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "Central configuration for Claude Code documentation sources. All sources are cached locally and updated when Claude Code version changes.",
   "cache": {
-    "claudeCodeVersion": "2.1.74",
-    "lastUpdated": "2026-03-12T14:48:15.149Z",
+    "claudeCodeVersion": "2.1.76",
+    "lastUpdated": "2026-03-14T12:58:56.718Z",
     "updateBehavior": "auto"
   },
   "updateBehaviorOptions": {
@@ -84,6 +84,12 @@
       "url": "https://code.claude.com/docs/en/cli-reference",
       "type": "spa",
       "description": "CLI options and flags"
+    },
+    {
+      "name": "common-workflows",
+      "url": "https://code.claude.com/docs/en/common-workflows",
+      "type": "spa",
+      "description": "Step-by-step guides for worktrees, parallel sessions, Plan Mode, subagents, testing, PRs, and unix-style usage"
     },
     {
       "name": "github-plugins-readme",

@@ -28,6 +28,7 @@ All Claude Code best practices are cached locally in `.claude/docs-cache/*.md`. 
 | `memory.md` | CLAUDE.md structure and usage |
 | `settings.md` | Settings reference |
 | `cli-reference.md` | CLI options and flags |
+| `common-workflows.md` | Worktrees, parallel sessions, Plan Mode, subagents, PR workflows |
 | `github-plugins-readme.md` | Plugin structure, examples (from GitHub) |
 | `github-official-plugins.md` | Official plugin standards, quality guidelines (from GitHub) |
 | `github-skills-readme.md` | Skill specifications, templates (from GitHub) |

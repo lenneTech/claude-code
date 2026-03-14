@@ -76,6 +76,11 @@ function validateFrontmatter(filePath: string, content: string): ValidationResul
     return { decision: 'allow' };
   }
 
+  // Reference files in skills/ directories (non-SKILL.md) are exempt from frontmatter
+  if (filePath.includes('/skills/') && !filePath.endsWith('SKILL.md')) {
+    return { decision: 'allow' };
+  }
+
   // Check for YAML frontmatter presence
   if (!content.trim().startsWith('---')) {
     return {
@@ -128,13 +133,13 @@ function validateFrontmatter(filePath: string, content: string): ValidationResul
       };
     }
 
-    // Validate model value
-    const validModels = ['haiku', 'sonnet', 'opus'];
+    // Validate model value (aliases, full model IDs, or inherit)
+    const validAliases = ['haiku', 'sonnet', 'opus'];
     const model = frontmatter.model?.toLowerCase();
-    if (model && !validModels.some(m => model.includes(m))) {
+    if (model && model !== 'inherit' && !model.startsWith('claude-') && !validAliases.some(m => model.includes(m))) {
       return {
         decision: 'deny',
-        reason: `Invalid model "${frontmatter.model}". Use: haiku, sonnet, or opus`
+        reason: `Invalid model "${frontmatter.model}". Use: haiku, sonnet, opus, inherit, or a full model ID (e.g., claude-sonnet-4-6)`
       };
     }
   }

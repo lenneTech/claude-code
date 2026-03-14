@@ -1,7 +1,7 @@
 # Create custom subagents
 
 > Source: https://code.claude.com/docs/en/sub-agents
-> Generated: 2026-03-12T14:48:15.034Z
+> Generated: 2026-03-14T12:58:55.799Z
 
 ---
 
@@ -144,14 +144,18 @@ Subagents are Markdown files with YAML frontmatter. Store them in different loca
 |`~/.claude/agents/`| All your projects | 3 | Interactive or manual |
 | Plugin’s`agents/`directory | Where plugin is enabled | 4 (lowest) | Installed with [plugins](/docs/en/plugins) |
 
-**Project subagents** (`.claude/agents/`) are ideal for subagents specific to a codebase. Check them into version control so your team can use and improve them collaboratively. **User subagents** (`~/.claude/agents/`) are personal subagents available in all your projects. **CLI-defined subagents** are passed as JSON when launching Claude Code. They exist only for that session and aren’t saved to disk, making them useful for quick testing or automation scripts:```claude --agents '{
+**Project subagents** (`.claude/agents/`) are ideal for subagents specific to a codebase. Check them into version control so your team can use and improve them collaboratively. **User subagents** (`~/.claude/agents/`) are personal subagents available in all your projects. **CLI-defined subagents** are passed as JSON when launching Claude Code. They exist only for that session and aren’t saved to disk, making them useful for quick testing or automation scripts. You can define multiple subagents in a single`--agents`call:```claude --agents '{
   "code-reviewer": {
     "description": "Expert code reviewer. Use proactively after code changes.",
     "prompt": "You are a senior code reviewer. Focus on code quality, security, and best practices.",
     "tools": ["Read", "Grep", "Glob", "Bash"],
     "model": "sonnet"
+  },
+  "debugger": {
+    "description": "Debugging specialist for errors and test failures.",
+    "prompt": "You are an expert debugger. Analyze errors, identify root causes, and provide fixes."
   }
-}'```The`--agents`flag accepts JSON with the same [frontmatter](#supported-frontmatter-fields) fields as file-based subagents:`description`,`prompt`,`tools`,`disallowedTools`,`model`,`permissionMode`,`mcpServers`,`hooks`,`maxTurns`,`skills`, and`memory`. Use`prompt`for the system prompt, equivalent to the markdown body in file-based subagents. See the [CLI reference](/docs/en/cli-reference#agents-flag-format) for the full JSON format. **Plugin subagents** come from [plugins](/docs/en/plugins) you’ve installed. They appear in`/agents`alongside your custom subagents. See the [plugin components reference](/docs/en/plugins-reference#agents) for details on creating plugin subagents.
+}'```The`--agents`flag accepts JSON with the same [frontmatter](#supported-frontmatter-fields) fields as file-based subagents:`description`,`prompt`,`tools`,`disallowedTools`,`model`,`permissionMode`,`mcpServers`,`hooks`,`maxTurns`,`skills`, and`memory`. Use`prompt`for the system prompt, equivalent to the markdown body in file-based subagents. **Plugin subagents** come from [plugins](/docs/en/plugins) you’ve installed. They appear in`/agents`alongside your custom subagents. See the [plugin components reference](/docs/en/plugins-reference#agents) for details on creating plugin subagents.
 
 
 Write subagent files
@@ -178,7 +182,7 @@ The following fields can be used in the YAML frontmatter. Only`name`and`descript
 |`description`| Yes | When Claude should delegate to this subagent |
 |`tools`| No | [Tools](#available-tools) the subagent can use. Inherits all tools if omitted |
 |`disallowedTools`| No | Tools to deny, removed from inherited or specified list |
-|`model`| No | [Model](#choose-a-model) to use:`sonnet`,`opus`,`haiku`, or`inherit`. Defaults to`inherit`|
+|`model`| No | [Model](#choose-a-model) to use:`sonnet`,`opus`,`haiku`, a full model ID (for example,`claude-opus-4-6`), or`inherit`. Defaults to`inherit`|
 |`permissionMode`| No | [Permission mode](#permission-modes):`default`,`acceptEdits`,`dontAsk`,`bypassPermissions`, or`plan`|
 |`maxTurns`| No | Maximum number of agentic turns before the subagent stops |
 |`skills`| No | [Skills](/docs/en/skills) to load into the subagent’s context at startup. The full skill content is injected, not just made available for invocation. Subagents don’t inherit skills from the parent conversation |
@@ -193,7 +197,8 @@ Choose a model
 
 The`model`field controls which [AI model](/docs/en/model-config) the subagent uses:
 
--   **Model alias**: Use one of the available aliases:`sonnet`,`opus`, or`haiku`-   **inherit**: Use the same model as the main conversation
+-   **Model alias**: Use one of the available aliases:`sonnet`,`opus`, or`haiku`-   **Full model ID**: Use a full model ID such as`claude-opus-4-6`or`claude-sonnet-4-6`. Accepts the same values as the`--model`flag
+-   **inherit**: Use the same model as the main conversation
 -   **Omitted**: If not specified, defaults to`inherit`(uses the same model as the main conversation)
 
 
@@ -204,7 +209,7 @@ You can control what subagents can do through tool access, permission modes, and
 
 Available tools
 
-Subagents can use any of Claude Code’s [internal tools](/docs/en/settings#tools-available-to-claude). By default, subagents inherit all tools from the main conversation, including MCP tools. To restrict tools, use the`tools`field (allowlist) or`disallowedTools`field (denylist):```---
+Subagents can use any of Claude Code’s [internal tools](/docs/en/tools-reference). By default, subagents inherit all tools from the main conversation, including MCP tools. To restrict tools, use the`tools`field (allowlist) or`disallowedTools`field (denylist):```---
 name: safe-researcher
 description: Research agent with restricted capabilities
 tools: Read, Grep, Glob, Bash
@@ -218,6 +223,23 @@ name: coordinator
 description: Coordinates work across specialized agents
 tools: Agent(worker, researcher), Read, Bash
 ---```This is an allowlist: only the`worker`and`researcher`subagents can be spawned. If the agent tries to spawn any other type, the request fails and the agent sees only the allowed types in its prompt. To block specific agents while allowing all others, use [`permissions.deny`](#disable-specific-subagents) instead. To allow spawning any subagent without restrictions, use`Agent`without parentheses:```tools: Agent, Read, Bash```If`Agent`is omitted from the`tools`list entirely, the agent cannot spawn any subagents. This restriction only applies to agents running as the main thread with`claude --agent`. Subagents cannot spawn other subagents, so`Agent(agent_type)`has no effect in subagent definitions.
+
+
+Scope MCP servers to a subagent
+
+Use the`mcpServers`field to give a subagent access to [MCP](/docs/en/mcp) servers that aren’t available in the main conversation. Inline servers defined here are connected when the subagent starts and disconnected when it finishes. String references share the parent session’s connection. Each entry in the list is either an inline server definition or a string referencing an MCP server already configured in your session:```---
+name: browser-tester
+description: Tests features in a real browser using Playwright
+mcpServers:
+  # Inline definition: scoped to this subagent only
+  - playwright:
+      type: stdio
+      command: npx
+      args: ["-y", "@playwright/mcp@latest"]
+  # Reference by name: reuses an already-configured server
+  - github
+
+Use the Playwright tools to navigate, screenshot, and interact with pages.```Inline definitions use the same schema as`.mcp.json`server entries (`stdio`,`http`,`sse`,`ws`), keyed by the server name. To keep an MCP server out of the main conversation entirely and avoid its tool descriptions consuming context there, define it inline here rather than in`.mcp.json`. The subagent gets the tools; the parent conversation does not.
 
 
 Permission modes
@@ -392,7 +414,7 @@ Have the code-reviewer subagent look at my recent changes```Run subagents in for
 
 Subagents can run in the foreground (blocking) or background (concurrent):
 
--   **Foreground subagents** block the main conversation until complete. Permission prompts and clarifying questions (like [`AskUserQuestion`](/docs/en/settings#tools-available-to-claude)) are passed through to you.
+-   **Foreground subagents** block the main conversation until complete. Permission prompts and clarifying questions (like [`AskUserQuestion`](/docs/en/tools-reference)) are passed through to you.
 -   **Background subagents** run concurrently while you continue working. Before launching, Claude Code prompts for any tool permissions the subagent will need, ensuring it has the necessary approvals upfront. Once running, the subagent inherits these permissions and auto-denies anything not pre-approved. If a background subagent needs to ask clarifying questions, that tool call fails but the subagent continues.
 
 If a background subagent fails due to missing permissions, you can [resume it](#resume-subagents) in the foreground to retry with interactive prompts. Claude decides whether to run subagents in the foreground or background based on the task. You can also:
@@ -400,7 +422,7 @@ If a background subagent fails due to missing permissions, you can [resume it](#
 -   Ask Claude to “run this in the background”
 -   Press **Ctrl+B** to background a running task
 
-To disable all background task functionality, set the`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS`environment variable to`1`. See [Environment variables](/docs/en/settings#environment-variables).
+To disable all background task functionality, set the`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS`environment variable to`1`. See [Environment variables](/docs/en/env-vars).
 
 
 Common patterns
@@ -457,7 +479,7 @@ Continue that code review and now analyze the authorization logic
 
 Auto-compaction
 
-Subagents support automatic compaction using the same logic as the main conversation. By default, auto-compaction triggers at approximately 95% capacity. To trigger compaction earlier, set`CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`to a lower percentage (for example,`50`). See [environment variables](/docs/en/settings#environment-variables) for details. Compaction events are logged in subagent transcript files:```{
+Subagents support automatic compaction using the same logic as the main conversation. By default, auto-compaction triggers at approximately 95% capacity. To trigger compaction earlier, set`CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`to a lower percentage (for example,`50`). See [environment variables](/docs/en/env-vars) for details. Compaction events are logged in subagent transcript files:```{
   "type": "system",
   "subtype": "compact_boundary",
   "compactMetadata": {
