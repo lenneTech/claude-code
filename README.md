@@ -82,7 +82,7 @@ Skills, Commands, Hooks and Agents for Frontend (Nuxt 4), Backend (NestJS/nest-s
 | `nest-server-updater` | Automated @lenne.tech/nest-server version updates with migration |
 | `fullstack-updater` | Synchronize fullstack project with latest starter templates |
 | `branch-rebaser` | Autonomous rebase execution for feature branches |
-| `code-reviewer` | Code review across 7 quality dimensions |
+| `code-reviewer` | Single-pass code review across 6 quality dimensions |
 
 ### Commands (32)
 
@@ -92,7 +92,7 @@ Skills, Commands, Hooks and Agents for Frontend (Nuxt 4), Backend (NestJS/nest-s
 - `/create-task` - Create Technical Task
 - `/create-bug` - Create Bug Report
 - `/resolve-ticket` - Resolve ticket end-to-end with TDD
-- `/review` - Comprehensive code review across 7 quality dimensions
+- `/review` - Comprehensive code review across 9 review domains
 - `/debug` - Adversarial debugging with competing hypotheses using Agent Teams
 - `/comment` - Generate and post testing comment on Linear issue
 - `/skill-optimize` - Validate and optimize Claude Skills

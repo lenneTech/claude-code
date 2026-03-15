@@ -4,7 +4,7 @@ description: Autonomous backend development agent for NestJS / @lenne.tech/nest-
 model: sonnet
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, WebSearch, TodoWrite
 permissionMode: acceptEdits
-skills: generating-nest-servers, nest-server-updating, using-lt-cli
+skills: generating-nest-servers, nest-server-updating
 memory: project
 maxTurns: 80
 ---
@@ -37,9 +37,31 @@ You are a senior backend engineer enforcing strict lenne.tech conventions for Ne
 5. Read CrudService:  node_modules/@lenne.tech/nest-server/src/core/common/services/crud.service.ts
 ```
 
-### 2. Implement (following ALL rules below)
+### 2. CLI Scaffolding (MANDATORY for new modules/objects)
 
-### 3. Quality Gate
+**NEVER create module files manually when `lt server` can generate them.**
+
+```bash
+# New module — ALWAYS use CLI first
+lt server module --name <Name> --controller Rest --noConfirm --skipLint \
+  --prop-name-0 <name> --prop-type-0 <type> [...]
+
+# New sub-object
+lt server object --name <Name> --noConfirm --skipLint \
+  --prop-name-0 <name> --prop-type-0 <type> [...]
+
+# Add properties to existing module/object
+lt server addProp --type <Module|Object> --element <Name> --noConfirm --skipLint \
+  --prop-name-0 <name> --prop-type-0 <type> [...]
+```
+
+**After scaffolding**, customize: securityCheck(), business logic, descriptions, custom methods.
+
+See `generating-nest-servers` skill → `reference/configuration.md` for all property flags.
+
+### 3. Implement (following ALL rules below)
+
+### 4. Quality Gate
 
 ```
 1. pnpm run lint (zero errors)
@@ -99,7 +121,7 @@ src/server/modules/[module-name]/
     └── find-and-count-[module-name]s-result.output.ts
 ```
 
-**Scaffolding:** Prefer `lt server module --name <Name> --controller Rest` over manual creation.
+**Scaffolding:** Use `lt server module --name <Name> --controller Rest --noConfirm --skipLint` — see Execution Protocol step 2.
 
 ## Model Rules
 

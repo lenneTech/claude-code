@@ -63,6 +63,27 @@ project/
 
 ## CRITICAL RULES
 
+### CLI-First Development
+
+When creating new modules, objects, or adding properties, **use `lt server` CLI commands first** before writing code manually. The CLI generates complete, standards-compliant scaffolding with all decorators, imports, and module integration.
+
+```bash
+# Always add --noConfirm --skipLint for non-interactive execution
+lt server module --name Product --controller Rest --noConfirm --skipLint \
+  --prop-name-0 name --prop-type-0 string \
+  --prop-name-1 price --prop-type-1 number
+
+lt server object --name Address --noConfirm --skipLint \
+  --prop-name-0 city --prop-type-0 string
+
+lt server addProp --type Module --element User --noConfirm --skipLint \
+  --prop-name-0 avatar --prop-type-0 string --prop-nullable-0 true
+```
+
+**After CLI scaffolding**, customize the generated code: business logic, security rules (`securityCheck`), descriptions, and custom methods.
+
+**Complete flag reference: [reference/configuration.md](${CLAUDE_SKILL_DIR}/reference/configuration.md#property-flags-reference)**
+
 ### Security (NON-NEGOTIABLE)
 
 1. **NEVER** remove/weaken `@Restricted()` or `@Roles()` decorators
@@ -95,17 +116,17 @@ Apply descriptions consistently to EVERY component (Model, CreateInput, UpdateIn
 ## Quick Command Reference
 
 ```bash
-# Create module (REST is default!)
-lt server module --name Product --controller Rest
+# Create module (REST is default!) — always use --noConfirm --skipLint
+lt server module --name Product --controller Rest --noConfirm --skipLint
 
 # Create SubObject
-lt server object --name Address
+lt server object --name Address --noConfirm --skipLint
 
 # Add properties
-lt server addProp --type Module --element User
+lt server addProp --type Module --element User --noConfirm --skipLint
 
 # New project
-lt server create <server-name>
+lt server create <server-name> --noConfirm
 
 # Permissions report (audit @Roles, @Restricted, securityCheck)
 lt server permissions --format html --open

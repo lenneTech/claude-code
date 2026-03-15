@@ -3,7 +3,7 @@
   "description": "Central configuration for Claude Code documentation sources. All sources are cached locally and updated when Claude Code version changes.",
   "cache": {
     "claudeCodeVersion": "2.1.76",
-    "lastUpdated": "2026-03-14T12:58:56.718Z",
+    "lastUpdated": "2026-03-14T21:15:24.494Z",
     "updateBehavior": "auto"
   },
   "updateBehaviorOptions": {
@@ -132,6 +132,12 @@
       "url": "https://raw.githubusercontent.com/OWASP/www-project-secure-coding-practices-quick-reference-guide/refs/heads/main/stable-en/02-checklist/05-checklist.md",
       "type": "md",
       "description": "OWASP Secure Coding Practices Checklist - reference for security implementations"
+    },
+    {
+      "name": "lt-cli-reference",
+      "url": "https://raw.githubusercontent.com/lenneTech/cli/main/LT-CLI-Reference.md",
+      "type": "md",
+      "description": "LT CLI command reference (server module, object, addProp, permissions, fullstack init)"
     }
   ]
 }

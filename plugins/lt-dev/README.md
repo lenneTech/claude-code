@@ -25,7 +25,7 @@ These plugins are **optional** but enhance the experience when working with this
 - **Fullstack Updates**: Synchronize projects with latest starter templates
 - **CLI Tools**: lenne.tech CLI integration
 - **Git Workflows**: Commit messages, MR descriptions, branch rebasing
-- **Code Review**: Comprehensive review across 7 quality dimensions
+- **Code Review**: Comprehensive review across 9 review domains
 - **Linear Integration**: Issue management and story creation
 - **Docker**: Development and production setup generation
 - **Package Maintenance**: npm dependency management and security audits

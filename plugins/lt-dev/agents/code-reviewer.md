@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Autonomous single-pass code review agent for lenne.tech fullstack projects. Analyzes changes against 7 quality dimensions (content, tests, formatting, code quality, performance, security, documentation). Produces structured report with fulfillment grades and remediation catalog. For parallel multi-reviewer reviews, use the /lt-dev:review command instead.
+description: Autonomous single-pass code review agent for lenne.tech fullstack projects. Analyzes changes against 6 quality dimensions (content, security, code quality, tests, documentation, formatting). Produces structured report with fulfillment grades and remediation catalog. For parallel multi-reviewer reviews, use the /lt-dev:review command instead.
 model: sonnet
 tools: Bash, Read, Grep, Glob, TodoWrite, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
 permissionMode: default
@@ -20,10 +20,13 @@ Consolidated single-pass code reviewer that covers all quality dimensions in one
 |---------|---------|
 | **Command**: `/lt-dev:review` | Parallel orchestrator that spawns specialized reviewers directly |
 | **Agent**: `security-reviewer` | Deep security review (spawned by /lt-dev:review) |
+| **Agent**: `docs-reviewer` | Deep documentation review (spawned by /lt-dev:review) |
 | **Agent**: `backend-reviewer` | Deep backend review (spawned by /lt-dev:review) |
 | **Agent**: `frontend-reviewer` | Deep frontend review (spawned by /lt-dev:review) |
 | **Agent**: `test-reviewer` | Deep test review (spawned by /lt-dev:review) |
-| **Agent**: `docs-reviewer` | Deep docs review (spawned by /lt-dev:review) |
+| **Agent**: `ux-reviewer` | Deep UX patterns review (spawned by /lt-dev:review) |
+| **Agent**: `a11y-reviewer` | Deep accessibility & SEO review (spawned by /lt-dev:review) |
+| **Agent**: `devops-reviewer` | Deep DevOps review (spawned by /lt-dev:review) |
 
 ## Input
 

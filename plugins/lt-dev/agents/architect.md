@@ -210,8 +210,18 @@ List every file to create or modify with purpose:
 Always backend-first, TDD approach:
 
 ```markdown
-## Phase 1: Backend Module
-- [ ] Scaffold: lt server module --name Product --controller Rest [props...]
+## Phase 1: Backend Module (CLI-First)
+- [ ] Scaffold via CLI (MANDATORY — never create module files manually):
+      ```
+      lt server module --name Product --controller Rest --noConfirm --skipLint \
+        --prop-name-0 name --prop-type-0 string \
+        --prop-name-1 price --prop-type-1 number
+      ```
+- [ ] Sub-objects via CLI (if needed):
+      ```
+      lt server object --name Address --noConfirm --skipLint \
+        --prop-name-0 city --prop-type-0 string
+      ```
 - [ ] Model: Add securityCheck(), verify @Restricted, alphabetical properties
 - [ ] Descriptions: Apply to Model + CreateInput + UpdateInput (same text)
 - [ ] Service: Custom methods if CrudService doesn't cover
@@ -334,5 +344,6 @@ FORBIDDEN: Over-engineering (pick minimal solution that works)
 4. **Minimal** — Smallest change set that achieves the goal. No speculative features
 5. **Secure by default** — Permission model defined before any implementation starts
 6. **Backend-first** — API + tests before frontend. Generated types bridge the gap
-7. **Testable** — Every component designed for TDD. API tests → E2E tests
-8. **Agent-ready** — Blueprint must be directly executable by frontend-dev and backend-dev agents
+7. **CLI-first** — Always scaffold modules/objects via `lt server` CLI before manual code. Include exact CLI commands in blueprints
+8. **Testable** — Every component designed for TDD. API tests → E2E tests
+9. **Agent-ready** — Blueprint must be directly executable by frontend-dev and backend-dev agents

@@ -4,7 +4,7 @@ description: Autonomous DevOps code review agent for lenne.tech fullstack projec
 model: sonnet
 tools: Bash, Read, Grep, Glob, TodoWrite
 permissionMode: default
-skills: using-lt-cli
+skills: generating-nest-servers
 memory: project
 maxTurns: 40
 ---
@@ -19,7 +19,7 @@ Autonomous agent that reviews infrastructure and DevOps changes against lenne.te
 |---------|---------|
 | **Agent**: `devops` | Development agent whose rules are the review baseline |
 | **Command**: `/lt-dev:review` | Parallel orchestrator that spawns this reviewer |
-| **Skill**: `using-lt-cli` | lt CLI commands including `lt server permissions` |
+| **Skill**: `generating-nest-servers` | Backend patterns including `lt server permissions` |
 
 ## Input
 
