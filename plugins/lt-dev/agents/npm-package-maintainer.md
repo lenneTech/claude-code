@@ -78,7 +78,8 @@ This agent should be used when:
 ### Constraints (Always Apply)
 
 1. **Test Immutability**: Tests MUST NOT be modified (except for unavoidable interface changes)
-2. **API Stability**: Function signatures and return values MUST NOT change
+2. **Failing Tests Are ALWAYS a Problem**: Fix the root cause of every failing test — even if the failure predates the current changes. A green test suite is a non-negotiable prerequisite.
+3. **API Stability**: Function signatures and return values MUST NOT change
 3. **Minimal Source Changes**: Source code modifications should be minimal
 4. **Exact Versioning**: All packages MUST use exact versions (no ^, ~, or ranges)
 5. **Security Guarantee**: ALWAYS run `pnpm audit --fix` after package updates (adapt to detected package manager)

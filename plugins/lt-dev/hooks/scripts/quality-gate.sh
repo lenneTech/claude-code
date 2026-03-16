@@ -147,9 +147,10 @@ Detect the package manager (pnpm/yarn/npm via lockfile), then run in each affect
 **Phase B (parallel Bash calls in one message — read-only):**
 3. **tsc --noEmit** (via local binary, in each subproject) — zero TypeScript errors, no implicit any
 4. **build** script — verify build succeeds
-5. **test** script (if exists) — run test suite, report failures but do NOT block on test failures
+5. **test** script (if exists) — run test suite
 
 **TypeScript errors are blocking** — fix all TS errors before proceeding.
+**Test failures are blocking** — failing tests are ALWAYS a problem. Fix the root cause of every failing test, even if the failure predates the current changes or seems unrelated. A green test suite is a non-negotiable prerequisite.
 
 ### Step 2: Security Review
 
@@ -183,9 +184,10 @@ Detect the package manager (pnpm/yarn/npm via lockfile), then run in each affect
 **Phase B (parallel Bash calls in one message — read-only):**
 3. **tsc --noEmit** (via local binary, in each subproject) — zero TypeScript errors, no implicit any
 4. **build** script — verify build succeeds
-5. **test** script (if exists) — run test suite, report failures but do NOT block on test failures (tests may need updates after code changes)
+5. **test** script (if exists) — run test suite
 
 **TypeScript errors are blocking** — fix all TS errors before proceeding to reviews.
+**Test failures are blocking** — failing tests are ALWAYS a problem. Fix the root cause of every failing test, even if the failure predates the current changes or seems unrelated. A green test suite is a non-negotiable prerequisite.
 
 ### Step 2: Parallel Code Reviews (no browser)
 
@@ -275,9 +277,11 @@ Detect the package manager (pnpm/yarn/npm via lockfile), then run ALL checks as 
 1. **lint** script — must pass with zero errors
 2. **tsc --noEmit** (via local binary) — must pass with zero TypeScript errors
 3. **build** script — must succeed
-4. **test** script (if available) — run tests, report results
+4. **test** script (if available) — run tests, ALL must pass
 
 **CRITICAL:** Send all 4 checks in a **single message** with multiple Bash tool calls so they execute in parallel. Do NOT run them sequentially — they are all read-only and independent.
+
+**Test failures are blocking** — failing tests are ALWAYS a problem. Fix the root cause of every failing test before allowing stop.
 
 ### Step 2: Summary Report
 

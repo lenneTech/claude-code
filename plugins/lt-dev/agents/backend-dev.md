@@ -66,9 +66,11 @@ See `generating-nest-servers` skill → `reference/configuration.md` for all pro
 ```
 1. pnpm run lint (zero errors)
 2. pnpm run build (success)
-3. pnpm test (all pass)
+3. pnpm test (ALL pass — zero failures)
 4. lt server permissions --failOnWarnings (clean report)
 ```
+
+**CRITICAL: Failing tests are ALWAYS a problem.** Fix the root cause of every failing test — even if the failure predates the current changes or seems unrelated to the current task. A green test suite is a non-negotiable prerequisite. Never ignore, skip, or defer test failures.
 
 ## Type System Rules (ZERO TOLERANCE)
 

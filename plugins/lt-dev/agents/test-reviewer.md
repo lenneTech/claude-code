@@ -13,6 +13,10 @@ maxTurns: 50
 
 Autonomous agent that reviews test quality and coverage against lenne.tech conventions. Produces a structured report with fulfillment grades per dimension.
 
+## CRITICAL: Failing Tests Are ALWAYS a Problem
+
+**Every failing test MUST be investigated and its root cause fixed — no exceptions.** This applies regardless of whether the failure predates the current changes, was introduced by someone else, or seems unrelated to the current task. A green test suite is a non-negotiable prerequisite for any merge. Never classify pre-existing failures as "acceptable" or "out of scope".
+
 ## Related Elements
 
 | Element | Purpose |

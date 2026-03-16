@@ -257,8 +257,9 @@ pnpm dlx vitest run     # if available
 
 **If tests fail:**
 - Analyze failure output
-- Attempt fix (max 3 iterations)
-- If unfixable: document in report, continue
+- Fix the root cause (iterate until all tests pass)
+- Failing tests are ALWAYS a problem — fix them even if the failure predates the rebase or seems unrelated
+- A green test suite is a non-negotiable prerequisite for completing the rebase
 
 ### Phase 8: Urgency Check
 
@@ -367,7 +368,7 @@ If blocked during any phase:
 
 1. **Document the error** and continue with remaining phases where possible
 2. **Rebase conflicts unresolvable** → `git rebase --abort`, report, STOP
-3. **Tests failing after 3 iterations** → Document failures, continue to review
+3. **Tests failing after multiple iterations** → Escalate to user for guidance, do NOT proceed with failing tests
 4. **Linear ticket not found** → Warning only, continue without context
 5. **Lint tools not available** → Fall back to project scripts, continue
 6. **Force push rejected** → Report error, suggest manual resolution

@@ -628,10 +628,14 @@ pnpm test -- tests/stories/your-story.story.test.ts
    - Missing implementation (expected)
    - Test errors/bugs (needs fixing)
    - Misunderstood requirements (needs clarification)
+   - Pre-existing failures unrelated to current changes (MUST STILL BE FIXED)
+
+**CRITICAL: Failing tests are ALWAYS a problem.** Every failing test must be investigated and its root cause fixed — even if the failure predates the current changes or seems unrelated to the current task. A green test suite is a non-negotiable prerequisite.
 
 **Decision point:**
 - If test has bugs/errors -> Go to Step 3a
 - If API implementation is missing/incomplete -> Go to Step 4
+- If pre-existing failure found -> Fix root cause before proceeding
 
 **Debugging Test Failures:**
 
@@ -852,6 +856,7 @@ pnpm test
  **Some tests still fail?**
 - Return to Step 3 (analyze failures)
 - Continue iteration
+- **CRITICAL:** This includes ALL tests — not just the ones you wrote. Pre-existing failures MUST also be fixed. A green test suite is non-negotiable.
 
 ## Step 5a: Code Quality & Refactoring Check
 

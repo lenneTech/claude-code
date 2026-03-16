@@ -145,6 +145,7 @@ claude plugins install typescript-lsp --marketplace claude-plugins-official
 
 1. **Test through API only** — Use `testHelper.rest()` / `testHelper.graphQl()`. NEVER call Services directly or query DB in test logic. Exception: DB access only for setup/cleanup (roles, verified status).
 2. **Verify before assuming** — ALWAYS read Controllers/Services/Models before writing tests. Never assume endpoints, methods, or properties exist.
+3. **Failing tests are ALWAYS a problem** — Fix the root cause of every failing test, even if the failure predates the current changes or seems unrelated to the current task. A green test suite is a non-negotiable prerequisite. Never ignore, skip, or defer test failures.
 
 **Full details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md) -> Steps 1, 2, and 4**
 

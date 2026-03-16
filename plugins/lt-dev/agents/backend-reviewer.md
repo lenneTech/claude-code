@@ -261,6 +261,8 @@ grep -rn "readFileSync\|writeFileSync\|execSync\|crypto\..*Sync" src/server/
 
 **Note:** Test execution is handled by `test-reviewer`. This phase only validates test file existence and coverage patterns statically.
 
+**CRITICAL:** Failing tests are ALWAYS a problem. If you detect test files that appear broken or incomplete, flag them as must-fix regardless of whether they predate the current changes.
+
 #### Step 1: Verify Test Files Exist
 
 For each changed module, check for corresponding `*.spec.ts` files:

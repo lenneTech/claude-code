@@ -54,8 +54,11 @@ Before writing any code:
 ```
 1. pnpm run lint:fix
 2. pnpm run build
-3. Browser verify via Chrome DevTools MCP (if applicable)
+3. pnpm test / pnpm run test:e2e (if test scripts exist — ALL must pass)
+4. Browser verify via Chrome DevTools MCP (if applicable)
 ```
+
+**CRITICAL: Failing tests are ALWAYS a problem.** Fix the root cause of every failing test — even if the failure predates the current changes or seems unrelated to the current task. A green test suite is a non-negotiable prerequisite. Never ignore, skip, or defer test failures.
 
 ## Type System Rules (ZERO TOLERANCE)
 

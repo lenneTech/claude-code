@@ -232,6 +232,8 @@ Changed files:
 Check test coverage gaps (40% regression + 60% coverage weighting), test quality & assertions,
 test isolation & data safety, API-first testing patterns, permission & security testing,
 test naming & structure, and flaky test detection (re-run failures 2-3x for classification).
+CRITICAL: Failing tests are ALWAYS a problem — flag every failure as must-fix regardless of
+whether it predates the current changes or seems unrelated.
 Produce your structured test review report with fulfillment grades.
 ```
 

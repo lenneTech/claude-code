@@ -60,7 +60,9 @@ Use the `building-stories-with-tdd` skill to execute the full implementation cyc
 2. **Write Tests** — Create tests FIRST based on acceptance criteria
 3. **Run Tests** — Verify tests fail for the right reasons
 4. **Implement** — Write code until tests pass (use `generating-nest-servers` for backend, `developing-lt-frontend` for frontend)
-5. **Validate** — All tests green, code quality check, security review
+5. **Validate** — ALL tests green (not just new ones), code quality check, security review
+
+**CRITICAL: Failing tests are ALWAYS a problem.** Fix the root cause of every failing test — even if the failure predates the current changes or seems unrelated. A green test suite is a non-negotiable prerequisite.
 
 **After completion, update the Linear Issue status** (if source was a Linear ticket).
 

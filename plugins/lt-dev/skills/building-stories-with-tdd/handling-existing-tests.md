@@ -14,7 +14,7 @@ description: Complete guide for handling existing tests when modifying code in T
 - [Red Flags](#red-flags)
 - [Remember](#remember)
 
-**CRITICAL RULE:** When your code changes cause existing (non-story) tests to fail, you MUST analyze and handle this properly.
+**CRITICAL RULE:** When your code changes cause existing (non-story) tests to fail, you MUST analyze and handle this properly. Failing tests are ALWAYS a problem — fix the root cause of every failure, even if it predates the current changes or seems unrelated. A green test suite is a non-negotiable prerequisite for completing any work.
 
 ## Analysis Decision Tree
 
@@ -194,3 +194,5 @@ async authenticate(user: User, options?: AuthOptions) {
 - **Don't break working functionality** to make new tests pass
 - **Use git freely** for investigation (NOT for commits)
 - **When in doubt, preserve backward compatibility**
+- **Failing tests are ALWAYS a problem** — never ignore, skip, or defer them, even if they predate the current work
+- **A green test suite is non-negotiable** — all tests must pass before any work is considered complete
