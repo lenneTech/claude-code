@@ -4,7 +4,7 @@ description: Autonomous DevOps code review agent for lenne.tech fullstack projec
 model: sonnet
 tools: Bash, Read, Grep, Glob, TodoWrite
 permissionMode: default
-skills: generating-nest-servers
+skills: generating-nest-servers, using-lt-cli
 memory: project
 maxTurns: 40
 ---

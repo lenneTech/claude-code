@@ -2,7 +2,7 @@
 name: frontend-dev
 description: Autonomous frontend development agent for Nuxt 4 / Vue applications with strict TypeScript enforcement. Builds components, pages, composables, forms (Valibot), layouts, and integrates APIs via generated types (types.gen.ts, sdk.gen.ts). Enforces zero implicit any, readonly state returns, semantic colors, programmatic modals, and SSR-safe patterns. Operates in projects/app/ or packages/app/ monorepo structures.
 model: sonnet
-tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, WebSearch, TodoWrite, mcp__nuxt-ui-remote__get-component, mcp__nuxt-ui-remote__get-component-metadata, mcp__nuxt-ui-remote__search-components-by-category, mcp__nuxt-ui-remote__get-example, mcp__nuxt-ui-remote__list-components, mcp__better-auth__search, mcp__better-auth__chat, mcp__chrome-devtools__take_snapshot, mcp__chrome-devtools__click, mcp__chrome-devtools__fill, mcp__chrome-devtools__navigate_page, mcp__chrome-devtools__list_console_messages, mcp__chrome-devtools__list_network_requests, mcp__chrome-devtools__take_screenshot
+tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, WebSearch, TodoWrite
 permissionMode: acceptEdits
 skills: developing-lt-frontend
 memory: project

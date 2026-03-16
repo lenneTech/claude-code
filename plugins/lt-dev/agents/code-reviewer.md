@@ -2,7 +2,7 @@
 name: code-reviewer
 description: Autonomous single-pass code review agent for lenne.tech fullstack projects. Analyzes changes against 6 quality dimensions (content, security, code quality, tests, documentation, formatting). Produces structured report with fulfillment grades and remediation catalog. For parallel multi-reviewer reviews, use the /lt-dev:review command instead.
 model: sonnet
-tools: Bash, Read, Grep, Glob, TodoWrite, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
+tools: Bash, Read, Grep, Glob, TodoWrite
 permissionMode: default
 memory: project
 maxTurns: 40

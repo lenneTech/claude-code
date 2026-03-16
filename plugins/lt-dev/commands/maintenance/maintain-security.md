@@ -16,11 +16,11 @@ disable-model-invocation: true
 
 | Command | Mode | Use Case |
 |---------|------|----------|
-| `/lt-dev:maintain` | FULL | Complete optimization |
-| `/lt-dev:maintain-check` | DRY-RUN | Analysis only - no changes |
-| `/lt-dev:maintain-security` | SECURITY | Fast security-only (this command) |
-| `/lt-dev:maintain-pre-release` | PRE-RELEASE | Conservative patch-only updates |
-| `/lt-dev:maintain-post-feature` | FULL | Clean up after feature development |
+| `/lt-dev:maintenance:maintain` | FULL | Complete optimization |
+| `/lt-dev:maintenance:maintain-check` | DRY-RUN | Analysis only - no changes |
+| `/lt-dev:maintenance:maintain-security` | SECURITY | Fast security-only (this command) |
+| `/lt-dev:maintenance:maintain-pre-release` | PRE-RELEASE | Conservative patch-only updates |
+| `/lt-dev:maintenance:maintain-post-feature` | FULL | Clean up after feature development |
 
 ## User Prompt
 Use the lt-dev:npm-package-maintainer agent to perform **SECURITY-ONLY** maintenance.

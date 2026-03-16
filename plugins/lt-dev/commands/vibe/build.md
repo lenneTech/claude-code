@@ -1,7 +1,7 @@
 ---
 description: Execute IMPLEMENTATION_PLAN.md completely
 argument-hint: [plan-file]
-allowed-tools: Read, Write, Edit, Glob, Grep, Agent, Bash(docker:*), Bash(docker-compose:*), Bash(pnpm:*), Bash(npm:*), Bash(yarn:*), Bash(git:*), Bash(curl:*), mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__evaluate_script, AskUserQuestion
+allowed-tools: Read, Write, Edit, Glob, Grep, Agent, Bash(docker:*), Bash(docker-compose:*), Bash(pnpm run:*), Bash(npm run:*), Bash(yarn run:*), Bash(git:*), Bash(curl:*), mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__evaluate_script, AskUserQuestion
 disable-model-invocation: true
 ---
 

@@ -2,7 +2,7 @@
 name: frontend-reviewer
 description: Autonomous frontend code review agent for Nuxt 4 / Vue applications. Analyzes component structure, TypeScript strictness, composable patterns, accessibility, SSR safety, performance, and styling conventions. Produces structured report with fulfillment grades per dimension. Enforces frontend-dev agent guidelines as review baseline.
 model: sonnet
-tools: Bash, Read, Grep, Glob, TodoWrite, mcp__chrome-devtools__take_snapshot, mcp__chrome-devtools__navigate_page, mcp__chrome-devtools__list_console_messages, mcp__chrome-devtools__list_network_requests, mcp__chrome-devtools__take_screenshot
+tools: Bash, Read, Grep, Glob, TodoWrite
 permissionMode: default
 skills: developing-lt-frontend
 memory: project

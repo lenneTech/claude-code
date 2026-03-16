@@ -3,6 +3,8 @@
 
 # Only inject context when prompt mentions lt CLI topics
 [ -z "$CLAUDE_USER_PROMPT" ] && exit 0
+# Skip slash commands — they have their own skill associations
+[[ "$CLAUDE_USER_PROMPT" == /* ]] && exit 0
 
 if echo "$CLAUDE_USER_PROMPT" | grep -iqE '(^lt |[^a-z]lt |lt fullstack|lt server|lt git|lenne.?tech.?cli|fullstack init)'; then
   if command -v lt &>/dev/null; then

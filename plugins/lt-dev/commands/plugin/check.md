@@ -85,7 +85,7 @@ For each element, perform the following checks:
 - [ ] Frontmatter exists and is properly formatted
 - [ ] All required fields present (name, description for skills/agents; description for commands)
 - [ ] Description follows guidelines (WHEN for skills, WHAT for commands)
-- [ ] Description length appropriate (max 280 chars for skills)
+- [ ] Description length appropriate (max 1024 chars for skills)
 
 ### 4.2 Structural Consistency
 
@@ -317,7 +317,7 @@ For a fast check without full documentation fetch, use this condensed checklist:
 
 ### Frontmatter Quick Check
 ```
-Skills: name + description (max 280 chars, WHEN focus)
+Skills: name + description (max 1024 chars, WHEN focus)
 Commands: description (WHAT focus)
 Agents: name + description + model + tools
 ```

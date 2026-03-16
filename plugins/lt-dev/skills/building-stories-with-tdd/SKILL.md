@@ -1,6 +1,6 @@
 ---
 name: building-stories-with-tdd
-description: Orchestrates Test-Driven Development (TDD) workflows for user stories and features. Creates story tests first in tests/stories/, then iteratively implements until all pass. Activates when user mentions "TDD", "test-driven", "test first", "story test", "write tests before code", or feature implementation with TDD. Coordinates with generating-nest-servers (backend) and developing-lt-frontend (frontend). NOT for direct NestJS coding without TDD (use generating-nest-servers). NOT for standalone test generation (use /test-generate).
+description: Orchestrates Test-Driven Development (TDD) workflows for user stories and features. Creates story tests first in tests/stories/, then iteratively implements until all pass. Invoke directly when a developer requests "TDD", "test-driven", "test first", "story test", "write tests before code", or feature implementation with TDD. Coordinates with generating-nest-servers (backend) and developing-lt-frontend (frontend). NOT for direct NestJS coding without TDD (use generating-nest-servers). NOT for standalone test generation (use /test-generate).
 disable-model-invocation: true
 ---
 
@@ -113,8 +113,7 @@ afterAll(async () => {
 - `coordinating-agent-teams` skill - For parallel test writing in fullstack projects
 - `/lt-dev:create-ticket` command - Create any ticket type (Story, Task, Bug)
 - `/lt-dev:create-story` command - Create a story, then implement with TDD
-- `/lt-dev:review` command - Comprehensive quality check after implementation
-- `/lt-dev:review` command - General security scan of branch diff (Step 5a)
+- `/lt-dev:review` command - Comprehensive quality check after implementation (Step 5a)
 - `/lt-dev:backend:sec-review` command - nest-server specific security review
 
 ## TypeScript Language Server (Recommended)

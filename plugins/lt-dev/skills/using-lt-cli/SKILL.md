@@ -96,6 +96,13 @@ Creates a standalone NestJS project from nest-server-starter. For module/object/
 - Use `--api-link` / `--frontend-link` for local template development (fastest)
 - After init: `pnpm install` → start API → start App
 
+## Reference Files
+
+| Topic | File |
+|-------|------|
+| Command reference & troubleshooting | [reference.md](${CLAUDE_SKILL_DIR}/reference.md) |
+| Real-world examples | [examples.md](${CLAUDE_SKILL_DIR}/examples.md) |
+
 ## Related Skills
 
 - `generating-nest-servers` — `lt server module`, `lt server object`, `lt server addProp`, `lt server permissions`

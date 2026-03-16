@@ -3,12 +3,12 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Write",
+        "matcher": "Write|Edit",
         "hooks": [
           {
             "type": "command",
-            "command": "npx ts-node \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/validate-plugin-frontmatter.ts\"",
-            "timeout": 10,
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/validate-plugin-frontmatter.sh\"",
+            "timeout": 5,
             "statusMessage": "Validating plugin frontmatter"
           }
         ]

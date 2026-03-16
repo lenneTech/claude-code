@@ -1,7 +1,7 @@
 ---
 description: Create detailed implementation plan from SPEC.md
 argument-hint: [spec-file]
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash(docker:*), Bash(docker-compose:*), Bash(git:*), AskUserQuestion
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash(docker:*), Bash(docker-compose:*), Bash(git:*), Bash(pnpm run lint:*), Bash(pnpm run build:*), Bash(npm run lint:*), Bash(npm run build:*), Bash(yarn run lint:*), Bash(yarn run build:*), AskUserQuestion
 disable-model-invocation: true
 ---
 

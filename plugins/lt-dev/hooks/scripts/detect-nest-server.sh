@@ -2,6 +2,9 @@
 # Detect @lenne.tech/nest-server and suggest appropriate skill
 # Priority: update keywords > TDD keywords > default backend
 
+# Skip slash commands — they have their own skill associations
+[[ "$CLAUDE_USER_PROMPT" == /* ]] && exit 0
+
 check_nest_server() {
   [ -f "$1" ] && grep -q '@lenne\.tech/nest-server' "$1" 2>/dev/null
 }

@@ -13,6 +13,9 @@ emit_context() {
   echo '{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"Nuxt 4 project detected. Use the developing-lt-frontend skill for frontend tasks (.vue files, components, composables, pages)."}}'
 }
 
+# Skip slash commands — they have their own skill associations
+[[ "$CLAUDE_USER_PROMPT" == /* ]] && exit 0
+
 # Keyword guard: only inject context when prompt contains frontend-related terms
 if [ -n "$CLAUDE_USER_PROMPT" ]; then
   echo "$CLAUDE_USER_PROMPT" | grep -iqE '(vue|component|composable|page|nuxt|frontend|layout|plugin|middleware|css|tailwind|style|template|ui)' || exit 0

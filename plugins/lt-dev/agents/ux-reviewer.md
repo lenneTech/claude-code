@@ -2,7 +2,7 @@
 name: ux-reviewer
 description: Autonomous UX pattern review agent for lenne.tech fullstack projects. Analyzes state handling (Loading/Empty/Error), user feedback (Toast consistency, German messages), navigation patterns (Breadcrumbs, Back-navigation, Dead Ends), form UX (live validation, disable during submit, success feedback), destructive action safety (confirm dialogs, red buttons), optimistic UI (loading indicators on all async actions), cross-page consistency (icon usage, button order, action patterns), error recovery (retry buttons, timeout handling), responsive behavior (table→card, touch targets, menu collapse), skeleton loading, keyboard navigation, pagination patterns, and onboarding empty states. Produces structured report with fulfillment grades per dimension.
 model: sonnet
-tools: Bash, Read, Grep, Glob, TodoWrite, mcp__chrome-devtools__take_snapshot, mcp__chrome-devtools__navigate_page, mcp__chrome-devtools__list_console_messages, mcp__chrome-devtools__list_network_requests, mcp__chrome-devtools__take_screenshot, mcp__chrome-devtools__click, mcp__chrome-devtools__fill, mcp__chrome-devtools__press_key, mcp__chrome-devtools__resize_page, mcp__chrome-devtools__evaluate_script
+tools: Bash, Read, Grep, Glob, TodoWrite
 permissionMode: default
 skills: developing-lt-frontend
 memory: project

@@ -114,7 +114,7 @@ See [worktree-guide.md](${CLAUDE_SKILL_DIR}/worktree-guide.md) for setup, cleanu
 
 ## Limitations
 
-- **Experimental**: Feature flag required (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`)
+- Requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` environment variable
 - **No session resumption**: If the lead crashes, the team cannot be resumed
 - **No nested teams**: A teammate cannot spawn its own team
 - **Shared filesystem**: Teammates share the same filesystem (use worktrees for parallel git operations)

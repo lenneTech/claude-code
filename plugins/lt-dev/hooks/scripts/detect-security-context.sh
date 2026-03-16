@@ -4,6 +4,8 @@
 
 # Skip if no user prompt
 [ -z "$CLAUDE_USER_PROMPT" ] && exit 0
+# Skip slash commands — they have their own skill associations
+[[ "$CLAUDE_USER_PROMPT" == /* ]] && exit 0
 
 # Check for security keywords in prompt
 if echo "$CLAUDE_USER_PROMPT" | grep -iqE '(security.audit|xss|csrf|csp|owasp|vulnerabilit|sicherheit|injection|sanitize|security.review|security.header|cookie.*(secure|httponly|samesite)|content.security.policy)'; then

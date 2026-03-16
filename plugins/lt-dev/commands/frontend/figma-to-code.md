@@ -1,8 +1,7 @@
 ---
 description: Implement Figma designs as Nuxt 4 pages using project-local config
 argument-hint: [section-name-or-node-id] [--screen name] [--team] [--globals]
-allowed-tools: Bash(pnpm:*), Bash(npm:*), Bash(yarn:*), Bash(npx:*), Bash(git:*), Bash(ls:*), Bash(cat:*), Bash(find:*), Read, Write, Edit, Glob, Grep, AskUserQuestion, Agent, mcp__figma-desktop__get_metadata, mcp__figma-desktop__get_design_context, mcp__figma-desktop__get_screenshot, mcp__figma-desktop__get_variable_defs, mcp__nuxt-ui-remote__list-components, mcp__nuxt-ui-remote__get-component-metadata, mcp__nuxt-ui-remote__search-components-by-category, mcp__nuxt-ui-remote__get-example
-skills: developing-lt-frontend
+allowed-tools: Bash(pnpm run:*), Bash(npm run:*), Bash(yarn run:*), Bash(npx:*), Bash(git:*), Bash(ls:*), Bash(cat:*), Bash(find:*), Read, Write, Edit, Glob, Grep, AskUserQuestion, Agent, mcp__figma-desktop__get_metadata, mcp__figma-desktop__get_design_context, mcp__figma-desktop__get_screenshot, mcp__figma-desktop__get_variable_defs, mcp__nuxt-ui-remote__list-components, mcp__nuxt-ui-remote__get-component-metadata, mcp__nuxt-ui-remote__search-components-by-category, mcp__nuxt-ui-remote__get-example
 disable-model-invocation: true
 ---
 

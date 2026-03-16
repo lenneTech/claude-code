@@ -3,6 +3,8 @@
 
 # Only inject context when prompt mentions plugin-related topics
 [ -z "$CLAUDE_USER_PROMPT" ] && exit 0
+# Skip slash commands — they have their own skill associations
+[[ "$CLAUDE_USER_PROMPT" == /* ]] && exit 0
 
 if echo "$CLAUDE_USER_PROMPT" | grep -iqE '(plugin|skill|SKILL\.md|command|agent|hook|frontmatter|marketplace|permissions\.json)'; then
   # Check if working in a plugin directory

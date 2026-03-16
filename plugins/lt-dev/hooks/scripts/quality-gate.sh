@@ -63,8 +63,18 @@ CHANGED_FILES=$(
 # No source files changed → allow stop
 [ -z "$CHANGED_FILES" ] && exit 0
 
+# ── Skip if project has no build tooling (lint/build/test scripts) ──
+HAS_TOOLING=false
+for pkg in "$PWD/package.json" "$PWD"/projects/*/package.json "$PWD"/packages/*/package.json; do
+  if [ -f "$pkg" ] && grep -qE '"(build|lint|lint:fix|test)"[[:space:]]*:' "$pkg" 2>/dev/null; then
+    HAS_TOOLING=true
+    break
+  fi
+done
+[ "$HAS_TOOLING" = false ] && exit 0
+
 # ── State files ──
-DIR_HASH=$(echo "$PWD" | md5 2>/dev/null || echo "$PWD" | md5sum 2>/dev/null | cut -d' ' -f1)
+DIR_HASH=$(echo "$PWD" | md5sum 2>/dev/null | cut -d' ' -f1 || echo "$PWD" | md5 2>/dev/null)
 COUNTER_FILE="/tmp/.claude-qg-${DIR_HASH}"
 TIMESTAMP_FILE="/tmp/.claude-qg-ts-${DIR_HASH}"
 REVIEWED_FILE="/tmp/.claude-qg-reviewed-${DIR_HASH}"
@@ -73,7 +83,7 @@ TIER_FILE="/tmp/.claude-qg-tier-${DIR_HASH}"
 # ── Already reviewed with no new changes → allow stop ──
 if [ -f "$REVIEWED_FILE" ]; then
   REVIEWED_DIFF_HASH=$(cat "$REVIEWED_FILE" 2>/dev/null)
-  CURRENT_DIFF_HASH=$(git diff HEAD 2>/dev/null | md5 2>/dev/null || git diff HEAD 2>/dev/null | md5sum 2>/dev/null | cut -d' ' -f1)
+  CURRENT_DIFF_HASH=$(git diff HEAD 2>/dev/null | md5sum 2>/dev/null | cut -d' ' -f1 || git diff HEAD 2>/dev/null | md5 2>/dev/null)
   [ "$REVIEWED_DIFF_HASH" = "$CURRENT_DIFF_HASH" ] && exit 0
 fi
 

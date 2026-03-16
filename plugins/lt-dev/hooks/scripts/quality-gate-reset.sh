@@ -7,7 +7,8 @@
 # to detect any dev activity for reset purposes, while the gate itself
 # only triggers for actual code changes (ts/vue/tsx/jsx/js/mjs).
 
-INPUT=$(cat)
+# Skip slash commands — they have their own skill associations
+[[ "$CLAUDE_USER_PROMPT" == /* ]] && exit 0
 
 # Skip non-project directories
 case "$PWD" in
@@ -27,7 +28,7 @@ CHANGED=$(
 )
 [ -z "$CHANGED" ] && exit 0
 
-DIR_HASH=$(echo "$PWD" | md5 2>/dev/null || echo "$PWD" | md5sum 2>/dev/null | cut -d' ' -f1)
+DIR_HASH=$(echo "$PWD" | md5sum 2>/dev/null | cut -d' ' -f1 || echo "$PWD" | md5 2>/dev/null)
 COUNTER_FILE="/tmp/.claude-qg-${DIR_HASH}"
 TIMESTAMP_FILE="/tmp/.claude-qg-ts-${DIR_HASH}"
 REVIEWED_FILE="/tmp/.claude-qg-reviewed-${DIR_HASH}"
