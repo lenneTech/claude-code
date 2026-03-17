@@ -1,7 +1,7 @@
 # Claude Code Plugins Directory
 
 > **Source:** https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/README.md
-> **Generated:** 2026-03-14T12:58:50.006Z
+> **Generated:** 2026-03-17T05:34:18.394Z
 
 ---
 
@@ -19,7 +19,7 @@ A curated directory of high-quality plugins for Claude Code.
 
 Plugins can be installed directly from this marketplace via Claude Code's plugin system.
 
-To install, run `/plugin install {plugin-name}@claude-plugin-directory`
+To install, run `/plugin install {plugin-name}@claude-plugins-official`
 
 or browse for the plugin in `/plugin > Discover`
 

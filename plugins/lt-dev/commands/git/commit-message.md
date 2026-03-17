@@ -37,4 +37,14 @@ Provide exactly 3 alternatives:
 3. [your third commit message suggestion]
 ```
 
-Then add: " **Copy your preferred message to use with `git commit -am \"...\"`**"
+Then assess the semver impact:
+
+```
+**Semver:** [patch | minor | major] — [one-sentence justification]
+```
+
+- **patch**: Bug fixes, typos, docs updates, dependency bumps — no new behavior
+- **minor**: New features, new capabilities, behavioral changes — backward compatible
+- **major**: Breaking changes, removed features, changed APIs — not backward compatible
+
+Then add: "**Copy your preferred message to use with `git commit -am \"...\"`**"

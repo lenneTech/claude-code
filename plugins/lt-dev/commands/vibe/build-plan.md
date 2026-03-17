@@ -1,6 +1,6 @@
 ---
 description: Plan + Build in one go (no interruption)
-argument-hint: [spec-file]
+argument-hint: "[spec-file]"
 allowed-tools: Read, Write, Edit, Glob, Grep, Agent, Bash(docker:*), Bash(docker-compose:*), Bash(pnpm run:*), Bash(npm run:*), Bash(yarn run:*), Bash(git:*), Bash(curl:*), mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__evaluate_script, AskUserQuestion
 disable-model-invocation: true
 ---

@@ -1,6 +1,6 @@
 ---
 name: building-stories-with-tdd
-description: Orchestrates Test-Driven Development (TDD) workflows for user stories and features. Creates story tests first in tests/stories/, then iteratively implements until all pass. Invoke directly when a developer requests "TDD", "test-driven", "test first", "story test", "write tests before code", or feature implementation with TDD. Coordinates with generating-nest-servers (backend) and developing-lt-frontend (frontend). NOT for direct NestJS coding without TDD (use generating-nest-servers). NOT for standalone test generation (use /test-generate).
+description: 'Orchestrates Test-Driven Development (TDD) workflows for user stories and features. Creates story tests first in tests/stories/, then iteratively implements until all pass. Invoke directly when a developer requests "TDD", "test-driven", "test first", "story test", "write tests before code", or feature implementation with TDD. Coordinates with generating-nest-servers (backend) and developing-lt-frontend (frontend). NOT for direct NestJS coding without TDD (use generating-nest-servers). NOT for standalone test generation (use /test-generate).'
 disable-model-invocation: true
 ---
 

@@ -25,6 +25,20 @@ You are a senior backend engineer enforcing strict lenne.tech conventions for Ne
 
 **Security > Convenience. Always. No exceptions.**
 
+## CRITICAL: Bug Fixes Require Regression Tests
+
+When fixing a bug, error, or security vulnerability:
+
+1. **ALWAYS** write a regression test that reproduces the exact bug BEFORE fixing it
+2. **Verify** the test fails (proves the bug exists)
+3. **Fix** the bug
+4. **Verify** the test passes (proves the fix works)
+5. The test MUST remain in the test suite permanently to prevent regression
+
+**Test type:** At minimum an API test (via TestHelper) or unit test (`.spec.ts`). Choose the test type that best covers the specific bug — API tests for endpoint/service bugs, unit tests for logic bugs.
+
+**This applies to:** Bug tickets, error reports, security vulnerabilities, edge cases. A bug fix without a regression test is incomplete.
+
 ## Execution Protocol
 
 ### 1. Context Analysis

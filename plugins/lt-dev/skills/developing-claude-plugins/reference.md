@@ -80,7 +80,7 @@ allowed-tools: string # Optional. Restrict tools: Read, Grep, Glob, etc.
 ```yaml
 ---
 description: string              # Required. WHAT it does (for /help)
-argument-hint: string            # Optional. Shows expected args, e.g., "[message]" or "[pr-number] [priority]"
+argument-hint: string            # Optional. Shows expected args, e.g., "[message]" or "[pr-number] [priority]". MUST quote values containing brackets: '"[arg]"'
 allowed-tools: string            # Optional. Restrict tools, e.g., "Bash(git:*), Read, Grep"
 model: string                    # Optional. Force specific model, e.g., "claude-3-5-haiku-20241022"
 disable-model-invocation: bool   # Optional. Prevent SlashCommand tool from calling this command

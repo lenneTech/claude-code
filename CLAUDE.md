@@ -214,11 +214,16 @@ user-invocable: false            # Hide from slash command menu
 description: What this command does (shown in /help)
 # Optional fields:
 allowed-tools: Bash(git:*), Read  # Restrict available tools
-argument-hint: [branch-name]      # Show expected arguments
+argument-hint: "[branch-name]"    # MUST quote values with brackets (YAML parses [...] as arrays)
 model: haiku                      # Use specific model
 disable-model-invocation: false   # Prevent SlashCommand tool use
 ---
 ```
+
+### YAML Quoting Rules
+- **`argument-hint`**: Always quote values containing `[...]` brackets: `"[arg-name]"`
+- **`description`**: Quote with single quotes when containing embedded `"..."` double quotes: `'Activates when user mentions "keyword"'`
+- **Validation**: Run `claude plugin validate plugins/lt-dev` to catch YAML parse errors
 
 ### Agents
 ```yaml

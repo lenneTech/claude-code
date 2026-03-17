@@ -1,6 +1,6 @@
 ---
 name: using-lt-cli
-description: Provides reference for the lenne.tech CLI tool (lt command). Covers lt fullstack init (workspace creation with local template symlinks), lt git get/reset (branch management), and lt server create (project scaffolding). Activates when user mentions "lt", "lt CLI", "lenne.tech CLI", "lt fullstack", "lt git", "fullstack workspace", "local templates", "--api-link", "--frontend-link", or any lt command syntax. NOT for NestJS module/object/property creation (use generating-nest-servers). NOT for Vue/Nuxt frontend code (use developing-lt-frontend).
+description: 'Provides reference for the lenne.tech CLI tool (lt command). Covers lt fullstack init (workspace creation with local template symlinks), lt git get/reset (branch management), and lt server create (project scaffolding). Activates when user mentions "lt", "lt CLI", "lenne.tech CLI", "lt fullstack", "lt git", "fullstack workspace", "local templates", "--api-link", "--frontend-link", or any lt command syntax. NOT for NestJS module/object/property creation (use generating-nest-servers). NOT for Vue/Nuxt frontend code (use developing-lt-frontend).'
 ---
 
 # LT CLI Reference

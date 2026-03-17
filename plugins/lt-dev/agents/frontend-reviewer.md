@@ -4,9 +4,9 @@ description: Autonomous frontend code review agent for Nuxt 4 / Vue applications
 model: sonnet
 tools: Bash, Read, Grep, Glob, TodoWrite
 permissionMode: default
-skills: developing-lt-frontend
+skills: developing-lt-frontend, building-stories-with-tdd
 memory: project
-mcpServers: chrome-devtools
+mcpServers: chrome-devtools, linear
 maxTurns: 60
 ---
 
@@ -19,6 +19,7 @@ Autonomous agent that reviews frontend code changes against lenne.tech Nuxt 4 / 
 | Element | Purpose |
 |---------|---------|
 | **Skill**: `developing-lt-frontend` | Frontend patterns and quality standards |
+| **Skill**: `building-stories-with-tdd` | TDD methodology and test expectations |
 | **Agent**: `frontend-dev` | Development agent whose rules are the review baseline |
 | **Command**: `/lt-dev:review` | Parallel orchestrator that spawns this reviewer |
 
@@ -28,6 +29,7 @@ Received from the `/lt-dev:review` command:
 - **Base branch**: Branch to diff against (default: `main`)
 - **Changed files**: List of frontend files from the diff
 - **App root**: Path to the frontend project (e.g., `projects/app/`)
+- **Issue ID**: Optional Linear issue identifier
 
 ---
 
@@ -81,7 +83,11 @@ ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
    - `nuxt.config.ts` for project-specific config
    - `app/api-client/types.gen.ts` existence
 
-3. **Identify test/lint commands** from package.json scripts
+3. **Load issue details** (if Issue ID provided):
+   - Use `mcp__plugin_lt-dev_linear__get_issue` for requirements
+   - Use `mcp__plugin_lt-dev_linear__list_comments` for context
+
+4. **Identify test/lint commands** from package.json scripts
 
 ### Phase 1: TypeScript Strictness
 
@@ -419,6 +425,7 @@ pnpm run lint
 
 - [ ] New components/composables have corresponding `*.spec.ts` or `*.test.ts` files
 - [ ] Modified components have updated tests (read test content to verify, do not execute)
+- [ ] **Regression tests for bug fixes**: If the diff fixes a bug or security issue (check commit messages, branch name for "fix", "bug", "security", "CVE"), verify a regression test exists that specifically covers the fixed scenario. Flag as Critical if missing.
 
 ---
 

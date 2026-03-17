@@ -1,7 +1,7 @@
 # Extend Claude with skills
 
 > Source: https://code.claude.com/docs/en/slash-commands
-> Generated: 2026-03-14T12:58:56.048Z
+> Generated: 2026-03-17T05:34:29.346Z
 
 ---
 

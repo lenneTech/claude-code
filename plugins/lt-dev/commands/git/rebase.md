@@ -1,7 +1,7 @@
 ---
 description: Rebase current branch onto dev (with conflict resolution, linting, testing and review)
 allowed-tools: Bash(git:*), Bash(gh:*), Bash(glab:*), Read, Grep, Glob, Agent, AskUserQuestion
-argument-hint: [--base=<branch>]
+argument-hint: "[--base=<branch>]"
 disable-model-invocation: true
 ---
 
