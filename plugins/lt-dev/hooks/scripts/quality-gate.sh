@@ -9,8 +9,13 @@
 #
 # Skip conditions:
 # - CLAUDE_SKIP_QUALITY_GATE=1
+# - Non-project directory (~/.claude/*)
+# - Non-git repository
 # - No source files changed
-# - /lt-dev:review already ran and no new changes since (diff-hash match)
+# - Baseline unchanged (no Claude edits this turn)
+# - Already reviewed with no new changes (diff-hash match)
+# - No build tooling (no lint/build/test scripts)
+# - Pass 3+ (counter >= 2)
 #
 # 2-Pass system with tiered response:
 # Pass 1 (counter=0): Tiered by change magnitude:
@@ -63,6 +68,23 @@ CHANGED_FILES=$(
 # No source files changed → allow stop
 [ -z "$CHANGED_FILES" ] && exit 0
 
+# ── State key ──
+DIR_HASH=$(echo "$PWD" | md5sum 2>/dev/null | cut -d' ' -f1 || echo "$PWD" | md5 2>/dev/null)
+
+# ── Skip if working tree unchanged since prompt (no Claude edits this turn) ──
+BASELINE_FILE="/tmp/.claude-qg-baseline-${DIR_HASH}"
+if [ -f "$BASELINE_FILE" ]; then
+  BASELINE_HASH=$(cat "$BASELINE_FILE" 2>/dev/null)
+  CURRENT_HASH=$({
+    git diff HEAD 2>/dev/null
+    git ls-files --others --exclude-standard 2>/dev/null
+  } | md5sum 2>/dev/null | cut -d' ' -f1 || {
+    git diff HEAD 2>/dev/null
+    git ls-files --others --exclude-standard 2>/dev/null
+  } | md5 2>/dev/null)
+  [ "$BASELINE_HASH" = "$CURRENT_HASH" ] && exit 0
+fi
+
 # ── Skip if project has no build tooling (lint/build/test scripts) ──
 HAS_TOOLING=false
 for pkg in "$PWD/package.json" "$PWD"/projects/*/package.json "$PWD"/packages/*/package.json; do
@@ -74,7 +96,6 @@ done
 [ "$HAS_TOOLING" = false ] && exit 0
 
 # ── State files ──
-DIR_HASH=$(echo "$PWD" | md5sum 2>/dev/null | cut -d' ' -f1 || echo "$PWD" | md5 2>/dev/null)
 COUNTER_FILE="/tmp/.claude-qg-${DIR_HASH}"
 TIMESTAMP_FILE="/tmp/.claude-qg-ts-${DIR_HASH}"
 REVIEWED_FILE="/tmp/.claude-qg-reviewed-${DIR_HASH}"
@@ -83,7 +104,13 @@ TIER_FILE="/tmp/.claude-qg-tier-${DIR_HASH}"
 # ── Already reviewed with no new changes → allow stop ──
 if [ -f "$REVIEWED_FILE" ]; then
   REVIEWED_DIFF_HASH=$(cat "$REVIEWED_FILE" 2>/dev/null)
-  CURRENT_DIFF_HASH=$(git diff HEAD 2>/dev/null | md5sum 2>/dev/null | cut -d' ' -f1 || git diff HEAD 2>/dev/null | md5 2>/dev/null)
+  CURRENT_DIFF_HASH=$({
+    git diff HEAD 2>/dev/null
+    git ls-files --others --exclude-standard 2>/dev/null
+  } | md5sum 2>/dev/null | cut -d' ' -f1 || {
+    git diff HEAD 2>/dev/null
+    git ls-files --others --exclude-standard 2>/dev/null
+  } | md5 2>/dev/null)
   [ "$REVIEWED_DIFF_HASH" = "$CURRENT_DIFF_HASH" ] && exit 0
 fi
 
@@ -240,6 +267,15 @@ After all reviews complete:
 ENDOFFULL
 )
 fi
+  # Save current state hash so re-review is skipped if nothing changes
+  CURRENT_DIFF_HASH=$({
+    git diff HEAD 2>/dev/null
+    git ls-files --others --exclude-standard 2>/dev/null
+  } | md5sum 2>/dev/null | cut -d' ' -f1 || {
+    git diff HEAD 2>/dev/null
+    git ls-files --others --exclude-standard 2>/dev/null
+  } | md5 2>/dev/null)
+  echo "$CURRENT_DIFF_HASH" > "$REVIEWED_FILE"
   emit_block "$REASON"
   exit 0
 fi

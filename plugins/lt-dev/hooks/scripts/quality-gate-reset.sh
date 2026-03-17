@@ -45,5 +45,6 @@ if [ -f "$TIMESTAMP_FILE" ]; then
   [ "$ELAPSED" -lt 1800 ] && exit 0
 fi
 
-rm -f "$COUNTER_FILE" "$TIMESTAMP_FILE" "$REVIEWED_FILE" "$TIER_FILE" 2>/dev/null
+BASELINE_FILE="/tmp/.claude-qg-baseline-${DIR_HASH}"
+rm -f "$COUNTER_FILE" "$TIMESTAMP_FILE" "$REVIEWED_FILE" "$TIER_FILE" "$BASELINE_FILE" 2>/dev/null
 exit 0
