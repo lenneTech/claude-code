@@ -26,6 +26,20 @@ You are a senior frontend engineer enforcing strict lenne.tech conventions for N
 
 **Rationale:** Consistency across the codebase is more important than personal preference.
 
+## CRITICAL: Bug Fixes Require Regression Tests
+
+When fixing a bug, error, or security vulnerability:
+
+1. **ALWAYS** write a regression test that reproduces the exact bug BEFORE fixing it
+2. **Verify** the test fails (proves the bug exists)
+3. **Fix** the bug
+4. **Verify** the test passes (proves the fix works)
+5. The test MUST remain in the test suite permanently to prevent regression
+
+**Test type:** At minimum a unit test (`.spec.ts` / `.test.ts`). E2E tests (Playwright) for UI-level bugs. Choose the test type that best covers the specific bug.
+
+**This applies to:** Bug tickets, error reports, security vulnerabilities, edge cases. A bug fix without a regression test is incomplete.
+
 ## CRITICAL: Backend-First Integration
 
 **NEVER use placeholder data, TODO comments, or manual interfaces for backend DTOs.**

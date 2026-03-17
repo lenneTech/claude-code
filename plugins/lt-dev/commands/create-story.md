@@ -1,6 +1,6 @@
 ---
 description: Create a user story for TDD implementation
-argument-hint: [story-idea]
+argument-hint: "[story-idea]"
 allowed-tools: AskUserQuestion, Write, Read, Glob, mcp__plugin_lt-dev_linear__*
 disable-model-invocation: true
 ---

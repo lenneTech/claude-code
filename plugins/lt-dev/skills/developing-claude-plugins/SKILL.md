@@ -119,7 +119,7 @@ commands/
 ```yaml
 ---
 description: What this command does (shown in /help and command list)
-argument-hint: [optional-args]    # Optional: shown in autocomplete
+argument-hint: "[optional-args]"   # Optional: shown in autocomplete (MUST quote if value contains brackets)
 allowed-tools: Read, Grep, Bash   # Optional: restrict tool access
 model: claude-3-5-sonnet-20241022 # Optional: force specific model
 ---

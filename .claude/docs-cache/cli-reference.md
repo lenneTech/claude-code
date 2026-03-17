@@ -1,7 +1,7 @@
 # CLI reference
 
 > Source: https://code.claude.com/docs/en/cli-reference
-> Generated: 2026-03-14T12:58:55.759Z
+> Generated: 2026-03-17T05:34:29.303Z
 
 ---
 

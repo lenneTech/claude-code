@@ -1,7 +1,7 @@
 ---
 description: Batch rebase multiple MRs/PRs onto dev (with conflict resolution, linting, testing, review, commit and force push)
 allowed-tools: Bash(git:*), Bash(gh:*), Bash(glab:*), Read, Grep, Glob, Agent, AskUserQuestion
-argument-hint: [project-url] [--team] [--no-team]
+argument-hint: "[project-url] [--team] [--no-team]"
 disable-model-invocation: true
 ---
 

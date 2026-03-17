@@ -5,12 +5,12 @@
     {
       "pattern": "Bash(npm test:*)",
       "description": "Run npm test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "backend-dev", "backend-reviewer", "test-reviewer", "frontend-reviewer", "branch-rebaser", "coordinating-agent-teams", "refactor-frontend"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "backend-dev", "backend-reviewer", "test-reviewer", "frontend-reviewer", "branch-rebaser", "coordinating-agent-teams", "refactor-frontend", "code-cleanup"]
     },
     {
       "pattern": "Bash(npm run test:*)",
       "description": "Run npm run test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "backend-dev", "backend-reviewer", "test-reviewer", "frontend-reviewer", "branch-rebaser", "coordinating-agent-teams", "refactor-frontend"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "backend-dev", "backend-reviewer", "test-reviewer", "frontend-reviewer", "branch-rebaser", "coordinating-agent-teams", "refactor-frontend", "code-cleanup"]
     },
     {
       "pattern": "Bash(npm run test\\:e2e:*)",
@@ -45,12 +45,12 @@
     {
       "pattern": "Bash(npm run build:*)",
       "description": "Build the application",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup"]
     },
     {
       "pattern": "Bash(npm run lint:*)",
       "description": "Run linter checks",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend", "code-cleanup"]
     },
     {
       "pattern": "Bash(npm run generate-types:*)",
@@ -140,12 +140,12 @@
     {
       "pattern": "Bash(pnpm test:*)",
       "description": "Run pnpm test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup"]
     },
     {
       "pattern": "Bash(pnpm run test:*)",
       "description": "Run pnpm run test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup"]
     },
     {
       "pattern": "Bash(pnpm run test\\:e2e:*)",
@@ -180,12 +180,12 @@
     {
       "pattern": "Bash(pnpm run build:*)",
       "description": "Build the application via pnpm",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup"]
     },
     {
       "pattern": "Bash(pnpm run lint:*)",
       "description": "Run linter checks via pnpm",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend", "code-cleanup"]
     },
     {
       "pattern": "Bash(pnpm run generate-types:*)",
@@ -260,12 +260,12 @@
     {
       "pattern": "Bash(yarn test:*)",
       "description": "Run yarn test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup"]
     },
     {
       "pattern": "Bash(yarn run test:*)",
       "description": "Run yarn run test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend"]
+      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup"]
     },
     {
       "pattern": "Bash(yarn run test\\:e2e:*)",
@@ -300,12 +300,12 @@
     {
       "pattern": "Bash(yarn run build:*)",
       "description": "Build the application via yarn",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup"]
     },
     {
       "pattern": "Bash(yarn run lint:*)",
       "description": "Run linter checks via yarn",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend", "code-cleanup"]
     },
     {
       "pattern": "Bash(yarn run generate-types:*)",

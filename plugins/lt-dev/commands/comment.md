@@ -1,6 +1,6 @@
 ---
 description: Generate and post a testing comment on a Linear issue
-argument-hint: [issue-id]
+argument-hint: "[issue-id]"
 allowed-tools: Read, Bash(git:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__create_comment, AskUserQuestion
 disable-model-invocation: true
 ---

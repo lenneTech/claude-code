@@ -1,6 +1,6 @@
 ---
 description: Comprehensive code review with content validation, security, documentation, tests, backend, frontend, UX, a11y, and devops reviewers. Small diffs use single-pass agent; larger diffs spawn parallel domain specialists with cross-domain challenge.
-argument-hint: [issue-id] [--base=main] [--weights="Security:25,..."]
+argument-hint: '[issue-id] [--base=main] [--weights="Security:25,..."]'
 allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Agent, AskUserQuestion, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
 disable-model-invocation: true
 ---
@@ -267,6 +267,7 @@ Review the frontend code changes on the current branch with browser testing.
 Base branch: <base-branch>
 App root: <path to app project>
 App URL: http://localhost:3001
+Issue ID: <issue-id or "none">
 Changed files:
 <list of frontend files>
 
@@ -432,12 +433,17 @@ Override rules:
 Priority ordering: Critical → High → Medium → Low
 
 ### Recommended Next Steps
-- Frontend ⚠️/❌ → `/refactor-frontend --dry-run`
+
+**Backend findings:**
 - Security ⚠️/❌ → `/lt-dev:backend:sec-review`
 - Tests ⚠️/❌ → `/lt-dev:backend:test-generate`
-- Formatting ⚠️/❌ → `/lt-dev:backend:code-cleanup`
+- Code Quality ⚠️/❌ → `/lt-dev:backend:code-cleanup`
 - Dependencies → `/lt-dev:backend:sec-audit`
-- All ✅ → Create PR and run `/review`
+
+**Frontend findings:**
+- Code Quality ⚠️/❌ → `/lt-dev:refactor-frontend --dry-run`
+
+**All ✅** → Create PR and run `/review`
 ```
 
 ### Phase 6: Diff Hash Snapshot

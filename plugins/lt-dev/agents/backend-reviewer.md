@@ -6,7 +6,7 @@ tools: Bash, Read, Grep, Glob, TodoWrite
 permissionMode: default
 skills: generating-nest-servers, building-stories-with-tdd
 memory: project
-maxTurns: 50
+maxTurns: 60
 mcpServers: linear
 ---
 
@@ -283,6 +283,7 @@ For each existing test file, **read** (do not execute) and check:
 3. **Validation tests**: grep for missing fields, invalid types test cases
 4. **Test cleanup**: verify `afterAll` with data removal exists
 5. **Test database**: verify `app-test` usage — never `app-dev`
+6. **Regression tests for bug fixes**: If the diff fixes a bug or security issue (check commit messages, branch name for "fix", "bug", "security", "CVE"), verify a regression test exists that specifically covers the fixed scenario. Flag as Critical if missing.
 
 **Scoring:**
 

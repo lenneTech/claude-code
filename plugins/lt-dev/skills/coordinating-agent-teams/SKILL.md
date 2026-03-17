@@ -1,6 +1,6 @@
 ---
 name: coordinating-agent-teams
-description: Provides auto-detection heuristics, coordination patterns, and worktree isolation guidance for parallel Claude Code operations. Covers Agent Teams (independent sessions with messaging) and parallel subagent spawning (Agent tool with isolation worktree). Activates when user mentions "agent team", "parallel review", "parallel agents", "team debug", "parallel worktrees", "batch rebase", "parallel backend frontend", "implement in parallel", or when commands evaluate team suitability via CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS. Also activates when spawning multiple file-modifying subagents concurrently. NOT for single sequential subagent invocations.
+description: 'Provides auto-detection heuristics, coordination patterns, and worktree isolation guidance for parallel Claude Code operations. Covers Agent Teams (independent sessions with messaging) and parallel subagent spawning (Agent tool with isolation worktree). Activates when user mentions "agent team", "parallel review", "parallel agents", "team debug", "parallel worktrees", "batch rebase", "parallel backend frontend", "implement in parallel", or when commands evaluate team suitability via CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS. Also activates when spawning multiple file-modifying subagents concurrently. NOT for single sequential subagent invocations.'
 user-invocable: false
 ---
 

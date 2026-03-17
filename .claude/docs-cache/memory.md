@@ -1,7 +1,7 @@
 # How Claude remembers your project
 
 > Source: https://code.claude.com/docs/en/memory
-> Generated: 2026-03-14T12:58:55.944Z
+> Generated: 2026-03-17T05:34:29.438Z
 
 ---
 
