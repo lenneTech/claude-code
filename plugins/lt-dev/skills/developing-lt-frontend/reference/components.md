@@ -11,6 +11,22 @@
 
 ---
 
+## SFC Block Order
+
+Vue Single File Components **always** use script-first order:
+
+```vue
+<script setup lang="ts">
+// ...
+</script>
+
+<template>
+  <!-- ... -->
+</template>
+```
+
+Never place `<template>` before `<script>`.
+
 ## Script Structure
 
 ```vue
