@@ -1,0 +1,21 @@
+{
+  "$schema": "../lt-dev/permissions.schema.json",
+  "description": "Bash permissions for the lt-offers plugin. Minimal permissions since most work goes through MCP tools.",
+  "permissions": [
+    {
+      "pattern": "Bash(curl *api.angebote.lenne.tech*)",
+      "description": "Health-check the offers API",
+      "usedBy": ["creating-offers"]
+    },
+    {
+      "pattern": "Bash(git clone *gitlab.lenne.tech/intern/offers*)",
+      "description": "Clone the offers repository from GitLab",
+      "usedBy": ["creating-offers", "offers:create", "offers:optimize"]
+    },
+    {
+      "pattern": "Bash(git -C *offers* pull*)",
+      "description": "Pull latest changes in the offers repository",
+      "usedBy": ["creating-offers", "offers:create", "offers:optimize"]
+    }
+  ]
+}
