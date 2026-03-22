@@ -10,6 +10,11 @@
       "name": "lt-dev",
       "source": "./plugins/lt-dev",
       "description": "Skills, Commands & Hooks for Nuxt 4, NestJS, TDD and CLI tools"
+    },
+    {
+      "name": "lt-offers",
+      "source": "./plugins/lt-offers",
+      "description": "Skills & Commands for creating business offers on angebote.lenne.tech via MCP"
     }
   ]
 }

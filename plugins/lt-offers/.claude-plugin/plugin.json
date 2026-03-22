@@ -1,0 +1,23 @@
+{
+  "name": "lt-offers",
+  "version": "7.2.0",
+  "description": "Skills & Commands for creating and managing business offers on angebote.lenne.tech — MCP tools for offers, knowledge base, analytics, and content management",
+  "author": {
+    "name": "lenne.tech GmbH",
+    "url": "https://lenne.tech"
+  },
+  "homepage": "https://angebote.lenne.tech",
+  "repository": "https://github.com/lenneTech/claude-code",
+  "license": "MIT",
+  "keywords": [
+    "lenne.tech",
+    "offers",
+    "angebote",
+    "mcp",
+    "content-blocks",
+    "business-offers",
+    "nuxt-ui",
+    "tailwind",
+    "rich-component"
+  ]
+}

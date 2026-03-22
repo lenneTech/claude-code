@@ -224,6 +224,7 @@ The scanner detects: missing class-level `@Restricted`, endpoints without `@Role
 | Quality Review | [reference/quality-review.md](${CLAUDE_SKILL_DIR}/reference/quality-review.md) |
 | Verification Checklist | [reference/verification-checklist.md](${CLAUDE_SKILL_DIR}/reference/verification-checklist.md) |
 | TypeScript Conventions | [reference/typescript-conventions.md](${CLAUDE_SKILL_DIR}/reference/typescript-conventions.md) |
+| MCP Integration | [reference/mcp-integration.md](${CLAUDE_SKILL_DIR}/reference/mcp-integration.md) |
 
 ## TypeScript Language Server (Recommended)
 
