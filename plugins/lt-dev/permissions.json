@@ -470,12 +470,12 @@
     {
       "pattern": "Bash(gh pr:*)",
       "description": "GitHub CLI for PR management",
-      "usedBy": ["branch-rebaser"]
+      "usedBy": ["branch-rebaser", "create-request", "dev-submit"]
     },
     {
       "pattern": "Bash(glab mr:*)",
       "description": "GitLab CLI for MR management",
-      "usedBy": ["branch-rebaser"]
+      "usedBy": ["branch-rebaser", "create-request", "dev-submit"]
     },
     {
       "pattern": "Bash(npx oxlint:*)",

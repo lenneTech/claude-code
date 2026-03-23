@@ -23,7 +23,8 @@ disable-model-invocation: true
 | `/lt-dev:create-bug` | Create a bug report |
 | `/lt-dev:review` | Comprehensive 7-dimension code review after implementation |
 | `/review` | Claude Code built-in: PR-level review after PR creation |
-| `/lt-dev:comment` | Generate testing comment for the issue |
+| `/lt-dev:linear-comment` | Generate testing comment for the issue |
+| `/lt-dev:dev-submit` | Submit work for review (MR/PR + comment + status update) |
 | `/lt-dev:backend:sec-review` | Security review of code changes |
 | `/lt-dev:backend:test-generate` | Generate tests for existing code |
 
@@ -93,8 +94,6 @@ Use the `building-stories-with-tdd` skill to execute the full implementation cyc
 
 1. `/lt-dev:review $ARGUMENTS` — Comprehensive 7-dimension quality check
 2. Address any findings from the review
-3. `/lt-dev:comment $ARGUMENTS` — Post testing comment on the ticket
-4. Ask the user: "Soll ich eine PR erstellen?" — If yes, create PR with `gh pr create` using the issue title and a summary of changes
-5. After PR creation: suggest running `/review` for a final PR-level check
+3. `/lt-dev:dev-submit $ARGUMENTS` — Create MR/PR, post testing comment, and move ticket to "Dev Review"
 
 **BEGIN IMPLEMENTATION NOW.**

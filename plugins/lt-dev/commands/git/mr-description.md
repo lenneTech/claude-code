@@ -18,6 +18,8 @@ disable-model-invocation: true
 |---------|---------|
 | `/lt-dev:git:commit-message` | Generate commit message suggestions |
 | `/lt-dev:git:mr-description-clipboard` | Same as this, but with clipboard copy |
+| `/lt-dev:git:create-request` | Create MR/PR directly |
+| `/lt-dev:dev-submit` | Full submission workflow (MR/PR + Linear comment + status) |
 | `/review` | Claude Code built-in: PR-level review (after PR creation) |
 
 ---
