@@ -54,16 +54,48 @@ git remote get-url origin
 
 ### STEP 2: Detect Target Branch
 
-Determine the target branch for the MR/PR:
+Determine the target branch for the MR/PR using a priority chain:
 
-1. Check for `dev` branch: `git rev-parse --verify origin/dev 2>/dev/null`
-2. Check for `develop` branch: `git rev-parse --verify origin/develop 2>/dev/null`
-3. Fallback to `main`: `git rev-parse --verify origin/main 2>/dev/null`
-4. Fallback to `master`: `git rev-parse --verify origin/master 2>/dev/null`
+**Priority 1 — Parent branch from git history:**
+
+Try to determine the branch from which the current branch was created:
+
+```bash
+# Check reflog for branch creation point
+git reflog show $(git branch --show-current) --format='%gs' | grep 'branch: Created from' | head -1
+```
+
+This returns e.g. `branch: Created from dev` or `branch: Created from refs/heads/develop`. Extract the branch name.
+
+If not found, try the checkout history:
+
+```bash
+git reflog show --format='%gs' | grep 'checkout: moving from .* to $(git branch --show-current)' | head -1
+```
+
+Extract the source branch name (the part after "moving from" and before " to").
+
+Verify the detected parent branch exists on remote: `git rev-parse --verify origin/<detected-branch> 2>/dev/null`
+
+**Priority 2 — Fallback to well-known branches** (if Priority 1 fails or detected branch has no remote):
+
+1. `origin/dev`
+2. `origin/develop`
+3. `origin/main`
+4. `origin/master`
 
 Use the first match as the target branch.
 
-### STEP 3: Generate Description
+### STEP 3: Check for Existing MR/PR
+
+Before creating, check if an MR/PR already exists for this branch:
+
+- GitHub: `gh pr list --head $(git branch --show-current) --json url --jq '.[0].url'`
+- GitLab: `glab mr list --source-branch $(git branch --show-current) --json url --jq '.[0].url'`
+
+If an MR/PR already exists, output the URL and skip to STEP 5.
+
+### STEP 4: Generate Description
 
 Analyze the branch changes to generate a concise MR/PR description:
 
@@ -85,7 +117,7 @@ Structure the description:
 - [commit messages from the branch]
 ```
 
-### STEP 4: Create MR/PR
+### STEP 5: Create MR/PR
 
 **GitHub:**
 ```bash
@@ -99,7 +131,7 @@ glab mr create --target-branch <target-branch> --title "<title>" --description "
 
 The title should be derived from the branch name or the most descriptive commit message.
 
-### STEP 5: Confirm
+### STEP 6: Confirm
 
 Output the MR/PR URL to the user:
 - "MR/PR erstellt: <URL>"

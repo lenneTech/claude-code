@@ -42,7 +42,11 @@ Store the resolved issue ID as `ISSUE_ID` for subsequent steps.
 ### STEP 1: Gather Context
 
 1. **Retrieve Issue:** Fetch Linear issue **#ISSUE_ID** via MCP (title, description, acceptance criteria).
-2. **Analyze Changes:** Run `git diff main...HEAD --stat` and `git diff main...HEAD` to understand what was changed. If there are no committed changes, fall back to `git diff HEAD` for uncommitted changes.
+2. **Analyze Changes:** Determine the target branch using the same priority chain as `/lt-dev:git:create-request`:
+   - Priority 1: Detect parent branch from reflog (`git reflog show $(git branch --show-current) --format='%gs' | grep 'branch: Created from' | head -1`)
+   - Priority 2: Fallback to `dev` → `develop` → `main` → `master`
+
+   Then run `git diff <target-branch>...HEAD --stat` and `git diff <target-branch>...HEAD` to understand what was changed. If there are no committed changes, fall back to `git diff HEAD` for uncommitted changes.
 3. **Read Key Files:** If the diff is large, read the most relevant changed files to understand the user-facing impact.
 
 ### STEP 2: Generate Comment

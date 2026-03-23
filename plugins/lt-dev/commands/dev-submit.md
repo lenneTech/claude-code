@@ -1,7 +1,7 @@
 ---
 description: Submit current work for dev review — creates MR/PR, posts Linear comment, and moves ticket to Dev Review
 argument-hint: "[issue-id]"
-allowed-tools: Read, Bash(git:*), Bash(gh pr:*), Bash(glab mr:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__create_comment, mcp__plugin_lt-dev_linear__update_issue, mcp__plugin_lt-dev_linear__get_status, mcp__plugin_lt-dev_linear__list_workflow_states, AskUserQuestion
+allowed-tools: Read, Bash(git:*), Bash(gh pr:*), Bash(glab mr:*), mcp__plugin_lt-dev_linear__*, AskUserQuestion
 disable-model-invocation: true
 ---
 
@@ -68,7 +68,24 @@ git remote get-url origin
 | `github.com` | GitHub | `gh` |
 | `gitlab` or other | GitLab | `glab` |
 
-**Detect Target Branch** (first match wins):
+**Detect Target Branch** using priority chain:
+
+*Priority 1 — Parent branch from git history:*
+
+```bash
+# Check reflog for branch creation point
+git reflog show $(git branch --show-current) --format='%gs' | grep 'branch: Created from' | head -1
+```
+
+Extract the branch name (e.g. `branch: Created from dev` → `dev`). If not found, try:
+
+```bash
+git reflog show --format='%gs' | grep 'checkout: moving from .* to $(git branch --show-current)' | head -1
+```
+
+Verify detected branch exists on remote: `git rev-parse --verify origin/<detected-branch> 2>/dev/null`
+
+*Priority 2 — Fallback to well-known branches* (if Priority 1 fails):
 1. `origin/dev`
 2. `origin/develop`
 3. `origin/main`
