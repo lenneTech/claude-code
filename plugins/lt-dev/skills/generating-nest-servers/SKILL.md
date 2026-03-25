@@ -94,6 +94,37 @@ lt server addProp --type Module --element User --noConfirm --skipLint \
 
 **Complete security rules: [reference/security-rules.md](${CLAUDE_SKILL_DIR}/reference/security-rules.md)** | **OWASP checklist: [reference/owasp-checklist.md](${CLAUDE_SKILL_DIR}/reference/owasp-checklist.md)**
 
+### Prefer CrudService Over Direct Model Access
+
+**ALWAYS prefer CrudService methods over direct Mongoose model calls.**
+
+```typescript
+// AVOID - Direct model access bypasses security and permissions
+const product = await this.productModel.findOne({ _id: id });
+const users = await this.mainDbModel.find({ active: true });
+await this.orderModel.updateOne({ _id: id }, { status: 'done' });
+
+// PREFERRED - CrudService methods handle security, permissions, population
+const product = await this.findOne({ id }, serviceOptions);
+const users = await this.find({ filterQuery: { active: true }, currentUser });
+await this.update(id, input, serviceOptions);
+await this.userService.findOne({ id: userId }, { currentUser });
+```
+
+**Why CrudService first:**
+- `checkRestricted()` enforces field-level `@Restricted` permissions (set via `@UnifiedField({ roles })`) — direct model access bypasses this
+- Handles population, filtering, validation, and sanitization automatically
+- `@Roles` is enforced by RolesGuard at controller level; field-level `@Restricted` goes through `checkRestricted()` in the service layer
+
+**Legitimate exceptions for direct model access:**
+- Setting fields that CrudService doesn't expose (e.g., password hashes directly in DB)
+- Aggregation pipelines or bulk operations not supported by CrudService
+- Performance-critical bulk migrations
+
+When using direct model access, **add a comment explaining why** CrudService can't be used.
+
+**Details: [reference/framework-guide.md](${CLAUDE_SKILL_DIR}/reference/framework-guide.md#prefer-crudservice-over-direct-model-access)**
+
 ### Never Use `declare` Keyword
 
 ```typescript
@@ -141,11 +172,28 @@ lt server permissions --failOnWarnings  # CI/CD mode
 ## TDD Recommendation
 
 ```
-1. Write API tests FIRST (REST/GraphQL endpoint tests)
-2. Implement backend code until tests pass
-3. Iterate until all tests green
-4. Then proceed to frontend (E2E tests first)
+1. Detect test framework BEFORE writing or running any test (see below)
+2. Write API tests FIRST (REST/GraphQL endpoint tests)
+3. Implement backend code until tests pass
+4. Iterate until all tests green
+5. Then proceed to frontend (E2E tests first)
 ```
+
+### Detect Test Framework First (CRITICAL)
+
+**BEFORE writing or running ANY test**, check which test framework and patterns the project uses:
+
+1. **Check `package.json`** for `vitest`, `jest`, or `@jest` in dependencies/devDependencies
+2. **Check existing test files** — read 1-2 files in `tests/` to see imports (`import { describe } from 'vitest'` vs Jest globals)
+3. **Check test scripts** in `package.json` (`test:e2e`, `test`, etc.) for the runner command
+4. **Match the framework exactly** — do NOT mix Vitest syntax in a Jest project or vice versa
+
+| Framework | Imports | Config File |
+|-----------|---------|-------------|
+| **Vitest** | `import { describe, it, expect } from 'vitest'` | `vitest.config.ts` |
+| **Jest** | No imports needed (globals) | `jest.config.ts` / `jest.config.js` |
+
+**Running tests:** Always use the project's npm scripts (check `package.json` `scripts` section). Do NOT guess commands like `npx vitest` or `npx jest` — use `npm run test:e2e`, `npm test`, or whatever the project defines.
 
 For full TDD workflow orchestration, use `building-stories-with-tdd` skill.
 
@@ -163,6 +211,7 @@ afterAll(async () => {
 ## Framework Essentials
 
 - [ ] Read CrudService before modifying any Service (`node_modules/@lenne.tech/nest-server/src/core/common/services/crud.service.ts`)
+- [ ] **Prefer CrudService methods** (`this.findOne()`, `this.find()`, `this.update()`) over direct model access (`this.someModel.findOne()`, `mainDbModel.find()`) — direct model access only with comment explaining why
 - [ ] NEVER blindly pass all serviceOptions to other Services (only pass `currentUser`)
 - [ ] Check if CrudService already provides needed functionality
 
