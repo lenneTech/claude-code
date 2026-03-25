@@ -6,6 +6,7 @@ description: Complete guide to @lenne.tech/nest-server framework - CrudService b
 #  Understanding the @lenne.tech/nest-server Framework
 
 ## Table of Contents
+- [Prefer CrudService Over Direct Model Access](#prefer-crudservice-over-direct-model-access)
 - [Core Service Base Class: CrudService](#core-service-base-class-crudservice)
 - [CRITICAL: ServiceOptions When Calling Other Services](#-critical-serviceoptions-when-calling-other-services)
 - [Framework Patterns](#framework-patterns)
