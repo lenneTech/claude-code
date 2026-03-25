@@ -142,7 +142,7 @@ export class BuyerProfile extends Profile { ... }
 
 ### Phase 5: Description Management
 
-** CRITICAL PHASE - Refer to "CRITICAL: DESCRIPTION MANAGEMENT" section at the top of this document!**
+**CRITICAL PHASE - Refer to "CRITICAL: DESCRIPTION MANAGEMENT" section at the top of this document!**
 
 This phase is often done incorrectly. Follow these steps EXACTLY:
 
@@ -214,7 +214,7 @@ Apply formatting rules:
 3. **If no comment provided**:
    -> Create meaningful English description: `description: 'User email address'`
 
-** CRITICAL - Preserve Original Wording**:
+**CRITICAL - Preserve Original Wording**:
 
 -  **DO:** Fix spelling/typos only
 -  **DON'T:** Rephrase, expand, or improve wording
@@ -373,7 +373,7 @@ export enum StatusEnum {
 
 ---
 
-** CRITICAL: Test Type Requirement**
+**CRITICAL: Test Type Requirement**
 
 **ONLY create API tests using TestHelper - NEVER create direct Service tests!**
 
@@ -466,7 +466,7 @@ describe('Product Tests', () => {
 
 ---
 
-** CRITICAL: Test Creation Process**
+**CRITICAL: Test Creation Process**
 
 Creating API tests is NOT just about testing functionality - it's about **validating the security model**. You MUST follow this exact process:
 
