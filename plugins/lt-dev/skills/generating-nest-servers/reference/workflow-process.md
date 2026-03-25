@@ -354,6 +354,25 @@ export enum StatusEnum {
 
 ### Phase 7: API Test Creation
 
+**CRITICAL: Detect Test Framework BEFORE Writing or Running Tests**
+
+**BEFORE writing or running ANY test**, determine which framework the project uses:
+
+1. Check `package.json` for `vitest` or `jest` in dependencies/devDependencies
+2. Read 1-2 existing test files in `tests/` to see import patterns and syntax
+3. Check `test:e2e` script in `package.json` for the runner command
+
+| Framework | Imports | Globals |
+|-----------|---------|---------|
+| **Vitest** | `import { describe, it, expect } from 'vitest'` | Not global by default |
+| **Jest** | No imports needed | `describe`, `it`, `expect` are global |
+
+**Do NOT assume a framework. Do NOT mix Vitest and Jest syntax. Match the existing project exactly.**
+
+**Running tests:** Always use the project's npm scripts from `package.json` (e.g., `npm run test:e2e`, `npm test`). Do NOT run `npx vitest`, `npx jest`, or other direct runner commands — the project scripts may include required flags, config paths, or environment setup.
+
+---
+
 ** CRITICAL: Test Type Requirement**
 
 **ONLY create API tests using TestHelper - NEVER create direct Service tests!**
