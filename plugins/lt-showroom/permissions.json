@@ -1,0 +1,111 @@
+{
+  "$schema": "../lt-dev/permissions.schema.json",
+  "description": "Bash permissions for the showroom plugin. Covers source code analysis, project startup for screenshots, and API health checks.",
+  "permissions": [
+    {
+      "pattern": "Bash(git log:*)",
+      "description": "Read git history for project analysis",
+      "usedBy": ["analyzing-projects", "project-analyzer", "showroom:analyze", "showroom:create", "showroom:update"]
+    },
+    {
+      "pattern": "Bash(git status:*)",
+      "description": "Check git working tree status for project analysis",
+      "usedBy": ["analyzing-projects", "project-analyzer", "showroom:analyze"]
+    },
+    {
+      "pattern": "Bash(git diff:*)",
+      "description": "Compare versions for project analysis",
+      "usedBy": ["analyzing-projects", "project-analyzer", "showroom:analyze"]
+    },
+    {
+      "pattern": "Bash(npm install:*)",
+      "description": "Install npm dependencies before starting project for screenshots",
+      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+    },
+    {
+      "pattern": "Bash(npm run dev:*)",
+      "description": "Start development server for screenshot capture",
+      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+    },
+    {
+      "pattern": "Bash(npm run build:*)",
+      "description": "Build project before screenshot capture",
+      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+    },
+    {
+      "pattern": "Bash(npm run seed:*)",
+      "description": "Seed demo data for screenshot capture",
+      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+    },
+    {
+      "pattern": "Bash(npm run start:*)",
+      "description": "Start project in production mode for screenshot capture",
+      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+    },
+    {
+      "pattern": "Bash(pnpm install:*)",
+      "description": "Install pnpm dependencies before starting project for screenshots",
+      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+    },
+    {
+      "pattern": "Bash(pnpm run dev:*)",
+      "description": "Start development server via pnpm for screenshot capture",
+      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+    },
+    {
+      "pattern": "Bash(pnpm run build:*)",
+      "description": "Build project via pnpm before screenshot capture",
+      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+    },
+    {
+      "pattern": "Bash(pnpm run seed:*)",
+      "description": "Seed demo data via pnpm for screenshot capture",
+      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+    },
+    {
+      "pattern": "Bash(pnpm run start:*)",
+      "description": "Start project via pnpm in production mode for screenshot capture",
+      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+    },
+    {
+      "pattern": "Bash(yarn install:*)",
+      "description": "Install yarn dependencies before starting project for screenshots",
+      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+    },
+    {
+      "pattern": "Bash(yarn run dev:*)",
+      "description": "Start development server via yarn for screenshot capture",
+      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+    },
+    {
+      "pattern": "Bash(yarn run build:*)",
+      "description": "Build project via yarn before screenshot capture",
+      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+    },
+    {
+      "pattern": "Bash(yarn run seed:*)",
+      "description": "Seed demo data via yarn for screenshot capture",
+      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+    },
+    {
+      "pattern": "Bash(yarn run start:*)",
+      "description": "Start project via yarn in production mode for screenshot capture",
+      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+    },
+    {
+      "pattern": "Bash(pkill:*)",
+      "description": "Stop dev server process after screenshot capture",
+      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+    },
+    {
+      "pattern": "Bash(lsof:*)",
+      "description": "Check if a port is already in use before starting the project",
+      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+    },
+    {
+      "pattern": "Bash(curl *api.showroom.lenne.tech*)",
+      "description": "Health-check the showroom API",
+      "usedBy": ["creating-showcases", "showroom:create", "showroom:update", "showroom:sync-schema"]
+    }
+  ]
+}

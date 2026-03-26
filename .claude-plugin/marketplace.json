@@ -15,6 +15,11 @@
       "name": "lt-offers",
       "source": "./plugins/lt-offers",
       "description": "Skills & Commands for creating business offers on angebote.lenne.tech via MCP"
+    },
+    {
+      "name": "lt-showroom",
+      "source": "./plugins/lt-showroom",
+      "description": "Skills & Commands for analyzing projects and creating showcases on showroom.lenne.tech via MCP"
     }
   ]
 }

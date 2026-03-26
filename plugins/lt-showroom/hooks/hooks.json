@@ -1,0 +1,27 @@
+{
+  "description": "Detects showroom projects and analyzable software projects to activate the relevant skills",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/detect-showroom-project.sh\"",
+            "timeout": 5,
+            "statusMessage": "Detecting showroom project context"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/detect-analyzable-project.sh\"",
+            "timeout": 5,
+            "statusMessage": "Detecting analyzable project context"
+          }
+        ]
+      }
+    ]
+  }
+}

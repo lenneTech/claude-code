@@ -12,7 +12,7 @@ CONTEXT=""
 # Check if we're inside the offers project
 if [ -f "$CWD/projects/api/src/server/modules/offer/offer.service.ts" ] || \
    [ -f "$CWD/projects/app/app/interfaces/offer.interface.ts" ]; then
-  CONTEXT="Offers project detected in monorepo. Use the creating-offers skill for offer-related tasks."
+  CONTEXT="Offers project detected (local development). The project-level .mcp.json overrides offers-api to http://localhost:3000/mcp — MCP tools will use the local API server. Use the creating-offers skill for offer-related tasks."
 fi
 
 # Check for offer-related keywords in the prompt

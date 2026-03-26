@@ -1,0 +1,22 @@
+{
+  "name": "lt-showroom",
+  "version": "7.5.0",
+  "description": "Skills & Commands for analyzing software projects and creating showcases on showroom.lenne.tech — MCP tools for showcases, screenshots, analytics, and content management",
+  "author": {
+    "name": "lenne.tech GmbH",
+    "url": "https://lenne.tech"
+  },
+  "homepage": "https://showroom.lenne.tech",
+  "repository": "https://github.com/lenneTech/claude-code",
+  "license": "MIT",
+  "keywords": [
+    "lenne.tech",
+    "showroom",
+    "showcase",
+    "portfolio",
+    "project-analysis",
+    "screenshots",
+    "mcp",
+    "content-blocks"
+  ]
+}

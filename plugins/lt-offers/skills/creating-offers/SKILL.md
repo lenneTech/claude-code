@@ -38,6 +38,8 @@ This skill enables Claude Code to create, optimize, and manage business offers o
 
 All offer operations go through the `offers-api` MCP server. The connection uses OAuth 2.1 with automatic browser-based login. No API keys or tokens needed.
 
+The default MCP endpoint is `https://api.angebote.lenne.tech/mcp` (production). When working inside the offers project repository, the project-level `.mcp.json` overrides this to `http://localhost:3000/mcp` for local development.
+
 **Available MCP Tools:**
 - `add_offer_source` — Add a source (text/link/file) to an offer
 - `create_from_template` — Create offer from template
