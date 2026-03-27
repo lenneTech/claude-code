@@ -2,18 +2,19 @@
 name: branch-rebaser
 description: Autonomous agent for rebasing feature branches onto the development branch. Handles conflict resolution, Linear ticket analysis, code optimization, linting (oxfmt/oxlint), testing, and code review.
 model: sonnet
+effort: high
 tools: Bash, Read, Grep, Glob, Write, Edit, TodoWrite
-permissionMode: acceptEdits
 memory: project
 isolation: worktree
 skills: generating-nest-servers, developing-lt-frontend, rebasing-branches
-mcpServers: linear
 maxTurns: 100
 ---
 
 # Branch Rebaser Agent
 
 Autonomous execution agent that rebases feature branches onto a development branch with conflict resolution, optimization, linting, testing, and review.
+
+> **MCP Dependency:** This agent requires the `linear` MCP server to be configured in the user's session for full functionality (ticket context during conflict resolution and optimization).
 
 ## Related Elements
 

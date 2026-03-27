@@ -27,6 +27,11 @@
 
 INPUT=$(cat)
 
+# ── Diff hash helper ──
+calc_diff_hash() {
+  (git diff HEAD 2>/dev/null; git ls-files --others --exclude-standard 2>/dev/null) | md5sum 2>/dev/null || md5 2>/dev/null | awk '{print $1}'
+}
+
 # ── Recursion guard: skip if this stop was triggered by a previous hook block ──
 STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null)
 if [ "$STOP_HOOK_ACTIVE" = "true" ]; then
@@ -75,13 +80,7 @@ DIR_HASH=$(echo "$PWD" | md5sum 2>/dev/null | cut -d' ' -f1 || echo "$PWD" | md5
 BASELINE_FILE="/tmp/.claude-qg-baseline-${DIR_HASH}"
 if [ -f "$BASELINE_FILE" ]; then
   BASELINE_HASH=$(cat "$BASELINE_FILE" 2>/dev/null)
-  CURRENT_HASH=$({
-    git diff HEAD 2>/dev/null
-    git ls-files --others --exclude-standard 2>/dev/null
-  } | md5sum 2>/dev/null | cut -d' ' -f1 || {
-    git diff HEAD 2>/dev/null
-    git ls-files --others --exclude-standard 2>/dev/null
-  } | md5 2>/dev/null)
+  CURRENT_HASH=$(calc_diff_hash)
   [ "$BASELINE_HASH" = "$CURRENT_HASH" ] && exit 0
 fi
 
@@ -104,13 +103,7 @@ TIER_FILE="/tmp/.claude-qg-tier-${DIR_HASH}"
 # ── Already reviewed with no new changes → allow stop ──
 if [ -f "$REVIEWED_FILE" ]; then
   REVIEWED_DIFF_HASH=$(cat "$REVIEWED_FILE" 2>/dev/null)
-  CURRENT_DIFF_HASH=$({
-    git diff HEAD 2>/dev/null
-    git ls-files --others --exclude-standard 2>/dev/null
-  } | md5sum 2>/dev/null | cut -d' ' -f1 || {
-    git diff HEAD 2>/dev/null
-    git ls-files --others --exclude-standard 2>/dev/null
-  } | md5 2>/dev/null)
+  CURRENT_DIFF_HASH=$(calc_diff_hash)
   [ "$REVIEWED_DIFF_HASH" = "$CURRENT_DIFF_HASH" ] && exit 0
 fi
 
@@ -141,140 +134,23 @@ fi
 if [ "$PASS_COUNT" -eq 0 ]; then
 echo "$GATE_TIER" > "$TIER_FILE"
 
+# Resolve instructions directory (relative to this script)
+INSTRUCTIONS_DIR="${CLAUDE_PLUGIN_ROOT}/hooks/scripts/quality-gate-instructions"
+
 # Light tier: only lint + build + TypeScript (small changes, ≤3 files, <30 lines)
 if [ "$GATE_TIER" = "light" ]; then
-REASON=$(cat <<'ENDOFLIGHT'
-## Automatic Quality Gate — Light (small change detected)
-
-Only a few files with minor changes. Running lint, TypeScript check, and build only.
-
-### Steps
-
-Detect the package manager (pnpm/yarn/npm via lockfile), then run:
-
-**Phase A (sequential — these modify files):**
-1. **lint:fix** script (or equivalent) — auto-fix lint issues
-2. **format** script (if available) — auto-format code
-
-**Phase B (parallel Bash calls in one message — read-only):**
-3. **tsc --noEmit** (via local binary) — zero TypeScript errors
-4. **build** script — verify build succeeds
-
-**TypeScript errors are blocking** — fix all TS errors before allowing stop.
-
-If all pass, present a short summary. No agent reviews needed for this change size.
-ENDOFLIGHT
-)
+REASON="Quality gate (light): Read ${INSTRUCTIONS_DIR}/light.md for steps, then execute them."
 
 # Standard tier: lint + build + security-reviewer only (medium changes)
 elif [ "$GATE_TIER" = "standard" ]; then
-REASON=$(cat <<'ENDOFSTANDARD'
-## Automatic Quality Gate — Standard (medium change detected)
-
-Moderate changes detected. Running build checks and security review.
-
-### Step 1: Build, Lint & Test
-
-Detect the package manager (pnpm/yarn/npm via lockfile), then run in each affected subproject:
-
-**Phase A (sequential — these modify files):**
-1. **lint:fix** script (or equivalent) — auto-fix lint issues
-2. **format** script (if available) — auto-format code
-
-**Phase B (parallel Bash calls in one message — read-only):**
-3. **tsc --noEmit** (via local binary, in each subproject) — zero TypeScript errors, no implicit any
-4. **build** script — verify build succeeds
-5. **test** script (if exists) — run test suite
-
-**TypeScript errors are blocking** — fix all TS errors before proceeding.
-**Test failures are blocking** — failing tests are ALWAYS a problem. Fix the root cause of every failing test, even if the failure predates the current changes or seems unrelated. A green test suite is a non-negotiable prerequisite.
-
-### Step 2: Security Review
-
-Launch security reviewer only:
-
-1. **Security Reviewer** — Agent tool with `subagent_type: "lt-dev:security-reviewer"`:
-   - Prompt: "Quick security review of recent code changes. Focus on: injection risks, auth bypass, data exposure, missing input validation, hardcoded secrets, missing @Restricted/@Roles/securityCheck. Only report Critical and High severity findings. Be concise."
-
-### Step 3: Handle Findings
-
-**Critical/High security findings:** Fix immediately. These are non-negotiable.
-**Lint/TS issues:** Auto-fix where possible.
-ENDOFSTANDARD
-)
+REASON="Quality gate (standard): Read ${INSTRUCTIONS_DIR}/standard.md for steps, then execute them."
 
 # Full tier: complete review pipeline (large changes, >100 lines or >10 files)
 else
-REASON=$(cat <<'ENDOFFULL'
-## Automatic Quality Gate — Full (large change detected)
-
-Significant changes detected. Running full quality gate with parallel reviews.
-
-### Step 1: Build, Lint & Test
-
-Detect the package manager (pnpm/yarn/npm via lockfile), then run in each affected subproject:
-
-**Phase A (sequential — these modify files):**
-1. **lint:fix** script (or equivalent) — auto-fix lint issues
-2. **format** script (if available) — auto-format code
-
-**Phase B (parallel Bash calls in one message — read-only):**
-3. **tsc --noEmit** (via local binary, in each subproject) — zero TypeScript errors, no implicit any
-4. **build** script — verify build succeeds
-5. **test** script (if exists) — run test suite
-
-**TypeScript errors are blocking** — fix all TS errors before proceeding to reviews.
-**Test failures are blocking** — failing tests are ALWAYS a problem. Fix the root cause of every failing test, even if the failure predates the current changes or seems unrelated. A green test suite is a non-negotiable prerequisite.
-
-### Step 2: Parallel Code Reviews (no browser)
-
-Launch ALL applicable code-only reviewers simultaneously using Agent tool calls in a **single message**:
-
-1. **Security Reviewer** — Agent tool with `subagent_type: "lt-dev:security-reviewer"`:
-   - Prompt: "Quick security review of recent code changes. Focus on: injection risks, auth bypass, data exposure, missing input validation, hardcoded secrets, missing @Restricted/@Roles/securityCheck. Only report Critical and High severity findings. Be concise."
-
-2. **Backend Reviewer** (only if api/ or src/server/ files changed) — Agent tool with `subagent_type: "lt-dev:backend-reviewer"`:
-   - Prompt: "Quick backend review of recent code changes. Focus on: missing @Restricted/@Roles, missing securityCheck, implicit any, missing input validation, blind serviceOptions passthrough. Only report High severity findings. Be concise."
-
-3. **Documentation Reviewer** — Agent tool with `subagent_type: "lt-dev:docs-reviewer"`:
-   - Prompt: "Quick documentation review of recent code changes. Focus on: missing README updates for new features, missing JSDoc on new public interfaces, missing migration guide for breaking changes or new config options, new env vars not in .env.example. Only report High severity findings. Be concise."
-
-### Step 3: Sequential Browser Reviews (Chrome DevTools MCP)
-
-**IMPORTANT:** Browser reviewers use Chrome DevTools MCP which has global page state (`select_page`). They MUST run one at a time — never in parallel.
-
-Launch each reviewer **after the previous one completes**:
-
-1. **Frontend Reviewer** (only if .vue or app/ files changed) — Agent tool with `subagent_type: "lt-dev:frontend-reviewer"`:
-   - Prompt: "Review recent frontend code changes with browser testing via Chrome DevTools MCP. Focus on: missing types on refs/computed, SSR safety violations, accessibility gaps, hardcoded colors, console.log usage, missing Loading/Error/Empty states. Navigate to affected pages and verify rendering. Only report High severity findings. Be concise."
-
-2. **UX Reviewer** (only if .vue or app/ files changed) — Agent tool with `subagent_type: "lt-dev:ux-reviewer"`:
-   - Prompt: "Review UX patterns of recent code changes with browser testing via Chrome DevTools MCP. Focus on: missing Loading/Empty/Error states, missing toast feedback after actions, dead-end navigation, forms without loading on submit, destructive actions without confirmation. Navigate to affected pages and verify behavior. Only report High severity findings. Be concise."
-
-3. **A11y Reviewer** (only if .vue or app/ files changed) — Agent tool with `subagent_type: "lt-dev:a11y-reviewer"`:
-   - Prompt: "Review accessibility of recent code changes with browser testing via Chrome DevTools MCP. Run Lighthouse audit on affected pages. Check ARIA labels, semantic HTML, keyboard navigation, contrast. Only report High severity findings. Be concise."
-
-### Step 4: Handle Review Findings
-
-After all reviews complete:
-
-**Critical/High security findings:**
-- Fix them immediately. These are non-negotiable.
-
-**Critical/High code review findings:**
-- Auto-fix: lint issues, formatting, missing type annotations, dead code
-- Report to user (do NOT auto-fix): architectural concerns, design decisions, missing tests
-ENDOFFULL
-)
+REASON="Quality gate (full): Read ${INSTRUCTIONS_DIR}/full.md for steps, then execute them."
 fi
   # Save current state hash so re-review is skipped if nothing changes
-  CURRENT_DIFF_HASH=$({
-    git diff HEAD 2>/dev/null
-    git ls-files --others --exclude-standard 2>/dev/null
-  } | md5sum 2>/dev/null | cut -d' ' -f1 || {
-    git diff HEAD 2>/dev/null
-    git ls-files --others --exclude-standard 2>/dev/null
-  } | md5 2>/dev/null)
+  CURRENT_DIFF_HASH=$(calc_diff_hash)
   echo "$CURRENT_DIFF_HASH" > "$REVIEWED_FILE"
   emit_block "$REASON"
   exit 0
@@ -285,73 +161,12 @@ if [ "$PASS_COUNT" -eq 1 ]; then
 PREV_TIER="full"
 [ -f "$TIER_FILE" ] && PREV_TIER=$(cat "$TIER_FILE" 2>/dev/null || echo "full")
 
+INSTRUCTIONS_DIR="${CLAUDE_PLUGIN_ROOT}/hooks/scripts/quality-gate-instructions"
+
 if [ "$PREV_TIER" = "light" ]; then
-REASON=$(cat <<'ENDOFPASS2LIGHT'
-## Automatic Quality Gate — Pass 2/2 (Verification, Light)
-
-Verify lint/build fixes are clean.
-
-### Steps
-
-Detect the package manager (pnpm/yarn/npm via lockfile), then run ALL checks as **parallel Bash calls in one message** (all are read-only verification):
-
-1. **lint** script — must pass with zero errors
-2. **tsc --noEmit** (via local binary) — must pass with zero TypeScript errors
-3. **build** script — must succeed
-
-### Summary
-
-Present a short summary:
-
-| Check      | Status |
-|------------|--------|
-| Lint       | .../... |
-| TypeScript | .../... |
-| Build      | .../... |
-ENDOFPASS2LIGHT
-)
+REASON="Quality gate pass 2/2 (verification, light): Read ${INSTRUCTIONS_DIR}/pass2-light.md for steps, then execute them."
 else
-REASON=$(cat <<'ENDOFPASS2'
-## Automatic Quality Gate — Pass 2/2 (Verification)
-
-Fixes were applied from review findings. Verify everything is clean.
-
-### Step 1: Verify Build, Lint & Test
-
-Detect the package manager (pnpm/yarn/npm via lockfile), then run ALL checks as **parallel Bash calls in one message** (all are read-only verification):
-
-1. **lint** script — must pass with zero errors
-2. **tsc --noEmit** (via local binary) — must pass with zero TypeScript errors
-3. **build** script — must succeed
-4. **test** script (if available) — run tests, ALL must pass
-
-**CRITICAL:** Send all 4 checks in a **single message** with multiple Bash tool calls so they execute in parallel. Do NOT run them sequentially — they are all read-only and independent.
-
-**Test failures are blocking** — failing tests are ALWAYS a problem. Fix the root cause of every failing test before allowing stop.
-
-### Step 2: Summary Report
-
-Present a final summary to the user:
-
-| Check           | Status |
-|-----------------|--------|
-| Lint            | .../... |
-| TypeScript      | .../... |
-| Build           | .../... |
-| Tests           | .../... |
-| Security Review | .../... |
-| Code Review     | .../... |
-
-### Security Fixes Applied
-- [list what was fixed, or "No critical findings"]
-
-### Code Review Fixes Applied
-- [list auto-fixes applied]
-
-### Remaining Items (user decision needed)
-- [list items that need user input, or "None"]
-ENDOFPASS2
-)
+REASON="Quality gate pass 2/2 (verification): Read ${INSTRUCTIONS_DIR}/pass2.md for steps, then execute them."
 fi
   emit_block "$REASON"
   exit 0

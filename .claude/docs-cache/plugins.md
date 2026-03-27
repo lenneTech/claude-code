@@ -1,7 +1,7 @@
 # Create plugins
 
 > Source: https://code.claude.com/docs/en/plugins
-> Generated: 2026-03-17T05:34:29.448Z
+> Generated: 2026-03-27T09:51:24.130Z
 
 ---
 
@@ -90,7 +90,7 @@ Test your plugin
 
 Run Claude Code with the`--plugin-dir`flag to load your plugin:```claude --plugin-dir ./my-first-plugin```Once Claude Code starts, try your new skill:```/my-first-plugin:hello```You’ll see Claude respond with a greeting. Run`/help`to see your skill listed under the plugin namespace.
 
-**Why namespacing?** Plugin skills are always namespaced (like`/greet:hello`) to prevent conflicts when multiple plugins have skills with the same name.To change the namespace prefix, update the`name`field in`plugin.json`.
+**Why namespacing?** Plugin skills are always namespaced (like`/my-first-plugin:hello`) to prevent conflicts when multiple plugins have skills with the same name.To change the namespace prefix, update the`name`field in`plugin.json`.
 
 5
 
@@ -190,7 +190,7 @@ For plugins with many components, organize your directory structure by functiona
 
 Test your plugins locally
 
-Use the`--plugin-dir`flag to test plugins during development. This loads your plugin directly without requiring installation.```claude --plugin-dir ./my-plugin```When a`--plugin-dir`plugin has the same name as an installed marketplace plugin, the local copy takes precedence for that session. This lets you test changes to a plugin you already have installed without uninstalling it first. Marketplace plugins force-enabled by managed settings are the only exception and cannot be overridden. As you make changes to your plugin, run`/reload-plugins`to pick up the updates without restarting. This reloads commands, skills, agents, hooks, plugin MCP servers, and plugin LSP servers. Test your plugin components:
+Use the`--plugin-dir`flag to test plugins during development. This loads your plugin directly without requiring installation.```claude --plugin-dir ./my-plugin```When a`--plugin-dir`plugin has the same name as an installed marketplace plugin, the local copy takes precedence for that session. This lets you test changes to a plugin you already have installed without uninstalling it first. Marketplace plugins force-enabled by managed settings are the only exception and cannot be overridden. As you make changes to your plugin, run`/reload-plugins`to pick up the updates without restarting. This reloads plugins, skills, agents, hooks, plugin MCP servers, and plugin LSP servers. Test your plugin components:
 
 -   Try your skills with`/plugin-name:skill-name`-   Check that agents appear in`/agents`-   Verify hooks work as expected
 
@@ -308,6 +308,6 @@ For plugin developers
 
 Was this page helpful?
 
-[Run agent teams](/docs/en/agent-teams)[Discover and install prebuilt plugins](/docs/en/discover-plugins)
+[Discover and install prebuilt plugins](/docs/en/discover-plugins)[Extend Claude with skills](/docs/en/skills)
 
 ⌘I

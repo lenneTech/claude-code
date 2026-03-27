@@ -1,6 +1,16 @@
 ---
 name: generating-nest-servers
 description: Handles ALL NestJS and @lenne.tech/nest-server development tasks including module creation, service implementation, controller/resolver development, model definition, and debugging. Covers lt server commands, @Roles/@Restricted security, CrudService patterns, and API tests. Supports monorepos (projects/api/, packages/api/). Activates when working with src/server/ files, NestJS modules, services, controllers, resolvers, models, DTOs, guards, decorators, or REST/GraphQL endpoints. NOT for Vue/Nuxt frontend (use developing-lt-frontend). NOT for nest-server version updates (use nest-server-updating). NOT for TDD workflow orchestration (use building-stories-with-tdd).
+effort: high
+paths:
+  - "**/src/server/**"
+  - "**/projects/api/**"
+  - "**/packages/api/**"
+  - "**/*.module.ts"
+  - "**/*.service.ts"
+  - "**/*.controller.ts"
+  - "**/*.resolver.ts"
+  - "**/*.model.ts"
 ---
 
 # NestJS Server Development Expert

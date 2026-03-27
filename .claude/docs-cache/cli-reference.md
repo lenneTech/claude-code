@@ -1,7 +1,7 @@
 # CLI reference
 
 > Source: https://code.claude.com/docs/en/cli-reference
-> Generated: 2026-03-17T05:34:29.303Z
+> Generated: 2026-03-27T09:52:39.635Z
 
 ---
 
@@ -19,11 +19,13 @@ You can start sessions, pipe content, resume conversations, and manage updates w
 |`claude -c -p "query"`| Continue via SDK |`claude -c -p "Check for type errors"`|
 |`claude -r "<session>" "query"`| Resume session by ID or name |`claude -r "auth-refactor" "Finish this PR"`|
 |`claude update`| Update to latest version |`claude update`|
-|`claude auth login`| Sign in to your Anthropic account. Use`--email`to pre-fill your email address and`--sso`to force SSO authentication |`claude auth login --email user@example.com --sso`|
+|`claude auth login`| Sign in to your Anthropic account. Use`--email`to pre-fill your email address,`--sso`to force SSO authentication, and`--console`to sign in with Anthropic Console for API usage billing instead of a Claude subscription |`claude auth login --console`|
 |`claude auth logout`| Log out from your Anthropic account |`claude auth logout`|
 |`claude auth status`| Show authentication status as JSON. Use`--text`for human-readable output. Exits with code 0 if logged in, 1 if not |`claude auth status`|
 |`claude agents`| List all configured [subagents](/docs/en/sub-agents), grouped by source |`claude agents`|
+|`claude auto-mode defaults`| Print the built-in [auto mode](/docs/en/permission-modes#eliminate-prompts-with-auto-mode) classifier rules as JSON. Use`claude auto-mode config`to see your effective config with settings applied |`claude auto-mode defaults > rules.json`|
 |`claude mcp`| Configure Model Context Protocol (MCP) servers | See the [Claude Code MCP documentation](/docs/en/mcp). |
+|`claude plugin`| Manage Claude Code [plugins](/docs/en/plugins). Alias:`claude plugins`. See [plugin reference](/docs/en/plugins-reference#cli-commands-reference) for subcommands |`claude plugin install code-review@claude-plugins-official`|
 |`claude remote-control`| Start a [Remote Control](/docs/en/remote-control) server to control Claude Code from Claude.ai or the Claude app. Runs in server mode (no local interactive session). See [Server mode flags](/docs/en/remote-control#server-mode) |`claude remote-control --name "My Project"`|
 
 
@@ -40,10 +42,13 @@ Customize Claude Code’s behavior with these command-line flags:
 |`--allowedTools`| Tools that execute without prompting for permission. See [permission rule syntax](/docs/en/settings#permission-rule-syntax) for pattern matching. To restrict which tools are available, use`--tools`instead |`"Bash(git log *)" "Bash(git diff *)" "Read"`|
 |`--append-system-prompt`| Append custom text to the end of the default system prompt |`claude --append-system-prompt "Always use TypeScript"`|
 |`--append-system-prompt-file`| Load additional system prompt text from a file and append to the default prompt |`claude --append-system-prompt-file ./extra-rules.txt`|
+|`--bare`| Minimal mode: skip auto-discovery of hooks, skills, plugins, MCP servers, auto memory, and CLAUDE.md so scripted calls start faster. Claude has access to Bash, file read, and file edit tools. Sets [`CLAUDE_CODE_SIMPLE`](/docs/en/env-vars). See [bare mode](/docs/en/headless#start-faster-with-bare-mode) |`claude --bare -p "query"`|
 |`--betas`| Beta headers to include in API requests (API key users only) |`claude --betas interleaved-thinking`|
+|`--channels`| (Research preview) MCP servers whose [channel](/docs/en/channels) notifications Claude should listen for in this session. Space-separated list of`plugin:<name>@<marketplace>`entries. Requires Claude.ai authentication |`claude --channels plugin:my-notifier@my-marketplace`|
 |`--chrome`| Enable [Chrome browser integration](/docs/en/chrome) for web automation and testing |`claude --chrome`|
 |`--continue`,`-c`| Load the most recent conversation in the current directory |`claude --continue`|
-|`--dangerously-skip-permissions`| Skip all permission prompts (use with caution) |`claude --dangerously-skip-permissions`|
+|`--dangerously-load-development-channels`| Enable [channels](/docs/en/channels-reference#test-during-the-research-preview) that are not on the approved allowlist, for local development. Accepts`plugin:<name>@<marketplace>`and`server:<name>`entries. Prompts for confirmation |`claude --dangerously-load-development-channels server:webhook`|
+|`--dangerously-skip-permissions`| Skip permission prompts (use with caution). See [permission modes](/docs/en/permission-modes#skip-all-checks-with-bypasspermissions-mode) for what this does and does not skip |`claude --dangerously-skip-permissions`|
 |`--debug`| Enable debug mode with optional category filtering (for example,`"api,hooks"`or`"!statsig,!file"`) |`claude --debug "api,mcp"`|
 |`--disable-slash-commands`| Disable all skills and commands for this session |`claude --disable-slash-commands`|
 |`--disallowedTools`| Tools that are removed from the model’s context and cannot be used |`"Bash(git log *)" "Bash(git diff *)" "Edit"`|
@@ -68,7 +73,8 @@ Customize Claude Code’s behavior with these command-line flags:
 |`--no-chrome`| Disable [Chrome browser integration](/docs/en/chrome) for this session |`claude --no-chrome`|
 |`--no-session-persistence`| Disable session persistence so sessions are not saved to disk and cannot be resumed (print mode only) |`claude -p --no-session-persistence "query"`|
 |`--output-format`| Specify output format for print mode (options:`text`,`json`,`stream-json`) |`claude -p "query" --output-format json`|
-|`--permission-mode`| Begin in a specified [permission mode](/docs/en/permissions#permission-modes) |`claude --permission-mode plan`|
+|`--enable-auto-mode`| Unlock [auto mode](/docs/en/permission-modes#eliminate-prompts-with-auto-mode) in the`Shift+Tab`cycle. Requires a Team plan (Enterprise and API support rolling out shortly) and Claude Sonnet 4.6 or Opus 4.6 |`claude --enable-auto-mode`|
+|`--permission-mode`| Begin in a specified [permission mode](/docs/en/permission-modes) |`claude --permission-mode plan`|
 |`--permission-prompt-tool`| Specify an MCP tool to handle permission prompts in non-interactive mode |`claude -p --permission-prompt-tool mcp_auth_tool "query"`|
 |`--plugin-dir`| Load plugins from a directory for this session only. Each flag takes one path. Repeat the flag for multiple directories:`--plugin-dir A --plugin-dir B`|`claude --plugin-dir ./my-plugins`|
 |`--print`,`-p`| Print response without interactive mode (see [Agent SDK documentation](https://platform.claude.com/docs/en/agent-sdk/overview) for programmatic usage details) |`claude -p "query"`|

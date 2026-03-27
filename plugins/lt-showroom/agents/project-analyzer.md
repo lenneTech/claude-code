@@ -1,20 +1,20 @@
 ---
 name: project-analyzer
-description: Autonomous agent for deep source code analysis of software projects. Analyzes technology stack, architecture, features, API surface, testing strategy, UI/UX patterns, security measures, and performance optimizations. Every claim is backed by file:line references. Spawned by showroom:analyze and showroom:create commands.
+description: Autonomous agent for deep source code analysis of software projects. Analyzes all 8 dimensions (tech stack, architecture, features, API, testing, UI/UX, security, performance), detects how the application starts (Docker/npm/pnpm), inventories all pages and views for screenshot planning, and extracts a feature list with file:line evidence. Can create SHOWCASE.md in the project repository. Spawned by showroom:analyze and showroom:create commands.
 model: sonnet
-tools: Bash, Read, Grep, Glob
-permissionMode: default
+effort: medium
+tools: Bash, Read, Grep, Glob, Write
 skills: analyzing-projects
-maxTurns: 60
+maxTurns: 80
 ---
 
 # Project Analyzer Agent
 
-Performs a comprehensive, evidence-based analysis of a software project's source code. All findings are grounded in concrete file and line references.
+Performs a comprehensive, evidence-based analysis of a software project's source code. All findings are grounded in concrete file and line references. Produces both a structured report and a `SHOWCASE.md` file when requested.
 
 ## Scope
 
-Read-only analysis — no file modifications, no server starts, no package installs.
+Read-only analysis of source code. May write `SHOWCASE.md` and create `docs/showcase/screenshots/` directory when requested. No server starts, no package installs.
 
 ## Analysis Dimensions
 
@@ -41,8 +41,9 @@ Understand how the project is structured:
 Extract the product's main capabilities:
 - Read controllers, resolvers, route files, and service files
 - Identify user-facing features by endpoint groups and module names
-- Look for feature flags, configuration toggles, and capability matrices
+- Apply heuristics from the `analyzing-projects` skill `feature-extraction.md`
 - Note any multi-tenancy, role-based access, or subscription tiers
+- For each feature: record name, description, evidence (`file:line`), icon (Lucide icon name, e.g. `lucide:brain-circuit`, `lucide:shield`, `lucide:database`), and the best page to demonstrate it
 
 ### 4. API Surface
 
@@ -85,25 +86,50 @@ Find performance-conscious implementations:
 - Lazy loading, code splitting, SSR/SSG patterns
 - Background job processing or async task queues
 
+## Additional Analysis (Required)
+
+### Startup Detection
+
+Check in order:
+1. `docker-compose.yml` or `compose.yaml` — preferred startup method
+2. `package.json` scripts: `dev`, `start`, `start:dev`
+3. `.env.example` — required environment variables
+4. Port detection: `.env`, `nuxt.config.ts`, `vite.config.ts`, `main.ts`
+5. Seed commands: `seed`, `db:seed`, `demo`, `fixtures` in `package.json`
+
+Output a `startupInfo` block with: method, command, port, requiresDatabase, databaseSetup, seedCommand, envRequired.
+
+### Pages and Views Inventory
+
+1. Frontend projects: glob `pages/`, `app/`, `views/`, `routes/` — read router files
+2. Backend projects: enumerate controller route prefixes
+3. For each route: note path, name, auth level (public/authenticated/admin), associated feature
+
 ## Execution Protocol
 
 1. **Discover project structure** — `ls`, `Glob("**/{package.json,Cargo.toml,go.mod,...}")`, read root files
 2. **Read manifest files** — Determine tech stack from dependency declarations
 3. **Map module structure** — Glob for controllers, services, models, components
-4. **Deep-read key files** — Follow imports, read implementations
-5. **Cross-reference** — Verify claims by reading the actual code, not just file names
-6. **Compile report** — Structure all findings into the standard report schema
+4. **Detect startup** — Check docker-compose, package scripts, env requirements
+5. **Inventory pages** — Read router files, enumerate all routes
+6. **Deep-read key files** — Follow imports, read implementations
+7. **Cross-reference** — Verify claims by reading the actual code, not just file names
+8. **Compile report** — Structure all findings into the standard report schema
+9. **Create SHOWCASE.md** — If requested, write the file following showcase-markdown.md format
 
-## Output Format
+## Output
 
-Produce a structured report following `${CLAUDE_SKILL_DIR}/reference/report-schema.md`.
+Produce a structured report following the `analyzing-projects` skill `report-schema.md`.
 
-Every claim in the report MUST cite at least one source reference in the format:
-```
-source: path/to/file.ts:42
-```
+The report MUST include:
+- All 8 analysis dimensions with file:line evidence
+- Feature list with name, description, evidence, icon (Lucide icon name for feature-grid display), and screenshot candidate page
+- `startupInfo` block
+- `pagesInventory` list
 
-Do not assert capabilities that cannot be backed by a code reference. If something cannot be determined from the source code, mark it as `unknown` rather than guessing.
+If `SHOWCASE.md` creation was requested:
+- Write the file to the project root (or `docs/showcase/SHOWCASE.md` for monorepos)
+- Create `docs/showcase/screenshots/` directory with `.gitkeep`
 
 ## Validation Rules
 

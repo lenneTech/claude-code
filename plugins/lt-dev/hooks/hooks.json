@@ -91,6 +91,16 @@
         ]
       }
     ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rm -f /tmp/.claude-qg-counter-* /tmp/.claude-qg-tier-* /tmp/.claude-qg-reviewed-* /tmp/.claude-qg-baseline-*"
+          }
+        ]
+      }
+    ],
     "PostCompact": [
       {
         "hooks": [

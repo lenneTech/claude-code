@@ -1,7 +1,7 @@
 # Claude Code settings
 
 > Source: https://code.claude.com/docs/en/settings
-> Generated: 2026-03-17T05:34:29.372Z
+> Generated: 2026-03-27T09:52:36.855Z
 
 ---
 
@@ -97,6 +97,7 @@ The`settings.json`file is the official mechanism for configuring Claude Code thr
 
         -   macOS:`/Library/Application Support/ClaudeCode/`-   Linux and WSL:`/etc/claude-code/`-   Windows:`C:\Program Files\ClaudeCode\`The legacy Windows path`C:\ProgramData\ClaudeCode\managed-settings.json`is no longer supported as of v2.1.75. Administrators who deployed settings to that location must migrate files to`C:\Program Files\ClaudeCode\managed-settings.json`.
 
+        File-based managed settings also support a drop-in directory at`managed-settings.d/`in the same system directory alongside`managed-settings.json`. This lets separate teams deploy independent policy fragments without coordinating edits to a single file. Following the systemd convention,`managed-settings.json`is merged first as the base, then all`*.json`files in the drop-in directory are sorted alphabetically and merged on top. Later files override earlier ones for scalar values; arrays are concatenated and de-duplicated; objects are deep-merged. Hidden files starting with`.`are ignored. Use numeric prefixes to control merge order, for example`10-telemetry.json`and`20-security.json`.
 
     See [managed settings](/docs/en/permissions#managed-only-settings) and [Managed MCP configuration](/docs/en/mcp#managed-mcp-configuration) for details.
 
@@ -146,9 +147,13 @@ Setting to`0`deletes all existing transcripts at startup and disables session pe
 |`env`| Environment variables that will be applied to every session |`{"FOO": "bar"}`|
 |`attribution`| Customize attribution for git commits and pull requests. See [Attribution settings](#attribution-settings) |`{"commit": "🤖 Generated with Claude Code", "pr": ""}`|
 |`includeCoAuthoredBy`| **Deprecated**: Use`attribution`instead. Whether to include the`co-authored-by Claude`byline in git commits and pull requests (default:`true`) |`false`|
-|`includeGitInstructions`| Include built-in commit and PR workflow instructions in Claude’s system prompt (default:`true`). Set to`false`to remove these instructions, for example when using your own git workflow skills. The`CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS`environment variable takes precedence over this setting when set |`false`|
+|`includeGitInstructions`| Include built-in commit and PR workflow instructions and the git status snapshot in Claude’s system prompt (default:`true`). Set to`false`to remove both, for example when using your own git workflow skills. The`CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS`environment variable takes precedence over this setting when set |`false`|
 |`permissions`| See table below for structure of permissions. |  |
+|`autoMode`| Customize what the [auto mode](/docs/en/permission-modes#eliminate-prompts-with-auto-mode) classifier blocks and allows. Contains`environment`,`allow`, and`soft_deny`arrays of prose rules. See [Configure the auto mode classifier](/docs/en/permissions#configure-the-auto-mode-classifier). Not read from shared project settings |`{"environment": ["Trusted repo: github.example.com/acme"]}`|
+|`disableAutoMode`| Set to`"disable"`to prevent [auto mode](/docs/en/permission-modes#eliminate-prompts-with-auto-mode) from being activated. Removes`auto`from the`Shift+Tab`cycle and rejects`--permission-mode auto`at startup. Most useful in [managed settings](/docs/en/permissions#managed-settings) where users cannot override it |`"disable"`|
+|`useAutoModeDuringPlan`| Whether plan mode uses auto mode semantics when auto mode is available. Default:`true`. Not read from shared project settings. Appears in`/config`as “Use auto mode during plan” |`false`|
 |`hooks`| Configure custom commands to run at lifecycle events. See [hooks documentation](/docs/en/hooks) for format | See [hooks](/docs/en/hooks) |
+|`defaultShell`| Default shell for input-box`!`commands. Accepts`"bash"`(default) or`"powershell"`. Setting`"powershell"`routes interactive`!`commands through PowerShell on Windows. Requires`CLAUDE_CODE_USE_POWERSHELL_TOOL=1`. See [PowerShell tool](/docs/en/tools-reference#powershell-tool) |`"powershell"`|
 |`disableAllHooks`| Disable all [hooks](/docs/en/hooks) and any custom [status line](/docs/en/statusline) |`true`|
 |`allowManagedHooksOnly`| (Managed settings only) Prevent loading of user, project, and plugin hooks. Only allows managed hooks and SDK hooks. See [Hook configuration](#hook-configuration) |`true`|
 |`allowedHttpHookUrls`| Allowlist of URL patterns that HTTP hooks may target. Supports`*`as a wildcard. When set, hooks with non-matching URLs are blocked. Undefined = no restriction, empty array = block all HTTP hooks. Arrays merge across settings sources. See [Hook configuration](#hook-configuration) |`["https://hooks.example.com/*"]`|
@@ -164,11 +169,14 @@ Setting to`0`deletes all existing transcripts at startup and disables session pe
 |`fileSuggestion`| Configure a custom script for`@`file autocomplete. See [File suggestion settings](#file-suggestion-settings) |`{"type": "command", "command": "~/.claude/file-suggestion.sh"}`|
 |`respectGitignore`| Control whether the`@`file picker respects`.gitignore`patterns. When`true`(default), files matching`.gitignore`patterns are excluded from suggestions |`false`|
 |`outputStyle`| Configure an output style to adjust the system prompt. See [output styles documentation](/docs/en/output-styles) |`"Explanatory"`|
+|`agent`| Run the main thread as a named subagent. Applies that subagent’s system prompt, tool restrictions, and model. See [Invoke subagents explicitly](/docs/en/sub-agents#invoke-subagents-explicitly) |`"code-reviewer"`|
 |`forceLoginMethod`| Use`claudeai`to restrict login to Claude.ai accounts,`console`to restrict login to Claude Console (API usage billing) accounts |`claudeai`|
 |`forceLoginOrgUUID`| Specify the UUID of an organization to automatically select it during login, bypassing the organization selection step. Requires`forceLoginMethod`to be set |`"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`|
 |`enableAllProjectMcpServers`| Automatically approve all MCP servers defined in project`.mcp.json`files |`true`|
 |`enabledMcpjsonServers`| List of specific MCP servers from`.mcp.json`files to approve |`["memory", "github"]`|
 |`disabledMcpjsonServers`| List of specific MCP servers from`.mcp.json`files to reject |`["filesystem"]`|
+|`channelsEnabled`| (Managed settings only) Allow [channels](/docs/en/channels) for Team and Enterprise users. Unset or`false`blocks channel message delivery regardless of what users pass to`--channels`|`true`|
+|`allowedChannelPlugins`| (Managed settings only) Allowlist of channel plugins that may push messages. Replaces the default Anthropic allowlist when set. Undefined = fall back to the default, empty array = block all channel plugins. Requires`channelsEnabled: true`. See [Restrict which channel plugins can run](/docs/en/channels#restrict-which-channel-plugins-can-run) |`[{ "marketplace": "claude-plugins-official", "plugin": "telegram" }]`|
 |`allowedMcpServers`| When set in managed-settings.json, allowlist of MCP servers users can configure. Undefined = no restrictions, empty array = lockdown. Applies to all scopes. Denylist takes precedence. See [Managed MCP configuration](/docs/en/mcp#managed-mcp-configuration) |`[{ "serverName": "github" }]`|
 |`deniedMcpServers`| When set in managed-settings.json, denylist of MCP servers that are explicitly blocked. Applies to all scopes including managed servers. Denylist takes precedence over allowlist. See [Managed MCP configuration](/docs/en/mcp#managed-mcp-configuration) |`[{ "serverName": "filesystem" }]`|
 |`strictKnownMarketplaces`| When set in managed-settings.json, allowlist of plugin marketplaces users can add. Undefined = no restrictions, empty array = lockdown. Applies to marketplace additions only. See [Managed marketplace restrictions](/docs/en/plugin-marketplaces#managed-marketplace-restrictions) |`[{ "source": "github", "repo": "acme-corp/plugins" }]`|
@@ -178,17 +186,30 @@ Setting to`0`deletes all existing transcripts at startup and disables session pe
 |`awsCredentialExport`| Custom script that outputs JSON with AWS credentials (see [advanced credential configuration](/docs/en/amazon-bedrock#advanced-credential-configuration)) |`/bin/generate_aws_grant.sh`|
 |`alwaysThinkingEnabled`| Enable [extended thinking](/docs/en/common-workflows#use-extended-thinking-thinking-mode) by default for all sessions. Typically configured via the`/config`command rather than editing directly |`true`|
 |`plansDirectory`| Customize where plan files are stored. Path is relative to project root. Default:`~/.claude/plans`|`"./plans"`|
-|`showTurnDuration`| Show turn duration messages after responses (e.g., “Cooked for 1m 6s”). Set to`false`to hide these messages |`true`|
+|`showClearContextOnPlanAccept`| Show the “clear context” option on the plan accept screen. Defaults to`false`. Set to`true`to restore the option |`true`|
 |`spinnerVerbs`| Customize the action verbs shown in the spinner and turn duration messages. Set`mode`to`"replace"`to use only your verbs, or`"append"`to add them to the defaults |`{"mode": "append", "verbs": ["Pondering", "Crafting"]}`|
-|`language`| Configure Claude’s preferred response language (e.g.,`"japanese"`,`"spanish"`,`"french"`). Claude will respond in this language by default |`"japanese"`|
+|`language`| Configure Claude’s preferred response language (e.g.,`"japanese"`,`"spanish"`,`"french"`). Claude will respond in this language by default. Also sets the [voice dictation](/docs/en/voice-dictation#change-the-dictation-language) language |`"japanese"`|
+|`voiceEnabled`| Enable push-to-talk [voice dictation](/docs/en/voice-dictation). Written automatically when you run`/voice`. Requires a Claude.ai account |`true`|
 |`autoUpdatesChannel`| Release channel to follow for updates. Use`"stable"`for a version that is typically about one week old and skips versions with major regressions, or`"latest"`(default) for the most recent release |`"stable"`|
 |`spinnerTipsEnabled`| Show tips in the spinner while Claude is working. Set to`false`to disable tips (default:`true`) |`false`|
 |`spinnerTipsOverride`| Override spinner tips with custom strings.`tips`: array of tip strings.`excludeDefault`: if`true`, only show custom tips; if`false`or absent, custom tips are merged with built-in tips |`{ "excludeDefault": true, "tips": ["Use our internal tool X"] }`|
-|`terminalProgressBarEnabled`| Enable the terminal progress bar that shows progress in supported terminals like Windows Terminal and iTerm2 (default:`true`) |`false`|
 |`prefersReducedMotion`| Reduce or disable UI animations (spinners, shimmer, flash effects) for accessibility |`true`|
 |`fastModePerSessionOptIn`| When`true`, fast mode does not persist across sessions. Each session starts with fast mode off, requiring users to enable it with`/fast`. The user’s fast mode preference is still saved. See [Require per-session opt-in](/docs/en/fast-mode#require-per-session-opt-in) |`true`|
 |`teammateMode`| How [agent team](/docs/en/agent-teams) teammates display:`auto`(picks split panes in tmux or iTerm2, in-process otherwise),`in-process`, or`tmux`. See [set up agent teams](/docs/en/agent-teams#set-up-agent-teams) |`"in-process"`|
 |`feedbackSurveyRate`| Probability (0–1) that the [session quality survey](/docs/en/data-usage#session-quality-surveys) appears when eligible. Set to`0`to suppress entirely. Useful when using Bedrock, Vertex, or Foundry where the default sample rate does not apply |`0.05`|
+
+
+Global config settings
+
+These settings are stored in`~/.claude.json`rather than`settings.json`. Adding them to`settings.json`will trigger a schema validation error.
+
+| Key | Description | Example |
+| --- | --- | --- |
+|`autoConnectIde`| Automatically connect to a running IDE when Claude Code starts from an external terminal. Default:`false`. Appears in`/config`as **Auto-connect to IDE (external terminal)** when running outside a VS Code or JetBrains terminal |`true`|
+|`autoInstallIdeExtension`| Automatically install the Claude Code IDE extension when running from a VS Code terminal. Default:`true`. Appears in`/config`as **Auto-install IDE extension** when running inside a VS Code or JetBrains terminal. You can also set the [`CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL`](/docs/en/env-vars) environment variable |`false`|
+|`editorMode`| Key binding mode for the input prompt:`"normal"`or`"vim"`. Default:`"normal"`. Written automatically when you run`/vim`. Appears in`/config`as **Key binding mode** |`"vim"`|
+|`showTurnDuration`| Show turn duration messages after responses, e.g. “Cooked for 1m 6s”. Default:`true`. Appears in`/config`as **Show turn duration** |`false`|
+|`terminalProgressBarEnabled`| Show the terminal progress bar in supported terminals: ConEmu, Ghostty 1.2.0+, and iTerm2 3.6.6+. Default:`true`. Appears in`/config`as **Terminal progress bar** |`false`|
 
 
 Worktree settings
@@ -209,8 +230,8 @@ Permission settings
 |`ask`| Array of permission rules to ask for confirmation upon tool use. See [Permission rule syntax](#permission-rule-syntax) below |`[ "Bash(git push *)" ]`|
 |`deny`| Array of permission rules to deny tool use. Use this to exclude sensitive files from Claude Code access. See [Permission rule syntax](#permission-rule-syntax) and [Bash permission limitations](/docs/en/permissions#tool-specific-permission-rules) |`[ "WebFetch", "Bash(curl *)", "Read(./.env)", "Read(./secrets/**)" ]`|
 |`additionalDirectories`| Additional [working directories](/docs/en/permissions#working-directories) that Claude has access to |`[ "../docs/" ]`|
-|`defaultMode`| Default [permission mode](/docs/en/permissions#permission-modes) when opening Claude Code |`"acceptEdits"`|
-|`disableBypassPermissionsMode`| Set to`"disable"`to prevent`bypassPermissions`mode from being activated. This disables the`--dangerously-skip-permissions`command-line flag. See [managed settings](/docs/en/permissions#managed-only-settings) |`"disable"`|
+|`defaultMode`| Default [permission mode](/docs/en/permission-modes) when opening Claude Code |`"acceptEdits"`|
+|`disableBypassPermissionsMode`| Set to`"disable"`to prevent`bypassPermissions`mode from being activated. Disables the`--dangerously-skip-permissions`flag. Most useful in [managed settings](/docs/en/permissions#managed-settings) where users cannot override it |`"disable"`|
 
 
 Permission rule syntax
@@ -234,12 +255,15 @@ Configure advanced sandboxing behavior. Sandboxing isolates bash commands from y
 | Keys | Description | Example |
 | --- | --- | --- |
 |`enabled`| Enable bash sandboxing (macOS, Linux, and WSL2). Default: false |`true`|
+|`failIfUnavailable`| Exit with an error at startup if`sandbox.enabled`is true but the sandbox cannot start (missing dependencies, unsupported platform, or platform restrictions). When false (default), a warning is shown and commands run unsandboxed. Intended for managed settings deployments that require sandboxing as a hard gate |`true`|
 |`autoAllowBashIfSandboxed`| Auto-approve bash commands when sandboxed. Default: true |`true`|
 |`excludedCommands`| Commands that should run outside of the sandbox |`["git", "docker"]`|
 |`allowUnsandboxedCommands`| Allow commands to run outside the sandbox via the`dangerouslyDisableSandbox`parameter. When set to`false`, the`dangerouslyDisableSandbox`escape hatch is completely disabled and all commands must run sandboxed (or be in`excludedCommands`). Useful for enterprise policies that require strict sandboxing. Default: true |`false`|
-|`filesystem.allowWrite`| Additional paths where sandboxed commands can write. Arrays are merged across all settings scopes: user, project, and managed paths are combined, not replaced. Also merged with paths from`Edit(...)`allow permission rules. See [path prefixes](#sandbox-path-prefixes) below. |`["//tmp/build", "~/.kube"]`|
-|`filesystem.denyWrite`| Paths where sandboxed commands cannot write. Arrays are merged across all settings scopes. Also merged with paths from`Edit(...)`deny permission rules. |`["//etc", "//usr/local/bin"]`|
+|`filesystem.allowWrite`| Additional paths where sandboxed commands can write. Arrays are merged across all settings scopes: user, project, and managed paths are combined, not replaced. Also merged with paths from`Edit(...)`allow permission rules. See [path prefixes](#sandbox-path-prefixes) below. |`["/tmp/build", "~/.kube"]`|
+|`filesystem.denyWrite`| Paths where sandboxed commands cannot write. Arrays are merged across all settings scopes. Also merged with paths from`Edit(...)`deny permission rules. |`["/etc", "/usr/local/bin"]`|
 |`filesystem.denyRead`| Paths where sandboxed commands cannot read. Arrays are merged across all settings scopes. Also merged with paths from`Read(...)`deny permission rules. |`["~/.aws/credentials"]`|
+|`filesystem.allowRead`| Paths to re-allow reading within`denyRead`regions. Takes precedence over`denyRead`. Arrays are merged across all settings scopes. Use this to create workspace-only read access patterns. |`["."]`|
+|`filesystem.allowManagedReadPathsOnly`| (Managed settings only) Only`allowRead`paths from managed settings are respected.`allowRead`entries from user, project, and local settings are ignored. Default: false |`true`|
 |`network.allowUnixSockets`| Unix socket paths accessible in sandbox (for SSH agents, etc.) |`["~/.ssh/agent-socket"]`|
 |`network.allowAllUnixSockets`| Allow all Unix socket connections in sandbox. Default: false |`true`|
 |`network.allowLocalBinding`| Allow binding to localhost ports (macOS only). Default: false |`true`|
@@ -253,22 +277,21 @@ Configure advanced sandboxing behavior. Sandboxing isolates bash commands from y
 
 Sandbox path prefixes
 
-Paths in`filesystem.allowWrite`,`filesystem.denyWrite`, and`filesystem.denyRead`support these prefixes:
+Paths in`filesystem.allowWrite`,`filesystem.denyWrite`,`filesystem.denyRead`, and`filesystem.allowRead`support these prefixes:
 
 | Prefix | Meaning | Example |
 | --- | --- | --- |
-|`//`| Absolute path from filesystem root |`//tmp/build`becomes`/tmp/build`|
+|`/`| Absolute path from filesystem root |`/tmp/build`stays`/tmp/build`|
 |`~/`| Relative to home directory |`~/.kube`becomes`$HOME/.kube`|
-|`/`| Relative to the settings file’s directory |`/build`becomes`$SETTINGS_DIR/build`|
-|`./`or no prefix | Relative path (resolved by sandbox runtime) |`./output`|
+|`./`or no prefix | Relative to the project root for project settings, or to`~/.claude`for user settings |`./output`in`.claude/settings.json`resolves to`<project-root>/output`|
 
-**Configuration example:**```{
+The older`//path`prefix for absolute paths still works. If you previously used single-slash`/path`expecting project-relative resolution, switch to`./path`. This syntax differs from [Read and Edit permission rules](/docs/en/permissions#read-and-edit), which use`//path`for absolute and`/path`for project-relative. Sandbox filesystem paths use standard conventions:`/tmp/build`is an absolute path. **Configuration example:**```{
   "sandbox": {
     "enabled": true,
     "autoAllowBashIfSandboxed": true,
     "excludedCommands": ["docker"],
     "filesystem": {
-      "allowWrite": ["//tmp/build", "~/.kube"],
+      "allowWrite": ["/tmp/build", "~/.kube"],
       "denyRead": ["~/.aws/credentials"]
     },
     "network": {
@@ -336,7 +359,7 @@ Settings apply in order of precedence. From highest to lowest:
 1.  **Managed settings** ([server-managed](/docs/en/server-managed-settings), [MDM/OS-level policies](#configuration-scopes), or [managed settings](/docs/en/settings#settings-files))
     -   Policies deployed by IT through server delivery, MDM configuration profiles, registry policies, or managed settings files
     -   Cannot be overridden by any other level, including command line arguments
-    -   Within the managed tier, precedence is: server-managed > MDM/OS-level policies >`managed-settings.json`> HKCU registry (Windows only). Only one managed source is used; sources do not merge.
+    -   Within the managed tier, precedence is: server-managed > MDM/OS-level policies > file-based (`managed-settings.d/*.json`+`managed-settings.json`) > HKCU registry (Windows only). Only one managed source is used; sources do not merge across tiers. Within the file-based tier, drop-in files and the base file are merged together.
 2.  **Command line arguments**
     -   Temporary overrides for a specific session
 3.  **Local project settings** (`.claude/settings.local.json`)
@@ -346,9 +369,9 @@ Settings apply in order of precedence. From highest to lowest:
 5.  **User settings** (`~/.claude/settings.json`)
     -   Personal global settings
 
-This hierarchy ensures that organizational policies are always enforced while still allowing teams and individuals to customize their experience. For example, if your user settings allow`Bash(npm run *)`but a project’s shared settings deny it, the project setting takes precedence and the command is blocked.
+This hierarchy ensures that organizational policies are always enforced while still allowing teams and individuals to customize their experience. The same precedence applies whether you run Claude Code from the CLI, the [VS Code extension](/docs/en/vs-code), or a [JetBrains IDE](/docs/en/jetbrains). For example, if your user settings allow`Bash(npm run *)`but a project’s shared settings deny it, the project setting takes precedence and the command is blocked.
 
-**Array settings merge across scopes.** When the same array-valued setting (such as`sandbox.filesystem.allowWrite`or`permissions.allow`) appears in multiple scopes, the arrays are **concatenated and deduplicated**, not replaced. This means lower-priority scopes can add entries without overriding those set by higher-priority scopes, and vice versa. For example, if managed settings set`allowWrite`to`["//opt/company-tools"]`and a user adds`["~/.kube"]`, both paths are included in the final configuration.
+**Array settings merge across scopes.** When the same array-valued setting (such as`sandbox.filesystem.allowWrite`or`permissions.allow`) appears in multiple scopes, the arrays are **concatenated and deduplicated**, not replaced. This means lower-priority scopes can add entries without overriding those set by higher-priority scopes, and vice versa. For example, if managed settings set`allowWrite`to`["/opt/company-tools"]`and a user adds`["~/.kube"]`, both paths are included in the final configuration.
 
 
 Verify active settings
@@ -454,7 +477,28 @@ Plugin-related settings in`settings.json`:```{
 -`github`: GitHub repository (uses`repo`)
 -`git`: Any git URL (uses`url`)
 -`directory`: Local filesystem path (uses`path`, for development only)
--`hostPattern`: regex pattern to match marketplace hosts (uses`hostPattern`)`strictKnownMarketplaces`**Managed settings only**: Controls which plugin marketplaces users are allowed to add. This setting can only be configured in [managed settings](/docs/en/settings#settings-files) and provides administrators with strict control over marketplace sources. **Managed settings file locations**:
+-`hostPattern`: regex pattern to match marketplace hosts (uses`hostPattern`)
+-`settings`: inline marketplace declared directly in settings.json without a separate hosted repository (uses`name`and`plugins`)
+
+Use`source: 'settings'`to declare a small set of plugins inline without setting up a hosted marketplace repository. Plugins listed here must reference external sources such as GitHub or npm. You still need to enable each plugin separately in`enabledPlugins`.```{
+  "extraKnownMarketplaces": {
+    "team-tools": {
+      "source": {
+        "source": "settings",
+        "name": "team-tools",
+        "plugins": [
+          {
+            "name": "code-formatter",
+            "source": {
+              "source": "github",
+              "repo": "acme-corp/code-formatter"
+            }
+          }
+        ]
+      }
+    }
+  }
+}````strictKnownMarketplaces`**Managed settings only**: Controls which plugin marketplaces users are allowed to add. This setting can only be configured in [managed settings](/docs/en/settings#settings-files) and provides administrators with strict control over marketplace sources. **Managed settings file locations**:
 
 -   **macOS**:`/Library/Application Support/ClaudeCode/managed-settings.json`-   **Linux and WSL**:`/etc/claude-code/managed-settings.json`-   **Windows**:`C:\Program Files\ClaudeCode\managed-settings.json`**Key characteristics**:
 
@@ -469,7 +513,7 @@ Plugin-related settings in`settings.json`:```{
 -   Empty array`[]`: Complete lockdown - users cannot add any new marketplaces
 -   List of sources: Users can only add marketplaces that match exactly
 
-**All supported source types**: The allowlist supports seven marketplace source types. Most sources use exact matching, while`hostPattern`uses regex matching against the marketplace host.
+**All supported source types**: The allowlist supports multiple marketplace source types. Most sources use exact matching, while`hostPattern`uses regex matching against the marketplace host.
 
 1.  **GitHub repositories**:```{ "source": "github", "repo": "acme-corp/approved-plugins" }
 { "source": "github", "repo": "acme-corp/security-tools", "ref": "v2.0" }

@@ -3,8 +3,6 @@
 # This ensures Claude retains awareness of the project type, package manager,
 # and active conventions even after the conversation context is compressed.
 
-set -euo pipefail
-
 # Read hook input from stdin
 INPUT=$(cat)
 
@@ -73,7 +71,7 @@ if [ -f "$PROJECT_DIR/.claude-plugin/marketplace.json" ] || [ -f "$PROJECT_DIR/.
 fi
 
 # Detect git branch
-BRANCH=$(git -C "$PROJECT_DIR" branch --show-current 2>/dev/null || echo "")
+BRANCH=$(git -C "$PROJECT_DIR" branch --show-current 2>/dev/null || true)
 if [ -n "$BRANCH" ]; then
   CONTEXT_LINES+=("Branch: ${BRANCH}")
 fi

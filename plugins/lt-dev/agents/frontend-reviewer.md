@@ -2,17 +2,18 @@
 name: frontend-reviewer
 description: Autonomous frontend code review agent for Nuxt 4 / Vue applications. Analyzes component structure, TypeScript strictness, composable patterns, accessibility, SSR safety, performance, and styling conventions. Produces structured report with fulfillment grades per dimension. Enforces frontend-dev agent guidelines as review baseline.
 model: sonnet
+effort: medium
 tools: Bash, Read, Grep, Glob, TodoWrite
-permissionMode: default
 skills: developing-lt-frontend, building-stories-with-tdd
 memory: project
-mcpServers: chrome-devtools, linear
 maxTurns: 60
 ---
 
 # Frontend Review Agent
 
 Autonomous agent that reviews frontend code changes against lenne.tech Nuxt 4 / Vue conventions. Produces a structured report with fulfillment grades per dimension.
+
+> **MCP Dependency:** This agent requires the `chrome-devtools` and `linear` MCP servers to be configured in the user's session for full functionality (browser-based linting verification and Linear issue context).
 
 ## Related Elements
 

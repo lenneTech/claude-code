@@ -37,9 +37,12 @@ if echo "$PROMPT_LOWER" | grep -qE '(showroom|showcase|portfolio|analys|screensh
 fi
 
 if [ -n "$CONTEXT" ]; then
-  cat <<EOF
-$CONTEXT
-EOF
+  jq -n --arg ctx "$CONTEXT" '{
+    hookSpecificOutput: {
+      hookEventName: "UserPromptSubmit",
+      additionalContext: $ctx
+    }
+  }'
 fi
 
 exit 0

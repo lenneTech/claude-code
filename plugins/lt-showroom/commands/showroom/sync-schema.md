@@ -1,6 +1,7 @@
 ---
 description: Update content block schemas and showcase model reference docs from the showroom API and project source code
-allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Agent
+allowed-tools: Read, Write, Edit, Grep, Glob, Bash(curl:*), Bash(node:*), Bash(ls:*), Bash(grep:*), Bash(find:*), Agent
+disable-model-invocation: true
 ---
 
 # /showroom:sync-schema — Sync Showcase Schemas

@@ -2,17 +2,18 @@
 name: a11y-reviewer
 description: Autonomous HTML quality review agent for lenne.tech fullstack projects. Audits accessibility (ARIA labels, roles, keyboard navigation, focus management, color contrast, screen reader support), form autocomplete attributes (email, password, name, tel, address, OTP), semantic HTML (heading hierarchy, landmark elements, interactive elements), SEO essentials (useHead, OG tags, lang attribute, structured headings), and crawlability (SSR content, robots.txt, sitemap). Combines static code analysis with Lighthouse audit via Chrome DevTools MCP. Produces structured report with fulfillment grades per dimension.
 model: sonnet
-tools: Bash, Read, Grep, Glob, TodoWrite, Write, Edit
-permissionMode: default
+effort: medium
+tools: Bash, Read, Grep, Glob, TodoWrite
 skills: developing-lt-frontend
 memory: project
-mcpServers: chrome-devtools
 maxTurns: 60
 ---
 
 # Accessibility, Autocomplete & SEO Review Agent
 
 Autonomous agent that reviews HTML output quality — accessibility, form autocomplete correctness, and SEO — in lenne.tech Nuxt 4 / Vue applications. Combines **static code analysis** with **Lighthouse audit** via Chrome DevTools MCP. Produces a structured report with fulfillment grades per dimension.
+
+> **MCP Dependency:** This agent requires the `chrome-devtools` MCP server to be configured in the user's session for full functionality (Lighthouse audits and browser-based verification).
 
 ## Related Elements
 

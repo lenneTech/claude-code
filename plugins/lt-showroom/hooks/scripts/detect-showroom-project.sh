@@ -6,6 +6,12 @@ INPUT=$(cat)
 PROMPT=$(echo "$INPUT" | jq -r '.user_prompt // empty' 2>/dev/null || echo "")
 CWD=$(echo "$INPUT" | jq -r '.cwd // empty' 2>/dev/null || echo "$PWD")
 
+# Keyword guard: only run filesystem checks when prompt is showroom-related
+PROMPT_LOWER=$(echo "$PROMPT" | tr '[:upper:]' '[:lower:]')
+if ! echo "$PROMPT_LOWER" | grep -qE '(showroom|showcase|portfolio)'; then
+  exit 0
+fi
+
 CONTEXT=""
 
 # Check if we're inside the showroom project (monorepo or standalone)
@@ -15,9 +21,12 @@ if [ -f "$CWD/projects/api/src/server/modules/showcase/showcase.service.ts" ] ||
 fi
 
 if [ -n "$CONTEXT" ]; then
-  cat <<EOF
-$CONTEXT
-EOF
+  jq -n --arg ctx "$CONTEXT" '{
+    hookSpecificOutput: {
+      hookEventName: "UserPromptSubmit",
+      additionalContext: $ctx
+    }
+  }'
 fi
 
 exit 0

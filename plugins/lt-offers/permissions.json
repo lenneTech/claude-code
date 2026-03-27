@@ -1,5 +1,5 @@
 {
-  "$schema": "../lt-dev/permissions.schema.json",
+  "$schema": "./permissions.schema.json",
   "description": "Bash permissions for the lt-offers plugin. Minimal permissions since most work goes through MCP tools.",
   "permissions": [
     {

@@ -2,8 +2,8 @@
 name: test-reviewer
 description: Autonomous test quality review agent for lenne.tech fullstack projects. Analyzes test coverage gaps, test quality (assertions, edge cases, error paths), test isolation (parallel-safe data, cleanup), API-first testing patterns (REST/GraphQL via TestHelper, never direct Service/DB), permission testing (least-privilege users, @Restricted/@Roles verification), and test naming conventions. Produces structured report with fulfillment grades per dimension.
 model: sonnet
+effort: medium
 tools: Bash, Read, Grep, Glob, TodoWrite
-permissionMode: default
 skills: building-stories-with-tdd, generating-nest-servers, developing-lt-frontend
 memory: project
 maxTurns: 50

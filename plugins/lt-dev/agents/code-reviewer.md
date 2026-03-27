@@ -2,17 +2,18 @@
 name: code-reviewer
 description: Autonomous single-pass code review agent for lenne.tech fullstack projects. Analyzes changes against 6 quality dimensions (content, security, code quality, tests, documentation, formatting). Produces structured report with fulfillment grades and remediation catalog. For parallel multi-reviewer reviews, use the /lt-dev:review command instead.
 model: sonnet
+effort: medium
 tools: Bash, Read, Grep, Glob, TodoWrite
-permissionMode: default
 memory: project
 maxTurns: 40
 skills: generating-nest-servers, developing-lt-frontend
-mcpServers: linear
 ---
 
 # Code Review Agent (Single-Pass)
 
 Consolidated single-pass code reviewer that covers all quality dimensions in one agent. Use this for quick reviews or when spawned by the quality-gate hook. For comprehensive parallel reviews with specialized domain reviewers, use `/lt-dev:review` instead.
+
+> **MCP Dependency:** This agent requires the `linear` MCP server to be configured in the user's session for full functionality (loading issue requirements for validation).
 
 ## Related Elements
 

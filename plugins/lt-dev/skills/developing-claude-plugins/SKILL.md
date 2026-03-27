@@ -1,6 +1,14 @@
 ---
 name: developing-claude-plugins
 description: Develops, optimizes, and validates Claude Code plugins, skills (SKILL.md), commands, agents, hooks (hooks.json), and scripts. Ensures consistency with official best practices. Activates when creating, editing, or reviewing files in plugins/ directory, .claude-plugin/, plugin.json, permissions.json, or marketplace.json. Covers YAML frontmatter, element structure, cross-references, naming conventions, and plugin manifest validation. NOT for application development (use domain-specific skills).
+effort: high
+paths:
+  - "**/plugins/**"
+  - "**/.claude-plugin/**"
+  - "**/SKILL.md"
+  - "**/hooks.json"
+  - "**/plugin.json"
+  - "**/permissions.json"
 ---
 
 # Claude Code Plugin & Marketplace Expert

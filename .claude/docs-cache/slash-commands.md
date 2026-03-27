@@ -1,7 +1,7 @@
 # Extend Claude with skills
 
 > Source: https://code.claude.com/docs/en/slash-commands
-> Generated: 2026-03-17T05:34:29.346Z
+> Generated: 2026-03-27T09:51:24.016Z
 
 ---
 
@@ -20,7 +20,7 @@ Bundled skills ship with Claude Code and are available in every session. Unlike 
 | --- | --- |
 |`/batch <instruction>`| Orchestrate large-scale changes across a codebase in parallel. Researches the codebase, decomposes the work into 5 to 30 independent units, and presents a plan. Once approved, spawns one background agent per unit in an isolated [git worktree](/docs/en/common-workflows#run-parallel-claude-code-sessions-with-git-worktrees). Each agent implements its unit, runs tests, and opens a pull request. Requires a git repository. Example:`/batch migrate src/ from Solid to React`|
 |`/claude-api`| Load Claude API reference material for your project’s language (Python, TypeScript, Java, Go, Ruby, C#, PHP, or cURL) and Agent SDK reference for Python and TypeScript. Covers tool use, streaming, batches, structured outputs, and common pitfalls. Also activates automatically when your code imports`anthropic`,`@anthropic-ai/sdk`, or`claude_agent_sdk`|
-|`/debug [description]`| Troubleshoot your current Claude Code session by reading the session debug log. Optionally describe the issue to focus the analysis |
+|`/debug [description]`| Enable debug logging for the current session and troubleshoot issues by reading the session debug log. Debug logging is off by default unless you started with`claude --debug`, so running`/debug`mid-session starts capturing logs from that point forward. Optionally describe the issue to focus the analysis |
 |`/loop [interval] <prompt>`| Run a prompt repeatedly on an interval while the session stays open. Useful for polling a deployment, babysitting a PR, or periodically re-running another skill. Example:`/loop 5m check if the deploy finished`. See [Run prompts on a schedule](/docs/en/scheduled-tasks) |
 |`/simplify [focus]`| Review your recently changed files for code reuse, quality, and efficiency issues, then fix them. Spawns three review agents in parallel, aggregates their findings, and applies fixes. Pass text to focus on specific concerns:`/simplify focus on memory efficiency`|
 
@@ -137,9 +137,12 @@ Your skill instructions here...```All fields are optional. Only`description`is r
 |`user-invocable`| No | Set to`false`to hide from the`/`menu. Use for background knowledge users shouldn’t invoke directly. Default:`true`. |
 |`allowed-tools`| No | Tools Claude can use without asking permission when this skill is active. |
 |`model`| No | Model to use when this skill is active. |
+|`effort`| No | [Effort level](/docs/en/model-config#adjust-effort-level) when this skill is active. Overrides the session effort level. Default: inherits from session. Options:`low`,`medium`,`high`,`max`(Opus 4.6 only). |
 |`context`| No | Set to`fork`to run in a forked subagent context. |
 |`agent`| No | Which subagent type to use when`context: fork`is set. |
 |`hooks`| No | Hooks scoped to this skill’s lifecycle. See [Hooks in skills and agents](/docs/en/hooks#hooks-in-skills-and-agents) for configuration format. |
+|`paths`| No | Glob patterns that limit when this skill is activated. Accepts a comma-separated string or a YAML list. When set, Claude loads the skill automatically only when working with files matching the patterns. Uses the same format as [path-specific rules](/docs/en/memory#path-specific-rules). |
+|`shell`| No | Shell to use for``!`command```blocks in this skill. Accepts`bash`(default) or`powershell`. Setting`powershell`runs inline shell commands via PowerShell on Windows. Requires`CLAUDE_CODE_USE_POWERSHELL_TOOL=1`. |
 
 
 Available string substitutions
@@ -235,7 +238,7 @@ Preserve all existing behavior and tests.```Advanced patterns
 
 Inject dynamic context
 
-The`!`command“ syntax runs shell commands before the skill content is sent to Claude. The command output replaces the placeholder, so Claude receives actual data, not the command itself. This skill summarizes a pull request by fetching live PR data with the GitHub CLI. The`!`gh pr diff“ and other commands run first, and their output gets inserted into the prompt:```---
+The``!`<command>```syntax runs shell commands before the skill content is sent to Claude. The command output replaces the placeholder, so Claude receives actual data, not the command itself. This skill summarizes a pull request by fetching live PR data with the GitHub CLI. The``!`gh pr diff```and other commands run first, and their output gets inserted into the prompt:```---
 name: pr-summary
 description: Summarize changes in a pull request
 context: fork
@@ -246,7 +249,7 @@ allowed-tools: Bash(gh *)
 - PR diff: !`gh pr diff`- PR comments: !`gh pr view --comments`- Changed files: !`gh pr diff --name-only`## Your task
 Summarize this pull request...```When this skill runs:
 
-1.  Each`!`command“ executes immediately (before Claude sees anything)
+1.  Each``!`<command>```executes immediately (before Claude sees anything)
 2.  The output replaces the placeholder in the skill content
 3.  Claude receives the fully-rendered prompt with actual PR data
 
@@ -327,9 +330,7 @@ Generate an interactive HTML tree view that shows your project's file structure 
 ## Usage
 
 Run the visualization script from your project root:```bash
-python ~/.claude/skills/codebase-visualizer/scripts/visualize.py .```text
-
-This creates`codebase-map.html`in the current directory and opens it in your default browser.
+python ~/.claude/skills/codebase-visualizer/scripts/visualize.py .```This creates`codebase-map.html`in the current directory and opens it in your default browser.
 
 ## What the visualization shows
 
@@ -511,6 +512,6 @@ Related resources
 
 Was this page helpful?
 
-[Discover and install prebuilt plugins](/docs/en/discover-plugins)[Run prompts on a schedule](/docs/en/scheduled-tasks)
+[Create plugins](/docs/en/plugins)[Automate with hooks](/docs/en/hooks-guide)
 
 ⌘I

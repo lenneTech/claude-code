@@ -12,6 +12,7 @@
 | `description` | string | Rich-text long description (optional) |
 | `customerName` | string | Customer name (optional) |
 | `customerCompany` | string | Customer company name (optional) |
+| `teaserImageFileId` | string | GridFS file ID for teaser image shown on showcase cards and hero section (optional) |
 | `meetingUrl` | string | Meeting URL for appointment booking (default: `https://meet.brevo.com/kai-haase`) |
 | `category` | string | Showcase category, e.g. Web App, Mobile, IoT, Backend (optional) |
 | `contentBlocks` | ContentBlock[] | Content blocks (see content-blocks.md) |

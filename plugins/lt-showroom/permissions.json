@@ -1,111 +1,335 @@
 {
-  "$schema": "../lt-dev/permissions.schema.json",
+  "$schema": "./permissions.schema.json",
   "description": "Bash permissions for the showroom plugin. Covers source code analysis, project startup for screenshots, and API health checks.",
   "permissions": [
     {
       "pattern": "Bash(git log:*)",
       "description": "Read git history for project analysis",
-      "usedBy": ["analyzing-projects", "project-analyzer", "showroom:analyze", "showroom:create", "showroom:update"]
+      "usedBy": [
+        "analyzing-projects",
+        "project-analyzer",
+        "showroom:analyze",
+        "showroom:create",
+        "showroom:update"
+      ]
     },
     {
       "pattern": "Bash(git status:*)",
       "description": "Check git working tree status for project analysis",
-      "usedBy": ["analyzing-projects", "project-analyzer", "showroom:analyze"]
+      "usedBy": [
+        "analyzing-projects",
+        "project-analyzer",
+        "showroom:analyze"
+      ]
     },
     {
       "pattern": "Bash(git diff:*)",
       "description": "Compare versions for project analysis",
-      "usedBy": ["analyzing-projects", "project-analyzer", "showroom:analyze"]
+      "usedBy": [
+        "analyzing-projects",
+        "project-analyzer",
+        "showroom:analyze"
+      ]
     },
     {
       "pattern": "Bash(npm install:*)",
       "description": "Install npm dependencies before starting project for screenshots",
-      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
     },
     {
       "pattern": "Bash(npm run dev:*)",
       "description": "Start development server for screenshot capture",
-      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
     },
     {
       "pattern": "Bash(npm run build:*)",
       "description": "Build project before screenshot capture",
-      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
     },
     {
       "pattern": "Bash(npm run seed:*)",
       "description": "Seed demo data for screenshot capture",
-      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
     },
     {
       "pattern": "Bash(npm run start:*)",
       "description": "Start project in production mode for screenshot capture",
-      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
     },
     {
       "pattern": "Bash(pnpm install:*)",
       "description": "Install pnpm dependencies before starting project for screenshots",
-      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
     },
     {
       "pattern": "Bash(pnpm run dev:*)",
       "description": "Start development server via pnpm for screenshot capture",
-      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
     },
     {
       "pattern": "Bash(pnpm run build:*)",
       "description": "Build project via pnpm before screenshot capture",
-      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
     },
     {
       "pattern": "Bash(pnpm run seed:*)",
       "description": "Seed demo data via pnpm for screenshot capture",
-      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
     },
     {
       "pattern": "Bash(pnpm run start:*)",
       "description": "Start project via pnpm in production mode for screenshot capture",
-      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
     },
     {
       "pattern": "Bash(yarn install:*)",
       "description": "Install yarn dependencies before starting project for screenshots",
-      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
     },
     {
       "pattern": "Bash(yarn run dev:*)",
       "description": "Start development server via yarn for screenshot capture",
-      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
     },
     {
       "pattern": "Bash(yarn run build:*)",
       "description": "Build project via yarn before screenshot capture",
-      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
     },
     {
       "pattern": "Bash(yarn run seed:*)",
       "description": "Seed demo data via yarn for screenshot capture",
-      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
     },
     {
       "pattern": "Bash(yarn run start:*)",
       "description": "Start project via yarn in production mode for screenshot capture",
-      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
     },
     {
       "pattern": "Bash(pkill:*)",
       "description": "Stop dev server process after screenshot capture",
-      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
     },
     {
       "pattern": "Bash(lsof:*)",
       "description": "Check if a port is already in use before starting the project",
-      "usedBy": ["creating-showcases", "screenshot-generator", "showroom:screenshot"]
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
     },
     {
       "pattern": "Bash(curl *api.showroom.lenne.tech*)",
       "description": "Health-check the showroom API",
-      "usedBy": ["creating-showcases", "showroom:create", "showroom:update", "showroom:sync-schema"]
+      "usedBy": [
+        "creating-showcases",
+        "showroom:create",
+        "showroom:update",
+        "showroom:sync-schema"
+      ]
+    },
+    {
+      "pattern": "Bash(docker compose up:*)",
+      "description": "Start application services via Docker Compose for screenshot capture",
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
+    },
+    {
+      "pattern": "Bash(docker compose down:*)",
+      "description": "Stop Docker Compose services after screenshot capture",
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
+    },
+    {
+      "pattern": "Bash(docker run:*)",
+      "description": "Start standalone MongoDB container for screenshot capture when not in compose",
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
+    },
+    {
+      "pattern": "Bash(docker stop:*)",
+      "description": "Stop standalone Docker container after screenshot capture",
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
+    },
+    {
+      "pattern": "Bash(docker rm:*)",
+      "description": "Remove standalone Docker container after screenshot capture",
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
+    },
+    {
+      "pattern": "Bash(mkdir -p docs/showcase*)",
+      "description": "Create screenshot output directory in project repository",
+      "usedBy": [
+        "analyzing-projects",
+        "project-analyzer",
+        "screenshot-generator",
+        "showroom:analyze",
+        "showroom:screenshot"
+      ]
+    },
+    {
+      "pattern": "Bash(npx lerna:*)",
+      "description": "Run lerna commands for monorepo projects",
+      "usedBy": [
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
+    },
+    {
+      "pattern": "Bash(npx nuxt:*)",
+      "description": "Run nuxt commands directly via npx",
+      "usedBy": [
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
+    },
+    {
+      "pattern": "Bash(mongosh:*)",
+      "description": "Check MongoDB connectivity and status",
+      "usedBy": [
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
+    },
+    {
+      "pattern": "Bash(pip install:*)",
+      "description": "Install Python dependencies for ML services",
+      "usedBy": [
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
+    },
+    {
+      "pattern": "Bash(uvicorn:*)",
+      "description": "Start Python FastAPI services",
+      "usedBy": [
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
+    },
+    {
+      "pattern": "Bash(curl *localhost*)",
+      "description": "Health check and API calls to local services",
+      "usedBy": [
+        "screenshot-generator",
+        "showroom:screenshot",
+        "showroom:create"
+      ]
+    },
+    {
+      "pattern": "Bash(cp *.env*)",
+      "description": "Copy .env.example to .env for project setup",
+      "usedBy": [
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
+    },
+    {
+      "pattern": "Bash(docker ps:*)",
+      "description": "Check running Docker containers",
+      "usedBy": [
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
+    },
+    {
+      "pattern": "Bash(npm run migrate:*)",
+      "description": "Run database migrations",
+      "usedBy": [
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
+    },
+    {
+      "pattern": "Bash(pnpm run migrate:*)",
+      "description": "Run database migrations (pnpm)",
+      "usedBy": [
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
     }
   ]
 }

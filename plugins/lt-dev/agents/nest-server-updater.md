@@ -2,11 +2,11 @@
 name: nest-server-updater
 description: Autonomous agent for updating @lenne.tech/nest-server to the latest version. Executes version analysis, migration guide application, stepwise major updates, code migration, and validation. Works fully automated.
 model: sonnet
+effort: high
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, TodoWrite
-permissionMode: acceptEdits
 skills: nest-server-updating, generating-nest-servers, maintaining-npm-packages
 memory: project
-maxTurns: 150
+maxTurns: 100
 ---
 
 # @lenne.tech/nest-server Update Agent

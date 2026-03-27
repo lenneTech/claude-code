@@ -1,7 +1,7 @@
 # Common workflows
 
 > Source: https://code.claude.com/docs/en/common-workflows
-> Generated: 2026-03-14T12:58:56.106Z
+> Generated: 2026-03-27T09:52:42.186Z
 
 ---
 
@@ -137,6 +137,8 @@ When to use Plan Mode
 How to use Plan Mode
 
 **Turn on Plan Mode during a session** You can switch into Plan Mode during a session using **Shift+Tab** to cycle through permission modes. If you are in Normal Mode, **Shift+Tab** first switches into Auto-Accept Mode, indicated by`⏵⏵ accept edits on`at the bottom of the terminal. A subsequent **Shift+Tab** will switch into Plan Mode, indicated by`⏸ plan mode on`. **Start a new session in Plan Mode** To start a new session in Plan Mode, use the`--permission-mode plan`flag:```claude --permission-mode plan```**Run “headless” queries in Plan Mode** You can also run a query in Plan Mode directly with`-p`(that is, in [“headless mode”](/docs/en/headless)):```claude --permission-mode plan -p "Analyze the authentication system and suggest improvements"```Example: Planning a complex refactor```claude --permission-mode plan``````I need to refactor our authentication system to use OAuth2. Create a detailed migration plan.```Claude analyzes the current implementation and create a comprehensive plan. Refine with follow-ups:```What about backward compatibility?``````How should we handle database migration?```Press`Ctrl+G`to open the plan in your default text editor, where you can edit it directly before Claude proceeds.
+
+When you accept a plan, Claude automatically names the session from the plan content. The name appears on the prompt bar and in the session picker. If you’ve already set a name with`--name`or`/rename`, accepting a plan won’t overwrite it.
 
 
 Configure Plan Mode as default```// .claude/settings.json
@@ -277,14 +279,14 @@ Thinking is enabled by default, but you can adjust or disable it.
 | **Toggle shortcut** | Press`Option+T`(macOS) or`Alt+T`(Windows/Linux) | Toggle thinking on/off for the current session (all models). May require [terminal configuration](/docs/en/terminal-config) to enable Option key shortcuts |
 | **Global default** | Use`/config`to toggle thinking mode | Sets your default across all projects (all models).
 Saved as`alwaysThinkingEnabled`in`~/.claude/settings.json`|
-| **Limit token budget** | Set [`MAX_THINKING_TOKENS`](/docs/en/env-vars) environment variable | Limit the thinking budget to a specific number of tokens (ignored on Opus 4.6 and Sonnet 4.6 unless set to 0). Example:`export MAX_THINKING_TOKENS=10000`|
+| **Limit token budget** | Set [`MAX_THINKING_TOKENS`](/docs/en/env-vars) environment variable | Limit the thinking budget to a specific number of tokens. On Opus 4.6 and Sonnet 4.6, only`0`applies unless adaptive reasoning is disabled. Example:`export MAX_THINKING_TOKENS=10000`|
 
 To view Claude’s thinking process, press`Ctrl+O`to toggle verbose mode and see the internal reasoning displayed as gray italic text.
 
 
 How extended thinking works
 
-Extended thinking controls how much internal reasoning Claude performs before responding. More thinking provides more space to explore solutions, analyze edge cases, and self-correct mistakes. **With Opus 4.6 and Sonnet 4.6**, thinking uses adaptive reasoning: the model dynamically allocates thinking tokens based on the [effort level](/docs/en/model-config#adjust-effort-level) you select. This is the recommended way to tune the tradeoff between speed and reasoning depth. **With older models**, thinking uses a fixed budget of up to 31,999 tokens from your output budget. You can limit this with the [`MAX_THINKING_TOKENS`](/docs/en/env-vars) environment variable, or disable thinking entirely via`/config`or the`Option+T`/`Alt+T`toggle.`MAX_THINKING_TOKENS`is ignored on Opus 4.6 and Sonnet 4.6, since adaptive reasoning controls thinking depth instead. The one exception: setting`MAX_THINKING_TOKENS=0`still disables thinking entirely on any model. To disable adaptive thinking and revert to the fixed thinking budget, set`CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1`. See [environment variables](/docs/en/env-vars).
+Extended thinking controls how much internal reasoning Claude performs before responding. More thinking provides more space to explore solutions, analyze edge cases, and self-correct mistakes. **With Opus 4.6 and Sonnet 4.6**, thinking uses adaptive reasoning: the model dynamically allocates thinking tokens based on the [effort level](/docs/en/model-config#adjust-effort-level) you select. This is the recommended way to tune the tradeoff between speed and reasoning depth. **With older models**, thinking uses a fixed token budget drawn from your output allocation. The budget varies by model; see [`MAX_THINKING_TOKENS`](/docs/en/env-vars) for per-model ceilings. You can limit the budget with that environment variable, or disable thinking entirely via`/config`or the`Option+T`/`Alt+T`toggle. On Opus 4.6 and Sonnet 4.6, [adaptive reasoning](/docs/en/model-config#adjust-effort-level) controls thinking depth, so`MAX_THINKING_TOKENS`only applies when set to`0`to disable thinking, or when`CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1`reverts these models to the fixed budget. See [environment variables](/docs/en/env-vars).
 
 You’re charged for all thinking tokens used, even though Claude 4 models show summarized thinking
 
@@ -339,11 +341,11 @@ The`/resume`command (or`claude --resume`without arguments) opens an interactive 
 -   Message count
 -   Git branch (if applicable)
 
-Forked sessions (created with`/rewind`or`--fork-session`) are grouped together under their root session, making it easier to find related conversations.
+Forked sessions (created with`/branch`,`/rewind`, or`--fork-session`) are grouped together under their root session, making it easier to find related conversations.
 
 Tips:
 
--   **Name sessions early**: Use`/rename`when starting work on a distinct task—it’s much easier to find “payment-integration” than “explain this function” later
+-   **Name sessions early**: Use`/rename`when starting work on a distinct task: it’s much easier to find “payment-integration” than “explain this function” later
 -   Use`--continue`for quick access to your most recent conversation in the current directory
 -   Use`--resume session-name`when you know which session you need
 -   Use`--resume`(without a name) when you need to browse and select
@@ -387,6 +389,15 @@ When you exit a worktree session, Claude handles cleanup based on whether you ma
 To clean up worktrees outside of a Claude session, use [manual worktree management](#manage-worktrees-manually).
 
 Add`.claude/worktrees/`to your`.gitignore`to prevent worktree contents from appearing as untracked files in your main repository.
+
+
+Copy gitignored files to worktrees
+
+Git worktrees are fresh checkouts, so they don’t include untracked files like`.env`or`.env.local`from your main repository. To automatically copy these files when Claude creates a worktree, add a`.worktreeinclude`file to your project root. The file uses`.gitignore`syntax to list which files to copy. Only files that match a pattern and are also gitignored get copied, so tracked files are never duplicated.
+
+.worktreeinclude```.env
+.env.local
+config/secrets.json```This applies to worktrees created with`--worktree`, subagent worktrees, and parallel sessions in the [desktop app](/docs/en/desktop#work-in-parallel-with-sessions).
 
 
 Manage worktrees manually
@@ -549,6 +560,22 @@ Tips:
 * * *
 
 
+Run Claude on a schedule
+
+Suppose you want Claude to handle a task automatically on a recurring basis, like reviewing open PRs every morning, auditing dependencies weekly, or checking for CI failures overnight. Pick a scheduling option based on where you want the task to run:
+
+| Option | Where it runs | Best for |
+| --- | --- | --- |
+| [Cloud scheduled tasks](/docs/en/web-scheduled-tasks) | Anthropic-managed infrastructure | Tasks that should run even when your computer is off. Configure at [claude.ai/code](https://claude.ai/code). |
+| [Desktop scheduled tasks](/docs/en/desktop#schedule-recurring-tasks) | Your machine, via the desktop app | Tasks that need direct access to local files, tools, or uncommitted changes. |
+| [GitHub Actions](/docs/en/github-actions) | Your CI pipeline | Tasks tied to repo events like opened PRs, or cron schedules that should live alongside your workflow config. |
+| [`/loop`](/docs/en/scheduled-tasks) | The current CLI session | Quick polling while a session is open. Tasks are cancelled when you exit. |
+
+When writing prompts for scheduled tasks, be explicit about what success looks like and what to do with results. The task runs autonomously, so it can’t ask clarifying questions. For example: “Review open PRs labeled`needs-review`, leave inline comments on any issues, and post a summary in the`#eng-reviews`Slack channel.”
+
+* * *
+
+
 Ask Claude about its capabilities
 
 Claude has built-in access to its documentation and can answer questions about its own features and limitations.
@@ -567,38 +594,8 @@ Tips:
 
 Next steps
 
-[
-
-## Best practices
-
-Patterns for getting the most out of Claude Code
-
-
-](/docs/en/best-practices)[
-
-## How Claude Code works
-
-Understand the agentic loop and context management
-
-
-](/docs/en/how-claude-code-works)[
-
-## Extend Claude Code
-
-Add skills, hooks, MCP, subagents, and plugins
-
-
-](/docs/en/features-overview)[
-
-## Reference implementation
-
-Clone our development container reference implementation
-
-
-](https://github.com/anthropics/claude-code/tree/main/.devcontainer)
-
 Was this page helpful?
 
-[Store instructions and memories](/docs/en/memory)[Best practices](/docs/en/best-practices)
+[Permission modes](/docs/en/permission-modes)[Best practices](/docs/en/best-practices)
 
 ⌘I

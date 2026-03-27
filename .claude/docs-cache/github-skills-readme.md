@@ -3,7 +3,7 @@
 # Skills
 
 > **Source:** https://raw.githubusercontent.com/anthropics/skills/main/README.md
-> **Generated:** 2026-03-17T05:34:18.398Z
+> **Generated:** 2026-03-27T09:51:16.244Z
 
 ---
 

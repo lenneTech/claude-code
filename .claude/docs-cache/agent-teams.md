@@ -1,7 +1,7 @@
 # Orchestrate teams of Claude Code sessions
 
 > Source: https://code.claude.com/docs/en/agent-teams
-> Generated: 2026-03-14T12:58:55.961Z
+> Generated: 2026-03-27T09:52:44.643Z
 
 ---
 
@@ -126,9 +126,10 @@ Always use the lead to clean up. Teammates should not run cleanup because their 
 
 Enforce quality gates with hooks
 
-Use [hooks](/docs/en/hooks) to enforce rules when teammates finish work or tasks complete:
+Use [hooks](/docs/en/hooks) to enforce rules when teammates finish work or tasks are created or completed:
 
 -   [`TeammateIdle`](/docs/en/hooks#teammateidle): runs when a teammate is about to go idle. Exit with code 2 to send feedback and keep the teammate working.
+-   [`TaskCreated`](/docs/en/hooks#taskcreated): runs when a task is being created. Exit with code 2 to prevent creation and send feedback.
 -   [`TaskCompleted`](/docs/en/hooks#taskcompleted): runs when a task is being marked complete. Exit with code 2 to prevent completion and send feedback.
 
 
@@ -313,6 +314,6 @@ Explore related approaches for parallel work and delegation:
 
 Was this page helpful?
 
-[Create custom subagents](/docs/en/sub-agents)[Create plugins](/docs/en/plugins)
+[Create custom subagents](/docs/en/sub-agents)[Model Context Protocol (MCP)](/docs/en/mcp)
 
 ⌘I

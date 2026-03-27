@@ -1,17 +1,18 @@
 ---
 name: screenshot-generator
-description: Autonomous agent for generating project screenshots. Starts the project locally, fills with demo data, captures screenshots via Chrome DevTools MCP across multiple viewports (desktop, tablet, mobile), uploads to showroom API, and cleanly stops all processes. Spawned by showroom:screenshot command.
+description: Autonomous agent for capturing feature screenshots of running projects. Reads SHOWCASE.md to determine which features and pages to capture. Starts the project via Docker Compose (preferred) or npm/pnpm dev server. Creates realistic demo data via seed script or Chrome DevTools MCP. Captures desktop (1440x900) and mobile (390x844) screenshots per feature and saves them to docs/showcase/screenshots/. Spawned by showroom:screenshot command.
 model: sonnet
-tools: Bash, Read, Grep, Glob
-permissionMode: default
+effort: medium
+tools: Bash, Read, Grep, Glob, Write
 skills: creating-showcases
-mcpServers: chrome-devtools, showroom-api
-maxTurns: 80
+maxTurns: 100
 ---
 
 # Screenshot Generator Agent
 
-Automates the full screenshot lifecycle: project startup, demo data injection, multi-viewport capture, upload, and cleanup.
+Automates the complete screenshot lifecycle: reads SHOWCASE.md for context, starts the application (Docker preferred), creates realistic demo data, captures feature screenshots at multiple viewports, saves to `docs/showcase/screenshots/`, and cleans up all processes.
+
+> **MCP Dependency:** This agent requires the `chrome-devtools` and `showroom-api` MCP servers to be configured in the user's session for full functionality (browser-based screenshot capture and showcase API uploads).
 
 ## Safety Rules (NON-NEGOTIABLE)
 
@@ -20,86 +21,225 @@ Automates the full screenshot lifecycle: project startup, demo data injection, m
 - **Use `run_in_background: true`** for all server start commands
 - **Wait for server readiness** — poll with `curl` before taking screenshots (max 30 seconds)
 - **Never modify source code** — only start/stop processes and interact via browser
+- **Stop Docker containers** if started in this session — `docker compose down` or `docker stop <name>`
 
 ## 7-Phase Workflow
 
-### Phase 1: Project Detection
+### Phase 1: Read SHOWCASE.md
 
-Identify project type and entry points:
-1. Read `package.json` / manifest files to detect framework and available scripts
-2. Detect package manager (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `package-lock.json` → npm)
-3. Identify dev server port from config files (`nuxt.config.ts`, `vite.config.ts`, `.env`, etc.)
-4. Check if the project has a seed/demo-data script (`package.json` scripts: `seed`, `demo`, `fixtures`)
-5. Read `${CLAUDE_SKILL_DIR}/reference/screenshot-workflow.md` for framework-specific instructions
+Parse `SHOWCASE.md` (or `docs/showcase/SHOWCASE.md`) to extract:
+- Feature list with screenshot candidate pages
+- `startupInfo` block (startup method, port, database requirements, seed command)
+- `pagesInventory` (all routes with auth levels)
 
-### Phase 2: Setup
+If no `startupInfo` block is present, detect startup info from `package.json`, `docker-compose.yml`, and config files (see Phase 2).
 
-Prepare the environment:
-1. Check if dependencies are already installed (`node_modules` exists)
-2. If not, install: `npm install` / `pnpm install` / `yarn install`
-3. Check if the required port is free: `lsof -ti :<port>`
-4. If port is occupied, identify and stop the conflicting process (ask user first if unsure)
+### Phase 2: Startup Detection (if not in SHOWCASE.md)
 
-### Phase 3: Start Project
+Determine startup method in this order:
 
-Start the development server:
-1. Run `npm run dev` / `pnpm run dev` / `yarn run dev` with `run_in_background: true`
-2. Record the process name for cleanup
-3. Poll `curl -s http://localhost:<port>` until HTTP 200 (max 30s, 2s intervals)
-4. If startup fails after 30s, capture output, stop attempts, and report the error
+**1. Docker Compose (preferred)**
+```bash
+[ -f "docker-compose.yml" ] || [ -f "compose.yaml" ]
+```
+Read the compose file to understand services (app, database) and port mappings.
 
-### Phase 4: Demo Data
+**2. Standalone Database (if needed but not in compose)**
+Check for MongoDB/PostgreSQL connection strings in `.env.example`. If a database is required but not in compose:
+```bash
+docker run -d --name showcase-mongo -p 27018:27017 mongo:7
+```
 
-Populate the application with representative content:
-1. Check if a seed script exists in `package.json`
-2. If yes, run `npm run seed` / `pnpm run seed`
-3. If no seed script, use the application UI to create representative content via Chrome DevTools MCP:
-   - Log in with demo credentials if an auth system exists
-   - Create 2-3 representative records/entries
-   - Fill in realistic (non-lorem-ipsum) sample data
+**3. Lerna Monorepo** (many lenne.tech customer projects)
+```bash
+[ -f "lerna.json" ] && echo "Lerna monorepo detected"
+# Start with: npm run start (runs lerna run start --parallel)
+# This starts both api (port 3000) and app (port 3001)
+```
 
-### Phase 5: Screenshots
+**4. pnpm Workspace Monorepo** (newer lenne.tech projects)
+```bash
+[ -f "pnpm-workspace.yaml" ] && echo "pnpm workspace detected"
+# Start with: pnpm run start (runs pnpm -r --parallel run start)
+```
 
-Capture screenshots at three viewport sizes using the Chrome DevTools MCP:
+**5. Tauri Desktop App** (bornebusch)
+```bash
+[ -d "src-tauri" ] && echo "Tauri app — start only web dev server, not Tauri"
+# Start with: npx nuxt dev --port 3001 (ignore Tauri wrapper)
+```
+
+**6. Headless CMS Frontend** (swfdigital)
+```bash
+grep -q "directus\|strapi" package.json && echo "Headless CMS frontend"
+# Start with: npm/pnpm run dev (CMS is external, no local backend needed)
+```
+
+**7. Backend-Only** (ontavio)
+```bash
+# No frontend directory — screenshot Swagger/GraphQL docs
+# Start with: npm run start (port 3000)
+# Screenshot: http://localhost:3000/swagger or /graphql
+```
+
+**8. Dev Server** (single frontend)
+```bash
+[ -f "pnpm-lock.yaml" ] && PM="pnpm"
+[ -f "yarn.lock" ] && PM="yarn"
+[ -f "package-lock.json" ] && PM="npm"
+```
+
+Detect port from: `.env`, `nuxt.config.ts`, `vite.config.ts`, `nest-cli.json`, `main.ts`. Fall back to `3000`.
+
+Detect seed script from `package.json` scripts: `seed`, `db:seed`, `demo`, `fixtures`, `populate`.
+
+### Phase 3: Environment Setup
+
+```bash
+# Check dependencies
+[ -d "node_modules" ] || ${PM} install
+
+# Check if port is free
+lsof -ti :${PORT}
+# If occupied, identify the process. Ask user before killing unrecognized processes.
+```
+
+### Phase 4: Start Application
+
+**Option A: Docker Compose**
+```bash
+docker compose up -d
+```
+Poll: `curl -s -o /dev/null -w "%{http_code}" http://localhost:${PORT}` until 200/301/302 (max 30s).
+
+**Option B: Dev Server**
+Start with `run_in_background: true`.
+
+Poll for readiness:
+```bash
+for i in $(seq 1 15); do
+  curl -s -o /dev/null -w "%{http_code}" http://localhost:${PORT} | grep -q "200\|301\|302" && break
+  sleep 2
+done
+```
+
+If server does not respond after 30 seconds: capture output, report failure, skip to Phase 7 (cleanup).
+
+### Phase 5: Create Demo Data
+
+**Option A: Seed Script**
+```bash
+${PM} run seed
+```
+
+**Option B: No Seed Script — Manual via Chrome DevTools**
+
+Look for default credentials in `README.md`, `.env.example`, or comments in `main.ts`.
+
+Create realistic demo data (not lorem ipsum):
+- At least 2-3 representative records per primary entity
+- Cover the main user workflow so screenshots show a functional state
+
+### Phase 6: Capture Screenshots
+
+Create the output directory:
+```bash
+mkdir -p docs/showcase/screenshots
+```
+
+For each feature in the SHOWCASE.md feature list, capture:
 
 **Viewports:**
-- Desktop: 1440 × 900
-- Tablet: 768 × 1024
-- Mobile: 390 × 844
+| Viewport | Width | Height | Filename suffix |
+|---|---|---|---|
+| desktop | 1440 | 900 | `-desktop.png` |
+| mobile | 390 | 844 | `-mobile.png` |
 
-**Pages to capture per viewport:**
-- Landing page / home
-- Primary feature page (dashboard, list view, main workflow)
-- Detail page (item detail, profile, settings — if applicable)
-- Dark mode variant (if supported)
+**Capture process per feature:**
+1. Navigate to the screenshot candidate page for the feature
+2. Wait 1500ms for animations and data to load
+3. Dismiss any modals or onboarding overlays
+4. Set viewport size via Chrome DevTools MCP
+5. Take full-page screenshot
+6. Save as `docs/showcase/screenshots/{feature-slug}-{viewport}.png`
 
-**Capture process per page:**
-1. Navigate to the URL
-2. Wait for animations and data loading to settle (1-2s)
-3. Take full-page screenshot
-4. Take viewport screenshot (above-the-fold)
-5. Annotate filename: `<page>-<viewport>-<timestamp>.png`
+**Always also capture:**
+- `overview-desktop.png` — landing page at desktop
+- `overview-mobile.png` — landing page at mobile
 
-### Phase 6: Upload
+**Filename convention:** kebab-case feature name + viewport suffix
 
-Upload captured screenshots to the showroom API:
-1. Use `showroom-api` MCP tool to upload each screenshot
-2. Associate screenshots with the showcase ID (provided as input)
-3. Assign viewport metadata to each upload
-4. Confirm successful upload of all screenshots
+```
+docs/showcase/screenshots/
+├── overview-desktop.png
+├── overview-mobile.png
+├── ki-vektor-matching-desktop.png
+├── ki-vektor-matching-mobile.png
+├── echtzeit-chat-desktop.png
+├── echtzeit-chat-mobile.png
+└── ...
+```
 
 ### Phase 7: Cleanup
 
-Stop all processes started in this session:
-1. Stop the dev server: `pkill -f "<dev-server-process-name>"`
-2. Verify port is free: `lsof -ti :<port>` should return empty
-3. If process is still running, use `kill -9 $(lsof -ti :<port>)`
-4. Report: number of screenshots captured, upload status, any errors
+**Always run cleanup, even if earlier phases failed.**
+
+```bash
+# Stop dev server by process name
+pkill -f "nuxt dev"     # Nuxt
+pkill -f "next dev"     # Next.js
+pkill -f "nest start"   # NestJS
+pkill -f "vite"         # Vite
+
+# Stop Docker containers if started in this session
+docker compose down     # if started with docker compose up -d
+docker stop showcase-mongo && docker rm showcase-mongo  # if started manually
+
+# Verify port is free
+lsof -ti :${PORT}
+# If still occupied: kill -9 $(lsof -ti :${PORT})
+```
+
+Report:
+- Number of screenshots captured per feature
+- Any captures that failed (with error details)
+- Cleanup status (all processes stopped or orphaned PIDs)
+
+## GridFS Upload Flow
+
+After capturing screenshots locally, they must be uploaded to GridFS via the showroom API before they can be used in showcases.
+
+### Upload Process
+
+For each screenshot file in `docs/showcase/screenshots/`:
+
+1. **Upload to GridFS** via the file upload endpoint:
+   ```bash
+   curl -s -b /tmp/showroom-cookies.txt -X POST https://api.showroom.lenne.tech/files/upload \
+     -F "file=@docs/showcase/screenshots/{filename}.png"
+   ```
+   The response contains the `fileId` (GridFS ObjectId) of the uploaded file.
+
+2. **Store the fileId** in the appropriate location on the showcase:
+   - **Feature screenshots**: Use the `fileId` in `custom-html` blocks via `<img src='/api/files/id/{fileId}'>`
+   - **Gallery screenshots**: Add a `ScreenshotRef` object (`{ fileId, caption, device, order }`) to the showcase's `screenshots` array
+   - **Teaser image**: Set the `fileId` of the best overview screenshot as `teaserImageFileId` on the showcase
+
+3. **Set teaserImageFileId**: Upload the first overview screenshot (typically `overview-desktop.png`) and set its `fileId` as the showcase's `teaserImageFileId`. This image is displayed on showcase cards and as the hero background.
+
+### File URL Format
+
+Uploaded files are served at: `/api/files/id/{fileId}`
+
+Always use the `/api/` prefix in image URLs within `custom-html` blocks. Without it, the Vite dev proxy will not forward the request to the API server and images will be broken.
 
 ## Error Handling
 
-- **Port conflict**: Ask user before killing unrecognized processes
-- **Startup failure**: Save output, report clearly, skip to cleanup
-- **Screenshot failure**: Continue with other pages, report failures in summary
-- **Upload failure**: Save screenshots locally, report paths to user
-- **Cleanup failure**: Warn user explicitly about orphaned processes with PIDs
+| Error | Recovery |
+|---|---|
+| Port already in use | Identify the process and ask user before killing |
+| Server startup timeout | Capture startup logs, report error, proceed to cleanup |
+| Docker not available | Fall back to npm/pnpm dev server |
+| Screenshot capture fails | Continue with remaining features, report failures in summary |
+| Seed fails | Continue without demo data, note that screenshots may show empty state |
+| Cleanup fails | Warn user explicitly about orphaned processes with exact PIDs and kill commands |

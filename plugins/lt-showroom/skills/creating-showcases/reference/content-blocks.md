@@ -126,13 +126,25 @@ Grid of feature cards with Heroicons, titles, and descriptions. Use 3-6 items fo
 
 ```json
 {
-  "showcaseId": "showcase-objectid",
-  "viewports": ["desktop", "tablet", "mobile"],
-  "layout": "tabs"
+  "screenshots": [
+    { "fileId": "gridfs-id", "caption": "Dashboard overview", "device": "desktop", "order": 0 },
+    { "fileId": "gridfs-id", "caption": "Mobile navigation", "device": "mobile", "order": 1 }
+  ]
 }
 ```
 
-Renders uploaded screenshots from the showcase's screenshot collection. Layout options: `tabs` (viewport switcher), `grid`, `carousel`.
+Displays a gallery of uploaded screenshots. Each entry is a `ScreenshotRef` object (see below). Screenshots must be uploaded to GridFS first; use the returned file ID as `fileId`.
+
+### `ScreenshotRef` Structure
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `fileId` | string | yes | GridFS file ID from the file upload endpoint |
+| `caption` | string | no | Caption text displayed below the screenshot |
+| `device` | string | no | Viewport type: `desktop` (default), `tablet`, or `mobile` |
+| `order` | number | no | Display order (0-based ascending) |
+
+Screenshots are served via `/api/files/id/{fileId}`. The same `ScreenshotRef` structure is used in the showcase model's top-level `screenshots` array.
 
 ---
 

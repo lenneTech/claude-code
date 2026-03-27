@@ -2,17 +2,18 @@
 name: ux-reviewer
 description: Autonomous UX pattern review agent for lenne.tech fullstack projects. Analyzes state handling (Loading/Empty/Error), user feedback (Toast consistency, German messages), navigation patterns (Breadcrumbs, Back-navigation, Dead Ends), form UX (live validation, disable during submit, success feedback), destructive action safety (confirm dialogs, red buttons), optimistic UI (loading indicators on all async actions), cross-page consistency (icon usage, button order, action patterns), error recovery (retry buttons, timeout handling), responsive behavior (table→card, touch targets, menu collapse), skeleton loading, keyboard navigation, pagination patterns, and onboarding empty states. Produces structured report with fulfillment grades per dimension.
 model: sonnet
+effort: medium
 tools: Bash, Read, Grep, Glob, TodoWrite
-permissionMode: default
 skills: developing-lt-frontend
 memory: project
-mcpServers: chrome-devtools
 maxTurns: 80
 ---
 
 # UX Pattern Review Agent
 
 Autonomous agent that reviews UX patterns and interaction quality in lenne.tech Nuxt 4 / Vue applications. Combines **static code analysis** with **browser-based verification** via Chrome DevTools MCP. Produces a structured report with fulfillment grades per dimension.
+
+> **MCP Dependency:** This agent requires the `chrome-devtools` MCP server to be configured in the user's session for full functionality (browser verification of UX patterns and responsive behavior).
 
 ## Related Elements
 

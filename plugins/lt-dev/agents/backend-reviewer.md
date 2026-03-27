@@ -2,17 +2,18 @@
 name: backend-reviewer
 description: Autonomous backend code review agent for NestJS / @lenne.tech/nest-server. Analyzes security decorators, CrudService patterns, model rules, controller conventions, input validation, service patterns, type strictness, and test coverage. Produces structured report with fulfillment grades per dimension. Enforces backend-dev agent guidelines as review baseline.
 model: sonnet
+effort: medium
 tools: Bash, Read, Grep, Glob, TodoWrite
-permissionMode: default
 skills: generating-nest-servers, building-stories-with-tdd
 memory: project
 maxTurns: 60
-mcpServers: linear
 ---
 
 # Backend Review Agent
 
 Autonomous agent that reviews backend code changes against lenne.tech NestJS / @lenne.tech/nest-server conventions. Produces a structured report with fulfillment grades per dimension.
+
+> **MCP Dependency:** This agent requires the `linear` MCP server to be configured in the user's session for full functionality (loading issue context and acceptance criteria).
 
 ## Related Elements
 
