@@ -1,5 +1,5 @@
 {
-  "description": "Project detection, safety guards, and automatic quality gates",
+  "description": "Project detection, safety guards, circuit breaker, file protection, and automatic quality gates",
   "hooks": {
     "PreToolUse": [
       {
@@ -10,6 +10,12 @@
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/validate-plugin-frontmatter.sh\"",
             "timeout": 5,
             "statusMessage": "Validating plugin frontmatter"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/protect-files.sh\"",
+            "timeout": 3,
+            "statusMessage": "Checking file protection"
           }
         ]
       },
@@ -21,6 +27,30 @@
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/block-dangerous-bash.sh\"",
             "timeout": 5,
             "statusMessage": "Checking for dangerous commands"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/circuit-breaker-reset.sh\"",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/circuit-breaker.sh\"",
+            "timeout": 3,
+            "statusMessage": "Checking circuit breaker"
           }
         ]
       }
@@ -96,7 +126,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "rm -f /tmp/.claude-qg-counter-* /tmp/.claude-qg-tier-* /tmp/.claude-qg-reviewed-* /tmp/.claude-qg-baseline-*"
+            "command": "rm -f /tmp/.claude-qg-counter-* /tmp/.claude-qg-tier-* /tmp/.claude-qg-reviewed-* /tmp/.claude-qg-baseline-* /tmp/.claude-circuit-breaker/* 2>/dev/null; true"
           }
         ]
       }
