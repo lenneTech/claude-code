@@ -136,7 +136,7 @@ export class BuyerProfile extends Profile { ... }
 
 ### Phase 5: Description Management
 
-** CRITICAL PHASE - Refer to "CRITICAL: DESCRIPTION MANAGEMENT" section at the top of this document!**
+**CRITICAL PHASE - Refer to "CRITICAL: DESCRIPTION MANAGEMENT" section at the top of this document!**
 
 This phase is often done incorrectly. Follow these steps EXACTLY:
 
@@ -208,7 +208,7 @@ Apply formatting rules:
 3. **If no comment provided**:
    -> Create meaningful English description: `description: 'User email address'`
 
-** CRITICAL - Preserve Original Wording**:
+**CRITICAL - Preserve Original Wording**:
 
 -  **DO:** Fix spelling/typos only
 -  **DON'T:** Rephrase, expand, or improve wording
@@ -348,7 +348,26 @@ export enum StatusEnum {
 
 ### Phase 7: API Test Creation
 
-** CRITICAL: Test Type Requirement**
+**CRITICAL: Detect Test Framework BEFORE Writing or Running Tests**
+
+**BEFORE writing or running ANY test**, determine which framework the project uses:
+
+1. Check `package.json` for `vitest` or `jest` in dependencies/devDependencies
+2. Read 1-2 existing test files in `tests/` to see import patterns and syntax
+3. Check `test:e2e` script in `package.json` for the runner command
+
+| Framework | Imports | Globals |
+|-----------|---------|---------|
+| **Vitest** | `import { describe, it, expect } from 'vitest'` | Not global by default |
+| **Jest** | No imports needed | `describe`, `it`, `expect` are global |
+
+**Do NOT assume a framework. Do NOT mix Vitest and Jest syntax. Match the existing project exactly.**
+
+**Running tests:** Always use the project's npm scripts from `package.json` (e.g., `npm run test:e2e`, `npm test`). Do NOT run `npx vitest`, `npx jest`, or other direct runner commands — the project scripts may include required flags, config paths, or environment setup.
+
+---
+
+**CRITICAL: Test Type Requirement**
 
 **ONLY create API tests using TestHelper - NEVER create direct Service tests!**
 
@@ -441,7 +460,7 @@ describe('Product Tests', () => {
 
 ---
 
-** CRITICAL: Test Creation Process**
+**CRITICAL: Test Creation Process**
 
 Creating API tests is NOT just about testing functionality - it's about **validating the security model**. You MUST follow this exact process:
 
