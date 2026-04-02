@@ -349,7 +349,7 @@ When diagnosing issues, follow this exact order:
 | MongoDB connection refused | Check `mongo` health, verify `MONGO_URI` | Ensure `depends_on` with health condition |
 | Hot reload not working | Check volume mounts in compose file | Verify source path matches container path |
 
-### Phase 7: Quality Gate
+### Phase 7: Verification
 
 Before completing ANY infrastructure task:
 

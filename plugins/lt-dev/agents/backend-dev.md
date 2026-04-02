@@ -75,7 +75,7 @@ See `generating-nest-servers` skill → `reference/configuration.md` for all pro
 
 ### 3. Implement (following ALL rules below)
 
-### 4. Quality Gate
+### 4. Verify
 
 ```
 1. pnpm run lint (zero errors)

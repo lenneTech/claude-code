@@ -11,7 +11,7 @@ disable-model-invocation: true
 
 - Before merging changes to validate overall quality
 - After completing a feature or fix implementation
-- As a final quality gate after `resolve-ticket`
+- As a final check after `resolve-ticket`
 - When you want a structured assessment across all quality dimensions
 
 ## Related Commands
@@ -448,10 +448,3 @@ Priority ordering: Critical → High → Medium → Low
 
 ### Phase 6: Diff Hash Snapshot
 
-After presenting the report, snapshot the diff state so the quality-gate Stop hook knows what was already reviewed:
-
-```bash
-DIR_HASH=$(echo "$PWD" | md5 2>/dev/null || echo "$PWD" | md5sum 2>/dev/null | cut -d' ' -f1)
-DIFF_HASH=$(git diff HEAD 2>/dev/null | md5 2>/dev/null || git diff HEAD 2>/dev/null | md5sum 2>/dev/null | cut -d' ' -f1)
-echo "$DIFF_HASH" > "/tmp/.claude-qg-reviewed-${DIR_HASH}"
-```

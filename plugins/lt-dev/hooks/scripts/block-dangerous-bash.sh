@@ -1,6 +1,10 @@
 #!/bin/bash
 # PreToolUse hook: Block dangerous Bash commands in lenne.tech projects
 # Uses permissionDecision to deny destructive operations
+#
+# Opt-out: CLAUDE_SKIP_DANGEROUS_BASH_CHECK=1
+
+[ "${CLAUDE_SKIP_DANGEROUS_BASH_CHECK:-0}" = "1" ] && exit 0
 
 INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')

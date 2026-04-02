@@ -11,7 +11,7 @@ skills: generating-nest-servers, developing-lt-frontend
 
 # Code Review Agent (Single-Pass)
 
-Consolidated single-pass code reviewer that covers all quality dimensions in one agent. Use this for quick reviews or when spawned by the quality-gate hook. For comprehensive parallel reviews with specialized domain reviewers, use `/lt-dev:review` instead.
+Consolidated single-pass code reviewer that covers all quality dimensions in one agent. Use this for quick reviews. For comprehensive parallel reviews with specialized domain reviewers, use `/lt-dev:review` instead.
 
 > **MCP Dependency:** This agent requires the `linear` MCP server to be configured in the user's session for full functionality (loading issue requirements for validation).
 

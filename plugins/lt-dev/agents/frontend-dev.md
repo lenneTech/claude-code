@@ -64,7 +64,7 @@ Before writing any code:
 
 ### 2. Write Code (following ALL rules below)
 
-### 3. Quality Gate
+### 3. Verify
 
 ```
 1. pnpm run lint:fix

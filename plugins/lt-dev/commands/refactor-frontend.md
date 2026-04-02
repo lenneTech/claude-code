@@ -236,7 +236,7 @@ Work exclusively in these files. Do NOT modify files outside your batch.
 
 ---
 
-### Quality Gate (MANDATORY — Blocks Completion)
+### Verification (MANDATORY — Blocks Completion)
 
 **The refactoring is NOT complete until ALL checks pass.**
 
@@ -275,9 +275,9 @@ pnpm test 2>/dev/null || pnpm run test 2>/dev/null
 
 ---
 
-### Code Review (MANDATORY — After Quality Gate)
+### Code Review (MANDATORY — After Verification)
 
-After the Quality Gate passes, run `/lt-dev:review` to validate the refactored code.
+After verification passes, run `/lt-dev:review` to validate the refactored code.
 
 ```
 Run: /lt-dev:review --base=<current-branch-base or main>
@@ -285,7 +285,7 @@ Run: /lt-dev:review --base=<current-branch-base or main>
 
 | Severity | Action |
 |----------|--------|
-| Critical / High findings | MUST be fixed — re-run Quality Gate after fixes |
+| Critical / High findings | MUST be fixed — re-run verification after fixes |
 | Medium findings | Fix if possible, otherwise document as "Known Issues" |
 | Low / Info findings | Document in Final Report |
 
@@ -305,7 +305,7 @@ Max 2 review-fix cycles. If Critical/High persist, STOP and report to user.
 | teams | 3 | 1 | 1 | 2 | ✅ |
 | TOTAL | 11 | 6 | 4 | 6 | ✅ |
 
-### Quality Gate
+### Verification
 | Check  | Status |
 |--------|--------|
 | Format | ✅ Bestanden |

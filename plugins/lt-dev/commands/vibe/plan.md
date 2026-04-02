@@ -155,7 +155,7 @@ After all features are implemented:
 6. **Every task as checkbox** `- [ ]` for tracking
 7. **No mock data** - Frontend always connects to real backend
 8. **Browser testing** - Test with Chrome MCP after implementation
-9. **Quality gates** - Lint and build must pass
+9. **Verification** - Lint and build must pass
 
 Ultrathink. Be thorough - this planning will guide the entire build.
 

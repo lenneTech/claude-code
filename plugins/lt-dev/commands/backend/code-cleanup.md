@@ -76,7 +76,7 @@ Initial TodoWrite:
 [pending] Phase 5: Debug code removal
 [pending] Phase 6: Formatting
 [pending] Phase 7: Build & Lint
-[pending] Quality gate verification
+[pending] Verification
 ```
 
 ### Phase 1: Import Optimization
@@ -135,7 +135,7 @@ Fix all errors and warnings!
 
 ---
 
-## Quality Gate (MANDATORY — Blocks Completion)
+## Verification (MANDATORY — Blocks Completion)
 
 **The cleanup is NOT complete until ALL checks pass.**
 
@@ -176,7 +176,7 @@ Max 3 fix attempts per check — if still failing, STOP and report errors to use
 | Debug Code Removal | ✅/⚠️ |
 | Formatting | ✅/⚠️ |
 
-### Quality Gate
+### Verification
 | Check  | Status |
 |--------|--------|
 | Lint   | ✅ Keine Fehler |
