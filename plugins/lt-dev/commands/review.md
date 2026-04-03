@@ -42,16 +42,17 @@ This command is the **direct orchestrator** — it spawns all reviewers in paral
 │  Phase 2: Content validation (requirements, scope, edge cases)
 │
 │  Phase 3A: Code-only reviewers — ALL spawned in parallel (single message):
-│  ├── security-reviewer    (always — OWASP, Permissions, Injection, XSS, Auth, Secrets, Dependencies)
-│  ├── docs-reviewer        (always — README, JSDoc, Migration Guides, Config Documentation)
-│  ├── test-reviewer        (if source files changed — Coverage, Quality, Isolation, API-First, Flaky Detection)
-│  ├── backend-reviewer     (if backend changes — Security Decorators, Models, Controllers, Services, Performance, Tests)
-│  └── devops-reviewer      (if infra changes — Docker, CI/CD, Environment, .dockerignore)
+│  ├── security-reviewer      (always — OWASP, Permissions, Injection, XSS, Auth, Secrets, Dependencies)
+│  ├── docs-reviewer          (always — README, JSDoc, Migration Guides, Config Documentation)
+│  ├── performance-reviewer   (always — Bundle, Queries, Memory, Async, Caching, k6 Baselines)
+│  ├── test-reviewer          (if source files changed — Coverage, Quality, Isolation, API-First, Flaky Detection)
+│  ├── backend-reviewer       (if backend changes — Security Decorators, Models, Controllers, Services, Tests)
+│  └── devops-reviewer        (if infra changes — Docker, CI/CD, Environment, .dockerignore)
 │
 │  Phase 3B: Browser reviewers — sequential (Chrome DevTools MCP has global page state):
 │  ├── frontend-reviewer    (if frontend changes — Types, Components, Code Quality, SSR, Performance, Styling)
 │  ├── ux-reviewer          (if frontend changes — State Handling, Feedback, Navigation, Form UX, Responsive)
-│  └── a11y-reviewer        (if frontend changes — ARIA, Semantic HTML, Keyboard, Contrast, SEO, Lighthouse)
+│  └── a11y-reviewer        (if frontend changes — ARIA, Semantic HTML, Keyboard, Contrast, SEO, Lighthouse a11y+perf)
 │
 │  Phase 4: Cross-domain challenge (filter false positives, deduplicate, annotate)
 │
@@ -95,7 +96,7 @@ Parse arguments from `$ARGUMENTS`:
 
    | Condition | Reviewer |
    |-----------|----------|
-   | Always | `security-reviewer`, `docs-reviewer` |
+   | Always | `security-reviewer`, `docs-reviewer`, `performance-reviewer` |
    | Backend files changed | `backend-reviewer` |
    | Frontend files changed | `frontend-reviewer`, `ux-reviewer`, `a11y-reviewer` |
    | Infra files changed | `devops-reviewer` |
@@ -201,6 +202,25 @@ configuration documentation (.env.example, INTEGRATION-CHECKLIST).
 Produce your structured documentation review report with fulfillment grades.
 ```
 
+#### Performance Reviewer (always)
+```
+Agent tool with subagent_type "lt-dev:performance-reviewer":
+
+Review the code changes on the current branch for performance regressions.
+
+Base branch: <base-branch>
+Project type: <Backend/Frontend/Fullstack>
+Changed files:
+<full list of changed files>
+API URL: http://localhost:3000
+
+Analyze bundle impact, database query patterns, memory management, async efficiency,
+API payload optimization, and caching strategy. Run k6 load tests with baseline
+comparison if k6 is installed and backend is running. Scaffold k6 infrastructure
+if not present. Lighthouse performance is handled by a11y-reviewer.
+Produce your structured performance review report with fulfillment grades.
+```
+
 #### Backend Reviewer (if backend changes)
 ```
 Agent tool with subagent_type "lt-dev:backend-reviewer":
@@ -214,8 +234,7 @@ Changed files:
 <list of backend files>
 
 Check security decorators & permission model, model rules, controller & service patterns,
-type strictness & input validation, code quality, performance (N+1 queries, memory leaks,
-async patterns, pagination), test coverage, and formatting.
+type strictness & input validation, code quality, test coverage, and formatting.
 Produce your structured backend review report with fulfillment grades.
 ```
 
@@ -328,6 +347,9 @@ After ALL agents (from both Phase 3A and 3B) return their reports, perform cross
 | A | **Security ↔ DevOps** | Overlapping Docker/env findings → deduplicate |
 | B | **Backend ↔ Frontend** | Are backend API changes reflected in frontend API client usage? |
 | B | **Performance ↔ Tests** | Does a performance concern have load test coverage? |
+| B | **Performance ↔ Backend** | Overlapping N+1/query findings → deduplicate, keep deeper analysis |
+| B | **Performance ↔ Frontend** | Overlapping rendering/lazy findings → deduplicate, keep deeper analysis |
+| C | **Performance ↔ A11y** | Merge Lighthouse performance scores from a11y-reviewer into performance report (only if a11y-reviewer was spawned) |
 | C | **Content ↔ Documentation** | Are new features documented? |
 
 Groups A, B, and C are independent and can be evaluated simultaneously. Within each group, challenges share context and should be evaluated together.
@@ -358,6 +380,7 @@ Generate a single unified report merging all reviewer results:
 | orchestrator | Content Validation | ✅ / ⚠️ / ❌ |
 | security-reviewer | Security (OWASP) | ✅ / ⚠️ / ❌ / — N/A |
 | docs-reviewer | Documentation | ✅ / ⚠️ / ❌ / — |
+| performance-reviewer | Performance (Bundle, Queries, k6) | ✅ / ⚠️ / ❌ / — |
 | backend-reviewer | Backend (NestJS) | ✅ / ⚠️ / ❌ / — |
 | frontend-reviewer | Frontend (Nuxt/Vue) | ✅ / ⚠️ / ❌ / — |
 | test-reviewer | Tests (Quality/Coverage) | ✅ / ⚠️ / ❌ / — |
@@ -371,6 +394,7 @@ Generate a single unified report merging all reviewer results:
 | Content | X% | ✅/⚠️/❌ |
 | Security | X% | ✅/⚠️/❌ |
 | Documentation | X% | ✅/⚠️/❌ |
+| Performance | X% | ✅/⚠️/❌ |
 | Backend | X% | ✅/⚠️/❌ |
 | Frontend | X% | ✅/⚠️/❌ |
 | Tests | X% | ✅/⚠️/❌ |
@@ -386,15 +410,16 @@ Default weights (override via `--weights` or project CLAUDE.md):
 
 | Domain | Default Weight | Condition |
 |--------|---------------|-----------|
-| Security | 25% | Always |
+| Security | 20% | Always |
 | Content | 10% | Always |
 | Documentation | 5% | Always |
+| Performance | 10% | Always |
 | Backend | 15% | If backend changes |
 | Frontend | 15% | If frontend changes |
 | Tests | 10% | If source files changed |
 | UX Patterns | 5% | If frontend changes |
 | A11y & SEO | 5% | If frontend changes |
-| DevOps | 10% | If infra changes |
+| DevOps | 5% | If infra changes |
 
 Only active domains count. Weights redistribute proportionally for N/A domains.
 
@@ -439,6 +464,11 @@ Priority ordering: Critical → High → Medium → Low
 - Tests ⚠️/❌ → `/lt-dev:backend:test-generate`
 - Code Quality ⚠️/❌ → `/lt-dev:backend:code-cleanup`
 - Dependencies → `/lt-dev:backend:sec-audit`
+
+**Performance findings:**
+- k6 ⚠️/❌ → Run `k6 run` with higher load to confirm regression
+- Database queries → Review with `explain()` in MongoDB shell
+- Lighthouse Performance ⚠️/❌ (from a11y-reviewer) → Run `lighthouse` manually on affected pages
 
 **Frontend findings:**
 - Code Quality ⚠️/❌ → `/lt-dev:refactor-frontend --dry-run`

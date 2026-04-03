@@ -442,19 +442,26 @@ ls app/error.vue 2>/dev/null
 
 ### Phase 10: Bonus — Lighthouse Audit
 
-**Only if dev server is available.** Run Lighthouse accessibility and SEO audits.
+**Only if dev server is available.** Run Lighthouse accessibility, SEO, **and performance** audits.
 
 ```
 Use mcp__chrome-devtools__lighthouse_audit on each changed page URL:
-- Categories: accessibility, seo
+- Categories: accessibility, seo, performance
 ```
 
 Report Lighthouse scores alongside manual findings:
 
-| Page | Accessibility Score | SEO Score |
-|------|-------------------|-----------|
-| /seasons | XX/100 | XX/100 |
-| /seasons/[id] | XX/100 | XX/100 |
+| Page | Accessibility | SEO | Performance |
+|------|--------------|-----|-------------|
+| /seasons | XX/100 | XX/100 | XX/100 |
+| /seasons/[id] | XX/100 | XX/100 | XX/100 |
+
+**Performance metrics to capture** (for cross-domain use by performance-reviewer):
+- Performance Score (target: >= 90)
+- Largest Contentful Paint — LCP (target: < 2.5s)
+- Cumulative Layout Shift — CLS (target: < 0.1)
+- Total Blocking Time — TBT (target: < 200ms)
+- First Contentful Paint — FCP (target: < 1.8s)
 
 **Flag any Lighthouse finding not already caught** by manual phases.
 
@@ -485,9 +492,9 @@ Report Lighthouse scores alongside manual findings:
 **Overall: X%**
 
 ### Lighthouse Scores (Bonus)
-| Page | Accessibility | SEO |
-|------|--------------|-----|
-| /path | XX/100 | XX/100 |
+| Page | Accessibility | SEO | Performance | LCP | CLS | TBT |
+|------|--------------|-----|-------------|-----|-----|-----|
+| /path | XX/100 | XX/100 | XX/100 | X.Xs | X.XX | XXms |
 
 ### 1. ARIA & Roles
 [Findings with file:line references]

@@ -283,44 +283,29 @@ grep -rn "^const .* = ref(" composables/*.ts  # check if exported/shared
 | Raw fetch or process.env usage | 50-70% |
 | Widespread SSR violations | <50% |
 
-### Phase 6: Performance
+### Phase 6: Performance (Quick Check)
 
-Validate performance patterns:
+> **Note:** Deep performance analysis (bundle impact, rendering architecture, re-render patterns, virtual scrolling, debouncing strategy, image optimization, Lighthouse) is handled by the dedicated `performance-reviewer` and `a11y-reviewer`. This phase only flags obvious red flags visible during code review.
 
 - [ ] Modals use `Lazy` prefix: `<LazyModalXyz>` — never eagerly loaded
-- [ ] Below-the-fold heavy components lazy-loaded
-- [ ] `shallowRef` for large arrays/objects without deep reactivity needs
-- [ ] `v-memo` on expensive list items in `v-for`
-- [ ] `v-once` on static content
-- [ ] Search/filter inputs debounced (`useDebounceFn`, 300ms)
-- [ ] Images use `<NuxtImg>` with `loading="lazy"` — never raw `<img>`
-- [ ] No `v-if` + `v-for` on same element — wrap in `<template>`
-- [ ] No deep watchers (`{ deep: true }`) — prefer watching specific properties
-- [ ] Prefer `computed` over `watch` when deriving state
-- [ ] `useFetch()` / `useAsyncData()` for data fetching
+- [ ] No `v-if` + `v-for` on same element
+- [ ] No deep watchers (`{ deep: true }`) on large objects
+- [ ] `useFetch()` / `useAsyncData()` for data fetching — never raw `fetch()`
 
-**Grep patterns:**
 ```bash
-# Eagerly loaded modals
-grep -n "<Modal\|<modal" <vue-files> | grep -v "Lazy"
-# Deep watchers
-grep -n "deep: true" <vue-files>
-# v-if + v-for on same element
+grep -n "<Modal" <vue-files> | grep -v "Lazy"
 grep -n "v-if.*v-for\|v-for.*v-if" <vue-files>
-# Raw img tags
-grep -n "<img " <vue-files>
-# Large ref (should be shallowRef)
-grep -n "ref<.*\[\]>" <vue-files>
+grep -n "deep: true" <vue-files>
+grep -n "await fetch(" <vue-files>
 ```
 
 **Scoring:**
 
 | Scenario | Score |
 |----------|-------|
-| All performance rules followed | 100% |
-| 1-3 minor issues (missing lazy, no v-memo) | 80-90% |
-| Eager modals or deep watchers on large data | 60-75% |
-| Widespread perf violations | <50% |
+| No obvious performance red flags | 100% |
+| 1-2 eager modals or deep watchers | 70-85% |
+| Raw fetch or v-if+v-for patterns | <70% |
 
 ### Phase 7: Styling & Conventions
 

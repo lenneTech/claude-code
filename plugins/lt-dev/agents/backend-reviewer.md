@@ -226,37 +226,25 @@ Flag: `NO_RESTRICTION`, `NO_ROLES`, `NO_SECURITY_CHECK`, `UNRESTRICTED_FIELD`, `
 | Significant complexity or structure violations | 60-75% |
 | Major DRY violations or wrong module structure | <50% |
 
-### Phase 6: Performance
+### Phase 6: Performance (Quick Check)
 
-Validate performance characteristics of backend code:
+> **Note:** Deep performance analysis (query optimization, populate depth, aggregation pipelines, bulk operations, memory management, async patterns, k6 load tests) is handled by the dedicated `performance-reviewer`. This phase only flags obvious red flags visible during code review.
 
-- [ ] No N+1 query patterns (loading related entities in loops)
-- [ ] No unnecessary database calls or redundant API requests
-- [ ] No memory leaks (unclosed streams, missing cleanup, event listener leaks)
-- [ ] No synchronous operations that should be async (file I/O, crypto, compression)
-- [ ] Large data sets handled with pagination/streaming where appropriate
-- [ ] No expensive operations in hot paths (loops, frequent calls)
-- [ ] Proper use of `populate()` — only load needed fields, avoid deep nesting
-- [ ] Bulk operations (`insertMany`, `updateMany`) used instead of loops with `.save()`
+- [ ] No `await` inside `for`/`forEach` loops (obvious N+1 pattern)
+- [ ] No `readFileSync`/`writeFileSync`/`execSync` in async context
 
-**Grep patterns:**
 ```bash
-# N+1 patterns (find/save in loops)
 grep -rn "for.*await.*find\|for.*await.*save\|forEach.*await" src/server/
-# Missing pagination
-grep -rn "\.find({" src/server/ | grep -v "limit\|skip\|paginate"
-# Sync operations
-grep -rn "readFileSync\|writeFileSync\|execSync\|crypto\..*Sync" src/server/
+grep -rn "readFileSync\|writeFileSync\|execSync" src/server/
 ```
 
 **Scoring:**
 
 | Scenario | Score |
 |----------|-------|
-| No performance issues found | 100% |
-| Minor issues (1-2 missing pagination) | 80-90% |
-| N+1 patterns or sync in async context | 50-70% |
-| Memory leaks or widespread performance issues | <50% |
+| No obvious performance red flags | 100% |
+| 1-2 await-in-loop patterns | 70-85% |
+| Sync operations in async context | <70% |
 
 ### Phase 7: Test Coverage (Static Analysis Only)
 

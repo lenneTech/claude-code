@@ -539,8 +539,23 @@
     },
     {
       "pattern": "Bash(curl:*)",
-      "description": "Check dev server availability for browser-based reviews",
-      "usedBy": ["ux-reviewer", "a11y-reviewer", "frontend-reviewer"]
+      "description": "Check dev server availability for browser-based reviews and k6 load tests",
+      "usedBy": ["ux-reviewer", "a11y-reviewer", "frontend-reviewer", "performance-reviewer"]
+    },
+    {
+      "pattern": "Bash(k6 run:*)",
+      "description": "Run k6 load tests for API performance measurement",
+      "usedBy": ["performance-reviewer"]
+    },
+    {
+      "pattern": "Bash(k6 version:*)",
+      "description": "Check k6 version availability",
+      "usedBy": ["performance-reviewer"]
+    },
+    {
+      "pattern": "Bash(command -v k6:*)",
+      "description": "Detect k6 installation",
+      "usedBy": ["performance-reviewer"]
     }
   ]
 }
