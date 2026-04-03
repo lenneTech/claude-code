@@ -74,30 +74,10 @@ matches_pattern() {
 
 # ── Built-in protected patterns for lenne.tech projects ──
 BUILTIN_PATTERNS=(
-  # Environment & secrets
-  ".env"
-  ".env.*"
-  "*.pem"
-  "*.key"
-
   # Lock files (should only change via package manager)
   "package-lock.json"
   "pnpm-lock.yaml"
   "yarn.lock"
-
-  # Database migrations (require careful review)
-  "*/migrations/*.ts"
-  "*/migration/*.ts"
-
-  # CI/CD (changes affect deployment pipeline)
-  ".gitlab-ci.yml"
-  ".github/workflows/*.yml"
-  "Dockerfile"
-  "docker-compose*.yml"
-
-  # Git configuration
-  ".gitignore"
-  ".gitmodules"
 )
 
 # ── Check built-in patterns ──
