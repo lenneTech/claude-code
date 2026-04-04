@@ -170,11 +170,29 @@ afterAll(async () => {
 
 **Use separate test database:** `app-test` instead of `app-dev`
 
+## Framework Source Files (MUST READ before guessing)
+
+**ALWAYS read actual source code** from `node_modules/@lenne.tech/nest-server/` before guessing framework behavior. The framework ships its complete source with the npm package.
+
+| File (in `node_modules/@lenne.tech/nest-server/`) | When to Read |
+|---------------------------------------------------|-------------|
+| `CLAUDE.md` | Start of any backend task — framework rules and architecture |
+| `FRAMEWORK-API.md` | Quick API reference — all interfaces, method signatures |
+| `src/core.module.ts` | Module registration, `CoreModule.forRoot()` parameters |
+| `src/core/common/interfaces/server-options.interface.ts` | ALL config interfaces (`IServerOptions`, `IBetterAuth`, `ICoreModuleOverrides`) |
+| `src/core/common/interfaces/service-options.interface.ts` | `ServiceOptions` interface for service method calls |
+| `src/core/common/services/crud.service.ts` | CrudService base class — ALL services extend this |
+| `src/core/modules/*/INTEGRATION-CHECKLIST.md` | Integration steps when extending core modules |
+| `src/core/modules/*/README.md` | Per-module documentation and usage |
+| `docs/REQUEST-LIFECYCLE.md` | Complete request flow, interceptors, decorators |
+| `.claude/rules/` | 11 rule files (architecture, security, testing, modules, etc.) |
+
 ## Framework Essentials
 
-- [ ] Read CrudService before modifying any Service (`node_modules/@lenne.tech/nest-server/src/core/common/services/crud.service.ts`)
+- [ ] Read CrudService before modifying any Service
 - [ ] NEVER blindly pass all serviceOptions to other Services (only pass `currentUser`)
 - [ ] Check if CrudService already provides needed functionality
+- [ ] Read `FRAMEWORK-API.md` for quick overview of available interfaces and methods
 
 **Complete framework guide: [reference/framework-guide.md](${CLAUDE_SKILL_DIR}/reference/framework-guide.md)**
 

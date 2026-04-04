@@ -1,7 +1,7 @@
 # CLI reference
 
 > Source: https://code.claude.com/docs/en/cli-reference
-> Generated: 2026-03-27T09:52:39.635Z
+> Generated: 2026-04-04T10:26:47.232Z
 
 ---
 
@@ -26,19 +26,19 @@ You can start sessions, pipe content, resume conversations, and manage updates w
 |`claude auto-mode defaults`| Print the built-in [auto mode](/docs/en/permission-modes#eliminate-prompts-with-auto-mode) classifier rules as JSON. Use`claude auto-mode config`to see your effective config with settings applied |`claude auto-mode defaults > rules.json`|
 |`claude mcp`| Configure Model Context Protocol (MCP) servers | See the [Claude Code MCP documentation](/docs/en/mcp). |
 |`claude plugin`| Manage Claude Code [plugins](/docs/en/plugins). Alias:`claude plugins`. See [plugin reference](/docs/en/plugins-reference#cli-commands-reference) for subcommands |`claude plugin install code-review@claude-plugins-official`|
-|`claude remote-control`| Start a [Remote Control](/docs/en/remote-control) server to control Claude Code from Claude.ai or the Claude app. Runs in server mode (no local interactive session). See [Server mode flags](/docs/en/remote-control#server-mode) |`claude remote-control --name "My Project"`|
+|`claude remote-control`| Start a [Remote Control](/docs/en/remote-control) server to control Claude Code from Claude.ai or the Claude app. Runs in server mode (no local interactive session). See [Server mode flags](/docs/en/remote-control#start-a-remote-control-session) |`claude remote-control --name "My Project"`|
 
 
 CLI flags
 
-Customize Claude Code’s behavior with these command-line flags:
+Customize Claude Code’s behavior with these command-line flags.`claude --help`does not list every flag, so a flag’s absence from`--help`does not mean it is unavailable.
 
 | Flag | Description | Example |
 | --- | --- | --- |
-|`--add-dir`| Add additional working directories for Claude to access (validates each path exists as a directory) |`claude --add-dir ../apps ../lib`|
+|`--add-dir`| Add additional working directories for Claude to read and edit files. Grants file access; most`.claude/`configuration is [not discovered](/docs/en/permissions#additional-directories-grant-file-access-not-configuration) from these directories. Validates each path exists as a directory |`claude --add-dir ../apps ../lib`|
 |`--agent`| Specify an agent for the current session (overrides the`agent`setting) |`claude --agent my-custom-agent`|
 |`--agents`| Define custom subagents dynamically via JSON. Uses the same field names as subagent [frontmatter](/docs/en/sub-agents#supported-frontmatter-fields), plus a`prompt`field for the agent’s instructions |`claude --agents '{"reviewer":{"description":"Reviews code","prompt":"You are a code reviewer"}}'`|
-|`--allow-dangerously-skip-permissions`| Enable permission bypassing as an option without immediately activating it. Allows composing with`--permission-mode`(use with caution) |`claude --permission-mode plan --allow-dangerously-skip-permissions`|
+|`--allow-dangerously-skip-permissions`| Add`bypassPermissions`to the`Shift+Tab`mode cycle without starting in it. Lets you begin in a different mode like`plan`and switch to`bypassPermissions`later. See [permission modes](/docs/en/permission-modes#skip-all-checks-with-bypasspermissions-mode) |`claude --permission-mode plan --allow-dangerously-skip-permissions`|
 |`--allowedTools`| Tools that execute without prompting for permission. See [permission rule syntax](/docs/en/settings#permission-rule-syntax) for pattern matching. To restrict which tools are available, use`--tools`instead |`"Bash(git log *)" "Bash(git diff *)" "Read"`|
 |`--append-system-prompt`| Append custom text to the end of the default system prompt |`claude --append-system-prompt "Always use TypeScript"`|
 |`--append-system-prompt-file`| Load additional system prompt text from a file and append to the default prompt |`claude --append-system-prompt-file ./extra-rules.txt`|
@@ -48,8 +48,9 @@ Customize Claude Code’s behavior with these command-line flags:
 |`--chrome`| Enable [Chrome browser integration](/docs/en/chrome) for web automation and testing |`claude --chrome`|
 |`--continue`,`-c`| Load the most recent conversation in the current directory |`claude --continue`|
 |`--dangerously-load-development-channels`| Enable [channels](/docs/en/channels-reference#test-during-the-research-preview) that are not on the approved allowlist, for local development. Accepts`plugin:<name>@<marketplace>`and`server:<name>`entries. Prompts for confirmation |`claude --dangerously-load-development-channels server:webhook`|
-|`--dangerously-skip-permissions`| Skip permission prompts (use with caution). See [permission modes](/docs/en/permission-modes#skip-all-checks-with-bypasspermissions-mode) for what this does and does not skip |`claude --dangerously-skip-permissions`|
+|`--dangerously-skip-permissions`| Skip permission prompts. Equivalent to`--permission-mode bypassPermissions`. See [permission modes](/docs/en/permission-modes#skip-all-checks-with-bypasspermissions-mode) for what this does and does not skip |`claude --dangerously-skip-permissions`|
 |`--debug`| Enable debug mode with optional category filtering (for example,`"api,hooks"`or`"!statsig,!file"`) |`claude --debug "api,mcp"`|
+|`--debug-file <path>`| Write debug logs to a specific file path. Implicitly enables debug mode. Takes precedence over`CLAUDE_CODE_DEBUG_LOGS_DIR`|`claude --debug-file /tmp/claude-debug.log`|
 |`--disable-slash-commands`| Disable all skills and commands for this session |`claude --disable-slash-commands`|
 |`--disallowedTools`| Tools that are removed from the model’s context and cannot be used |`"Bash(git log *)" "Bash(git diff *)" "Edit"`|
 |`--effort`| Set the [effort level](/docs/en/model-config#adjust-effort-level) for the current session. Options:`low`,`medium`,`high`,`max`(Opus 4.6 only). Session-scoped and does not persist to settings |`claude --effort high`|
@@ -59,10 +60,11 @@ Customize Claude Code’s behavior with these command-line flags:
 |`--ide`| Automatically connect to IDE on startup if exactly one valid IDE is available |`claude --ide`|
 |`--init`| Run initialization hooks and start interactive mode |`claude --init`|
 |`--init-only`| Run initialization hooks and exit (no interactive session) |`claude --init-only`|
-|`--include-partial-messages`| Include partial streaming events in output (requires`--print`and`--output-format=stream-json`) |`claude -p --output-format stream-json --include-partial-messages "query"`|
+|`--include-hook-events`| Include all hook lifecycle events in the output stream. Requires`--output-format stream-json`|`claude -p --output-format stream-json --include-hook-events "query"`|
+|`--include-partial-messages`| Include partial streaming events in output. Requires`--print`and`--output-format stream-json`|`claude -p --output-format stream-json --include-partial-messages "query"`|
 |`--input-format`| Specify input format for print mode (options:`text`,`stream-json`) |`claude -p --output-format json --input-format stream-json`|
 |`--json-schema`| Get validated JSON output matching a JSON Schema after agent completes its workflow (print mode only, see [structured outputs](https://platform.claude.com/docs/en/agent-sdk/structured-outputs)) |`claude -p --json-schema '{"type":"object","properties":{...}}' "query"`|
-|`--maintenance`| Run maintenance hooks and exit |`claude --maintenance`|
+|`--maintenance`| Run maintenance hooks and start interactive mode |`claude --maintenance`|
 |`--max-budget-usd`| Maximum dollar amount to spend on API calls before stopping (print mode only) |`claude -p --max-budget-usd 5.00 "query"`|
 |`--max-turns`| Limit the number of agentic turns (print mode only). Exits with an error when the limit is reached. No limit by default |`claude -p --max-turns 3 "query"`|
 |`--mcp-config`| Load MCP servers from JSON files or strings (space-separated) |`claude --mcp-config ./mcp.json`|
@@ -73,13 +75,14 @@ Customize Claude Code’s behavior with these command-line flags:
 |`--no-chrome`| Disable [Chrome browser integration](/docs/en/chrome) for this session |`claude --no-chrome`|
 |`--no-session-persistence`| Disable session persistence so sessions are not saved to disk and cannot be resumed (print mode only) |`claude -p --no-session-persistence "query"`|
 |`--output-format`| Specify output format for print mode (options:`text`,`json`,`stream-json`) |`claude -p "query" --output-format json`|
-|`--enable-auto-mode`| Unlock [auto mode](/docs/en/permission-modes#eliminate-prompts-with-auto-mode) in the`Shift+Tab`cycle. Requires a Team plan (Enterprise and API support rolling out shortly) and Claude Sonnet 4.6 or Opus 4.6 |`claude --enable-auto-mode`|
-|`--permission-mode`| Begin in a specified [permission mode](/docs/en/permission-modes) |`claude --permission-mode plan`|
+|`--enable-auto-mode`| Unlock [auto mode](/docs/en/permission-modes#eliminate-prompts-with-auto-mode) in the`Shift+Tab`cycle. Requires a Team, Enterprise, or API plan and Claude Sonnet 4.6 or Opus 4.6 |`claude --enable-auto-mode`|
+|`--permission-mode`| Begin in a specified [permission mode](/docs/en/permission-modes). Accepts`default`,`acceptEdits`,`plan`,`auto`,`dontAsk`, or`bypassPermissions`. Overrides`defaultMode`from settings files |`claude --permission-mode plan`|
 |`--permission-prompt-tool`| Specify an MCP tool to handle permission prompts in non-interactive mode |`claude -p --permission-prompt-tool mcp_auth_tool "query"`|
 |`--plugin-dir`| Load plugins from a directory for this session only. Each flag takes one path. Repeat the flag for multiple directories:`--plugin-dir A --plugin-dir B`|`claude --plugin-dir ./my-plugins`|
 |`--print`,`-p`| Print response without interactive mode (see [Agent SDK documentation](https://platform.claude.com/docs/en/agent-sdk/overview) for programmatic usage details) |`claude -p "query"`|
 |`--remote`| Create a new [web session](/docs/en/claude-code-on-the-web) on claude.ai with the provided task description |`claude --remote "Fix the login bug"`|
-|`--remote-control`,`--rc`| Start an interactive session with [Remote Control](/docs/en/remote-control#interactive-session) enabled so you can also control it from claude.ai or the Claude app. Optionally pass a name for the session |`claude --remote-control "My Project"`|
+|`--remote-control`,`--rc`| Start an interactive session with [Remote Control](/docs/en/remote-control#start-a-remote-control-session) enabled so you can also control it from claude.ai or the Claude app. Optionally pass a name for the session |`claude --remote-control "My Project"`|
+|`--replay-user-messages`| Re-emit user messages from stdin back on stdout for acknowledgment. Requires`--input-format stream-json`and`--output-format stream-json`|`claude -p --input-format stream-json --output-format stream-json --replay-user-messages`|
 |`--resume`,`-r`| Resume a specific session by ID or name, or show an interactive picker to choose a session |`claude --resume auth-refactor`|
 |`--session-id`| Use a specific session ID for the conversation (must be a valid UUID) |`claude --session-id "550e8400-e29b-41d4-a716-446655440000"`|
 |`--setting-sources`| Comma-separated list of setting sources to load (`user`,`project`,`local`) |`claude --setting-sources user,project`|
@@ -88,7 +91,8 @@ Customize Claude Code’s behavior with these command-line flags:
 |`--system-prompt`| Replace the entire system prompt with custom text |`claude --system-prompt "You are a Python expert"`|
 |`--system-prompt-file`| Load system prompt from a file, replacing the default prompt |`claude --system-prompt-file ./custom-prompt.txt`|
 |`--teleport`| Resume a [web session](/docs/en/claude-code-on-the-web) in your local terminal |`claude --teleport`|
-|`--teammate-mode`| Set how [agent team](/docs/en/agent-teams) teammates display:`auto`(default),`in-process`, or`tmux`. See [set up agent teams](/docs/en/agent-teams#set-up-agent-teams) |`claude --teammate-mode in-process`|
+|`--teammate-mode`| Set how [agent team](/docs/en/agent-teams) teammates display:`auto`(default),`in-process`, or`tmux`. See [Choose a display mode](/docs/en/agent-teams#choose-a-display-mode) |`claude --teammate-mode in-process`|
+|`--tmux`| Create a tmux session for the worktree. Requires`--worktree`. Uses iTerm2 native panes when available; pass`--tmux=classic`for traditional tmux |`claude -w feature-auth --tmux`|
 |`--tools`| Restrict which built-in tools Claude can use. Use`""`to disable all,`"default"`for all, or tool names like`"Bash,Edit,Read"`|`claude --tools "Bash,Edit,Read"`|
 |`--verbose`| Enable verbose logging, shows full turn-by-turn output |`claude --verbose`|
 |`--version`,`-v`| Output the version number |`claude -v`|

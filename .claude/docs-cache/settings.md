@@ -1,7 +1,7 @@
 # Claude Code settings
 
 > Source: https://code.claude.com/docs/en/settings
-> Generated: 2026-03-27T09:52:36.855Z
+> Generated: 2026-04-04T10:26:47.287Z
 
 ---
 
@@ -73,7 +73,7 @@ Scopes apply to many Claude Code features:
 | **Subagents** |`~/.claude/agents/`|`.claude/agents/`| None |
 | **MCP servers** |`~/.claude.json`|`.mcp.json`|`~/.claude.json`(per-project) |
 | **Plugins** |`~/.claude/settings.json`|`.claude/settings.json`|`.claude/settings.local.json`|
-| **CLAUDE.md** |`~/.claude/CLAUDE.md`|`CLAUDE.md`or`.claude/CLAUDE.md`| None |
+| **CLAUDE.md** |`~/.claude/CLAUDE.md`|`CLAUDE.md`or`.claude/CLAUDE.md`|`CLAUDE.local.md`|
 
 * * *
 
@@ -138,65 +138,64 @@ Available settings`settings.json`supports a number of options:
 
 | Key | Description | Example |
 | --- | --- | --- |
-|`apiKeyHelper`| Custom script, to be executed in`/bin/sh`, to generate an auth value. This value will be sent as`X-Api-Key`and`Authorization: Bearer`headers for model requests |`/bin/generate_temp_api_key.sh`|
-|`autoMemoryDirectory`| Custom directory for [auto memory](/docs/en/memory#storage-location) storage. Accepts`~/`\-expanded paths. Not accepted in project settings (`.claude/settings.json`) to prevent shared repos from redirecting memory writes to sensitive locations. Accepted from policy, local, and user settings |`"~/my-memory-dir"`|
-|`cleanupPeriodDays`| Sessions inactive for longer than this period are deleted at startup (default: 30 days).
-
-Setting to`0`deletes all existing transcripts at startup and disables session persistence entirely. No new`.jsonl`files are written,`/resume`shows no conversations, and hooks receive an empty`transcript_path`. |`20`|
-|`companyAnnouncements`| Announcement to display to users at startup. If multiple announcements are provided, they will be cycled through at random. |`["Welcome to Acme Corp! Review our code guidelines at docs.acme.com"]`|
-|`env`| Environment variables that will be applied to every session |`{"FOO": "bar"}`|
-|`attribution`| Customize attribution for git commits and pull requests. See [Attribution settings](#attribution-settings) |`{"commit": "🤖 Generated with Claude Code", "pr": ""}`|
-|`includeCoAuthoredBy`| **Deprecated**: Use`attribution`instead. Whether to include the`co-authored-by Claude`byline in git commits and pull requests (default:`true`) |`false`|
-|`includeGitInstructions`| Include built-in commit and PR workflow instructions and the git status snapshot in Claude’s system prompt (default:`true`). Set to`false`to remove both, for example when using your own git workflow skills. The`CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS`environment variable takes precedence over this setting when set |`false`|
-|`permissions`| See table below for structure of permissions. |  |
-|`autoMode`| Customize what the [auto mode](/docs/en/permission-modes#eliminate-prompts-with-auto-mode) classifier blocks and allows. Contains`environment`,`allow`, and`soft_deny`arrays of prose rules. See [Configure the auto mode classifier](/docs/en/permissions#configure-the-auto-mode-classifier). Not read from shared project settings |`{"environment": ["Trusted repo: github.example.com/acme"]}`|
-|`disableAutoMode`| Set to`"disable"`to prevent [auto mode](/docs/en/permission-modes#eliminate-prompts-with-auto-mode) from being activated. Removes`auto`from the`Shift+Tab`cycle and rejects`--permission-mode auto`at startup. Most useful in [managed settings](/docs/en/permissions#managed-settings) where users cannot override it |`"disable"`|
-|`useAutoModeDuringPlan`| Whether plan mode uses auto mode semantics when auto mode is available. Default:`true`. Not read from shared project settings. Appears in`/config`as “Use auto mode during plan” |`false`|
-|`hooks`| Configure custom commands to run at lifecycle events. See [hooks documentation](/docs/en/hooks) for format | See [hooks](/docs/en/hooks) |
-|`defaultShell`| Default shell for input-box`!`commands. Accepts`"bash"`(default) or`"powershell"`. Setting`"powershell"`routes interactive`!`commands through PowerShell on Windows. Requires`CLAUDE_CODE_USE_POWERSHELL_TOOL=1`. See [PowerShell tool](/docs/en/tools-reference#powershell-tool) |`"powershell"`|
-|`disableAllHooks`| Disable all [hooks](/docs/en/hooks) and any custom [status line](/docs/en/statusline) |`true`|
-|`allowManagedHooksOnly`| (Managed settings only) Prevent loading of user, project, and plugin hooks. Only allows managed hooks and SDK hooks. See [Hook configuration](#hook-configuration) |`true`|
-|`allowedHttpHookUrls`| Allowlist of URL patterns that HTTP hooks may target. Supports`*`as a wildcard. When set, hooks with non-matching URLs are blocked. Undefined = no restriction, empty array = block all HTTP hooks. Arrays merge across settings sources. See [Hook configuration](#hook-configuration) |`["https://hooks.example.com/*"]`|
-|`httpHookAllowedEnvVars`| Allowlist of environment variable names HTTP hooks may interpolate into headers. When set, each hook’s effective`allowedEnvVars`is the intersection with this list. Undefined = no restriction. Arrays merge across settings sources. See [Hook configuration](#hook-configuration) |`["MY_TOKEN", "HOOK_SECRET"]`|
-|`allowManagedPermissionRulesOnly`| (Managed settings only) Prevent user and project settings from defining`allow`,`ask`, or`deny`permission rules. Only rules in managed settings apply. See [Managed-only settings](/docs/en/permissions#managed-only-settings) |`true`|
-|`allowManagedMcpServersOnly`| (Managed settings only) Only`allowedMcpServers`from managed settings are respected.`deniedMcpServers`still merges from all sources. Users can still add MCP servers, but only the admin-defined allowlist applies. See [Managed MCP configuration](/docs/en/mcp#managed-mcp-configuration) |`true`|
-|`model`| Override the default model to use for Claude Code |`"claude-sonnet-4-6"`|
-|`availableModels`| Restrict which models users can select via`/model`,`--model`, Config tool, or`ANTHROPIC_MODEL`. Does not affect the Default option. See [Restrict model selection](/docs/en/model-config#restrict-model-selection) |`["sonnet", "haiku"]`|
-|`modelOverrides`| Map Anthropic model IDs to provider-specific model IDs such as Bedrock inference profile ARNs. Each model picker entry uses its mapped value when calling the provider API. See [Override model IDs per version](/docs/en/model-config#override-model-ids-per-version) |`{"claude-opus-4-6": "arn:aws:bedrock:..."}`|
-|`effortLevel`| Persist the [effort level](/docs/en/model-config#adjust-effort-level) across sessions. Accepts`"low"`,`"medium"`, or`"high"`. Written automatically when you run`/effort low`,`/effort medium`, or`/effort high`. Supported on Opus 4.6 and Sonnet 4.6 |`"medium"`|
-|`otelHeadersHelper`| Script to generate dynamic OpenTelemetry headers. Runs at startup and periodically (see [Dynamic headers](/docs/en/monitoring-usage#dynamic-headers)) |`/bin/generate_otel_headers.sh`|
-|`statusLine`| Configure a custom status line to display context. See [`statusLine`documentation](/docs/en/statusline) |`{"type": "command", "command": "~/.claude/statusline.sh"}`|
-|`fileSuggestion`| Configure a custom script for`@`file autocomplete. See [File suggestion settings](#file-suggestion-settings) |`{"type": "command", "command": "~/.claude/file-suggestion.sh"}`|
-|`respectGitignore`| Control whether the`@`file picker respects`.gitignore`patterns. When`true`(default), files matching`.gitignore`patterns are excluded from suggestions |`false`|
-|`outputStyle`| Configure an output style to adjust the system prompt. See [output styles documentation](/docs/en/output-styles) |`"Explanatory"`|
 |`agent`| Run the main thread as a named subagent. Applies that subagent’s system prompt, tool restrictions, and model. See [Invoke subagents explicitly](/docs/en/sub-agents#invoke-subagents-explicitly) |`"code-reviewer"`|
-|`forceLoginMethod`| Use`claudeai`to restrict login to Claude.ai accounts,`console`to restrict login to Claude Console (API usage billing) accounts |`claudeai`|
-|`forceLoginOrgUUID`| Specify the UUID of an organization to automatically select it during login, bypassing the organization selection step. Requires`forceLoginMethod`to be set |`"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`|
-|`enableAllProjectMcpServers`| Automatically approve all MCP servers defined in project`.mcp.json`files |`true`|
-|`enabledMcpjsonServers`| List of specific MCP servers from`.mcp.json`files to approve |`["memory", "github"]`|
-|`disabledMcpjsonServers`| List of specific MCP servers from`.mcp.json`files to reject |`["filesystem"]`|
-|`channelsEnabled`| (Managed settings only) Allow [channels](/docs/en/channels) for Team and Enterprise users. Unset or`false`blocks channel message delivery regardless of what users pass to`--channels`|`true`|
 |`allowedChannelPlugins`| (Managed settings only) Allowlist of channel plugins that may push messages. Replaces the default Anthropic allowlist when set. Undefined = fall back to the default, empty array = block all channel plugins. Requires`channelsEnabled: true`. See [Restrict which channel plugins can run](/docs/en/channels#restrict-which-channel-plugins-can-run) |`[{ "marketplace": "claude-plugins-official", "plugin": "telegram" }]`|
+|`allowedHttpHookUrls`| Allowlist of URL patterns that HTTP hooks may target. Supports`*`as a wildcard. When set, hooks with non-matching URLs are blocked. Undefined = no restriction, empty array = block all HTTP hooks. Arrays merge across settings sources. See [Hook configuration](#hook-configuration) |`["https://hooks.example.com/*"]`|
 |`allowedMcpServers`| When set in managed-settings.json, allowlist of MCP servers users can configure. Undefined = no restrictions, empty array = lockdown. Applies to all scopes. Denylist takes precedence. See [Managed MCP configuration](/docs/en/mcp#managed-mcp-configuration) |`[{ "serverName": "github" }]`|
-|`deniedMcpServers`| When set in managed-settings.json, denylist of MCP servers that are explicitly blocked. Applies to all scopes including managed servers. Denylist takes precedence over allowlist. See [Managed MCP configuration](/docs/en/mcp#managed-mcp-configuration) |`[{ "serverName": "filesystem" }]`|
-|`strictKnownMarketplaces`| When set in managed-settings.json, allowlist of plugin marketplaces users can add. Undefined = no restrictions, empty array = lockdown. Applies to marketplace additions only. See [Managed marketplace restrictions](/docs/en/plugin-marketplaces#managed-marketplace-restrictions) |`[{ "source": "github", "repo": "acme-corp/plugins" }]`|
-|`blockedMarketplaces`| (Managed settings only) Blocklist of marketplace sources. Blocked sources are checked before downloading, so they never touch the filesystem. See [Managed marketplace restrictions](/docs/en/plugin-marketplaces#managed-marketplace-restrictions) |`[{ "source": "github", "repo": "untrusted/plugins" }]`|
-|`pluginTrustMessage`| (Managed settings only) Custom message appended to the plugin trust warning shown before installation. Use this to add organization-specific context, for example to confirm that plugins from your internal marketplace are vetted. |`"All plugins from our marketplace are approved by IT"`|
+|`allowManagedHooksOnly`| (Managed settings only) Prevent loading of user, project, and plugin hooks. Only allows managed hooks and SDK hooks. See [Hook configuration](#hook-configuration) |`true`|
+|`allowManagedMcpServersOnly`| (Managed settings only) Only`allowedMcpServers`from managed settings are respected.`deniedMcpServers`still merges from all sources. Users can still add MCP servers, but only the admin-defined allowlist applies. See [Managed MCP configuration](/docs/en/mcp#managed-mcp-configuration) |`true`|
+|`allowManagedPermissionRulesOnly`| (Managed settings only) Prevent user and project settings from defining`allow`,`ask`, or`deny`permission rules. Only rules in managed settings apply. See [Managed-only settings](/docs/en/permissions#managed-only-settings) |`true`|
+|`alwaysThinkingEnabled`| Enable [extended thinking](/docs/en/common-workflows#use-extended-thinking-thinking-mode) by default for all sessions. Typically configured via the`/config`command rather than editing directly |`true`|
+|`apiKeyHelper`| Custom script, to be executed in`/bin/sh`, to generate an auth value. This value will be sent as`X-Api-Key`and`Authorization: Bearer`headers for model requests |`/bin/generate_temp_api_key.sh`|
+|`attribution`| Customize attribution for git commits and pull requests. See [Attribution settings](#attribution-settings) |`{"commit": "🤖 Generated with Claude Code", "pr": ""}`|
+|`autoMemoryDirectory`| Custom directory for [auto memory](/docs/en/memory#storage-location) storage. Accepts`~/`\-expanded paths. Not accepted in project settings (`.claude/settings.json`) to prevent shared repos from redirecting memory writes to sensitive locations. Accepted from policy, local, and user settings |`"~/my-memory-dir"`|
+|`autoMode`| Customize what the [auto mode](/docs/en/permission-modes#eliminate-prompts-with-auto-mode) classifier blocks and allows. Contains`environment`,`allow`, and`soft_deny`arrays of prose rules. See [Configure the auto mode classifier](/docs/en/permissions#configure-the-auto-mode-classifier). Not read from shared project settings |`{"environment": ["Trusted repo: github.example.com/acme"]}`|
+|`autoUpdatesChannel`| Release channel to follow for updates. Use`"stable"`for a version that is typically about one week old and skips versions with major regressions, or`"latest"`(default) for the most recent release |`"stable"`|
+|`availableModels`| Restrict which models users can select via`/model`,`--model`, Config tool, or`ANTHROPIC_MODEL`. Does not affect the Default option. See [Restrict model selection](/docs/en/model-config#restrict-model-selection) |`["sonnet", "haiku"]`|
 |`awsAuthRefresh`| Custom script that modifies the`.aws`directory (see [advanced credential configuration](/docs/en/amazon-bedrock#advanced-credential-configuration)) |`aws sso login --profile myprofile`|
 |`awsCredentialExport`| Custom script that outputs JSON with AWS credentials (see [advanced credential configuration](/docs/en/amazon-bedrock#advanced-credential-configuration)) |`/bin/generate_aws_grant.sh`|
-|`alwaysThinkingEnabled`| Enable [extended thinking](/docs/en/common-workflows#use-extended-thinking-thinking-mode) by default for all sessions. Typically configured via the`/config`command rather than editing directly |`true`|
-|`plansDirectory`| Customize where plan files are stored. Path is relative to project root. Default:`~/.claude/plans`|`"./plans"`|
-|`showClearContextOnPlanAccept`| Show the “clear context” option on the plan accept screen. Defaults to`false`. Set to`true`to restore the option |`true`|
-|`spinnerVerbs`| Customize the action verbs shown in the spinner and turn duration messages. Set`mode`to`"replace"`to use only your verbs, or`"append"`to add them to the defaults |`{"mode": "append", "verbs": ["Pondering", "Crafting"]}`|
+|`blockedMarketplaces`| (Managed settings only) Blocklist of marketplace sources. Blocked sources are checked before downloading, so they never touch the filesystem. See [Managed marketplace restrictions](/docs/en/plugin-marketplaces#managed-marketplace-restrictions) |`[{ "source": "github", "repo": "untrusted/plugins" }]`|
+|`channelsEnabled`| (Managed settings only) Allow [channels](/docs/en/channels) for Team and Enterprise users. Unset or`false`blocks channel message delivery regardless of what users pass to`--channels`|`true`|
+|`cleanupPeriodDays`| Sessions inactive for longer than this period are deleted at startup (default: 30 days, minimum 1). Setting to`0`is rejected with a validation error. Also controls the age cutoff for automatic removal of [orphaned subagent worktrees](/docs/en/common-workflows#worktree-cleanup) at startup. To disable transcript writes entirely in non-interactive mode (`-p`), use the`--no-session-persistence`flag or the`persistSession: false`SDK option; there is no interactive-mode equivalent. |`20`|
+|`companyAnnouncements`| Announcement to display to users at startup. If multiple announcements are provided, they will be cycled through at random. |`["Welcome to Acme Corp! Review our code guidelines at docs.acme.com"]`|
+|`defaultShell`| Default shell for input-box`!`commands. Accepts`"bash"`(default) or`"powershell"`. Setting`"powershell"`routes interactive`!`commands through PowerShell on Windows. Requires`CLAUDE_CODE_USE_POWERSHELL_TOOL=1`. See [PowerShell tool](/docs/en/tools-reference#powershell-tool) |`"powershell"`|
+|`deniedMcpServers`| When set in managed-settings.json, denylist of MCP servers that are explicitly blocked. Applies to all scopes including managed servers. Denylist takes precedence over allowlist. See [Managed MCP configuration](/docs/en/mcp#managed-mcp-configuration) |`[{ "serverName": "filesystem" }]`|
+|`disableAllHooks`| Disable all [hooks](/docs/en/hooks) and any custom [status line](/docs/en/statusline) |`true`|
+|`disableAutoMode`| Set to`"disable"`to prevent [auto mode](/docs/en/permission-modes#eliminate-prompts-with-auto-mode) from being activated. Removes`auto`from the`Shift+Tab`cycle and rejects`--permission-mode auto`at startup. Most useful in [managed settings](/docs/en/permissions#managed-settings) where users cannot override it |`"disable"`|
+|`disableDeepLinkRegistration`| Set to`"disable"`to prevent Claude Code from registering the`claude-cli://`protocol handler with the operating system on startup. Deep links let external tools open a Claude Code session with a pre-filled prompt via`claude-cli://open?q=...`. The`q`parameter supports multi-line prompts using URL-encoded newlines (`%0A`). Useful in environments where protocol handler registration is restricted or managed separately |`"disable"`|
+|`disabledMcpjsonServers`| List of specific MCP servers from`.mcp.json`files to reject |`["filesystem"]`|
+|`effortLevel`| Persist the [effort level](/docs/en/model-config#adjust-effort-level) across sessions. Accepts`"low"`,`"medium"`, or`"high"`. Written automatically when you run`/effort low`,`/effort medium`, or`/effort high`. Supported on Opus 4.6 and Sonnet 4.6 |`"medium"`|
+|`enableAllProjectMcpServers`| Automatically approve all MCP servers defined in project`.mcp.json`files |`true`|
+|`enabledMcpjsonServers`| List of specific MCP servers from`.mcp.json`files to approve |`["memory", "github"]`|
+|`env`| Environment variables that will be applied to every session |`{"FOO": "bar"}`|
+|`fastModePerSessionOptIn`| When`true`, fast mode does not persist across sessions. Each session starts with fast mode off, requiring users to enable it with`/fast`. The user’s fast mode preference is still saved. See [Require per-session opt-in](/docs/en/fast-mode#require-per-session-opt-in) |`true`|
+|`feedbackSurveyRate`| Probability (0–1) that the [session quality survey](/docs/en/data-usage#session-quality-surveys) appears when eligible. Set to`0`to suppress entirely. Useful when using Bedrock, Vertex, or Foundry where the default sample rate does not apply |`0.05`|
+|`fileSuggestion`| Configure a custom script for`@`file autocomplete. See [File suggestion settings](#file-suggestion-settings) |`{"type": "command", "command": "~/.claude/file-suggestion.sh"}`|
+|`forceLoginMethod`| Use`claudeai`to restrict login to Claude.ai accounts,`console`to restrict login to Claude Console (API usage billing) accounts |`claudeai`|
+|`forceLoginOrgUUID`| Require login to belong to a specific organization. Accepts a single UUID string, which also pre-selects that organization during login, or an array of UUIDs where any listed organization is accepted without pre-selection. When set in managed settings, login fails if the authenticated account does not belong to a listed organization; an empty array fails closed and blocks login with a misconfiguration message |`"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`or`["xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy"]`|
+|`hooks`| Configure custom commands to run at lifecycle events. See [hooks documentation](/docs/en/hooks) for format | See [hooks](/docs/en/hooks) |
+|`httpHookAllowedEnvVars`| Allowlist of environment variable names HTTP hooks may interpolate into headers. When set, each hook’s effective`allowedEnvVars`is the intersection with this list. Undefined = no restriction. Arrays merge across settings sources. See [Hook configuration](#hook-configuration) |`["MY_TOKEN", "HOOK_SECRET"]`|
+|`includeCoAuthoredBy`| **Deprecated**: Use`attribution`instead. Whether to include the`co-authored-by Claude`byline in git commits and pull requests (default:`true`) |`false`|
+|`includeGitInstructions`| Include built-in commit and PR workflow instructions and the git status snapshot in Claude’s system prompt (default:`true`). Set to`false`to remove both, for example when using your own git workflow skills. The`CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS`environment variable takes precedence over this setting when set |`false`|
 |`language`| Configure Claude’s preferred response language (e.g.,`"japanese"`,`"spanish"`,`"french"`). Claude will respond in this language by default. Also sets the [voice dictation](/docs/en/voice-dictation#change-the-dictation-language) language |`"japanese"`|
-|`voiceEnabled`| Enable push-to-talk [voice dictation](/docs/en/voice-dictation). Written automatically when you run`/voice`. Requires a Claude.ai account |`true`|
-|`autoUpdatesChannel`| Release channel to follow for updates. Use`"stable"`for a version that is typically about one week old and skips versions with major regressions, or`"latest"`(default) for the most recent release |`"stable"`|
+|`model`| Override the default model to use for Claude Code |`"claude-sonnet-4-6"`|
+|`modelOverrides`| Map Anthropic model IDs to provider-specific model IDs such as Bedrock inference profile ARNs. Each model picker entry uses its mapped value when calling the provider API. See [Override model IDs per version](/docs/en/model-config#override-model-ids-per-version) |`{"claude-opus-4-6": "arn:aws:bedrock:..."}`|
+|`otelHeadersHelper`| Script to generate dynamic OpenTelemetry headers. Runs at startup and periodically (see [Dynamic headers](/docs/en/monitoring-usage#dynamic-headers)) |`/bin/generate_otel_headers.sh`|
+|`outputStyle`| Configure an output style to adjust the system prompt. See [output styles documentation](/docs/en/output-styles) |`"Explanatory"`|
+|`permissions`| See table below for structure of permissions. |  |
+|`plansDirectory`| Customize where plan files are stored. Path is relative to project root. Default:`~/.claude/plans`|`"./plans"`|
+|`pluginTrustMessage`| (Managed settings only) Custom message appended to the plugin trust warning shown before installation. Use this to add organization-specific context, for example to confirm that plugins from your internal marketplace are vetted. |`"All plugins from our marketplace are approved by IT"`|
+|`prefersReducedMotion`| Reduce or disable UI animations (spinners, shimmer, flash effects) for accessibility |`true`|
+|`respectGitignore`| Control whether the`@`file picker respects`.gitignore`patterns. When`true`(default), files matching`.gitignore`patterns are excluded from suggestions |`false`|
+|`showClearContextOnPlanAccept`| Show the “clear context” option on the plan accept screen. Defaults to`false`. Set to`true`to restore the option |`true`|
+|`showThinkingSummaries`| Show [extended thinking](/docs/en/common-workflows#use-extended-thinking-thinking-mode) summaries in interactive sessions. When unset or`false`(default in interactive mode), thinking blocks are redacted by the API and shown as a collapsed stub. Redaction only changes what you see, not what the model generates: to reduce thinking spend, [lower the budget or disable thinking](/docs/en/common-workflows#use-extended-thinking-thinking-mode) instead. Non-interactive mode (`-p`) and SDK callers always receive summaries regardless of this setting |`true`|
 |`spinnerTipsEnabled`| Show tips in the spinner while Claude is working. Set to`false`to disable tips (default:`true`) |`false`|
 |`spinnerTipsOverride`| Override spinner tips with custom strings.`tips`: array of tip strings.`excludeDefault`: if`true`, only show custom tips; if`false`or absent, custom tips are merged with built-in tips |`{ "excludeDefault": true, "tips": ["Use our internal tool X"] }`|
-|`prefersReducedMotion`| Reduce or disable UI animations (spinners, shimmer, flash effects) for accessibility |`true`|
-|`fastModePerSessionOptIn`| When`true`, fast mode does not persist across sessions. Each session starts with fast mode off, requiring users to enable it with`/fast`. The user’s fast mode preference is still saved. See [Require per-session opt-in](/docs/en/fast-mode#require-per-session-opt-in) |`true`|
-|`teammateMode`| How [agent team](/docs/en/agent-teams) teammates display:`auto`(picks split panes in tmux or iTerm2, in-process otherwise),`in-process`, or`tmux`. See [set up agent teams](/docs/en/agent-teams#set-up-agent-teams) |`"in-process"`|
-|`feedbackSurveyRate`| Probability (0–1) that the [session quality survey](/docs/en/data-usage#session-quality-surveys) appears when eligible. Set to`0`to suppress entirely. Useful when using Bedrock, Vertex, or Foundry where the default sample rate does not apply |`0.05`|
+|`spinnerVerbs`| Customize the action verbs shown in the spinner and turn duration messages. Set`mode`to`"replace"`to use only your verbs, or`"append"`to add them to the defaults |`{"mode": "append", "verbs": ["Pondering", "Crafting"]}`|
+|`statusLine`| Configure a custom status line to display context. See [`statusLine`documentation](/docs/en/statusline) |`{"type": "command", "command": "~/.claude/statusline.sh"}`|
+|`strictKnownMarketplaces`| (Managed settings only) Allowlist of plugin marketplaces users can add. Undefined = no restrictions, empty array = lockdown. Applies to marketplace additions only. See [Managed marketplace restrictions](/docs/en/plugin-marketplaces#managed-marketplace-restrictions) |`[{ "source": "github", "repo": "acme-corp/plugins" }]`|
+|`useAutoModeDuringPlan`| Whether plan mode uses auto mode semantics when auto mode is available. Default:`true`. Not read from shared project settings. Appears in`/config`as “Use auto mode during plan” |`false`|
+|`voiceEnabled`| Enable push-to-talk [voice dictation](/docs/en/voice-dictation). Written automatically when you run`/voice`. Requires a Claude.ai account |`true`|
 
 
 Global config settings
@@ -210,6 +209,7 @@ These settings are stored in`~/.claude.json`rather than`settings.json`. Adding t
 |`editorMode`| Key binding mode for the input prompt:`"normal"`or`"vim"`. Default:`"normal"`. Written automatically when you run`/vim`. Appears in`/config`as **Key binding mode** |`"vim"`|
 |`showTurnDuration`| Show turn duration messages after responses, e.g. “Cooked for 1m 6s”. Default:`true`. Appears in`/config`as **Show turn duration** |`false`|
 |`terminalProgressBarEnabled`| Show the terminal progress bar in supported terminals: ConEmu, Ghostty 1.2.0+, and iTerm2 3.6.6+. Default:`true`. Appears in`/config`as **Terminal progress bar** |`false`|
+|`teammateMode`| How [agent team](/docs/en/agent-teams) teammates display:`auto`(picks split panes in tmux or iTerm2, in-process otherwise),`in-process`, or`tmux`. See [choose a display mode](/docs/en/agent-teams#choose-a-display-mode) |`"in-process"`|
 
 
 Worktree settings
@@ -221,6 +221,8 @@ Configure how`--worktree`creates and manages git worktrees. Use these settings t
 |`worktree.symlinkDirectories`| Directories to symlink from the main repository into each worktree to avoid duplicating large directories on disk. No directories are symlinked by default |`["node_modules", ".cache"]`|
 |`worktree.sparsePaths`| Directories to check out in each worktree via git sparse-checkout (cone mode). Only the listed paths are written to disk, which is faster in large monorepos |`["packages/my-app", "shared/utils"]`|
 
+To copy gitignored files like`.env`into new worktrees, use a [`.worktreeinclude`file](/docs/en/common-workflows#copy-gitignored-files-to-worktrees) in your project root instead of a setting.
+
 
 Permission settings
 
@@ -229,9 +231,10 @@ Permission settings
 |`allow`| Array of permission rules to allow tool use. See [Permission rule syntax](#permission-rule-syntax) below for pattern matching details |`[ "Bash(git diff *)" ]`|
 |`ask`| Array of permission rules to ask for confirmation upon tool use. See [Permission rule syntax](#permission-rule-syntax) below |`[ "Bash(git push *)" ]`|
 |`deny`| Array of permission rules to deny tool use. Use this to exclude sensitive files from Claude Code access. See [Permission rule syntax](#permission-rule-syntax) and [Bash permission limitations](/docs/en/permissions#tool-specific-permission-rules) |`[ "WebFetch", "Bash(curl *)", "Read(./.env)", "Read(./secrets/**)" ]`|
-|`additionalDirectories`| Additional [working directories](/docs/en/permissions#working-directories) that Claude has access to |`[ "../docs/" ]`|
-|`defaultMode`| Default [permission mode](/docs/en/permission-modes) when opening Claude Code |`"acceptEdits"`|
-|`disableBypassPermissionsMode`| Set to`"disable"`to prevent`bypassPermissions`mode from being activated. Disables the`--dangerously-skip-permissions`flag. Most useful in [managed settings](/docs/en/permissions#managed-settings) where users cannot override it |`"disable"`|
+|`additionalDirectories`| Additional [working directories](/docs/en/permissions#working-directories) for file access. Most`.claude/`configuration is [not discovered](/docs/en/permissions#additional-directories-grant-file-access-not-configuration) from these directories |`[ "../docs/" ]`|
+|`defaultMode`| Default [permission mode](/docs/en/permission-modes) when opening Claude Code. Valid values:`default`,`acceptEdits`,`plan`,`auto`,`dontAsk`,`bypassPermissions`. The`--permission-mode`CLI flag overrides this setting for a single session |`"acceptEdits"`|
+|`disableBypassPermissionsMode`| Set to`"disable"`to prevent`bypassPermissions`mode from being activated. This disables the`--dangerously-skip-permissions`command-line flag. Typically placed in [managed settings](/docs/en/permissions#managed-settings) to enforce organizational policy, but works from any scope |`"disable"`|
+|`skipDangerousModePermissionPrompt`| Skip the confirmation prompt shown before entering bypass permissions mode via`--dangerously-skip-permissions`or`defaultMode: "bypassPermissions"`. Ignored when set in project settings (`.claude/settings.json`) to prevent untrusted repositories from auto-bypassing the prompt |`true`|
 
 
 Permission rule syntax
@@ -257,13 +260,13 @@ Configure advanced sandboxing behavior. Sandboxing isolates bash commands from y
 |`enabled`| Enable bash sandboxing (macOS, Linux, and WSL2). Default: false |`true`|
 |`failIfUnavailable`| Exit with an error at startup if`sandbox.enabled`is true but the sandbox cannot start (missing dependencies, unsupported platform, or platform restrictions). When false (default), a warning is shown and commands run unsandboxed. Intended for managed settings deployments that require sandboxing as a hard gate |`true`|
 |`autoAllowBashIfSandboxed`| Auto-approve bash commands when sandboxed. Default: true |`true`|
-|`excludedCommands`| Commands that should run outside of the sandbox |`["git", "docker"]`|
+|`excludedCommands`| Commands that should run outside of the sandbox |`["docker *"]`|
 |`allowUnsandboxedCommands`| Allow commands to run outside the sandbox via the`dangerouslyDisableSandbox`parameter. When set to`false`, the`dangerouslyDisableSandbox`escape hatch is completely disabled and all commands must run sandboxed (or be in`excludedCommands`). Useful for enterprise policies that require strict sandboxing. Default: true |`false`|
 |`filesystem.allowWrite`| Additional paths where sandboxed commands can write. Arrays are merged across all settings scopes: user, project, and managed paths are combined, not replaced. Also merged with paths from`Edit(...)`allow permission rules. See [path prefixes](#sandbox-path-prefixes) below. |`["/tmp/build", "~/.kube"]`|
 |`filesystem.denyWrite`| Paths where sandboxed commands cannot write. Arrays are merged across all settings scopes. Also merged with paths from`Edit(...)`deny permission rules. |`["/etc", "/usr/local/bin"]`|
 |`filesystem.denyRead`| Paths where sandboxed commands cannot read. Arrays are merged across all settings scopes. Also merged with paths from`Read(...)`deny permission rules. |`["~/.aws/credentials"]`|
 |`filesystem.allowRead`| Paths to re-allow reading within`denyRead`regions. Takes precedence over`denyRead`. Arrays are merged across all settings scopes. Use this to create workspace-only read access patterns. |`["."]`|
-|`filesystem.allowManagedReadPathsOnly`| (Managed settings only) Only`allowRead`paths from managed settings are respected.`allowRead`entries from user, project, and local settings are ignored. Default: false |`true`|
+|`filesystem.allowManagedReadPathsOnly`| (Managed settings only) Only`filesystem.allowRead`paths from managed settings are respected.`denyRead`still merges from all sources. Default: false |`true`|
 |`network.allowUnixSockets`| Unix socket paths accessible in sandbox (for SSH agents, etc.) |`["~/.ssh/agent-socket"]`|
 |`network.allowAllUnixSockets`| Allow all Unix socket connections in sandbox. Default: false |`true`|
 |`network.allowLocalBinding`| Allow binding to localhost ports (macOS only). Default: false |`true`|
@@ -289,7 +292,7 @@ The older`//path`prefix for absolute paths still works. If you previously used s
   "sandbox": {
     "enabled": true,
     "autoAllowBashIfSandboxed": true,
-    "excludedCommands": ["docker"],
+    "excludedCommands": ["docker *"],
     "filesystem": {
       "allowWrite": ["/tmp/build", "~/.kube"],
       "denyRead": ["~/.aws/credentials"]
@@ -443,6 +446,7 @@ Plugin-related settings in`settings.json`:```{
 -   **User settings** (`~/.claude/settings.json`): Personal plugin preferences
 -   **Project settings** (`.claude/settings.json`): Project-specific plugins shared with team
 -   **Local settings** (`.claude/settings.local.json`): Per-machine overrides (not committed)
+-   **Managed settings** (`managed-settings.json`): Organization-wide policy overrides that block installation at all scopes and hide the plugin from the marketplace
 
 **Example**:```{
   "enabledPlugins": {

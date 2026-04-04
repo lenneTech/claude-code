@@ -1,7 +1,7 @@
 # Orchestrate teams of Claude Code sessions
 
 > Source: https://code.claude.com/docs/en/agent-teams
-> Generated: 2026-03-27T09:52:44.643Z
+> Generated: 2026-04-04T10:26:47.256Z
 
 ---
 
@@ -77,7 +77,7 @@ Agent teams support two display modes:
 -   **In-process**: all teammates run inside your main terminal. Use Shift+Down to cycle through teammates and type to message them directly. Works in any terminal, no extra setup required.
 -   **Split panes**: each teammate gets its own pane. You can see everyone’s output at once and click into a pane to interact directly. Requires tmux, or iTerm2.`tmux`has known limitations on certain operating systems and traditionally works best on macOS. Using`tmux -CC`in iTerm2 is the suggested entrypoint into`tmux`.
 
-The default is`"auto"`, which uses split panes if you’re already running inside a tmux session, and in-process otherwise. The`"tmux"`setting enables split-pane mode and auto-detects whether to use tmux or iTerm2 based on your terminal. To override, set`teammateMode`in your [settings.json](/docs/en/settings):```{
+The default is`"auto"`, which uses split panes if you’re already running inside a tmux session, and in-process otherwise. The`"tmux"`setting enables split-pane mode and auto-detects whether to use tmux or iTerm2 based on your terminal. To override, set`teammateMode`in your [global config](/docs/en/settings#global-config-settings) at`~/.claude.json`:```{
   "teammateMode": "in-process"
 }```To force in-process mode for a single session, pass it as a flag:```claude --teammate-mode in-process```Split-pane mode requires either [tmux](https://github.com/tmux/tmux/wiki) or iTerm2 with the [`it2`CLI](https://github.com/mkusaka/it2). To install manually:
 
@@ -161,7 +161,14 @@ An agent team consists of:
 
 See [Choose a display mode](#choose-a-display-mode) for display configuration options. Teammate messages arrive at the lead automatically. The system manages task dependencies automatically. When a teammate completes a task that other tasks depend on, blocked tasks unblock without manual intervention. Teams and tasks are stored locally:
 
--   **Team config**:`~/.claude/teams/{team-name}/config.json`-   **Task list**:`~/.claude/tasks/{team-name}/`The team config contains a`members`array with each teammate’s name, agent ID, and agent type. Teammates can read this file to discover other team members.
+-   **Team config**:`~/.claude/teams/{team-name}/config.json`-   **Task list**:`~/.claude/tasks/{team-name}/`Claude Code generates both of these automatically when you create a team and updates them as teammates join, go idle, or leave. The team config holds runtime state such as session IDs and tmux pane IDs, so don’t edit it by hand or pre-author it: your changes are overwritten on the next state update. To define reusable teammate roles, use [subagent definitions](#use-subagent-definitions-for-teammates) instead. The team config contains a`members`array with each teammate’s name, agent ID, and agent type. Teammates can read this file to discover other team members. There is no project-level equivalent of the team config. A file like`.claude/teams/teams.json`in your project directory is not recognized as configuration; Claude treats it as an ordinary file.
+
+
+Use subagent definitions for teammates
+
+When spawning a teammate, you can reference a [subagent](/docs/en/sub-agents) type from any [subagent scope](/docs/en/sub-agents#choose-the-subagent-scope): project, user, plugin, or CLI-defined. This lets you define a role once, such as a security-reviewer or test-runner, and reuse it both as a delegated subagent and as an agent team teammate. To use a subagent definition, mention it by name when asking Claude to spawn the teammate:```Spawn a teammate using the security-reviewer agent type to audit the auth module.```The teammate honors that definition’s`tools`allowlist and`model`, and the definition’s body is appended to the teammate’s system prompt as additional instructions rather than replacing it. Team coordination tools such as`SendMessage`and the task management tools are always available to a teammate even when`tools`restricts other tools.
+
+The`skills`and`mcpServers`frontmatter fields in a subagent definition are not applied when that definition runs as a teammate. Teammates load skills and MCP servers from your project and user settings, the same as a regular session.
 
 
 Permissions
@@ -181,6 +188,8 @@ Each teammate has its own context window. When spawned, a teammate loads the sam
 
 -   **message**: send a message to one specific teammate
 -   **broadcast**: send to all teammates simultaneously. Use sparingly, as costs scale with team size.
+
+The lead assigns every teammate a name when it spawns them, and any teammate can message any other by that name. To get predictable names you can reference in later prompts, tell the lead what to call each teammate in your spawn instruction.
 
 
 Token usage

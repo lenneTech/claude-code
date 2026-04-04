@@ -1,7 +1,7 @@
 # Create plugins
 
 > Source: https://code.claude.com/docs/en/plugins
-> Generated: 2026-03-27T09:51:24.130Z
+> Generated: 2026-04-04T10:26:47.226Z
 
 ---
 
@@ -41,7 +41,6 @@ This quickstart walks you through creating a plugin with a custom skill. You’l
 Prerequisites
 
 -   Claude Code [installed and authenticated](/docs/en/quickstart#step-1-install-claude-code)
--   Claude Code version 1.0.33 or later (run`claude --version`to check)
 
 If you don’t see the`/plugin`command, update Claude Code to the latest version. See [Troubleshooting](/docs/en/troubleshooting) for upgrade instructions.
 
@@ -129,6 +128,7 @@ You’ve created a plugin with a skill, but plugins can include much more: custo
 |`hooks/`| Plugin root | Event handlers in`hooks.json`|
 |`.mcp.json`| Plugin root | MCP server configurations |
 |`.lsp.json`| Plugin root | LSP server configurations for code intelligence |
+|`bin/`| Plugin root | Executables added to the Bash tool’s`PATH`while the plugin is enabled |
 |`settings.json`| Plugin root | Default [settings](/docs/en/settings) applied when the plugin is enabled |
 
 **Next steps**: Ready to add more features? Jump to [Develop more complex plugins](#develop-more-complex-plugins) to add agents, hooks, MCP servers, and LSP servers. For complete technical specifications of all plugin components, see [Plugins reference](/docs/en/plugins-reference).

@@ -1,7 +1,7 @@
 # Extend Claude with skills
 
 > Source: https://code.claude.com/docs/en/skills
-> Generated: 2026-03-27T09:52:08.804Z
+> Generated: 2026-04-04T10:26:47.189Z
 
 ---
 
@@ -87,7 +87,7 @@ Files in`.claude/commands/`still work and support the same [frontmatter](#frontm
 
 Skills from additional directories
 
-Skills defined in`.claude/skills/`within directories added via`--add-dir`are loaded automatically and picked up by live change detection, so you can edit them during a session without restarting.
+The`--add-dir`flag [grants file access](/docs/en/permissions#additional-directories-grant-file-access-not-configuration) rather than configuration discovery, but skills are an exception:`.claude/skills/`within an added directory is loaded automatically and picked up by live change detection, so you can edit those skills during a session without restarting. Other`.claude/`configuration such as subagents, commands, and output styles is not loaded from additional directories. See the [exceptions table](/docs/en/permissions#additional-directories-grant-file-access-not-configuration) for the complete list of what is and isn’t loaded, and the recommended ways to share configuration across projects.
 
 CLAUDE.md files from`--add-dir`directories are not loaded by default. To load them, set`CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1`. See [Load from additional directories](/docs/en/memory#load-from-additional-directories).
 
@@ -124,18 +124,18 @@ Beyond the markdown content, you can configure skill behavior using YAML frontma
 name: my-skill
 description: What this skill does
 disable-model-invocation: true
-allowed-tools: Read, Grep
+allowed-tools: Read Grep
 
 Your skill instructions here...```All fields are optional. Only`description`is recommended so Claude knows when to use the skill.
 
 | Field | Required | Description |
 | --- | --- | --- |
 |`name`| No | Display name for the skill. If omitted, uses the directory name. Lowercase letters, numbers, and hyphens only (max 64 characters). |
-|`description`| Recommended | What the skill does and when to use it. Claude uses this to decide when to apply the skill. If omitted, uses the first paragraph of markdown content. |
+|`description`| Recommended | What the skill does and when to use it. Claude uses this to decide when to apply the skill. If omitted, uses the first paragraph of markdown content. Front-load the key use case: descriptions longer than 250 characters are truncated in the skill listing to reduce context usage. |
 |`argument-hint`| No | Hint shown during autocomplete to indicate expected arguments. Example:`[issue-number]`or`[filename] [format]`. |
 |`disable-model-invocation`| No | Set to`true`to prevent Claude from automatically loading this skill. Use for workflows you want to trigger manually with`/name`. Default:`false`. |
 |`user-invocable`| No | Set to`false`to hide from the`/`menu. Use for background knowledge users shouldn’t invoke directly. Default:`true`. |
-|`allowed-tools`| No | Tools Claude can use without asking permission when this skill is active. |
+|`allowed-tools`| No | Tools Claude can use without asking permission when this skill is active. Accepts a space-separated string or a YAML list. |
 |`model`| No | Model to use when this skill is active. |
 |`effort`| No | [Effort level](/docs/en/model-config#adjust-effort-level) when this skill is active. Overrides the session effort level. Default: inherits from session. Options:`low`,`medium`,`high`,`max`(Opus 4.6 only). |
 |`context`| No | Set to`fork`to run in a forked subagent context. |
@@ -209,7 +209,7 @@ Restrict tool access
 Use the`allowed-tools`field to limit which tools Claude can use when a skill is active. This skill creates a read-only mode where Claude can explore files but not modify them:```---
 name: safe-reader
 description: Read files without making changes
-allowed-tools: Read, Grep, Glob
+allowed-tools: Read Grep Glob
 ---```Pass arguments to skills
 
 Both you and Claude can pass arguments when invoking a skill. Arguments are available via the`$ARGUMENTS`placeholder. This skill fixes a GitHub issue by number. The`$ARGUMENTS`placeholder gets replaced with whatever follows the skill name:```---
@@ -496,9 +496,9 @@ If Claude uses your skill when you don’t want it:
 2.  Add`disable-model-invocation: true`if you only want manual invocation
 
 
-Claude doesn’t see all my skills
+Skill descriptions are cut short
 
-Skill descriptions are loaded into context so Claude knows what’s available. If you have many skills, they may exceed the character budget. The budget scales dynamically at 2% of the context window, with a fallback of 16,000 characters. Run`/context`to check for a warning about excluded skills. To override the limit, set the`SLASH_COMMAND_TOOL_CHAR_BUDGET`environment variable.
+Skill descriptions are loaded into context so Claude knows what’s available. All skill names are always included, but if you have many skills, descriptions are shortened to fit the character budget, which can strip the keywords Claude needs to match your request. The budget scales dynamically at 1% of the context window, with a fallback of 8,000 characters. To raise the limit, set the`SLASH_COMMAND_TOOL_CHAR_BUDGET`environment variable. Or trim descriptions at the source: front-load the key use case, since each entry is capped at 250 characters regardless of budget.
 
 
 Related resources

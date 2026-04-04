@@ -1,7 +1,7 @@
 # Plugins reference
 
 > Source: https://code.claude.com/docs/en/plugins-reference
-> Generated: 2026-03-27T09:51:22.323Z
+> Generated: 2026-04-04T10:26:47.169Z
 
 ---
 
@@ -74,6 +74,7 @@ Plugins can provide event handlers that respond to Claude Code events automatica
 |`UserPromptSubmit`| When you submit a prompt, before Claude processes it |
 |`PreToolUse`| Before a tool call executes. Can block it |
 |`PermissionRequest`| When a permission dialog appears |
+|`PermissionDenied`| When a tool call is denied by the auto mode classifier. Return`{retry: true}`to tell the model it may retry the denied tool call |
 |`PostToolUse`| After a tool call succeeds |
 |`PostToolUseFailure`| After a tool call fails |
 |`Notification`| When Claude Code sends a notification |
@@ -415,6 +416,8 @@ A complete plugin follows this structure:```enterprise-plugin/
 ├── hooks/                    # Hook configurations
 │   ├── hooks.json           # Main hook config
 │   └── security-hooks.json  # Additional hooks
+├── bin/                      # Plugin executables added to PATH
+│   └── my-tool               # Invokable as bare command in Bash tool
 ├── settings.json            # Default settings for the plugin
 ├── .mcp.json                # MCP server definitions
 ├── .lsp.json                # LSP server configurations
@@ -438,6 +441,7 @@ File locations reference
 | **Hooks** |`hooks/hooks.json`| Hook configuration |
 | **MCP servers** |`.mcp.json`| MCP server definitions |
 | **LSP servers** |`.lsp.json`| Language server configurations |
+| **Executables** |`bin/`| Executables added to the Bash tool’s`PATH`. Files here are invokable as bare commands in any Bash tool call while the plugin is enabled |
 | **Settings** |`settings.json`| Default configuration applied when the plugin is enabled. Only [`agent`](/docs/en/sub-agents) settings are currently supported |
 
 * * *
@@ -461,7 +465,7 @@ Install a plugin from available marketplaces.```claude plugin install <plugin> [
 |`-s, --scope <scope>`| Installation scope:`user`,`project`, or`local`|`user`|
 |`-h, --help`| Display help for command |  |
 
-Scope determines which settings file the installed plugin is added to. For example, —scope project writes to`enabledPlugins`in .claude/settings.json, making the plugin available to everyone who clones the project repository. **Examples:**```# Install to user scope (default)
+Scope determines which settings file the installed plugin is added to. For example,`--scope project`writes to`enabledPlugins`in .claude/settings.json, making the plugin available to everyone who clones the project repository. **Examples:**```# Install to user scope (default)
 claude plugin install formatter@my-marketplace
 
 # Install to project scope (shared with team)

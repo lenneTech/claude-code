@@ -1,7 +1,7 @@
 # Common workflows
 
 > Source: https://code.claude.com/docs/en/common-workflows
-> Generated: 2026-03-27T09:52:42.186Z
+> Generated: 2026-04-04T10:26:47.111Z
 
 ---
 
@@ -288,7 +288,7 @@ How extended thinking works
 
 Extended thinking controls how much internal reasoning Claude performs before responding. More thinking provides more space to explore solutions, analyze edge cases, and self-correct mistakes. **With Opus 4.6 and Sonnet 4.6**, thinking uses adaptive reasoning: the model dynamically allocates thinking tokens based on the [effort level](/docs/en/model-config#adjust-effort-level) you select. This is the recommended way to tune the tradeoff between speed and reasoning depth. **With older models**, thinking uses a fixed token budget drawn from your output allocation. The budget varies by model; see [`MAX_THINKING_TOKENS`](/docs/en/env-vars) for per-model ceilings. You can limit the budget with that environment variable, or disable thinking entirely via`/config`or the`Option+T`/`Alt+T`toggle. On Opus 4.6 and Sonnet 4.6, [adaptive reasoning](/docs/en/model-config#adjust-effort-level) controls thinking depth, so`MAX_THINKING_TOKENS`only applies when set to`0`to disable thinking, or when`CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1`reverts these models to the fixed budget. See [environment variables](/docs/en/env-vars).
 
-You’re charged for all thinking tokens used, even though Claude 4 models show summarized thinking
+You’re charged for all thinking tokens used even when thinking summaries are redacted. In interactive mode, thinking appears as a collapsed stub by default. Set`showThinkingSummaries: true`in`settings.json`to show full summaries.
 
 * * *
 
@@ -301,7 +301,7 @@ When starting Claude Code, you can resume a previous session:
 -`claude --resume`opens a conversation picker or resumes by name
 -`claude --from-pr 123`resumes sessions linked to a specific pull request
 
-From inside an active session, use`/resume`to switch to a different conversation. Sessions are stored per project directory. The`/resume`picker shows sessions from the same git repository, including worktrees.
+From inside an active session, use`/resume`to switch to a different conversation. Sessions are stored per project directory. The`/resume`picker shows interactive sessions from the same git repository, including worktrees. Sessions created by`claude -p`or SDK invocations do not appear in the picker, but you can still resume one by passing its session ID directly to`claude --resume <session-id>`.
 
 
 Name your sessions
@@ -371,7 +371,7 @@ claude --worktree feature-auth
 
 # Start another session in a separate worktree
 claude --worktree bugfix-123```If you omit the name, Claude generates a random one automatically:```# Auto-generates a name like "bright-running-fox"
-claude --worktree```Worktrees are created at`<repo>/.claude/worktrees/<name>`and branch from the default remote branch. The worktree branch is named`worktree-<name>`. You can also ask Claude to “work in a worktree” or “start a worktree” during a session, and it will create one automatically.
+claude --worktree```Worktrees are created at`<repo>/.claude/worktrees/<name>`and branch from the default remote branch, which is where`origin/HEAD`points. The worktree branch is named`worktree-<name>`. The base branch is not configurable through a Claude Code flag or setting.`origin/HEAD`is a reference stored in your local`.git`directory that Git set once when you cloned. If the repository’s default branch later changes on GitHub or GitLab, your local`origin/HEAD`keeps pointing at the old one, and worktrees will branch from there. To re-sync your local reference with whatever the remote currently considers its default:```git remote set-head origin -a```This is a standard Git command that only updates your local`.git`directory. Nothing on the remote server changes. If you want worktrees to base off a specific branch rather than the remote’s default, set it explicitly with`git remote set-head origin your-branch-name`. For full control over how worktrees are created, including choosing a different base per invocation, configure a [WorktreeCreate hook](/docs/en/hooks#worktreecreate). The hook replaces Claude Code’s default`git worktree`logic entirely, so you can fetch and branch from whatever ref you need. You can also ask Claude to “work in a worktree” or “start a worktree” during a session, and it will create one automatically.
 
 
 Subagent worktrees
@@ -386,7 +386,7 @@ When you exit a worktree session, Claude handles cleanup based on whether you ma
 -   **No changes**: the worktree and its branch are removed automatically
 -   **Changes or commits exist**: Claude prompts you to keep or remove the worktree. Keeping preserves the directory and branch so you can return later. Removing deletes the worktree directory and its branch, discarding all uncommitted changes and commits
 
-To clean up worktrees outside of a Claude session, use [manual worktree management](#manage-worktrees-manually).
+Subagent worktrees orphaned by a crash or an interrupted parallel run are removed automatically at startup once they are older than your [`cleanupPeriodDays`](/docs/en/settings#available-settings) setting, provided they have no modifications to tracked files and no unpushed commits. Untracked files (new files never staged with`git add`) are not checked and do not prevent removal. Worktrees you create with`--worktree`are never removed by this sweep. To clean up worktrees outside of a Claude session, use [manual worktree management](#manage-worktrees-manually).
 
 Add`.claude/worktrees/`to your`.gitignore`to prevent worktree contents from appearing as untracked files in your main repository.
 
@@ -420,7 +420,7 @@ Remember to initialize your development environment in each new worktree accordi
 
 Non-git version control
 
-Worktree isolation works with git by default. For other version control systems like SVN, Perforce, or Mercurial, configure [WorktreeCreate and WorktreeRemove hooks](/docs/en/hooks#worktreecreate) to provide custom worktree creation and cleanup logic. When configured, these hooks replace the default git behavior when you use`--worktree`. For automated coordination of parallel sessions with shared tasks and messaging, see [agent teams](/docs/en/agent-teams).
+Worktree isolation works with git by default. For other version control systems like SVN, Perforce, or Mercurial, configure [WorktreeCreate and WorktreeRemove hooks](/docs/en/hooks#worktreecreate) to provide custom worktree creation and cleanup logic. When configured, these hooks replace the default git behavior when you use`--worktree`, so [`.worktreeinclude`](#copy-gitignored-files-to-worktrees) is not processed. Copy any local configuration files inside your hook script instead. For automated coordination of parallel sessions with shared tasks and messaging, see [agent teams](/docs/en/agent-teams).
 
 * * *
 
@@ -532,7 +532,7 @@ Suppose you want to pipe data into Claude, and get back data in a structured for
 
 -   Use pipes to integrate Claude into existing shell scripts
 -   Combine with other Unix tools for powerful workflows
--   Consider using —output-format for structured output
+-   Consider using`--output-format`for structured output
 
 
 Control output format
@@ -567,7 +567,7 @@ Suppose you want Claude to handle a task automatically on a recurring basis, lik
 | Option | Where it runs | Best for |
 | --- | --- | --- |
 | [Cloud scheduled tasks](/docs/en/web-scheduled-tasks) | Anthropic-managed infrastructure | Tasks that should run even when your computer is off. Configure at [claude.ai/code](https://claude.ai/code). |
-| [Desktop scheduled tasks](/docs/en/desktop#schedule-recurring-tasks) | Your machine, via the desktop app | Tasks that need direct access to local files, tools, or uncommitted changes. |
+| [Desktop scheduled tasks](/docs/en/desktop-scheduled-tasks) | Your machine, via the desktop app | Tasks that need direct access to local files, tools, or uncommitted changes. |
 | [GitHub Actions](/docs/en/github-actions) | Your CI pipeline | Tasks tied to repo events like opened PRs, or cron schedules that should live alongside your workflow config. |
 | [`/loop`](/docs/en/scheduled-tasks) | The current CLI session | Quick polling while a session is open. Tasks are cancelled when you exit. |
 
@@ -581,7 +581,7 @@ Ask Claude about its capabilities
 Claude has built-in access to its documentation and can answer questions about its own features and limitations.
 
 
-Example questions```can Claude Code create pull requests?``````how does Claude Code handle permissions?``````what skills are available?``````how do I use MCP with Claude Code?``````how do I configure Claude Code for Amazon Bedrock?``````what are the limitations of Claude Code?```Claude provides documentation-based answers to these questions. For executable examples and hands-on demonstrations, refer to the specific workflow sections above.
+Example questions```can Claude Code create pull requests?``````how does Claude Code handle permissions?``````what skills are available?``````how do I use MCP with Claude Code?``````how do I configure Claude Code for Amazon Bedrock?``````what are the limitations of Claude Code?```Claude provides documentation-based answers to these questions. For hands-on demonstrations, run`/powerup`for interactive lessons with animated demos, or refer to the specific workflow sections above.
 
 Tips:
 

@@ -44,6 +44,22 @@ project/
 
 **NOT for:** NestJS backend development (use `generating-nest-servers` skill instead)
 
+## Framework Source Files (MUST READ before guessing)
+
+**ALWAYS read actual source code** from `node_modules/@lenne.tech/nuxt-extensions/` before guessing framework behavior. The framework ships documentation with the npm package.
+
+| File (in `node_modules/@lenne.tech/nuxt-extensions/`) | When to Read |
+|-------------------------------------------------------|-------------|
+| `CLAUDE.md` | Start of any frontend task — composables, components, config |
+| `dist/runtime/composables/` | Available composables (useAuth, useApi, etc.) |
+| `dist/runtime/components/` | Available components |
+| `dist/runtime/utils/` | Available utilities |
+| `dist/runtime/types/` | TypeScript type definitions |
+
+**Also read** the nuxt-base-starter documentation:
+- `README.md` — Project overview, tech stack, auth setup
+- `AUTH.md` — Better Auth integration details
+
 ## CRITICAL: Real Backend Integration FIRST
 
 **Never use placeholder data, TODO comments, or manual interfaces!**
