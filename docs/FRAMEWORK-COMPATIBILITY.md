@@ -149,7 +149,8 @@ Analogous section for `@lenne.tech/nuxt-extensions` source paths.
 | `nest-server` | `package.json` files, `FRAMEWORK-API.md` generator, `.claude/rules/framework-compatibility.md` | 1 + A |
 | `nest-server-starter` | `CLAUDE.md` framework block | 2 |
 | `nuxt-extensions` | `CLAUDE.md` + `package.json` files | 1 (C) |
-| `nuxt-base-starter` | `CLAUDE.md` created | 2 (C) |
+| `nuxt-base-starter` | `nuxt-base-template/CLAUDE.md` created (template dir, not root) | 2 (C) |
+| `lt-monorepo` | `CLAUDE.md` created (fullstack monorepo skeleton used by `lt fullstack init`) | 2 |
 | `claude-code/plugins/lt-dev` | Hooks + Skills enhanced | 3 + B |
 | `claude-code/docs/` | This strategy document | — |
 
