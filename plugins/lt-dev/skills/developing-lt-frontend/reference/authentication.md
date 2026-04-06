@@ -511,6 +511,16 @@ For comprehensive frontend security guidelines, see [security.md](./security.md)
 
 ---
 
+## Auth Cookie Rules (lt-auth-state)
+
+**WARNING:** Projects using `useLtAuth()` from `@lenne.tech/nuxt-extensions` must never manually write to the `lt-auth-state` cookie from custom middleware. Writing to `authState.value` in SSR generates a `Set-Cookie` header that can overwrite the browser's cookie.
+
+- Use `useLtAuth().setUser()` / `clearUser()` for all cookie mutations
+- In custom middleware, read `lt-auth-state` only (via `document.cookie` on client, `useCookie('lt-auth-state')` on server)
+- The `iam.session_token` httpOnly cookie is the real session identifier; `lt-auth-state` is a client-side convenience cache
+
+See the full rules in `node_modules/@lenne.tech/nuxt-extensions/CLAUDE.md` under "Authentication Cookie Rules".
+
 ## Anti-Patterns
 
 ```typescript
