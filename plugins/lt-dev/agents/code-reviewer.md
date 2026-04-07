@@ -91,6 +91,8 @@ Initial TodoWrite:
 - [ ] No hardcoded secrets, API keys, or passwords in diff
 - [ ] No `eval()`, `innerHTML`, or `v-html` with user input
 - [ ] Backend: `@Restricted` on controllers, `@Roles` on endpoints, `securityCheck()` on models
+- [ ] No `model.collection.*` or `model.db.*` access (bypasses all Mongoose security plugins — Tenant, Audit, RoleGuard, Password)
+- [ ] No `connection.db.collection()` WRITE on tenant-scoped collections
 - [ ] No `process.env` in frontend (use `useRuntimeConfig()`)
 - [ ] Input validation present on new endpoints
 

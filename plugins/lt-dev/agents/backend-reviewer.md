@@ -113,6 +113,19 @@ done
 - [ ] `securityCheck` checks `user?.hasRole()` and ownership (`equalIds(user, this.createdBy)`)
 - [ ] Sensitive fields have `hideField: true` in `@UnifiedField`
 
+#### Layer 4: No Native MongoDB Driver on Mongoose Models
+
+- [ ] No `model.collection.*` access (bypasses ALL Mongoose plugins — Tenant, Audit, RoleGuard, Password). Exception: `getNativeCollection(reason)` or `getNativeDb(reason)` from CrudService
+- [ ] No `model.db.*` access (same risk — provides path to native driver via Mongoose Connection)
+- [ ] No `connection.db.collection()` WRITE operations on tenant-scoped collections
+- [ ] `connection.db.collection()` READ-ONLY on schema-less collections (OAuth, BetterAuth, MCP) is allowed
+
+```bash
+grep -rn '\.collection\.' src/server/ --include='*.ts' | grep -v node_modules | grep -v '.spec.ts'
+grep -rn 'Model\.db\b' src/server/ --include='*.ts' | grep -v node_modules | grep -v '.spec.ts'
+grep -rn '\.db\.collection(' src/server/ --include='*.ts' | grep -v node_modules
+```
+
 #### Permissions Scanner
 
 ```bash

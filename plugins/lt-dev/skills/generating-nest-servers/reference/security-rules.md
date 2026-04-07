@@ -28,6 +28,13 @@ description: Critical security and test coverage rules for NestJS development
 2. **NEVER change `@Roles()` decorators** to more permissive roles for test convenience
 3. **NEVER modify `securityCheck()` logic** to bypass security in tests
 4. **NEVER remove class-level `@Restricted(RoleEnum.ADMIN)`** - it's a security fallback
+5. **NEVER use `model.collection.*` or `model.db.*` methods** — these bypass ALL Mongoose security plugins (Tenant, Audit, RoleGuard, Password).
+   - Use `Model.insertMany([doc])` instead of `collection.insertOne(doc)`
+   - Use `Model.bulkWrite(ops)` instead of `collection.bulkWrite(ops)`
+   - Use `Model.findByIdAndUpdate()` instead of `collection.updateOne()`
+   - Only exception: `this.getNativeCollection(reason)` or `this.getNativeDb(reason)` from CrudService with documented reason
+6. **NEVER use `connection.db.collection()` for write operations on tenant-scoped collections** — Tenant-Plugin is bypassed, causing data leaks between tenants. Use the Mongoose Model instead. Read-only access on schema-less collections (OAuth, BetterAuth, MCP) is allowed.
+7. **NEVER bypass `process()` by using `collection.*` or `model.db.*`** to fix memory issues — use `Model.insertMany()` or `Model.findByIdAndUpdate()` instead, which keep all Mongoose plugins active. The `process()` pipeline can cause high memory usage under heavy load or in service cascades. If this happens, bypass `process()` while keeping Mongoose security intact: `Model.insertMany([input])` instead of `CrudService.create()`, `Model.findByIdAndUpdate(id, input)` instead of `CrudService.update()`.
 
 ---
 

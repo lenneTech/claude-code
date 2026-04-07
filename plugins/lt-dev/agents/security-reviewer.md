@@ -102,6 +102,25 @@ grep -rn "extends CoreModel\|extends CorePersisted" src/server/modules/
 
 - Missing `securityCheck` = **HIGH** (data visible regardless of ownership)
 
+#### Layer 4: Native MongoDB Driver Access
+
+Direct native driver access via `model.collection.*`, `model.db.*`, or `connection.db.collection()` bypasses ALL Mongoose plugins (Tenant, Audit, RoleGuard, Password).
+
+```bash
+# Find model.collection.* access (bypasses all plugins)
+grep -rn '\.collection\.' src/server/ --include='*.ts' | grep -v node_modules | grep -v '.spec.ts'
+# Find model.db.* access (bypasses all plugins)
+grep -rn 'Model\.db\b' src/server/ --include='*.ts' | grep -v node_modules | grep -v '.spec.ts'
+# Find connection.db.collection() access
+grep -rn '\.db\.collection(' src/server/ --include='*.ts' | grep -v node_modules
+```
+
+**Review rules:**
+- `model.collection.*` or `model.db.*` → **CRITICAL**: Always a security violation. Must use Mongoose Model methods, `getNativeCollection(reason)`, or `getNativeDb(reason)`
+- `connection.db.collection('name')` with WRITE on tenant-scoped collection → **CRITICAL**: Tenant-Plugin bypassed
+- `connection.db.collection('name')` READ-ONLY on schema-less collection (OAuth, BetterAuth, MCP) → Allowed
+- `connection.db.collection('name')` for Admin ops (createIndex, drop) → Allowed
+
 #### Permissions Scanner
 
 ```bash
