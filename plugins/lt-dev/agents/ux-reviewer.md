@@ -6,7 +6,6 @@ effort: medium
 tools: Bash, Read, Grep, Glob, TodoWrite
 skills: developing-lt-frontend
 memory: project
-maxTurns: 80
 ---
 
 # UX Pattern Review Agent

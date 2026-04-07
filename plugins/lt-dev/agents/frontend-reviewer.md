@@ -6,7 +6,6 @@ effort: medium
 tools: Bash, Read, Grep, Glob, TodoWrite
 skills: developing-lt-frontend, building-stories-with-tdd
 memory: project
-maxTurns: 60
 ---
 
 # Frontend Review Agent

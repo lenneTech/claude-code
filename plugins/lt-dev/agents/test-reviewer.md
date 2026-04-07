@@ -6,7 +6,6 @@ effort: medium
 tools: Bash, Read, Grep, Glob, TodoWrite
 skills: building-stories-with-tdd, generating-nest-servers, developing-lt-frontend
 memory: project
-maxTurns: 50
 ---
 
 # Test Review Agent

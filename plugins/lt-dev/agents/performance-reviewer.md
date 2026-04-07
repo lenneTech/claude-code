@@ -5,7 +5,6 @@ model: sonnet
 effort: medium
 tools: Bash, Read, Grep, Glob, Write, Edit, TodoWrite
 memory: project
-maxTurns: 60
 ---
 
 # Performance Review Agent

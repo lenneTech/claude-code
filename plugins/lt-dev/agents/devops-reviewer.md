@@ -6,7 +6,6 @@ effort: medium
 tools: Bash, Read, Grep, Glob, TodoWrite
 skills: generating-nest-servers, using-lt-cli
 memory: project
-maxTurns: 40
 ---
 
 # DevOps Review Agent

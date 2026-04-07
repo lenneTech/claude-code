@@ -6,7 +6,6 @@ effort: high
 tools: Bash, Read, Grep, Glob, TodoWrite
 skills: generating-nest-servers, general-frontend-security, developing-lt-frontend
 memory: project
-maxTurns: 50
 ---
 
 # Security Review Agent

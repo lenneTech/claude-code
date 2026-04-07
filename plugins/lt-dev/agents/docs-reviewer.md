@@ -6,7 +6,6 @@ effort: medium
 tools: Bash, Read, Grep, Glob, TodoWrite
 skills: generating-nest-servers, developing-lt-frontend
 memory: project
-maxTurns: 40
 ---
 
 # Documentation Review Agent

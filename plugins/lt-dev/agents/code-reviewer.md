@@ -5,7 +5,6 @@ model: sonnet
 effort: medium
 tools: Bash, Read, Grep, Glob, TodoWrite
 memory: project
-maxTurns: 40
 skills: generating-nest-servers, developing-lt-frontend
 ---
 
