@@ -85,6 +85,43 @@ Initial TodoWrite (after Phase 1):
 
 ## Execution Protocol
 
+### Phase 0: Vendored-Project Detection (delegate if applicable)
+
+**CRITICAL FIRST STEP.** Before doing anything else, check whether the target
+project has **vendored** the nest-server core directly into its source tree
+(under `projects/api/src/core/` or similar). If so, this agent is the wrong
+tool — delegate to `nest-server-core-updater` instead.
+
+Detection:
+
+```bash
+# A vendored project has all three of these:
+# 1. A VENDOR.md file documenting the baseline
+# 2. NO @lenne.tech/nest-server entry in package.json
+# 3. A populated src/core/ directory with common/, modules/, index.ts
+
+VENDOR_MD=$(find . -name "VENDOR.md" -path "*/src/core/*" -not -path "*/node_modules/*" | head -1)
+
+if [ -n "$VENDOR_MD" ]; then
+  PROJECT_DIR=$(dirname "$(dirname "$(dirname "$VENDOR_MD")")")
+  if ! grep -q '"@lenne.tech/nest-server"' "$PROJECT_DIR/package.json" 2>/dev/null; then
+    echo "DETECTED: vendored nest-server core at $VENDOR_MD"
+    echo "This project uses the vendor pattern. Delegating to nest-server-core-updater."
+    # → Spawn lt-dev:nest-server-core-updater with the same arguments
+    # → Abort this agent
+  fi
+fi
+```
+
+If detection is positive, **stop executing this agent** and tell the user to
+invoke `/lt-dev:backend:update-nest-server-core` with the same arguments.
+The two agents have different workflows: the classic one (this agent) does
+`pnpm update` + migration guides, the core-updater does a source-level
+diff-and-merge against upstream.
+
+If detection is negative (no VENDOR.md, or `@lenne.tech/nest-server` still in
+package.json), continue with the classic flow below.
+
 ### Package Manager Detection
 
 Before executing any commands, detect the project's package manager:

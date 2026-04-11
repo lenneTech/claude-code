@@ -1,5 +1,5 @@
 ---
-description: Update @lenne.tech/nest-server with automated migration and validation
+description: Update @lenne.tech/nest-server with automated migration and validation. Auto-detects vendored projects and delegates to nest-server-core-updater if applicable.
 argument-hint: "[--dry-run] [--target-version X.Y.Z] [--skip-packages] [path]"
 allowed-tools: Agent
 disable-model-invocation: true
@@ -8,6 +8,12 @@ disable-model-invocation: true
 # Update @lenne.tech/nest-server
 
 Fully automated update of @lenne.tech/nest-server with migration guide support.
+
+**Auto-detection:** This command works for both npm-based projects (classic
+flow: pnpm update + migration guides) and vendored projects (delegates to
+`update-nest-server-core`). The agent detects the project type by checking
+for `src/core/VENDOR.md` and the presence of `@lenne.tech/nest-server` in
+`package.json`.
 
 ## Usage
 
