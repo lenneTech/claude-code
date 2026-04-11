@@ -8,15 +8,21 @@ description: Database index guidelines for @UnifiedField decorator - keep indexe
 ## Table of Contents
 - [When to Add Indexes](#when-to-add-indexes)
 - [Example Patterns](#example-patterns)
+- [Framework-Managed Indexes — Do Not Set Manually](#framework-managed-indexes--do-not-set-manually)
+- [Compound Indexes — Use `Schema.index()`](#compound-indexes--use-schemaindex)
 - [DON'T Create Indexes Separately!](#-dont-create-indexes-separately)
 - [Benefits of Decorator-Based Indexes](#benefits-of-decorator-based-indexes)
 - [Index Verification Checklist](#index-verification-checklist)
 - [Red Flags - Missing Indexes](#red-flags---missing-indexes)
 - [Quick Index Checklist](#quick-index-checklist)
 
-**IMPORTANT: Always define indexes directly in the @UnifiedField decorator!**
+**IMPORTANT: Always define single-field indexes directly in the @UnifiedField / @Prop decorator!**
 
-This keeps indexes visible right where properties are defined, making them easy to spot during code reviews.
+This keeps indexes visible right where properties are defined, making them easy to spot during code reviews. Schema-level `Schema.index()` is reserved for **compound (multi-field) indexes only**.
+
+**Golden Rule:**
+
+> Single-field indexes that are not already set by the framework (e.g. `tenantId`) belong on the property — this keeps all info about the property compact. Only combined/compound indexes belong in `ModelSchema.index()`.
 
 ---
 
@@ -79,6 +85,86 @@ name: string;
 })
 createdBy: string;
 ```
+
+### TTL Index (inline on the property)
+
+```typescript
+/**
+ * Expiration timestamp (5 minutes TTL)
+ */
+@Prop({ required: true, index: { expireAfterSeconds: 3600 } })  //  TTL on the property
+@UnifiedField({
+  description: 'Expiration timestamp',
+  roles: RoleEnum.S_EVERYONE,
+  type: () => Date,
+})
+expiresAt: Date = undefined;
+```
+
+**Do NOT** add a separate `Schema.index({ expiresAt: 1 }, { expireAfterSeconds: 3600 })` — it duplicates the TTL index.
+
+### Unique Index (inline on the property)
+
+```typescript
+@Prop({ required: true, unique: true })  //  unique auto-creates an index
+slug: string = undefined;
+```
+
+**Do NOT** additionally write `Schema.index({ slug: 1 }, { unique: true })` — Mongoose already created the unique index via `@Prop({ unique: true })`.
+
+---
+
+## Framework-Managed Indexes — Do Not Set Manually
+
+Some fields are automatically indexed by framework plugins. Adding `index: true` on these fields triggers Mongoose `"Duplicate schema index"` warnings.
+
+**Known framework-managed fields:**
+
+| Field      | Plugin                           | Source |
+|------------|----------------------------------|--------|
+| `tenantId` | `mongooseTenantPlugin`           | `@lenne.tech/nest-server` → `src/core/common/plugins/mongoose-tenant.plugin.ts` |
+
+```typescript
+//  WRONG — duplicate index
+@Prop({ type: String, index: true })
+@Restricted(RoleEnum.S_EVERYONE)
+tenantId: string = undefined;
+
+//  CORRECT — add a short comment so future edits don't reintroduce the duplicate
+// Index is auto-created by the nest-server mongooseTenantPlugin — do NOT add `index: true`.
+@Prop({ type: String })
+@Restricted(RoleEnum.S_EVERYONE)
+tenantId: string = undefined;
+```
+
+**Before adding an index to any field, grep the framework source (`node_modules/@lenne.tech/nest-server/src/core/common/plugins/`) for `schema.index(` to see if the plugin already handles it.**
+
+---
+
+## Compound Indexes — Use `Schema.index()`
+
+**The only valid use of `Schema.index()` is for compound (multi-field) indexes.**
+
+```typescript
+@Schema()
+export class Order {
+  @Prop({ type: String })  //  no single-field index here
+  customerId: string = undefined;
+
+  @Prop({ type: String })  //  no single-field index here
+  status: string = undefined;
+}
+
+export const OrderSchema = SchemaFactory.createForClass(Order);
+
+//  Compound index — belongs here
+OrderSchema.index({ customerId: 1, status: 1, createdAt: -1 });
+```
+
+Why compound indexes stay in `Schema.index()`:
+- They cover queries across multiple fields — they aren't "about" one property
+- Order of fields matters (prefix rule) — this belongs at the schema level
+- They're usually paired with sort/range queries spanning multiple columns
 
 ---
 
@@ -175,7 +261,11 @@ Before marking complete:
 
 - [ ] **Fields used in find() queries have indexes**
 - [ ] **Foreign keys (userId, productId, etc.) have indexes**
-- [ ] **Unique fields (email, username) marked with unique: true**
+- [ ] **Unique fields (email, username) marked with unique: true** (no separate `Schema.index()`)
 - [ ] **Fields used in sorting have indexes**
-- [ ] **All indexes in @UnifiedField decorator (NOT separate schema)**
+- [ ] **Single-field indexes on the property** (`@Prop` / `@UnifiedField`), NOT in `Schema.index()`
+- [ ] **TTL indexes inline** (`@Prop({ index: { expireAfterSeconds: N } })`), NOT via `Schema.index()`
+- [ ] **`tenantId` has NO `index: true`** — framework plugin sets it automatically
+- [ ] **`Schema.index()` only used for compound (multi-field) indexes**
 - [ ] **Indexes match query patterns in services**
+- [ ] **No Mongoose `"Duplicate schema index"` warnings on server start** (run `pnpm start` and grep for them)

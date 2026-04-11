@@ -92,6 +92,10 @@ Initial TodoWrite:
 - [ ] Backend: `@Restricted` on controllers, `@Roles` on endpoints, `securityCheck()` on models
 - [ ] No `model.collection.*` or `model.db.*` access (bypasses all Mongoose security plugins — Tenant, Audit, RoleGuard, Password)
 - [ ] No `connection.db.collection()` WRITE on tenant-scoped collections
+- [ ] Direct Mongoose access (`Model.find()`, `Model.create()`, etc.) in user-facing code — bypasses CrudService authorization, so verify:
+  - [ ] Explicit authorization check (`user.hasRole()`, `equalIds()`) before the DB call
+  - [ ] Tenant isolation preserved (if multi-tenancy active)
+  - [ ] No sensitive fields (`hideField: true`) leaked in the response
 - [ ] No `process.env` in frontend (use `useRuntimeConfig()`)
 - [ ] Input validation present on new endpoints
 

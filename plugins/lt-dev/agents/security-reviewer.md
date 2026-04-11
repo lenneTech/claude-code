@@ -120,6 +120,29 @@ grep -rn '\.db\.collection(' src/server/ --include='*.ts' | grep -v node_modules
 - `connection.db.collection('name')` READ-ONLY on schema-less collection (OAuth, BetterAuth, MCP) → Allowed
 - `connection.db.collection('name')` for Admin ops (createIndex, drop) → Allowed
 
+#### Layer 5: Direct Mongoose Access Authorization Bypass
+
+Direct Mongoose methods (`Model.create()`, `Model.findByIdAndUpdate()`, `Model.find().lean()`, `Model.aggregate()`) keep Mongoose plugins active (Tenant isolation preserved) but **bypass CrudService authorization** (`checkRights`, `@Restricted` enforcement, `S_CREATOR` ownership checks, secret field removal). Performance-motivated direct access is legitimate — but must be security-verified.
+
+```bash
+# Find direct Mongoose model access in user-facing code (controllers, resolvers)
+grep -rn 'Model\.\(create\|find\|findOne\|findById\|updateOne\|updateMany\|deleteOne\|deleteMany\|bulkWrite\|insertMany\|aggregate\)' src/server/ --include='*.ts' | grep -v node_modules | grep -v '.spec.ts' | grep -v 'crud.service'
+```
+
+**For each direct access found, verify:**
+1. **Authorization before access:** Is `user.hasRole()`, `equalIds(user, entity.createdBy)`, or equivalent check performed before the database call?
+2. **Tenant isolation (only if project uses multi-tenancy):** Is the Mongoose Tenant plugin active on this model, or is tenant filtering manually applied? Skip if project has no Tenant plugin configured.
+3. **Output filtering:** If the result is returned to a user, are `hideField: true` fields excluded?
+4. **Context justification:** Is the bypass documented (performance, bulk ops, subdocument arrays, system-internal)?
+
+| Scenario | Severity |
+|----------|----------|
+| Direct access in controller without prior authorization | **HIGH** — Broken Access Control (OWASP A01) |
+| Direct access leaking sensitive fields to user response | **HIGH** — Sensitive Data Exposure (OWASP A02) |
+| Direct access without tenant filter in multi-tenant project | **CRITICAL** — Tenant data leak |
+| Direct access in system-internal code (cron, processor) | Allowed |
+| Direct access with documented reason + authorization | Allowed |
+
 #### Permissions Scanner
 
 ```bash

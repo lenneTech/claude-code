@@ -34,8 +34,15 @@ description: Critical security and test coverage rules for NestJS development
    - Use `Model.findByIdAndUpdate()` instead of `collection.updateOne()`
    - Only exception: `this.getNativeCollection(reason)` or `this.getNativeDb(reason)` from CrudService with documented reason
 6. **NEVER use `connection.db.collection()` for write operations on tenant-scoped collections** — Tenant-Plugin is bypassed, causing data leaks between tenants. Use the Mongoose Model instead. Read-only access on schema-less collections (OAuth, BetterAuth, MCP) is allowed.
-7. **NEVER bypass `process()` by using `collection.*` or `model.db.*`** to fix memory issues — use `Model.create(doc)` (single) or `Model.insertMany(docs)` (batch) or `Model.findByIdAndUpdate().lean()` (update) instead, which keep all Mongoose plugins active. For read-only lookups in high-frequency paths use `Model.findById().lean()` instead of `getForce()` (5x less memory, 2x slower per call — memory savings outweigh latency in hot paths).
-8. **High-frequency paths** (monitoring, metrics, queue processors): defer complex logic (incidents, notifications, escalation) to cron/queue. Avoid service cascades (A.create → B.create → C.create) in hot paths. Use lean queries for WebSocket data. Each `getForce()` or `process()` call in a hot path multiplies memory pressure by the number of concurrent operations.
+7. **Bypassing `process()` is ONLY allowed in system-internal code** (processors, crons, service-to-service) — never in user-facing controllers. `CrudService.create/update/get()` provides authorization (`checkRights`, `@Restricted`, `S_CREATOR`) and output filtering (secret removal, field-level permissions). Direct Mongoose methods (`Model.create()`, `findByIdAndUpdate().lean()`, `findById().lean()`) keep all Mongoose plugins active (Tenant, Audit, RoleGuard) but skip authorization. Use them when no user context exists and no response goes to a user.
+8. **High-frequency paths** (monitoring, metrics, queue processors): these are always system-internal — no user context. Defer complex logic (incidents, notifications, escalation) to cron/queue. Avoid service cascades (A.create → B.create → C.create) in hot paths. Use lean queries for WebSocket data. Each `getForce()` or `process()` call in a hot path multiplies memory pressure by the number of concurrent operations.
+9. **NEVER pass Mongoose SubDocument Arrays through `CrudService.update()`** — applies in ALL contexts, including controllers.
+   - **Affected fields:** subdocument arrays like `entity.logs`, `entity.comments`, `entity.history`
+   - **Why:** subdocument arrays are Proxy-wrapped. `process()` → `clone()` (rfdc) + `processDeep()` triggers Proxy getters/setters per property, then `mergePlain()` re-clones the array → OOM on long-lived documents
+   - **Use instead (preferred):** `CrudService.pushToArray(id, field, items)` / `pullFromArray(id, field, condition)` — bypass `process()` while Mongoose `pre('findOneAndUpdate')` hooks still fire
+   - **For combined `$push` + `$set`:** use `Model.findByIdAndUpdate()` directly
+10. **Clear timers in `Promise.race` patterns** — if using `Promise.race([operation, timeout])`, always clear the timeout after the race resolves. Leaked timers accumulate memory and cause unhandled rejections in high-frequency paths.
+11. **In-memory buffers (Map, Set, Array) need eviction** — any buffer used for caching, dedup, or error tracking must have a size cap and periodic cleanup. Without eviction, buffers grow unbounded over the process lifetime and are never GC'd.
 
 ---
 
@@ -613,6 +620,7 @@ Before completing ANY task:
 - [ ] **Least privileged user tested**
 - [ ] **Permission denial tested (403 responses)**
 - [ ] **No securityCheck() logic bypassed**
+- [ ] **Direct Mongoose access security-verified** — if `Model.find()/.create()/.aggregate()` used instead of CrudService (for performance): authorization check before call, tenant isolation preserved (if multi-tenancy active), no sensitive fields leaked to user
 - [ ] **Permissions report clean** (`lt server permissions --failOnWarnings`)
 
 **Input & Validation:**

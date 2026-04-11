@@ -3,7 +3,7 @@ name: npm-package-maintainer
 description: Specialized agent for maintaining, updating, and auditing npm packages. Use when performing package maintenance, security audits, dependency optimization, or before/after releases.
 model: sonnet
 effort: high
-tools: Bash, Read, Grep, Glob, Write, Edit, TodoWrite
+tools: Bash, Read, Grep, Glob, Write, Edit, TodoWrite, WebFetch
 memory: project
 skills: maintaining-npm-packages
 maxTurns: 120
@@ -362,9 +362,81 @@ pnpm audit
 pnpm run build && pnpm test
 ```
 
-### Phase 6: Override Cleanup (Priority 4)
+### Phase 6: Override Management (Priority 4)
 
-**Goal**: Remove unnecessary overrides that were added for security fixes but are no longer needed.
+**Goal**: Manage `pnpm.overrides` safely — both when ADDING new overrides for security fixes AND when REMOVING unnecessary ones.
+
+#### CRITICAL RULE: Override Targets MUST Be Fixed Versions
+
+The **target** of an override (value on the right-hand side) MUST be a fixed version. Never use range selectors (`>=`, `^`, `~`, `*`) as override targets — they are unbounded and will silently install whatever satisfies the range, which in practice means the LATEST available version, potentially across major version boundaries.
+
+| RIGHT (fixed target) | WRONG (unbounded range target) |
+|---|---|
+| `"vite": "7.3.2"` | `"vite": ">=7.3.2"` — pnpm may install `8.x.y` |
+| `"drizzle-orm": "0.45.2"` | `"drizzle-orm": ">=0.45.2"` — breaks better-auth peer |
+| `"@apollo/server": "5.5.0"` | `"@apollo/server": "^5.5.0"` |
+| `"path-to-regexp@<8.4.2": "8.4.2"` | `"path-to-regexp@<8.4.2": ">=8.4.2"` |
+
+**Real-world incident (TurboOps, April 2026):** The unbounded override `"vite@>=7.0.0 <=7.3.1": ">=7.3.2"` caused pnpm to install `vite@8.0.8` (a major version jump), which cascaded into broken peer dependencies in `@nuxt/test-utils`, dropped `drizzle-orm` from `better-auth`, and caused 13 e2e test regressions in the `server` module. The fix was replacing every `">=X"` target with a fixed version like `"vite": "7.3.2"`.
+
+**Reference implementations** (canonical examples of correctly-written `pnpm.overrides` for the lenne.tech stack — align with these when in doubt):
+
+| Repo | Raw URL | Pattern |
+|---|---|---|
+| `@lenne.tech/nest-server` | https://raw.githubusercontent.com/lenneTech/nest-server/main/package.json | Form A — range selector LEFT (`"minimatch@<3.1.5": "3.1.5"`) |
+| `@lenne.tech/nest-server-starter` | https://raw.githubusercontent.com/lenneTech/nest-server-starter/main/package.json | Form B — package name LEFT (`"vite": "7.3.2"`) + `//overrides` doc block |
+
+**Both forms are valid. Form A is preferred for security-driven overrides** because it only replaces vulnerable versions and leaves non-vulnerable installs untouched — reducing the blast radius. Use Form B only when ALL installed versions of the package must be unified.
+
+Additionally, when the package is actually installed (`node_modules/@lenne.tech/nest-server/.claude/rules/package-management.md`), the canonical rule document is available locally and lists the full rationale, the TurboOps incident, and the safe override workflow.
+
+#### Document Every Override (Mandatory)
+
+Every entry in `pnpm.overrides` MUST be documented. The lenne.tech starter uses a parallel `//overrides` block in `package.json` with one explanation per override (CVE ID, transitive chain, or compatibility reason). Mirror this pattern when adding overrides:
+
+```json
+{
+  "//overrides": {
+    "vite": "Security fix: Multiple CVEs in vite >=7.0.0 <=7.3.1 (arbitrary file read via WebSocket, fs.deny bypass) - transitive via vite-plugin-node",
+    "drizzle-orm": "Security fix: SQL injection via improperly escaped SQL identifiers in drizzle-orm <0.45.2 (GHSA-gpj5-g38j-94v9) - transitive via @lenne.tech/nest-server>better-auth"
+  },
+  "pnpm": {
+    "overrides": {
+      "vite": "7.3.2",
+      "drizzle-orm": "0.45.2"
+    }
+  }
+}
+```
+
+**Each `//overrides` comment must contain:**
+- **What** (security fix / compatibility / peer resolution)
+- **Why** (CVE ID or specific issue)
+- **Transitive chain** (which direct dep pulls in the vulnerable package)
+- **Removal condition** (when the override can be dropped, if known)
+
+Without this documentation, overrides become unmaintainable and accumulate indefinitely.
+
+#### Adding a New Override (Security Fix)
+
+1. **Identify the exact patched version** from the security advisory (e.g. "fixed in vite >= 7.3.2")
+2. **Check the latest fixed version WITHIN THE SAME MAJOR** to avoid accidental major jumps:
+   ```bash
+   pnpm view vite versions --json | jq '[.[] | select(startswith("7."))]' | tail -5
+   ```
+3. **Pick a specific version** and use it as the target:
+   ```json
+   // Form A: range selector on LEFT (preferred — only replaces vulnerable versions)
+   "vite@>=7.0.0 <7.3.2": "7.3.2"
+
+   // Form B: package name on LEFT (replaces ALL installed versions)
+   "vite": "7.3.2"
+   ```
+4. **Never use `">=X"` or `"^X"` on the RIGHT side** — those are unbounded and will silently upgrade.
+5. **Run validation:** `pnpm install && pnpm run build && pnpm test` — all must pass.
+6. **Verify the fix:** `pnpm audit` — vulnerability should be gone.
+
+#### Removing Unnecessary Overrides
 
 ```bash
 # 1. Check if overrides exist in package.json
@@ -481,6 +553,31 @@ rm -f *.txt *.debug.log* 2>/dev/null
 - Files that are tracked by git (use `git ls-files` to check)
 - README.txt or other intentional documentation
 - Test fixture files that are part of the test suite
+
+## Reference Templates (lenne.tech Starters)
+
+When dependency constellations become complex (conflicting peer dependencies, unclear version combinations during major upgrades, missing framework packages), consult the canonical lenne.tech starter templates for validated version combinations:
+
+| Project Type | Detection | Raw `package.json` URL |
+|--------------|-----------|------------------------|
+| Frontend (Nuxt/Vue) in `projects/app/`, `packages/app/` | `nuxt.config.*` exists | https://raw.githubusercontent.com/lenneTech/nuxt-base-starter/main/package.json |
+| Backend (NestJS) in `projects/api/`, `packages/api/` | `nest-cli.json` exists | https://raw.githubusercontent.com/lenneTech/nest-server-starter/main/package.json |
+| Backend framework package itself | Working inside `@lenne.tech/nest-server` repo | https://raw.githubusercontent.com/lenneTech/nest-server/main/package.json |
+
+**When to consult:**
+- Dependency resolution conflicts (`ERESOLVE`, peer dependency warnings)
+- Unclear version combinations between framework core and plugins (e.g., `@nestjs/*`, `nuxt` + modules)
+- Major version upgrades where multiple related packages must align
+- Validating whether a package should still exist in the ecosystem
+- Looking up canonical `pnpm.overrides` entries for known transitive CVEs
+
+**How to apply:**
+1. Detect project type via the markers above
+2. Fetch the relevant starter `package.json` via WebFetch (raw URL — do NOT use blob URLs, they return HTML)
+3. Diff against the current project's `package.json` to identify version drift or misalignment
+4. Use the starter versions as ground truth for the framework core and its direct ecosystem (NOT for project-specific dependencies)
+
+**Important:** The starters are reference points, not strict upgrade targets. Only adopt starter versions when they resolve actual conflicts or align with the update strategy — do not downgrade packages to match the starter unnecessarily.
 
 ## Update Decision Framework
 
@@ -662,6 +759,7 @@ Before declaring success, verify ALL of these:
 14. **Isolate HIGH RISK**: Test thoroughly, fix code when possible
 15. **Balance Value vs. Cost**: Don't make extensive changes for minor updates
 16. **Transparency**: Report all attempts, fixes, successes, and blockers
+17. **Consult Starter Templates**: On complex version conflicts, use `nuxt-base-starter` (frontend) or `nest-server-starter` (backend) `package.json` as reference for validated combinations
 
 **Success is measured by**:
 1. How many packages you removed (not kept)

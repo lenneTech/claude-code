@@ -92,9 +92,23 @@ The lt-dev:npm-package-maintainer agent performs 4 priorities:
 1. **Remove unused packages** - Finds and removes packages not used in the codebase
 2. **Optimize categorization** - Moves dev-only packages to devDependencies
 3. **Replace deprecated packages** - Detects deprecated packages and replaces them with maintained alternatives
-4. **Update packages** - Updates to latest versions with risk-based approach
+4. **Update packages & manage overrides** - Updates to latest versions with risk-based approach and maintains `pnpm.overrides` entries
 
 All operations ensure `pnpm run build` and `pnpm test` pass before completion.
+
+## Override Safety Rule (Critical)
+
+When the agent ADDS an entry to `pnpm.overrides` (typically to force a security-patched version of a transitive dependency), the override **target** MUST be a fixed version — never a range like `">=X"`, `"^X"`, or `"~X"`.
+
+| Correct | Incorrect | Why |
+|---|---|---|
+| `"vite": "7.3.2"` | `"vite": ">=7.3.2"` | `>=` is unbounded — pnpm will install `8.x.y` if available |
+| `"@apollo/server": "5.5.0"` | `"@apollo/server": "^5.5.0"` | Defeats the purpose of an override |
+| `"vite@>=7.0.0 <7.3.2": "7.3.2"` | `"vite@>=7.0.0 <7.3.2": ">=7.3.2"` | Range on the LEFT selects affected versions; the RIGHT must still be fixed |
+
+**Why this matters:** In April 2026 the TurboOps monorepo received an override `"vite@>=7.0.0 <=7.3.1": ">=7.3.2"` from a security maintenance run. Because the target `">=7.3.2"` was unbounded, pnpm silently installed `vite@8.0.8` (major version jump), which broke peer dependencies in `@nuxt/test-utils`, dropped `drizzle-orm` from `better-auth`, and caused 13 e2e test regressions. The fix was switching every override target to a fixed version.
+
+**Reference implementation:** `https://github.com/lenneTech/nest-server-starter/blob/main/package.json` — canonical example of correctly-written `pnpm.overrides` for the lenne.tech stack. Align with this file when in doubt. The detailed rule is in `@lenne.tech/nest-server/.claude/rules/package-management.md` → "Overrides".
 
 ## Quick Guidance
 
@@ -102,3 +116,23 @@ All operations ensure `pnpm run build` and `pnpm test` pass before completion.
 - **Security urgent?** → Recommend `/lt-dev:maintenance:maintain-security` (fast, focused)
 - **Before release?** → Recommend `/lt-dev:maintenance:maintain-pre-release` (conservative)
 - **General cleanup?** → Recommend `/lt-dev:maintenance:maintain` (comprehensive)
+
+## Reference Templates for Complex Version Constellations
+
+When dependency conflicts or unclear version combinations arise during maintenance, the lenne.tech starter templates provide validated package constellations as reference:
+
+| Project Type | Raw `package.json` URL |
+|--------------|------------------------|
+| Frontend (`projects/app/`, `packages/app/`) — Nuxt/Vue | https://raw.githubusercontent.com/lenneTech/nuxt-base-starter/main/package.json |
+| Backend (`projects/api/`, `packages/api/`) — NestJS | https://raw.githubusercontent.com/lenneTech/nest-server-starter/main/package.json |
+| Framework core — `@lenne.tech/nest-server` | https://raw.githubusercontent.com/lenneTech/nest-server/main/package.json |
+
+**When to consult the templates:**
+- `ERESOLVE` errors or peer dependency warnings during install
+- Major version upgrades affecting multiple related packages (e.g., `@nestjs/*`, `nuxt` + modules)
+- Uncertainty whether a framework package version combination is valid
+- Looking up canonical `pnpm.overrides` entries for known transitive CVEs
+
+**How to apply:** Fetch the raw `package.json` via WebFetch and diff against the current project. Use the starter versions as ground truth for framework core + direct ecosystem. Do NOT blindly downgrade project-specific dependencies to match the starter.
+
+**Override documentation pattern:** The starter uses a parallel `//overrides` block in `package.json` with one comment per override (CVE / transitive chain / removal condition). Mirror this pattern when adding new overrides — undocumented overrides accumulate and become unmaintainable. The full rule is in `@lenne.tech/nest-server/.claude/rules/package-management.md` → "Overrides".

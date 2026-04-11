@@ -125,6 +125,29 @@ grep -rn 'Model\.db\b' src/server/ --include='*.ts' | grep -v node_modules | gre
 grep -rn '\.db\.collection(' src/server/ --include='*.ts' | grep -v node_modules
 ```
 
+#### Layer 5: Direct Mongoose Access Security Verification
+
+Direct Mongoose methods (`Model.create()`, `Model.findByIdAndUpdate()`, `Model.find().lean()`) keep all Mongoose plugins active (Tenant, Audit, RoleGuard) but **skip CrudService authorization** (`checkRights`, `@Restricted` enforcement, `S_CREATOR` checks, output filtering). This is acceptable for performance-critical paths — but only when security is ensured by other means.
+
+```bash
+# Find direct Mongoose model access outside of CrudService
+grep -rn 'Model\.\(create\|find\|findOne\|findById\|updateOne\|updateMany\|deleteOne\|deleteMany\|bulkWrite\|insertMany\|aggregate\)' src/server/ --include='*.ts' | grep -v node_modules | grep -v '.spec.ts' | grep -v 'crud.service'
+```
+
+**Review rules for each direct access found:**
+- [ ] **System-internal context only:** Used in processors, crons, queue handlers, or service-to-service calls — NOT in controller methods that serve user requests directly
+- [ ] **If user-facing:** Explicit authorization check (`user.hasRole()`, `equalIds()`, ownership verification) performed BEFORE the direct access
+- [ ] **Tenant isolation preserved (only if project uses multi-tenancy):** No cross-tenant data access possible — tenant filter applied or inherited via Mongoose plugin. Skip this check if project has no Tenant plugin configured.
+- [ ] **Output filtering:** Sensitive fields (`hideField: true`) manually excluded from response if result goes to a user
+- [ ] **Documented reason:** Comment explains WHY `process()`/CrudService was bypassed (performance, bulk operation, subdocument array, etc.)
+
+| Scenario | Severity |
+|----------|----------|
+| Direct access without tenant filter in multi-tenant project | **CRITICAL** — Tenant data leak |
+| Direct access in controller without authorization check | **HIGH** |
+| Direct access returning unfiltered sensitive fields to user | **HIGH** |
+| Direct access in system-internal code with documented reason | Allowed |
+
 #### Permissions Scanner
 
 ```bash
