@@ -172,7 +172,21 @@ afterAll(async () => {
 
 ## Framework Source Files (MUST READ before guessing)
 
-**ALWAYS read actual source code** from `node_modules/@lenne.tech/nest-server/` before guessing framework behavior. The framework ships its complete source with the npm package.
+**ALWAYS read actual source code** before guessing framework behavior. lenne.tech projects ship the framework source in one of two consumption modes:
+
+- **npm mode** — `@lenne.tech/nest-server` installed as a dependency. Source lives in `node_modules/@lenne.tech/nest-server/`.
+- **vendored mode** — `src/core/VENDOR.md` exists in the api project. Source lives DIRECTLY in `<api-root>/src/core/` as first-class project code (no `@lenne.tech/nest-server` npm dependency). Detect via `test -f <api-root>/src/core/VENDOR.md`.
+
+All paths in the table below use the npm-mode base. **In vendored projects, substitute**:
+- `node_modules/@lenne.tech/nest-server/src/core/` → `src/core/`
+- `node_modules/@lenne.tech/nest-server/src/core.module.ts` → `src/core/core.module.ts`
+- `node_modules/@lenne.tech/nest-server/CLAUDE.md` → `src/core/VENDOR.md` (vendored projects document the baseline + local patches here instead)
+- `node_modules/@lenne.tech/nest-server/FRAMEWORK-API.md` → same concept in upstream repo; vendored projects may copy it into `src/core/` during sync, else consult the upstream GitHub repo at the baseline tag recorded in `VENDOR.md`.
+- `node_modules/@lenne.tech/nest-server/.claude/rules/` → not shipped into vendored projects; read from the upstream repo if needed.
+
+Generated imports MUST match the project mode:
+- npm: `import { CrudService } from '@lenne.tech/nest-server';`
+- vendored: `import { CrudService } from '../../../core';` (relative depth varies by file location)
 
 | File (in `node_modules/@lenne.tech/nest-server/`) | When to Read |
 |---------------------------------------------------|-------------|

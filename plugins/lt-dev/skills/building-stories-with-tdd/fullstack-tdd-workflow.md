@@ -2,6 +2,12 @@
 
 This document describes the recommended Test-Driven Development approach for fullstack projects (Backend + Frontend).
 
+> **Framework consumption mode**: The api project runs in one of two modes — detect via `test -f <api-root>/src/core/VENDOR.md`.
+> - **npm mode**: `@lenne.tech/nest-server` is an npm dependency; imports use `from '@lenne.tech/nest-server'`; framework source lives in `node_modules/@lenne.tech/nest-server/`.
+> - **vendored mode** (`VENDOR.md` exists): framework source is at `<api-root>/src/core/**`; imports use relative paths (`from '../../src/core'` from tests). No npm dependency.
+>
+> Generated backend code, tests, and imports MUST match the project mode.
+
 ## Core Principle
 
 **Tests drive the implementation, not vice versa.**

@@ -13,11 +13,17 @@ description: Complete guide to @lenne.tech/nest-server framework - CrudService b
 
 ## Core Service Base Class: CrudService
 
-**IMPORTANT**: Before working with Services, ALWAYS read this file to understand the base functionality:
+**IMPORTANT**: Before working with Services, ALWAYS read this file to understand the base functionality. The path depends on the project's framework consumption mode:
 
 ```
+# npm mode (classic):
 node_modules/@lenne.tech/nest-server/src/core/common/services/crud.service.ts
+
+# vendored mode (src/core/VENDOR.md exists in the api project):
+<api-root>/src/core/common/services/crud.service.ts
 ```
+
+Detect via `test -f <api-root>/src/core/VENDOR.md`. All subsequent framework paths in this document follow the same npm-mode base; substitute `node_modules/@lenne.tech/nest-server/src/core/` → `src/core/` in vendored projects.
 
 **Why this is critical:**
 - Almost ALL Services extend `CrudService<Model>`

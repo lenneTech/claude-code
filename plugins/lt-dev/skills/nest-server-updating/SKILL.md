@@ -10,6 +10,24 @@ This skill provides **knowledge and resources** for updating @lenne.tech/nest-se
 
 **Important:** After updating nest-server, also check if `@lenne.tech/nuxt-extensions` in `projects/app/` needs a compatible update, as nuxt-extensions is aligned with nest-server.
 
+## Scope: npm mode vs vendored mode
+
+This skill covers the **npm-mode** update flow (bumping `@lenne.tech/nest-server` in `package.json`, applying migration guides from the upstream repo, re-running tests). Its companion for **vendored projects** (those where `<api-root>/src/core/VENDOR.md` exists) is the `nest-server-core-vendoring` skill + the `nest-server-core-updater` agent via `/lt-dev:backend:update-nest-server-core`.
+
+**The two flows share one migration-guide corpus** (the upstream `migration-guides/` directory applies to code regardless of consumption mode — it describes API deltas in the framework, not in the distribution channel). Everything in this skill about per-version breaking changes, error patterns, and error messages is equally valid in vendored mode. What differs is:
+
+| Aspect | npm mode | vendored mode |
+|--------|----------|---------------|
+| Detection | no `src/core/VENDOR.md` | `src/core/VENDOR.md` exists |
+| Bump command | `pnpm update @lenne.tech/nest-server` | `/lt-dev:backend:update-nest-server-core --target <v>` |
+| Framework source location | `node_modules/@lenne.tech/nest-server/src/core/...` | `<api-root>/src/core/...` |
+| Baseline version lookup | `pnpm list @lenne.tech/nest-server --depth=0` | `grep Baseline-Version <api-root>/src/core/VENDOR.md` |
+| Source of truth for framework code | npm package `dist/` + shipped `src/` | local `src/core/` (committed, may carry patches) |
+| Local patches | not persisted (lost on `pnpm install`) | expected; logged in `VENDOR.md` |
+| Import statements in consumer code | `from '@lenne.tech/nest-server'` | relative: `from '../../src/core'` etc. |
+
+The `nest-server-updater` agent auto-detects the project mode (Phase 0 in its workflow) and delegates to `nest-server-core-updater` when `VENDOR.md` is present, so users only ever need to invoke `/lt-dev:backend:update-nest-server` — the right flow kicks in automatically.
+
 ## When This Skill Activates
 
 - Discussing nest-server updates or upgrades

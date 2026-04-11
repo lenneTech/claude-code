@@ -5,6 +5,8 @@ description: Quick reference guide for Test-Driven Development workflow
 
 # Story-Based TDD Quick Reference
 
+> **Framework source location**: All `node_modules/@lenne.tech/nest-server/...` paths below assume npm-mode. In vendored projects (those with `<api-root>/src/core/VENDOR.md`), substitute `node_modules/@lenne.tech/nest-server/src/core/` → `<api-root>/src/core/` and `node_modules/@lenne.tech/nest-server/src/test/` → `<api-root>/src/core/test/`. Detection: `test -f <api-root>/src/core/VENDOR.md`.
+
 ## Table of Contents
 - [The 7-Step Workflow](#the-7-step-workflow)
 - [Commands Cheatsheet](#commands-cheatsheet)

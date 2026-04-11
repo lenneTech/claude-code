@@ -18,10 +18,10 @@ These plugins are **optional** but enhance the experience when working with this
 
 ## Features
 
-- **Backend Development**: NestJS with @lenne.tech/nest-server
+- **Backend Development**: NestJS with @lenne.tech/nest-server (supports both npm-mode and vendored-mode projects — see below)
 - **Frontend Development**: Nuxt 4 with Nuxt UI
 - **TDD Workflows**: Test-Driven Development with story-based implementation
-- **Nest-Server Updates**: Automated migration guides and stepwise upgrades
+- **Nest-Server Updates**: Automated migration guides and stepwise upgrades (auto-delegates to `nest-server-core-updater` in vendored projects)
 - **Fullstack Updates**: Synchronize projects with latest starter templates
 - **CLI Tools**: lenne.tech CLI integration
 - **Git Workflows**: Commit messages, MR descriptions, branch rebasing
@@ -40,6 +40,15 @@ These plugins are **optional** but enhance the experience when working with this
 - **27 Commands** - User-triggered actions via `/command-name`
 - **9 Hooks** - Automated project detection and validation
 - **5 MCP Servers** - Chrome DevTools, Linear, Nuxt UI, Better Auth, and Figma Desktop integration
+
+## Framework consumption modes (nest-server)
+
+lenne.tech api projects can consume `@lenne.tech/nest-server` in one of two modes:
+
+- **npm mode** (classic): `@lenne.tech/nest-server` is installed as a dependency. Framework source lives in `node_modules/@lenne.tech/nest-server/`. Imports use the bare specifier `from '@lenne.tech/nest-server'`. Updated via `/lt-dev:backend:update-nest-server` → `nest-server-updater` agent.
+- **vendored mode**: the framework's `core/` directory is copied directly into the project at `<api-root>/src/core/` and managed as first-class project code. There is NO `@lenne.tech/nest-server` npm dependency. Imports use relative paths (`from '../../../core'`). Local patches are allowed and logged in `<api-root>/src/core/VENDOR.md`. Updated via `/lt-dev:backend:update-nest-server-core` → `nest-server-core-updater` agent; local changes are proposed back upstream via `/lt-dev:backend:contribute-nest-server-core` → `nest-server-core-contributor` agent.
+
+**Detection**: `test -f <api-root>/src/core/VENDOR.md` → vendored, else npm. The `detect-nest-server` hook, the `nest-server-updater` agent, and the `nest-server-core-vendoring` skill all perform this check automatically and branch accordingly. All skills and agents that reference framework files (`generating-nest-servers`, `building-stories-with-tdd`, `backend-dev`, etc.) carry a preamble listing both path conventions.
 
 ## License
 

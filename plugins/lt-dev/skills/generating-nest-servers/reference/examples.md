@@ -5,6 +5,8 @@ description: Complete examples for generating NestJS server structures from spec
 
 # NestJS Server Generator Examples
 
+> **Framework source location**: All `node_modules/@lenne.tech/nest-server/...` paths below assume npm-mode. In vendored projects (those with `<api-root>/src/core/VENDOR.md`), substitute `node_modules/@lenne.tech/nest-server/src/core/` → `<api-root>/src/core/` and `node_modules/@lenne.tech/nest-server/src/test/` → `<api-root>/src/core/test/`. Detection: `test -f <api-root>/src/core/VENDOR.md`.
+
 ## Table of Contents
 - [Example 1: Library Management System](#example-1-library-management-system)
 - [Example 2: Hotel Booking System (Minimal)](#example-2-hotel-booking-system-minimal)

@@ -137,7 +137,9 @@ tenantId: string = undefined;
 tenantId: string = undefined;
 ```
 
-**Before adding an index to any field, grep the framework source (`node_modules/@lenne.tech/nest-server/src/core/common/plugins/`) for `schema.index(` to see if the plugin already handles it.**
+**Before adding an index to any field, grep the framework source for `schema.index(` to see if the plugin already handles it. The path depends on the project's framework consumption mode:**
+- **npm mode**: `node_modules/@lenne.tech/nest-server/src/core/common/plugins/`
+- **vendored mode** (`src/core/VENDOR.md` exists): `<api-root>/src/core/common/plugins/`
 
 ---
 

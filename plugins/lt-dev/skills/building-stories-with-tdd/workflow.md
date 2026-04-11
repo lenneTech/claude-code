@@ -17,6 +17,30 @@ description: Complete 7-step TDD workflow with detailed implementation steps, te
 
 This skill follows a rigorous 7-step iterative process (with Steps 5, 5a, 5b for final validation and refactoring):
 
+## Framework Source Location (npm vs vendored) — READ FIRST
+
+All framework file paths in this workflow use the npm-mode base path
+`node_modules/@lenne.tech/nest-server/src/core/...`. **Before you follow any
+of those paths, detect the project's consumption mode:**
+
+```bash
+test -f projects/api/src/core/VENDOR.md || test -f packages/api/src/core/VENDOR.md && echo vendored || echo npm
+```
+
+- **Vendored mode** (`src/core/VENDOR.md` exists): the framework source is
+  first-class project code at `<api-root>/src/core/**`. Substitute every
+  `node_modules/@lenne.tech/nest-server/src/core/` path below with
+  `src/core/` and every `node_modules/@lenne.tech/nest-server/src/test/`
+  with `src/core/test/`. Imports in generated code use relative paths like
+  `from '../../../core'` (not `from '@lenne.tech/nest-server'`).
+- **npm mode**: source lives under `node_modules/@lenne.tech/nest-server/`.
+  Imports in generated code use the bare specifier
+  `from '@lenne.tech/nest-server'`.
+
+Generated tests and implementation MUST match the project's mode. Mixing
+vendored files with a bare-specifier import (or vice-versa) will fail at
+build/test time.
+
 ## Step 1: Story Analysis & Validation
 
 **Before writing ANY code or tests:**

@@ -5,6 +5,12 @@ description: Complete 7-phase workflow for NestJS module/object generation - fro
 
 # Workflow Process
 
+> **Framework consumption mode**: lenne.tech api projects run in one of two modes — detect via `test -f <api-root>/src/core/VENDOR.md`.
+> - **npm mode**: `@lenne.tech/nest-server` is an npm dependency. Imports use `from '@lenne.tech/nest-server'`. Framework source in `node_modules/@lenne.tech/nest-server/src/core/...`.
+> - **vendored mode** (`VENDOR.md` exists): framework source at `<api-root>/src/core/**`. Imports use relative paths (`from '../../../core'`, depth depends on location). No npm dependency.
+>
+> Generated code MUST match the project mode — the scaffolded imports, test helpers, and any `node_modules/...` path references below all need to be translated in vendored mode.
+
 ## Table of Contents
 - [Phase 1: Analysis & Planning](#phase-1-analysis--planning)
 - [Phase 2: SubObject Creation](#phase-2-subobject-creation)

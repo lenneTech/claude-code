@@ -14,6 +14,8 @@ description: Complete examples for Test-Driven Development workflow with NestJS 
 
 This document provides complete examples of the TDD workflow for different types of user stories.
 
+> **Framework source location**: All `node_modules/@lenne.tech/nest-server/...` paths below assume npm-mode. In vendored projects (those with `<api-root>/src/core/VENDOR.md`), substitute `node_modules/@lenne.tech/nest-server/src/core/` → `<api-root>/src/core/` and `node_modules/@lenne.tech/nest-server/src/test/` → `<api-root>/src/core/test/`. Also replace `from '@lenne.tech/nest-server'` imports with relative paths like `from '../../src/core'` from test files. Detection: `test -f <api-root>/src/core/VENDOR.md`.
+
 ## Example 1: Simple CRUD Feature - Product Reviews
 
 ### Story Requirement

@@ -388,7 +388,7 @@ The **target** of an override (value on the right-hand side) MUST be a fixed ver
 
 **Both forms are valid. Form A is preferred for security-driven overrides** because it only replaces vulnerable versions and leaves non-vulnerable installs untouched — reducing the blast radius. Use Form B only when ALL installed versions of the package must be unified.
 
-Additionally, when the package is actually installed (`node_modules/@lenne.tech/nest-server/.claude/rules/package-management.md`), the canonical rule document is available locally and lists the full rationale, the TurboOps incident, and the safe override workflow.
+Additionally, when the package is actually installed as an npm dependency (`node_modules/@lenne.tech/nest-server/.claude/rules/package-management.md`), the canonical rule document is available locally and lists the full rationale, the TurboOps incident, and the safe override workflow. In **vendored projects** the npm package does not exist; the equivalent rules are documented in the upstream repo and the project's own `src/core/VENDOR.md`. A vendored project that does NOT have `@lenne.tech/nest-server` in `dependencies` should NOT be audited by this agent for that package at all — vendored source is first-class project code, not a dependency.
 
 #### Document Every Override (Mandatory)
 

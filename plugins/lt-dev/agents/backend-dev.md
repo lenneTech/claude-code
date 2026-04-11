@@ -41,14 +41,41 @@ When fixing a bug, error, or security vulnerability:
 
 ## Execution Protocol
 
+### 0. Framework Source Location (npm vs vendored)
+
+Before reading any framework source, detect the consumption mode:
+
+```bash
+# Vendored mode: src/core/VENDOR.md exists → framework lives INSIDE the project
+test -f projects/api/src/core/VENDOR.md || test -f packages/api/src/core/VENDOR.md && echo vendored
+```
+
+- **Vendored projects** (`src/core/VENDOR.md` exists): framework source is at
+  `src/core/**` (first-class project code). Imports use relative paths
+  (`from '../../../core'`). No `@lenne.tech/nest-server` npm dependency.
+  Framework file paths referenced below substitute `src/core/` for
+  `node_modules/@lenne.tech/nest-server/src/core/`.
+- **npm projects**: framework is an npm dependency. Source lives in
+  `node_modules/@lenne.tech/nest-server/src/core/**`. Imports are bare specifiers
+  (`from '@lenne.tech/nest-server'`).
+
+Generated code MUST match the project's mode:
+- npm mode → `import { CrudService } from '@lenne.tech/nest-server';`
+- vendored mode → `import { CrudService } from '../../../core';` (depth depends on file location relative to `src/core`)
+
 ### 1. Context Analysis
 
 ```
 1. Detect project root:  ls -d projects/api packages/api 2>/dev/null
-2. Read nest-server version:  pnpm list @lenne.tech/nest-server --depth=0
-3. Detect package manager:  ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
-4. Study existing patterns:  src/server/modules/ structure, models, services
-5. Read CrudService:  node_modules/@lenne.tech/nest-server/src/core/common/services/crud.service.ts
+2. Detect consumption mode:  test -f <api-root>/src/core/VENDOR.md && echo vendored || echo npm
+3. Read nest-server version:
+   - npm:       pnpm list @lenne.tech/nest-server --depth=0
+   - vendored:  grep 'Baseline-Version' <api-root>/src/core/VENDOR.md
+4. Detect package manager:  ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
+5. Study existing patterns:  src/server/modules/ structure, models, services
+6. Read CrudService:
+   - npm:       node_modules/@lenne.tech/nest-server/src/core/common/services/crud.service.ts
+   - vendored:  src/core/common/services/crud.service.ts
 ```
 
 ### 2. CLI Scaffolding (MANDATORY for new modules/objects)
@@ -482,7 +509,7 @@ function fn(a: string, b?: number, c?: string) { }
 | Test fails (validation) | Check CreateInput has all required fields |
 | Circular dependency | Use `forwardRef()` or `lt server addProp` for second reference |
 | Permissions scanner warnings | Add missing `@Restricted`, `@Roles`, or `securityCheck()` |
-| Missing import | Add manually: `import { Ref } from '@lenne.tech/nest-server'` |
+| Missing import | Add manually: npm → `import { Ref } from '@lenne.tech/nest-server'`; vendored → `import { Ref } from '<relative path to src/core>'` |
 | Inheritance issues | Check extends statement, ensure CreateInput includes parent fields |
 
 ## Permissions Report

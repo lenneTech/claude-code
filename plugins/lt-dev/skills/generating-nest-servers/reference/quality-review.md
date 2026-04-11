@@ -5,6 +5,8 @@ description: Comprehensive quality review guidelines before creating final repor
 
 # Phase 8: Pre-Report Quality Review
 
+> **Framework source location**: All `node_modules/@lenne.tech/nest-server/...` paths below assume npm-mode. In vendored projects (those with `<api-root>/src/core/VENDOR.md`), substitute `node_modules/@lenne.tech/nest-server/src/core/` → `<api-root>/src/core/` and `node_modules/@lenne.tech/nest-server/src/test/` → `<api-root>/src/core/test/`. Detection: `test -f <api-root>/src/core/VENDOR.md`.
+
 ## Table of Contents
 - [Step 1: Identify All Changes](#step-1-identify-all-changes)
 - [Step 2: Test Management](#step-2-test-management)

@@ -5,6 +5,12 @@ description: Quick reference for ALL NestJS server development - from simple sin
 
 # NestJS Server Development Quick Reference
 
+> **Framework consumption mode**: lenne.tech api projects run in one of two modes — detect via `test -f <api-root>/src/core/VENDOR.md`.
+> - **npm mode**: `@lenne.tech/nest-server` is an npm dependency. Imports use bare specifiers (`from '@lenne.tech/nest-server'`). Framework source lives in `node_modules/@lenne.tech/nest-server/src/core/...`.
+> - **vendored mode** (`VENDOR.md` exists): framework source is first-class project code at `<api-root>/src/core/...`. Imports use relative paths (`from '../../../core'`). All `node_modules/@lenne.tech/nest-server/src/core/` references in this document substitute for `src/core/`.
+>
+> Generated code MUST match the project mode — mixing will fail at build time.
+
 ## Table of Contents
 - [Scope](#scope)
 - [Specification Syntax](#specification-syntax)
