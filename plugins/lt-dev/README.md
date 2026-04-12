@@ -50,6 +50,15 @@ lenne.tech api projects can consume `@lenne.tech/nest-server` in one of two mode
 
 **Detection**: `test -f <api-root>/src/core/VENDOR.md` → vendored, else npm. The `detect-nest-server` hook, the `nest-server-updater` agent, and the `nest-server-core-vendoring` skill all perform this check automatically and branch accordingly. All skills and agents that reference framework files (`generating-nest-servers`, `building-stories-with-tdd`, `backend-dev`, etc.) carry a preamble listing both path conventions.
 
+## Further Reading
+
+The comprehensive guide for the full lenne.tech fullstack ecosystem — covering both the `lt` CLI and this `lt-dev` plugin — is maintained in the CLI repository:
+
+- **[LT-ECOSYSTEM-GUIDE](https://github.com/lenneTech/cli/blob/main/docs/LT-ECOSYSTEM-GUIDE.md)** — Full reference: architecture, CLI commands, plugin commands, agents, skills, vendor-mode workflows, decision matrix, glossary
+- **[VENDOR-MODE-WORKFLOW](https://github.com/lenneTech/cli/blob/main/docs/VENDOR-MODE-WORKFLOW.md)** — Step-by-step guide: npm → vendor conversion, update workflows, vendor → npm rollback, troubleshooting
+
+Both documents reference each other and are kept in sync with CLI releases.
+
 ## License
 
 MIT - lenne.tech GmbH

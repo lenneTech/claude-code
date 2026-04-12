@@ -47,15 +47,15 @@ git reset --hard HEAD@{1}
 Use `--*-link` for **development** (symlink, changes affect source):
 ```bash
 lt fullstack init --name TestApp --frontend nuxt --git false --noConfirm \
-  --api-link ~/code/nest-server-starter \
-  --frontend-link ~/code/nuxt-base-starter
+  --api-link <path/to/nest-server-starter> \
+  --frontend-link <path/to/nuxt-base-starter>
 ```
 
 Use `--*-copy` for **independent development** (isolated copy):
 ```bash
 lt fullstack init --name MyApp --frontend angular --git true --noConfirm \
-  --api-copy ~/code/nest-server-starter \
-  --frontend-copy ~/code/ng-base-starter
+  --api-copy <path/to/nest-server-starter> \
+  --frontend-copy <path/to/ng-base-starter>
 ```
 
 ## Troubleshooting

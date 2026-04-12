@@ -4,7 +4,7 @@ description: Autonomous agent for updating a lenne.tech fullstack project. Synch
 model: sonnet
 effort: high
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, TodoWrite
-skills: nest-server-updating, developing-lt-frontend, maintaining-npm-packages, using-lt-cli
+skills: nest-server-updating, developing-lt-frontend, maintaining-npm-packages, using-lt-cli, nuxt-extensions-core-vendoring
 memory: project
 maxTurns: 120
 ---
@@ -61,6 +61,7 @@ Initial TodoWrite (after Phase 1):
 [pending] Present plan for user approval
 [pending] Update backend (nest-server + starter changes)
 [pending] Update frontend (nuxt-extensions + starter changes)
+[pending] Sync CLAUDE.md from upstream starters
 [pending] Final cross-project validation
 [pending] Generate report
 ```
@@ -74,6 +75,24 @@ Initial TodoWrite (after Phase 1):
 ---
 
 ## Execution Protocol
+
+### Phase 0: Frontend Mode Detection
+
+Before any updates, detect whether the frontend uses npm or vendor mode:
+
+```bash
+# Check for vendored nuxt-extensions
+test -f <frontend-path>/app/core/VENDOR.md && echo "VENDOR_MODE" || echo "NPM_MODE"
+```
+
+**If vendor mode is detected:**
+- The frontend uses a vendored copy of `@lenne.tech/nuxt-extensions` at `app/core/`
+- Do NOT run `pnpm add @lenne.tech/nuxt-extensions@latest` -- this would conflict
+- Instead, delegate to the `nuxt-extensions-core-updater` workflow in Phase 5
+- The `nuxt-extensions-core-vendoring` skill has the knowledge base for this pattern
+
+**If npm mode is detected (default):**
+- Proceed with the standard update flow (install latest npm package)
 
 ### Package Manager Detection
 
@@ -289,6 +308,32 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
 
 ### Phase 5: Frontend Update (unless --skip-frontend)
 
+**Check frontend mode first** (see Phase 0):
+
+```bash
+test -f <frontend-path>/app/core/VENDOR.md && echo "VENDOR_MODE" || echo "NPM_MODE"
+```
+
+**If vendor mode (`app/core/VENDOR.md` exists):**
+
+Do NOT install `@lenne.tech/nuxt-extensions` via npm. Instead, use the vendored
+core update workflow:
+
+1. Read `VENDOR.md` for baseline version
+2. Determine latest upstream tag from `github.com/lenneTech/nuxt-extensions`
+3. Follow the `nuxt-extensions-core-updater` workflow:
+   - Clone upstream baseline and target to `/tmp/`
+   - Generate diffs (upstream-delta, local-changes)
+   - Categorize hunks (clean pick / conflict / not applicable)
+   - Apply approved changes (1:1 file mapping, no flatten-fix needed)
+   - Validate with `nuxt build` + lint
+   - Update `VENDOR.md` with new baseline and sync history
+4. **IMPORTANT:** nuxt-extensions tags have **no** `v` prefix (e.g., `1.5.3` not `v1.5.3`)
+
+Skip steps 1-2 below and proceed to step 3 (apply starter changes).
+
+**If npm mode (default):**
+
 1. **Update @lenne.tech/nuxt-extensions:**
    ```bash
    cd <frontend-path>
@@ -321,7 +366,27 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
    - Start dev server, verify no runtime errors
    - Check console for warnings/errors
 
-### Phase 6: Final Validation & Report
+### Phase 6: Sync CLAUDE.md Files
+
+After backend and/or frontend updates, sync the CLAUDE.md files from the
+upstream starter templates so that Claude Code has up-to-date framework
+instructions. This is the same logic as `/lt-dev:fullstack:sync-claude-md`:
+
+| Source | Target |
+|--------|--------|
+| `lenneTech/nest-server` → `CLAUDE.md` | `<backend-path>/CLAUDE.md` |
+| `lenneTech/nuxt-base-starter` → `nuxt-base-template/CLAUDE.md` | `<frontend-path>/CLAUDE.md` |
+| `lenneTech/lt-monorepo` → `CLAUDE.md` | `./CLAUDE.md` (root) |
+
+1. Only sync the targets that were actually updated in this run:
+   - Backend updated → sync nest-server CLAUDE.md
+   - Frontend updated → sync nuxt-base-starter CLAUDE.md
+   - Either updated → sync root monorepo CLAUDE.md
+2. Use section-level merge (keep project-specific customizations, add new upstream sections).
+3. Preserve any `<!-- lt-vendor-marker -->` blocks in vendor-mode projects.
+4. Commit: `docs: sync CLAUDE.md from upstream starter templates`
+
+### Phase 7: Final Validation & Report
 
 1. **Cross-project validation:**
    ```bash

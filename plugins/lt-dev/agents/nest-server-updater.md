@@ -355,7 +355,25 @@ Updates use **pipeline parallelism** — overlap analysis with validation to red
    - Run all tests
    - Verify no cross-dependency issues
 
-### Phase 6: Report Generation
+### Phase 6: Sync CLAUDE.md from upstream
+
+After a successful update, the project's `CLAUDE.md` may need to be refreshed
+to reflect framework changes (new conventions, updated API patterns, etc.).
+
+1. Fetch the CLAUDE.md from the **target version** of `@lenne.tech/nest-server`:
+   ```bash
+   # For npm-based projects, read from the updated node_modules
+   cat projects/api/node_modules/@lenne.tech/nest-server/CLAUDE.md
+   ```
+2. Compare section-by-section with the existing `projects/api/CLAUDE.md`.
+3. Apply the same section-level merge logic as `/lt-dev:fullstack:sync-claude-md`:
+   - Sections in upstream but missing locally → **add**
+   - Sections in both → **keep local** (may contain project-specific customizations)
+   - Sections only locally → **keep** (project-specific)
+4. If changes were made, commit as:
+   `docs(framework): sync CLAUDE.md from @lenne.tech/nest-server@<target-version>`
+
+### Phase 7: Report Generation
 
 Generate comprehensive report:
 

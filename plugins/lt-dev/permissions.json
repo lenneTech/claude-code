@@ -45,12 +45,12 @@
     {
       "pattern": "Bash(npm run build:*)",
       "description": "Build the application",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
     },
     {
       "pattern": "Bash(npm run lint:*)",
       "description": "Run linter checks",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend", "code-cleanup"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend", "code-cleanup", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
     },
     {
       "pattern": "Bash(npm run generate-types:*)",
@@ -78,6 +78,11 @@
       "usedBy": ["generating-nest-servers", "code-reviewer", "backend-reviewer", "security-reviewer", "sec-audit", "backend-dev"]
     },
     {
+      "pattern": "Bash(lt frontend:*)",
+      "description": "Execute lt frontend CLI commands (convert-mode)",
+      "usedBy": ["vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
+    },
+    {
       "pattern": "Bash(lt:*)",
       "description": "Execute general lt CLI commands (git, fullstack)",
       "usedBy": ["using-lt-cli"]
@@ -90,7 +95,7 @@
     {
       "pattern": "Bash(npm install:*)",
       "description": "Install npm packages",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "branch-rebaser"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "branch-rebaser", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
     },
     {
       "pattern": "Bash(npm uninstall:*)",
@@ -180,12 +185,12 @@
     {
       "pattern": "Bash(pnpm run build:*)",
       "description": "Build the application via pnpm",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
     },
     {
       "pattern": "Bash(pnpm run lint:*)",
       "description": "Run linter checks via pnpm",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend", "code-cleanup"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend", "code-cleanup", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
     },
     {
       "pattern": "Bash(pnpm run generate-types:*)",
@@ -200,12 +205,12 @@
     {
       "pattern": "Bash(pnpm install:*)",
       "description": "Install packages via pnpm",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "branch-rebaser"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "branch-rebaser", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
     },
     {
       "pattern": "Bash(pnpm add:*)",
       "description": "Add packages via pnpm",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "branch-rebaser"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "branch-rebaser", "vendor-mode-converter-frontend"]
     },
     {
       "pattern": "Bash(pnpm remove:*)",
@@ -300,12 +305,12 @@
     {
       "pattern": "Bash(yarn run build:*)",
       "description": "Build the application via yarn",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup"]
+      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
     },
     {
       "pattern": "Bash(yarn run lint:*)",
       "description": "Run linter checks via yarn",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend", "code-cleanup"]
+      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend", "code-cleanup", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
     },
     {
       "pattern": "Bash(yarn run generate-types:*)",
@@ -320,7 +325,7 @@
     {
       "pattern": "Bash(yarn install:*)",
       "description": "Install packages via yarn",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "branch-rebaser"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "branch-rebaser", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
     },
     {
       "pattern": "Bash(yarn add:*)",
@@ -380,37 +385,37 @@
     {
       "pattern": "Bash(gh release:*)",
       "description": "Access GitHub releases via gh CLI",
-      "usedBy": ["nest-server-updating", "fullstack-updater"]
+      "usedBy": ["nest-server-updating", "fullstack-updater", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater", "nuxt-extensions-core-contributor"]
     },
     {
       "pattern": "Bash(gh api:*)",
       "description": "Access GitHub API via gh CLI for migration guides and changelogs",
-      "usedBy": ["nest-server-updating", "fullstack-updater"]
+      "usedBy": ["nest-server-updating", "fullstack-updater", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
     },
     {
       "pattern": "Bash(git clone:*)",
       "description": "Clone repositories for comparison",
-      "usedBy": ["nest-server-updating", "fullstack-updater"]
+      "usedBy": ["nest-server-updating", "fullstack-updater", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater", "nuxt-extensions-core-contributor"]
     },
     {
       "pattern": "Bash(git diff:*)",
       "description": "Compare versions in repositories",
-      "usedBy": ["fullstack-updater", "review", "debug", "coordinating-agent-teams", "code-reviewer", "test-reviewer", "frontend-reviewer", "backend-reviewer", "ux-reviewer", "docs-reviewer", "a11y-reviewer", "architect"]
+      "usedBy": ["fullstack-updater", "review", "debug", "coordinating-agent-teams", "code-reviewer", "test-reviewer", "frontend-reviewer", "backend-reviewer", "ux-reviewer", "docs-reviewer", "a11y-reviewer", "architect", "nuxt-extensions-core-updater", "nuxt-extensions-core-contributor"]
     },
     {
       "pattern": "Bash(git log:*)",
       "description": "Read git history of repositories",
-      "usedBy": ["fullstack-updater", "review", "debug", "coordinating-agent-teams", "code-reviewer", "architect"]
+      "usedBy": ["fullstack-updater", "review", "debug", "coordinating-agent-teams", "code-reviewer", "architect", "nuxt-extensions-core-updater", "nuxt-extensions-core-contributor"]
     },
     {
       "pattern": "Bash(git tag:*)",
       "description": "List git tags for version comparison",
-      "usedBy": ["fullstack-updater"]
+      "usedBy": ["fullstack-updater", "nuxt-extensions-core-updater"]
     },
     {
       "pattern": "Bash(git fetch:*)",
       "description": "Fetch latest changes from remote repositories",
-      "usedBy": ["fullstack-updater", "branch-rebaser"]
+      "usedBy": ["fullstack-updater", "branch-rebaser", "nuxt-extensions-core-updater"]
     },
     {
       "pattern": "Bash(npm run format:*)",
@@ -470,7 +475,7 @@
     {
       "pattern": "Bash(gh pr:*)",
       "description": "GitHub CLI for PR management",
-      "usedBy": ["branch-rebaser", "create-request", "dev-submit"]
+      "usedBy": ["branch-rebaser", "create-request", "dev-submit", "nuxt-extensions-core-contributor"]
     },
     {
       "pattern": "Bash(glab mr:*)",
@@ -556,6 +561,16 @@
       "pattern": "Bash(command -v k6:*)",
       "description": "Detect k6 installation",
       "usedBy": ["performance-reviewer"]
+    },
+    {
+      "pattern": "Bash(nuxt build:*)",
+      "description": "Run Nuxt build for validation",
+      "usedBy": ["vendor-mode-converter-frontend", "nuxt-extensions-core-updater", "fullstack-updater"]
+    },
+    {
+      "pattern": "Bash(nuxt typecheck:*)",
+      "description": "Run Nuxt type checking",
+      "usedBy": ["vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
     }
   ]
 }

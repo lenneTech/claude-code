@@ -14,21 +14,31 @@ Coordinated update of backend (nest-server) and frontend (nuxt-extensions) with 
 | Scenario | Command |
 |----------|---------|
 | Routine fullstack update | `/lt-dev:fullstack:update` |
+| Mode-aware update (npm/vendor detection) | `/lt-dev:fullstack:update-all` |
 | Check impact before updating | `/lt-dev:fullstack:update --dry-run` |
 | Only update frontend | `/lt-dev:fullstack:update --skip-backend` |
 | Only update backend | `/lt-dev:fullstack:update --skip-frontend` |
 | Backend-only project | `/lt-dev:backend:update-nest-server` |
+| Vendored frontend core sync | `/lt-dev:frontend:update-nuxt-extensions-core` |
+| Vendored backend core sync | `/lt-dev:backend:update-nest-server-core` |
 
 ## Related Elements
 
 | Element | Purpose |
 |---------|---------|
 | **Skill**: `nest-server-updating` | Backend update knowledge base |
+| **Skill**: `nest-server-core-vendoring` | Backend vendor pattern knowledge |
+| **Skill**: `nuxt-extensions-core-vendoring` | Frontend vendor pattern knowledge |
 | **Skill**: `developing-lt-frontend` | Frontend patterns and expertise |
 | **Skill**: `maintaining-npm-packages` | Package optimization guidance |
-| **Agent**: `lt-dev:nest-server-updater` | Backend nest-server version update |
+| **Agent**: `lt-dev:nest-server-updater` | Backend nest-server version update (npm mode) |
+| **Agent**: `lt-dev:nest-server-core-updater` | Backend vendor-mode update |
 | **Agent**: `lt-dev:fullstack-updater` | Frontend update + starter synchronization |
+| **Agent**: `lt-dev:nuxt-extensions-core-updater` | Frontend vendor-mode update |
 | **Command**: `/lt-dev:backend:update-nest-server` | Standalone backend update |
+| **Command**: `/lt-dev:backend:update-nest-server-core` | Standalone backend vendor update |
+| **Command**: `/lt-dev:frontend:update-nuxt-extensions-core` | Standalone frontend vendor update |
+| **Command**: `/lt-dev:fullstack:update-all` | Comprehensive mode-aware fullstack update |
 
 ## Architecture
 
@@ -78,15 +88,26 @@ Parse `$ARGUMENTS` for flags:
    find . -name "package.json" -not -path "*/node_modules/*" -exec grep -l "@lenne.tech/nuxt-extensions" {} \;
    ```
 
-4. **Get current and target versions:**
+4. **Detect vendor modes:**
+   ```bash
+   # Backend vendor mode
+   find . -name "VENDOR.md" -path "*/api/src/core/*" -not -path "*/node_modules/*" 2>/dev/null
+   # Frontend vendor mode
+   find . -name "VENDOR.md" -path "*/app/core/*" -not -path "*/node_modules/*" 2>/dev/null
+   ```
+   If a `VENDOR.md` is found, that side is in vendor mode. The corresponding
+   npm package will NOT be in `package.json`. Note this for Phase 4/5 agent selection.
+
+5. **Get current and target versions:**
    ```bash
    cd <backend-path> && pnpm list @lenne.tech/nest-server --depth=0
    cd <frontend-path> && pnpm list @lenne.tech/nuxt-extensions --depth=0
    pnpm view @lenne.tech/nest-server version
    pnpm view @lenne.tech/nuxt-extensions version
    ```
+   For vendored sides, read the baseline version from `VENDOR.md` instead of npm list.
 
-5. **Early exit:** If both already on latest → "Already up to date"
+6. **Early exit:** If both already on latest -> "Already up to date"
 
 ### Phase 2: Starter Repository Analysis
 
@@ -117,7 +138,18 @@ Parse `$ARGUMENTS` for flags:
 
 ### Phase 4: Backend Update (unless --skip-backend)
 
-Spawn the `nest-server-updater` agent:
+**If backend is in vendor mode** (detected in Phase 1), spawn `lt-dev:nest-server-core-updater` instead:
+
+```
+Use Agent tool with subagent_type "lt-dev:nest-server-core-updater":
+
+Sync the vendored @lenne.tech/nest-server core in this project from upstream.
+Backend path: <backend-path>
+Sync to the latest upstream tag.
+Work fully autonomously.
+```
+
+**If backend is in npm mode** (default), spawn the `nest-server-updater` agent:
 
 ```
 Use Agent tool with subagent_type "lt-dev:nest-server-updater":
@@ -142,7 +174,20 @@ Validate: build, lint, test — fix issues until all pass.
 
 ### Phase 5: Frontend Update (unless --skip-frontend)
 
-Spawn the `fullstack-updater` agent with --skip-backend:
+**If frontend is in vendor mode** (detected in Phase 1), spawn `lt-dev:nuxt-extensions-core-updater` instead:
+
+```
+Use Agent tool with subagent_type "lt-dev:nuxt-extensions-core-updater":
+
+Sync the vendored @lenne.tech/nuxt-extensions core in this project from upstream.
+Frontend path: <frontend-path>
+Sync to the latest upstream tag.
+nuxt-extensions tags have NO v-prefix (e.g., 1.5.3 not v1.5.3).
+No flatten-fix needed -- direct 1:1 file mapping.
+Work fully autonomously.
+```
+
+**If frontend is in npm mode** (default), spawn the `fullstack-updater` agent with --skip-backend:
 
 ```
 Use Agent tool with subagent_type "lt-dev:fullstack-updater":

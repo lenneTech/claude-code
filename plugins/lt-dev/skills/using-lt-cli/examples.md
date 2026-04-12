@@ -304,12 +304,12 @@ Use local templates when developing or testing changes to the starter templates 
 ```bash
 # Test changes to nest-server-starter immediately
 lt fullstack init --name TestApp --frontend nuxt --git false \
-  --api-link ~/code/nest-server-starter
+  --api-link <path/to/nest-server-starter>
 
 # Test both API and frontend template changes
 lt fullstack init --name TestApp --frontend nuxt --git false \
-  --api-link ~/code/nest-server-starter \
-  --frontend-link ~/code/nuxt-base-starter
+  --api-link <path/to/nest-server-starter> \
+  --frontend-link <path/to/nuxt-base-starter>
 ```
 
 **What happens:**
@@ -324,8 +324,8 @@ lt fullstack init --name TestApp --frontend nuxt --git false \
 ```bash
 # Create independent copy from local template
 lt fullstack init --name MyApp --frontend angular --git true \
-  --api-copy ~/code/nest-server-starter \
-  --frontend-copy ~/code/ng-base-starter
+  --api-copy <path/to/nest-server-starter> \
+  --frontend-copy <path/to/ng-base-starter>
 ```
 
 **What happens:**
@@ -339,8 +339,8 @@ lt fullstack init --name MyApp --frontend angular --git true \
 ```bash
 # If your local repo has nuxt-base-template/ subdirectory:
 lt fullstack init --name TestApp --frontend nuxt --git false \
-  --frontend-link ~/code/nuxt-base-starter
-# CLI auto-detects and uses ~/code/nuxt-base-starter/nuxt-base-template/
+  --frontend-link <path/to/nuxt-base-starter>
+# CLI auto-detects and uses <path/to/nuxt-base-starter>/nuxt-base-template/
 ```
 
 ---

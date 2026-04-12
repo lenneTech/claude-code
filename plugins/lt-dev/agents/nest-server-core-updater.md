@@ -77,7 +77,8 @@ Use TodoWrite at the start:
 [pending] Phase 6: Present curation proposal for human review
 [pending] Phase 7: Apply approved changes + reapply flatten-fix
 [pending] Phase 8: Run tsc / lint / tests
-[pending] Phase 9: Update VENDOR.md + commit
+[pending] Phase 9: Sync upstream CLAUDE.md into project
+[pending] Phase 10: Update VENDOR.md + commit
 ```
 
 ---
@@ -164,8 +165,7 @@ For each hunk in `upstream-delta.patch`:
    (grep `projects/api/src/server`, `tests/`, `migrations/`, `scripts/`
    for symbol names exported from the changed file)
 
-Write a structured report to
-`projects/api/scripts/vendor/sync-results/<timestamp>/report.md`:
+Write a structured report (output it to the user, no file needed):
 
 ```markdown
 # Upstream Sync Report
@@ -280,14 +280,35 @@ Loop this up to 10 times, fixing issues each round. Common issues:
 - **migrate:list error: Cannot find module 'ts-node/register'** → use explicit
   `./migrations-utils/ts-compiler.js` as --compiler argument, not bare `ts-node/register`.
 
-### Phase 9: Commit + Update VENDOR.md
+### Phase 9: Sync upstream CLAUDE.md into project
+
+The upstream `nest-server` CLAUDE.md contains framework-specific instructions
+(API conventions, UnifiedField usage, CrudService patterns, etc.) that Claude
+Code needs to work correctly with the vendored framework code. After every
+upstream sync this file must be checked for changes and merged into the project.
+
+1. Fetch the upstream CLAUDE.md from the **target** version:
+   ```bash
+   cp /tmp/nest-server-target/CLAUDE.md /tmp/nest-server-target-claude.md
+   ```
+2. Compare with the current `projects/api/CLAUDE.md`.
+3. Apply section-level merge (same logic as `/lt-dev:fullstack:sync-claude-md`):
+   - Sections present in upstream but missing in project → **add**
+   - Sections present in both → **keep project version** (may have customizations)
+   - Sections only in project → **keep** (project-specific content)
+4. If the project uses **vendor mode**, ensure the vendor-mode notice block
+   (marked with `<!-- lt-vendor-marker -->`) is preserved at the top.
+5. Present a summary of what changed and ask for confirmation before writing.
+
+### Phase 10: Commit + Update VENDOR.md
 
 Commit structure:
 
 1. `chore(framework): sync vendored core from 11.24.1 to 11.25.0 (upstream pick)`
 2. `chore(framework): reapply flatten-fix after 11.25.0 sync` (if flatten files changed)
 3. `fix(framework): apply upstream 11.25.0 breaking changes to consumer code` (if any)
-4. `chore(framework): update VENDOR.md sync history`
+4. `docs(framework): sync CLAUDE.md from upstream 11.25.0` (if CLAUDE.md changed)
+5. `chore(framework): update VENDOR.md sync history`
 
 Update `VENDOR.md`:
 

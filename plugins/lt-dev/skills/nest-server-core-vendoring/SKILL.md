@@ -63,11 +63,11 @@ The vendored core lives as **first-class project code**. Flow is:
 ```
 Upstream (github.com/lenneTech/nest-server)
     |
-    | sync-from-upstream  (curated, one-way)
+    | /lt-dev:backend:update-nest-server-core  (curated, one-way)
     v
 Project vendor (projects/api/src/core/)
     |
-    | propose-upstream-pr  (manual review, cherry-pick)
+    | /lt-dev:backend:contribute-nest-server-core  (manual review, cherry-pick)
     v
 Upstream PR (via normal GitHub review process)
 ```
@@ -213,7 +213,13 @@ When a new upstream version is available, the `nest-server-core-updater` agent:
 7. Applies approved clean-picks
 8. Interactive 3-way merge for conflicts
 9. Runs `pnpm run test` — commits if green
-10. Updates `VENDOR.md` with new baseline + sync history entry
+10. Syncs the upstream `CLAUDE.md` into `projects/api/CLAUDE.md` — the
+    nest-server CLAUDE.md contains framework-specific instructions that Claude
+    Code needs to work correctly with the vendored source. Section-level merge:
+    new upstream sections are added, existing project-specific sections are
+    preserved. The vendor-mode notice block (`<!-- lt-vendor-marker -->`) is
+    always kept.
+11. Updates `VENDOR.md` with new baseline + sync history entry
 
 ## Upstream PR Workflow (contribution)
 
@@ -280,6 +286,7 @@ This restores `@lenne.tech/nest-server` as an npm dependency and removes the
 
 ## References
 
-- Pilot plan (living document): `/Users/kaihaase/code/lenneTech/framework-vendoring-pilot-plan.md`
 - nest-server upstream: https://github.com/lenneTech/nest-server
-- Migration guides (for npm-based upgrades): `/Users/kaihaase/code/lenneTech/nest-server/migration-guides/`
+- nest-server-starter: https://github.com/lenneTech/nest-server-starter
+- Migration guides (for npm-based upgrades): https://github.com/lenneTech/nest-server/tree/main/migration-guides
+- CLI vendor pipeline source: `cli/src/extensions/server.ts#convertCloneToVendored` (https://github.com/lenneTech/cli)

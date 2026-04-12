@@ -103,6 +103,19 @@ Creates a standalone NestJS project from nest-server-starter. For module/object/
 | Command reference & troubleshooting | [reference.md](${CLAUDE_SKILL_DIR}/reference.md) |
 | Real-world examples | [examples.md](${CLAUDE_SKILL_DIR}/examples.md) |
 
+## External Documentation (Canonical Source)
+
+The authoritative references live in the `lenneTech/cli` GitHub repository. Fetch via `WebFetch` when deep context is needed:
+
+| Document | URL | When to fetch |
+|----------|-----|---------------|
+| **LT-ECOSYSTEM-GUIDE** | `https://raw.githubusercontent.com/lenneTech/cli/main/docs/LT-ECOSYSTEM-GUIDE.md` | Full reference for CLI + plugin (architecture, commands, agents, skills, vendor-mode, glossary) |
+| **VENDOR-MODE-WORKFLOW** | `https://raw.githubusercontent.com/lenneTech/cli/main/docs/VENDOR-MODE-WORKFLOW.md` | Step-by-step guide for npm ↔ vendor conversion, vendor updates, rollback |
+| **Command Reference** | `https://raw.githubusercontent.com/lenneTech/cli/main/docs/commands.md` | Full CLI command reference with all options |
+| **Configuration Guide** | `https://raw.githubusercontent.com/lenneTech/cli/main/docs/lt.config.md` | lt.config.json reference |
+
+**When to fetch**: When user asks about architecture/design decisions, vendor-mode conversion steps, or any CLI/plugin function not covered by this skill's condensed content.
+
 ## Related Skills
 
 - `generating-nest-servers` — `lt server module`, `lt server object`, `lt server addProp`, `lt server permissions`
