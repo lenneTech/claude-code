@@ -1,7 +1,7 @@
 ---
-description: Comprehensive code review with content validation, security, documentation, tests, backend, frontend, UX, a11y, and devops reviewers. Small diffs use single-pass agent; larger diffs spawn parallel domain specialists with cross-domain challenge.
+description: Comprehensive code review with content validation, security, documentation, tests, backend, frontend, UX, a11y, and devops reviewers. Runs package.json check script with auto-fix. Small diffs use single-pass agent; larger diffs spawn parallel domain specialists with cross-domain challenge.
 argument-hint: '[issue-id] [--base=main] [--weights="Security:25,..."]'
-allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Agent, AskUserQuestion, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Bash(jq:*), Bash(cat:*), Bash(ls:*), Bash(test:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Agent, AskUserQuestion, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
 disable-model-invocation: true
 ---
 
@@ -20,6 +20,7 @@ disable-model-invocation: true
 |---------|---------|
 | `/review` | Claude Code built-in: quick PR-level review (requires `gh` CLI) |
 | `/security-review` | Claude Code built-in: general security review of branch diff |
+| `/lt-dev:check` | Runnability-only gate (runs the same check-script logic as Phase 1.5 of this command) |
 | `/lt-dev:backend:sec-review` | Focused security review (@lenne.tech/nest-server specific) |
 | `/lt-dev:backend:code-cleanup` | Code style and formatting cleanup |
 | `/lt-dev:backend:test-generate` | Generate tests for changes |
@@ -116,6 +117,24 @@ Parse arguments from `$ARGUMENTS`:
    git diff <base-branch>...HEAD --name-only | wc -l
    ```
 
+### Phase 1.5: Check Script Validation & Auto-Fix
+
+**Runs BEFORE every review path** (both single-pass and parallel). Goal: guarantee the project is in a runnable state before any reviewer sees it.
+
+**Follow the `running-check-script` skill verbatim** (`plugins/lt-dev/skills/running-check-script/SKILL.md`). It defines:
+
+- **Step 1** — Discovery via `bash "${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh" "$(pwd)"`
+- **Step 2** — Per-project `check` execution
+- **Step 3** — Auto-fix loop: iterate until truly GREEN (exit 0), no hard iteration cap, terminate only on GREEN or STALLED (error count no longer decreases)
+- **Step 4** — Audit findings: mandatory 6-step fix escalation ladder before any acceptance
+- **Step 5** — Residual classification (Accepted vs Critical blocker)
+- **Step 6** — Bypass policy (no `--no-verify`, no `@ts-ignore`, no `eslint-disable`, etc.)
+- **Step 7** — Test-duplication baseline (record `git rev-parse HEAD` + `git status --porcelain` after GREEN)
+- **Step 8** — Report block format
+- **Step 9** — Gating
+
+After Phase 1.5 completes, paste the Step 8 report block verbatim into the final review output, then continue with Phase 2. If any Unresolved blockers remain, surface them prominently in the header and add them to the Consolidated Remediation Catalog with Critical priority.
+
 ### Small-Diff Optimization
 
 If the diff is small (**< 20 changed lines AND <= 2 changed files**), skip Phases 2-5 and spawn the single-pass `code-reviewer` agent instead:
@@ -129,6 +148,11 @@ Base branch: <base-branch>
 Issue ID: <issue-id or "none">
 Changed files:
 <full list of changed files>
+
+SKIP Phase 1.5 (Check Script Validation & Auto-Fix) — the orchestrator has already
+executed the check script and auto-fixed all resolvable errors. Check-script results
+to include verbatim in your report:
+<paste orchestrator's Check Script Results block here>
 
 Cover all quality dimensions: content, security, code quality, tests, documentation, formatting.
 Produce your structured single-pass report.
@@ -247,6 +271,14 @@ Review the test quality and coverage on the current branch.
 Base branch: <base-branch>
 Changed files:
 <full list of changed files>
+
+Check-script status from Phase 1.5: <GREEN / YELLOW (accepted residuals only) / BLOCKED>
+Check script covers tests: <yes / no> (true when the check script transitively invokes
+test/vitest/jest/playwright). When "yes" AND status is GREEN or YELLOW AND no files have
+changed since Phase 1.5 completed, SKIP re-running the test suite — the regression check
+has already happened. Focus on static analysis: coverage gaps, test quality, isolation,
+API-first patterns, naming. Only execute tests yourself if check did not cover them, or
+if files have been modified after Phase 1.5.
 
 Check test coverage gaps (40% regression + 60% coverage weighting), test quality & assertions,
 test isolation & data safety, API-first testing patterns, permission & security testing,
@@ -377,6 +409,7 @@ Generate a single unified report merging all reviewer results:
 ### Reviewers Spawned
 | Reviewer | Domain | Status |
 |----------|--------|--------|
+| orchestrator | Check Script (auto-fix) | ✅ / ⚠️ / ❌ / — N/A |
 | orchestrator | Content Validation | ✅ / ⚠️ / ❌ |
 | security-reviewer | Security (OWASP) | ✅ / ⚠️ / ❌ / — N/A |
 | docs-reviewer | Documentation | ✅ / ⚠️ / ❌ / — |

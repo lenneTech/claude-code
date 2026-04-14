@@ -53,6 +53,16 @@
       "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend", "code-cleanup", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
     },
     {
+      "pattern": "Bash(npm run check:*)",
+      "description": "Run project check script (typecheck + lint + build)",
+      "usedBy": ["review", "code-reviewer", "branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(npm run typecheck:*)",
+      "description": "Run TypeScript type checking",
+      "usedBy": ["review", "code-reviewer", "branch-rebaser", "backend-reviewer", "frontend-reviewer"]
+    },
+    {
       "pattern": "Bash(npm run generate-types:*)",
       "description": "Generate TypeScript types from backend API",
       "usedBy": ["developing-lt-frontend", "fullstack-updater", "frontend-dev"]
@@ -90,7 +100,12 @@
     {
       "pattern": "Bash(npm audit:*)",
       "description": "Run security audit on npm packages",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit", "review", "coordinating-agent-teams", "security-reviewer"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit", "review", "code-reviewer", "branch-rebaser", "coordinating-agent-teams", "security-reviewer"]
+    },
+    {
+      "pattern": "Bash(npm update:*)",
+      "description": "Update npm packages to latest compatible version (escalation-ladder step 1)",
+      "usedBy": ["review", "code-reviewer", "branch-rebaser", "maintaining-npm-packages"]
     },
     {
       "pattern": "Bash(npm install:*)",
@@ -193,6 +208,16 @@
       "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend", "code-cleanup", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
     },
     {
+      "pattern": "Bash(pnpm run check:*)",
+      "description": "Run project check script via pnpm (typecheck + lint + build)",
+      "usedBy": ["review", "code-reviewer", "branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(pnpm run typecheck:*)",
+      "description": "Run TypeScript type checking via pnpm",
+      "usedBy": ["review", "code-reviewer", "branch-rebaser", "backend-reviewer", "frontend-reviewer"]
+    },
+    {
       "pattern": "Bash(pnpm run generate-types:*)",
       "description": "Generate TypeScript types via pnpm",
       "usedBy": ["developing-lt-frontend", "fullstack-updater", "frontend-dev"]
@@ -200,7 +225,12 @@
     {
       "pattern": "Bash(pnpm audit:*)",
       "description": "Run security audit via pnpm",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit", "review", "coordinating-agent-teams", "security-reviewer"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit", "review", "code-reviewer", "branch-rebaser", "coordinating-agent-teams", "security-reviewer"]
+    },
+    {
+      "pattern": "Bash(pnpm update:*)",
+      "description": "Update packages to latest compatible version via pnpm (escalation-ladder step 1)",
+      "usedBy": ["review", "code-reviewer", "branch-rebaser", "maintaining-npm-packages"]
     },
     {
       "pattern": "Bash(pnpm install:*)",
@@ -313,6 +343,16 @@
       "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend", "code-cleanup", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
     },
     {
+      "pattern": "Bash(yarn run check:*)",
+      "description": "Run project check script via yarn (typecheck + lint + build)",
+      "usedBy": ["review", "code-reviewer", "branch-rebaser"]
+    },
+    {
+      "pattern": "Bash(yarn run typecheck:*)",
+      "description": "Run TypeScript type checking via yarn",
+      "usedBy": ["review", "code-reviewer", "branch-rebaser", "backend-reviewer", "frontend-reviewer"]
+    },
+    {
       "pattern": "Bash(yarn run generate-types:*)",
       "description": "Generate TypeScript types via yarn",
       "usedBy": ["developing-lt-frontend", "fullstack-updater", "frontend-dev"]
@@ -320,7 +360,12 @@
     {
       "pattern": "Bash(yarn audit:*)",
       "description": "Run security audit via yarn",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit", "review", "coordinating-agent-teams", "security-reviewer"]
+      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit", "review", "code-reviewer", "branch-rebaser", "coordinating-agent-teams", "security-reviewer"]
+    },
+    {
+      "pattern": "Bash(yarn upgrade:*)",
+      "description": "Upgrade packages via yarn (escalation-ladder step 1)",
+      "usedBy": ["review", "code-reviewer", "branch-rebaser", "maintaining-npm-packages"]
     },
     {
       "pattern": "Bash(yarn install:*)",
@@ -391,6 +436,21 @@
       "pattern": "Bash(gh api:*)",
       "description": "Access GitHub API via gh CLI for migration guides and changelogs",
       "usedBy": ["nest-server-updating", "fullstack-updater", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
+    },
+    {
+      "pattern": "Bash(jq:*)",
+      "description": "Parse and extract fields from JSON files (e.g. package.json scripts)",
+      "usedBy": ["review", "code-reviewer", "branch-rebaser", "maintaining-npm-packages", "running-check-script", "check"]
+    },
+    {
+      "pattern": "Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*)",
+      "description": "Run plugin helper bash scripts in plugins/lt-dev/scripts/ (e.g. discover-check-scripts.sh) — narrowly scoped to prevent arbitrary shell execution",
+      "usedBy": ["review", "code-reviewer", "branch-rebaser", "running-check-script", "check"]
+    },
+    {
+      "pattern": "Bash(node:*)",
+      "description": "Run node for JSON parsing fallback and small helper computations",
+      "usedBy": ["review", "code-reviewer", "branch-rebaser", "running-check-script", "check"]
     },
     {
       "pattern": "Bash(git clone:*)",

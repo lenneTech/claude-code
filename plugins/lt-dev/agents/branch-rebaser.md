@@ -6,7 +6,7 @@ effort: high
 tools: Bash, Read, Grep, Glob, Write, Edit, TodoWrite
 memory: project
 isolation: worktree
-skills: generating-nest-servers, developing-lt-frontend, rebasing-branches
+skills: generating-nest-servers, developing-lt-frontend, rebasing-branches, running-check-script
 maxTurns: 100
 ---
 
@@ -50,6 +50,7 @@ Initial TodoWrite:
 [pending] Phase 4: Load Linear ticket context
 [pending] Phase 5: Optimize code based on new dev state
 [pending] Phase 6: Lint and format (oxfmt/oxlint)
+[pending] Phase 6.5: Check script validation & auto-fix
 [pending] Phase 7: Run tests
 [pending] Phase 8: Urgency check for critical optimizations
 [pending] Phase 9: Iterate (re-lint, re-test if needed)
@@ -237,7 +238,32 @@ pnpm run lint -- --fix
 pnpm run format
 ```
 
+### Phase 6.5: Check Script Validation & Auto-Fix
+
+Guarantee project runnability post-rebase. Rebase conflicts and upstream changes frequently introduce breakage that `check` catches before tests.
+
+**Follow the `running-check-script` skill verbatim** (loaded via `skills:` frontmatter). It defines discovery, the iterate-until-green auto-fix loop, the mandatory audit escalation ladder, residual classification, the bypass policy, the test-duplication baseline, and the report block format.
+
+**Rebase-specific gating:** If Unresolved blockers remain after the skill finishes, document them in the final report and do NOT proceed with force-push in batch mode. Accepted Residuals alone do NOT block the rebase.
+
 ### Phase 7: Tests
+
+**Skip condition:** If Phase 6.5 (`check`) already executed the test suites for a given project AND no files have been modified in that project since the last green `check` run, skip the tests for that project — they would just re-run an identical green state.
+
+**How to detect whether `check` already ran tests** (per project):
+```bash
+# Inspect the check script definition
+script=$(jq -r '.scripts.check // empty' package.json 2>/dev/null)
+# Does it include test invocations?
+echo "$script" | grep -qE '(^|[[:space:]&|;])(test|vitest|jest|playwright|pnpm[[:space:]]+test|npm[[:space:]]+test|yarn[[:space:]]+test|pnpm[[:space:]]+run[[:space:]]+test|npm[[:space:]]+run[[:space:]]+test|yarn[[:space:]]+run[[:space:]]+test)' && echo "check-includes-tests"
+# Also resolve composite scripts — if check calls another script (e.g. "pnpm run ci"), inspect that script too
+```
+
+Also mark the "post-check baseline" by recording `git status --porcelain` + `git rev-parse HEAD` right after Phase 6.5 ends green. Phase 7 is skippable for a project only if BOTH hold:
+1. The project's `check` script (transitively) invokes tests.
+2. No tracked or untracked files in that project's directory have changed since the baseline (working tree + HEAD both match).
+
+If either condition fails → run tests as normal.
 
 Run all available test suites (NODE_ENV=e2e is set in package.json scripts for local execution):
 
@@ -273,10 +299,12 @@ If critical issues found, address them before proceeding.
 
 ### Phase 9: Iteration
 
-If Phase 6 or 7 produced changes or failures:
-1. Re-run lint & format
-2. Re-run tests
+If any subsequent phase (6, 6.5, 7, 8) produced code changes or failures:
+1. Re-run `check` (Phase 6.5 logic — single source of truth for lint + typecheck + build + audit, and tests if included in `check`)
+2. Re-run tests **only** if `check` does not transitively invoke them (same skip logic as Phase 7)
 3. Repeat until stable (max 3 iterations)
+
+The goal: never re-execute a test run that has already been covered by a green `check` on an unchanged working tree.
 
 ### Phase 10: Code Review
 

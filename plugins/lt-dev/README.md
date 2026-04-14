@@ -26,6 +26,7 @@ These plugins are **optional** but enhance the experience when working with this
 - **CLI Tools**: lenne.tech CLI integration
 - **Git Workflows**: Commit messages, MR descriptions, branch rebasing
 - **Code Review**: Comprehensive review across 9 review domains
+- **Runnability Gate**: `/lt-dev:check` runs the project's `check` script with iterate-until-green auto-fix and mandatory audit-finding fix escalation (also integrated into review + rebase workflows)
 - **Linear Integration**: Issue management and story creation
 - **Docker**: Development and production setup generation
 - **Package Maintenance**: npm dependency management and security audits
@@ -35,10 +36,11 @@ These plugins are **optional** but enhance the experience when working with this
 
 ## Included
 
-- **10 Skills** - Auto-detected contextual expertise
-- **5 Agents** - Autonomous task execution
-- **27 Commands** - User-triggered actions via `/command-name`
+- **13 Skills** - Auto-detected contextual expertise (includes `running-check-script` for runnability validation)
+- **24 Agents** - Autonomous task execution
+- **52 Commands** - User-triggered actions via `/lt-dev:<name>`
 - **9 Hooks** - Automated project detection and validation
+- **Helper Scripts** - Plugin-local shell helpers under `plugins/lt-dev/scripts/` (e.g. `discover-check-scripts.sh` for monorepo-aware `check` discovery)
 - **5 MCP Servers** - Chrome DevTools, Linear, Nuxt UI, Better Auth, and Figma Desktop integration
 
 ## Framework consumption modes (nest-server)

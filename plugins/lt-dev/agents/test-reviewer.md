@@ -4,7 +4,7 @@ description: Autonomous test quality review agent for lenne.tech fullstack proje
 model: sonnet
 effort: medium
 tools: Bash, Read, Grep, Glob, TodoWrite
-skills: building-stories-with-tdd, generating-nest-servers, developing-lt-frontend
+skills: building-stories-with-tdd, generating-nest-servers, developing-lt-frontend, running-check-script
 memory: project
 ---
 
@@ -62,6 +62,30 @@ Before executing any commands, detect the project's package manager:
 ```bash
 ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
 ```
+
+### Check Script Coordination (Test-Duplication Avoidance)
+
+When invoked by `/lt-dev:review`, the orchestrator's Phase 1.5 has already executed the `running-check-script` skill and provides two inputs in the invocation prompt:
+
+- **Check-script status**: `GREEN` / `YELLOW (accepted residuals only)` / `BLOCKED`
+- **Check script covers tests**: `yes` (the check script transitively invokes `test`/`vitest`/`jest`/`playwright`) or `no`
+
+**Test-run skip rule** (per project):
+
+| Condition | Action |
+|-----------|--------|
+| Status is `GREEN` or `YELLOW` AND `covers tests = yes` AND no files modified since Phase 1.5 | **Skip re-running tests** — regression is already proven. Focus on static analysis: coverage gaps, quality, isolation, API-first patterns, naming. |
+| Status is `BLOCKED` | Still skip re-running tests (blockers are the orchestrator's concern); focus on static analysis. |
+| `covers tests = no` OR files modified after Phase 1.5 OR no check input provided (direct invocation) | Run the test suite yourself as defined in Phase 7 (Flaky Test Detection) and the per-phase checks below. |
+
+Verify the "no files modified" precondition at the start of execution:
+
+```bash
+git status --porcelain
+git rev-parse HEAD
+```
+
+If the agent is invoked standalone (not via `/lt-dev:review`), treat it as `covers tests = no` and run tests normally.
 
 ### Phase 0: Context Analysis
 
@@ -272,7 +296,9 @@ grep -L "describe(" <test-files>
 
 ### Phase 7: Flaky Test Detection
 
-Before reporting tests as failed, verify whether failures are consistent or flaky:
+**Skip condition:** If the "Check Script Coordination" preconditions (above) mark tests as already covered by a GREEN/YELLOW `check` run on an unchanged working tree, Phase 7 is skipped entirely — the orchestrator's Phase 1.5 has already produced a green test run, so there are no failures to classify as flaky. Report "Phase 7: skipped — tests covered by check script, no failures to analyze" and proceed to the Output Format. Continue with static flaky-pattern analysis (grep patterns below) without re-executing tests.
+
+Otherwise, before reporting tests as failed, verify whether failures are consistent or flaky:
 
 1. **Re-run failing tests 2-3 times** to determine consistency
 2. **Classify each failure:**

@@ -102,6 +102,9 @@ claude-code/
 │       ├── hooks/            # Event hooks
 │       │   ├── hooks.json    # Hook definitions
 │       │   └── scripts/      # Hook handler scripts (.sh, .ts)
+│       ├── scripts/          # Plugin helper scripts referenced by commands/agents/skills
+│       │                     # (e.g. discover-check-scripts.sh) — narrow Bash permission
+│       │                     # pattern: Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*)
 │       ├── skills/           # Context-aware expertise (SKILL.md + references)
 │       ├── permissions.json  # Bash permission patterns for auto-approval
 │       ├── permissions.schema.json  # JSON Schema for permissions validation

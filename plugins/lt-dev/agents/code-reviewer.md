@@ -1,11 +1,11 @@
 ---
 name: code-reviewer
-description: Autonomous single-pass code review agent for lenne.tech fullstack projects. Analyzes changes against 6 quality dimensions (content, security, code quality, tests, documentation, formatting). Produces structured report with fulfillment grades and remediation catalog. For parallel multi-reviewer reviews, use the /lt-dev:review command instead.
+description: Autonomous single-pass code review agent for lenne.tech fullstack projects. Runs package.json check script with auto-fix for any errors (even pre-existing). Analyzes changes against 6 quality dimensions (content, security, code quality, tests, documentation, formatting). Produces structured report with fulfillment grades and remediation catalog. For parallel multi-reviewer reviews, use the /lt-dev:review command instead.
 model: sonnet
 effort: medium
-tools: Bash, Read, Grep, Glob, TodoWrite
+tools: Bash, Read, Edit, Write, Grep, Glob, TodoWrite
 memory: project
-skills: generating-nest-servers, developing-lt-frontend
+skills: generating-nest-servers, developing-lt-frontend, running-check-script
 ---
 
 # Code Review Agent (Single-Pass)
@@ -40,6 +40,7 @@ Consolidated single-pass code reviewer that covers all quality dimensions in one
 ```
 Initial TodoWrite:
 [pending] Phase 1: Diff analysis & domain detection
+[pending] Phase 1.5: Check script validation & auto-fix
 [pending] Phase 2: Content validation (requirements, scope, edge cases)
 [pending] Phase 3: Security quick scan
 [pending] Phase 4: Code quality & patterns
@@ -72,6 +73,14 @@ Initial TodoWrite:
    - Use `mcp__plugin_lt-dev_linear__list_comments`
 
 4. **Draft Change Summary:** What changed, how, why.
+
+### Phase 1.5: Check Script Validation & Auto-Fix
+
+Guarantee runnability **before** the review itself. Any error — even one that predates the current diff — must be fixed.
+
+**Follow the `running-check-script` skill verbatim** (loaded via `skills:` frontmatter). It defines discovery, the iterate-until-green auto-fix loop, the mandatory audit escalation ladder, residual classification, the bypass policy, the test-duplication baseline, and the report block format.
+
+**Skip condition (orchestrator delegation):** If the invocation prompt explicitly says "SKIP running-check-script — orchestrator already ran it" and provides a pre-computed Check Script Results block, paste that block verbatim into your final report and proceed directly to Phase 2. Do NOT re-run `check`.
 
 ### Phase 2: Content Validation
 
@@ -133,11 +142,19 @@ grep -rn "eval(\|innerHTML\|v-html\|dangerouslySetInnerHTML" $(git diff <base>..
 
 ### Phase 5: Test Coverage Check
 
+**Skip test execution** if Phase 1.5 (`check`) already ran them AND no files have changed since the last green `check`:
+```bash
+# Inspect whether check includes tests
+script=$(jq -r '.scripts.check // empty' package.json 2>/dev/null)
+echo "$script" | grep -qE '(^|[[:space:]&|;])(test|vitest|jest|playwright|pnpm[[:space:]]+test|npm[[:space:]]+test|yarn[[:space:]]+test)' && echo "check-includes-tests"
+```
+
+Only run the test suite if `check` does NOT already cover it, OR if files have been modified after Phase 1.5 completed:
 ```bash
 pnpm test 2>/dev/null || npm test 2>/dev/null || yarn test 2>/dev/null
 ```
 
-- [ ] Existing tests still pass (regression)
+- [ ] Existing tests still pass (regression) — verified either via green `check` (Phase 1.5) or a dedicated test run here
 - [ ] New code has corresponding tests
 - [ ] Permission tests present for new endpoints
 
@@ -167,6 +184,9 @@ pnpm run lint 2>/dev/null || npm run lint 2>/dev/null || yarn run lint 2>/dev/nu
 
 ### Change Summary
 [2-4 sentences]
+
+### Check Script Results
+[Use the Step 8 report block from the `running-check-script` skill verbatim]
 
 ### Overall Results
 | Dimension | Fulfillment | Status |
