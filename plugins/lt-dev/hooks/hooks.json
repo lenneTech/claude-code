@@ -1,6 +1,19 @@
 {
-  "description": "Project detection, safety guards, circuit breaker, and file protection",
+  "description": "Project detection, safety guards, circuit breaker, file protection, and lt-plugin auto-update",
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/update-lt-plugins.sh\"",
+            "timeout": 5,
+            "statusMessage": "Checking lt CLI plugin updates"
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Write|Edit",
