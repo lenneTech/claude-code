@@ -1,4 +1,7 @@
 #!/bin/bash
+# Skip in non-interactive headless mode (claude -p)
+. "${0%/*}/_headless-skip.sh"
+
 # Detect Claude Code plugin development context
 
 # Only inject context when prompt mentions plugin-related topics

@@ -1,4 +1,7 @@
 #!/bin/bash
+# Skip in non-interactive headless mode (claude -p)
+. "${0%/*}/_headless-skip.sh"
+
 # Detect npm maintenance prompts regardless of framework
 # Suggests maintaining-npm-packages skill for any Node.js project
 

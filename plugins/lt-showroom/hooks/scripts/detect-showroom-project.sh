@@ -1,4 +1,7 @@
 #!/bin/bash
+# Skip in non-interactive headless mode (claude -p)
+. "${0%/*}/_headless-skip.sh"
+
 # Detects if the current project is the showroom platform, injecting skill context accordingly.
 
 INPUT=$(cat)

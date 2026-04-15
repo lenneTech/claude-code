@@ -1,4 +1,7 @@
 #!/bin/bash
+# Skip in non-interactive headless mode (claude -p)
+. "${0%/*}/_headless-skip.sh"
+
 # Detect Nuxt 4 frontend projects and suggest appropriate skill
 # Priority: TDD keywords > default frontend
 

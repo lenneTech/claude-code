@@ -1,4 +1,7 @@
 #!/bin/bash
+# Skip in non-interactive headless mode (claude -p)
+. "${0%/*}/_headless-skip.sh"
+
 # Detect lenne.tech CLI and suggest using-lt-cli skill
 
 # Only inject context when prompt mentions lt CLI topics

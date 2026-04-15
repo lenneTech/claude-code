@@ -1,4 +1,7 @@
 #!/bin/bash
+# Skip in non-interactive headless mode (claude -p)
+. "${0%/*}/_headless-skip.sh"
+
 # Detect @lenne.tech/nest-server and suggest appropriate skill
 # Priority: update keywords > TDD keywords > default backend
 

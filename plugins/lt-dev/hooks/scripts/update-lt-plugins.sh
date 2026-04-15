@@ -1,4 +1,7 @@
 #!/bin/bash
+# Skip in non-interactive headless mode (claude -p)
+. "${0%/*}/_headless-skip.sh"
+
 # SessionStart hook: surface any pending lt-plugin update notification and
 # fire a detached background updater. Must stay fast (<1s) — heavy lifting
 # is done by update-lt-plugins-background.sh.

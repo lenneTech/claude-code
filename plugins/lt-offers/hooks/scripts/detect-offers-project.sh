@@ -1,4 +1,7 @@
 #!/bin/bash
+# Skip in non-interactive headless mode (claude -p)
+. "${0%/*}/_headless-skip.sh"
+
 # Detects if the current project is the offers platform or if the user prompt
 # mentions offer-related keywords, injecting skill context accordingly.
 

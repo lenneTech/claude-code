@@ -1,4 +1,7 @@
 #!/bin/bash
+# Skip in non-interactive headless mode (claude -p)
+. "${0%/*}/_headless-skip.sh"
+
 # Detect security-related prompts regardless of framework
 # Suggests general-frontend-security skill for any web project
 

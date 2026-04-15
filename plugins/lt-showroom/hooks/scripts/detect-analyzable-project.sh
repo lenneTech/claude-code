@@ -1,4 +1,7 @@
 #!/bin/bash
+# Skip in non-interactive headless mode (claude -p)
+. "${0%/*}/_headless-skip.sh"
+
 # Detects if the current directory contains an analyzable software project and the user prompt
 # mentions showroom-related keywords, injecting skill context accordingly.
 
