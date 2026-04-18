@@ -6,10 +6,84 @@ description: Complete guide to @lenne.tech/nest-server framework - CrudService b
 #  Understanding the @lenne.tech/nest-server Framework
 
 ## Table of Contents
+- [Prefer CrudService Over Direct Model Access](#prefer-crudservice-over-direct-model-access)
 - [Core Service Base Class: CrudService](#core-service-base-class-crudservice)
 - [CRITICAL: ServiceOptions When Calling Other Services](#-critical-serviceoptions-when-calling-other-services)
 - [Framework Patterns](#framework-patterns)
 - [Key Takeaways](#key-takeaways)
+
+## Prefer CrudService Over Direct Model Access
+
+**Default rule: Use CrudService methods. Only use direct model access when CrudService can't do the job.**
+
+| Approach | When to Use |
+|----------|-------------|
+| `this.findOne()`, `this.find()`, `this.update()` | **Default** — handles security, permissions, population |
+| `this.otherService.findOne()` | **Default** — cross-service calls with proper ServiceOptions |
+| `this.someModel.findOne()`, `mainDbModel.updateOne()` | **Exception only** — when CrudService methods can't achieve the goal |
+
+### Why CrudService first
+
+CrudService methods (via `ModuleService.process()`) automatically handle:
+- `checkRestricted()` — enforces field-level `@Restricted` permissions (set via `@UnifiedField({ roles: ... })`) for both input validation and output filtering
+- Input validation and sanitization
+- Population of related documents
+- Filtering, pagination, and sorting
+
+Note: `@Roles` on controllers/resolvers is enforced by **RolesGuard** (before the service call), not by CrudService. Field-level `@Restricted` is enforced by `checkRestricted()` via `checkRights()` in the service layer. `securityCheck()` on the model is a no-op override hook — not the main enforcement mechanism.
+
+Direct model access **bypasses `checkRestricted()`**. This means no field-level permission filtering, no validation, no population.
+
+### Legitimate exceptions
+
+Direct model access is acceptable when:
+- **MongoDB atomic operators** not exposed by `CrudService.update()` — `$push`, `$pull`, `$addToSet`, `$inc`, `$setOnInsert` via `findByIdAndUpdate` / `updateOne`. Common for appending to history arrays, incrementing counters, race-free upserts.
+- **Aggregation pipelines** (`.aggregate([...])`) for grouping, joining, faceted queries
+- **Setting internal fields** that CrudService doesn't expose (e.g., writing a password hash directly, setting `createdAt` manually in migrations)
+- **Bulk operations** for migrations or data cleanup (`bulkWrite`, `insertMany`, `deleteMany` on known-safe filters)
+- **Performance-critical queries** where CrudService overhead is measurable and profiled
+
+**Common legitimate pattern — combine direct access with `super.update()`:**
+
+```typescript
+// Append to history array (atomic, CrudService.update() can't do $push)
+await this.ticketModel.findByIdAndUpdate(id, {
+  $push: { history: { $each: historyEntries } },
+});
+// Then run the normal update path for permission checks & output filtering
+return super.update(id, input, serviceOptions);
+```
+
+**When using direct model access, always add a short comment explaining why:**
+
+```typescript
+// Direct model access: CrudService.update() would hash the password again
+await this.userModel.updateOne({ _id: userId }, { $set: { password: hashedPassword } });
+```
+
+### Common mistake patterns
+
+```typescript
+// WRONG: Using model when CrudService works fine
+const user = await this.userModel.findOne({ _id: userId });
+
+// CORRECT: CrudService handles permissions automatically
+const user = await this.findOne({ id: userId }, serviceOptions);
+
+// WRONG: Using model for simple queries
+const items = await this.mainDbModel.find({ status: 'active' });
+
+// CORRECT: CrudService with filterQuery
+const items = await this.find({ filterQuery: { status: 'active' }, currentUser });
+
+// WRONG: Using model to update
+await this.mainDbModel.updateOne({ _id: id }, { $set: { name: 'new' } });
+
+// CORRECT: CrudService update with validation
+await this.update(id, { name: 'new' }, serviceOptions);
+```
+
+---
 
 ## Core Service Base Class: CrudService
 

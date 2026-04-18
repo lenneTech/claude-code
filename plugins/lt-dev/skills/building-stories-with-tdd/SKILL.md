@@ -91,6 +91,21 @@ afterAll(async () => {
 
 **Why this matters:** Enables unlimited test runs without manual database cleanup.
 
+### Detect Test Framework FIRST (CRITICAL)
+
+**BEFORE writing or running ANY test**, mirror the project's existing framework and import style:
+
+1. Check `package.json` for `vitest` or `jest` in dependencies/devDependencies
+2. For Vitest: inspect `vitest.config.ts` / `vitest-e2e.config.ts` for `globals: true` — this flips whether `describe`/`it`/`expect` must be imported
+3. Read 1-2 existing test files and mirror their import pattern exactly
+4. Run tests via `package.json` scripts (e.g., `pnpm run test:e2e`), never via `npx vitest` / `npx jest`
+
+**lt stack default:** `@lenne.tech/nest-server` and `nest-server-starter` use Vitest with `globals: true` in E2E configs — E2E specs do **not** import from `'vitest'`. Unit tests may import explicitly — match the neighbouring file.
+
+**Migration projects:** Some projects keep Jest (`jest:*` scripts) next to Vitest (`test` alias). Within one project, `tests/**/*.e2e-spec.ts` may use globals while `src/**/*.spec.ts` uses explicit Vitest imports. Always mirror the nearest existing test file.
+
+**Do NOT mix Vitest and Jest syntax in a single test file.**
+
 ## Skill Boundaries
 
 | User Intent | Correct Skill |

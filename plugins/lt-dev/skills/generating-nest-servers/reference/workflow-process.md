@@ -142,7 +142,7 @@ export class BuyerProfile extends Profile { ... }
 
 ### Phase 5: Description Management
 
-** CRITICAL PHASE - Refer to "CRITICAL: DESCRIPTION MANAGEMENT" section at the top of this document!**
+**CRITICAL PHASE - Refer to "CRITICAL: DESCRIPTION MANAGEMENT" section at the top of this document!**
 
 This phase is often done incorrectly. Follow these steps EXACTLY:
 
@@ -214,7 +214,7 @@ Apply formatting rules:
 3. **If no comment provided**:
    -> Create meaningful English description: `description: 'User email address'`
 
-** CRITICAL - Preserve Original Wording**:
+**CRITICAL - Preserve Original Wording**:
 
 -  **DO:** Fix spelling/typos only
 -  **DON'T:** Rephrase, expand, or improve wording
@@ -235,7 +235,7 @@ Apply formatting rules:
 
 #### Step 5.3: Apply Descriptions EVERYWHERE
 
-** MOST IMPORTANT: Apply SAME description to ALL files!**
+**MOST IMPORTANT: Apply SAME description to ALL files!**
 
 For **EVERY property in EVERY Module**:
 
@@ -354,7 +354,35 @@ export enum StatusEnum {
 
 ### Phase 7: API Test Creation
 
-** CRITICAL: Test Type Requirement**
+**CRITICAL: Detect Test Framework BEFORE Writing or Running Tests**
+
+**BEFORE writing or running ANY test**, determine which framework and import style the project uses:
+
+1. Check `package.json` for `vitest` or `jest` in dependencies/devDependencies
+2. For Vitest: inspect `vitest.config.ts` / `vitest-e2e.config.ts` for `globals: true` — this flips whether imports are needed
+3. Read 1-2 existing test files in `tests/` and mirror their import pattern exactly
+4. Check `test:e2e` / `test` scripts in `package.json` for the runner command
+
+| Framework | `globals: true` | `globals: false` (default) |
+|-----------|-----------------|----------------------------|
+| **Vitest** | No imports — `describe`, `it`, `expect` are global | `import { describe, it, expect } from 'vitest'` |
+| **Jest** | Always global — no imports needed | n/a |
+
+**lt stack default:** `@lenne.tech/nest-server` and `nest-server-starter` use **Vitest with `globals: true`** in E2E configs (`vitest-e2e.config.ts`). E2E specs therefore **do not import** from `'vitest'`. Unit tests in `tests/unit/` may still import explicitly — match the neighbouring file.
+
+**Migration projects (Jest + Vitest side-by-side):** Some projects keep `jest:*` scripts (legacy) next to `vitest` (primary, aliased as `test`). Patterns may differ **per test-file type within the same project**:
+- `tests/**/*.e2e-spec.ts` → Vitest with globals (no imports)
+- `src/**/*.spec.ts` → may use explicit `import { describe, expect, it } from 'vitest'`
+
+Always read the nearest existing test file and mirror its imports — do **not** assume one pattern per project.
+
+**Do NOT assume a framework. Do NOT mix Vitest and Jest syntax in a single test file. Match the existing project exactly.**
+
+**Running tests:** Always use the project's npm scripts from `package.json` (e.g., `pnpm run test:e2e`, `pnpm test`, `npm test`). Do NOT run `npx vitest`, `npx jest`, or other direct runner commands — the project scripts may include required flags, config paths, or environment setup.
+
+---
+
+**CRITICAL: Test Type Requirement**
 
 **ONLY create API tests using TestHelper - NEVER create direct Service tests!**
 
@@ -447,7 +475,7 @@ describe('Product Tests', () => {
 
 ---
 
-** CRITICAL: Test Creation Process**
+**CRITICAL: Test Creation Process**
 
 Creating API tests is NOT just about testing functionality - it's about **validating the security model**. You MUST follow this exact process:
 
@@ -534,7 +562,7 @@ Is endpoint marked with @Roles(RoleEnum.S_EVERYONE)?
                   └─ For ADMIN-only -> Test WITH admin token
 ```
 
-** WRONG Approach:**
+**WRONG Approach:**
 ```typescript
 // BAD: Using admin for everything
 it('should create product', async () => {
@@ -547,7 +575,7 @@ it('should create product', async () => {
 });
 ```
 
-** CORRECT Approach:**
+**CORRECT Approach:**
 ```typescript
 // GOOD: Using least privileged user
 it('should create product as regular user', async () => {
@@ -1062,5 +1090,5 @@ Before finalizing tests, verify:
 - [ ]  All tests follow the security model
 - [ ]  Tests validate protection mechanisms work
 
-** NEVER use admin token when a less privileged user would work!**
+**NEVER use admin token when a less privileged user would work!**
 

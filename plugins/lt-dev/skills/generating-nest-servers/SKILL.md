@@ -109,6 +109,38 @@ lt server addProp --type Module --element User --noConfirm --skipLint \
 
 **Complete security rules: [reference/security-rules.md](${CLAUDE_SKILL_DIR}/reference/security-rules.md)** | **OWASP checklist: [reference/owasp-checklist.md](${CLAUDE_SKILL_DIR}/reference/owasp-checklist.md)**
 
+### Prefer CrudService Over Direct Model Access
+
+**ALWAYS prefer CrudService methods over direct Mongoose model calls.**
+
+```typescript
+// AVOID - Direct model access bypasses security and permissions
+const product = await this.productModel.findOne({ _id: id });
+const users = await this.mainDbModel.find({ active: true });
+await this.orderModel.updateOne({ _id: id }, { status: 'done' });
+
+// PREFERRED - CrudService methods handle security, permissions, population
+const product = await this.findOne({ id }, serviceOptions);
+const users = await this.find({ filterQuery: { active: true }, currentUser });
+await this.update(id, input, serviceOptions);
+await this.userService.findOne({ id: userId }, { currentUser });
+```
+
+**Why CrudService first:**
+- `checkRestricted()` enforces field-level `@Restricted` permissions (set via `@UnifiedField({ roles })`) — direct model access bypasses this
+- Handles population, filtering, validation, and sanitization automatically
+- `@Roles` is enforced by RolesGuard at controller level; field-level `@Restricted` goes through `checkRestricted()` in the service layer
+
+**Legitimate exceptions for direct model access:**
+- MongoDB atomic operators (`$push`, `$pull`, `$inc`, `$addToSet`) via `findByIdAndUpdate` — CrudService.update() doesn't expose these
+- Aggregation pipelines (`.aggregate([...])`)
+- Setting internal fields that CrudService doesn't expose (e.g., password hashes)
+- Bulk operations (`bulkWrite`, `insertMany`, `deleteMany`) for migrations or cleanup
+
+When using direct model access, **add a comment explaining why** CrudService can't be used. Common pattern: do the atomic op directly, then call `super.update(id, input, serviceOptions)` so permission checks still run.
+
+**Details: [reference/framework-guide.md](${CLAUDE_SKILL_DIR}/reference/framework-guide.md#prefer-crudservice-over-direct-model-access)**
+
 ### Never Use `declare` Keyword
 
 ```typescript
@@ -156,11 +188,18 @@ lt server permissions --failOnWarnings  # CI/CD mode
 ## TDD Recommendation
 
 ```
-1. Write API tests FIRST (REST/GraphQL endpoint tests)
-2. Implement backend code until tests pass
-3. Iterate until all tests green
-4. Then proceed to frontend (E2E tests first)
+1. Detect test framework BEFORE writing or running any test (see below)
+2. Write API tests FIRST (REST/GraphQL endpoint tests)
+3. Implement backend code until tests pass
+4. Iterate until all tests green
+5. Then proceed to frontend (E2E tests first)
 ```
+
+### Detect Test Framework First (CRITICAL)
+
+**BEFORE writing or running ANY test**, detect which framework and import style the project uses. Vitest vs. Jest, plus `globals: true/false` in `vitest.config.ts`, determines whether `describe`/`it`/`expect` must be imported.
+
+**Details: [reference/workflow-process.md](${CLAUDE_SKILL_DIR}/reference/workflow-process.md#phase-7-api-test-creation)**
 
 For full TDD workflow orchestration, use `building-stories-with-tdd` skill.
 
@@ -209,6 +248,7 @@ Generated imports MUST match the project mode:
 ## Framework Essentials
 
 - [ ] Read CrudService before modifying any Service
+- [ ] **Prefer CrudService methods** (`this.findOne()`, `this.find()`, `this.update()`) over direct model access (`this.someModel.findOne()`, `mainDbModel.find()`) — direct model access only with comment explaining why
 - [ ] NEVER blindly pass all serviceOptions to other Services (only pass `currentUser`)
 - [ ] Check if CrudService already provides needed functionality
 - [ ] Read `FRAMEWORK-API.md` for quick overview of available interfaces and methods
