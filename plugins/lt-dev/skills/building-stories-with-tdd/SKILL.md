@@ -102,7 +102,9 @@ afterAll(async () => {
 
 **lt stack default:** `@lenne.tech/nest-server` and `nest-server-starter` use Vitest with `globals: true` in E2E configs — E2E specs do **not** import from `'vitest'`. Unit tests may import explicitly — match the neighbouring file.
 
-**Do NOT mix Vitest and Jest syntax in the same project.**
+**Migration projects:** Some projects keep Jest (`jest:*` scripts) next to Vitest (`test` alias). Within one project, `tests/**/*.e2e-spec.ts` may use globals while `src/**/*.spec.ts` uses explicit Vitest imports. Always mirror the nearest existing test file.
+
+**Do NOT mix Vitest and Jest syntax in a single test file.**
 
 ## Skill Boundaries
 

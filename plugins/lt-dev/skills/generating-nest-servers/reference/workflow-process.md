@@ -370,7 +370,13 @@ export enum StatusEnum {
 
 **lt stack default:** `@lenne.tech/nest-server` and `nest-server-starter` use **Vitest with `globals: true`** in E2E configs (`vitest-e2e.config.ts`). E2E specs therefore **do not import** from `'vitest'`. Unit tests in `tests/unit/` may still import explicitly — match the neighbouring file.
 
-**Do NOT assume a framework. Do NOT mix Vitest and Jest syntax. Match the existing project exactly.**
+**Migration projects (Jest + Vitest side-by-side):** Some projects keep `jest:*` scripts (legacy) next to `vitest` (primary, aliased as `test`). Patterns may differ **per test-file type within the same project**:
+- `tests/**/*.e2e-spec.ts` → Vitest with globals (no imports)
+- `src/**/*.spec.ts` → may use explicit `import { describe, expect, it } from 'vitest'`
+
+Always read the nearest existing test file and mirror its imports — do **not** assume one pattern per project.
+
+**Do NOT assume a framework. Do NOT mix Vitest and Jest syntax in a single test file. Match the existing project exactly.**
 
 **Running tests:** Always use the project's npm scripts from `package.json` (e.g., `pnpm run test:e2e`, `pnpm test`, `npm test`). Do NOT run `npx vitest`, `npx jest`, or other direct runner commands — the project scripts may include required flags, config paths, or environment setup.
 

@@ -37,12 +37,24 @@ Direct model access **bypasses `checkRestricted()`**. This means no field-level 
 ### Legitimate exceptions
 
 Direct model access is acceptable when:
-- **Setting internal fields** that CrudService doesn't expose (e.g., writing a password hash directly)
-- **Aggregation pipelines** not supported by CrudService
-- **Bulk operations** for migrations or data cleanup
-- **Performance-critical queries** where CrudService overhead is measurable
+- **MongoDB atomic operators** not exposed by `CrudService.update()` — `$push`, `$pull`, `$addToSet`, `$inc`, `$setOnInsert` via `findByIdAndUpdate` / `updateOne`. Common for appending to history arrays, incrementing counters, race-free upserts.
+- **Aggregation pipelines** (`.aggregate([...])`) for grouping, joining, faceted queries
+- **Setting internal fields** that CrudService doesn't expose (e.g., writing a password hash directly, setting `createdAt` manually in migrations)
+- **Bulk operations** for migrations or data cleanup (`bulkWrite`, `insertMany`, `deleteMany` on known-safe filters)
+- **Performance-critical queries** where CrudService overhead is measurable and profiled
 
-**When using direct model access, always add a comment explaining why:**
+**Common legitimate pattern — combine direct access with `super.update()`:**
+
+```typescript
+// Append to history array (atomic, CrudService.update() can't do $push)
+await this.ticketModel.findByIdAndUpdate(id, {
+  $push: { history: { $each: historyEntries } },
+});
+// Then run the normal update path for permission checks & output filtering
+return super.update(id, input, serviceOptions);
+```
+
+**When using direct model access, always add a short comment explaining why:**
 
 ```typescript
 // Direct model access: CrudService.update() would hash the password again

@@ -132,11 +132,12 @@ await this.userService.findOne({ id: userId }, { currentUser });
 - `@Roles` is enforced by RolesGuard at controller level; field-level `@Restricted` goes through `checkRestricted()` in the service layer
 
 **Legitimate exceptions for direct model access:**
-- Setting fields that CrudService doesn't expose (e.g., password hashes directly in DB)
-- Aggregation pipelines or bulk operations not supported by CrudService
-- Performance-critical bulk migrations
+- MongoDB atomic operators (`$push`, `$pull`, `$inc`, `$addToSet`) via `findByIdAndUpdate` — CrudService.update() doesn't expose these
+- Aggregation pipelines (`.aggregate([...])`)
+- Setting internal fields that CrudService doesn't expose (e.g., password hashes)
+- Bulk operations (`bulkWrite`, `insertMany`, `deleteMany`) for migrations or cleanup
 
-When using direct model access, **add a comment explaining why** CrudService can't be used.
+When using direct model access, **add a comment explaining why** CrudService can't be used. Common pattern: do the atomic op directly, then call `super.update(id, input, serviceOptions)` so permission checks still run.
 
 **Details: [reference/framework-guide.md](${CLAUDE_SKILL_DIR}/reference/framework-guide.md#prefer-crudservice-over-direct-model-access)**
 
