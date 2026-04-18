@@ -41,7 +41,7 @@ These plugins are **optional** but enhance the experience when working with this
 - **15 Skills** - Auto-detected contextual expertise (includes `running-check-script` for runnability validation, `managing-dev-servers` for dev-server lifecycle rules, and `contributing-to-lt-framework` for pnpm link workflows)
 - **24 Agents** - Autonomous task execution
 - **52 Commands** - User-triggered actions via `/lt-dev:<name>`
-- **9 Hooks** - Automated project detection and validation
+- **13 Hook Scripts** across 7 event types (SessionStart, PreToolUse, PostToolUse, PostToolUseFailure, UserPromptSubmit, StopFailure, PostCompact) - Automated project detection and validation
 - **Helper Scripts** - Plugin-local shell helpers under `plugins/lt-dev/scripts/` (e.g. `discover-check-scripts.sh` for monorepo-aware `check` discovery)
 - **5 MCP Servers** - Chrome DevTools, Linear, Nuxt UI, Better Auth, and Figma Desktop integration
 

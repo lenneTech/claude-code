@@ -1,7 +1,7 @@
 ---
 description: Extract design system from Figma (colors, spacing, radius, fonts, global components) and configure NuxtUI + Tailwind v4 theme
 argument-hint: "[figma-url-or-node-id] [--force]"
-allowed-tools: Bash(pnpm run:*), Bash(npm run:*), Bash(yarn run:*), Bash(npx:*), Bash(git:*), Bash(ls:*), Bash(cat:*), Bash(find:*), Read, Write, Edit, Glob, Grep, AskUserQuestion, mcp__figma-desktop__get_metadata, mcp__figma-desktop__get_variable_defs, mcp__figma-desktop__get_screenshot, mcp__figma-desktop__get_design_context
+allowed-tools: Bash(pnpm run:*), Bash(npm run:*), Bash(yarn run:*), Bash(npx:*), Bash(git:*), Bash(ls:*), Bash(cat:*), Bash(find:*), Read, Write, Edit, Glob, Grep, AskUserQuestion, mcp__plugin_lt-dev_figma-desktop__get_metadata, mcp__plugin_lt-dev_figma-desktop__get_variable_defs, mcp__plugin_lt-dev_figma-desktop__get_screenshot, mcp__plugin_lt-dev_figma-desktop__get_design_context
 disable-model-invocation: true
 ---
 

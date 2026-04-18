@@ -4,6 +4,7 @@ description: Autonomous performance review agent for lenne.tech fullstack projec
 model: sonnet
 effort: medium
 tools: Bash, Read, Grep, Glob, Write, Edit, TodoWrite
+skills: generating-nest-servers, developing-lt-frontend
 memory: project
 ---
 

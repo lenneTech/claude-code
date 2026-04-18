@@ -1,6 +1,7 @@
 ---
 description: Convert an existing vendor-mode API project back to npm mode (@lenne.tech/nest-server as dependency)
 allowed-tools: Bash(lt:*), Bash(node:*), Bash(pnpm:*), Bash(git:*), Bash(ls:*), Bash(test:*), Bash(cat:*), Read, Grep, Glob, AskUserQuestion
+disable-model-invocation: true
 ---
 
 # Convert API Project: vendor → npm Mode

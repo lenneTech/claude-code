@@ -1,7 +1,7 @@
 ---
 description: Comprehensive code review with content validation, security, documentation, tests, backend, frontend, UX, a11y, and devops reviewers. Runs package.json check script with auto-fix. Small diffs use single-pass agent; larger diffs spawn parallel domain specialists with cross-domain challenge.
 argument-hint: '[issue-id] [--base=main] [--weights="Security:25,..."]'
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Bash(jq:*), Bash(cat:*), Bash(ls:*), Bash(test:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Agent, AskUserQuestion, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Bash(jq:*), Bash(cat:*), Bash(ls:*), Bash(test:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Agent, Skill, AskUserQuestion, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
 disable-model-invocation: true
 ---
 
@@ -18,8 +18,10 @@ disable-model-invocation: true
 
 | Command | Purpose |
 |---------|---------|
-| `/review` | Claude Code built-in: quick PR-level review (requires `gh` CLI) |
-| `/security-review` | Claude Code built-in: general security review of branch diff |
+| `/review [PR]` | Claude Code built-in: generic PR-level review (no lt-stack awareness) |
+| `/security-review` | Claude Code built-in: generic security review of branch diff — **used internally in Phase 3A as cross-check** |
+| `/simplify [focus]` | Claude Code built-in skill: reviews recently changed files AND auto-applies fixes — use BEFORE review, not as part of it |
+| `/autofix-pr [prompt]` | Claude Code built-in: cloud session that watches the PR and pushes fixes for CI failures / review comments |
 | `/lt-dev:check` | Runnability-only gate (runs the same check-script logic as Phase 1.5 of this command) |
 | `/lt-dev:backend:sec-review` | Focused security review (@lenne.tech/nest-server specific) |
 | `/lt-dev:backend:code-cleanup` | Code style and formatting cleanup |
@@ -28,7 +30,7 @@ disable-model-invocation: true
 | `/lt-dev:resolve-ticket` | Resolve a ticket (run review after) |
 | `/lt-dev:debug` | Adversarial debugging with competing hypotheses |
 
-**Recommended workflow:** `resolve-ticket` → `/lt-dev:review` → address findings → `code-cleanup` → create PR → `/review`
+**Recommended workflow:** `resolve-ticket` → optional `/simplify` → `/lt-dev:review` → address findings → `code-cleanup` → create PR → `/review`
 
 ---
 
@@ -44,6 +46,7 @@ This command is the **direct orchestrator** — it spawns all reviewers in paral
 │
 │  Phase 3A: Code-only reviewers — ALL spawned in parallel (single message):
 │  ├── security-reviewer      (always — OWASP, Permissions, Injection, XSS, Auth, Secrets, Dependencies)
+│  ├── /security-review       (always — Claude Code built-in, generic diff-based cross-check)
 │  ├── docs-reviewer          (always — README, JSDoc, Migration Guides, Config Documentation)
 │  ├── performance-reviewer   (always — Bundle, Queries, Memory, Async, Caching, k6 Baselines)
 │  ├── test-reviewer          (if source files changed — Coverage, Quality, Isolation, API-First, Flaky Detection)
@@ -98,6 +101,7 @@ Parse arguments from `$ARGUMENTS`:
    | Condition | Reviewer |
    |-----------|----------|
    | Always | `security-reviewer`, `docs-reviewer`, `performance-reviewer` |
+   | Always (built-in cross-check, not an agent) | `/security-review` — supports the Security cross-challenge only; skipped silently on the small-diff path |
    | Backend files changed | `backend-reviewer` |
    | Frontend files changed | `frontend-reviewer`, `ux-reviewer`, `a11y-reviewer` |
    | Infra files changed | `devops-reviewer` |
@@ -158,7 +162,9 @@ Cover all quality dimensions: content, security, code quality, tests, documentat
 Produce your structured single-pass report.
 ```
 
-After the single-pass agent completes, skip directly to Phase 6 (Diff Hash Snapshot) and present its report as the final output.
+After the single-pass agent completes, present its report as the final output.
+
+**Note:** The built-in `/security-review` cross-check is NOT invoked on the small-diff path — the single-pass `code-reviewer` agent already covers security for diffs this small, and the extra Skill call would only add latency.
 
 **If diff exceeds the threshold:** Continue with Phase 2 as usual.
 
@@ -186,7 +192,7 @@ Run directly in this command (not delegated to sub-agents):
 
 ### Phase 3A: Parallel Code Reviews (no browser)
 
-**CRITICAL:** Send ALL Agent tool calls in a **single message** so they execute in parallel. Do NOT send them one by one — that makes them sequential.
+**CRITICAL:** Send ALL Agent tool calls **and the built-in `/security-review` Skill call** in a **single message** so they execute in parallel. Do NOT send them one by one — that makes them sequential.
 
 These reviewers only analyze code — they do NOT use Chrome DevTools MCP and can safely run in parallel.
 
@@ -205,6 +211,19 @@ Audit OWASP Top 10, permission model (@Restricted/@Roles/securityCheck), injecti
 XSS patterns, auth/session security, secrets exposure, dependency CVEs, and infrastructure security.
 Produce your structured security report with severity classification.
 ```
+
+#### Built-in `/security-review` Cross-Check (always)
+
+Invoke the Claude Code built-in `/security-review` skill in the **same single message** as the Agent tool calls above, so all reviewers execute in parallel. The built-in analyses the git diff vs. merge-base for generic security patterns (injection, auth issues, data exposure) and returns its findings inline.
+
+```
+Skill tool with skill "security-review":
+(no arguments — it auto-detects the current branch diff)
+```
+
+Capture the built-in's output verbatim into a variable `builtin_security_findings` for Phase 4 cross-domain challenge. Do NOT treat it as a reviewer report (no fulfillment grade, no structured severity). Its role is to supply an independent second opinion that the lt-specific `security-reviewer` agent can be challenged against.
+
+**If the built-in is unavailable** (older Claude Code versions, Skill tool denied): log "`/security-review` unavailable — skipping built-in cross-check" and continue. The agent's report stands on its own.
 
 #### Documentation Reviewer (always)
 ```
@@ -369,7 +388,9 @@ Produce your structured a11y & SEO review report with fulfillment grades.
 
 After ALL agents (from both Phase 3A and 3B) return their reports, perform cross-domain analysis.
 
-**Skip condition:** If only 1-2 reviewers were spawned (e.g., small diff that only triggered security-reviewer and docs-reviewer), skip this phase — cross-domain analysis adds minimal value with few data points. Proceed directly to Phase 5.
+**Skip condition:** If only 1-2 **agent reviewers** were spawned (the built-in `/security-review` cross-check does NOT count toward this threshold, since it only supports the Security challenge), skip this phase — cross-domain analysis adds minimal value with few data points. Proceed directly to Phase 5.
+
+**Partial-skip exception:** When Phase 4 is skipped but both the `security-reviewer` agent AND the built-in produced output, still run the `Security-Reviewer ↔ /security-review built-in` row alone — it's cheap, self-contained, and the Cross-Source column in Phase 5 depends on it. All other challenge rows remain skipped.
 
 **Parallel challenge groups:** These challenge pairs are independent — evaluate them as **parallel analysis tasks** (multiple Grep/Read calls in a single message where evidence lookups are needed):
 
@@ -377,6 +398,7 @@ After ALL agents (from both Phase 3A and 3B) return their reports, perform cross
 |-------|-----------|---------------|
 | A | **Security ↔ Tests** | Does a security finding have test coverage that mitigates it? |
 | A | **Security ↔ DevOps** | Overlapping Docker/env findings → deduplicate |
+| A | **Security-Reviewer ↔ `/security-review` built-in** | Compare lt-specific agent findings against the built-in's generic output (stored in `builtin_security_findings`). Confidence matrix: both sources flag it → high confidence, keep; only agent flags it → lt-specific pattern, keep at normal priority; only built-in flags it → possible blind spot of the lt-agent, keep at built-in's severity UNLESS already demonstrably mitigated (`@Restricted` / `securityCheck` / Better Auth / Valibot) — only then downgrade or drop. If the built-in returned zero findings, this row is trivially satisfied (no matches to evaluate). Skip entirely if the built-in was unavailable. |
 | B | **Backend ↔ Frontend** | Are backend API changes reflected in frontend API client usage? |
 | B | **Performance ↔ Tests** | Does a performance concern have load test coverage? |
 | B | **Performance ↔ Backend** | Overlapping N+1/query findings → deduplicate, keep deeper analysis |
@@ -395,6 +417,7 @@ For each challenged finding:
 - Mark the domain as "Could not evaluate — [reason]"
 - Continue with available reports
 - 3+ reviewers fail → flag "Degraded Review" in header
+- Built-in `/security-review` unavailability is NOT a reviewer failure and never counts toward the "Degraded Review" threshold — it simply means the cross-check is skipped.
 
 ### Phase 5: Unified Report
 
@@ -412,6 +435,7 @@ Generate a single unified report merging all reviewer results:
 | orchestrator | Check Script (auto-fix) | ✅ / ⚠️ / ❌ / — N/A |
 | orchestrator | Content Validation | ✅ / ⚠️ / ❌ |
 | security-reviewer | Security (OWASP) | ✅ / ⚠️ / ❌ / — N/A |
+| `/security-review` built-in | Security (generic cross-check) | ✓ findings / — none / ✗ unavailable |
 | docs-reviewer | Documentation | ✅ / ⚠️ / ❌ / — |
 | performance-reviewer | Performance (Bundle, Queries, k6) | ✅ / ⚠️ / ❌ / — |
 | backend-reviewer | Backend (NestJS) | ✅ / ⚠️ / ❌ / — |
@@ -480,6 +504,12 @@ Override rules:
 ### Detailed Findings
 [Per domain: findings from each reviewer, or "N/A — no changes"]
 
+For Security findings, add a `Cross-Source` column:
+- ✓ = flagged by both security-reviewer AND `/security-review` built-in (high confidence, keep as-is)
+- ○ = only security-reviewer (lt-specific finding — keep at normal priority)
+- △ = only `/security-review` built-in (generic pattern — could be a **blind spot of the lt-agent**; verify lt-context before deciding. Downgrade ONLY if already demonstrably mitigated by `@Restricted` / `securityCheck` / Better Auth / Valibot. Otherwise keep at the built-in's original severity.)
+- — = built-in was unavailable (no cross-check possible; rely solely on security-reviewer)
+
 ### Cross-Domain Challenge Results
 [Findings removed, downgraded, or annotated after cross-domain analysis]
 
@@ -506,8 +536,11 @@ Priority ordering: Critical → High → Medium → Low
 **Frontend findings:**
 - Code Quality ⚠️/❌ → `/lt-dev:refactor-frontend --dry-run`
 
-**All ✅** → Create PR and run `/review`
-```
+**Claude Code Built-in Cross-Reviews (optional, outside this command):**
+- After PR is created → `/review <PR#>` for a generic PR-context review (uses `gh` CLI)
+- CI fails on the PR → `/autofix-pr` spawns a cloud session that pushes fixes automatically
+- Quick pre-review code cleanup on recently changed files → `/simplify` (auto-applies fixes — run BEFORE `/lt-dev:review`, never inside it)
 
-### Phase 6: Diff Hash Snapshot
+**All ✅** → Create PR, then run `/review <PR#>` for a generic PR-context cross-check
+```
 
