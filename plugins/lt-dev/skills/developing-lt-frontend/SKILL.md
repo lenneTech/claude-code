@@ -88,7 +88,12 @@ project/
 - `generating-nest-servers` - For NestJS backend development (projects/api/)
 - `using-lt-cli` - For Git operations and Fullstack initialization
 - `building-stories-with-tdd` - For complete TDD workflow (Backend + Frontend)
+- `contributing-to-lt-framework` - When modifying `@lenne.tech/nuxt-extensions` itself and testing via `pnpm link`
 - `/lt-dev:frontend:env-migrate` - Migrate env variables to `NUXT_` prefix convention
+
+## Dev Server Lifecycle
+
+When starting `nuxt dev` (or any long-running process) for manual testing, Chrome DevTools MCP debugging, or E2E tests: **always** use `run_in_background: true` and `pkill -f "nuxt dev"` afterwards. Leaving dev servers orphaned blocks the Claude Code session ("Unfurling..."). Full rules: `managing-dev-servers` skill.
 
 **In monorepo projects:**
 - `projects/app/` or `packages/app/` → **This skill**

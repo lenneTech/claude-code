@@ -14,6 +14,22 @@ to having the module source vendored directly at `app/core/`.
 npm version and the target vendor version, then fetches and applies all relevant
 changelog/release changes -- so the project code is updated to match the vendored module version.
 
+## Before You Convert -- Vendor Modification Policy
+
+Vendoring copies the framework module into `app/core/` as first-class
+project code. This is a **comprehension aid**, not a fork. After the
+conversion, edit `app/core/` **only** when the change is generally useful
+to every @lenne.tech/nuxt-extensions consumer (bugfixes, broad enhancements
+like new composables or SSR fixes, security fixes, type-compat). All
+project-specific behavior stays outside `app/core/` -- use
+`app/composables/`, `app/components/`, `app/middleware/`, or plugin
+overrides. Generally useful changes MUST flow back upstream via
+`/lt-dev:frontend:contribute-nuxt-extensions-core` -- otherwise they rot
+in one project's vendor tree and re-conflict on every sync.
+
+The generated `app/core/VENDOR.md` contains the full policy text; read it
+once right after the conversion.
+
 ## Usage
 
 ```

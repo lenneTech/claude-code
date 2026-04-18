@@ -14,6 +14,21 @@ to having the framework core vendored directly at `src/core/`.
 npm version and the target vendor version, then fetches and applies all relevant
 migration guides — so the project code is updated to match the vendored framework version.
 
+## Before You Convert — Vendor Modification Policy
+
+Vendoring copies the framework core into `src/core/` as first-class project
+code. This is a **comprehension aid**, not a fork. After the conversion, edit
+`src/core/` **only** when the change is generally useful to every
+@lenne.tech/nest-server consumer (bugfixes, broad enhancements, security
+fixes, build/TS-compat). All project-specific behavior stays outside
+`src/core/` via inheritance, extension, or `ICoreModuleOverrides`. Generally
+useful changes MUST flow back upstream via
+`/lt-dev:backend:contribute-nest-server-core` — otherwise they rot in one
+project's vendor tree and re-conflict on every sync.
+
+The generated `src/core/VENDOR.md` contains the full policy text; read it
+once right after the conversion.
+
 ## Usage
 
 ```

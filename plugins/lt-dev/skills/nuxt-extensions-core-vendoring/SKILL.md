@@ -36,6 +36,7 @@ execution, use the matching agents:
 | "Create a new Nuxt composable"                             | developing-lt-frontend                |
 | "Fix a CVE via npm audit"                                  | maintaining-npm-packages              |
 | "Sync vendored backend core from upstream"                 | nest-server-core-vendoring            |
+| "Modify @lenne.tech/nuxt-extensions itself and test via pnpm link" | contributing-to-lt-framework   |
 
 ## Detecting a Vendored Frontend Project
 
@@ -53,6 +54,36 @@ A project is **npm-based** (classic) if:
 
 The `fullstack-updater` (classic agent) detects this automatically and delegates
 to `nuxt-extensions-core-updater` for vendored projects.
+
+## Modification Policy (when to touch `app/core/`)
+
+Vendoring copies the nuxt-extensions source into the project tree so Claude
+Code can read it directly -- this is a **comprehension aid**, not an
+invitation to fork. The policy:
+
+1. **Change `app/core/` ONLY when the change is generally useful to all
+   nuxt-extensions consumers.** Valid reasons:
+   - Bugfixes that apply to every consumer
+   - Framework enhancements with broad applicability (new composables,
+     better defaults, SSR fixes)
+   - Closing security vulnerabilities
+   - Type/config compatibility fixes that every consumer would hit
+2. **Every other change belongs in project code** (outside `app/core/`),
+   via project-level composables, components, middleware, or plugin
+   overrides. Project-specific business rules, customer branding, or
+   proprietary integrations must never live in the vendored core.
+3. **Generally-useful changes MUST be submitted as an upstream PR** to
+   `github.com/lenneTech/nuxt-extensions`. Use
+   `/lt-dev:frontend:contribute-nuxt-extensions-core` to prepare the PR.
+   Do not let useful fixes rot in a single project's vendor tree -- they
+   belong upstream so every consumer benefits and the local patch
+   disappears on the next sync.
+4. **When in doubt, ask before editing `app/core/`.** The contributor
+   agent exists precisely to keep the vendor tree close to upstream.
+
+The `nuxt-extensions-core-contributor` agent enforces this distinction by
+categorizing every local commit as **upstream-candidate** (generic) vs.
+**project-specific** (stays local) vs. **unclear** (asks the human).
 
 ## The Frontend Vendor Model (one-way curation)
 

@@ -284,6 +284,19 @@ REPEAT until all pass (unlimited iterations):
 - Commit the conversion: `git add -A && git commit -m "chore: convert to vendor mode (nest-server X.Y.Z → A.B.C)"`
 - Review VENDOR.md for accuracy
 - Use `/lt-dev:backend:update-nest-server-core` for future framework updates
+
+### Vendor Modification Policy (read before editing `src/core/`)
+
+The vendored core is a **comprehension aid**, not a fork. Edit `src/core/`
+**only** for changes that are generally useful to every
+@lenne.tech/nest-server consumer (bugfixes, broad enhancements, security
+fixes, build/TS-compat). Project-specific behavior belongs outside
+`src/core/` — use inheritance, extension, or `ICoreModuleOverrides`.
+
+Generally-useful changes MUST flow back upstream via
+`/lt-dev:backend:contribute-nest-server-core` — otherwise they rot in
+this project's vendor tree and re-conflict on every sync. The full
+policy text is in `src/core/VENDOR.md`.
 ```
 
 ---

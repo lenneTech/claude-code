@@ -631,6 +631,56 @@
       "pattern": "Bash(nuxt typecheck:*)",
       "description": "Run Nuxt type checking",
       "usedBy": ["vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
+    },
+    {
+      "pattern": "Bash(pnpm link:*)",
+      "description": "Link a local package into a consumer project for framework-level development",
+      "usedBy": ["contributing-to-lt-framework"]
+    },
+    {
+      "pattern": "Bash(pnpm unlink:*)",
+      "description": "Unlink a previously linked local package after framework-level development",
+      "usedBy": ["contributing-to-lt-framework"]
+    },
+    {
+      "pattern": "Bash(npm link:*)",
+      "description": "Link a local package into a consumer project for framework-level development",
+      "usedBy": ["contributing-to-lt-framework"]
+    },
+    {
+      "pattern": "Bash(npm unlink:*)",
+      "description": "Unlink a previously linked local package after framework-level development",
+      "usedBy": ["contributing-to-lt-framework"]
+    },
+    {
+      "pattern": "Bash(yarn link:*)",
+      "description": "Link a local package into a consumer project for framework-level development",
+      "usedBy": ["contributing-to-lt-framework"]
+    },
+    {
+      "pattern": "Bash(yarn unlink:*)",
+      "description": "Unlink a previously linked local package after framework-level development",
+      "usedBy": ["contributing-to-lt-framework"]
+    },
+    {
+      "pattern": "Bash(pnpm why:*)",
+      "description": "Inspect package resolution to verify link/unlink state",
+      "usedBy": ["contributing-to-lt-framework"]
+    },
+    {
+      "pattern": "Bash(pkill:*)",
+      "description": "Terminate background dev servers and watchers to enforce the dev-server lifecycle contract",
+      "usedBy": ["managing-dev-servers", "contributing-to-lt-framework", "building-stories-with-tdd", "developing-lt-frontend", "generating-nest-servers"]
+    },
+    {
+      "pattern": "Bash(pgrep:*)",
+      "description": "Check whether a background dev server is still running before reporting completion",
+      "usedBy": ["managing-dev-servers", "contributing-to-lt-framework", "building-stories-with-tdd", "developing-lt-frontend", "generating-nest-servers"]
+    },
+    {
+      "pattern": "Bash(lsof:*)",
+      "description": "Inspect which process holds ports 3000/3001 when diagnosing port collisions",
+      "usedBy": ["managing-dev-servers", "contributing-to-lt-framework"]
     }
   ]
 }

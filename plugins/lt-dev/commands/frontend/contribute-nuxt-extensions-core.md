@@ -17,6 +17,23 @@ review.
 **Never auto-pushes.** Every candidate becomes a prepared branch + PR body
 that the human explicitly reviews and submits via normal GitHub flow.
 
+## Why This Exists (Modification Policy)
+
+The vendored `app/core/` is a **comprehension aid**, not a fork. Per the
+Vendor Modification Policy (documented in `app/core/VENDOR.md`, the
+frontend `CLAUDE.md`, and the `nuxt-extensions-core-vendoring` skill),
+`app/core/` may only be edited for changes that are generally useful to
+every @lenne.tech/nuxt-extensions consumer (bugfixes, broad enhancements
+like new composables/SSR fixes, security fixes, type-compat). **Generally
+useful changes MUST flow back upstream** so every consumer benefits and
+the local patch disappears on the next sync — that is exactly what this
+command prepares.
+
+If a change turns out to be project-specific, it does not belong in
+`app/core/` at all; move it to project code (`app/composables/`,
+`app/components/`, `app/middleware/`, plugin overrides) instead of
+submitting an upstream PR.
+
 ## Usage
 
 ```

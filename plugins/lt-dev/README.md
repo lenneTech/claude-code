@@ -33,10 +33,12 @@ These plugins are **optional** but enhance the experience when working with this
 - **Frontend Security**: OWASP-based security auditing (XSS, CSRF, CSP)
 - **Agent Teams**: Parallel workflow coordination for complex tasks
 - **Plugin Development**: Claude Code plugin best practices and validation
+- **Framework Contribution**: Local `pnpm link` workflow for modifying `@lenne.tech/nest-server` / `@lenne.tech/nuxt-extensions` and validating changes from a starter
+- **Dev Server Lifecycle**: Enforced `run_in_background` / `pkill` contract to prevent orphaned processes across TDD, framework linking, and MCP-driven debugging
 
 ## Included
 
-- **13 Skills** - Auto-detected contextual expertise (includes `running-check-script` for runnability validation)
+- **15 Skills** - Auto-detected contextual expertise (includes `running-check-script` for runnability validation, `managing-dev-servers` for dev-server lifecycle rules, and `contributing-to-lt-framework` for pnpm link workflows)
 - **24 Agents** - Autonomous task execution
 - **52 Commands** - User-triggered actions via `/lt-dev:<name>`
 - **9 Hooks** - Automated project detection and validation

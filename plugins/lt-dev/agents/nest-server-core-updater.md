@@ -316,6 +316,17 @@ Update `VENDOR.md`:
 - Append a row to "Sync-Historie" with date, adopted commits, conflicts, reviewer
 - Remove entries from "Lokale Änderungen" that correspond to upstream-PRs
   that have now been merged (if the upstream target includes them)
+- **Policy-section backfill:** if `VENDOR.md` does not contain a
+  `## Modification Policy` section (pre-existing projects vendored
+  before the policy was added to the CLI generator), insert the
+  canonical block directly before `## Baseline`. Canonical content:
+  four allowed edit reasons (bugfix / enhancement / security /
+  build-compat), "everything else stays outside `src/core/`", mandatory
+  upstream-PR via `/lt-dev:backend:contribute-nest-server-core`, and
+  "when in doubt, ask". Use the exact wording from
+  `cli/src/extensions/server.ts#convertCloneToVendored` (VENDOR.md
+  generator, step 10) as the source of truth. Commit separately:
+  `docs(framework): backfill modification policy in VENDOR.md`.
 
 ---
 

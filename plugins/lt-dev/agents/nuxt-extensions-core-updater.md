@@ -261,6 +261,17 @@ Update `VENDOR.md`:
 - Append a row to "Sync History" with date, adopted commits, conflicts, reviewer
 - Remove entries from "Local Changes" that correspond to upstream-PRs
   that have now been merged (if the upstream target includes them)
+- **Policy-section backfill:** if `VENDOR.md` does not contain a
+  `## Modification Policy` section (pre-existing projects vendored
+  before the policy was added to the CLI generator), insert the
+  canonical block directly before `## Baseline`. Canonical content:
+  four allowed edit reasons (bugfix / enhancement / security /
+  type-compat), "everything else stays outside `app/core/`", mandatory
+  upstream-PR via `/lt-dev:frontend:contribute-nuxt-extensions-core`,
+  and "when in doubt, ask". Use the exact wording from
+  `cli/src/extensions/frontend-helper.ts#convertAppCloneToVendored`
+  (VENDOR.md generator, step 7) as the source of truth. Commit
+  separately: `docs(framework): backfill modification policy in VENDOR.md`.
 
 ---
 

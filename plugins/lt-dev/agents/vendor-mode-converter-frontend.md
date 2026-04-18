@@ -261,6 +261,21 @@ REPEAT until all pass (unlimited iterations):
 - Commit the conversion: `git add -A && git commit -m "chore: convert frontend to vendor mode (nuxt-extensions X.Y.Z -> A.B.C)"`
 - Review VENDOR.md for accuracy
 - Use `/lt-dev:frontend:update-nuxt-extensions-core` for future framework updates
+
+### Vendor Modification Policy (read before editing `app/core/`)
+
+The vendored module is a **comprehension aid**, not a fork. Edit
+`app/core/` **only** for changes that are generally useful to every
+@lenne.tech/nuxt-extensions consumer (bugfixes, broad enhancements like
+new composables or SSR fixes, security fixes, type-compat).
+Project-specific behavior belongs outside `app/core/` -- use
+`app/composables/`, `app/components/`, `app/middleware/`, or plugin
+overrides.
+
+Generally-useful changes MUST flow back upstream via
+`/lt-dev:frontend:contribute-nuxt-extensions-core` -- otherwise they rot
+in this project's vendor tree and re-conflict on every sync. The full
+policy text is in `app/core/VENDOR.md`.
 ```
 
 ---

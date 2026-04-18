@@ -49,6 +49,7 @@ Initial TodoWrite:
 [pending] Phase 7: Styling & conventions
 [pending] Phase 8: Tailwind & CSS quality
 [pending] Phase 9: Formatting & lint
+[pending] Phase 10: Vendor modification compliance (only if vendored + app/core/ touched)
 [pending] Generate report
 ```
 
@@ -412,6 +413,56 @@ pnpm run lint
 - [ ] Modified components have updated tests (read test content to verify, do not execute)
 - [ ] **Regression tests for bug fixes**: If the diff fixes a bug or security issue (check commit messages, branch name for "fix", "bug", "security", "CVE"), verify a regression test exists that specifically covers the fixed scenario. Flag as Critical if missing.
 
+### Phase 10: Vendor Modification Compliance (conditional)
+
+**Only runs if both:** (a) the project is in vendor mode
+(`test -f app/core/VENDOR.md`), AND (b) the diff touches `app/core/**`.
+
+If either condition is false, skip this phase and mark the dimension as
+"N/A" in the report.
+
+#### Step 1: Detect vendored-core changes in the diff
+
+```bash
+git diff <base-branch>...HEAD --name-only -- "**/app/core/**"
+```
+
+#### Step 2: Policy Checks
+
+For each changed file under `app/core/`:
+
+- [ ] **Generic-looking change** — the modification reads as a framework
+      bugfix, broad enhancement (composables, SSR fixes, defaults),
+      security fix, or type-compat fix. Flag as *concern* (not blocker)
+      if the change references project-specific names (customer
+      branding, business routes, tenant IDs) — that code belongs in
+      `app/composables/`, `app/components/`, `app/middleware/`, or
+      plugin overrides.
+- [ ] **Logged in `VENDOR.md`** — `app/core/VENDOR.md` has a row in the
+      "Local changes" table referencing this change (date + scope +
+      reason). Missing entry = **Critical**.
+- [ ] **Upstream-PR tracked** — either `VENDOR.md`'s "Upstream PRs"
+      table has an entry for this change OR the commit message mentions
+      "upstream" / "contribute-nuxt-extensions-core" / a PR URL.
+      Missing = *concern* with remediation "run
+      `/lt-dev:frontend:contribute-nuxt-extensions-core` to prepare a PR".
+
+#### Step 3: Heuristic output
+
+The reviewer is not the arbiter of generic-vs-specific — surface the
+judgment call, don't block on it. Format findings as:
+
+```
+app/core/composables/useBetterAuth.ts
+  ⚠ Touches vendored core — ensure this is a generic fix.
+  Status: ✅ logged in VENDOR.md  |  ⚠ no upstream PR tracked
+  Next step: /lt-dev:frontend:contribute-nuxt-extensions-core
+```
+
+If policy breaches are found (not logged, clearly project-specific
+change in core), cite the Vendor Modification Policy in `VENDOR.md` and
+link to the `nuxt-extensions-core-vendoring` skill.
+
 ---
 
 ## Output Format
@@ -432,6 +483,7 @@ pnpm run lint
 | Styling & Conventions | X% | ✅/⚠️/❌ |
 | Tailwind & CSS Quality | X% | ✅/⚠️/❌ |
 | Formatting & Lint | X% | ✅/⚠️/❌ |
+| Vendor Modification Compliance | X% or N/A | ✅/⚠️/❌/— |
 
 **Overall: X%**
 
@@ -464,6 +516,11 @@ pnpm run lint
 
 ### 9. Formatting & Lint
 [Lint output, debug artifacts, test file existence check]
+
+### 10. Vendor Modification Compliance
+[Only when vendored + app/core/ touched. Per-file: generic-looking?
+logged in VENDOR.md? upstream-PR tracked? Otherwise: "N/A — not a
+vendor project" or "N/A — no app/core/ changes in this diff".]
 
 ### Remediation Catalog
 | # | Dimension | Priority | File | Action |

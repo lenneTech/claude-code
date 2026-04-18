@@ -17,6 +17,21 @@ review.
 **Never auto-pushes.** Every candidate becomes a prepared branch + PR body
 that the human explicitly reviews and submits via normal GitHub flow.
 
+## Why This Exists (Modification Policy)
+
+The vendored `src/core/` is a **comprehension aid**, not a fork. Per the
+Vendor Modification Policy (documented in `src/core/VENDOR.md`,
+`projects/api/CLAUDE.md`, and the `nest-server-core-vendoring` skill),
+`src/core/` may only be edited for changes that are generally useful to
+every @lenne.tech/nest-server consumer (bugfixes, broad enhancements,
+security fixes, build-compat). **Generally-useful changes MUST flow back
+upstream** so every consumer benefits and the local patch disappears on
+the next sync — that is exactly what this command prepares.
+
+If a change turns out to be project-specific, it does not belong in
+`src/core/` at all; move it to project code (inheritance, extension,
+`ICoreModuleOverrides`) instead of submitting an upstream PR.
+
 ## Usage
 
 ```

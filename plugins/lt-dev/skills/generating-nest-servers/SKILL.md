@@ -63,6 +63,7 @@ project/
 - `building-stories-with-tdd` - For TDD workflow (tests first, then implementation)
 - `using-lt-cli` - For Git operations and Fullstack initialization
 - `nest-server-updating` - For updating @lenne.tech/nest-server versions
+- `contributing-to-lt-framework` - When modifying `@lenne.tech/nest-server` itself and testing via `pnpm link`
 - `/lt-dev:review` - General security review of branch diff
 - `/lt-dev:backend:sec-review` - Security review after implementing endpoints or modifying auth/authz
 - `/lt-dev:backend:sec-audit` - Full OWASP security audit for dependencies, config, and code
@@ -70,6 +71,10 @@ project/
 **In monorepo projects:**
 - `projects/api/` or `packages/api/` → This skill
 - `projects/app/` or `packages/app/` → `developing-lt-frontend`
+
+## Dev Server Lifecycle
+
+When starting `nest start` / `pnpm dev` (or any long-running process) for manual API testing, debugging, or E2E tests: **always** use `run_in_background: true` and `pkill -f "nest start"` afterwards. Leaving dev servers orphaned blocks the Claude Code session ("Unfurling..."). Full rules: `managing-dev-servers` skill.
 
 ## CRITICAL RULES
 
