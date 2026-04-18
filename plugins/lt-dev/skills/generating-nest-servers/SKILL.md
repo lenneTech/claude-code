@@ -196,19 +196,9 @@ lt server permissions --failOnWarnings  # CI/CD mode
 
 ### Detect Test Framework First (CRITICAL)
 
-**BEFORE writing or running ANY test**, check which test framework and patterns the project uses:
+**BEFORE writing or running ANY test**, detect which framework and import style the project uses. Vitest vs. Jest, plus `globals: true/false` in `vitest.config.ts`, determines whether `describe`/`it`/`expect` must be imported.
 
-1. **Check `package.json`** for `vitest`, `jest`, or `@jest` in dependencies/devDependencies
-2. **Check existing test files** — read 1-2 files in `tests/` to see imports (`import { describe } from 'vitest'` vs Jest globals)
-3. **Check test scripts** in `package.json` (`test:e2e`, `test`, etc.) for the runner command
-4. **Match the framework exactly** — do NOT mix Vitest syntax in a Jest project or vice versa
-
-| Framework | Imports | Config File |
-|-----------|---------|-------------|
-| **Vitest** | `import { describe, it, expect } from 'vitest'` | `vitest.config.ts` |
-| **Jest** | No imports needed (globals) | `jest.config.ts` / `jest.config.js` |
-
-**Running tests:** Always use the project's npm scripts (check `package.json` `scripts` section). Do NOT guess commands like `npx vitest` or `npx jest` — use `npm run test:e2e`, `npm test`, or whatever the project defines.
+**Details: [reference/workflow-process.md](${CLAUDE_SKILL_DIR}/reference/workflow-process.md#phase-7-api-test-creation)**
 
 For full TDD workflow orchestration, use `building-stories-with-tdd` skill.
 
