@@ -33,23 +33,25 @@ Once all tests are passing, analyze your implementation for code quality issues.
 **Example of code duplication:**
 
 ```typescript
-//  BAD: Duplicated validation logic
+import { ErrorCode } from '../../common/errors/project-errors';
+
+//  BAD: Duplicated validation logic (ignore the ErrorCode usage here — focus is the duplication)
 async createProduct(input: ProductInput) {
   if (!input.name || input.name.trim().length === 0) {
-    throw new BadRequestException('Name is required');
+    throw new BadRequestException(ErrorCode.REQUIRED_FIELD_MISSING);
   }
   if (!input.price || input.price <= 0) {
-    throw new BadRequestException('Price must be positive');
+    throw new BadRequestException(ErrorCode.INVALID_FIELD_FORMAT);
   }
   // ... create product
 }
 
 async updateProduct(id: string, input: ProductInput) {
   if (!input.name || input.name.trim().length === 0) {
-    throw new BadRequestException('Name is required');
+    throw new BadRequestException(ErrorCode.REQUIRED_FIELD_MISSING);
   }
   if (!input.price || input.price <= 0) {
-    throw new BadRequestException('Price must be positive');
+    throw new BadRequestException(ErrorCode.INVALID_FIELD_FORMAT);
   }
   // ... update product
 }
@@ -57,10 +59,10 @@ async updateProduct(id: string, input: ProductInput) {
 //  GOOD: Extracted to reusable function
 private validateProductInput(input: ProductInput) {
   if (!input.name || input.name.trim().length === 0) {
-    throw new BadRequestException('Name is required');
+    throw new BadRequestException(ErrorCode.REQUIRED_FIELD_MISSING);
   }
   if (!input.price || input.price <= 0) {
-    throw new BadRequestException('Price must be positive');
+    throw new BadRequestException(ErrorCode.INVALID_FIELD_FORMAT);
   }
 }
 
@@ -74,6 +76,8 @@ async updateProduct(id: string, input: ProductInput) {
   // ... update product
 }
 ```
+
+> Every `throw new XxxException(...)` in this file uses `ErrorCode` from the project registry. Raw-string exceptions are forbidden outside tests — full rules in `generating-nest-servers/reference/error-handling.md`.
 
 ---
 

@@ -877,11 +877,12 @@ export class Order {
 **Service logic for total calculation and stock validation:**
 ```typescript
 // In OrderService (extends CrudService)
+import { ErrorCode } from '../../common/errors/project-errors';
 
 async create(input: CreateOrderInput, userId: string): Promise<Order> {
   // Validate items exist
   if (!input.items || input.items.length === 0) {
-    throw new BadRequestException('Order must contain at least one item');
+    throw new BadRequestException(ErrorCode.ORDER_EMPTY);
   }
 
   // Check stock and calculate total
@@ -891,13 +892,12 @@ async create(input: CreateOrderInput, userId: string): Promise<Order> {
   for (const item of input.items) {
     const product = await this.productService.findById(item.productId);
     if (!product) {
-      throw new NotFoundException(`Product ${item.productId} not found`);
+      // Placeholders ({productId}) are interpolated on the frontend from the translation template
+      throw new NotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
     }
 
     if (product.stock < item.quantity) {
-      throw new BadRequestException(
-        `Insufficient stock for product ${product.name}`
-      );
+      throw new BadRequestException(ErrorCode.INSUFFICIENT_STOCK);
     }
 
     orderItems.push({

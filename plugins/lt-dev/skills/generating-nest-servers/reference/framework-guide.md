@@ -145,6 +145,8 @@ export class ProductService extends CrudService<Product> {
 - [ ] Only add custom methods if CrudService doesn't cover the use case
 - [ ] Follow CrudService patterns for consistency
 
+>  **Security Note — `@InjectModel` scope:** In the example above, `@InjectModel(Product.name)` is the Service's OWN primary Model (same class, passed to `super({ mainDbModel })`) — the standard usage. Any OTHER `@InjectModel` (e.g. injecting `User` or `Category` into `ProductService`) is legitimate but requires (1) a **good reason** in a code comment, and (2) a **thorough analysis** of the corresponding Service to confirm no security measure or process (`securityCheck()`, `@Restricted`/`@Roles`, ownership, field filtering, hooks, events, side-effects) is unintentionally bypassed. Prefer injecting the corresponding Service when no specific reason exists. See `security-rules.md` Rule 12.
+
 ---
 
 ##  CRITICAL: ServiceOptions When Calling Other Services
@@ -256,9 +258,13 @@ All Services follow this pattern:
 @Injectable()
 export class YourService extends CrudService<YourModel> {
   constructor(
+    // Standard: @InjectModel for this Service's OWN primary Model (passed to super({ mainDbModel }))
     @InjectModel(YourModel.name) protected readonly yourModel: Model<YourModelDocument>,
     protected readonly configService: ConfigService,
-    // Inject other services if needed
+    // For other modules' data: inject the corresponding Service by default — it enforces
+    // securityCheck(), @Restricted/@Roles, ownership, field filtering, hooks, events.
+    // Any additional @InjectModel(ForeignModel.name) needs a documented reason AND an
+    // analysis of the foreign Service to ensure no process/security rule is bypassed.
     private readonly otherService: OtherService,
   ) {
     super({

@@ -51,6 +51,16 @@ Before writing any code:
 2. If missing: **STOP** — ask user if API is running at `http://localhost:3000`, then run `pnpm run generate-types`
 3. **NEVER** create manual DTO interfaces as a workaround — this is FORBIDDEN
 
+## CRITICAL: Informed-Trade-off Pattern (Frontend Instances)
+
+Several Nuxt/Vue framework conventions have a **standard safe path** and an **opt-out for good reasons**. The opt-out is never implicit — it requires a documented justification and awareness of what it bypasses.
+
+**Frontend instances** (Composition API vs Options, readonly composable state, SSR guards, deprecated APIs, `v-html`, `useFetch` vs raw `fetch`): see `developing-lt-frontend` skill → [`reference/informed-trade-off-pattern.md`](${CLAUDE_SKILL_DIR}/reference/informed-trade-off-pattern.md). The reference lists each instance's standard path, legitimate opt-out reasons, what is bypassed, and required documentation.
+
+**Meta-shape** (identical across backend and frontend): five-element pattern (standard path → opt-out legitimacy → mandatory analysis → code comment → review severity from actual bypass). Full definition in the backend skill: `generating-nest-servers/reference/informed-trade-off-pattern.md`.
+
+**When writing frontend code:** default to the standard path; if an opt-out is needed, add a code comment naming the reason and the compensating logic (sanitization source for `v-html`, SSR guard reason for `import.meta.client`, etc.). Reviewers will check the same five elements.
+
 ## Execution Protocol
 
 ### 1. Context Analysis

@@ -121,9 +121,12 @@ export class PasswordDto {
   password: string;
 }
 
-// Generic error messages
+// Generic error messages — typed via ErrorCode registry
+import { ErrorCode } from '../../common/errors/project-errors';
+
 if (!user || !(await bcrypt.compare(password, user.password))) {
-  throw new UnauthorizedException('Invalid credentials');  // Never specify which
+  // ErrorCode.INVALID_CREDENTIALS (LTNS_0010) — never specify which (user vs password)
+  throw new UnauthorizedException(ErrorCode.INVALID_CREDENTIALS);
 }
 ```
 
@@ -412,10 +415,13 @@ const user = await this.userModel.findOne({ email });  // Safe
 const user = await this.userModel.findOne({ $where: `this.email === '${email}'` });  // Injection!
 
 // Validate ObjectId before query
+import { ErrorCode } from '../../common/errors/project-errors';
 if (!Types.ObjectId.isValid(id)) {
-  throw new BadRequestException('Invalid ID');
+  throw new BadRequestException(ErrorCode.INVALID_FIELD_FORMAT);
 }
 ```
+
+> All exceptions in this checklist use `ErrorCode` from the project registry (`src/server/common/errors/project-errors.ts`). Raw-string messages are forbidden outside tests — see [`error-handling.md`](error-handling.md) for the full ErrorCode rules.
 
 ---
 
@@ -436,13 +442,15 @@ if (!Types.ObjectId.isValid(id)) {
 
 ```typescript
 // Secure file upload handling
+import { ErrorCode } from '../../common/errors/project-errors';
+
 @Post('upload')
 @UseInterceptors(FileInterceptor('file', {
   limits: { fileSize: 5 * 1024 * 1024 },  // 5MB
   fileFilter: (req, file, cb) => {
     const allowedMimes = ['image/jpeg', 'image/png', 'application/pdf'];
     if (!allowedMimes.includes(file.mimetype)) {
-      return cb(new BadRequestException('Invalid file type'), false);
+      return cb(new BadRequestException(ErrorCode.INVALID_FILE_TYPE), false);
     }
     cb(null, true);
   }
@@ -451,7 +459,7 @@ async uploadFile(@UploadedFile() file: Express.Multer.File) {
   // Additional magic byte validation
   const type = await fileType.fromBuffer(file.buffer);
   if (!type || !['image/jpeg', 'image/png', 'application/pdf'].includes(type.mime)) {
-    throw new BadRequestException('Invalid file content');
+    throw new BadRequestException(ErrorCode.INVALID_FILE_CONTENT);
   }
 
   // Generate secure filename
@@ -459,6 +467,8 @@ async uploadFile(@UploadedFile() file: Express.Multer.File) {
   // Upload to S3 or secure storage
 }
 ```
+
+> `INVALID_FILE_TYPE` / `INVALID_FILE_CONTENT` are either existing `LTNS_*` file codes (see `LTNS_0500–0599` range) or project-defined `PROJ_*` codes — define once in `project-errors.ts`, never hardcode the message.
 
 ---
 
@@ -513,12 +523,14 @@ function processPassword(password: string): void {
 
 ```typescript
 // Safe redirect validation
+import { ErrorCode } from '../../common/errors/project-errors';
+
 const ALLOWED_REDIRECTS = ['/', '/dashboard', '/profile'];
 
 @Get('redirect')
 redirect(@Query('to') to: string, @Res() res: Response) {
   if (!ALLOWED_REDIRECTS.includes(to)) {
-    throw new BadRequestException('Invalid redirect target');
+    throw new BadRequestException(ErrorCode.INVALID_REDIRECT_TARGET);
   }
   return res.redirect(to);
 }
@@ -526,7 +538,7 @@ redirect(@Query('to') to: string, @Res() res: Response) {
 // Or validate against origin
 const url = new URL(to, 'https://example.com');
 if (url.hostname !== 'example.com') {
-  throw new BadRequestException('Cannot redirect to external sites');
+  throw new BadRequestException(ErrorCode.EXTERNAL_REDIRECT_FORBIDDEN);
 }
 ```
 

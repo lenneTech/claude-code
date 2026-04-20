@@ -152,6 +152,50 @@ nuxt.config.ts
 
 **Complete E2E testing guide: [reference/e2e-testing.md](${CLAUDE_SKILL_DIR}/reference/e2e-testing.md)**
 
+## Error Handling — Consume Backend ErrorCodes via `useLtErrorTranslation`
+
+The backend returns structured errors in the format `#LTNS_XXXX: Developer message` (core) or `#PROJ_XXXX: ...` (project-specific). The `@lenne.tech/nuxt-extensions` package ships `useLtErrorTranslation()` which parses the `#CODE:` marker, loads locale-specific translations from `GET /i18n/errors/:locale`, and returns end-user messages.
+
+**NEVER assert or display raw English backend messages in the UI.** Always pipe errors through `translateError()` / `showErrorToast()` so users see localized text.
+
+```vue
+<script setup lang="ts">
+const { translateError, showErrorToast, parseError } = useLtErrorTranslation();
+const toast = useToast();
+
+async function onSubmit() {
+  try {
+    await $fetch('/api/users', { method: 'POST', body: form.value });
+  } catch (error) {
+    // Preferred — direct toast from translated message
+    showErrorToast(error, 'Speichern fehlgeschlagen');
+
+    // Or manual, if you need more control
+    toast.add({
+      color: 'error',
+      title: 'Speichern fehlgeschlagen',
+      description: translateError(error),  // '#LTNS_0400: Resource not found' → 'Ressource nicht gefunden.'
+    });
+
+    // Or parse for custom handling (e.g. redirect on specific code)
+    const parsed = parseError(error);
+    if (parsed.code === 'LTNS_0023') {
+      await navigateTo('/auth/verify-email');
+    }
+  }
+}
+</script>
+```
+
+**Rules:**
+- [ ] Every error-handling site uses `useLtErrorTranslation()` — no raw `error.message` in Toast descriptions, form errors, or page-level error UI
+- [ ] `loadTranslations(locale)` is called once at app start or on locale change (the composable caches per locale via `useState`)
+- [ ] Code-based branching (`if (parsed.code === 'LTNS_XXXX')`) for flow-control decisions (verification-required redirects, retry prompts) — never branch on message-string contents
+- [ ] Toast titles are hardcoded in German (context-specific, e.g. `'Anmeldung fehlgeschlagen'`); descriptions come from `translateError`
+- [ ] Tests assert translated messages (not English `error.message`) — see the test-reviewer rules in this plugin
+
+**Full consumer reference: [reference/error-translation.md](${CLAUDE_SKILL_DIR}/reference/error-translation.md)**
+
 ## Reference Files
 
 | Topic | File |
@@ -171,6 +215,8 @@ nuxt.config.ts
 | E2E Testing | [reference/e2e-testing.md](${CLAUDE_SKILL_DIR}/reference/e2e-testing.md) |
 | Troubleshooting | [reference/troubleshooting.md](${CLAUDE_SKILL_DIR}/reference/troubleshooting.md) |
 | Security | [reference/security.md](${CLAUDE_SKILL_DIR}/reference/security.md) |
+| Error Translation (consume backend ErrorCodes) | [reference/error-translation.md](${CLAUDE_SKILL_DIR}/reference/error-translation.md) |
+| Informed Trade-offs (Composition API, readonly, SSR guards, v-html, useFetch) | [reference/informed-trade-off-pattern.md](${CLAUDE_SKILL_DIR}/reference/informed-trade-off-pattern.md) |
 
 ## Pre-Commit Checklist
 
@@ -181,5 +227,6 @@ nuxt.config.ts
 - [ ] German UI, English code, no implicit `any`
 - [ ] Auth uses `useBetterAuth()`, protected routes use `middleware: 'auth'`
 - [ ] No `v-html` with user content, tokens stored securely
+- [ ] All error-handling sites route through `useLtErrorTranslation()` — no raw backend messages in Toasts / UI
 - [ ] Security review passed (`/lt-dev:review` for general scan)
 - [ ] Feature tested in browser (Chrome DevTools MCP), no console errors

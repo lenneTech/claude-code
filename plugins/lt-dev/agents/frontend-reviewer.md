@@ -43,6 +43,7 @@ Initial TodoWrite:
 [pending] Phase 1: TypeScript strictness
 [pending] Phase 2: Component structure & decomposition
 [pending] Phase 3: Composable patterns
+[pending] Phase 3b: Error handling (useLtErrorTranslation)
 [pending] Phase 4: Accessibility (a11y)
 [pending] Phase 5: SSR safety
 [pending] Phase 6: Performance
@@ -50,6 +51,7 @@ Initial TodoWrite:
 [pending] Phase 8: Tailwind & CSS quality
 [pending] Phase 9: Formatting & lint
 [pending] Phase 10: Vendor modification compliance (only if vendored + app/core/ touched)
+[pending] Phase 11: Deprecation scan (non-blocking)
 [pending] Generate report
 ```
 
@@ -220,6 +222,60 @@ grep -n "modalOpen\|isOpen\|showModal\|ref<.*Element>" composables/*.ts
 | Missing readonly on some returns | 70-85% |
 | Logic scattered in components instead of composables | 50-70% |
 | No composables, all logic inline | <50% |
+
+### Phase 3b: Error Handling (UI Translation via `useLtErrorTranslation`)
+
+Backend returns errors as `#LTNS_XXXX: Developer message` / `#PROJ_XXXX: ...`. The `@lenne.tech/nuxt-extensions` composable `useLtErrorTranslation()` parses the `#CODE:` marker and loads locale translations via `GET /i18n/errors/:locale`. **Displaying raw `error.message` in the UI is a user-experience AND a potential information-disclosure issue** — the developer message is English, technical, and may leak internal details. Full rules: `developing-lt-frontend` skill → [`reference/error-translation.md`](${CLAUDE_PLUGIN_ROOT}/skills/developing-lt-frontend/reference/error-translation.md).
+
+```bash
+# Raw error.message in Toast / UI — should route through translateError/showErrorToast
+grep -rnE "description\s*:\s*[a-zA-Z_]+\.(message|data\.message|error\.message)" app/ --include="*.vue" --include="*.ts" | grep -v node_modules
+grep -rnE "\{\{\s*[a-zA-Z_]+\.message\s*\}\}" app/ --include="*.vue" | grep -v node_modules
+
+# Message-string-based branching — fragile (should compare parsed.code)
+grep -rnE "\.message\.(includes|indexOf|startsWith)\(" app/ --include="*.vue" --include="*.ts" | grep -v node_modules
+
+# Manual fetch of translation endpoint instead of using loadTranslations()
+grep -rn "/i18n/errors/" app/ --include="*.vue" --include="*.ts" | grep -v "loadTranslations\|useLtErrorTranslation" | grep -v node_modules
+
+# useLtErrorTranslation actually imported/used — expected in any app with API error handling
+grep -rn "useLtErrorTranslation\|translateError\|showErrorToast" app/ --include="*.vue" --include="*.ts" | grep -v node_modules | head -20
+```
+
+**Checklist — for every error-handling site (try/catch, `onError` callback, form error handler):**
+- [ ] Toast descriptions use `translateError(error)` OR `showErrorToast(error, title)` — never raw `error.message` / `error.data.message`
+- [ ] Inline form errors (below input, page-level banner) use `translateError(error)` — not `error.message` directly
+- [ ] Flow-control branching (redirect on verification-required, retry on token-expired) uses `parseError(error).code === 'LTNS_XXXX'` — not `error.message.includes('...')`
+- [ ] Toast titles are hardcoded German strings specific to the action context (`'Anmeldung fehlgeschlagen'`, `'Speichern fehlgeschlagen'`) — `translateError` only supplies the description
+- [ ] `loadTranslations()` is called once at app start (plugin or `app.vue`) OR relied upon via the composable's lazy-load — NOT manually via `$fetch('/i18n/errors/...')`
+- [ ] No hardcoded translation maps duplicating backend codes
+- [ ] SSR-safe: `showErrorToast` is client-only (no-ops on SSR) — any direct Toast call in SSR context is a bug
+
+**Severity:**
+
+| Scenario | Severity |
+|----------|----------|
+| `toast.add({ description: error.message })` reaching end users | **HIGH** — displays `#LTNS_XXXX: English dev message` to users; also potential disclosure if backend is misconfigured to leak details |
+| Message-string branching (`if (error.message.includes('not found'))`) | **HIGH** — brittle; first translation tweak breaks flow control |
+| Inline form error displaying raw `error.message` | **MEDIUM** — UX problem, not always a leak |
+| Manual `$fetch('/i18n/errors/de')` bypassing composable cache/SSR state | **MEDIUM** — loses SSR safety, duplicate fetches, potential double-fetch waterfalls |
+| Hardcoded translation map duplicating backend registry | **MEDIUM** — diverges over time |
+| Error-handling site correctly routes through `useLtErrorTranslation` | Allowed |
+| App has no API error handling at all (new app, no error paths implemented yet) | Flag as Phase 3 coverage gap, not Phase 3b |
+
+**Scoring:**
+
+| Scenario | Score |
+|----------|-------|
+| All error sites route through `useLtErrorTranslation`, code-based branching, translations preloaded | 100% |
+| 1-2 missed sites with raw `error.message` | 80-90% |
+| Message-string branching present | 60-75% |
+| Widespread raw `error.message` in UI | <50% |
+
+**Cross-references:**
+- Backend contract: `generating-nest-servers/reference/error-handling.md`
+- Backend audit: `security-reviewer` Phase 5 Layer 5b (raw-string exceptions on backend are the root cause if Frontend must fall back)
+- Test-side: `test-reviewer` Phase 2 (assert translated messages in Vitest/Playwright, not English `error.message`)
 
 ### Phase 4: Accessibility (a11y)
 
@@ -463,6 +519,75 @@ If policy breaches are found (not logged, clearly project-specific
 change in core), cite the Vendor Modification Policy in `VENDOR.md` and
 link to the `nuxt-extensions-core-vendoring` skill.
 
+### Phase 11: Deprecation Scan (informed trade-off, non-blocking by default)
+
+Instantiates the **Informed-Trade-off Pattern** (see `generating-nest-servers` skill, `reference/informed-trade-off-pattern.md`; same meta-pattern as backend Rule 12 / Rule 13).
+
+**Goal:** surface deprecated Nuxt / Vue / `@lenne.tech/nuxt-extensions` / Nuxt UI / Better Auth / third-party APIs, composables, directives, config keys, and packages used in the frontend diff so they can be migrated early — AND detect cases where the deprecation removed a security, validation, or SSR-safety control that the current call site now lacks.
+
+**Severity policy:**
+- **Default = Low** — pure API renames, ergonomic replacements, no behavior change. Deprecations do not lower the Fulfillment grade of any other dimension.
+- **Upgrade to Medium** when the deprecated API had an XSS guard, auth guard, input sanitizer, CSRF protection, SSR-safety protection, or validation that is NOT present in the current call site (see "Security-aware evaluation" below).
+- **Never Critical/High** based on deprecation alone. Actual security gaps go to regular security/a11y findings.
+
+**What to scan:**
+- **Framework `@deprecated` symbols:** Nuxt / Vue / nuxt-extensions / Nuxt UI / Better Auth composables, components, utilities, directives marked `@deprecated` (check source in `node_modules/` or `app/core/` in vendor mode).
+- **Deprecated Vue patterns:** e.g. Options API where Composition API is standard for this codebase, `filters`, `$listeners`, `$children`, `.sync` modifier, Vue 2 functional components.
+- **Deprecated Nuxt APIs:** e.g. `useFetch`/`useAsyncData` callbacks that moved, `definePageMeta` options renamed, old auth module vs Better Auth, deprecated runtime config keys.
+- **Deprecated Nuxt UI components:** UI Library versions may rename/replace components — check the active version's changelog.
+- **Deprecated config keys:** `nuxt.config.ts`, `tailwind.config.ts`, `tsconfig.json`, `app.config.ts`.
+- **Deprecated npm packages:** flagged via `pnpm/npm/yarn outdated` or their README deprecation notice.
+- **Pre-existing deprecations in touched files:** even if not introduced by this diff, report them as early-migration opportunities.
+
+**Detection:**
+```bash
+# Deprecated JSDoc usage inside changed frontend files
+git diff <base>...HEAD --name-only -- "*/app/**" "*.vue" | \
+  xargs -I {} grep -Hn "@deprecated" {} 2>/dev/null
+
+# Deprecated symbols in framework sources — grep for @deprecated, then grep callers
+grep -rn "@deprecated" node_modules/@lenne.tech/nuxt-extensions/ 2>/dev/null | head -40
+grep -rn "@deprecated" app/core/ 2>/dev/null | head -40  # vendor mode
+grep -rn "@deprecated" node_modules/@nuxt/ 2>/dev/null | head -40
+
+# Deprecated Vue patterns
+grep -rn "\.sync\|\$children\|\$listeners\|filters:" app/ --include="*.vue" --include="*.ts"
+
+# Deprecated packages
+pnpm outdated 2>/dev/null | grep -i "deprecated" || \
+  npm outdated 2>/dev/null | grep -i "deprecated" || \
+  yarn outdated 2>/dev/null | grep -i "deprecated"
+```
+
+**Security-aware evaluation (mandatory for every finding):**
+Frontend deprecations often carry XSS, auth, CSRF, or SSR-safety implications. For each finding, read the `@deprecated` JSDoc AND the replacement's signature/docs. Ask:
+- Did the deprecated API sanitize input, escape HTML, guard against XSS, validate URLs against an allowlist, or enforce CSP directives?
+- Did the deprecated auth composable/util handle httpOnly cookies, CSRF tokens, or session validation differently than the current replacement requires?
+- Did the deprecated SSR helper prevent `window`/`document` access in universal context (client-only guards)?
+- Does the `@deprecated` message use security language: "security", "vulnerability", "XSS", "unsafe", "client-only", "SSR", "do not use"?
+- Has the replacement added required security parameters (new validation schema, new CSP context, new auth flow argument) that the caller is missing?
+
+If any answer is yes → upgrade to **Medium** and annotate the specific gap. Actual security findings (XSS, broken auth, SSR leaks) go to the regular security sections regardless of deprecation origin.
+
+**Checklist:**
+- [ ] No calls to `@deprecated` symbols from Nuxt / Vue / nuxt-extensions / Nuxt UI / Better Auth in changed files
+- [ ] No deprecated Vue patterns (`.sync`, `$children`, `$listeners`, `filters`)
+- [ ] No deprecated Nuxt config keys or runtime config usage
+- [ ] No deprecated Nuxt UI components (verify against installed version's changelog)
+- [ ] No deprecated npm packages introduced or retained
+- [ ] Pre-existing deprecations in touched files reported as early-migration items
+- [ ] Security-aware evaluation performed for every deprecation — `@deprecated` messages checked for security/SSR/XSS language; replacement signatures checked for new required security parameters
+
+**Scoring:** this phase produces **no score** — only an informational count. It does NOT affect the overall fulfillment percentage.
+
+**Reporting:**
+- Default classification: **Low** priority.
+- Upgrade to **Medium** only when security-aware evaluation identifies a control gap.
+- Never classify higher than Medium based on deprecation alone.
+- Include the `@deprecated` message verbatim if available, plus the replacement symbol/API.
+- Action format: `Migrate to <replacement> (see <changelog/doc link>)` — for upgraded findings, add the specific control gap.
+- If no deprecations detected: report "No deprecations detected in changed frontend files".
+
 ---
 
 ## Output Format
@@ -477,6 +602,7 @@ link to the `nuxt-extensions-core-vendoring` skill.
 | Component Structure | X% | ✅/⚠️/❌ |
 | Code Quality | X% | ✅/⚠️/❌ |
 | Composable Patterns | X% | ✅/⚠️/❌ |
+| Error Handling (useLtErrorTranslation) | X% | ✅/⚠️/❌ |
 | Accessibility (a11y) | X% | ✅/⚠️/❌ |
 | SSR Safety | X% | ✅/⚠️/❌ |
 | Performance | X% | ✅/⚠️/❌ |
@@ -484,8 +610,9 @@ link to the `nuxt-extensions-core-vendoring` skill.
 | Tailwind & CSS Quality | X% | ✅/⚠️/❌ |
 | Formatting & Lint | X% | ✅/⚠️/❌ |
 | Vendor Modification Compliance | X% or N/A | ✅/⚠️/❌/— |
+| Deprecations | N informational findings | ℹ️ / ✅ (none) |
 
-**Overall: X%**
+**Overall: X%** (Deprecations are informational and do not affect the overall score)
 
 ### 1. TypeScript Strictness
 [Findings with file:line references]
@@ -521,6 +648,9 @@ link to the `nuxt-extensions-core-vendoring` skill.
 [Only when vendored + app/core/ touched. Per-file: generic-looking?
 logged in VENDOR.md? upstream-PR tracked? Otherwise: "N/A — not a
 vendor project" or "N/A — no app/core/ changes in this diff".]
+
+### 11. Deprecations (informational, non-blocking)
+[List each deprecated Nuxt / Vue / nuxt-extensions / Nuxt UI / Better Auth / third-party symbol, config key, or package found in changed files. Include `@deprecated` message verbatim and replacement hint. Empty = "No deprecations detected".]
 
 ### Remediation Catalog
 | # | Dimension | Priority | File | Action |

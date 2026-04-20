@@ -129,9 +129,48 @@ Layer 3 — securityCheck():
   - Admin:           sees all
   - Owner:           sees own entries
   - Others:          filtered out (returns undefined)
+  - Default from CoreModel is `return this` — legitimate when the Model has nothing to filter
+  - Before leaving default: evaluate whether securityCheck is the only place for needed authorization
+    (ownership-based field visibility, state-dependent exposure, conditional record hiding in lists,
+    cross-field rules — none of which @Roles/@Restricted/guards can express)
+  - Override when such rules apply; for partial grants clear restricted fields (this.secretField = undefined)
 ```
 
 **Rule:** Specific `@Roles` overrides general `@Restricted`. Missing `@Roles` = ADMIN only.
+
+**When designing a new Model, blueprint the `securityCheck` evaluation explicitly:** list the Model's visibility rules (per-instance ownership, state flags, relationships, cross-field dependencies). If any exist, specify the `securityCheck` override as part of the architecture — it is often the only viable implementation site for these rules and should not be deferred to implementation.
+
+**Design consideration — Model instances vs. plain objects in responses** (instance of the *Informed-Trade-off Pattern* — same meta-shape as foreign `@InjectModel`, direct own-Model access, and deprecated-API use; see `generating-nest-servers` skill → `reference/informed-trade-off-pattern.md` and Rules 12/13/14): `CheckSecurityInterceptor` calls `securityCheck(user, force)` on each object it walks through. Plain objects (from `.lean()`, `toObject()`, spreads, raw `aggregate()`, native driver) lose the Model-specific `securityCheck` logic (ownership checks, role-based field clearing). Framework-level `removeSecrets` still runs on plain objects and `processDeep` still reaches nested Model instances, so plain objects are a **trade-off, not an automatic leak**. When designing service methods that return data to users, explicitly note in the blueprint: (a) whether the return path uses CrudService (Model instances by default — safe), or (b) if a plain-object path is chosen for performance/projection reasons, document whether hydration back to Model instances (`Model.map(raw)` / `new Model(raw)`) or manual replication of authorization rules is required. `.lean()` / raw aggregation in user-facing endpoints is permitted with a documented reason — especially relevant when the Model has non-trivial overridden `securityCheck`.
+
+**Design consideration — direct own-Model access in custom Service methods** (Rule 14 instance of the *Informed-Trade-off Pattern*): when a service method needs atomic MongoDB operators (`$push`, `$pull`, `$inc`), aggregation pipelines, bulk ops, or internal-field writes that CrudService doesn't expose, direct access on `this.mainDbModel` is allowed. Plan it explicitly in the blueprint: (a) state the reason, (b) pick the appropriate follow-up — `super.update(id, {}, serviceOptions)` to rerun the full pipeline, OR `this.processResult(result, serviceOptions)` to run `prepareOutput`/secret removal only (caller authorizes upstream), OR explicit `checkRights(result, currentUser, { processType: ProcessType.OUTPUT })` — (c) state which side-effects (events, hooks, relation updates, cache invalidations) must be manually re-emitted, (d) state the hydration strategy for plain results (`this.mainDbModel.hydrate(raw)` or `ModelClass.map(raw)`). Surfacing this in the plan prevents "quietly bypassed process" bugs from emerging first at review time.
+
+**Design consideration — `Force`/`Raw` CrudService variants** (Rule 15): every CrudService method has `*Force` (disables `checkRights` + `removeSecrets`) and `*Raw` (additionally disables all preparations — **can return password hashes, tokens, and hidden fields**) variants. When designing system-internal flows (credential verification, migrations, admin tooling where ADMIN is already confirmed upstream), specify in the blueprint: which variant is used, WHY the standard variant is insufficient, and how the return value is prevented from reaching a user-facing response. Treating `*Raw` as drop-in substitute for `*Force` without evaluating is a supply-chain-like risk: more permissions bypassed than necessary.
+
+**Design consideration — ErrorCode registry (domain-specific error semantics)** (NON-NEGOTIABLE — `generating-nest-servers` skill → `reference/error-handling.md`): every NestJS exception MUST use a typed code from `src/server/common/errors/project-errors.ts`. Raw-string messages are forbidden outside tests. When a new feature introduces domain-specific failure modes, plan the ErrorCode additions as part of the architecture — if deferred to implementation, developers invent ad-hoc codes (duplicates, inconsistent prefixes, missing translations).
+
+**In the blueprint, enumerate:**
+1. **Reusable `LTNS_*` core codes** that already fit (`RESOURCE_NOT_FOUND`, `VALIDATION_FAILED`, `ACCESS_DENIED`, `INVALID_CREDENTIALS`, etc.). Prefer reuse — only define a new code when the generic one hides required domain semantics.
+2. **New `PROJ_*` codes** per domain-specific failure. For each: proposed key (e.g. `PROJECT_INVALID_STATUS`, `QUOTA_EXCEEDED`, `ACCOUNT_BLOCKED`), proposed number (in the correct range — see the 4-digit sub-ranges in `error-handling.md`), developer message (English), `de` + `en` translations (minimum), placeholders (`{paramName}` for runtime values), and the exception class (`BadRequest` / `Forbidden` / `NotFound` / `UnprocessableEntity` — mapped by HTTP status semantics).
+3. **Translation placeholders:** if a message needs interpolated data (`"Order {orderId} already completed"`), design the placeholder NOW — retrofitting placeholders into shipped codes is a breaking change.
+4. **HTTP exception class mapping** per code — `UnprocessableEntityException` for business-rule violations (`QUOTA_EXCEEDED`, `INVALID_STATUS_TRANSITION`), `ForbiddenException` only after authentication is confirmed, etc.
+5. **Information-Disclosure check:** any error path that currently would carry stacktrace / SQL / file path in a raw-string message must be refactored to a structured code — the Security Review Phase 5b treats those as Critical (OWASP A09/A05).
+
+**Blueprint template snippet:**
+```markdown
+### New ErrorCodes
+| Key | Code | Range | HTTP Status | Exception | Placeholders | DE Translation | EN Translation |
+|-----|------|-------|-------------|-----------|--------------|----------------|----------------|
+| PROJECT_INVALID_STATUS | PROJ_0003 | 0001-0099 (resources) | 422 | UnprocessableEntity | {from}, {to} | Status kann nicht von {from} nach {to} geändert werden. | Cannot change status from {from} to {to}. |
+| QUOTA_EXCEEDED | PROJ_0101 | 0100-0199 (business) | 422 | UnprocessableEntity | {limit} | Kontingent ({limit}) überschritten. | Quota ({limit}) exceeded. |
+
+### Reused LTNS_* codes
+- RESOURCE_NOT_FOUND (404) — for `/projects/:id` when id does not exist
+- ACCESS_DENIED (403) — for cross-tenant access attempts
+```
+
+Without this block in the blueprint, the implementing developer will hit the raw-string forbidden rule at review time — expensive to fix late because every call site needs touching and every translation needs discussion with product.
+
+**Design consideration — Frontend error-consumption** (`developing-lt-frontend` skill → `reference/error-translation.md`): when the blueprint introduces new `PROJ_*` codes, specify which UI surfaces will consume them (Toast titles, inline form errors, flow-control redirects). Every error-display site on the frontend must route through `useLtErrorTranslation()` — `translateError(error)` for Toasts and inline messages, `parseError(error).code === 'PROJ_XXXX'` for flow-control branching (never message-string matching). Call out preload strategy (`loadTranslations()` at app start) if the feature introduces error paths before first user interaction.
 
 #### 2.4 Frontend Architecture
 

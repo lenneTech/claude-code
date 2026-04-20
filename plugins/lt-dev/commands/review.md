@@ -520,6 +520,32 @@ For Security findings, add a `Cross-Source` column:
 
 Priority ordering: Critical → High → Medium → Low
 
+### Informed Trade-offs (consolidated, non-blocking by default)
+
+Consolidates all "informed trade-off" findings from individual reviewers. These share the meta-pattern defined in `generating-nest-servers` skill → `reference/informed-trade-off-pattern.md`: a standard framework path exists; an opt-out is allowed with (a) a documented reason and (b) an analysis that nothing necessary is silently bypassed. The category is presented separately because it does NOT block the review — but silently bypassing a process or security measure always escalates the individual finding into the regular catalog at the appropriate severity.
+
+Seven trade-off categories are aggregated:
+
+1. **Deprecations (source code)** — deprecated APIs, config keys, packages (from `code-reviewer`, `backend-reviewer`, `frontend-reviewer`, `devops-reviewer`). Default Low; Medium when the deprecation removed a security/process control the caller now lacks.
+2. **Deprecations (test APIs)** — deprecated Jest/Vitest/Playwright/supertest/testing-library/lt-framework test helpers (from `test-reviewer`). Default Low; Medium when the deprecation removed assertion-strictness or test-reliability guarantees.
+3. **Foreign `@InjectModel`** — injection of a Model that does not belong to the injecting Service (from `backend-reviewer`, `security-reviewer`). Default Low with justification; Medium without justification/Service analysis; escalates to High/Critical in the main catalog if a Service security measure is silently bypassed.
+4. **Plain-object response paths** — `.lean()` / `toObject()` / spreads / raw `aggregate()` / native-driver results returned to users (from `backend-reviewer`, `security-reviewer`). Default Low when Model has only default `securityCheck`; Medium when Model has overridden `securityCheck` and no justification/hydration/manual replication; High in the main catalog when Model-specific authorization is silently bypassed.
+5. **Direct own-Model access** — `this.mainDbModel.xxx` / `this.<modelName>Model.xxx` calls inside the owning Service instead of CrudService methods (from `backend-reviewer` Layer 5b, `security-reviewer` Layer 7, `code-reviewer` Phase 4). Default Low when `securityCheck()` still runs via the interceptor and no role-restricted fields are affected; Medium for missing side-effects or undocumented access on Models with role-restricted fields; High in the main catalog when field-level `@Restricted` is silently bypassed on a user-facing response. Preferred alternatives: `this.processResult(result, serviceOptions)` wrapper (runs `prepareOutput`), or follow-up `super.update(id, {}, serviceOptions)` to rerun the full pipeline.
+6. **CrudService `*Force`/`*Raw` variants** — `getForce`/`createForce`/`findRaw`/etc. disable `checkRights`, RoleGuard, and `removeSecrets` (Force) or additionally `prepareInput`/`prepareOutput` entirely (Raw). From `backend-reviewer` (Services-section audit), `security-reviewer` Layer 8, `code-reviewer` Phase 3. Default Medium without justification; **Critical in the main catalog when a `*Force`/`*Raw` result (possibly containing password hashes or tokens) reaches a user-facing response without explicit field stripping**; High when upstream authorization check is missing. Allowed in documented system-internal flows (credential verification, migrations, admin tooling).
+7. **Frontend trade-offs** — Options API in new code, mutable composable state, `import.meta.client` escape hatches, `v-html`, raw `fetch()` (from `frontend-reviewer`, `code-reviewer`). Default Low; Medium for SSR-safety gaps; High in the main catalog for unjustified `v-html` (XSS class).
+
+| # | Category | Origin Reviewer | File:Line | Opt-out Used | Documented Reason | Analysis Performed | Default-Path Logic Bypassed | Severity | Action |
+|---|----------|-----------------|-----------|--------------|-------------------|--------------------|----------------------------|----------|--------|
+| 1 | Deprecation | backend-reviewer | path:line | `OldAPI` (`@deprecated since vX`) | — | `@deprecated` msg read | ⚠ Migration required | Low | Migrate to `NewAPI` (see changelog) |
+| 2 | Foreign @InjectModel | security-reviewer | path:line | `@InjectModel(User.name)` in `OrderService` | — | not performed | ⚠ UserService.securityCheck skipped | Medium | Inject `UserService` OR document + replicate auth |
+| 3 | Plain Object | backend-reviewer | path:line | `.lean()` | "large list perf" | ✓ UserModel securityCheck reviewed | ⚠ ownership field-clearing skipped | Medium | Hydrate via `UserModel.map(raw)` OR replicate filter |
+
+**Behavior rules:**
+- If no reviewer reported trade-off findings: "No informed trade-offs detected across changed files."
+- Findings in this section do NOT count toward domain Fulfillment percentages.
+- Findings where the analysis reveals an actual silent bypass of a security measure are ALSO added to the regular Consolidated Remediation Catalog with appropriate severity (Critical/High) — they must not be hidden in the trade-off section alone.
+- Use the "Analysis Performed" column as a reviewer accountability check: missing analysis ≠ safe; it means the trade-off was accepted without verification and is itself a review gap.
+
 ### Recommended Next Steps
 
 **Backend findings:**

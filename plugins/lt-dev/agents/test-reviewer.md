@@ -48,6 +48,7 @@ Initial TodoWrite:
 [pending] Phase 5: Permission & security testing
 [pending] Phase 6: Test naming & structure
 [pending] Phase 7: Flaky test detection
+[pending] Phase 8: Deprecation scan of test APIs (non-blocking)
 [pending] Generate report
 ```
 
@@ -168,12 +169,87 @@ grep -n "it(" <test-files> | grep -v "expect"
 grep -n "toMatchSnapshot\|toMatchInlineSnapshot" <test-files>
 ```
 
+#### ErrorCode Assertions (Backend + Frontend)
+
+Error-path tests must assert **structured error codes** (`#LTNS_XXXX` / `#PROJ_XXXX`), not raw message strings. The codes are the public API contract; messages are translations that change per locale and release. Reference: backend skill `generating-nest-servers/reference/error-handling.md`, frontend composable `useLtErrorTranslation` (`@lenne.tech/nuxt-extensions`).
+
+**Backend — NestJS API/E2E tests:**
+- Endpoints return `message: "#LTNS_0001: User not found"` — assert the code, optionally the code + locale-independent message marker.
+- Never assert against localized translations directly in API tests — translation endpoint tests are the only place the German/English text is checked.
+
+```typescript
+// PREFERRED — assert the structured code (locale-independent)
+const res = await testHelper.rest('/users/invalid-id', { statusCode: 404 });
+expect(res.message).toMatch(/^#LTNS_0400:/);
+
+// PREFERRED — assert against the imported ErrorCode entry (fully type-safe)
+import { ErrorCode } from '../src/server/common/errors/project-errors';
+expect(res.message).toBe(`#${ErrorCode.RESOURCE_NOT_FOUND.code}: ${ErrorCode.RESOURCE_NOT_FOUND.message}`);
+
+// FORBIDDEN — brittle, breaks on translation or message tweaks
+expect(res.message).toBe('User not found');
+expect(res.message).toContain('not found');
+```
+
+**Translation-endpoint tests (REAL PATTERN from volksbank/imo `tests/common.e2e-spec.ts`):**
+```typescript
+it('get error translations in German', async () => {
+  const res: any = await testHelper.rest('/i18n/errors/de');
+  expect(res).toHaveProperty('errors');
+  // Core LTNS_* codes must be present in every project
+  expect(res.errors.LTNS_0001).toBe('Benutzer wurde nicht gefunden.');
+  // Project PROJ_* codes prove additionalErrorRegistry is wired correctly
+  expect(res.errors.PROJ_0001).toBe('Projekt wurde nicht gefunden.');
+});
+```
+
+**Frontend — Vitest unit tests for composables/forms consuming errors:**
+- When testing error handlers/toast integration, mock the `parseError` / `translateError` return shape, not raw backend message strings.
+- When asserting the composable's behavior, test via the `#CODE: message` input format and check `parsed.code` / `parsed.translatedMessage`.
+
+```typescript
+// REAL PATTERN from nuxt-base-starter tests/unit/auth/error-translation.spec.ts
+const result = parseError('#LTNS_0010: Invalid credentials');
+expect(result.code).toBe('LTNS_0010');
+expect(result.translatedMessage).toBe('Ungültige Anmeldedaten');
+
+// Frontend form test — assert translated toast description, not English
+const toastSpy = vi.spyOn(toast, 'add');
+await submitForm(invalidPayload);
+expect(toastSpy).toHaveBeenCalledWith(expect.objectContaining({
+  description: 'Ungültige Anmeldedaten',  // from translateError — locale-aware
+  color: 'error',
+}));
+```
+
+**Grep patterns — error-assertion anti-patterns:**
+```bash
+# Brittle message-string assertions (should use code instead)
+grep -rnE "expect\([^)]*\)\.toBe\(['\"\`][A-Z][^#]" <test-files> | grep -iE "error|message|exception"
+grep -rnE "expect\([^)]*\)\.toContain\(['\"\`](not found|invalid|unauthorized|forbidden|denied)" <test-files>
+
+# ErrorCode import in API tests — expected for strong assertions
+grep -rn "from.*project-errors\|ErrorCode\." <test-files>
+```
+
+**Severity:**
+
+| Scenario | Severity |
+|----------|----------|
+| Error-path test asserts only `toBeDefined()` on the error | **Medium** — happy-path only |
+| Test asserts raw English message string instead of error code | **Medium** — brittle, breaks on i18n / translation update |
+| Test asserts localized translation (`'Benutzer wurde nicht gefunden.'`) outside the dedicated `/i18n/errors/:locale` test | **Medium** — locale-dependent, fails in other envs |
+| Test correctly asserts `#LTNS_XXXX` / `#PROJ_XXXX` code or `ErrorCode.KEY` from registry | Allowed (preferred) |
+| Test suite has zero error-path coverage for new endpoint | **High** — missing negative tests |
+| Translation endpoint tests missing in a new project (no `GET /i18n/errors/de` coverage) | **Medium** — verifies `additionalErrorRegistry` wiring |
+
 **Scoring:**
 
 | Scenario | Score |
 |----------|-------|
-| Strong assertions, error paths, edge cases | 100% |
+| Strong assertions, error paths, edge cases, ErrorCode-based error checks | 100% |
 | Good happy path, missing error paths | 70-85% |
+| Brittle message-string error assertions (instead of code-based) | 60-75% |
 | Weak assertions (toBeDefined only) | 50-70% |
 | Tests without meaningful assertions | <50% |
 
@@ -340,6 +416,71 @@ grep -L "afterAll\|afterEach" <test-files>
 | Consistent failures in changed code | 50-70% |
 | Widespread failures or unfixable flakiness | <50% |
 
+### Phase 8: Deprecation Scan of Test APIs (informed trade-off, non-blocking by default)
+
+Instantiates the **Informed-Trade-off Pattern** — same meta-pattern as the source-code deprecation scans in `code-reviewer` / `backend-reviewer` / `frontend-reviewer` / `devops-reviewer`. Full definition: `generating-nest-servers` skill, `reference/informed-trade-off-pattern.md`.
+
+**Goal:** surface deprecated test framework APIs (Jest, Vitest, Playwright, supertest, Mocha/Chai, testing-library) and deprecated lt-framework test helpers used in the test diff so they can be migrated early — AND detect cases where the deprecation removed an assertion-strictness, isolation, or reliability control the current test now lacks.
+
+**Severity policy:**
+- **Default = Low** — pure API renames, ergonomic replacements, no behavior change. Deprecations do not lower the Fulfillment grade of any other dimension.
+- **Upgrade to Medium** when the deprecated test API had stricter assertions, stricter matchers, better isolation, or reliability guarantees that are NOT present in the current test (see "Security-aware evaluation" below).
+- **Never Critical/High** based on deprecation alone. Actual test-quality gaps (weak assertions, missing isolation) go to Phase 2 or Phase 3 regardless of deprecation origin.
+
+**What to scan:**
+- **Jest/Vitest deprecations:** `expect().toBeCalledWith()` (use `toHaveBeenCalledWith`), deprecated `jest.fn()` return-value helpers, deprecated `done` callback pattern (use promises/async), deprecated matcher variants.
+- **Playwright deprecations:** `page.$$eval` variants marked deprecated, deprecated `page.waitFor` overloads, deprecated `browserContext.setDefaultTimeout` patterns, deprecated `request` API shapes.
+- **Supertest deprecations:** callback-style `.end()` (use promise-returning API).
+- **Mocha/Chai deprecations:** `should` syntax deprecation paths, deprecated `assert` variants.
+- **Testing-library deprecations:** `cleanup` import paths, deprecated query variants.
+- **lt-framework test helpers:** deprecated `TestHelper` methods, deprecated fixture helpers in `@lenne.tech/nest-server` testing utilities (check framework source for `@deprecated` annotations).
+- **Deprecated test config keys** in `vitest.config.ts`, `jest.config.ts`, `playwright.config.ts`.
+
+**Detection:**
+```bash
+# Deprecated symbol calls inside changed test files
+git diff <base>...HEAD --name-only -- "*.spec.ts" "*.test.ts" "*.e2e.ts" "*.spec.vue" | \
+  xargs -I {} grep -Hn "@deprecated" {} 2>/dev/null
+
+# Deprecated lt-framework test helpers (check framework source)
+grep -rn "@deprecated" node_modules/@lenne.tech/nest-server/src/core/ 2>/dev/null | grep -i "test\|spec\|fixture" | head -40
+grep -rn "@deprecated" src/core/ 2>/dev/null | grep -i "test\|spec\|fixture" | head -40
+
+# Jest/Vitest deprecated patterns
+grep -rn "toBeCalledWith\|toBeCalled\|\.end(function\|mockReset.*mockClear" $(git diff <base>...HEAD --name-only | grep -E "\.(spec|test)\.ts$")
+
+# Playwright deprecated patterns
+grep -rn "page\.\$\$eval\|waitFor(function\|setDefaultTimeout" $(git diff <base>...HEAD --name-only | grep -E "\.(spec|test|e2e)\.ts$")
+```
+
+**Security-aware / reliability-aware evaluation (mandatory for every finding):**
+Test-API deprecations often exist because the replacement improves assertion strictness or test reliability. For each finding, ask:
+- Did the deprecated API accept looser argument comparison than the replacement? (e.g. `toBeCalledWith` vs `toHaveBeenCalledWith` — same matcher, pure rename, Low.)
+- Does the deprecated callback pattern hide errors that the promise-based replacement surfaces? (e.g. `done(err)` callback-style supertest — swallowed errors on rejection — upgrade to Medium.)
+- Does the deprecated matcher have weaker type narrowing than the replacement?
+- Was the replacement added because the original had timing / isolation issues (e.g. Playwright auto-waiting improvements)?
+- Does the `@deprecated` message use strictness/reliability language: "removed in vX", "unsafe", "race-prone", "swallows errors"?
+
+If any answer is yes → upgrade to **Medium**. If the current test has an actual quality gap (weak assertion, swallowed error, flake vector), file a separate finding under Phase 2/3/7 regardless of deprecation origin.
+
+**Checklist:**
+- [ ] No calls to `@deprecated` symbols from the detected test framework (Jest/Vitest/Playwright/supertest/Mocha/testing-library) in changed test files
+- [ ] No deprecated lt-framework test helpers (TestHelper, fixtures) from `@lenne.tech/nest-server`
+- [ ] No deprecated test config keys
+- [ ] No deprecated callback-style test APIs where promise-based equivalents exist (`done` callbacks, `.end(cb)`)
+- [ ] Pre-existing deprecations in touched test files reported as early-migration items
+- [ ] Security-aware / reliability-aware evaluation performed — `@deprecated` messages checked for strictness/race/reliability language
+
+**Scoring:** this phase produces **no score** — only an informational count. It does NOT affect the overall fulfillment percentage.
+
+**Reporting:**
+- Default classification: **Low** priority.
+- Upgrade to **Medium** only when evaluation identifies a test-quality gap (swallowed errors, weak matchers, race-prone timing).
+- Never classify higher than Medium based on deprecation alone.
+- Include the `@deprecated` message verbatim if available.
+- Action format: `Migrate to <replacement> (see <changelog/doc link>)` — for upgraded findings, add the specific reliability gap.
+- If no deprecations detected: report "No test-API deprecations detected in changed test files".
+
 ---
 
 ## Output Format
@@ -357,8 +498,9 @@ grep -L "afterAll\|afterEach" <test-files>
 | Permission & Security Testing | X% | ✅/⚠️/❌ |
 | Test Naming & Structure | X% | ✅/⚠️/❌ |
 | Flaky Test Detection | X% | ✅/⚠️/❌ |
+| Test-API Deprecations | N informational findings | ℹ️ / ✅ (none) |
 
-**Overall: X%**
+**Overall: X%** (Deprecations are informational and do not affect the overall score)
 
 ### 1. Test Coverage
 [Missing tests per changed file]
@@ -380,6 +522,9 @@ grep -L "afterAll\|afterEach" <test-files>
 
 ### 7. Flaky Test Detection
 [Re-run results, classification per failing test, common patterns found]
+
+### 8. Test-API Deprecations (informational, non-blocking)
+[List each deprecated Jest/Vitest/Playwright/supertest/testing-library/lt-framework test helper found in changed test files. Include `@deprecated` message verbatim and replacement hint. Empty = "No test-API deprecations detected". Upgraded-to-Medium items annotate the specific reliability/assertion gap.]
 
 ### Remediation Catalog
 | # | Dimension | Priority | File | Action |

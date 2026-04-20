@@ -40,6 +40,7 @@ Initial TodoWrite:
 [pending] Phase 5: Permissions & security gates
 [pending] Phase 6: Nuxt 4 SSR build patterns
 [pending] Phase 7: .dockerignore & misc
+[pending] Phase 8: Deprecation scan (non-blocking)
 [pending] Generate report
 ```
 
@@ -225,6 +226,66 @@ grep -n "CMD\|ENTRYPOINT" projects/app/Dockerfile 2>/dev/null
 - [ ] Excludes: `node_modules`, `.git`, `.env`, `.env.*`, `*.log`, `test`, `tests`, `coverage`, `docs`
 - [ ] Does NOT exclude `package.json` (needed for builds)
 
+### Phase 8: Deprecation Scan (informed trade-off, non-blocking by default)
+
+Instantiates the **Informed-Trade-off Pattern** (see `generating-nest-servers` skill, `reference/informed-trade-off-pattern.md`; same meta-pattern as backend Rule 12 / Rule 13).
+
+**Goal:** surface deprecated Docker, Docker Compose, CI/CD, and related infrastructure syntax or options in the diff so they can be modernized early — AND detect cases where the deprecation removed a security, isolation, or supply-chain control that the current configuration now lacks.
+
+**Severity policy:**
+- **Default = Low** — pure syntax modernization, ergonomic replacements, no runtime change. Deprecations do not lower the Fulfillment grade of any other dimension.
+- **Upgrade to Medium** when the deprecated infrastructure had security, isolation, or supply-chain controls that the current configuration now lacks (see "Security-aware evaluation" below).
+- **Never Critical/High** based on deprecation alone. Actual security gaps go to the regular infrastructure-security sections.
+
+**What to scan:**
+- **Dockerfile:** deprecated instructions/flags (e.g. `MAINTAINER` → `LABEL maintainer=`, legacy `LEGACY=1` syntax, old multi-stage patterns).
+- **Docker Compose:** deprecated top-level `version:` key in modern Compose, `links:` (use networks), `volume_driver:` at service level, obsolete v1/v2 schema artifacts.
+- **CI/CD:** deprecated GitHub Actions runners (e.g. `ubuntu-18.04`), deprecated Actions versions flagged by GitHub (`actions/checkout@v1/v2` when v4+ is standard), deprecated GitLab CI keywords (`only`/`except` → `rules`).
+- **Base images:** base images with an official deprecation/EOL notice (e.g. `node:16` when 16 is EOL — check `endoflife.date`).
+- **CLI flags / env vars:** Docker/Compose/kubectl flags documented as deprecated.
+
+**Detection:**
+```bash
+# Dockerfile deprecated instructions
+git diff <base>...HEAD -- "**/Dockerfile*" | grep -E "^\+.*MAINTAINER"
+# Compose legacy version key (Compose v2+ doesn't require it)
+grep -rn "^version:" docker-compose*.yml compose*.yml 2>/dev/null
+# Deprecated GitHub Actions versions
+grep -rn "actions/checkout@v[12]\|actions/setup-node@v[12]\|actions/cache@v[12]" .github/workflows/ 2>/dev/null
+# Deprecated GitLab CI keywords
+grep -rn "^[[:space:]]*only:\|^[[:space:]]*except:" .gitlab-ci.yml .gitlab/ 2>/dev/null
+# EOL Node versions in Dockerfiles
+grep -rn "FROM node:1[0-6]\|FROM node:17" **/Dockerfile* 2>/dev/null
+```
+
+**Security-aware evaluation (mandatory for every finding):**
+Infrastructure deprecations often coincide with security or supply-chain hardening. For each finding, ask:
+- **EOL base images:** does the current base image still receive security patches? Node 16 and older receive no CVE fixes — upgrade is Medium minimum (supply-chain risk).
+- **Deprecated Actions versions:** has GitHub announced the action will stop running? Did the newer major version add required security features (e.g. `actions/checkout@v4` no longer persists credentials by default)?
+- **Deprecated Compose keys:** did the replacement introduce network isolation, secret handling, or capability-drop primitives not available in the old key?
+- **Deprecated CI keywords:** do the replacements add required security gating (e.g. GitLab `rules` support branch-protected conditions that `only`/`except` could not express)?
+- **Deprecated Dockerfile instructions:** do any deprecated flags bypass newer buildkit security features?
+
+If any answer is yes → upgrade to **Medium** and annotate the specific risk. Actual infrastructure-security gaps (secrets in layers, running as root, pinning missing) go to the regular security sections.
+
+**Checklist:**
+- [ ] No `MAINTAINER` in Dockerfiles (use `LABEL maintainer=`)
+- [ ] No unnecessary `version:` key in Docker Compose (v2+ schema)
+- [ ] No deprecated GitHub Actions versions
+- [ ] No deprecated GitLab CI keywords (`only`/`except` in new files)
+- [ ] No EOL base images (Node 16 and older, etc.)
+- [ ] No deprecated CLI flags in scripts
+- [ ] Security-aware evaluation performed for every deprecation — EOL/supply-chain risk, missing buildkit features, missing security gating in newer CI syntax
+
+**Scoring:** this phase produces **no score** — only an informational count. It does NOT affect the overall fulfillment percentage.
+
+**Reporting:**
+- Default classification: **Low** priority.
+- Upgrade to **Medium** only when security-aware evaluation identifies a control gap (EOL image without patches, missing security features in newer replacement).
+- Never classify higher than Medium based on deprecation alone.
+- Action format: `Migrate to <replacement> (see <changelog/doc link>)` — for upgraded findings, add the specific risk.
+- If no deprecations detected: report "No infrastructure deprecations detected in changed files".
+
 ---
 
 ## Output Format
@@ -242,8 +303,9 @@ grep -n "CMD\|ENTRYPOINT" projects/app/Dockerfile 2>/dev/null
 | Permissions & Security Gates | X% | ✅/⚠️/❌ |
 | Nuxt 4 SSR Build | X% | ✅/⚠️/❌ |
 | .dockerignore & Misc | X% | ✅/⚠️/❌ |
+| Deprecations | N informational findings | ℹ️ / ✅ (none) |
 
-**Overall: X%**
+**Overall: X%** (Deprecations are informational and do not affect the overall score)
 
 ### 1. Dockerfiles
 [Findings per Dockerfile]
@@ -259,6 +321,9 @@ grep -n "CMD\|ENTRYPOINT" projects/app/Dockerfile 2>/dev/null
 
 ### 5. .dockerignore & Misc
 [Coverage analysis]
+
+### 6. Deprecations (informational, non-blocking)
+[List each deprecated Dockerfile instruction, Compose key, CI/CD syntax, base image, or CLI flag found in changed infrastructure files. Include replacement hint. Empty = "No infrastructure deprecations detected".]
 
 ### Remediation Catalog
 | # | Dimension | Priority | File | Action |

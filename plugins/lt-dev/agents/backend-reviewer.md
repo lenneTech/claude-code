@@ -49,6 +49,7 @@ Initial TodoWrite:
 [pending] Phase 7: Test coverage
 [pending] Phase 8: Formatting & lint
 [pending] Phase 9: Vendor modification compliance (only if vendored + src/core/ touched)
+[pending] Phase 10: Deprecation scan (non-blocking)
 [pending] Generate report
 ```
 
@@ -109,9 +110,37 @@ done
 
 #### Layer 3: Model securityCheck()
 
-- [ ] Every model extending `CoreModel`/`CorePersisted` has `securityCheck()` method
-- [ ] `securityCheck` checks `user?.hasRole()` and ownership (`equalIds(user, this.createdBy)`)
-- [ ] Sensitive fields have `hideField: true` in `@UnifiedField`
+- [ ] Every model extending `CoreModel`/`CorePersisted` has a `securityCheck()` method. **Note:** `CoreModel` provides a default `return this` (pass-through). A trivial/default implementation is legitimate when the Model genuinely has nothing to filter.
+- [ ] **Proactive evaluation before accepting a trivial `securityCheck`:** verify that the Model has no per-instance, ownership-based, relationship-based, or state-dependent visibility rules that `securityCheck` is the only place to express. Authorization needs that `@Roles`/`@Restricted` and controller guards cannot cover — ownership-based field clearing, conditional record hiding (`return undefined` in lists), cross-field visibility rules, status-dependent exposure — belong in `securityCheck`. If the Model has such needs and `securityCheck` is still trivial, flag as design gap
+- [ ] When `securityCheck` is overridden, it checks `user?.hasRole()` and ownership (`equalIds(user, this.createdBy)`) as appropriate for the Model's restrictions
+- [ ] Overridden `securityCheck` actually filters: clears restricted fields (`this.secretField = undefined`) for partial grants, or returns `undefined` for full denial — not just `return this` with no effect
+- [ ] Sensitive fields have `hideField: true` in `@UnifiedField`, or are listed in the framework's `security.secretFields` config (default includes `password`, `verificationToken`, `passwordResetToken`, `refreshTokens`, `tempTokens`)
+- [ ] If a Model appears to expose data to unauthorized users AND only has the default pass-through `securityCheck`: flag as design issue (missing override OR missing field-level `@Restricted`)
+
+#### Layer 3b: Prefer Model Instances in Responses — Plain Objects Lose Model-Specific securityCheck
+
+Instance of the **Informed-Trade-off Pattern** (same meta-pattern as the Services-section check on foreign `@InjectModel` and Phase 10 Deprecation-scan). Full definition: `generating-nest-servers` skill → `reference/informed-trade-off-pattern.md`. Cross-reference the `@InjectModel` audit in Phase 3 Services: a single call site can bypass `securityCheck` via both vectors.
+
+`CheckSecurityInterceptor` invokes each object's `securityCheck()` after the controller returns. Plain objects (from `.lean()`, `toObject()`, spreads, raw `aggregate()`, native-driver, manual literals) **lose the Model-specific `securityCheck` logic** — ownership checks, role-based field clearing, entity-specific rules simply do not run. The framework still applies `removeSecrets()` to plain objects (stripping configured `secretFields`) and still recurses into nested Model instances, so plain objects are not fully unprotected. They are an **informed trade-off**, not an automatic leak.
+
+```bash
+# .lean() — plain-object path; only acceptable with documented justification
+grep -rn "\.lean(" src/server/ --include="*.ts" | grep -v ".spec.ts" | grep -v node_modules
+# toObject() — same
+grep -rn "\.toObject(" src/server/ --include="*.ts" | grep -v ".spec.ts"
+# Spread of Mongoose docs
+grep -rn "\.\.\." src/server/ --include="*.ts" | grep -iE "return|res\." | grep -v ".spec.ts"
+# Raw aggregate() output
+grep -rn "\.aggregate(" src/server/ --include="*.ts" | grep -v ".spec.ts"
+```
+
+**For every plain-object path found in code that returns to a user, verify:**
+- [ ] A justification comment states WHY the Model instance is not used (performance hot-path, projection, system-internal code, Model has only default `securityCheck`)
+- [ ] If the Model overrides `securityCheck` with non-trivial logic: either the raw result is re-hydrated with `Model.map(raw)` / `new Model(raw)` before return, OR the authorization rules that `securityCheck` would have applied are manually replicated at the call site
+- [ ] `.lean()` in controllers or service methods that return to users has a documented reason (cron/processor/queue/WebSocket hot-path or intentional projection)
+- [ ] Spreads (`{ ...doc, extraField }`) are intentional — preferred alternative is to mutate the Model instance and return it
+- [ ] `aggregate()` results returned to a user are either hydrated to Model instances OR the authorization logic is manually applied
+- [ ] Native driver / `getNativeCollection()` results returning to users are either hydrated OR have manual authorization
 
 #### Layer 4: No Native MongoDB Driver on Mongoose Models
 
@@ -129,6 +158,8 @@ grep -rn '\.db\.collection(' src/server/ --include='*.ts' | grep -v node_modules
 #### Layer 5: Direct Mongoose Access Security Verification
 
 Direct Mongoose methods (`Model.create()`, `Model.findByIdAndUpdate()`, `Model.find().lean()`) keep all Mongoose plugins active (Tenant, Audit, RoleGuard) but **skip CrudService authorization** (`checkRights`, `@Restricted` enforcement, `S_CREATOR` checks, output filtering). This is acceptable for performance-critical paths — but only when security is ensured by other means.
+
+This overlaps with Layer 5b below (Own-Model direct access as informed trade-off): Layer 5 focuses on the **security** impact of the bypass (authorization gaps, tenant leaks); Layer 5b instantiates the **Informed-Trade-off Pattern** and additionally checks for missing side-effects and consistency. A single call site can trigger both; run both checks.
 
 ```bash
 # Find direct Mongoose model access outside of CrudService
@@ -149,6 +180,64 @@ grep -rn 'Model\.\(create\|find\|findOne\|findById\|updateOne\|updateMany\|delet
 | Direct access returning unfiltered sensitive fields to user | **HIGH** |
 | Direct access in system-internal code with documented reason | Allowed |
 
+#### Layer 5b: Own-Model Direct Access (Informed Trade-off)
+
+Instance of the **Informed-Trade-off Pattern** (same meta-shape as Rule 12 foreign `@InjectModel`, Rule 13 plain objects, Phase 10 deprecations). Full definition: `generating-nest-servers` skill, `reference/informed-trade-off-pattern.md` and `reference/security-rules.md` Rule 14.
+
+**Scope:** calls in a Service on its OWN primary Model (`this.mainDbModel.xxx` / `this.<modelName>Model.xxx` — the Model passed to `super({ mainDbModel })`). Direct access here is allowed, but must be controlled for unintentionally bypassed processes AND missing side-effects, not only for authorization.
+
+```bash
+# Direct own-Model access inside Service classes — flag for analysis
+grep -rn "this\.\(mainDbModel\|[a-zA-Z]*Model\)\.\(findOne\|findById\|find\|create\|updateOne\|updateMany\|findByIdAndUpdate\|findOneAndUpdate\|deleteOne\|deleteMany\|findByIdAndDelete\|bulkWrite\|insertMany\|aggregate\|countDocuments\|count\|distinct\)" src/server/ --include="*.ts" | grep -v ".spec.ts" | grep -v node_modules
+
+# Force/Raw CrudService variants — elevated risk (Rule 15)
+grep -rn "\.\(getForce\|createForce\|updateForce\|findForce\|findOneForce\|findAndCountForce\|findAndUpdateForce\|deleteForce\|readForce\|aggregateForce\|getRaw\|createRaw\|updateRaw\|findRaw\|findOneRaw\|findAndCountRaw\|findAndUpdateRaw\|deleteRaw\|readRaw\|aggregateRaw\)(" src/server/ --include="*.ts" | grep -v ".spec.ts" | grep -v node_modules
+
+# Framework-provided helper usage — good pattern, usually an "all clear" signal
+grep -rn "this\.processResult\|this\.mainDbModel\.hydrate\|\w\+\.map(" src/server/ --include="*.ts" | grep -v ".spec.ts" | grep -v node_modules | head -30
+```
+
+**What own-Model direct access skips versus the standard CrudService path:**
+- `prepareInput` — input cloning, type mapping via `inputType`
+- `checkRights` on INPUT and OUTPUT (field-level `@Restricted` via `@UnifiedField({ roles })`)
+- `prepareOutput` — including `removeSecrets`, type mapping, translations, field selection
+- `processFieldSelection` — GraphQL population
+- CrudService-emitted audit/events/side-effects
+- Nested-depth coordination
+
+**What is NOT skipped:**
+- Mongoose-level plugins (Tenant, Audit, RoleGuard, Password) — preserved because `mainDbModel` is still a Mongoose Model
+- Model `securityCheck()` — still runs via `CheckSecurityInterceptor` IF the return reaches a controller response
+- Framework-level `removeSecrets` via the interceptor — strips configured `secretFields` (default: `password`, `verificationToken`, `passwordResetToken`, `refreshTokens`, `tempTokens`) on plain objects too
+
+**For every own-Model direct access found, verify:**
+- [ ] Code comment states a legitimate reason (atomic op not in CrudService / aggregation / bulk / internal field / perf / subdoc array / system-internal / same-transaction lean for rights-check)
+- [ ] **Authorization check:** if result reaches a user AND Model has role-restricted `@UnifiedField({ roles })` fields, verify one of (a) follow-up `super.update(id, {}, serviceOptions)`, (b) `this.processResult(result, serviceOptions)` wrapper with upstream authorization check, (c) manual `checkRights(result, currentUser, { processType: ProcessType.OUTPUT })`, OR (d) explicit field-filter
+- [ ] **Input validation check:** if the write payload was service-built (not validated upstream by class-validator), verify explicit sanitization
+- [ ] **Side-effect check:** if downstream code depends on CrudService-emitted events/hooks, verify manual re-emission at the call site
+- [ ] **Consistency check:** if the method mixes direct access with CrudService calls, intentionally documented or flag for redesign
+- [ ] **Hydration check for Model returns:** if the direct result should be a Model instance (not plain), verify `this.mainDbModel.hydrate(raw)` or `ModelClass.map(raw)` was used
+
+**Force/Raw CrudService variants audit (Rule 15):**
+For every `*Force` or `*Raw` call found, verify:
+- [ ] Caller has verified current user's authorization BEFORE the call (since `checkRights` is skipped)
+- [ ] Result is NOT returned directly to a user-facing endpoint without explicit field stripping (since `removeSecrets` is skipped — password hashes, tokens may be present)
+- [ ] `*Raw` is used ONLY where `*Force` would not suffice (otherwise over-bypassing)
+- [ ] Justification comment names why the standard variant cannot be used
+
+| Scenario | Severity |
+|----------|----------|
+| `*Force`/`*Raw` result leaking to user-facing response (possibly exposing credentials) | **CRITICAL** — OWASP A02 Sensitive Data Exposure |
+| Direct own-Model access + silent bypass of field-level `@Restricted` on user-facing response | **HIGH** — Broken Access Control (OWASP A01) |
+| `*Force`/`*Raw` without justification comment in system-internal context | **MEDIUM** — audit gap |
+| Direct own-Model access + missing side-effect (event/hook) that downstream code expects | **MEDIUM** — consistency gap, likely bug |
+| Direct own-Model access without justification comment, `securityCheck()` still runs via interceptor, no role-restricted fields on response | **LOW** — trade-off accepted without documentation |
+| `*Raw` used where `*Force` would suffice | **LOW** — over-bypassing |
+| Direct own-Model access with documented reason + completed 5-question analysis + appropriate follow-up pattern | Allowed |
+| `super.update(id, {}, serviceOptions)` after an atomic op to rerun the pipeline | Allowed (preferred pattern A) |
+| `this.processResult(result, serviceOptions)` wrapper with upstream authorization | Allowed (preferred pattern B) |
+| `*Force`/`*Raw` in documented system-internal flow (credential check, migration, admin tooling) | Allowed |
+
 #### Permissions Scanner
 
 ```bash
@@ -161,9 +250,11 @@ Flag: `NO_RESTRICTION`, `NO_ROLES`, `NO_SECURITY_CHECK`, `UNRESTRICTED_FIELD`, `
 
 | Scenario | Score |
 |----------|-------|
-| All 3 layers complete, scanner clean | 100% |
+| All 3 layers complete, scanner clean, responses are Model instances (or plain-object paths are justified) | 100% |
 | Minor gaps (missing @Roles on 1-2 endpoints) | 70-85% |
-| Missing securityCheck on new model | 50-70% |
+| Plain-object response path without justification comment in code where the Model overrides `securityCheck` with non-trivial logic | 50-70% |
+| Overridden `securityCheck` fails to clear restricted fields for partial grants | 50-70% |
+| Missing `securityCheck()` declaration on new Model (default from CoreModel inherited is acceptable only if no restrictions apply) | 50-70% |
 | Missing @Restricted on controller | <50% |
 
 ### Phase 2: Model Rules
@@ -201,6 +292,7 @@ Flag: `NO_RESTRICTION`, `NO_ROLES`, `NO_SECURITY_CHECK`, `UNRESTRICTED_FIELD`, `
 - [ ] ServiceOptions: only pass `{ currentUser: serviceOptions.currentUser }` to other services
 - [ ] No blind `serviceOptions` passthrough
 - [ ] Constructor follows pattern: `@InjectModel`, `configService`, then custom deps
+- [ ] **`@InjectModel` audit (instance of Informed-Trade-off Pattern) — applies ONLY to Models that do NOT belong to this Service.** The Service's OWN primary Model (passed to `super({ mainDbModel })`) is the standard pattern and requires nothing extra. For every `@InjectModel` of a Model belonging to a different Service, verify: (1) a code comment states a **good reason** for not using the corresponding Service, AND (2) the corresponding Service has been analyzed — `securityCheck()`, `@Restricted`/`@Roles`, ownership, field filtering, hooks/events, and side-effects are either safely skippable in this context or manually replicated. Unjustified or unanalyzed foreign `@InjectModel` = finding. See Layer 3b below (plain-object responses share the same bypass vectors).
 
 **Scoring:**
 
@@ -209,6 +301,8 @@ Flag: `NO_RESTRICTION`, `NO_ROLES`, `NO_SECURITY_CHECK`, `UNRESTRICTED_FIELD`, `
 | All patterns followed | 100% |
 | Minor deviations (missing ObjectId validation) | 80-90% |
 | Blind serviceOptions passthrough | 60-75% |
+| Foreign `@InjectModel` without justification comment or Service analysis | 60-75% |
+| Foreign `@InjectModel` silently bypassing a Service security measure | <50% |
 | Not extending CrudService or wrong REST patterns | <50% |
 
 ### Phase 4: Type Strictness & Input Validation
@@ -230,14 +324,53 @@ Flag: `NO_RESTRICTION`, `NO_ROLES`, `NO_SECURITY_CHECK`, `UNRESTRICTED_FIELD`, `
 - [ ] `@IsEmail()` on email fields
 - [ ] `@IsEnum()` on enum fields
 
+#### Error Handling — ErrorCode Usage (MANDATORY)
+
+The framework requires typed `ErrorCode` usage for every NestJS exception — raw string messages are forbidden outside test files. Full rules: `generating-nest-servers` skill → `reference/error-handling.md`.
+
+```bash
+# Raw-string exceptions in production code — MUST be zero outside *.spec.ts / *.test.ts
+grep -rnE "throw new (BadRequest|Unauthorized|Forbidden|NotFound|Conflict|UnprocessableEntity|InternalServerError)Exception\(\s*['\"\`]" src/server/ --include="*.ts" | grep -v ".spec.ts" | grep -v ".test.ts" | grep -v node_modules
+
+# ErrorCode must be imported from the PROJECT registry (not from the framework)
+grep -rn "import .*ErrorCode.* from '@lenne.tech/nest-server'" src/server/ --include="*.ts" | grep -v node_modules
+
+# Project ErrorCode registry must exist
+test -f src/server/common/errors/project-errors.ts || echo "MISSING: project-errors.ts registry"
+
+# Every env config must register the registry
+grep -n "additionalErrorRegistry" src/config.env.ts
+```
+
+- [ ] Zero raw-string exceptions in `src/server/**` (outside test files)
+- [ ] `src/server/common/errors/project-errors.ts` exists with `ProjectErrors` + `ErrorCode = mergeErrorCodes(ProjectErrors)` export
+- [ ] `errorCode: { additionalErrorRegistry: ProjectErrors }` registered in **every** env config in `src/config.env.ts`
+- [ ] `ErrorCode` is imported from the project file (`common/errors/project-errors`), never directly from `@lenne.tech/nest-server`
+- [ ] Error codes follow format `#PREFIX_XXXX: Description` with one consistent project prefix (`PROJ_`, `APP_`, …)
+- [ ] Generic failures reuse `LTNS_*` core codes (`RESOURCE_NOT_FOUND`, `VALIDATION_FAILED`, `ACCESS_DENIED`) — only domain-specific semantics get new `PROJ_*` codes
+- [ ] New `PROJ_*` codes have translations for every configured locale (min. `de` + `en`)
+- [ ] Exception class matches error semantic (NotFoundException + RESOURCE_NOT_FOUND, ForbiddenException + ACCESS_DENIED, etc. — see error-handling.md HTTP Status Code Mapping)
+
+**Severity:**
+
+| Scenario | Severity |
+|----------|----------|
+| Raw-string `throw new XxxException('...')` in production code | **HIGH** — contract violation, breaks i18n/translation lookup |
+| Project registry missing entirely (no `project-errors.ts`) | **HIGH** — framework integration incomplete |
+| `additionalErrorRegistry` missing in one or more env configs | **MEDIUM** — silent translation drop in that env |
+| `ErrorCode` imported from framework instead of project file | **MEDIUM** — project codes invisible |
+| Duplicate codes across `LtnsErrors` + `ProjectErrors` | **HIGH** — merge-order collision |
+| New `PROJ_*` code without `de` + `en` translation | **MEDIUM** — end-user sees English technical text |
+| Re-used/recycled error code number | **HIGH** — public API contract break |
+
 **Scoring:**
 
 | Scenario | Score |
 |----------|-------|
-| All types explicit, all inputs validated | 100% |
-| Minor gaps (1-3 missing validators) | 80-90% |
-| Missing return types or implicit any | 60-75% |
-| Widespread type violations | <50% |
+| All types explicit, all inputs validated, zero raw-string exceptions, ErrorCode registry wired correctly | 100% |
+| Minor gaps (1-3 missing validators, single missing translation) | 80-90% |
+| Missing return types, implicit any, OR raw-string exceptions present | 60-75% |
+| Widespread type violations OR registry not wired in config | <50% |
 
 ### Phase 5: Code Quality
 
@@ -379,6 +512,80 @@ If policy breaches are found (not logged, clearly project-specific
 change in core), cite the Vendor Modification Policy in `VENDOR.md` and
 link to the `nest-server-core-vendoring` skill.
 
+### Phase 10: Deprecation Scan (informed trade-off, non-blocking by default)
+
+Instantiates the **Informed-Trade-off Pattern** (see `reference/informed-trade-off-pattern.md`; same meta-pattern as Rule 12 `@InjectModel` and Rule 13 plain objects).
+
+**Goal:** surface deprecated NestJS / `@lenne.tech/nest-server` / Mongoose / third-party APIs, config keys, decorators, CLI flags, and packages used in the backend diff so they can be migrated early — AND detect cases where the deprecation removed a security or process control that the current call site now lacks.
+
+**Severity policy:**
+- **Default = Low** — pure API renames, ergonomic replacements, no behavior change. Deprecations do not lower the Fulfillment grade of any other dimension.
+- **Upgrade to Medium** when the deprecated symbol had a security, validation, guard, or process function that is NOT present in the current call site (see "Security-aware evaluation" below).
+- **Never Critical/High** based on deprecation alone. Actual security gaps go to Phase 1 (Security Decorators & Permission Model) regardless of deprecation origin.
+
+**What to scan:**
+- **Framework `@deprecated` symbols:** nest-server / NestJS / Mongoose classes, decorators, services, helpers marked `@deprecated` in their JSDoc (check the source in `node_modules/@lenne.tech/nest-server` or `src/core/` in vendor mode).
+- **Deprecated decorators / guards / pipes:** e.g. replaced `@Restricted` forms, old `ConfigService` APIs, legacy `RolesGuard` patterns — verify against the installed nest-server version's changelog.
+- **Deprecated Mongoose methods:** e.g. `Model.count()` (use `countDocuments`), `Model.findOneAndRemove()` (use `findOneAndDelete`), callback-based APIs.
+- **Deprecated config keys:** `nest-cli.json`, `tsconfig.json`, `.env.*` keys no longer supported by the current nest-server major version.
+- **Deprecated npm packages:** flagged via `pnpm/npm/yarn outdated` or their README deprecation notice.
+- **Pre-existing deprecations in touched files:** even if not introduced by this diff, report them as early-migration opportunities.
+
+**Detection:**
+```bash
+# Deprecated JSDoc usage inside changed backend files
+git diff <base>...HEAD --name-only -- "*/api/**" "src/server/**" | \
+  xargs -I {} grep -Hn "@deprecated" {} 2>/dev/null
+
+# Deprecated nest-server symbols — check framework source for @deprecated and grep for callers
+grep -rn "@deprecated" node_modules/@lenne.tech/nest-server/src/ 2>/dev/null | head -40
+grep -rn "@deprecated" src/core/ 2>/dev/null | head -40  # vendor mode
+
+# Deprecated Mongoose methods — known offenders in real lt projects
+# .count()            → countDocuments() (Mongoose deprecated since v5)
+# .findOneAndRemove() → findOneAndDelete()
+# .remove()           → deleteOne() / deleteMany()
+# .update()           → updateOne() / updateMany() / replaceOne()
+grep -rn "\.count(\|\.findOneAndRemove(\|\.remove(\|\(mainDbModel\|[a-zA-Z]*Model\)\.update(" src/server/ --include="*.ts" | grep -v ".spec.ts" | grep -v node_modules
+
+# Note: `mainDbModel.findById(id).lean()` inside a Service method that immediately passes
+# the result to `this.process(...)` as `dbObject` is NOT deprecated — it is the framework's
+# own pattern (see core/common/services/crud.service.ts:617). Do not flag this pattern.
+
+# Deprecated packages
+pnpm outdated 2>/dev/null | grep -i "deprecated" || \
+  npm outdated 2>/dev/null | grep -i "deprecated" || \
+  yarn outdated 2>/dev/null | grep -i "deprecated"
+```
+
+**Security-aware evaluation (mandatory for every finding):**
+Backend deprecations especially tend to be motivated by security hardening. For each finding, read the `@deprecated` JSDoc AND the replacement's signature. Ask:
+- Did the deprecated API enforce authorization (`@Restricted`/`@Roles` wiring), input validation, sanitization, rate limiting, secret masking, ownership checks, or other security/process controls?
+- Was the replacement added to close a security gap in the original (deprecated auth helpers, deprecated guard variants, deprecated Mongoose callbacks that silently swallowed errors, deprecated crypto helpers)?
+- Does the `@deprecated` message use security language: "security", "vulnerability", "CVE", "unsafe", "insecure", "do not use", "removed in vX"?
+- Has the replacement added required parameters (new `options` argument, explicit role guard, new validation schema) that the caller is missing?
+- Mongoose specifically: deprecated `count()` silently deferred to `countDocuments()`; deprecated callback signatures mask errors — these have process-level consequences even when "just" deprecation.
+
+If any answer is yes → upgrade to **Medium** and annotate the specific control gap. If the caller has an actual security gap (not just deprecation), file a separate Critical/High finding under Phase 1.
+
+**Checklist:**
+- [ ] No calls to `@deprecated` symbols from nest-server / NestJS / Mongoose in changed files
+- [ ] No deprecated Mongoose methods (`count`, `findOneAndRemove`, `update`/`remove` as documents methods, callback signatures)
+- [ ] No deprecated config keys in touched config files
+- [ ] No deprecated npm packages introduced or retained in the diff's dependency changes
+- [ ] Pre-existing deprecations in touched files reported as early-migration items
+- [ ] Security-aware evaluation performed for every deprecation — `@deprecated` messages checked for security language; replacement signatures checked for new required security/validation parameters
+
+**Scoring:** this phase produces **no score** — only an informational count. It does NOT affect the overall fulfillment percentage.
+
+**Reporting:**
+- Default classification: **Low** priority.
+- Upgrade to **Medium** only when security-aware evaluation identifies a control gap.
+- Never classify higher than Medium based on deprecation alone.
+- Include the `@deprecated` message verbatim if available, plus the replacement symbol/API.
+- Action format: `Migrate to <replacement> (see <changelog/doc link>)` — for upgraded findings, add the specific control gap.
+- If no deprecations detected: report "No deprecations detected in changed backend files".
+
 ---
 
 ## Output Format
@@ -398,8 +605,9 @@ link to the `nest-server-core-vendoring` skill.
 | Test Coverage | X% | ✅/⚠️/❌ |
 | Formatting & Lint | X% | ✅/⚠️/❌ |
 | Vendor Modification Compliance | X% or N/A | ✅/⚠️/❌/— |
+| Deprecations | N informational findings | ℹ️ / ✅ (none) |
 
-**Overall: X%**
+**Overall: X%** (Deprecations are informational and do not affect the overall score)
 
 ### 1. Security & Permissions
 [Findings with @Restricted/@Roles status, permissions scanner output]
@@ -429,6 +637,9 @@ link to the `nest-server-core-vendoring` skill.
 [Only when vendored + src/core/ touched. Per-file: generic-looking?
 logged in VENDOR.md? upstream-PR tracked? Otherwise: "N/A — not a
 vendor project" or "N/A — no src/core/ changes in this diff".]
+
+### 10. Deprecations (informational, non-blocking)
+[List each deprecated nest-server / NestJS / Mongoose / third-party symbol, config key, or package found in changed files. Include `@deprecated` message verbatim and replacement hint. Empty = "No deprecations detected".]
 
 ### Remediation Catalog
 | # | Dimension | Priority | File | Action |

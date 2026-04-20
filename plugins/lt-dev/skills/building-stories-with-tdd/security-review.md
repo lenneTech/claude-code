@@ -67,10 +67,12 @@ async updateProfile(userId: string, data: UpdateProfileInput, currentUser: User)
 }
 
 //  CORRECT: Verify ownership or admin role
+import { ErrorCode } from '../../common/errors/project-errors';
+
 async updateProfile(userId: string, data: UpdateProfileInput, currentUser: User) {
   // Check if user is updating their own profile or is admin
   if (userId !== currentUser.id && !currentUser.roles.includes(RoleEnum.ADMIN)) {
-    throw new ForbiddenException('Cannot update other users');
+    throw new ForbiddenException(ErrorCode.RESOURCE_FORBIDDEN);
   }
   return this.userService.update(userId, data);
 }
@@ -149,17 +151,19 @@ export class User {
  **Check error messages don't leak data:**
 
 ```typescript
-//  WRONG: Exposing sensitive info in errors
+//  WRONG: Exposing sensitive info in errors (also uses raw string — double violation)
 catch (error) {
   throw new BadRequestException(`Query failed: ${error.message}, SQL: ${query}`);
 }
 
-//  CORRECT: Generic error messages
+//  CORRECT: Generic typed error code, internal logging retains details
 catch (error) {
   this.logger.error(`Query failed: ${error.message}`, error.stack);
-  throw new BadRequestException('Invalid request');
+  throw new BadRequestException(ErrorCode.VALIDATION_FAILED);
 }
 ```
+
+> All `throw new XxxException(...)` examples in this file use `ErrorCode` from the project registry. Raw-string messages are forbidden outside tests (see `generating-nest-servers/reference/error-handling.md`).
 
 ### 4. Authorization in Services
 
@@ -177,7 +181,7 @@ async getOrder(orderId: string, currentUser: User) {
 
   // Check if user owns the order or is admin
   if (order.customerId !== currentUser.id && !currentUser.roles.includes(RoleEnum.ADMIN)) {
-    throw new ForbiddenException('Access denied');
+    throw new ForbiddenException(ErrorCode.ACCESS_DENIED);
   }
 
   return order;
@@ -196,11 +200,11 @@ async checkSecurity(user: User, mode: SecurityMode): Promise<void> {
 
   //  CORRECT: Proper security implementation
   if (mode === SecurityMode.CREATE && !user.roles.includes(RoleEnum.ADMIN)) {
-    throw new ForbiddenException('Only admins can create');
+    throw new ForbiddenException(ErrorCode.OPERATION_NOT_PERMITTED);
   }
 
   if (mode === SecurityMode.UPDATE && this.createdBy !== user.id && !user.roles.includes(RoleEnum.ADMIN)) {
-    throw new ForbiddenException('Can only update own items');
+    throw new ForbiddenException(ErrorCode.RESOURCE_FORBIDDEN);
   }
 }
 ```
@@ -314,7 +318,7 @@ catch (error) {
     userId: currentUser?.id,
     operation: 'findUser'
   });
-  throw new InternalServerErrorException('An error occurred processing your request');
+  throw new InternalServerErrorException(ErrorCode.INTERNAL_ERROR);
 }
 ```
 
@@ -434,7 +438,7 @@ async refreshAccessToken(refreshToken: string): Promise<TokenPair> {
   // Check if token is revoked
   const isValid = await this.refreshTokenService.validate(refreshToken);
   if (!isValid) {
-    throw new UnauthorizedException('Token has been revoked');
+    throw new UnauthorizedException(ErrorCode.TOKEN_REVOKED);
   }
 
   // Rotate refresh token (issue new one, revoke old)

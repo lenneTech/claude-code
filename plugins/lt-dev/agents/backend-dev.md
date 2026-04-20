@@ -194,6 +194,136 @@ export class Product extends CoreModel {
 }
 ```
 
+### CRITICAL: Prefer Model Instances in Responses — Plain Objects Lose Model-Specific securityCheck
+
+This is an instance of the **Informed-Trade-off Pattern** — same meta-pattern as the foreign `@InjectModel` rule above. A single call site can hit both (e.g. `@InjectModel(User.name)` + `.lean()` in the same method). Full definition: `generating-nest-servers` skill, `reference/informed-trade-off-pattern.md` and Rule 13.
+
+The `CheckSecurityInterceptor` runs **after** every controller method and walks the response to invoke `securityCheck(user, force)` on each object that provides it. `securityCheck` is the **final authorization filter** before serialization: it lets each Model return a modified copy (cleared fields) or `undefined` (fully denied), per requester.
+
+**What survives on a plain object vs. a Model instance:**
+
+| Path | Model-specific `securityCheck` runs? | Framework-level secret stripping runs? |
+|------|--------------------------------------|---------------------------------------|
+| Return Mongoose document / Model instance | YES — full per-Model filtering (ownership, role-based field clearing) | YES — via `removeSecrets` |
+| Return result of `.lean()` / `toObject()` / spread `{...doc}` / raw `aggregate()` / native-driver result / manual literal | **NO** — Model-specific logic is lost | YES — `removeSecrets` still clears configured `secretFields` (default: `password`, `verificationToken`, `passwordResetToken`, `refreshTokens`, `tempTokens` + any `security.secretFields` overrides) |
+| Plain object containing **nested** Model instances | Nested items still get their `securityCheck` — interceptor recurses via `processDeep` | YES |
+
+**Takeaway:** returning a plain object is not an outright data leak — the framework still strips known secret fields and still reaches nested Model instances. What you lose is **the Model's own authorization logic** — ownership checks, role-based field clearing, entity-specific rules written in `securityCheck()`. If the Model has non-trivial restrictions, that logic simply does not run.
+
+**Implementation guidance (not absolutes):**
+
+1. **Default path is the safe path.** `CrudService` (`create/find/findOne/findAndCount/update/delete`) returns Model instances — no extra work.
+2. **Prefer Model instances when the Model overrides `securityCheck`.** If `securityCheck` only does the default `return this`, the Model has no extra restrictions and a plain-object shortcut has no impact beyond losing the ability to add restrictions later without refactoring call sites.
+3. **When using `.lean()`, `toObject()`, spreads, raw `aggregate()`, or native-driver results:** treat it as a deliberate decision. Acceptable reasons include performance-critical paths (WebSocket hot-path, large list endpoints where hydration is the bottleneck), system-internal code with no user-facing response (cron, processor, queue handler), projections that intentionally drop fields, or endpoints where the Model has no overridden `securityCheck`. Document the reason in a comment and note that Model-specific filtering will not run.
+4. **If Model-specific `securityCheck` logic matters on this path AND you still want plain objects for performance:** either (a) hydrate back into Model instances with `Model.map(raw)` / `new Model(raw)` before returning, OR (b) manually apply the authorization rules and field clearing that `securityCheck` would have done.
+5. **Arrays:** same rules. `docs.map(d => d)` preserves Mongoose documents; `docs.map(d => ({ ...d }))` strips them and must be justified.
+
+**`securityCheck()` implementation:**
+- `CoreModel` provides a **default pass-through** (`return this`). Keep it when the Model genuinely has nothing to filter — that's the intentional "public to anyone who reached this endpoint" state and is perfectly legitimate.
+- **Override** when restrictions apply: typical pattern is `if (force || user?.hasRole(RoleEnum.ADMIN)) return this;` followed by ownership check (`equalIds(user, this.createdBy)`), and either return `undefined` for full denial or clear restricted fields (`this.secretField = undefined`) and return `this` for partial grants.
+- `force` is set by the interceptor for `AuthResolver`/`AuthController` when there is no current user (sign-in/sign-up paths) — respect it.
+- Must be side-effect free beyond field mutations on `this`.
+- Field-level `@Restricted` / `@UnifiedField({ roles })` is enforced separately in `CrudService.checkRestricted()`. `securityCheck` is your place for entity-specific authorization.
+
+**MANDATORY proactive review — before accepting a trivial `securityCheck`, explicitly evaluate whether `securityCheck` is the right (possibly only) place for required authorization logic:**
+
+`securityCheck` can do things that `@Roles` / `@Restricted` / controller guards **cannot**:
+- **Per-instance, per-user decisions at response time:** e.g. "show `salary` only if the viewer is the record owner" (ownership is not expressible as a static field role).
+- **Cross-field / state-dependent filtering:** e.g. "hide `email` if `profile.public === false` AND viewer is not in `allowedViewers`".
+- **Conditional full hiding:** `return undefined` to remove entire records from a list when the user may see some but not others in the same query (filtering in the controller can't do this without leaking existence).
+- **Field clearing that depends on runtime state:** e.g. "hide `reviewerComments` until `status === 'published'`".
+- **Authorization rules that span multiple Model fields in ways `@Restricted` roles can't express.**
+
+For every Model, ask before leaving `securityCheck` as the default:
+1. Does the Model expose fields that depend on **who** the requester is (not just their role)?
+2. Does visibility depend on **relationships** (ownership, membership, sharing) not captured by roles?
+3. Does visibility depend on the **Model's own state** (status, visibility flag, publication)?
+4. Should the entire record be hidden from certain users in list responses without the controller knowing why?
+
+If ANY answer is yes, `securityCheck` likely needs an override — and often it is the **only** place where this logic can live (controllers operate before the Model is known; `@Restricted` is role-static; database filters can't express per-field rules). Document the result of this check in a short code comment when the default is kept (`// securityCheck: no per-instance restrictions — all fields public within role gate`).
+
+**Review stance:** a trivial `securityCheck` is acceptable only when this evaluation has been done and documented. A plain-object response path without justification is a finding, but its severity depends on what the Model's overridden `securityCheck` would have filtered.
+
+### CRITICAL: Direct Access to the Service's OWN Model Requires Justification and Side-Effect Check
+
+This is an instance of the **Informed-Trade-off Pattern** — the third trade-off that can occur in the same service, together with foreign `@InjectModel` (above) and plain-object responses (above). Full rule: `generating-nest-servers` skill → `reference/informed-trade-off-pattern.md` and `reference/security-rules.md` Rule 14.
+
+**Scope:** calls inside the owning Service on `this.mainDbModel.xxx` / `this.<modelName>Model.xxx` — direct Mongoose Model access on the Model that was passed to `super({ mainDbModel })`. Using your own CrudService-inherited methods (`this.create`/`this.find`/`this.findOne`/`this.findAndCount`/`this.update`/`this.delete`) is the standard path.
+
+**What direct own-Model access skips that the standard CrudService path provides:**
+- `process()` — input normalization, cloning, secret masking, population wiring
+- `checkRestricted()` — field-level `@UnifiedField({ roles })` enforcement in the service layer
+- Ownership pre-checks (`S_CREATOR`)
+- CrudService-emitted events / audit hooks / side-effects
+- Consistency with the rest of the service surface
+
+**What is NOT skipped** (key distinction vs. native driver / foreign `@InjectModel`):
+- Mongoose-level plugins (Tenant, Audit, RoleGuard, Password) — still run because the Model is preserved
+- The Model's own `securityCheck()` — still runs IF the return value travels through the controller → `CheckSecurityInterceptor`
+
+**Legitimate reasons to opt out:**
+- MongoDB atomic operators not exposed by `CrudService.update()` (`$push`, `$pull`, `$inc`, `$addToSet`, `$setOnInsert`)
+- Aggregation pipelines for reporting/stats
+- Bulk operations (`bulkWrite`, `insertMany`, `deleteMany`) for migrations/backfills/cleanup
+- Setting internal fields CrudService doesn't expose (password hashes, verification tokens)
+- Performance hot-paths where `process()` overhead is measurable
+- System-internal code (cron/processor/queue) — Rule 7 also relevant
+- SubDocument array operations (Rule 9)
+
+**Decision protocol before every direct own-Model call — answer each question:**
+1. **Authorization still covered?** Does the path reach a user response, and does the Model have role-restricted `@UnifiedField({ roles })` fields? If yes, either follow the direct op with `super.update(id, {}, serviceOptions)` so the pipeline runs, or manually apply the role filter.
+2. **Input validation still covered?** Is the write payload already validated by class-validator upstream, or did the service build custom shapes that now need explicit sanitization?
+3. **Side-effects still fired?** Do downstream consumers depend on events/hooks that CrudService would have emitted? Trigger them manually if so (relation updates, notifications, cache invalidation).
+4. **Consistency?** If the same method mixes direct access with CrudService calls, note why — divergent paths are a code-review flag unless intentional.
+
+**Framework-provided helper for direct-query return paths:** `this.processResult(result, serviceOptions)` runs `processFieldSelection` (GraphQL population) + `prepareOutput` (secret removal, translations, type mapping) without `checkRights`. Use it when you need to return direct-query results and want the output-preparation pipeline to still run. **The caller must handle authorization upstream** (e.g. `user.hasRole()` / `equalIds()` check) because `processResult` does NOT run `checkRights`.
+
+**Hydration helpers** for converting raw results back to Model instances:
+- `this.mainDbModel.hydrate(rawDoc)` — Mongoose-native hydration, restores document methods. Used by CrudService itself in `findAndCount` (see `crud.service.ts:298`).
+- `this.mainModelConstructor.map(rawDoc)` / `YourModel.map(rawDoc)` — CoreModel static helper, converts plain data to a typed Model instance.
+
+**Template comments at the call site (choose the pattern that fits):**
+
+```typescript
+// Pattern A: atomic op + full pipeline rerun
+// Direct own-Model access used because:
+//   - atomic $push on order.logs; CrudService.update doesn't expose $push
+// checkRights/prepareInput/prepareOutput are skipped here but rerun by super.update below.
+await this.mainDbModel.findByIdAndUpdate(id, { $push: { logs: entry } });
+return super.update(id, {}, serviceOptions); // reruns full pipeline on the updated doc
+
+// Pattern B: direct query + processResult (framework helper for prepareOutput)
+// Direct own-Model access used because:
+//   - need a projection of fields not expressible via CrudService.find
+// Authorization: verified upstream via `currentUser.hasRole(RoleEnum.ADMIN)` in line 42.
+// processResult handles population + prepareOutput (secret removal, translations).
+const doc = await this.mainDbModel.findOne({ email }).exec();
+return this.processResult(doc, serviceOptions);
+
+// Pattern C: aggregation + hydration
+// Direct own-Model access used because:
+//   - aggregation pipeline required for points computation
+// Results hydrated to Model instances so Model securityCheck() runs via the interceptor.
+const raw = await this.mainDbModel.aggregate(pipeline).exec();
+return raw.map(r => this.mainDbModel.hydrate(r));
+
+// Pattern D: system-internal — no user response
+// Direct own-Model access used because:
+//   - bulk backfill during migration; no user context
+// No authorization needed — system-internal execution path.
+await this.mainDbModel.bulkWrite(ops);
+```
+
+**CRITICAL: `Force` and `Raw` CrudService variants** — every CrudService method has `*Force` and `*Raw` variants with stricter implications than direct own-Model access. Rule 15 applies:
+- `*Force` (`getForce`/`createForce`/`findForce`/…) disables `checkRights`, RoleGuard plugin, AND `removeSecrets`. **Results may contain passwords, hashes, tokens.**
+- `*Raw` (`getRaw`/`createRaw`/`findRaw`/…) additionally sets `prepareInput = null` / `prepareOutput = null` — no translations, no type mapping, no secret removal.
+
+Use `Force`/`Raw` only in system-internal flows (credential verification needs password hash, migrations, admin tooling). A `Force`/`Raw` result reaching a user response is Critical. Document with a comment explaining why the standard variant cannot be used. Example: `// getForce — need password hash for credential verification`.
+
+**Native driver access — Rules 5-6:** `mainDbModel.collection` and `mainDbModel.db` are blocked at the type level via `SafeModel<T>`. For legitimate native access, use `this.getNativeCollection(reason)` or `this.getNativeConnection(reason)` — both require ≥20-char reasons and log `[SECURITY]` warnings. Bypasses ALL Mongoose plugins (Tenant, Audit, RoleGuard, Password).
+
+**Review stance:** documented direct own-Model access with the 5-question analysis completed AND an appropriate follow-up pattern (A/B/C/D) = allowed. Undocumented direct access = finding (typically Low — `securityCheck` still runs via the interceptor). Silent bypass of field-level `@Restricted` on a user-facing response = High. `Force`/`Raw` result leaking to user-facing response = Critical.
+
 ### Property Rules
 
 | Rule | Enforcement |
@@ -278,6 +408,41 @@ const product = await this.productService.findOne(
 
 **Rule:** Only pass `currentUser`. Only add `inputType` if a specific Input class is needed.
 
+### CRITICAL: @InjectModel Usage Requires Justification and Service Analysis
+
+This is an instance of the **Informed-Trade-off Pattern** (standard path → opt-out with good reason → mandatory analysis → code comment → severity in review depends on what is bypassed). Same meta-pattern as the Plain-Object rule ("Prefer Model Instances" section below) and the deprecation-use rule — a single call site can hit multiple. Full definition: `generating-nest-servers` skill, `reference/informed-trade-off-pattern.md` and Rule 12.
+
+**Scope of this rule:** Applies ONLY to Models that do NOT belong to this Service. The Service's OWN primary Model (passed to `super({ mainDbModel })`) is the standard `@InjectModel` usage and has no extra requirements.
+
+For every `@InjectModel` of a Model that belongs to a different Service, there must be a **good reason** AND the corresponding Service must be **thoroughly analyzed** to ensure no processes or security measures are unintentionally bypassed.
+
+**What a Service typically enforces that direct Model access skips:**
+- `securityCheck()` on the Model
+- `@Restricted` / `@Roles` pre-checks and field-level permissions
+- `S_CREATOR` ownership logic
+- Secret-field removal, field-level filtering, output sanitization
+- Lifecycle side-effects (hooks, events, audit, notifications, relation updates)
+- Input validation and `process()` normalization
+
+**Decision protocol before using `@InjectModel` for any Model other than your own primary Model:**
+1. **Justify:** Is there a concrete reason the corresponding Service cannot be used? (Performance-critical path, bulk op, no Service exists yet, atomic MongoDB operator not exposed by CrudService, etc.)
+2. **Analyze the Service:** Open and read the corresponding Service. List every security measure, permission check, hook, and side-effect it performs.
+3. **Assess the bypass:** For each item from step 2 — is skipping it safe in this context, or must it be manually replicated?
+4. **Document:** Add a code comment naming the reason AND noting which Service logic is intentionally bypassed (and why that's safe) or manually replicated (with reference to the Service method).
+
+**Template comment:**
+```typescript
+// @InjectModel(Product.name) used instead of ProductService because:
+//   - <reason, e.g. "bulk insert of 10k+ docs during migration, ProductService.create() too slow">
+// ProductService logic considered:
+//   - securityCheck(): N/A (system-internal migration, no user context)
+//   - checkRestricted(): N/A (no user response)
+//   - hooks/events: manually fired below via <method>
+@InjectModel(Product.name) private readonly productModel: Model<ProductDocument>,
+```
+
+**Typical legitimate reasons:** system-internal migrations/cron/processors, documented performance hot-paths, atomic operators (`$push`, `$pull`, `$inc`) not exposed by CrudService, service-to-service calls with no user context. Typical illegitimate reasons: "simpler code", "Service feels like overhead", "avoiding a circular import" (resolve the cycle instead).
+
 ## Description Management (MANDATORY)
 
 ### Format
@@ -339,15 +504,19 @@ export class ProductCreateInput {
 ### URL Parameter Validation
 
 ```typescript
-// CORRECT: Validate ObjectId format
+// CORRECT: Validate ObjectId format — ErrorCode is MANDATORY (see generating-nest-servers/reference/error-handling.md)
+import { ErrorCode } from '../../common/errors/project-errors';
+
 @Get(':id')
 async findOne(@Param('id') id: string): Promise<Product> {
   if (!Types.ObjectId.isValid(id)) {
-    throw new BadRequestException('Invalid ID format');
+    throw new BadRequestException(ErrorCode.INVALID_FIELD_FORMAT);
   }
   return this.productService.findOne({ id });
 }
 ```
+
+**NEVER pass raw strings to NestJS exceptions.** Always use the typed `ErrorCode` registry from `src/server/common/errors/project-errors.ts` — reuse `LTNS_*` core codes when generic, define `PROJ_*` codes only for domain-specific semantics. Full rules: `generating-nest-servers` skill → `reference/error-handling.md`.
 
 ### Query Limits (Enforce Pagination)
 

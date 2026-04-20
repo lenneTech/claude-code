@@ -49,6 +49,7 @@ All Claude Code best practices are cached locally in `.claude/docs-cache/*.md`. 
 | `update-docs-cache.ts` | Downloads & converts documentation | `bun .claude/scripts/update-docs-cache.ts [--source=<name>]` |
 | `check-cache-version.ts` | Checks if cache is outdated | `bun .claude/scripts/check-cache-version.ts` |
 | `check-cache-integrity.ts` | Verifies all cache files exist | `bun .claude/scripts/check-cache-integrity.ts [--fix]` |
+| `check-cross-references.ts` | Verifies markdown links and "Rule N" references across `plugins/` resolve | `bun .claude/scripts/check-cross-references.ts [--json] [--plugin=<name>]` |
 
 **Source types in `sources.json`:**
 - `md`: Direct Markdown files (downloaded as-is, relative links converted to absolute GitHub URLs)
