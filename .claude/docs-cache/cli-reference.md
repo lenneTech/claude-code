@@ -1,7 +1,7 @@
 # CLI reference
 
 > Source: https://code.claude.com/docs/en/cli-reference
-> Generated: 2026-04-04T10:26:47.232Z
+> Generated: 2026-04-21T03:28:07.010Z
 
 ---
 
@@ -27,6 +27,9 @@ You can start sessions, pipe content, resume conversations, and manage updates w
 |`claude mcp`| Configure Model Context Protocol (MCP) servers | See the [Claude Code MCP documentation](/docs/en/mcp). |
 |`claude plugin`| Manage Claude Code [plugins](/docs/en/plugins). Alias:`claude plugins`. See [plugin reference](/docs/en/plugins-reference#cli-commands-reference) for subcommands |`claude plugin install code-review@claude-plugins-official`|
 |`claude remote-control`| Start a [Remote Control](/docs/en/remote-control) server to control Claude Code from Claude.ai or the Claude app. Runs in server mode (no local interactive session). See [Server mode flags](/docs/en/remote-control#start-a-remote-control-session) |`claude remote-control --name "My Project"`|
+|`claude setup-token`| Generate a long-lived OAuth token for CI and scripts. Prints the token to the terminal without saving it. Requires a Claude subscription. See [Generate a long-lived token](/docs/en/authentication#generate-a-long-lived-token) |`claude setup-token`|
+
+If you mistype a subcommand, Claude Code suggests the closest match and exits without starting a session. For example,`claude udpate`prints`Did you mean claude update?`.
 
 
 CLI flags
@@ -53,7 +56,9 @@ Customize Claude Code’s behavior with these command-line flags.`claude --help`
 |`--debug-file <path>`| Write debug logs to a specific file path. Implicitly enables debug mode. Takes precedence over`CLAUDE_CODE_DEBUG_LOGS_DIR`|`claude --debug-file /tmp/claude-debug.log`|
 |`--disable-slash-commands`| Disable all skills and commands for this session |`claude --disable-slash-commands`|
 |`--disallowedTools`| Tools that are removed from the model’s context and cannot be used |`"Bash(git log *)" "Bash(git diff *)" "Edit"`|
-|`--effort`| Set the [effort level](/docs/en/model-config#adjust-effort-level) for the current session. Options:`low`,`medium`,`high`,`max`(Opus 4.6 only). Session-scoped and does not persist to settings |`claude --effort high`|
+|`--effort`| Set the [effort level](/docs/en/model-config#adjust-effort-level) for the current session. Options:`low`,`medium`,`high`,`xhigh`,`max`; available levels depend on the model. Session-scoped and does not persist to settings |`claude --effort high`|
+|`--enable-auto-mode`| Removed in v2.1.111. Auto mode is now in the`Shift+Tab`cycle by default; use`--permission-mode auto`to start in it |`claude --permission-mode auto`|
+|`--exclude-dynamic-system-prompt-sections`| Move per-machine sections from the system prompt (working directory, environment info, memory paths, git status) into the first user message. Improves prompt-cache reuse across different users and machines running the same task. Only applies with the default system prompt; ignored when`--system-prompt`or`--system-prompt-file`is set. Use with`-p`for scripted, multi-user workloads |`claude -p --exclude-dynamic-system-prompt-sections "query"`|
 |`--fallback-model`| Enable automatic fallback to specified model when default model is overloaded (print mode only) |`claude -p --fallback-model sonnet "query"`|
 |`--fork-session`| When resuming, create a new session ID instead of reusing the original (use with`--resume`or`--continue`) |`claude --resume abc123 --fork-session`|
 |`--from-pr`| Resume sessions linked to a specific GitHub PR. Accepts a PR number or URL. Sessions are automatically linked when created via`gh pr create`|`claude --from-pr 123`|
@@ -63,7 +68,7 @@ Customize Claude Code’s behavior with these command-line flags.`claude --help`
 |`--include-hook-events`| Include all hook lifecycle events in the output stream. Requires`--output-format stream-json`|`claude -p --output-format stream-json --include-hook-events "query"`|
 |`--include-partial-messages`| Include partial streaming events in output. Requires`--print`and`--output-format stream-json`|`claude -p --output-format stream-json --include-partial-messages "query"`|
 |`--input-format`| Specify input format for print mode (options:`text`,`stream-json`) |`claude -p --output-format json --input-format stream-json`|
-|`--json-schema`| Get validated JSON output matching a JSON Schema after agent completes its workflow (print mode only, see [structured outputs](https://platform.claude.com/docs/en/agent-sdk/structured-outputs)) |`claude -p --json-schema '{"type":"object","properties":{...}}' "query"`|
+|`--json-schema`| Get validated JSON output matching a JSON Schema after agent completes its workflow (print mode only, see [structured outputs](/docs/en/agent-sdk/structured-outputs)) |`claude -p --json-schema '{"type":"object","properties":{...}}' "query"`|
 |`--maintenance`| Run maintenance hooks and start interactive mode |`claude --maintenance`|
 |`--max-budget-usd`| Maximum dollar amount to spend on API calls before stopping (print mode only) |`claude -p --max-budget-usd 5.00 "query"`|
 |`--max-turns`| Limit the number of agentic turns (print mode only). Exits with an error when the limit is reached. No limit by default |`claude -p --max-turns 3 "query"`|
@@ -75,13 +80,13 @@ Customize Claude Code’s behavior with these command-line flags.`claude --help`
 |`--no-chrome`| Disable [Chrome browser integration](/docs/en/chrome) for this session |`claude --no-chrome`|
 |`--no-session-persistence`| Disable session persistence so sessions are not saved to disk and cannot be resumed (print mode only) |`claude -p --no-session-persistence "query"`|
 |`--output-format`| Specify output format for print mode (options:`text`,`json`,`stream-json`) |`claude -p "query" --output-format json`|
-|`--enable-auto-mode`| Unlock [auto mode](/docs/en/permission-modes#eliminate-prompts-with-auto-mode) in the`Shift+Tab`cycle. Requires a Team, Enterprise, or API plan and Claude Sonnet 4.6 or Opus 4.6 |`claude --enable-auto-mode`|
 |`--permission-mode`| Begin in a specified [permission mode](/docs/en/permission-modes). Accepts`default`,`acceptEdits`,`plan`,`auto`,`dontAsk`, or`bypassPermissions`. Overrides`defaultMode`from settings files |`claude --permission-mode plan`|
 |`--permission-prompt-tool`| Specify an MCP tool to handle permission prompts in non-interactive mode |`claude -p --permission-prompt-tool mcp_auth_tool "query"`|
 |`--plugin-dir`| Load plugins from a directory for this session only. Each flag takes one path. Repeat the flag for multiple directories:`--plugin-dir A --plugin-dir B`|`claude --plugin-dir ./my-plugins`|
-|`--print`,`-p`| Print response without interactive mode (see [Agent SDK documentation](https://platform.claude.com/docs/en/agent-sdk/overview) for programmatic usage details) |`claude -p "query"`|
+|`--print`,`-p`| Print response without interactive mode (see [Agent SDK documentation](/docs/en/agent-sdk/overview) for programmatic usage details) |`claude -p "query"`|
 |`--remote`| Create a new [web session](/docs/en/claude-code-on-the-web) on claude.ai with the provided task description |`claude --remote "Fix the login bug"`|
 |`--remote-control`,`--rc`| Start an interactive session with [Remote Control](/docs/en/remote-control#start-a-remote-control-session) enabled so you can also control it from claude.ai or the Claude app. Optionally pass a name for the session |`claude --remote-control "My Project"`|
+|`--remote-control-session-name-prefix <prefix>`| Prefix for auto-generated [Remote Control](/docs/en/remote-control) session names when no explicit name is set. Defaults to your machine’s hostname, producing names like`myhost-graceful-unicorn`. Set`CLAUDE_REMOTE_CONTROL_SESSION_NAME_PREFIX`for the same effect |`claude remote-control --remote-control-session-name-prefix dev-box`|
 |`--replay-user-messages`| Re-emit user messages from stdin back on stdout for acknowledgment. Requires`--input-format stream-json`and`--output-format stream-json`|`claude -p --input-format stream-json --output-format stream-json --replay-user-messages`|
 |`--resume`,`-r`| Resume a specific session by ID or name, or show an interactive picker to choose a session |`claude --resume auth-refactor`|
 |`--session-id`| Use a specific session ID for the conversation (must be a valid UUID) |`claude --session-id "550e8400-e29b-41d4-a716-446655440000"`|
@@ -118,10 +123,10 @@ See also
 -   [Quickstart guide](/docs/en/quickstart) - Getting started with Claude Code
 -   [Common workflows](/docs/en/common-workflows) - Advanced workflows and patterns
 -   [Settings](/docs/en/settings) - Configuration options
--   [Agent SDK documentation](https://platform.claude.com/docs/en/agent-sdk/overview) - Programmatic usage and integrations
+-   [Agent SDK documentation](/docs/en/agent-sdk/overview) - Programmatic usage and integrations
 
 Was this page helpful?
 
-[Built-in commands](/docs/en/commands)
+[Commands](/docs/en/commands)
 
 ⌘I

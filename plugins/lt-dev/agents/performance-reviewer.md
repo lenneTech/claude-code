@@ -1,8 +1,7 @@
 ---
 name: performance-reviewer
 description: Autonomous performance review agent for lenne.tech fullstack projects. Analyzes bundle impact, database query patterns, memory management, async efficiency, API payload optimization, and caching strategy via static code analysis. Optionally runs k6 load tests with baseline comparison for API response time regression detection. Lighthouse Performance audit is handled by a11y-reviewer (cross-domain). Produces structured report with fulfillment grades per dimension.
-model: sonnet
-effort: medium
+model: inherit
 tools: Bash, Read, Grep, Glob, Write, Edit, TodoWrite
 skills: generating-nest-servers, developing-lt-frontend
 memory: project

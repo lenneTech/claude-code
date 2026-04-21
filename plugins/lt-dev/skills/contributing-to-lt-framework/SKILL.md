@@ -1,7 +1,6 @@
 ---
 name: contributing-to-lt-framework
 description: 'Guides local development on the lenne.tech framework libraries themselves (@lenne.tech/nest-server and @lenne.tech/nuxt-extensions) and validation of those changes from within a consuming starter project. Covers the pnpm link workflow for both frameworks, expected repository layouts, build/watch commands, rollback, and the handoff to the upstream contribution agents. Activates when the user mentions "modify nest-server", "change nuxt-extensions", "pnpm link", "test framework locally", "develop lt framework", "contribute to nest-server", "contribute to nuxt-extensions", or wants to iterate on framework source while exercising it in nest-server-starter / nuxt-base-starter. NOT for consuming frameworks inside a project (use generating-nest-servers or developing-lt-frontend). NOT for vendored-core workflows inside projects (use nest-server-core-vendoring or nuxt-extensions-core-vendoring). NOT for npm version upgrades (use nest-server-updating).'
-effort: medium
 ---
 
 # Contributing to the lt Framework

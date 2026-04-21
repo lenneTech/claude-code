@@ -1,10 +1,16 @@
 ---
 name: nest-server-core-vendoring
 description: 'Provides knowledge and resources for projects that have vendored the @lenne.tech/nest-server core directly into their source tree (under projects/api/src/core/ instead of consuming via npm). Covers the vendor model, the flatten-fix pattern, the Upstream-to-Project sync workflow, the Project-to-Upstream PR workflow, typical conflicts, and how cosmetic changes are distinguished from substantial upstream candidates. Activates for vendored nest-server core discussions, "sync core from upstream", "port local core change to upstream", conflict resolution during vendor sync, or questions about the vendor pattern. Delegates execution to lt-dev:nest-server-core-updater (for syncs) and lt-dev:nest-server-core-contributor (for upstream PR preparation). NOT for npm-based nest-server updates (use nest-server-updating). NOT for writing new NestJS code (use generating-nest-servers).'
-effort: high
 ---
 
 # Vendored nest-server core Knowledge Base
+
+## Gotchas
+
+- **Flatten-fix edge case on `core-persistence-model.interface.ts`** — During flatten-fix, most files get `'../../..'` rewritten to `'../..'`. This file is an exception: it sits one directory deeper and needs `'../../..'` → `'../..'` → `'..'`. Missing this step causes a silent `Cannot find module` at runtime, not compile-time.
+- **`migrate` CLI disappears after vendoring** — The upstream `@lenne.tech/nest-server` package exports a `migrate` binary in its `package.json`. When vendored (no longer a dependency), this binary is gone. Projects that relied on `pnpm migrate` will need to run the migration script directly from `src/core/`.
+- **Cosmetic commits are tempting upstream PR candidates** — Formatting-only, linting-only, or rename-only commits look substantive but offer no value as upstream PRs. The contributor agent filters these — if authoring manually, verify the commit changes behavior, not just style.
+- **Local patches in `src/core/` are invisible to future `/update-nest-server-core` runs** — The updater does AI-driven curation but cannot read your intent. Document every intentional local deviation in `src/core/LOCAL-PATCHES.md` so the next sync doesn't silently undo your work.
 
 This skill provides **knowledge and resources** for lenne.tech projects that have
 vendored the @lenne.tech/nest-server core into their source tree. For automated

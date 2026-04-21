@@ -1,7 +1,7 @@
 # Common workflows
 
 > Source: https://code.claude.com/docs/en/common-workflows
-> Generated: 2026-04-04T10:26:47.111Z
+> Generated: 2026-04-21T03:28:07.077Z
 
 ---
 
@@ -204,6 +204,13 @@ Verify documentation```check if the documentation follows our project standards`
 * * *
 
 
+Work in notes and non-code folders
+
+Claude Code works in any directory. Run it inside a notes vault, a documentation folder, or any collection of markdown files to search, edit, and reorganize content the same way you would code. The`.claude/`directory and`CLAUDE.md`sit alongside other tools’ config directories without conflict. Claude reads files fresh on each tool call, so it sees edits you make in another application the next time it reads that file.
+
+* * *
+
+
 Work with images
 
 Suppose you need to work with images in your codebase, and you want Claude’s help analyzing image content.
@@ -263,7 +270,7 @@ Tips:
 
 Use extended thinking (thinking mode)
 
-[Extended thinking](https://platform.claude.com/docs/en/build-with-claude/extended-thinking) is enabled by default, giving Claude space to reason through complex problems step-by-step before responding. This reasoning is visible in verbose mode, which you can toggle on with`Ctrl+O`. Additionally, Opus 4.6 and Sonnet 4.6 support adaptive reasoning: instead of a fixed thinking token budget, the model dynamically allocates thinking based on your [effort level](/docs/en/model-config#adjust-effort-level) setting. Extended thinking and adaptive reasoning work together to give you control over how deeply Claude reasons before responding. Extended thinking is particularly valuable for complex architectural decisions, challenging bugs, multi-step implementation planning, and evaluating tradeoffs between different approaches.
+[Extended thinking](https://platform.claude.com/docs/en/build-with-claude/extended-thinking) is enabled by default, giving Claude space to reason through complex problems step-by-step before responding. This reasoning is visible in verbose mode, which you can toggle on with`Ctrl+O`. During extended thinking, progress hints appear below the indicator to show that Claude is actively working. Additionally, [models that support effort](/docs/en/model-config#adjust-effort-level) use adaptive reasoning: instead of a fixed thinking token budget, the model dynamically decides whether and how much to think based on your effort level setting and the task at hand. Adaptive reasoning lets Claude respond faster to routine prompts and reserve deeper thinking for steps that benefit from it. Extended thinking is particularly valuable for complex architectural decisions, challenging bugs, multi-step implementation planning, and evaluating tradeoffs between different approaches.
 
 Phrases like “think”, “think hard”, and “think more” are interpreted as regular prompt instructions and don’t allocate thinking tokens.
 
@@ -274,19 +281,19 @@ Thinking is enabled by default, but you can adjust or disable it.
 
 | Scope | How to configure | Details |
 | --- | --- | --- |
-| **Effort level** | Run`/effort`, adjust in`/model`, or set [`CLAUDE_CODE_EFFORT_LEVEL`](/docs/en/env-vars) | Control thinking depth for Opus 4.6 and Sonnet 4.6. See [Adjust effort level](/docs/en/model-config#adjust-effort-level) |
-| **`ultrathink`keyword** | Include “ultrathink” anywhere in your prompt | Sets effort to high for that turn on Opus 4.6 and Sonnet 4.6. Useful for one-off tasks requiring deep reasoning without permanently changing your effort setting |
+| **Effort level** | Run`/effort`, adjust in`/model`, or set [`CLAUDE_CODE_EFFORT_LEVEL`](/docs/en/env-vars) | Control thinking depth on [supported models](/docs/en/model-config#adjust-effort-level) |
+| **`ultrathink`keyword** | Include “ultrathink” anywhere in your prompt | Adds an in-context instruction telling the model to reason more on that turn. Does not change the effort level itself; see [Adjust effort level](/docs/en/model-config#adjust-effort-level) for that |
 | **Toggle shortcut** | Press`Option+T`(macOS) or`Alt+T`(Windows/Linux) | Toggle thinking on/off for the current session (all models). May require [terminal configuration](/docs/en/terminal-config) to enable Option key shortcuts |
 | **Global default** | Use`/config`to toggle thinking mode | Sets your default across all projects (all models).
 Saved as`alwaysThinkingEnabled`in`~/.claude/settings.json`|
-| **Limit token budget** | Set [`MAX_THINKING_TOKENS`](/docs/en/env-vars) environment variable | Limit the thinking budget to a specific number of tokens. On Opus 4.6 and Sonnet 4.6, only`0`applies unless adaptive reasoning is disabled. Example:`export MAX_THINKING_TOKENS=10000`|
+| **Limit token budget** | Set [`MAX_THINKING_TOKENS`](/docs/en/env-vars) environment variable | Limit the thinking budget to a specific number of tokens. On models with adaptive reasoning, only`0`applies unless adaptive reasoning is disabled. Example:`export MAX_THINKING_TOKENS=10000`|
 
 To view Claude’s thinking process, press`Ctrl+O`to toggle verbose mode and see the internal reasoning displayed as gray italic text.
 
 
 How extended thinking works
 
-Extended thinking controls how much internal reasoning Claude performs before responding. More thinking provides more space to explore solutions, analyze edge cases, and self-correct mistakes. **With Opus 4.6 and Sonnet 4.6**, thinking uses adaptive reasoning: the model dynamically allocates thinking tokens based on the [effort level](/docs/en/model-config#adjust-effort-level) you select. This is the recommended way to tune the tradeoff between speed and reasoning depth. **With older models**, thinking uses a fixed token budget drawn from your output allocation. The budget varies by model; see [`MAX_THINKING_TOKENS`](/docs/en/env-vars) for per-model ceilings. You can limit the budget with that environment variable, or disable thinking entirely via`/config`or the`Option+T`/`Alt+T`toggle. On Opus 4.6 and Sonnet 4.6, [adaptive reasoning](/docs/en/model-config#adjust-effort-level) controls thinking depth, so`MAX_THINKING_TOKENS`only applies when set to`0`to disable thinking, or when`CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1`reverts these models to the fixed budget. See [environment variables](/docs/en/env-vars).
+Extended thinking controls how much internal reasoning Claude performs before responding. More thinking provides more space to explore solutions, analyze edge cases, and self-correct mistakes. On [models that support effort](/docs/en/model-config#adjust-effort-level), thinking uses adaptive reasoning: the model dynamically allocates thinking tokens based on the effort level you select. This is the recommended way to tune the tradeoff between speed and reasoning depth. If you want Claude to think more or less often than your effort level would otherwise produce, you can also say so directly in your prompt or in`CLAUDE.md`. With older models, thinking uses a fixed token budget drawn from your output allocation. The budget varies by model; see [`MAX_THINKING_TOKENS`](/docs/en/env-vars) for per-model ceilings. You can limit the budget with that environment variable, or disable thinking entirely via`/config`or the`Option+T`/`Alt+T`toggle. On models with adaptive reasoning,`MAX_THINKING_TOKENS`only applies when set to`0`to disable thinking, or when`CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1`reverts the model to the fixed budget.`CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING`applies to Opus 4.6 and Sonnet 4.6 only. Opus 4.7 always uses adaptive reasoning and does not support a fixed thinking budget. See [environment variables](/docs/en/env-vars).
 
 You’re charged for all thinking tokens used even when thinking summaries are redacted. In interactive mode, thinking appears as a collapsed stub by default. Set`showThinkingSummaries: true`in`settings.json`to show full summaries.
 
@@ -301,7 +308,7 @@ When starting Claude Code, you can resume a previous session:
 -`claude --resume`opens a conversation picker or resumes by name
 -`claude --from-pr 123`resumes sessions linked to a specific pull request
 
-From inside an active session, use`/resume`to switch to a different conversation. Sessions are stored per project directory. The`/resume`picker shows interactive sessions from the same git repository, including worktrees. Sessions created by`claude -p`or SDK invocations do not appear in the picker, but you can still resume one by passing its session ID directly to`claude --resume <session-id>`.
+From inside an active session, use`/resume`to switch to a different conversation. Sessions are stored per project directory. By default, the`/resume`picker shows interactive sessions from the current worktree, with keyboard shortcuts to widen the list to other worktrees or projects, search, preview, and rename. See [Use the session picker](#use-the-session-picker) below for the full shortcut reference. When you select a session from another worktree of the same repository, Claude Code resumes it directly without requiring you to switch directories first. Selecting a session from an unrelated project copies a`cd`and resume command to your clipboard instead. Resuming by name resolves across the current repository and its worktrees. Both`claude --resume <name>`and`/resume <name>`look for an exact match and resume it directly, even if the session lives in a different worktree. When the name is ambiguous,`claude --resume <name>`opens the picker with the name pre-filled as a search term.`/resume <name>`from inside a session reports an error instead, so run`/resume`with no argument to open the picker and choose. Sessions created by`claude -p`or SDK invocations do not appear in the picker, but you can still resume one by passing its session ID directly to`claude --resume <session-id>`.
 
 
 Name your sessions
@@ -312,7 +319,7 @@ Give sessions descriptive names to find them later. This is a best practice when
 
 Name the session
 
-Name a session at startup with`-n`:```claude -n auth-refactor```Or use`/rename`during a session, which also shows the name on the prompt bar:```/rename auth-refactor```You can also rename any session from the picker: run`/resume`, navigate to a session, and press`R`.
+Name a session at startup with`-n`:```claude -n auth-refactor```Or use`/rename`during a session, which also shows the name on the prompt bar:```/rename auth-refactor```You can also rename any session from the picker: run`/resume`, navigate to a session, and press`Ctrl+R`.
 
 2
 
@@ -327,21 +334,21 @@ The`/resume`command (or`claude --resume`without arguments) opens an interactive 
 |`↑`/`↓`| Navigate between sessions |
 |`→`/`←`| Expand or collapse grouped sessions |
 |`Enter`| Select and resume the highlighted session |
-|`P`| Preview the session content |
-|`R`| Rename the highlighted session |
-|`/`| Search to filter sessions |
-|`A`| Toggle between current directory and all projects |
-|`B`| Filter to sessions from your current git branch |
+|`Space`| Preview the session content.`Ctrl+V`also works on terminals that do not capture it as paste |
+|`Ctrl+R`| Rename the highlighted session |
+|`/`or any printable character other than`Space`| Enter search mode and filter sessions |
+|`Ctrl+A`| Show sessions from all projects on this machine. Press again to restore the current repository |
+|`Ctrl+W`| Show sessions from all worktrees of the current repository. Press again to restore the current worktree. Only shown in multi-worktree repositories |
+|`Ctrl+B`| Filter to sessions from your current git branch. Press again to show sessions from all branches |
 |`Esc`| Exit the picker or search mode |
 
 **Session organization:** The picker displays sessions with helpful metadata:
 
--   Session name or initial prompt
+-   Session name if set, otherwise the conversation summary or first user prompt
 -   Time elapsed since last activity
 -   Message count
 -   Git branch (if applicable)
-
-Forked sessions (created with`/branch`,`/rewind`, or`--fork-session`) are grouped together under their root session, making it easier to find related conversations.
+-   Project path, shown after widening to all projects with`Ctrl+A`Forked sessions (created with`/branch`,`/rewind`, or`--fork-session`) are grouped together under their root session, making it easier to find related conversations.
 
 Tips:
 
@@ -350,7 +357,7 @@ Tips:
 -   Use`--resume session-name`when you know which session you need
 -   Use`--resume`(without a name) when you need to browse and select
 -   For scripts, use`claude --continue --print "prompt"`to resume in non-interactive mode
--   Press`P`in the picker to preview a session before resuming it
+-   Press`Space`in the picker to preview a session before resuming it
 -   The resumed conversation starts with the same model and configuration as the original
 
 How it works:
@@ -386,7 +393,7 @@ When you exit a worktree session, Claude handles cleanup based on whether you ma
 -   **No changes**: the worktree and its branch are removed automatically
 -   **Changes or commits exist**: Claude prompts you to keep or remove the worktree. Keeping preserves the directory and branch so you can return later. Removing deletes the worktree directory and its branch, discarding all uncommitted changes and commits
 
-Subagent worktrees orphaned by a crash or an interrupted parallel run are removed automatically at startup once they are older than your [`cleanupPeriodDays`](/docs/en/settings#available-settings) setting, provided they have no modifications to tracked files and no unpushed commits. Untracked files (new files never staged with`git add`) are not checked and do not prevent removal. Worktrees you create with`--worktree`are never removed by this sweep. To clean up worktrees outside of a Claude session, use [manual worktree management](#manage-worktrees-manually).
+Subagent worktrees orphaned by a crash or an interrupted parallel run are removed automatically at startup once they are older than your [`cleanupPeriodDays`](/docs/en/settings#available-settings) setting, provided they have no uncommitted changes, no untracked files, and no unpushed commits. Worktrees you create with`--worktree`are never removed by this sweep. To clean up worktrees outside of a Claude session, use [manual worktree management](#manage-worktrees-manually).
 
 Add`.claude/worktrees/`to your`.gitignore`to prevent worktree contents from appearing as untracked files in your main repository.
 
@@ -566,10 +573,10 @@ Suppose you want Claude to handle a task automatically on a recurring basis, lik
 
 | Option | Where it runs | Best for |
 | --- | --- | --- |
-| [Cloud scheduled tasks](/docs/en/web-scheduled-tasks) | Anthropic-managed infrastructure | Tasks that should run even when your computer is off. Configure at [claude.ai/code](https://claude.ai/code). |
+| [Routines](/docs/en/routines) | Anthropic-managed infrastructure | Tasks that should run even when your computer is off. Can also trigger on API calls or GitHub events in addition to a schedule. Configure at [claude.ai/code/routines](https://claude.ai/code/routines). |
 | [Desktop scheduled tasks](/docs/en/desktop-scheduled-tasks) | Your machine, via the desktop app | Tasks that need direct access to local files, tools, or uncommitted changes. |
 | [GitHub Actions](/docs/en/github-actions) | Your CI pipeline | Tasks tied to repo events like opened PRs, or cron schedules that should live alongside your workflow config. |
-| [`/loop`](/docs/en/scheduled-tasks) | The current CLI session | Quick polling while a session is open. Tasks are cancelled when you exit. |
+| [`/loop`](/docs/en/scheduled-tasks) | The current CLI session | Quick polling while a session is open. Tasks stop when you start a new conversation;`--resume`and`--continue`restore unexpired ones. |
 
 When writing prompts for scheduled tasks, be explicit about what success looks like and what to do with results. The task runs autonomously, so it can’t ask clarifying questions. For example: “Review open PRs labeled`needs-review`, leave inline comments on any issues, and post a summary in the`#eng-reviews`Slack channel.”
 

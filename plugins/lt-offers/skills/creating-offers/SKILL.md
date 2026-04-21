@@ -1,15 +1,19 @@
 ---
 name: creating-offers
-description: |
-  Creates and edits business offers on the lenne.tech Offers platform (angebote.lenne.tech).
-  Knows all 16 content block types, offer lifecycle (draft/sent/viewed/template), custom HTML with
-  Tailwind CSS and NuxtUI components (via rich-component block). Activates when working with offers,
-  content blocks, or the Offers API. Uses MCP tools (offers-api) for all CRUD operations.
+description: 'Creates and edits business offers on the lenne.tech Offers platform (angebote.lenne.tech). Knows all 16 content block types, offer lifecycle (draft/sent/viewed/template), custom HTML with Tailwind CSS and NuxtUI components (via rich-component block). Activates when working with offers, content blocks, or the Offers API. Uses MCP tools (offers-api) for all CRUD operations.'
 ---
 
 # Creating Offers on angebote.lenne.tech
 
 This skill enables Claude Code to create, optimize, and manage business offers on the lenne.tech Offers platform via MCP tools.
+
+## Gotchas
+
+- **Content block `order` values must be ascending without gaps** — Gaps in the sequence (e.g., `1, 3, 5`) cause rendering glitches on the offers frontend. When deleting a block, re-normalize remaining orders; when inserting, pick the next consecutive integer. The API does not validate this — the bug only surfaces client-side.
+- **`global-ref` block type is NOT listed in the standard MCP tool catalog** — It's created automatically by the `/offers:create` workflow when a block is promoted to the offers repository. Users attempting to use it directly via `create_offer` will get a schema error. The workflow guards this via the `@lenne.tech` git email check.
+- **OAuth session expires silently across sessions** — The `offers-api` MCP OAuth cookie is tied to the current Claude session. Resuming an earlier offers session (via `--resume`) often hits a 401 on the first MCP call without a clear error. Re-authenticate by running a trivial MCP tool first.
+- **`git config user.email` detection is fragile** — The reusable-block detection uses this to gate the lenne.tech-only flow. It fails for developers with a non-`@lenne.tech` email configured locally (CI machines, temporary clones, rebased-from-fork setups). The step silently skips in those cases, which is the intended fail-safe.
+- **Template offers cannot be published — only duplicated** — Offers with `isTemplate: true` cannot be `mark_sent`. Attempting to publish a template silently returns the unchanged offer. To publish, first `create_from_template` to produce a regular offer, then send that one.
 
 ## When to Use This Skill
 

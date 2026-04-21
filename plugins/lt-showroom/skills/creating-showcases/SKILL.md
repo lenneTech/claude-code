@@ -1,20 +1,18 @@
 ---
 name: creating-showcases
-description: |
-  Creates, updates, and manages showcases on the lenne.tech Showroom platform (showroom.lenne.tech).
-  Implements a 5-phase workflow: (1) project analysis, (2) screenshot capture with Docker/app startup
-  and demo data, (3) SHOWCASE.md creation as single source of truth in the project repository,
-  (4) showcase creation via API using SHOWCASE.md + customer feedback + web research,
-  (5) interactive presentation with modern content blocks. Fetches customer feedback from
-  https://lenne.tech/kundenerfolge. Uses MCP tools (showroom-api) or REST API for CRUD operations.
-  Activates when creating, editing, managing showcases, portfolio entries, or the Showroom platform.
-  NOT for platform development on the showroom codebase itself (use generating-nest-servers or developing-lt-frontend).
-effort: high
+description: 'Creates, updates, and manages showcases on the lenne.tech Showroom platform (showroom.lenne.tech). Implements a 5-phase workflow: (1) project analysis, (2) screenshot capture with Docker/app startup and demo data, (3) SHOWCASE.md creation as single source of truth in the project repository, (4) showcase creation via API using SHOWCASE.md + customer feedback + web research, (5) interactive presentation with modern content blocks. Fetches customer feedback from https://lenne.tech/kundenerfolge. Uses MCP tools (showroom-api) or REST API for CRUD operations. Activates when creating, editing, managing showcases, portfolio entries, or the Showroom platform. NOT for platform development on the showroom codebase itself (use generating-nest-servers or developing-lt-frontend).'
 ---
 
 # Creating Showcases on showroom.lenne.tech
 
 This skill implements a **5-phase workflow** built around SHOWCASE.md as the single source of truth. Every showcase starts from a versioned Markdown file in the project repository and is then published to showroom.lenne.tech.
+
+## Gotchas
+
+- **SHOWCASE.md `version` must match `package.json` version** — A drift between the two is silently ignored by the API, but it confuses future audits and breaks automated "is the showcase current?" checks. Always `sync` the `version` field when running an update.
+- **REST API cookies expire between Claude sessions** — If you fall back from MCP to direct `curl` calls, the session cookie written to `.cookies` is tied to this Claude session. On the next session's first request you'll get a 401 without a clear error. Re-authenticate before each new workflow.
+- **Phase 2 cleanup MUST run even on failure** — If Docker is started for screenshots but the workflow fails before Phase 5, containers remain running and block port 3000 for the next project's startup. Always guard `docker compose down` with a trap/finally-equivalent, not just a success-path call.
+- **Content block `order` values must be ascending with no gaps** — Holes in the sequence (e.g. order 1, 3, 5) cause rendering glitches on the showroom frontend. When deleting a block, re-normalize the remaining orders; when adding, pick the next consecutive integer.
 
 ## When to Use This Skill
 

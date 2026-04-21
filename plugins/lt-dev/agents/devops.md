@@ -1,12 +1,11 @@
 ---
 name: devops
 description: Autonomous DevOps agent for lenne.tech fullstack projects with strict infrastructure enforcement. Manages Docker configurations (multi-stage builds, non-root containers, health checks), docker-compose setups (dev hot-reload, production hardening), CI/CD pipelines (lint/build/test/security/deploy), environment management (.env isolation, secret injection), and monitoring. Enforces pinned base images, layer caching, volume-based node_modules, port conventions (API 3000, App 3001, MongoDB 27017), lt CLI integration, and OWASP-aligned infrastructure security. Produces reproducible, secure, minimal configurations.
-model: sonnet
-effort: high
+model: inherit
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, WebSearch, TodoWrite
 skills: using-lt-cli
 memory: project
-maxTurns: 60
+maxTurns: 80
 ---
 
 # DevOps Agent

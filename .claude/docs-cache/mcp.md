@@ -1,11 +1,11 @@
 # Connect Claude Code to tools via MCP
 
 > Source: https://code.claude.com/docs/en/mcp
-> Generated: 2026-04-04T10:26:47.385Z
+> Generated: 2026-04-21T03:28:07.110Z
 
 ---
 
-Claude Code can connect to hundreds of external tools and data sources through the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction), an open source standard for AI-tool integrations. MCP servers give Claude Code access to your tools, databases, and APIs.
+Claude Code can connect to hundreds of external tools and data sources through the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction), an open source standard for AI-tool integrations. MCP servers give Claude Code access to your tools, databases, and APIs. Connect a server when you find yourself copying data into chat from another tool, like an issue tracker or a monitoring dashboard. Once connected, Claude can read and act on that system directly instead of working from what you paste.
 
 
 What you can do with MCP
@@ -78,7 +78,7 @@ Search your context lake and safely run actionsRequires user-specific URL. [Get 
 
 [**Aiwyn Tax (formerly Column Tax)**](https://docs.columntax.com/page/aiwyn-tax-mcp-server)
 
-Prepare your federal & state tax return 100% accuratelyCommand`claude mcp add --transport http aiwyn-tax https://mcp.columnapi.com/mcp`[**Circleback**](https://circleback.ai/docs/mcp)
+Estimate your federal & state taxes with Aiwyn's tax engineCommand`claude mcp add --transport http aiwyn-tax https://mcp.columnapi.com/mcp`[**Circleback**](https://circleback.ai/docs/mcp)
 
 Search and access context from meetingsCommand`claude mcp add circleback --transport http https://app.circleback.ai/api/mcp`[**Clarify**](https://docs.clarify.ai/en/articles/13367278-clarify-mcp)
 
@@ -86,17 +86,17 @@ Query your CRM. Create records. Ask anything.Command`claude mcp add --transport 
 
 Simulate fund classifications under proposed SFDR 2.0Command`claude mcp add --transport http clarity-ai https://clarity-sfdr20-mcp.pro.clarity.ai/mcp`[**Day AI**](https://day.ai/mcp)
 
-Know everything about your prospects & customers with CRMxCommand`claude mcp add day-ai --transport http https://day.ai/api/mcp`[**bioRxiv**](https://docs.mcp.deepsense.ai/guides/biorxiv.html)
+Know everything about your prospects & customers with CRMxCommand`claude mcp add day-ai --transport http https://day.ai/api/mcp`[**bioRxiv**](https://claude.com/resources/tutorials/using-the-biorxiv-and-medrxiv-connector-in-claude)
 
-Access bioRxiv and medRxiv preprint dataCommand`claude mcp add biorxiv --transport http https://hcls.mcp.claude.com/biorxiv/mcp`[**ChEMBL**](https://docs.mcp.deepsense.ai/guides/chembl.html)
+Access bioRxiv and medRxiv preprint dataCommand`claude mcp add biorxiv --transport http https://hcls.mcp.claude.com/biorxiv/mcp`[**ChEMBL**](https://claude.com/resources/tutorials/using-the-chembl-connector-in-claude)
 
-Access the ChEMBL DatabaseCommand`claude mcp add chembl --transport http https://hcls.mcp.claude.com/chembl/mcp`[**Clinical Trials**](https://docs.mcp.deepsense.ai/guides/clinical_trials.html)
+Access the ChEMBL DatabaseCommand`claude mcp add chembl --transport http https://hcls.mcp.claude.com/chembl/mcp`[**Clinical Trials**](https://claude.com/resources/tutorials/using-the-clinicaltrials-gov-connector-in-claude)
 
-Access ClinicalTrials.gov dataCommand`claude mcp add clinical-trials --transport http https://hcls.mcp.claude.com/clinical_trials/mcp`[**CMS Coverage**](https://docs.mcp.deepsense.ai/guides/cms_coverage.html)
+Access ClinicalTrials.gov dataCommand`claude mcp add clinical-trials --transport http https://hcls.mcp.claude.com/clinical_trials/mcp`[**CMS Coverage**](https://claude.com/resources/tutorials/using-the-cms-coverage-connector-in-claude)
 
-Access the CMS Coverage DatabaseCommand`claude mcp add cms-coverage --transport http https://hcls.mcp.claude.com/cms_coverage/mcp`[**ICD-10 Codes**](https://docs.mcp.deepsense.ai/guides/icd10_codes.html)
+Access the CMS Coverage DatabaseCommand`claude mcp add cms-coverage --transport http https://hcls.mcp.claude.com/cms_coverage/mcp`[**ICD-10 Codes**](https://claude.com/resources/tutorials/using-the-icd-10-connector-in-claude)
 
-Access ICD-10-CM and ICD-10-PCS code setsCommand`claude mcp add icd-10-codes --transport http https://hcls.mcp.claude.com/icd10_codes/mcp`[**NPI Registry**](https://docs.mcp.deepsense.ai/guides/npi_registry.html)
+Access ICD-10-CM and ICD-10-PCS code setsCommand`claude mcp add icd-10-codes --transport http https://hcls.mcp.claude.com/icd10_codes/mcp`[**NPI Registry**](https://claude.com/resources/tutorials/using-the-npi-registry-connector-in-claude)
 
 Access US National Provider Identifier (NPI) RegistryCommand`claude mcp add npi-registry --transport http https://hcls.mcp.claude.com/npi_registry/mcp`[**DevRev**](https://support.devrev.ai/en-US/devrev/article/ART-21859-remote-mcp-server)
 
@@ -126,7 +126,9 @@ Enhance responses with scholarly research and citationsCommand`claude mcp add sc
 
 From query to qualified lead in seconds.Command`claude mcp add --transport http sprouts https://sprouts-mcp-server.kartikay-dhar.workers.dev`[**Gainsight (Staircase AI)**](https://support.gainsight.com/Staircase_AI/Staircase_AI_Features/Connect_Staircase_AI_to_LLMs_Using_MCP#Install_Staircase_AI_MCP_for_Claude)
 
-Power AI Workflows with Customer ContextCommand`claude mcp add --transport http gainsight-staircase-ai https://mcp.staircase.ai/mcp`[**Vibe Prospecting**](https://developers.explorium.ai/mcp-docs/agentsource-mcp)
+Power AI Workflows with Customer ContextCommand`claude mcp add --transport http gainsight-staircase-ai https://mcp.staircase.ai/mcp`[**Sybill**](https://api.sybill.ai/docs/mcp.html)
+
+Ask AI about your sales calls, deals & pipelineCommand`claude mcp add sybill --transport http https://mcp.sybill.ai/mcp`[**Vibe Prospecting**](https://developers.explorium.ai/mcp-docs/agentsource-mcp)
 
 Find company & contact dataCommand`claude mcp add vibe-prospecting --transport http https://vibeprospecting.explorium.ai/mcp`[**Windsor.ai**](https://windsor.ai/introducing-windsor-mcp/#method-1-using-claude-desktop-3)
 
@@ -138,7 +140,9 @@ Ideate, diagram, and align teamsCommand`claude mcp add --transport http lucid ht
 
 Create, deploy, manage, and secure websites on Netlify.Command`claude mcp add --transport http netlify https://netlify-mcp.netlify.app/mcp`[**AWS Marketplace**](https://docs.aws.amazon.com/marketplace/latest/APIReference/marketplace-mcp-server.html)
 
-Discover, evaluate, and buy solutions for the cloudCommand`claude mcp add aws-marketplace --transport http https://marketplace-mcp.us-east-1.api.aws/mcp`[**Omni Analytics**](https://docs.omni.co/ai/mcp)
+Discover, evaluate, and buy solutions for the cloudCommand`claude mcp add aws-marketplace --transport http https://marketplace-mcp.us-east-1.api.aws/mcp`[**Kindora Funder Discovery**](https://kindora.co/mcp)
+
+Find funders who support causes like yoursCommand`claude mcp add --transport http kindora-funder-discovery https://kindora-mcp.azurewebsites.net/mcp/`[**Omni Analytics**](https://docs.omni.co/ai/mcp)
 
 Query your data using natural language through Omni's semantic modelCommand`claude mcp add --transport http omni-analytics https://callbacks.omniapp.co/callback/mcp`[**ActiveCampaign**](https://developers.activecampaign.com/page/mcp)
 
@@ -152,7 +156,7 @@ Craft content that wins AI searchCommand`claude mcp add airops --transport http 
 
 Integrate with the Airwallex Platform using ClaudeCommand`claude mcp add --transport http airwallex-developer https://mcp-demo.airwallex.com/developer`[**Asana**](https://developers.asana.com/docs/mcp-server)
 
-Connect to Asana to coordinate tasks, projects, and goalsCommand`claude mcp add --transport streamable-http asana https://mcp.asana.com/v2/mcp`[**Attio**](https://docs.attio.com/mcp/overview)
+Connect to Asana to coordinate tasks, projects, and goalsCommand`claude mcp add --transport http asana https://mcp.asana.com/v2/mcp`[**Attio**](https://docs.attio.com/mcp/overview)
 
 Search, manage, and update your Attio CRM from ClaudeCommand`claude mcp add --transport http attio https://mcp.attio.com/mcp`[**Aura**](https://docs.getaura.ai/)
 
@@ -174,9 +178,7 @@ Search, create, autofill, and export Canva designsCommand`claude mcp add --trans
 
 Predictive intelligence on private companiesCommand`claude mcp add --transport http cb-insights https://mcp.cbinsights.com`[**CData Connect AI**](https://cloud.cdata.com/docs/Claude-Client.html)
 
-Managed MCP platform for 350 sourcesCommand`claude mcp add cdata-connect-ai --transport http https://mcp.cloud.cdata.com/mcp`[**Microsoft 365**](https://support.claude.com/en/articles/12542951-enabling-and-using-the-microsoft-365-connector)
-
-Access your company's SharePoint, OneDrive, Outlook, and Teams directly in ClaudeCommand`claude mcp add microsoft-365 --transport http https://microsoft365.mcp.claude.com/mcp`[**PubMed**](https://support.claude.com/en/)
+Managed MCP platform for 350 sourcesCommand`claude mcp add cdata-connect-ai --transport http https://mcp.cloud.cdata.com/mcp`[**PubMed**](https://support.claude.com/en/)
 
 Search biomedical literature from PubMedCommand`claude mcp add pubmed --transport http https://pubmed.mcp.claude.com/mcp`[**Clay**](https://www.notion.so/clayrun/Clay-Claude-MCP-Server-Documentation-2ef7e66eb01480c9820de48041591aeb?showMoveTo=true&saveParent=true)
 
@@ -272,7 +274,7 @@ Search, access, and analyze your Ramp financial dataCommand`claude mcp add --tra
 
 Real time web, mobile app, and market data.Command`claude mcp add --transport http similarweb https://mcp.similarweb.com`[**Slack**](https://docs.slack.dev/ai/mcp-server)
 
-Send messages, create canvases, and fetch Slack dataCommand`claude mcp add slack --transport http https://mcp.slack.com/mcp`[**Smartsheet**](https://help.smartsheet.com/articles/2483663-use-smartsheet-connector-claude)
+Send messages, create canvases, and fetch Slack dataCommand`claude mcp add --transport http --client-id 1601185624273.8899143856786 --callback-port 3118 slack https://mcp.slack.com/mcp`[**Smartsheet**](https://help.smartsheet.com/articles/2483663-use-smartsheet-connector-claude)
 
 Analyze and manage Smartsheet data with ClaudeRequires user-specific URL. [Get your URL here](https://help.smartsheet.com/articles/2483656-install-smartsheet-connector-claude#toc-get-started).
 
@@ -280,7 +282,9 @@ Analyze and manage Smartsheet data with ClaudeRequires user-specific URL. [Get y
 
 Retrieve both structured and unstructured dataRequires user-specific URL. [Get your URL here](https://docs.snowflake.com/en/user-guide/admin-account-identifier#label-account-name-find).
 
-[**Square**](https://developer.squareup.com/docs/mcp)
+[**AdisInsight**](https://adisinsight-mcp.springer.com)
+
+Pharmaceutical drug & clinical trial intelligenceCommand`claude mcp add --transport http adisinsight https://adisinsight-mcp.springer.com/mcp`[**Square**](https://developer.squareup.com/docs/mcp)
 
 Search and manage transaction, merchant, and payment dataCommand`claude mcp add --transport sse square https://mcp.squareup.com/sse`[**Tavily**](https://docs.tavily.com/documentation/mcp)
 
@@ -326,7 +330,9 @@ Authenticated access to your Postgres and MySQL DB'sCommand`claude mcp add --tra
 
 Search, query, and debug errors intelligentlyCommand`claude mcp add --transport http sentry https://mcp.sentry.dev/mcp`[**Craft**](https://documents.craft.me/jWeCVJrSfxFRuA)
 
-Notes & second brainCommand`claude mcp add --transport http craft https://mcp.craft.do/my/mcp`[**GraphOS MCP Tools**](https://www.apollographql.com/docs/graphos/platform/graphos-mcp-tools)
+Notes & second brainCommand`claude mcp add --transport http craft https://mcp.craft.do/my/mcp`[**MoSPI**](https://www.datainnovation.mospi.gov.in/mospi-mcp)
+
+India's official statistics via natural languageCommand`claude mcp add --transport http mospi https://mcp.mospi.gov.in/`[**GraphOS MCP Tools**](https://www.apollographql.com/docs/graphos/platform/graphos-mcp-tools)
 
 Search Apollo docs, specs, and best practicesCommand`claude mcp add --transport http graphos-tools https://mcp.apollographql.com`[**Customer.io**](https://docs.customer.io/ai/mcp-server/)
 
@@ -336,7 +342,9 @@ Explore customer data and generate insights via ClaudeRequires user-specific URL
 
 Query, analyze, and manage your PostHog insightsCommand`claude mcp add --transport http posthog https://mcp.posthog.com/mcp`[**Honeycomb**](https://docs.honeycomb.io/troubleshoot/product-lifecycle/beta/mcp/)
 
-Query and explore observability data and SLOsCommand`claude mcp add --transport http honeycomb https://mcp.honeycomb.io/mcp`[**n8n**](https://docs.n8n.io/advanced-ai/accessing-n8n-mcp-server/)
+Query and explore observability data and SLOsCommand`claude mcp add --transport http honeycomb https://mcp.honeycomb.io/mcp`[**incident.io**](https://docs.incident.io/ai/remote-mcp)
+
+See and manage everything in incident.ioCommand`claude mcp add incident-io --transport http https://mcp.incident.io/mcp`[**n8n**](https://docs.n8n.io/advanced-ai/accessing-n8n-mcp-server/)
 
 Access and run your n8n workflowsRequires user-specific URL. [Get your URL here](https://docs.n8n.io/advanced-ai/accessing-n8n-mcp-server/).
 
@@ -352,7 +360,9 @@ Create, query, and manage structured content in SanityCommand`claude mcp add --t
 
 Securely retrieve data from your federated data sourcesRequires user-specific URL. [Get your URL here](https://docs.starburst.io/starburst-galaxy/ai-workflows/mcp-server.html).
 
-[**Zocks**](https://help.zocks.io/en/articles/14075856-connect-to-the-zocks-mcp-server)
+[**Unthread**](https://docs.unthread.io/docs/unthread-ai/unthread-mcp)
+
+Manage and automate your support ticketsCommand`claude mcp add --transport http unthread https://app.unthread.io/api/mcp`[**Zocks**](https://help.zocks.io/en/articles/14075856-connect-to-the-zocks-mcp-server)
 
 Analyze client conversations, patterns, and insights.Command`claude mcp add --transport http zocks https://mcp.zocks.io/v1/mcp`[**Candid**](https://support.claude.com/en/articles/12923235-using-the-candid-connector-in-claude)
 
@@ -425,6 +435,11 @@ claude mcp remove github
 Claude Code supports MCP`list_changed`notifications, allowing MCP servers to dynamically update their available tools, prompts, and resources without requiring you to disconnect and reconnect. When an MCP server sends a`list_changed`notification, Claude Code automatically refreshes the available capabilities from that server.
 
 
+Automatic reconnection
+
+If an HTTP or SSE server disconnects mid-session, Claude Code automatically reconnects with exponential backoff: up to five attempts, starting at a one-second delay and doubling each time. The server appears as pending in`/mcp`while reconnection is in progress. After five failed attempts the server is marked as failed and you can retry manually from`/mcp`. Stdio servers are local processes and are not reconnected automatically.
+
+
 Push messages with channels
 
 An MCP server can also push messages directly into your session so Claude can react to external events like CI results, monitoring alerts, or chat messages. To enable this, your server declares the`claude/channel`capability and you opt it in with the`--channels`flag at startup. See [Channels](/docs/en/channels) to use an officially supported channel, or [Channels reference](/docs/en/channels-reference) to build your own.
@@ -489,18 +504,35 @@ See the [plugin components reference](/docs/en/plugins-reference#mcp-servers) fo
 
 MCP installation scopes
 
-MCP servers can be configured at three different scope levels, each serving distinct purposes for managing server accessibility and sharing. Understanding these scopes helps you determine the best way to configure servers for your specific needs.
+MCP servers can be configured at three scopes. The scope you choose controls which projects the server loads in and whether the configuration is shared with your team.
+
+| Scope | Loads in | Shared with team | Stored in |
+| --- | --- | --- | --- |
+| [Local](#local-scope) | Current project only | No |`~/.claude.json`|
+| [Project](#project-scope) | Current project only | Yes, via version control |`.mcp.json`in project root |
+| [User](#user-scope) | All your projects | No |`~/.claude.json`|
 
 
 Local scope
 
-Local-scoped servers represent the default configuration level and are stored in`~/.claude.json`under your project’s path. These servers remain private to you and are only accessible when working within the current project directory. This scope is ideal for personal development servers, experimental configurations, or servers containing sensitive credentials that shouldn’t be shared.
+Local scope is the default. A local-scoped server loads only in the project where you added it and stays private to you. Claude Code stores it in`~/.claude.json`under that project’s path, so the same server won’t appear in your other projects. Use local scope for personal development servers, experimental configurations, or servers with credentials you don’t want in version control.
 
 The term “local scope” for MCP servers differs from general local settings. MCP local-scoped servers are stored in`~/.claude.json`(your home directory), while general local settings use`.claude/settings.local.json`(in the project directory). See [Settings](/docs/en/settings#settings-files) for details on settings file locations.```# Add a local-scoped server (default)
 claude mcp add --transport http stripe https://mcp.stripe.com
 
 # Explicitly specify local scope
-claude mcp add --transport http stripe --scope local https://mcp.stripe.com```Project scope
+claude mcp add --transport http stripe --scope local https://mcp.stripe.com```The command writes the server into the entry for your current project inside`~/.claude.json`. The example below shows the result when you run it from`/path/to/your/project`:```{
+  "projects": {
+    "/path/to/your/project": {
+      "mcpServers": {
+        "stripe": {
+          "type": "http",
+          "url": "https://mcp.stripe.com"
+        }
+      }
+    }
+  }
+}```Project scope
 
 Project-scoped servers enable team collaboration by storing configurations in a`.mcp.json`file at your project’s root directory. This file is designed to be checked into version control, ensuring all team members have access to the same MCP tools and services. When you add a project-scoped server, Claude Code automatically creates or updates this file with the appropriate configuration structure.```# Add a project-scoped server
 claude mcp add --transport http paypal --scope project https://mcp.paypal.com/mcp```The resulting`.mcp.json`file follows a standardized format:```{
@@ -517,24 +549,17 @@ claude mcp add --transport http paypal --scope project https://mcp.paypal.com/mc
 User scope
 
 User-scoped servers are stored in`~/.claude.json`and provide cross-project accessibility, making them available across all projects on your machine while remaining private to your user account. This scope works well for personal utility servers, development tools, or services you frequently use across different projects.```# Add a user server
-claude mcp add --transport http hubspot --scope user https://mcp.hubspot.com/anthropic```Choosing the right scope
+claude mcp add --transport http hubspot --scope user https://mcp.hubspot.com/anthropic```Scope hierarchy and precedence
 
-Select your scope based on:
+When the same server is defined in more than one place, Claude Code connects to it once, using the definition from the highest-precedence source:
 
--   **Local scope**: Personal servers, experimental configurations, or sensitive credentials specific to one project
--   **Project scope**: Team-shared servers, project-specific tools, or services required for collaboration
--   **User scope**: Personal utilities needed across multiple projects, development tools, or frequently used services
+1.  Local scope
+2.  Project scope
+3.  User scope
+4.  [Plugin-provided servers](/docs/en/plugins)
+5.  [claude.ai connectors](#use-mcp-servers-from-claude-ai)
 
-**Where are MCP servers stored?**
-
--   **User and local scope**:`~/.claude.json`(in the`mcpServers`field or under project paths)
--   **Project scope**:`.mcp.json`in your project root (checked into source control)
--   **Managed**:`managed-mcp.json`in system directories (see [Managed MCP configuration](#managed-mcp-configuration))
-
-
-Scope hierarchy and precedence
-
-MCP server configurations follow a clear precedence hierarchy. When servers with the same name exist at multiple scopes, the system resolves conflicts by prioritizing local-scoped servers first, followed by project-scoped servers, and finally user-scoped servers. This design ensures that personal configurations can override shared ones when needed. If a server is configured both locally and through a [claude.ai connector](#use-mcp-servers-from-claude-ai), the local configuration takes precedence and the connector entry is skipped.
+The three scopes match duplicates by name. Plugins and connectors match by endpoint, so one that points at the same URL or command as a server above is treated as a duplicate.
 
 
 Environment variable expansion in`.mcp.json`Claude Code supports environment variable expansion in`.mcp.json`files, allowing teams to share configurations while maintaining flexibility for machine-specific paths and sensitive values like API keys. **Supported syntax:**
@@ -639,7 +664,7 @@ Tips:
 
 Override OAuth metadata discovery
 
-If your MCP server’s standard OAuth metadata endpoints return errors but the server exposes a working OIDC endpoint, you can point Claude Code at a specific metadata URL to bypass the default discovery chain. By default, Claude Code first checks RFC 9728 Protected Resource Metadata at`/.well-known/oauth-protected-resource`, then falls back to RFC 8414 authorization server metadata at`/.well-known/oauth-authorization-server`. Set`authServerMetadataUrl`in the`oauth`object of your server’s config in`.mcp.json`:```{
+Point Claude Code at a specific OAuth authorization server metadata URL to bypass the default discovery chain. Set`authServerMetadataUrl`when the MCP server’s standard endpoints error, or when you want to route discovery through an internal proxy. By default, Claude Code first checks RFC 9728 Protected Resource Metadata at`/.well-known/oauth-protected-resource`, then falls back to RFC 8414 authorization server metadata at`/.well-known/oauth-authorization-server`. Set`authServerMetadataUrl`in the`oauth`object of your server’s config in`.mcp.json`:```{
   "mcpServers": {
     "my-server": {
       "type": "http",
@@ -649,7 +674,22 @@ If your MCP server’s standard OAuth metadata endpoints return errors but the s
       }
     }
   }
-}```The URL must use`https://`. This option requires Claude Code v2.1.64 or later.
+}```The URL must use`https://`.`authServerMetadataUrl`requires Claude Code v2.1.64 or later. The metadata URL’s`scopes_supported`overrides the scopes the upstream server advertises.
+
+
+Restrict OAuth scopes
+
+Set`oauth.scopes`to pin the scopes Claude Code requests during the authorization flow. This is the supported way to restrict an MCP server to a security-team-approved subset when the upstream authorization server advertises more scopes than you want to grant. The value is a single space-separated string, matching the`scope`parameter format in RFC 6749 §3.3.```{
+  "mcpServers": {
+    "slack": {
+      "type": "http",
+      "url": "https://mcp.slack.com/mcp",
+      "oauth": {
+        "scopes": "channels:read chat:write search:read"
+      }
+    }
+  }
+}````oauth.scopes`takes precedence over both`authServerMetadataUrl`and the scopes the server discovers at`/.well-known`. Leave it unset to let the MCP server determine the requested scope set. If the authorization server advertises`offline_access`in`scopes_supported`, Claude Code appends it to the pinned scopes so the access token can be refreshed without a new browser sign-in. If the server later returns a 403`insufficient_scope`for a tool call, Claude Code re-authenticates with the same pinned scopes. Widen`oauth.scopes`when a tool you need requires a scope outside the pin.
 
 
 Use dynamic headers for custom authentication
@@ -792,10 +832,9 @@ MCP output limits and warnings
 When MCP tools produce large outputs, Claude Code helps manage the token usage to prevent overwhelming your conversation context:
 
 -   **Output warning threshold**: Claude Code displays a warning when any MCP tool output exceeds 10,000 tokens
--   **Configurable limit**: You can adjust the maximum allowed MCP output tokens using the`MAX_MCP_OUTPUT_TOKENS`environment variable
--   **Default limit**: The default maximum is 25,000 tokens
-
-To increase the limit for tools that produce large outputs:```export MAX_MCP_OUTPUT_TOKENS=50000
+-   **Configurable limit**: you can adjust the maximum allowed MCP output tokens using the`MAX_MCP_OUTPUT_TOKENS`environment variable
+-   **Default limit**: the default maximum is 25,000 tokens
+-   **Scope**: the environment variable applies to tools that don’t declare their own limit. Tools that set [`anthropic/maxResultSizeChars`](#raise-the-limit-for-a-specific-tool) use that value instead for text content, regardless of what`MAX_MCP_OUTPUT_TOKENS`is set to. Tools that return image data are still subject to`MAX_MCP_OUTPUT_TOKENS`To increase the limit for tools that produce large outputs:```export MAX_MCP_OUTPUT_TOKENS=50000
 claude```This is particularly useful when working with MCP servers that:
 
 -   Query large datasets or databases
@@ -803,15 +842,17 @@ claude```This is particularly useful when working with MCP servers that:
 -   Process extensive log files or debugging information
 
 
-Override result size per tool
+Raise the limit for a specific tool
 
-If you’re building an MCP server, you can allow individual tools to return results larger than the default limit by setting`_meta["anthropic/maxResultSizeChars"]`in the tool’s`tools/list`response entry. Claude Code uses this value as the maximum result size for that tool, up to a hard ceiling of 500,000 characters. This is useful for tools that return inherently large but necessary outputs, such as database schemas or full file trees. Without the annotation, results that exceed the default limit are persisted to disk and replaced with a file reference in the conversation.```{
+If you’re building an MCP server, you can allow individual tools to return results larger than the default persist-to-disk threshold by setting`_meta["anthropic/maxResultSizeChars"]`in the tool’s`tools/list`response entry. Claude Code raises that tool’s threshold to the annotated value, up to a hard ceiling of 500,000 characters. This is useful for tools that return inherently large but necessary outputs, such as database schemas or full file trees. Without the annotation, results that exceed the default threshold are persisted to disk and replaced with a file reference in the conversation.```{
   "name": "get_schema",
   "description": "Returns the full database schema",
   "_meta": {
-    "anthropic/maxResultSizeChars": 500000
+    "anthropic/maxResultSizeChars": 200000
   }
-}```If you frequently encounter output warnings with specific MCP servers you don’t control, consider increasing the`MAX_MCP_OUTPUT_TOKENS`limit or asking the server author to add the`anthropic/maxResultSizeChars`annotation.
+}```The annotation applies independently of`MAX_MCP_OUTPUT_TOKENS`for text content, so users don’t need to raise the environment variable for tools that declare it. Tools that return image data are still subject to the token limit.
+
+If you frequently encounter output warnings with specific MCP servers you don’t control, consider increasing the`MAX_MCP_OUTPUT_TOKENS`limit. You can also ask the server author to add the`anthropic/maxResultSizeChars`annotation or to paginate their responses. The annotation has no effect on tools that return image content; for those, raising`MAX_MCP_OUTPUT_TOKENS`is the only option.
 
 
 Respond to MCP elicitation requests

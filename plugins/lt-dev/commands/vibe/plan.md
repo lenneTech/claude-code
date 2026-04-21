@@ -12,11 +12,11 @@ disable-model-invocation: true
 - You have a `SPEC.md` with feature requirements
 - You want to create a detailed implementation plan before coding
 - You need to review and approve the plan before execution
-- Use `/vibe:build` afterwards to execute the plan
+- Use `/lt-dev:vibe:build` afterwards to execute the plan
 
 **Related commands:**
-- `/vibe:build` - Execute an existing IMPLEMENTATION_PLAN.md
-- `/vibe:build-plan` - Plan + Build in one go (no interruption)
+- `/lt-dev:vibe:build` - Execute an existing IMPLEMENTATION_PLAN.md
+- `/lt-dev:vibe:build-plan` - Plan + Build in one go (no interruption)
 
 **For higher quality (recommended):**
 - Use `building-stories-with-tdd` skill for Test-Driven Development

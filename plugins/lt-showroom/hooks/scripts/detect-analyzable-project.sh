@@ -7,8 +7,18 @@
 
 INPUT=$(cat)
 
-PROMPT=$(echo "$INPUT" | jq -r '.user_prompt // empty' 2>/dev/null || echo "")
-CWD=$(echo "$INPUT" | jq -r '.cwd // empty' 2>/dev/null || echo "$PWD")
+# ── Extract prompt and cwd with jq fallback ──
+if command -v jq >/dev/null 2>&1; then
+  PROMPT=$(echo "$INPUT" | jq -r '.prompt // .user_prompt // empty' 2>/dev/null)
+  CWD=$(echo "$INPUT" | jq -r '.cwd // empty' 2>/dev/null)
+else
+  PROMPT=$(echo "$INPUT" | grep -o '"prompt"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"prompt"[[:space:]]*:[[:space:]]*"//;s/"$//')
+  CWD=$(echo "$INPUT" | grep -o '"cwd"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"cwd"[[:space:]]*:[[:space:]]*"//;s/"$//')
+fi
+
+# Fallback to CLAUDE_USER_PROMPT env var and PWD
+PROMPT="${PROMPT:-${CLAUDE_USER_PROMPT:-}}"
+CWD="${CWD:-$PWD}"
 
 CONTEXT=""
 
@@ -40,12 +50,12 @@ if echo "$PROMPT_LOWER" | grep -qE '(showroom|showcase|portfolio|analys|screensh
 fi
 
 if [ -n "$CONTEXT" ]; then
-  jq -n --arg ctx "$CONTEXT" '{
-    hookSpecificOutput: {
-      hookEventName: "UserPromptSubmit",
-      additionalContext: $ctx
-    }
-  }'
+  if command -v jq >/dev/null 2>&1; then
+    jq -n --arg ctx "$CONTEXT" '{hookSpecificOutput: {hookEventName: "UserPromptSubmit", additionalContext: $ctx}}'
+  else
+    escaped=$(printf '%s' "$CONTEXT" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g')
+    printf '{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"%s"}}\n' "$escaped"
+  fi
 fi
 
 exit 0

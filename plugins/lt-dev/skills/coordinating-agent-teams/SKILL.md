@@ -1,13 +1,21 @@
 ---
 name: coordinating-agent-teams
 description: 'Provides auto-detection heuristics, coordination patterns, and worktree isolation guidance for parallel Claude Code operations. Covers Agent Teams (independent sessions with messaging) and parallel subagent spawning (Agent tool with isolation worktree). Activates when user mentions "agent team", "parallel review", "parallel agents", "team debug", "parallel worktrees", "batch rebase", "parallel backend frontend", "implement in parallel", or when commands evaluate team suitability via CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS. Also activates when spawning multiple file-modifying subagents concurrently. NOT for single sequential subagent invocations.'
-effort: medium
 user-invocable: false
 ---
 
 # Coordinating Agent Teams
 
 Claude Code Agent Teams (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) coordinate multiple independent Claude Code sessions with inter-agent messaging and a shared task list. Unlike subagents (Agent tool), teammates communicate directly and challenge each other.
+
+## Gotchas
+
+- **`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` must be set BEFORE session start** — Setting it mid-session has no effect. The flag is read once at startup. Team-capable commands silently fall back to single-agent mode if the env var is missing. Verify with `echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` before running `/debug`, `/review`, or any team command.
+- **Token cost is 3-5× single-agent — not 2×** — Each teammate runs a full Claude Code session with its own context, memory, and transcript. A 4-teammate debug session easily consumes 5× the tokens of a single-agent run. Budget accordingly and prefer `--no-team` for simple tasks.
+- **No session resumption for teams** — `claude --resume` cannot restore a multi-teammate session. If a team run is interrupted (crash, network, user exit), the teammates' transcripts are lost. Treat every team run as one-shot and save important findings to disk before stopping.
+- **`Agent` tool does NOT work inside a subagent or teammate** — Nested spawning is blocked. Teammates can message each other, but they cannot spawn their own subagents. Structure workflows as flat teams, not hierarchies.
+- **Worktree isolation is per-teammate, not shared** — Each teammate with `isolation: worktree` gets its own worktree. Shared state must go through the messaging channel or through files written to the parent repo after merge. Teammates cannot see each other's unmerged worktree files.
+- **`pkill` in one teammate can kill processes of another** — If `pkill -f "nuxt dev"` runs in one teammate, it kills ALL `nuxt dev` processes on the machine, including ones owned by other teammates. Use PID-tracked kills (save PID at start, kill by PID at end) in team contexts.
 
 ## Auto-Detection Protocol
 

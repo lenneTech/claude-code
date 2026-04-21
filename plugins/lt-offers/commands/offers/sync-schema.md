@@ -1,6 +1,7 @@
 ---
 description: Update content block schemas and NuxtUI component whitelist from the API and nuxt-ui-remote MCP
-allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Agent
+allowed-tools: Read, Write, Edit, Grep, Glob, Agent
+disable-model-invocation: true
 ---
 
 # /offers:sync-schema — Sync Block Schemas & Component Whitelist

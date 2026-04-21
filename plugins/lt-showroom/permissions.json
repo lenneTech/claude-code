@@ -176,6 +176,15 @@
       ]
     },
     {
+      "pattern": "Bash(pgrep:*)",
+      "description": "Check for running dev server processes (non-disruptive port/process checks)",
+      "usedBy": [
+        "creating-showcases",
+        "screenshot-generator",
+        "showroom:screenshot"
+      ]
+    },
+    {
       "pattern": "Bash(lsof:*)",
       "description": "Check if a port is already in use before starting the project",
       "usedBy": [

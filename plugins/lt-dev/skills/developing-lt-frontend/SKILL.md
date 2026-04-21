@@ -1,7 +1,6 @@
 ---
 name: developing-lt-frontend
-description: Handles ALL Nuxt 4 and Vue frontend development tasks including composables, forms (Valibot), API integration (types.gen.ts, sdk.gen.ts), authentication (Better Auth), SSR, and Playwright E2E testing. Supports monorepos (projects/app/, packages/app/). Activates when working with .vue files, nuxt.config.ts, Nuxt UI, TailwindCSS, or files in app/components/, app/composables/, app/pages/, app/interfaces/, app/layouts/. NOT for NestJS backend (use generating-nest-servers). NOT for security theory (use general-frontend-security).
-effort: high
+description: 'Handles ALL Nuxt 4 and Vue frontend development tasks including composables, forms (Valibot), API integration (types.gen.ts, sdk.gen.ts), authentication (Better Auth), SSR, and Playwright E2E testing. Supports monorepos (projects/app/, packages/app/). Activates when working with .vue files, nuxt.config.ts, Nuxt UI, TailwindCSS, composables, server components, forms, or files in app/components/, app/composables/, app/pages/, app/interfaces/, app/layouts/. Also activates on phrases like "generate types", "sdk.gen.ts regenerate", "Valibot form", "useOverlay modal", "Chrome DevTools debug", "Playwright E2E". NOT for NestJS backend (use generating-nest-servers). NOT for framework-agnostic security theory (use general-frontend-security).'
 paths:
   - "**/*.vue"
   - "**/nuxt.config.ts"
@@ -13,6 +12,14 @@ paths:
 ---
 
 # lenne.tech Frontend Development
+
+## Gotchas
+
+- **`pnpm run generate-types` needs a RUNNING API** — The generator fetches the OpenAPI/GraphQL schema from `http://localhost:3000`. If the API is not running, the command completes successfully but produces an empty or stale `types.gen.ts` / `sdk.gen.ts`. No error is raised. Always verify the API is up (`curl http://localhost:3000/health`) before regenerating.
+- **All UI text must be German** — English labels, button captions, toasts, and form placeholders pass lint, pass tests, but fail review. The app targets German-speaking users exclusively. When in doubt, translate, and consider `du` vs `Sie` addressing matches the existing tone of the screen.
+- **Use `useOverlay()` for modals — NOT conditional rendering** — The default instinct is `<MyModal v-if="showModal" />`. This bypasses Nuxt UI's modal stack, breaks focus trapping, and causes z-index issues with nested dialogs. The correct pattern is `useOverlay().create(ModalComponent)` from composables. See `reference/modals.md`.
+- **`types.gen.ts` and `sdk.gen.ts` are GENERATED — never hand-edit** — Manual changes are overwritten on next `generate-types` run. If a type is missing, the fix is on the API side (add `@ApiProperty`, `@Field`, etc.) not in the generated file. `.gitignore` does NOT ignore these files — they ARE committed, but only via the regeneration command.
+- **Better Auth cookies are bound to ports 3000/3001** — Changing the dev server port breaks login silently (401/403 without clear error). See `managing-dev-servers` skill for port rules.
 
 ## Ecosystem Context
 

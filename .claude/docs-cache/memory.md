@@ -1,7 +1,7 @@
 # How Claude remembers your project
 
 > Source: https://code.claude.com/docs/en/memory
-> Generated: 2026-04-04T10:26:47.219Z
+> Generated: 2026-04-21T03:28:07.020Z
 
 ---
 
@@ -35,6 +35,18 @@ Use CLAUDE.md files when you want to guide Claude’s behavior. Auto memory lets
 CLAUDE.md files
 
 CLAUDE.md files are markdown files that give Claude persistent instructions for a project, your personal workflow, or your entire organization. You write these files in plain text; Claude reads them at the start of every session.
+
+
+When to add to CLAUDE.md
+
+Treat CLAUDE.md as the place you write down what you’d otherwise re-explain. Add to it when:
+
+-   Claude makes the same mistake a second time
+-   A code review catches something Claude should have known about this codebase
+-   You type the same correction or clarification into chat that you typed last session
+-   A new teammate would need the same context to be productive
+
+Keep it to facts Claude should hold in every session: build commands, conventions, project layout, “always do X” rules. If an entry is a multi-step procedure or only matters for one part of the codebase, move it to a [skill](/docs/en/skills) or a [path-scoped rule](#organize-rules-with-claude/rules/) instead. The [extension overview](/docs/en/features-overview#build-your-setup-over-time) covers when to use each mechanism.
 
 
 Choose where to put CLAUDE.md files
@@ -95,7 +107,7 @@ Claude Code reads CLAUDE.md files by walking up the directory tree from your cur
 
 Load from additional directories
 
-The`--add-dir`flag gives Claude access to additional directories outside your main working directory. By default, CLAUDE.md files from these directories are not loaded. To also load CLAUDE.md files from additional directories, including`CLAUDE.md`,`.claude/CLAUDE.md`, and`.claude/rules/*.md`, set the`CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD`environment variable:```CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config````CLAUDE.local.md`files in additional directories are not loaded.
+The`--add-dir`flag gives Claude access to additional directories outside your main working directory. By default, CLAUDE.md files from these directories are not loaded. To also load memory files from additional directories, set the`CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD`environment variable:```CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config```This loads`CLAUDE.md`,`.claude/CLAUDE.md`,`.claude/rules/*.md`, and`CLAUDE.local.md`from the additional directory.`CLAUDE.local.md`is skipped if you exclude`local`from [`--setting-sources`](/docs/en/cli-reference).
 
 
 Organize rules with`.claude/rules/`For larger projects, you can organize instructions into multiple files using the`.claude/rules/`directory. This keeps instructions modular and easier for teams to maintain. Rules can also be [scoped to specific file paths](#path-specific-rules), so they only load into context when Claude works with matching files, reducing noise and saving context space.
@@ -259,14 +271,13 @@ My CLAUDE.md is too large
 Files over 200 lines consume more context and may reduce adherence. Move detailed content into separate files referenced with`@path`imports (see [Import additional files](#import-additional-files)), or split your instructions across`.claude/rules/`files.
 
 
-Instructions seem lost after`/compact`CLAUDE.md fully survives compaction. After`/compact`, Claude re-reads your CLAUDE.md from disk and re-injects it fresh into the session. If an instruction disappeared after compaction, it was given only in conversation, not written to CLAUDE.md. Add it to CLAUDE.md to make it persist across sessions. See [Write effective instructions](#write-effective-instructions) for guidance on size, structure, and specificity.
+Instructions seem lost after`/compact`Project-root CLAUDE.md survives compaction: after`/compact`, Claude re-reads it from disk and re-injects it into the session. Nested CLAUDE.md files in subdirectories are not re-injected automatically; they reload the next time Claude reads a file in that subdirectory. If an instruction disappeared after compaction, it was either given only in conversation or lives in a nested CLAUDE.md that hasn’t reloaded yet. Add conversation-only instructions to CLAUDE.md to make them persist. See [What survives compaction](/docs/en/context-window#what-survives-compaction) for the full breakdown. See [Write effective instructions](#write-effective-instructions) for guidance on size, structure, and specificity.
 
 
 Related resources
 
 -   [Skills](/docs/en/skills): package repeatable workflows that load on demand
 -   [Settings](/docs/en/settings): configure Claude Code behavior with settings files
--   [Manage sessions](/docs/en/sessions): manage context, resume conversations, and run parallel sessions
 -   [Subagent memory](/docs/en/sub-agents#enable-persistent-memory): let subagents maintain their own auto memory
 
 Was this page helpful?

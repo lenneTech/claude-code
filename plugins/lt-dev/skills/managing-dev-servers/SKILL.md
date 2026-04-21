@@ -1,7 +1,6 @@
 ---
 name: managing-dev-servers
 description: 'Rules for starting, monitoring, and stopping local development servers (nuxt dev, nest start, npm/pnpm run dev, pnpm build --watch, Playwright, etc.) across all lt-dev workflows. Enforces the run_in_background / pkill contract that prevents orphaned processes from blocking the Claude Code session ("Unfurling..."). Activates whenever a long-running process must be started for manual validation, Chrome DevTools MCP debugging, TDD iterations, framework linking, or any E2E test run. Referenced by building-stories-with-tdd, developing-lt-frontend, generating-nest-servers, and contributing-to-lt-framework.'
-effort: low
 user-invocable: false
 ---
 
@@ -28,6 +27,13 @@ Apply these rules whenever you start any such process — regardless of whether 
 ## Why It Matters
 
 Orphaned dev servers block the Claude Code main loop. The session appears to hang ("Unfurling..."), no tokens are consumed, and the only recovery is user interaction (ESC). This breaks the autonomous iteration contract that TDD and framework-linking workflows rely on.
+
+## Gotchas
+
+- **"Unfurling..." with no token consumption** — This is the most-missed symptom. The spinner continues but nothing is happening. It means a background process was started uncontrolled and is holding the main loop. Recovery requires the user to press ESC; no retry will help. Prevention: always use `run_in_background: true` + eventual `pkill`.
+- **Alternative ports silently break authentication** — Better Auth cookies are configured against ports 3000 (API) and 3001 (App). Starting on another port (e.g. because 3000 is bound) makes login APIs return 401/403 mysteriously. Fix the port collision (`lsof` + `pkill`) rather than switching to 3002.
+- **`pnpm build --watch` is a dev server too** — Framework-linking workflows run both `pnpm build --watch` and `pnpm dev` in parallel. The watch process is easy to forget in cleanup because it produces less visible output. Track it like any other server and `pkill -f "build --watch"` when done.
+- **`pkill -f "<name>"` matches too broadly with short names** — `pkill -f "dev"` can kill unrelated processes (e.g. `devtools`, `developer`). Always match the full command: `pkill -f "nuxt dev"`, `pkill -f "nest start"`, `pkill -f "pnpm build --watch"`.
 
 ## Integration Points
 

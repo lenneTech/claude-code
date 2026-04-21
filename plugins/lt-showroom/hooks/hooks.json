@@ -1,5 +1,5 @@
 {
-  "description": "Detects showroom projects and analyzable software projects to activate the relevant skills",
+  "description": "Detects showroom projects and analyzable software projects to activate the relevant skills, and re-injects context after compaction",
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -9,16 +9,24 @@
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/detect-showroom-project.sh\"",
             "timeout": 5,
             "statusMessage": "Detecting showroom project context"
-          }
-        ]
-      },
-      {
-        "hooks": [
+          },
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/detect-analyzable-project.sh\"",
             "timeout": 5,
             "statusMessage": "Detecting analyzable project context"
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/post-compact-context.sh\"",
+            "timeout": 5,
+            "statusMessage": "Re-injecting showroom context"
           }
         ]
       }

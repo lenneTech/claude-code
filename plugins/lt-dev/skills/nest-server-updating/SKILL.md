@@ -1,7 +1,6 @@
 ---
 name: nest-server-updating
 description: 'Provides migration guides, release notes, and error solutions for updating @lenne.tech/nest-server to a newer version. Covers version-specific breaking changes, stepwise upgrade strategies, and starter project comparisons. Activates for nest-server version updates, upgrades, migrations, breaking changes between versions, "pnpm run update", TypeScript errors after upgrading, or stepwise migration planning. Delegates execution to the lt-dev:nest-server-updater agent. NOT for writing NestJS code or building features (use generating-nest-servers). NOT for general npm package updates (use maintaining-npm-packages).'
-effort: high
 ---
 
 # @lenne.tech/nest-server Update Knowledge Base
@@ -9,6 +8,14 @@ effort: high
 This skill provides **knowledge and resources** for updating @lenne.tech/nest-server. For automated execution, use the `lt-dev:nest-server-updater` agent via `/lt-dev:backend:update-nest-server`.
 
 **Important:** After updating nest-server, also check if `@lenne.tech/nuxt-extensions` in `projects/app/` needs a compatible update, as nuxt-extensions is aligned with nest-server.
+
+## Gotchas
+
+- **Minor version bumps are treated as MAJOR** — `@lenne.tech/nest-server` follows a "stepwise update" policy even on minor versions. Jumping from `7.5.x` directly to `7.9.x` in one step is likely to miss breaking changes that were introduced sub-minor. Always run the update step-by-step via `pnpm run update`, even if the version gap looks small.
+- **`pnpm run update` requires the target version in `package.json` FIRST** — The update script reads the current/target from `package.json`. Running it before bumping the version does nothing or produces confusing errors. Order: (1) bump `package.json` → (2) `pnpm install` → (3) `pnpm run update`.
+- **`nuxt-extensions` alignment breaks silently** — `@lenne.tech/nuxt-extensions` is version-aligned with `@lenne.tech/nest-server`. Updating nest-server to `7.19.0` without also updating nuxt-extensions to `7.19.x` leaves the frontend consuming an outdated API contract. Types generated via `generate-types` may still pass locally but break at runtime on production.
+- **Migration guides are cumulative — read ALL between old and new version** — If you jump from `7.12` to `7.19`, migration guides for `7.13`, `7.14`, `7.15`, `7.16`, `7.17`, `7.18`, `7.19` ALL apply. Don't skip reading them — each introduces non-trivial behavior changes.
+- **Starter project is the ground truth for constellations** — When a migration is ambiguous (e.g., which package.json override to add, which config value to change), check `nest-server-starter`'s current `package.json` via GitHub raw. It reflects the canonical working constellation for the target version.
 
 ## Scope: npm mode vs vendored mode
 

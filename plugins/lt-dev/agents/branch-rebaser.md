@@ -1,8 +1,7 @@
 ---
 name: branch-rebaser
 description: Autonomous agent for rebasing feature branches onto the development branch. Handles conflict resolution, Linear ticket analysis, code optimization, linting (oxfmt/oxlint), testing, and code review.
-model: sonnet
-effort: high
+model: inherit
 tools: Bash, Read, Grep, Glob, Write, Edit, TodoWrite
 memory: project
 isolation: worktree

@@ -1,7 +1,7 @@
 # Create plugins
 
 > Source: https://code.claude.com/docs/en/plugins
-> Generated: 2026-04-04T10:26:47.226Z
+> Generated: 2026-04-21T03:28:06.819Z
 
 ---
 
@@ -58,12 +58,12 @@ Create the plugin manifest
 The manifest file at`.claude-plugin/plugin.json`defines your plugin’s identity: its name, description, and version. Claude Code uses this metadata to display your plugin in the plugin manager.Create the`.claude-plugin`directory inside your plugin folder:```mkdir my-first-plugin/.claude-plugin```Then create`my-first-plugin/.claude-plugin/plugin.json`with this content:
 
 my-first-plugin/.claude-plugin/plugin.json```{
-"name": "my-first-plugin",
-"description": "A greeting plugin to learn the basics",
-"version": "1.0.0",
-"author": {
-"name": "Your Name"
-}
+  "name": "my-first-plugin",
+  "description": "A greeting plugin to learn the basics",
+  "version": "1.0.0",
+  "author": {
+    "name": "Your Name"
+  }
 }```| Field | Purpose |
 | --- | --- |
 |`name`| Unique identifier and skill namespace. Skills are prefixed with this (e.g.,`/my-first-plugin:hello`). |
@@ -115,19 +115,20 @@ The`--plugin-dir`flag is useful for development and testing. When you’re ready
 
 Plugin structure overview
 
-You’ve created a plugin with a skill, but plugins can include much more: custom agents, hooks, MCP servers, and LSP servers.
+You’ve created a plugin with a skill, but plugins can include much more: custom agents, hooks, MCP servers, LSP servers, and background monitors.
 
 **Common mistake**: Don’t put`commands/`,`agents/`,`skills/`, or`hooks/`inside the`.claude-plugin/`directory. Only`plugin.json`goes inside`.claude-plugin/`. All other directories must be at the plugin root level.
 
 | Directory | Location | Purpose |
 | --- | --- | --- |
 |`.claude-plugin/`| Plugin root | Contains`plugin.json`manifest (optional if components use default locations) |
-|`commands/`| Plugin root | Skills as Markdown files |
+|`skills/`| Plugin root | Skills as`<name>/SKILL.md`directories |
+|`commands/`| Plugin root | Skills as flat Markdown files. Use`skills/`for new plugins |
 |`agents/`| Plugin root | Custom agent definitions |
-|`skills/`| Plugin root | Agent Skills with`SKILL.md`files |
 |`hooks/`| Plugin root | Event handlers in`hooks.json`|
 |`.mcp.json`| Plugin root | MCP server configurations |
 |`.lsp.json`| Plugin root | LSP server configurations for code intelligence |
+|`monitors/`| Plugin root | Background monitor configurations in`monitors.json`|
 |`bin/`| Plugin root | Executables added to the Bash tool’s`PATH`while the plugin is enabled |
 |`settings.json`| Plugin root | Default [settings](/docs/en/settings) applied when the plugin is enabled |
 
@@ -146,8 +147,7 @@ Plugins can include [Agent Skills](/docs/en/skills) to extend Claude’s capabil
 │   └── plugin.json
 └── skills/
     └── code-review/
-        └── SKILL.md```Each`SKILL.md`needs frontmatter with`name`and`description`fields, followed by instructions:```---
-name: code-review
+        └── SKILL.md```Each`SKILL.md`contains YAML frontmatter and instructions. Include a`description`so Claude knows when to use the skill:```---
 description: Reviews code for best practices and potential issues. Use when reviewing code, checking PRs, or analyzing code quality.
 
 When reviewing code, check for:
@@ -174,9 +174,22 @@ LSP (Language Server Protocol) plugins give Claude real-time code intelligence. 
 }```Users installing your plugin must have the language server binary installed on their machine. For complete LSP configuration options, see [LSP servers](/docs/en/plugins-reference#lsp-servers).
 
 
+Add background monitors to your plugin
+
+Background monitors let your plugin watch logs, files, or external status in the background and notify Claude as events arrive. Claude Code starts each monitor automatically when the plugin is active, so you don’t need to instruct Claude to start the watch. Add a`monitors/monitors.json`file at the plugin root with an array of monitor entries:
+
+monitors/monitors.json```[
+  {
+    "name": "error-log",
+    "command": "tail -F ./logs/error.log",
+    "description": "Application error log"
+  }
+]```Each stdout line from`command`is delivered to Claude as a notification during the session. For the full schema, including the`when`trigger and variable substitution, see [Monitors](/docs/en/plugins-reference#monitors).
+
+
 Ship default settings with your plugin
 
-Plugins can include a`settings.json`file at the plugin root to apply default configuration when the plugin is enabled. Currently, only the`agent`key is supported. Setting`agent`activates one of the plugin’s [custom agents](/docs/en/sub-agents) as the main thread, applying its system prompt, tool restrictions, and model. This lets a plugin change how Claude Code behaves by default when enabled.
+Plugins can include a`settings.json`file at the plugin root to apply default configuration when the plugin is enabled. Currently, only the`agent`and`subagentStatusLine`keys are supported. Setting`agent`activates one of the plugin’s [custom agents](/docs/en/sub-agents) as the main thread, applying its system prompt, tool restrictions, and model. This lets a plugin change how Claude Code behaves by default when enabled.
 
 settings.json```{
   "agent": "security-reviewer"
@@ -198,7 +211,7 @@ You can load multiple plugins at once by specifying the flag multiple times:```c
 
 If your plugin isn’t working as expected:
 
-1.  **Check the structure**: Ensure your directories are at the plugin root, not inside`.claude-plugin/`2.  **Test components individually**: Check each command, agent, and hook separately
+1.  **Check the structure**: Ensure your directories are at the plugin root, not inside`.claude-plugin/`2.  **Test components individually**: Check each skill, agent, and hook separately
 3.  **Use validation and debugging tools**: See [Debugging and development tools](/docs/en/plugins-reference#debugging-and-development-tools) for CLI commands and troubleshooting techniques
 
 
@@ -219,6 +232,8 @@ To submit a plugin to the official Anthropic marketplace, use one of the in-app 
 
 -   **Claude.ai**: [claude.ai/settings/plugins/submit](https://claude.ai/settings/plugins/submit)
 -   **Console**: [platform.claude.com/plugins/submit](https://platform.claude.com/plugins/submit)
+
+Once your plugin is listed, you can have your own CLI prompt Claude Code users to install it. See [Recommend your plugin from your CLI](/docs/en/plugin-hints).
 
 For complete technical specifications, debugging techniques, and distribution strategies, see [Plugins reference](/docs/en/plugins-reference).
 

@@ -1,7 +1,7 @@
 ---
 name: running-check-script
 description: 'Single source of truth for running the package.json `check` script across lt-dev review and rebase workflows. Defines discovery (multi-package monorepo aware), the iterate-until-green auto-fix loop, the mandatory audit-finding fix escalation ladder, residual classification (Accepted vs Critical), test-duplication avoidance, and report formatting. Activates whenever an agent or command needs to validate runnability via `check` — currently used by `/lt-dev:review`, `code-reviewer`, `branch-rebaser`, and `test-reviewer`. NOT for general npm package maintenance (use maintaining-npm-packages). NOT for the rebase orchestration itself (use rebasing-branches).'
-effort: medium
+user-invocable: false
 ---
 
 # Running the `check` Script

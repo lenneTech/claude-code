@@ -1,12 +1,19 @@
 ---
 name: rebasing-branches
 description: 'Guides rebase workflows for updating feature branches onto the current development branch (dev/develop). Handles conflict resolution with priority ordering, extracts Linear ticket context from branch names for smarter conflict decisions, performs post-rebase optimization, and uses force-push-with-lease for safety. Activates when user mentions "rebase", "branch aktualisieren", "dev stand", "feature branch updaten", "merge conflicts", "rebase MRs", "force push", or "git rebase". NOT for merge request descriptions (use git:mr-description). NOT for general git operations.'
-effort: medium
 ---
 
 # Rebase Workflow Knowledge Base
 
 This skill provides **knowledge and strategy** for rebasing feature branches onto a development branch. For automated execution, use the `lt-dev:branch-rebaser` agent via `/lt-dev:git:rebase` or `/lt-dev:git:rebase-mrs`.
+
+## Gotchas
+
+- **`--force` silently overwrites teammate pushes — always `--force-with-lease`** — If a teammate pushed to the same remote branch while you were rebasing locally, plain `--force` overwrites their commits without any warning. `--force-with-lease` refuses the push if the remote has moved. There is no valid reason to use `--force` on a shared branch.
+- **Lock-file conflicts: accepting "ours" without re-install breaks dependencies** — When `pnpm-lock.yaml` or `package-lock.json` conflicts, resolving in favor of the dev-branch version without running `pnpm install` afterwards leaves the lockfile describing packages that aren't actually in `node_modules`. Always: resolve → install → verify `pnpm run build` before continuing.
+- **Post-rebase optimization: never remove "redundant" feature code without asking** — The optimization pass sometimes flags code as dead because it's used by a feature not in the current branch. Check git log on the file before removing anything. When in doubt, ask the user or leave it.
+- **`git rebase --abort` works only if you haven't started a commit** — Once you `git add` the resolved conflict files, `--abort` still works. After `git rebase --continue` has moved past the conflict commit, you need `git reset --hard ORIG_HEAD` to recover, which DOES require the original ref. ORIG_HEAD is auto-set by rebase start — safe to rely on.
+- **Branch names encode Linear ticket context** — `feat/dev-1628-abc-xyz` contains the Linear ID. The rebaser agent uses this to pull ticket context for smarter conflict decisions. Branches without a ticket ID get generic treatment — prefer `feat/dev-XXXX-...` naming for rebaseable branches.
 
 ## When This Skill Activates
 

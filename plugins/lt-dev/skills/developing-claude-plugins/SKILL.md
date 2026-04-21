@@ -1,7 +1,6 @@
 ---
 name: developing-claude-plugins
 description: Develops, optimizes, and validates Claude Code plugins, skills (SKILL.md), commands, agents, hooks (hooks.json), and scripts. Ensures consistency with official best practices. Activates when creating, editing, or reviewing files in plugins/ directory, .claude-plugin/, plugin.json, permissions.json, or marketplace.json. Covers YAML frontmatter, element structure, cross-references, naming conventions, and plugin manifest validation. NOT for application development (use domain-specific skills).
-effort: high
 paths:
   - "**/plugins/**"
   - "**/.claude-plugin/**"
@@ -25,6 +24,17 @@ You are an expert in developing Claude Code marketplaces and plugins. This skill
 - `**/hooks/**/*` - Hook configurations and scripts
 - `marketplace.json` - Marketplace definition
 - `plugin.json` - Plugin manifests
+
+## Gotchas
+
+- **`argument-hint` with `[...]` brackets MUST be quoted** — `argument-hint: [branch-name]` is parsed by YAML as a list (`["branch-name"]`) and breaks the command silently. Always write `argument-hint: "[branch-name]"`. This is the #1 cause of broken commands across the marketplace.
+- **`description` with embedded `"..."` MUST use single-quote wrapping** — `description: 'Activates when user says "rebase"'` works. `description: "Activates when user says "rebase""` is invalid YAML. Always verify with `claude plugin validate <plugin-dir>`.
+- **Plugin-agent frontmatter ignores `permissionMode`, `mcpServers`, and `hooks`** — Security restriction since docs 2.1.78+. Setting them looks valid but silently has no effect. Plugin-agents needing MCP must add a body note that MCP must be configured in the user's session.
+- **Hard-coded `model:` and `effort:` on agents DEGRADES the user's setup** — If developers run with Opus 4.7 + `effort: high`, an agent with `model: sonnet, effort: medium` runs SLOWER and WORSE than the user's default. Use `model: inherit` + no `effort` field (inherit) unless explicitly upgrading (`effort: max` for security/review-critical agents).
+- **`Agent` tool does NOT work in subagents** — Listing `Agent` in a subagent's `tools:` is silently ignored. Subagents cannot spawn sub-subagents. For parallel work inside an agent, use `isolation: worktree` instead.
+- **`Skill` and `LSP` are NOT valid Claude Code tools** — Listing them in `tools:` causes frontmatter validation to fail. Skills load via `skills:` frontmatter, LSP runs implicitly.
+- **`permissions.json` `usedBy` arrays drift silently** — When you rename an agent or skill, the `usedBy` references in `permissions.json` don't auto-update. Run `grep -r "old-name" plugins/*/permissions.json` before finalizing a rename.
+- **Skills storing state in their own directory lose data on plugin update** — Skill directories are recreated on update. For persistent state use `${CLAUDE_PLUGIN_DATA}` (since 2.1.78), not the skill directory itself.
 
 **Actions that trigger this skill:**
 - Creating new plugins, agents, commands, hooks, skills, or scripts

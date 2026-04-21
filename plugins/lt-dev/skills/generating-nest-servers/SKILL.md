@@ -1,7 +1,6 @@
 ---
 name: generating-nest-servers
 description: Handles ALL NestJS and @lenne.tech/nest-server development tasks including module creation, service implementation, controller/resolver development, model definition, and debugging. Covers lt server commands, @Roles/@Restricted security, CrudService patterns, and API tests. Supports monorepos (projects/api/, packages/api/). Activates when working with src/server/ files, NestJS modules, services, controllers, resolvers, models, DTOs, guards, decorators, or REST/GraphQL endpoints. NOT for Vue/Nuxt frontend (use developing-lt-frontend). NOT for nest-server version updates (use nest-server-updating). NOT for TDD workflow orchestration (use building-stories-with-tdd).
-effort: high
 paths:
   - "**/src/server/**"
   - "**/projects/api/**"
@@ -14,6 +13,14 @@ paths:
 ---
 
 # NestJS Server Development Expert
+
+## Gotchas
+
+- **`declare` keyword on Model properties kills decorators** — `declare name: string` tells TypeScript "this property exists but isn't emitted at runtime" — which means Mongoose/Typegoose decorators (`@Prop`, `@Field`) attached to it are lost. Always use `name!: string` (definite assignment) or `name: string = ''` (default value) on model fields. Tests pass silently in memory but production MongoDB writes drop the field.
+- **`securityCheck()` returning `this` unchanged is a red flag** — A trivial `return this;` implementation means no permission boundary exists on the model. The decorator system requires `@Restricted`/`@Roles` + an actual check (usually filtering sensitive fields or verifying ownership). If the model genuinely has nothing to restrict, add a comment explaining why — otherwise it will be flagged in every security review.
+- **`--controller` flag generates REST — even in GraphQL projects** — `lt server object <name> --controller` produces a REST controller by default. For GraphQL projects, use `--resolver` instead. The CLI does not auto-detect from the project's existing pattern.
+- **`CrudService` is the default — always extend it** — New modules often get hand-rolled service classes instead of `extends CrudService`. The framework's pagination, filtering, population, and permission integration all depend on CrudService inheritance. Hand-rolled services break `/api/<entity>/find` queries silently for consumers.
+- **Alphabetical property order is enforced in reviews** — Class fields, DTO properties, and model definitions are reviewed for alphabetical ordering. Generated code from `lt server` usually respects this; hand-edited additions often break it. Run a final pass before committing.
 
 ## Ecosystem Context
 

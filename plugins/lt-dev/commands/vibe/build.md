@@ -9,13 +9,13 @@ disable-model-invocation: true
 
 ## When to Use This Command
 
-- You already have an `IMPLEMENTATION_PLAN.md` (created manually or via `/vibe:plan`)
+- You already have an `IMPLEMENTATION_PLAN.md` (created manually or via `/lt-dev:vibe:plan`)
 - You want to execute the plan completely without interruption
 - You've reviewed and approved the implementation plan
 
 **Related commands:**
-- `/vibe:plan` - Create a plan first (if you don't have one)
-- `/vibe:build-plan` - Plan + Build in one go (no interruption)
+- `/lt-dev:vibe:plan` - Create a plan first (if you don't have one)
+- `/lt-dev:vibe:build-plan` - Plan + Build in one go (no interruption)
 
 **For higher quality (recommended):**
 - Use `building-stories-with-tdd` skill for Test-Driven Development

@@ -14,8 +14,8 @@ disable-model-invocation: true
 - You want the fastest path from spec to working implementation
 
 **Related commands:**
-- `/vibe:plan` - Create plan only (for review before execution)
-- `/vibe:build` - Execute existing plan only
+- `/lt-dev:vibe:plan` - Create plan only (for review before execution)
+- `/lt-dev:vibe:build` - Execute existing plan only
 
 **For higher quality (recommended):**
 - Use `building-stories-with-tdd` skill for Test-Driven Development

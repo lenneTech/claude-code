@@ -1,8 +1,7 @@
 ---
 name: nest-server-core-updater
 description: Autonomous agent for adopting upstream @lenne.tech/nest-server changes into projects that vendor the framework core directly into their source tree (projects/api/src/core/). Analyzes the delta between the vendored baseline and a chosen upstream target, detects conflicts with local patches, categorizes each upstream hunk (clean pick / conflict / not applicable), reapplies the flatten-fix pattern, and either adopts approved changes or prepares a human-review document. Works fully automated. NOT for npm-based nest-server updates — use nest-server-updater for those.
-model: sonnet
-effort: high
+model: inherit
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, TodoWrite
 skills: nest-server-core-vendoring, nest-server-updating, generating-nest-servers
 memory: project

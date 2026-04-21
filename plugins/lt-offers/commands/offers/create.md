@@ -1,6 +1,8 @@
 ---
 description: Guided workflow to create a new business offer on angebote.lenne.tech via MCP
-allowed-tools: Read, Grep, Glob, Bash, Agent
+allowed-tools: Read, Grep, Glob, Bash(command -v:*), Bash(git config:*), Bash(git clone:*), Bash(git pull:*), Bash(git status:*), Agent
+argument-hint: "[customer-name-or-description]"
+disable-model-invocation: true
 ---
 
 # /offers:create — Create a New Offer

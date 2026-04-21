@@ -36,9 +36,9 @@ fi
 
 # ── Determine tool name ──
 if command -v jq &>/dev/null; then
-  TOOL=$(echo "$INPUT" | jq -r '.tool // ""')
+  TOOL=$(echo "$INPUT" | jq -r '.tool_name // ""')
 else
-  TOOL=$(echo "$INPUT" | grep -o '"tool"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"tool"[[:space:]]*:[[:space:]]*"//;s/"$//')
+  TOOL=$(echo "$INPUT" | grep -o '"tool_name"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"tool_name"[[:space:]]*:[[:space:]]*"//;s/"$//')
 fi
 
 # ── Edit tool: only validate if frontmatter is being touched ──

@@ -1,7 +1,6 @@
 ---
 name: maintaining-npm-packages
 description: 'Analyzes and optimizes npm package dependencies across 5 maintenance modes: FULL (update all), DRY-RUN (analysis only), SECURITY-ONLY (urgent CVE fixes), PRE-RELEASE (conservative patch-only), POST-FEATURE (cleanup after development). Activates when user mentions "update packages", "pnpm audit", "npm audit", "check dependencies", "security fix", "outdated dependencies", "deprecated packages", "devDependencies", "pre-release cleanup", "post-feature housekeeping", "remove unused packages", or package.json optimization. NOT for @lenne.tech/nest-server version updates (use nest-server-updating).'
-effort: medium
 paths:
   - "**/package.json"
   - "**/pnpm-lock.yaml"
@@ -9,6 +8,13 @@ paths:
 ---
 
 # NPM Package Maintenance
+
+## Gotchas
+
+- **Override target must be a FIXED version** — The most common failure mode: adding `"vite": ">=7.3.2"` to `pnpm.overrides` lets pnpm silently install `8.x.y` on the next install, causing major-version cascading regressions. Override targets MUST be exact (`"vite": "7.3.2"`). See "Override Safety Rule" below for the real-incident reference from April 2026. The LEFT side of an override may carry a range (to select affected versions); the RIGHT side must be fixed.
+- **`pnpm audit --fix --force` can cause major version jumps** — Step 3 of the escalation ladder is destructive. It will happily upgrade a transitive dependency from `^1.x` to `3.x` if that closes the CVE. Always verify `pnpm run build` and the full test suite after using it, and prefer a scoped override for transitives where a compatible patch exists.
+- **Deprecated packages in `devDependencies` often lag** — `@types/*` packages in particular remain flagged as deprecated for months after the upstream merges types natively. Don't remove them blindly — check the affected imports still resolve via the new inline types before deleting.
+- **`packageManager` field locks pnpm/npm/yarn version** — When running maintenance across a monorepo, the `packageManager: "pnpm@X.Y.Z"` field in the root `package.json` pins the exact version. Upgrading pnpm without also bumping this field causes CI and local runs to diverge silently.
 
 ## When to Use This Skill
 

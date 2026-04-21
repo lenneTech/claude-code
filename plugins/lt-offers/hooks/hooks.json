@@ -1,5 +1,5 @@
 {
-  "description": "Detects offers-related projects and keywords to activate the creating-offers skill",
+  "description": "Detects offers-related projects and keywords to activate the creating-offers skill, and re-injects context after compaction",
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -9,6 +9,18 @@
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/detect-offers-project.sh\"",
             "timeout": 5,
             "statusMessage": "Detecting offers project context"
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/post-compact-context.sh\"",
+            "timeout": 5,
+            "statusMessage": "Re-injecting offers context"
           }
         ]
       }

@@ -1,12 +1,12 @@
 ---
 name: frontend-dev
 description: Autonomous frontend development agent for Nuxt 4 / Vue applications with strict TypeScript enforcement. Builds components, pages, composables, forms (Valibot), layouts, and integrates APIs via generated types (types.gen.ts, sdk.gen.ts). Enforces zero implicit any, readonly state returns, semantic colors, programmatic modals, and SSR-safe patterns. Operates in projects/app/ or packages/app/ monorepo structures.
-model: sonnet
-effort: high
+model: inherit
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, WebSearch, TodoWrite
 skills: developing-lt-frontend
 memory: project
 maxTurns: 80
+isolation: worktree
 ---
 
 # Frontend Development Agent

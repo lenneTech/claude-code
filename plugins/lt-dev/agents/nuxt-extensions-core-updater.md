@@ -1,8 +1,7 @@
 ---
 name: nuxt-extensions-core-updater
 description: Autonomous agent for adopting upstream @lenne.tech/nuxt-extensions changes into projects that vendor the frontend module directly into their source tree (app/core/ instead of consuming via npm). Analyzes the delta between the vendored baseline and a chosen upstream target, detects conflicts with local patches, and either adopts approved changes or prepares a human-review document. No flatten-fix needed. NOT for npm-based nuxt-extensions updates.
-model: sonnet
-effort: high
+model: inherit
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, TodoWrite
 skills: nuxt-extensions-core-vendoring, developing-lt-frontend
 memory: project

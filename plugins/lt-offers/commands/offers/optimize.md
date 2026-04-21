@@ -1,6 +1,8 @@
 ---
 description: Analyze and improve an existing offer — text quality, structure, missing sections
-allowed-tools: Read, Grep, Glob, Bash, Agent
+allowed-tools: Read, Grep, Glob, Bash(command -v:*), Bash(git config:*), Bash(git clone:*), Bash(git pull:*), Bash(git status:*), Agent
+argument-hint: "[offer-id]"
+disable-model-invocation: true
 ---
 
 # /offers:optimize — Optimize an Existing Offer

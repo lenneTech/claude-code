@@ -1,5 +1,6 @@
 {
   "name": "lenne-tech",
+  "version": "7.19.0",
   "description": "Official lenne.tech plugins for Claude Code - Frontend (Nuxt 4), Backend (NestJS), TDD and CLI Tools",
   "owner": {
     "name": "lenne.tech GmbH",

@@ -1,10 +1,16 @@
 ---
 name: nuxt-extensions-core-vendoring
 description: 'Provides knowledge and resources for projects that have vendored the @lenne.tech/nuxt-extensions module directly into their source tree (under app/core/ instead of consuming via npm). Covers the vendor model, the Upstream-to-Project sync workflow, the Project-to-Upstream PR workflow, typical conflicts, and how cosmetic changes are distinguished from substantial upstream candidates. Activates for vendored nuxt-extensions discussions, "sync frontend core from upstream", "port local frontend core change to upstream", conflict resolution during frontend vendor sync, or questions about the frontend vendor pattern. Delegates execution to lt-dev:nuxt-extensions-core-updater (for syncs) and lt-dev:nuxt-extensions-core-contributor (for upstream PR preparation). NOT for npm-based nuxt-extensions updates (use developing-lt-frontend). NOT for writing new Nuxt code (use developing-lt-frontend).'
-effort: high
 ---
 
 # Vendored nuxt-extensions core Knowledge Base
+
+## Gotchas
+
+- **Upstream tags have NO `v` prefix** — `@lenne.tech/nuxt-extensions` publishes tags like `7.19.0`, not `v7.19.0`. Using `v7.19.0` in git refs or changelog links produces 404s. This differs from `@lenne.tech/nest-server` which also drops the prefix but some tooling adds it back automatically.
+- **`nuxt.config.ts` module registration is NOT auto-handled on sync** — When a new composable or module file is added upstream, the sync agent copies the file but does NOT register it in `nuxt.config.ts`. You must manually add the module reference after a sync, otherwise Nuxt does not expose the new functionality.
+- **Auto-imports work for composables + components but NOT for types** — Files in `app/core/` are auto-imported by Nuxt for composables and components, but explicitly imported types (e.g. `import type { Foo } from '@lenne.tech/nuxt-extensions'`) need their paths rewritten to relative references after vendoring. This rewrite is not fully automated.
+- **Local patches in `app/core/` are invisible to future syncs** — Same gotcha as nest-server-core-vendoring: the updater can't infer your intent. Document intentional local deviations in `app/core/LOCAL-PATCHES.md`.
 
 This skill provides **knowledge and resources** for lenne.tech projects that have
 vendored the @lenne.tech/nuxt-extensions module into their source tree. For automated

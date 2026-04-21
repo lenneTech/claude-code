@@ -1,7 +1,7 @@
 # Orchestrate teams of Claude Code sessions
 
 > Source: https://code.claude.com/docs/en/agent-teams
-> Generated: 2026-04-04T10:26:47.256Z
+> Generated: 2026-04-21T03:28:07.032Z
 
 ---
 

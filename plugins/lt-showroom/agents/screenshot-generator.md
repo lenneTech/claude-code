@@ -1,10 +1,10 @@
 ---
 name: screenshot-generator
 description: Autonomous agent for capturing feature screenshots of running projects. Reads SHOWCASE.md to determine which features and pages to capture. Starts the project via Docker Compose (preferred) or npm/pnpm dev server. Creates realistic demo data via seed script or Chrome DevTools MCP. Captures desktop (1440x900) and mobile (390x844) screenshots per feature and saves them to docs/showcase/screenshots/. Spawned by showroom:screenshot command.
-model: sonnet
-effort: medium
+model: inherit
 tools: Bash, Read, Grep, Glob, Write
 skills: creating-showcases
+memory: project
 maxTurns: 100
 ---
 
@@ -12,7 +12,11 @@ maxTurns: 100
 
 Automates the complete screenshot lifecycle: reads SHOWCASE.md for context, starts the application (Docker preferred), creates realistic demo data, captures feature screenshots at multiple viewports, saves to `docs/showcase/screenshots/`, and cleans up all processes.
 
-> **MCP Dependency:** This agent requires the `chrome-devtools` and `showroom-api` MCP servers to be configured in the user's session for full functionality (browser-based screenshot capture and showcase API uploads).
+> **MCP Dependencies (REQUIRED):**
+> - **`chrome-devtools`** — browser automation for screenshot capture, realistic interaction flows, and demo data creation via form filling
+> - **`showroom-api`** — uploading captured screenshots to GridFS and linking them to showcase feature entries
+>
+> Both MCP servers MUST be configured in the user's session. Without them, the agent cannot complete the screenshot lifecycle.
 
 ## Safety Rules (NON-NEGOTIABLE)
 

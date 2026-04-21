@@ -1,10 +1,17 @@
 ---
 name: using-lt-cli
-description: 'Provides reference for the lenne.tech CLI tool (lt command). Covers lt fullstack init (workspace creation with local template symlinks), lt git get/reset (branch management), and lt server create (project scaffolding). Activates when user mentions "lt", "lt CLI", "lenne.tech CLI", "lt fullstack", "lt git", "fullstack workspace", "local templates", "--api-link", "--frontend-link", or any lt command syntax. NOT for NestJS module/object/property creation (use generating-nest-servers). NOT for Vue/Nuxt frontend code (use developing-lt-frontend).'
-effort: low
+description: 'Provides reference for the lenne.tech CLI tool (lt command). Covers lt fullstack init (workspace creation with local template symlinks), lt fullstack update (version sync), lt fullstack convert-mode (npm/vendor switch), lt git get/reset (branch management), lt server create (project scaffolding), and lt server object/addProp (element generation). Activates when user mentions "lt", "lt CLI", "lenne.tech CLI", "lt fullstack", "lt git", "lt server", "fullstack workspace", "local templates", "--api-link", "--frontend-link", "--noConfirm", "convert-mode", "npm mode", "vendor mode", or any lt command syntax. NOT for NestJS module/object/property creation (use generating-nest-servers). NOT for Vue/Nuxt frontend code (use developing-lt-frontend).'
 ---
 
 # LT CLI Reference
+
+## Gotchas
+
+- **`lt fullstack init` without `--noConfirm` blocks Claude Code forever** — The interactive prompts (project name, git init, template selection) wait for stdin input. Claude Code cannot respond to them, and the session hangs on "Unfurling..." with no token consumption. ALWAYS pass `--noConfirm` + all required flags (`--name X --frontend nuxt --git false`) when calling lt CLI from Claude Code.
+- **`--api-link` and `--frontend-link` create SYMLINKS, not copies** — Changes to the template (`nest-server-starter`, `nuxt-base-starter`) in `/Users/kaihaase/code/lenneTech/` immediately affect the linked project. This is a feature for framework development but surprises developers who expect copies. Document it in the project README when using `--api-link`.
+- **`lt git reset` is DESTRUCTIVE and irreversible** — Lives next to the safe `lt git get` in the CLI menu. `reset` does `git reset --hard` followed by force-pull, destroying ALL local changes without confirmation. Never run it on a branch with unpushed work. Prefer `git stash` + `lt git get`.
+- **`lt server object X --controller` generates REST, NOT GraphQL** — Default is REST. For GraphQL projects, use `--resolver`. The CLI does not auto-detect from existing project patterns — you must specify explicitly.
+- **`lt fullstack convert-mode` rewrites the source tree** — Switching between `npm` and `vendor` mode moves framework code in/out of `src/core/` (API) or `app/core/` (App). The operation is reversible but NOT idempotent mid-run — always commit before starting, so a failed conversion can be rolled back via `git reset`.
 
 ## Skill Boundaries
 

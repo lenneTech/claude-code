@@ -1,13 +1,20 @@
 ---
 name: building-stories-with-tdd
 description: 'Orchestrates Test-Driven Development (TDD) workflows for user stories and features. Creates story tests first in tests/stories/, then iteratively implements until all pass. Invoke directly when a developer requests "TDD", "test-driven", "test first", "story test", "write tests before code", or feature implementation with TDD. Coordinates with generating-nest-servers (backend) and developing-lt-frontend (frontend). NOT for direct NestJS coding without TDD (use generating-nest-servers). NOT for standalone test generation (use /test-generate).'
-effort: high
 user-invocable: false
 ---
 
 # Story-Based Test-Driven Development Expert
 
 You are an expert in Test-Driven Development (TDD) for NestJS applications using @lenne.tech/nest-server. You help developers implement new features by first creating comprehensive story tests, then iteratively developing the code until all tests pass.
+
+## Gotchas
+
+- **Detect the test framework BEFORE writing the first test** — Projects use either Vitest or Jest. Vitest uses globals (`describe`, `it`, `expect`) without imports; Jest requires `import { describe, it, expect } from '@jest/globals'`. Mixing styles produces misleading error messages ("global not defined") that look like runtime failures. Check `vitest.config.ts` vs `jest.config.ts` first.
+- **Test data emails MUST use `@test.com`** — The cleanup regex in `TestHelper` uses `@test.com` as its deletion filter. Using `@example.com` or `@user.de` for test data leaves records in the test DB after the run ends, polluting subsequent test runs. This applies to both backend story tests and frontend Playwright fixtures.
+- **Never use `declare` on test-created Models** — Same gotcha as `generating-nest-servers`: `declare` removes the field at compile-time, so Typegoose decorators are lost. Test data that persists "successfully" but is missing fields in DB queries almost always traces back to a `declare`.
+- **Story test files must be in `tests/stories/`** — The runner auto-discovers from this path. Placing them in `tests/` or `src/__tests__/` means they silently don't run. Backend: `projects/api/tests/stories/<feature>.e2e-spec.ts`. Frontend E2E: `projects/app/tests/<feature>.spec.ts`.
+- **Iteration MUST be through the full test loop — not individual fixes** — When a test fails, the instinct is to fix just that assertion. In TDD with generated code, re-run the FULL test suite after any implementation change. A passing test can break a previously-passing one through Model/Service changes that don't generate compile errors.
 
 ## Ecosystem Context
 

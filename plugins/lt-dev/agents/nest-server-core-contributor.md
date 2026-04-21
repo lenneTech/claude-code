@@ -1,8 +1,7 @@
 ---
 name: nest-server-core-contributor
 description: Autonomous agent for identifying substantial local changes in a vendored nest-server core (projects/api/src/core/) and preparing them as Upstream Pull Requests to the @lenne.tech/nest-server repository. Filters cosmetic commits (formatting, linting), categorizes substantial commits as upstream-candidate or project-specific, cherry-picks candidates into a fresh upstream clone branch, and prepares PR drafts for human review. Never auto-pushes — every PR requires human review before GitHub submission.
-model: sonnet
-effort: high
+model: inherit
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, TodoWrite
 skills: nest-server-core-vendoring, generating-nest-servers
 memory: project
