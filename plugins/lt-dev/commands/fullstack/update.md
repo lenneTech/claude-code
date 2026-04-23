@@ -220,9 +220,93 @@ Execute frontend update:
    cd <backend-path> && pnpm test
    ```
 
-3. **Generate report** with version changes, files modified, validation results.
+3. **Generate unified report** — see "Report Format" section below. Capture each spawned updater agent's complete output into named buffers (`backend_core_report`, `backend_npm_report`, `frontend_core_report`, `frontend_npm_report`) and embed them verbatim in the report.
 
 4. **Cleanup:**
    ```bash
    rm -rf /tmp/nest-server-starter-ref /tmp/nuxt-base-starter-ref
    ```
+
+## Report Format
+
+**OUTPUT REQUIREMENTS:**
+
+1. All sections below are MANDATORY.
+2. Section "Detailed Updater Reports" MUST contain the verbatim full output of every spawned updater agent. Do NOT summarize. Wrap each in a details block.
+3. Action Roadmap — derive from updater warnings, build errors, test failures, and migration steps still required.
+4. No-Loss Guarantee — every manual step / warning / error in any verbatim updater report MUST appear in the Action Roadmap below.
+5. No Placeholders — replace every N, X.Y.Z, X min with concrete values.
+
+```markdown
+## Fullstack Update Report
+
+### Executive Summary
+- **Status:** ✅ Erfolgreich / ⚠️ Mit manuellen Schritten / ❌ Blockiert
+- **Backend:** vX.Y.Z → vA.B.C (Mode: npm/vendor)
+- **Frontend:** vX.Y.Z → vA.B.C (Mode: npm/vendor)
+- **Build:** Backend ✅ | Frontend ✅ | Tests ✅
+- **Top 3 nächste Schritte:**
+  1. ...
+  2. ...
+  3. ...
+- **My Recommendation:** **Standard** (alle Critical/High aus Migration anwenden) — [Begründung in einem Satz]
+- **Steps at a Glance:** 🔴 Manual Critical: N | 🟠 Manual High: N | 🟡 Optional: N | **Total: N** — ⏱️ ≈ X min für Komplett
+
+### Decision Helper
+- 🚀 **Minimal** — nur Build-Blocker beheben, Migration sonst pausieren — N Schritte, ≈ X min
+- 🎯 **Standard (Empfohlen)** — alle Critical + High Migrations-Schritte umsetzen — N Schritte, ≈ X min
+- 💎 **Komplett** — zusätzlich alle Medium/Low Tipps + Codebase-Cleanup — N Schritte, ≈ X min
+- ⏭️ **Nichts** — Update-Status melden, manuelle Schritte als Tickets, ≈ X min
+
+After printing the report, **ask via `AskUserQuestion`** which option to execute (skip if zero manual steps required). Then execute the chosen migration steps, propose code changes, apply after confirmation. End with a "Result"-Block: chosen option, steps performed, files modified, remaining steps, suggested next step (`/lt-dev:check`, `/lt-dev:review`, oder PR erstellen).
+
+### Action Roadmap
+#### 🔴 Must Fix (Critical)
+1. ...
+#### 🟠 Must Fix (High)
+1. ...
+#### 🟡 Should Fix (Medium)
+1. ...
+#### 🟢 Nice to Have (Low / Info)
+1. ...
+
+### Version Overview
+Subproject | From | To | Mode | Migration Guides Applied
+- api: x.y.z → a.b.c (npm), 1 guide applied
+- app: x.y.z → a.b.c (vendor), 2 guides applied
+
+### Validation Results
+- Build: Backend ✅ | Frontend ✅
+- Tests: Backend ✅ N/M | Frontend —
+- Lint:  Backend ✅ | Frontend ✅
+
+### Detailed Updater Reports
+
+<details>
+<summary>🔧 Backend Core Updater — full report</summary>
+
+[Paste verbatim, OR "Not spawned — backend in npm mode."]
+
+</details>
+
+<details>
+<summary>📦 Backend NPM Updater — full report</summary>
+
+[Paste verbatim, OR "Not spawned — backend in vendor mode."]
+
+</details>
+
+<details>
+<summary>🎨 Frontend Core Updater — full report</summary>
+
+[Paste verbatim, OR "Not spawned — frontend in npm mode."]
+
+</details>
+
+<details>
+<summary>🔄 Frontend NPM Updater — full report</summary>
+
+[Paste verbatim, OR "Not spawned — frontend in vendor mode."]
+
+</details>
+```

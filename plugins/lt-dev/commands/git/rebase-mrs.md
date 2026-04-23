@@ -159,11 +159,38 @@ Shutdown teammates, end team session.
 
 ## Report Format
 
-Display summary report after all branches are processed:
+**OUTPUT REQUIREMENTS:**
+
+1. **All sections below are MANDATORY.**
+2. **Section "Detailed Branch Reports" MUST contain the verbatim full output of every spawned `branch-rebaser` agent / teammate.** Do NOT summarize. Wrap each in a `<details>` block.
+3. **Action Roadmap** — derive from failed/conflicted branches with concrete next steps per branch.
+4. **No-Loss Guarantee:** Every branch processed MUST appear in both the Branch Overview table and the Detailed Branch Reports. Counts must match.
+5. **No Placeholders:** Replace every `N`, `X/Y`, `X min` with concrete values.
+
+Display unified report after all branches are processed:
 
 ```markdown
 ## Batch Rebase Report
 
+### Executive Summary
+- **Status:** ✅ Alle erfolgreich / ⚠️ Mit Konflikten / ❌ Blockiert
+- **Ergebnis:** X/Y Branches erfolgreich rebased
+- **Top 3 nächste Schritte:**
+  1. ...
+  2. ...
+  3. ...
+- **My Recommendation:** **Standard** (Konflikt-Branches manuell auflösen, sauber rebased mergen) — [Begründung in einem Satz]
+- **Branches at a Glance:** ✅ Clean: N | ⚠️ Auto-Resolved: N | ❌ Konflikt: N | **Total: N**
+
+### Decision Helper
+- 🚀 **Minimal** — nur Branches mit hartem Konflikt manuell anschauen, Rest ignorieren — N Branches, ≈ X min
+- 🎯 **Standard (Empfohlen)** — alle Konflikt-Branches auflösen + clean rebased Branches mergen — N Branches, ≈ X min
+- 💎 **Komplett** — zusätzlich Auto-Resolved Branches verifizieren (`git diff` Review pro Branch) — N Branches, ≈ X min
+- ⏭️ **Nichts** — Status melden, später kümmern, ≈ X min
+
+After printing the report, **ask via `AskUserQuestion`** which option to execute (skip if all clean). Then process selected branches: open conflict files, propose resolutions, push after confirmation. End with a "Result"-Block: chosen option, branches handled, branches remaining, suggested next step.
+
+### Branch Overview
 | # | Branch | MR/PR | Status | Conflicts | Notes |
 |---|--------|-------|--------|-----------|-------|
 | 1 | feat/DEV-123 | #42 | Success | 2 resolved | All tests pass |
@@ -171,4 +198,30 @@ Display summary report after all branches are processed:
 | 3 | feat/DEV-789 | #44 | Success | 0 | Clean rebase |
 
 **Results:** X/Y branches rebased successfully.
+
+### Action Roadmap
+#### 🔴 Manuelle Auflösung erforderlich
+1. **fix/DEV-456 (#43)** — Unresolvable conflict in path:line — `git checkout fix/DEV-456 && <command>`
+#### 🟡 Review empfohlen
+1. **feat/DEV-123 (#42)** — 2 conflicts auto-resolved — diff prüfen: `git diff origin/dev...feat/DEV-123`
+#### 🟢 Bereit zum Merge
+1. **feat/DEV-789 (#44)** — Clean rebase, alle Tests grün
+
+### Detailed Branch Reports
+
+<details>
+<summary>📦 feat/DEV-123 (#42) — full report</summary>
+
+[Paste the COMPLETE return message of the `branch-rebaser` agent / teammate for this branch here, verbatim.]
+
+</details>
+
+<details>
+<summary>📦 fix/DEV-456 (#43) — full report</summary>
+
+[Paste the COMPLETE return message — including conflict details, attempted resolutions, and final state.]
+
+</details>
+
+[One `<details>` block per branch — never omit or summarize.]
 ```

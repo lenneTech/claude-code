@@ -61,7 +61,9 @@ This command is the **direct orchestrator** — it spawns all reviewers in paral
 │
 │  Phase 4: Cross-domain challenge (filter false positives, deduplicate, annotate)
 │
-└── Phase 5: Unified report with consolidated remediation catalog
+│  Phase 5: Unified report (Executive Summary → Decision Helper → Action Roadmap → Remediation Catalog → FULL verbatim reports per reviewer → Recommended Commands → Reconciliation)
+│
+└── Phase 6: Decision & Execution (AskUserQuestion with 4 options → fix selected findings or open tracking tickets → closing block)
 ```
 
 ---
@@ -163,7 +165,7 @@ Cover all quality dimensions: content, security, code quality, tests, documentat
 Produce your structured single-pass report.
 ```
 
-After the single-pass agent completes, present its report as the final output.
+After the single-pass agent completes, present its report as the final output **wrapped in the same Phase 5 envelope** (Sections 1, 2, 4, 5, 8, 9 only — Sections 3, 6, 7 are N/A for the single-pass path). The Executive Summary, Action Roadmap, and Recommended Commands are still mandatory; only the cross-domain analysis and per-domain breakdown are skipped. Section 8 contains the single-pass `code-reviewer` agent's full verbatim report.
 
 **Note:** The built-in `/security-review` cross-check is NOT invoked on the small-diff path — the single-pass `code-reviewer` agent already covers security for diffs this small, and the extra Skill call would only add latency.
 
@@ -196,6 +198,8 @@ Run directly in this command (not delegated to sub-agents):
 **CRITICAL:** Send ALL Agent tool calls **and the built-in `/security-review` Skill call** in a **single message** so they execute in parallel. Do NOT send them one by one — that makes them sequential.
 
 These reviewers only analyze code — they do NOT use Chrome DevTools MCP and can safely run in parallel.
+
+**Report retention rule:** Capture each reviewer's complete returned report into a named buffer (e.g. `security_report`, `docs_report`, `performance_report`, ...). These buffers are required verbatim in Phase 5, Section 8. Do NOT discard, summarize, or compress them after Phase 4 — Phase 4 only annotates the Consolidated Catalog; the per-reviewer reports themselves must reach the final output unchanged.
 
 #### Security Reviewer (always)
 ```
@@ -329,6 +333,8 @@ Produce your structured DevOps review report with fulfillment grades.
 
 If no frontend/page files changed, skip this phase entirely.
 
+**Report retention rule:** Same as Phase 3A — capture `frontend_report`, `ux_report`, `a11y_report` verbatim. They are required in Phase 5, Section 8.
+
 #### Frontend Reviewer (if frontend changes)
 ```
 Agent tool with subagent_type "lt-dev:frontend-reviewer":
@@ -422,15 +428,64 @@ For each challenged finding:
 
 ### Phase 5: Unified Report
 
+**CRITICAL OUTPUT REQUIREMENTS (read before generating):**
+
+1. **Every numbered section below is MANDATORY** — do not skip, summarize, or omit any section, even if a domain is N/A.
+2. **Section 8 (Detailed Reviewer Reports) MUST contain the VERBATIM full output of every spawned reviewer agent.** Do NOT paraphrase, compress, or drop reports. If a reviewer returned 400 lines, all 400 lines appear in the final output.
+3. **Section order is fixed.** Top-to-bottom: Executive Summary → Reviewers Spawned → Overall Results → Action Roadmap → Consolidated Remediation Catalog → Informed Trade-offs → Cross-Domain Challenge Results → Detailed Reviewer Reports → Recommended Commands & Tools.
+4. **Wrap each full reviewer report in a `<details><summary>` block** for scannability — but the FULL content stays inside. GitHub, VS Code, and the Claude Code terminal all render these natively.
+5. **If a reviewer failed or returned an error**, show the error verbatim in its `<details>` block. Do not silently drop it.
+6. **No-Loss Guarantee:** EVERY individual finding present in any verbatim report (Section 8) MUST also appear (a) as a row in the Consolidated Remediation Catalog (Section 5) AND (b) as a numbered item under the matching priority bucket in the Action Roadmap (Section 4). Apply across ALL severities including Low and Info — no long-tail dropping.
+7. **Reconciliation:** End Section 8 with a counts table proving conservation: `Findings in verbatim reports: N | Catalog rows: N | Roadmap items: N`. If counts differ, list the missing finding IDs and explicitly add them before finalizing the report.
+8. **Trade-off Visibility:** Findings that stay in Section 6 (informed trade-offs that did NOT escalate) MUST also appear in Section 4 under a dedicated "🔄 Trade-offs accepted (no fix required, listed for transparency)" sub-bucket — so the user sees them when scanning the roadmap. They do NOT enter Section 5 (catalog is for actionable items only).
+9. **No Placeholders in Final Output:** All `N`, `X%`, `X min`, and `[...]` placeholders in the template MUST be replaced with concrete values before output. Empty buckets must say "None". Missing data must say "Not measured" with reason. Never ship a literal `N findings, ≈ X min` to the user.
+
 Generate a single unified report merging all reviewer results:
 
 ```markdown
 ## Code Review Report
 
-### Change Summary
-[2-4 sentences from Phase 1]
+### 1. Executive Summary
 
-### Reviewers Spawned
+**Overall Status:** ✅ Ready to merge / ⚠️ Fixes required / ❌ BLOCKED (do not merge)
+**Overall Score:** X% (weighted — see Section 3)
+**Change Summary:** [2-4 sentences from Phase 1]
+
+**Findings at a Glance** (counts MUST be filled — never leave as placeholders):
+- 🔴 Critical: N | 🟠 High: N | 🟡 Medium: N | 🟢 Low: N | ℹ️ Info: N | **Total: N**
+- 🔄 Informed Trade-offs: N (separate, see Section 6) — of which N are silent-bypass escalations already mirrored into the catalog
+- ⏱️ Estimated total fix effort (Komplett option): ≈ X min (using heuristic: Critical ≈ 60min, High ≈ 30min, Medium ≈ 15min, Low/Info ≈ 5min)
+
+**Top 3 Critical Findings** (pulled from Section 5, Critical/High only):
+1. 🔴 [Domain] — path:line — one-line description
+2. 🔴 [Domain] — path:line — one-line description
+3. 🟡 [Domain] — path:line — one-line description
+
+**Top 3 Immediate Actions:**
+1. [command or manual step] — addresses finding #X
+2. [command or manual step] — addresses finding #Y
+3. [command or manual step] — addresses finding #Z
+
+> If no Critical/High findings exist: state "No blockers — see Section 5 for optional improvements."
+
+**My Recommendation:** **Standard** (Critical + High) — [one-sentence reasoning, e.g. "Critical findings are real merge blockers; High findings are quick wins that prevent follow-up reviews. Medium/Low can be deferred as tech-debt tickets."]
+
+> Pick exactly one of: **Minimal** / **Standard** / **Komplett** / **Nichts** (defined in Section 1.5). Always justify the choice in one sentence — risk profile, time pressure, sprint context.
+
+### 1.5 Decision Helper
+
+Concrete options the user can pick from. Counts come from Section 5; effort estimates are heuristic (≈ 5 min per Low/Info, ≈ 15 min per Medium, ≈ 30 min per High, ≈ 60 min per Critical — adjust based on remediation complexity visible in the catalog).
+
+- 🚀 **Minimal (Merge-Ready)** — Critical only, N findings, ≈ X min — for hot-fixes, time pressure, high confidence in non-blocking findings
+- 🎯 **Standard (Recommended)** — Critical + High, N findings, ≈ X min — default for feature branches before merge
+- 💎 **Komplett** — All severities (Critical → Info), N findings, ≈ X min — for pre-release polish, codebase quality push, ample time
+- ⏭️ **Nichts (Defer)** — None fixed, N tracked as tickets, ≈ X min ticket creation — when all findings are non-urgent, scope locked, work belongs to next sprint
+
+**Notes:**
+- "Nichts" still requires creating tracking tickets (e.g., Linear) for every Critical/High finding — never silently merge with known blockers.
+- The user MAY override: pick individual findings by ID instead of a bucket. Phase 6 question accepts free-text selection.
+
+### 2. Reviewers Spawned
 | Reviewer | Domain | Status |
 |----------|--------|--------|
 | orchestrator | Check Script (auto-fix) | ✅ / ⚠️ / ❌ / — N/A |
@@ -446,7 +501,7 @@ Generate a single unified report merging all reviewer results:
 | a11y-reviewer | A11y & SEO | ✅ / ⚠️ / ❌ / — |
 | devops-reviewer | DevOps (Docker/CI) | ✅ / ⚠️ / ❌ / — |
 
-### Overall Results
+### 3. Overall Results
 | Domain | Fulfillment | Status |
 |--------|-------------|--------|
 | Content | X% | ✅/⚠️/❌ |
@@ -502,26 +557,47 @@ Override rules:
 - Weights are normalized to 100% across active domains after N/A exclusion
 - If neither `--weights` nor CLAUDE.md weights exist, use defaults above
 
-### Detailed Findings
-[Per domain: findings from each reviewer, or "N/A — no changes"]
+### 4. Action Roadmap (prioritized Next Steps)
 
-For Security findings, add a `Cross-Source` column:
+Single, directly-actionable list derived from ALL reviewer findings, grouped by urgency. Each item references the finding number from Section 5.
+
+#### 🔴 Must Fix (Critical) — Blocks Merge
+1. **[Finding #X]** `path:line` — Fix description. Command: `...` or manual step.
+2. ...
+
+#### 🟠 Must Fix (High) — Before Merge
+1. **[Finding #X]** `path:line` — Fix description. Command: `...` or manual step.
+2. ...
+
+#### 🟡 Should Fix (Medium) — This Sprint
+1. **[Finding #X]** `path:line` — Fix description.
+2. ...
+
+#### 🟢 Nice to Have (Low / Info) — Track for Later
+1. **[Finding #X]** `path:line` — Improvement description.
+2. ...
+
+#### 🔄 Trade-offs accepted (no fix required, listed for transparency)
+Mirrors Section 6 entries that did NOT escalate. They are visible here so the user can override the "accepted" decision per item if desired.
+1. **[TO-#X]** `path:line` — Category — Reason accepted: "..."
+2. ...
+
+> If a priority level has no entries, write "None" under that heading. Do NOT remove the heading.
+
+### 5. Consolidated Remediation Catalog
+| # | Domain | Priority | File | Cross-Source | Action |
+|---|--------|----------|------|--------|
+| 1 | Security | Critical | path:line | ✓ | ... |
+
+Priority ordering: Critical → High → Medium → Low
+
+**Cross-Source column** (Security findings only — leave blank for non-Security rows):
 - ✓ = flagged by both security-reviewer AND `/security-review` built-in (high confidence, keep as-is)
 - ○ = only security-reviewer (lt-specific finding — keep at normal priority)
 - △ = only `/security-review` built-in (generic pattern — could be a **blind spot of the lt-agent**; verify lt-context before deciding. Downgrade ONLY if already demonstrably mitigated by `@Restricted` / `securityCheck` / Better Auth / Valibot. Otherwise keep at the built-in's original severity.)
 - — = built-in was unavailable (no cross-check possible; rely solely on security-reviewer)
 
-### Cross-Domain Challenge Results
-[Findings removed, downgraded, or annotated after cross-domain analysis]
-
-### Consolidated Remediation Catalog
-| # | Domain | Priority | File | Action |
-|---|--------|----------|------|--------|
-| 1 | Security | Critical | path:line | ... |
-
-Priority ordering: Critical → High → Medium → Low
-
-### Informed Trade-offs (consolidated, non-blocking by default)
+### 6. Informed Trade-offs (consolidated, non-blocking by default)
 
 Consolidates all "informed trade-off" findings from individual reviewers. These share the meta-pattern defined in `generating-nest-servers` skill → `reference/informed-trade-off-pattern.md`: a standard framework path exists; an opt-out is allowed with (a) a documented reason and (b) an analysis that nothing necessary is silently bypassed. The category is presented separately because it does NOT block the review — but silently bypassing a process or security measure always escalates the individual finding into the regular catalog at the appropriate severity.
 
@@ -547,7 +623,99 @@ Seven trade-off categories are aggregated:
 - Findings where the analysis reveals an actual silent bypass of a security measure are ALSO added to the regular Consolidated Remediation Catalog with appropriate severity (Critical/High) — they must not be hidden in the trade-off section alone.
 - Use the "Analysis Performed" column as a reviewer accountability check: missing analysis ≠ safe; it means the trade-off was accepted without verification and is itself a review gap.
 
-### Recommended Next Steps
+### 7. Cross-Domain Challenge Results
+
+[Findings removed, downgraded, or annotated after Phase 4 cross-domain analysis. Format each entry as: `[Domain] finding-id — RESOLUTION (removed / downgraded to X / annotated with Y) — reason`. If no findings were challenged: "No cross-domain conflicts found — all reviewer findings stand."]
+
+### 8. Detailed Reviewer Reports
+
+**MANDATORY:** Paste each spawned reviewer's COMPLETE report verbatim below. No summarization, no truncation, no omission. Wrap each in a `<details>` block for scannability. The order matches the rows in Section 2 (Reviewers Spawned). For reviewers marked "— N/A", write a single line "Not spawned — no relevant changes" inside the `<details>` block instead of omitting the section.
+
+<details>
+<summary>🔒 Security Reviewer — full report</summary>
+
+[Paste the COMPLETE output of the `lt-dev:security-reviewer` agent here, verbatim.]
+
+</details>
+
+<details>
+<summary>🛡️ /security-review Built-in Cross-Check — full output</summary>
+
+[Paste the COMPLETE output of the built-in `/security-review` skill here, verbatim. If unavailable: "Skipped — built-in `/security-review` unavailable in this Claude Code version."]
+
+</details>
+
+<details>
+<summary>📝 Documentation Reviewer — full report</summary>
+
+[Paste the COMPLETE output of the `lt-dev:docs-reviewer` agent here, verbatim.]
+
+</details>
+
+<details>
+<summary>⚡ Performance Reviewer — full report</summary>
+
+[Paste the COMPLETE output of the `lt-dev:performance-reviewer` agent here, verbatim.]
+
+</details>
+
+<details>
+<summary>🏗️ Backend Reviewer — full report</summary>
+
+[Paste the COMPLETE output of the `lt-dev:backend-reviewer` agent here, verbatim, OR "Not spawned — no backend changes."]
+
+</details>
+
+<details>
+<summary>🎨 Frontend Reviewer — full report</summary>
+
+[Paste the COMPLETE output of the `lt-dev:frontend-reviewer` agent here, verbatim, OR "Not spawned — no frontend changes."]
+
+</details>
+
+<details>
+<summary>🧪 Test Reviewer — full report</summary>
+
+[Paste the COMPLETE output of the `lt-dev:test-reviewer` agent here, verbatim, OR "Not spawned — no source files changed."]
+
+</details>
+
+<details>
+<summary>👥 UX Reviewer — full report</summary>
+
+[Paste the COMPLETE output of the `lt-dev:ux-reviewer` agent here, verbatim, OR "Not spawned — no frontend changes."]
+
+</details>
+
+<details>
+<summary>♿ A11y &amp; SEO Reviewer — full report</summary>
+
+[Paste the COMPLETE output of the `lt-dev:a11y-reviewer` agent here, verbatim, OR "Not spawned — no frontend changes."]
+
+</details>
+
+<details>
+<summary>🐳 DevOps Reviewer — full report</summary>
+
+[Paste the COMPLETE output of the `lt-dev:devops-reviewer` agent here, verbatim, OR "Not spawned — no infrastructure changes."]
+
+</details>
+
+#### 8.1 Reconciliation (No-Loss Check)
+
+Counts must match. If any column is lower than the highest, add the missing finding IDs explicitly.
+
+Source per severity (Critical / High / Medium / Low / Info / Total):
+- Verbatim reports (Section 8): N / N / N / N / N / N
+- Catalog rows (Section 5):     N / N / N / N / N / N
+- Roadmap items (Section 4):    N / N / N / N / N / N
+
+**Status:** ✅ All counts match — every finding tracked / ❌ Mismatch — see missing IDs below
+
+**Missing finding IDs** (only fill if mismatch):
+- `[REVIEWER-NNN]` from Section 8 — added to Catalog #X and Roadmap bucket Y
+
+### 9. Recommended Commands & Tools
 
 **Backend findings:**
 - Security ⚠️/❌ → `/lt-dev:backend:sec-review`
@@ -569,5 +737,52 @@ Seven trade-off categories are aggregated:
 - Quick pre-review code cleanup on recently changed files → `/simplify` (auto-applies fixes — run BEFORE `/lt-dev:review`, never inside it)
 
 **All ✅** → Create PR, then run `/review <PR#>` for a generic PR-context cross-check
+```
+
+### Phase 6: Decision & Execution
+
+After the unified report is rendered (Phase 5 output is on screen), ask the user how to proceed via the `AskUserQuestion` tool. Always present FOUR options derived from Section 1.5:
+
+```
+AskUserQuestion tool:
+- question: "Welche Findings möchtest du jetzt beheben? (Reviewer-Empfehlung: <Variante aus Section 1>)"
+- multiSelect: false
+- options:
+  - label: "🚀 Minimal — nur Critical (N Findings, ~X min)"
+    description: "Hot-fix-Modus: nur Merge-Blocker beheben."
+  - label: "🎯 Standard — Critical + High (N Findings, ~X min)"
+    description: "Empfohlene Variante für Feature-Branches."
+  - label: "💎 Komplett — alle Severities (N Findings, ~X min)"
+    description: "Pre-Release-Politur, alle Findings inkl. Low/Info."
+  - label: "⏭️ Nichts jetzt — Tracking-Tickets erstellen (~X min)"
+    description: "Findings dokumentieren, Fixes auf später verschieben."
+```
+
+**Skip the question if and only if:**
+- Section 5 contains zero findings (all reviewers ✅) → state "All clean — nothing to decide. Suggest creating PR." and stop.
+- The user passed an explicit non-interactive flag (none defined yet — placeholder for future `--no-prompt` support).
+
+**Free-text override:** If the user replies outside the four options (e.g. "nur Finding #3 und #7"), parse the IDs and treat them as the explicit fix set.
+
+#### Phase 6 Execution
+
+After the user picks an option:
+
+- 🚀 **Minimal** — Iterate findings filtered by severity = Critical. For each, propose the diff and apply after confirmation (or auto-apply if user said "alles fixen, nicht fragen").
+- 🎯 **Standard** — Same iteration on Critical + High.
+- 💎 **Komplett** — Same iteration on all severities, in priority order.
+- ⏭️ **Nichts** — Create one tracking ticket per Critical/High finding via `mcp__plugin_lt-dev_linear__save_issue` (or print a markdown ticket-list if Linear MCP is unavailable). Confirm ticket IDs back to the user. Do NOT fix code.
+- **Free-text IDs** — Iterate only the listed IDs.
+
+After execution, print a short closing block:
+
+```markdown
+## Phase 6 Result
+
+- **Chosen option:** <option>
+- **Findings addressed:** N (out of M total)
+- **Files modified:** N
+- **Remaining findings:** N (see Section 5 for IDs)
+- **Suggested next step:** [`/lt-dev:check` to re-validate / Create PR / Re-run `/lt-dev:review` if many fixes / etc.]
 ```
 

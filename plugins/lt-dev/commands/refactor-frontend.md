@@ -295,8 +295,48 @@ Max 2 review-fix cycles. If Critical/High persist, STOP and report to user.
 
 ### Final Report
 
+**OUTPUT REQUIREMENTS (read before generating):**
+
+1. **Every section below is MANDATORY** — Executive Summary, Batch Summary, Verification, Code Review, File Lists, Detailed Reports, Next Steps.
+2. **Section "Detailed Teammate Reports" MUST contain the verbatim full output of every batch teammate** (`shared-foundation` + each `refactor-<batch>`). Do NOT summarize — wrap each in a `<details>` block.
+3. **Section "Code Review Output" MUST embed the FULL `/lt-dev:review` output** (Executive Summary + Action Roadmap + Catalog + per-reviewer reports), not just the dimension table. Wrap in `<details>` if very long.
+4. **Action Roadmap** — derive from review findings + verification failures, prioritized: 🔴 Critical → 🟠 High → 🟡 Medium → 🟢 Low.
+5. **No-Loss Guarantee:** Every finding in the embedded `/lt-dev:review` output MUST appear in the Action Roadmap below. Cross-check counts before finalizing.
+6. **No Placeholders:** Replace every `N`, `X min`, and `[...]` in the template with concrete values. Empty buckets say "None".
+
 ```
 ## Refactoring Abgeschlossen
+
+### Executive Summary
+- **Status:** ✅ Erfolgreich / ⚠️ Mit offenen Findings / ❌ Blockiert
+- **Batches:** N/M erfolgreich
+- **Verification:** Format ✅ | Lint ✅ | Build ✅ | Tests ✅
+- **Top 3 nächste Schritte:**
+  1. ...
+  2. ...
+  3. ...
+- **My Recommendation:** **Standard** (Critical + High aus Code Review) — [Begründung in einem Satz]
+- **Findings at a Glance:** 🔴 N | 🟠 N | 🟡 N | 🟢 N | **Total: N** — ⏱️ ≈ X min für Komplett
+
+### Decision Helper
+- 🚀 **Minimal (Merge-Ready)** — nur Critical, N Findings, ≈ X min
+- 🎯 **Standard (Empfohlen)** — Critical + High, N Findings, ≈ X min
+- 💎 **Komplett** — alle Severities, N Findings, ≈ X min
+- ⏭️ **Nichts (Defer)** — Tracking-Tickets statt Fixes, ≈ X min
+
+After printing the report, **ask via `AskUserQuestion`** which option to execute (skip if zero findings). Then iterate the chosen findings, propose diffs, apply after confirmation. End with a "Result"-Block: chosen option, findings addressed, files modified, remaining count, suggested next step.
+
+### Action Roadmap
+#### 🔴 Must Fix (Critical) — Vor Merge
+1. ...
+#### 🟠 Must Fix (High) — Vor Merge
+1. ...
+#### 🟡 Should Fix (Medium) — In diesem Sprint
+1. ...
+#### 🟢 Nice to Have (Low / Info)
+1. ...
+
+### Batch Summary
 
 | Batch | Dateien | Neu | Verschoben | Geändert | Status |
 |-------|---------|-----|------------|----------|--------|
@@ -335,6 +375,31 @@ Max 2 review-fix cycles. If Critical/High persist, STOP and report to user.
 ### Extrahierte Composables
 - composables/useSeasonsFilter.ts (aus pages/seasons/index.vue)
 - ...
+
+### Detailed Teammate Reports
+
+<details>
+<summary>🧱 shared-foundation — full report</summary>
+
+[Paste the COMPLETE return message of the `shared-foundation` teammate here, verbatim.]
+
+</details>
+
+<details>
+<summary>🔧 refactor-&lt;batch-name&gt; — full report</summary>
+
+[Paste the COMPLETE return message of each batch teammate here, verbatim. One `<details>` block per batch.]
+
+</details>
+
+### Code Review Output
+
+<details>
+<summary>📋 /lt-dev:review — full unified report</summary>
+
+[Paste the COMPLETE output of `/lt-dev:review` from the "Code Review (MANDATORY)" step here, verbatim — including Executive Summary, Action Roadmap, Consolidated Remediation Catalog, all per-reviewer reports, and Recommended Commands.]
+
+</details>
 ```
 
 ### Post-Refactor
