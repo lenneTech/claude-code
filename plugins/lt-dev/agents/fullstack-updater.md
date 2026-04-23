@@ -256,7 +256,7 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
    3. Backend validation (build, lint, test)
    4. Frontend update (nuxt-extensions)
    5. Frontend starter synchronization
-   6. Type regeneration (pnpm run generate-types)
+   6. Type regeneration (pnpm run generate-types) — ONLY if the frontend imports the generated api-client (detection below)
    7. Frontend validation (build, lint)
    8. Cross-project validation
    ```
@@ -347,11 +347,34 @@ Skip steps 1-2 below and proceed to step 3 (apply starter changes).
    - Update TypeScript configuration
    - Sync Docker-related files if present
 
-3. **Regenerate types from updated API:**
+3. **Regenerate types from updated API — conditional:**
+
+   Run `generate-types` ONLY if the frontend actually imports the generated
+   api-client. Many lenne.tech projects ship hand-written interfaces in
+   `app/interfaces/` and keep the generated `app/api-client/` as a
+   reference artifact that is never imported. Running `generate-types` on
+   those projects is pure noise: it spawns a prettier-vs-oxfmt format
+   drift that breaks the next `check` run and updates files nobody uses.
+
+   Detect with a single grep before acting:
+
    ```bash
    cd <frontend-path>
-   pnpm run generate-types
+
+   if grep -REq "from ['\"](~|\.|app)/api-client" app/; then
+     echo "api-client is imported — regenerating types from the updated API."
+     pnpm run generate-types
+   else
+     echo "Skipped generate-types: the frontend uses hand-written interfaces (app/api-client is present but unused)."
+     echo "Record this in the update report so the operator knows regeneration was intentionally skipped."
+   fi
    ```
+
+   If the grep matches and `generate-types` fails (backend not running,
+   unreachable port, etc.), surface that as a hard error — the build
+   would otherwise fall over on stale types. If the grep does not match,
+   skipping is safe because no compile step depends on the generated
+   output.
 
 4. **Validate frontend:**
    ```bash

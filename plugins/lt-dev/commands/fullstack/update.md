@@ -59,7 +59,7 @@ This command is the **direct orchestrator**. Sub-agents cannot spawn sub-sub-age
 └── Phase 6: Cross-validation + report
 ```
 
-Backend must complete before frontend because `generate-types` needs the updated API.
+Backend must complete before frontend because — when the frontend actually imports the generated api-client — `generate-types` needs the updated API running. Projects using hand-written interfaces skip this step (see Phase 5 detection logic).
 
 ---
 
@@ -198,12 +198,17 @@ Arguments: --skip-backend
 Frontend path: <frontend-path>
 Current nuxt-extensions version: <current-version>
 Target nuxt-extensions version: <target-version>
-Backend path: <backend-path> (for generate-types)
+Backend path: <backend-path> (for generate-types, only if api-client is imported)
 
 Execute frontend update:
 1. Install @lenne.tech/nuxt-extensions@latest
 2. Sync with nuxt-base-starter (config, components, middleware)
-3. Run generate-types from updated backend API
+3. Detect whether the frontend imports the generated api-client:
+     grep -REq "from ['\"](~|\.|app)/api-client" app/
+   If matches: run `pnpm run generate-types` (needs backend on port 3000).
+   If no match: skip — the project uses hand-written interfaces
+   (`app/interfaces/*.ts`) and the generated output is an unused reference
+   artifact. Note the skip in the report.
 4. Validate: build, lint — fix issues until all pass
 ```
 

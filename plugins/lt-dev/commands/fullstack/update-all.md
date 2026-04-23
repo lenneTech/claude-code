@@ -66,7 +66,7 @@ so the command coordinates the agents directly.
 |  Phase 8: Report
 ```
 
-Backend must complete before frontend because `generate-types` needs the updated API.
+Backend must complete before frontend because — when the frontend actually imports the generated api-client — `generate-types` needs the updated API running. Projects using hand-written interfaces skip this step (see Phase 5/7 detection logic).
 
 ## Mode Detection Matrix
 
@@ -214,12 +214,17 @@ Arguments: --skip-backend
 Frontend path: <frontend-path>
 Current nuxt-extensions version: <current-version>
 Target nuxt-extensions version: <target-version>
-Backend path: <backend-path> (for generate-types)
+Backend path: <backend-path> (for generate-types, only if api-client is imported)
 
 Execute frontend update:
 1. Install @lenne.tech/nuxt-extensions@latest
 2. Sync with nuxt-base-starter (config, components, middleware)
-3. Run generate-types from updated backend API
+3. Detect whether the frontend imports the generated api-client:
+     grep -REq "from ['\"](~|\.|app)/api-client" app/
+   If matches: run `pnpm run generate-types` (needs backend on port 3000).
+   If no match: skip -- the project uses hand-written interfaces
+   (`app/interfaces/*.ts`) and the generated output is an unused reference
+   artifact. Note the skip in the report.
 4. Validate: build, lint -- fix issues until all pass
 ```
 
@@ -286,10 +291,19 @@ Only sync the targets that were actually updated. Use section-level merge
    cd <backend-path> && pnpm test
    ```
 
-3. **Verify type generation works:**
+3. **Verify type generation works — conditional:**
    ```bash
-   cd <frontend-path> && pnpm run generate-types
+   cd <frontend-path>
+   if grep -REq "from ['\"](~|\.|app)/api-client" app/; then
+     pnpm run generate-types
+   else
+     echo "Skipped: api-client not imported (project uses hand-written interfaces)."
+   fi
    ```
+   Rationale: running `generate-types` on a project that does not import
+   the generated api-client is pure noise — the output is an unused
+   reference artifact, and the prettier/oxfmt format difference surfaces
+   as a false `check` failure the operator has to chase.
 
 ### Phase 8: Report
 
