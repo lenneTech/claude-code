@@ -9,6 +9,29 @@ Two block types support custom HTML:
 - No Vue components, no JavaScript
 - Wrapped in `prose prose-sm max-w-none dark:prose-invert`
 
+### Editor — WYSIWYG ↔ Source toggle
+
+The block editor exposes two synchronised surfaces over the same `content.html` string:
+
+- **Visuell** uses [Squire](https://github.com/fastmail/Squire), a contenteditable rich-text editor that **does not parse the markup into a schema**. Whatever HTML you put in (`<div>`, inline `style="..."`, tables, custom classes) survives a Visual ↔ Source roundtrip intact. The toolbar covers bold, italic, strikethrough, inline code, headings 1–3, ordered/unordered lists, blockquotes, code blocks, links, horizontal rules and a "clear formatting" eraser.
+- **Quellcode** is a CodeMirror surface with a "Format" button (HTML pretty-print).
+
+This is a deliberate departure from schema-based editors like TipTap/ProseMirror — Squire was chosen so a hand-built layout (custom borders, inline gradients, branded card grids) is not silently flattened to `<p>` paragraphs the moment a user toggles into Visual mode.
+
+### File-URL tokens
+
+Embed GridFS images inside `<img>`/`<a>` tags via `{{fileUrl:<24-hex-id>}}`. The token is expanded:
+- in the customer-facing browser view,
+- in the editor's WYSIWYG surface (so images render while editing),
+- in the PDF builder.
+
+The persisted HTML keeps the **token form** — collapse-on-save in the editor ensures no host name is ever baked into the database. This makes a single offer portable across local/staging/production without rewriting paths.
+
+Example:
+```html
+<img src="{{fileUrl:69e9c4b6014c53740c761ca5}}" alt="Architektur">
+```
+
 ### Examples
 
 ```html

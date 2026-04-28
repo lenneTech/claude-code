@@ -45,17 +45,19 @@ All offer operations go through the `offers-api` MCP server. The connection uses
 The default MCP endpoint is `https://api.angebote.lenne.tech/mcp` (production). When working inside the offers project repository, the project-level `.mcp.json` overrides this to `http://localhost:3000/mcp` for local development.
 
 **Available MCP Tools:**
+- `add_lottie_animation` — Upload a Lottie JSON file and create a `lottie` content block in one atomic call (validates the JSON, rejects unsupported features, ≤ 2 MB)
 - `add_offer_source` — Add a source (text/link/file) to an offer
 - `create_from_template` — Create offer from template
 - `create_knowledge` — Create a knowledge base entry
-- `create_offer` — Create new offer (returns offer + access code)
+- `create_offer` — Create new offer (returns offer + access code). Accepts an optional `theme: { enabled, light, dark }` per-offer override
 - `delete_knowledge` — Delete a knowledge base entry
 - `delete_offer` — Delete offer permanently
-- `duplicate_offer` — Clone offer with new slug + access code
+- `duplicate_offer` — Clone offer with new slug + access code (theme is carried over)
 - `generate_snippet` — Generate sharing text with link + access code
+- `get_default_theme` — Read the app-wide default theme that the renderer applies to offers without their own theme
 - `get_global` — Get global block with versions
 - `get_knowledge` — Get a knowledge base entry with full content
-- `get_offer` — Get offer with all content blocks (globals auto-resolved)
+- `get_offer` — Get offer with all content blocks (globals auto-resolved). Returns the **effective theme** — i.e. the per-offer override when enabled, otherwise the settings default merged in transparently
 - `get_offer_analytics` — Get offer analytics (views, downloads, scroll depth, dwell time)
 - `get_offer_context` — Get full AI context (knowledge + globals + optional offer/sources)
 - `get_offer_sources` — Get all sources for an offer
@@ -66,17 +68,20 @@ The default MCP endpoint is `https://api.angebote.lenne.tech/mcp` (production). 
 - `mark_draft` — Reset to draft (sent → draft)
 - `mark_sent` — Mark offer as sent (draft → sent)
 - `remove_offer_source` — Remove a source from an offer
+- `set_default_theme` — Configure the app-wide default theme (light/dark hex palettes). Admin-only on the underlying SettingsService
 - `update_knowledge` — Update a knowledge base entry
-- `update_offer` — Update offer fields and content blocks
+- `update_lottie_animation` — Replace the Lottie JSON of an existing block (keeps the block ID + position; resets first-frame snapshot)
+- `update_offer` — Update offer fields and content blocks. Accepts an optional `theme` to set/clear the per-offer palette
 - `upload_knowledge_file` — Upload file to knowledge entry (base64)
 - `upload_offer_source_file` — Upload file as offer source (base64)
 
 ## Reference Files
 
-- `${CLAUDE_SKILL_DIR}/reference/content-blocks.md` — All 16 block types with schemas
-- `${CLAUDE_SKILL_DIR}/reference/offer-model.md` — Offer model and status lifecycle
+- `${CLAUDE_SKILL_DIR}/reference/content-blocks.md` — All 17 block types with schemas (incl. `lottie`)
+- `${CLAUDE_SKILL_DIR}/reference/offer-model.md` — Offer model, status lifecycle, per-offer theme field
 - `${CLAUDE_SKILL_DIR}/reference/knowledge-base.md` — Knowledge base schema and categories
-- `${CLAUDE_SKILL_DIR}/reference/custom-html-guide.md` — HTML + Tailwind + NuxtUI guide
+- `${CLAUDE_SKILL_DIR}/reference/custom-html-guide.md` — HTML + Tailwind + NuxtUI guide (incl. WYSIWYG editor)
+- `${CLAUDE_SKILL_DIR}/reference/theming.md` — Per-offer theme override, app-wide default theme, MCP & UI workflows
 - `${CLAUDE_SKILL_DIR}/reference/best-practices.md` — Content structure and examples
 
 ## Core Workflow

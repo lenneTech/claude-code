@@ -169,7 +169,15 @@ Use `list_globals` to find available globals, then reference by ID.
 { "html": "<div class=\"p-4 bg-primary-50 rounded-lg\"><p>Custom styled content</p></div>" }
 ```
 
-Pure HTML + Tailwind CSS classes. Sanitized with DOMPurify. No Vue components.
+Pure HTML + Tailwind CSS classes. Sanitized with DOMPurify on render. No Vue components.
+
+**File-URL tokens.** Use `{{fileUrl:<24-hex-id>}}` to embed GridFS images / PDFs without baking a host into the stored HTML. The frontend renderer, the WYSIWYG editor and the PDF builder all expand these tokens at render time. Example: `<img src="{{fileUrl:69e9c4b6014c53740c761ca5}}" alt="Screenshot">`.
+
+**Editor UX.** The block has two synchronised surfaces in the offer editor:
+- "Visuell" — Squire-based WYSIWYG that **preserves any HTML you put in** (divs, inline `style="..."`, tables, classes). Toolbar covers bold/italic/strike/code, headings 1–3, lists, quotes, links and clear-format. Image tokens render as real images via the bridge above.
+- "Quellcode" — CodeMirror with HTML-Beautify, for power-users.
+
+Both modes feed the same `content.html` field. Squire's contract is "no schema-rewrite", so a complex hand-built layout survives a Visual ↔ Source roundtrip intact — see [`custom-html-guide.md`](./custom-html-guide.md).
 
 ---
 
@@ -202,9 +210,40 @@ HTML + Tailwind CSS + whitelisted NuxtUI components.
 
 ---
 
+## 17. `lottie` — Lightweight JSON Animation
+
+```json
+{
+  "animationFileId": "69e9c4b6014c53740c761ca5",
+  "loop": true,
+  "autoplay": true,
+  "speed": 1,
+  "alignment": "center",
+  "maxWidth": 600,
+  "previewFileId": "69e9c4b6014c53740c761cab"
+}
+```
+
+Renders a [Lottie](https://lottiefiles.com/) JSON animation. Auto-plays only once it scrolls into view (`IntersectionObserver`), so a long offer page stays cheap to render. PDFs and the email-share preview cannot run JS animations and use a static fallback in this order:
+
+1. **`previewFileId`** — author-uploaded PNG/JPG (recommended for branded outputs).
+2. **Auto-snapshot** — first frame of the animation, captured server-side via Puppeteer at PDF render time. No DB persistence.
+3. **Inline placeholder** — "Interaktive Animation — im Online-Angebot sichtbar".
+
+**Constraints**
+- Max 2 MB per JSON file (rejected at upload).
+- Static validator strips unsupported features (3D, expressions, large embedded raster assets) and warns the author.
+- `maxWidth` is clamped to 640 px so a hostile payload cannot blow up the layout.
+- `alignment`: `'left' | 'center' | 'right'`.
+
+**Authoring path.** The MCP tool `add_lottie_animation` does the upload + block creation in one call (it validates the JSON, surfaces unsupported-feature warnings, and inserts the block at the requested `order`). `update_lottie_animation` swaps the JSON of an existing block atomically.
+
+---
+
 ## Block Usage Tips
 
 - **Order**: Start at 0, increment by 1
 - **Visible**: Always `true` unless intentionally hiding (e.g., draft blocks)
 - **ShowInToc**: Set to `true` for major sections, `false` for dividers/small blocks
-- **File references**: Use existing `fileId` values from uploaded files. No upload via MCP in v1.
+- **File references**: Use existing `fileId` values from uploaded files. For Lottie files, use `add_lottie_animation`; for offer-source files (briefing material, NOT content blocks) use `upload_offer_source_file`.
+- **Image tokens**: Inside `text`, `custom-html`, `rich-component` blocks, embed GridFS images via `{{fileUrl:<24-hex-id>}}` — the renderer expands these at view/PDF time and keeps the HTML portable across environments.

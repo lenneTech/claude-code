@@ -16,6 +16,7 @@
 | `customerContacts` | array | Additional contacts `[{ name, email, position }]` |
 | `contentBlocks` | array | Content blocks (see content-blocks.md) |
 | `tags` | string[] | Tags for categorization |
+| `theme` | object | Per-offer theme override `{ enabled, light, dark }` — see [theming.md](./theming.md). When `enabled: false` (or missing), the renderer falls back to the app-wide default theme (`set_default_theme`); when neither is configured, the platform palette applies. |
 | `validUntil` | Date | Expiration date (optional) |
 | `showTableOfContents` | boolean | Show TOC on offer page (default: true) |
 | `customerContacts` | array | Additional contacts `[{ name, email?, position? }]` |
