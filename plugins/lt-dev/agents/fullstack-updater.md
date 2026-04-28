@@ -3,7 +3,7 @@ name: fullstack-updater
 description: Autonomous agent for updating a lenne.tech fullstack project. Synchronizes backend and frontend with latest nest-server-starter and nuxt-base-starter. Analyzes version drift, generates update plan with user approval, coordinates backend (nest-server-updater) and frontend updates, validates across subprojects.
 model: inherit
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, TodoWrite
-skills: nest-server-updating, developing-lt-frontend, maintaining-npm-packages, using-lt-cli, nuxt-extensions-core-vendoring
+skills: nest-server-updating, developing-lt-frontend, maintaining-npm-packages, using-lt-cli, nuxt-extensions-core-vendoring, modernizing-toolchain, running-check-script
 memory: project
 maxTurns: 120
 ---
@@ -20,6 +20,8 @@ Autonomous execution agent for updating lenne.tech fullstack projects by synchro
 | **Skill**: `developing-lt-frontend` | Frontend patterns and expertise |
 | **Skill**: `maintaining-npm-packages` | Package optimization guidance |
 | **Skill**: `using-lt-cli` | CLI context and commands |
+| **Skill**: `modernizing-toolchain` | jest→vitest, eslint→oxlint, prettier→oxfmt migration recipe |
+| **Skill**: `running-check-script` | check pipeline mechanics + common failures |
 | **Command**: `/lt-dev:fullstack:update` | User invocation with options |
 | **Agent**: `lt-dev:nest-server-updater` | Backend update (spawned by `/lt-dev:fullstack:update` command) |
 | **Agent**: `lt-dev:npm-package-maintainer` | Package optimization (spawned by `/lt-dev:fullstack:update` command) |
@@ -60,8 +62,9 @@ Initial TodoWrite (after Phase 1):
 [pending] Present plan for user approval
 [pending] Update backend (nest-server + starter changes)
 [pending] Update frontend (nuxt-extensions + starter changes)
+[pending] Modernize toolchain (jest→vitest, eslint→oxlint, prettier→oxfmt) — BOTH api AND app
 [pending] Sync CLAUDE.md from upstream starters
-[pending] Final cross-project validation
+[pending] Final cross-project validation (npm run check / pnpm run check from root, must be green)
 [pending] Generate report
 ```
 
@@ -388,6 +391,91 @@ Skip steps 1-2 below and proceed to step 3 (apply starter changes).
    - Start dev server, verify no runtime errors
    - Check console for warnings/errors
 
+### Phase 5.5: Toolchain Modernization (BOTH api AND app)
+
+After versions and starter files are aligned, check whether the project still uses
+the legacy `jest + eslint + prettier` toolchain or has already moved to the current
+baseline (`vitest + oxlint + oxfmt`). The current `nest-server-starter` and
+`nuxt-base-starter` ship the modern toolchain — projects originally created from
+older starters carry the legacy stack and need to be migrated.
+
+**This phase is mandatory for fullstack updates.** A project that lands on the
+current `nest-server` major but still runs `jest` + `eslint` will fall behind the
+starter conventions and the next `npm run check` may surface mismatches that look
+like framework bugs.
+
+Detect each subproject's state:
+
+```bash
+cd <api-path>
+test -f jest-e2e.json && echo "API: jest (LEGACY)" || \
+  test -f vitest-e2e.config.ts && echo "API: vitest (MODERN)" || \
+  echo "API: unknown"
+
+cd <frontend-path>
+test -f vitest.config.ts && echo "APP: vitest (MODERN)" || \
+  ([ -f playwright.config.ts ] && [ ! -f vitest.config.ts ] && echo "APP: playwright-only (no unit tests)") || \
+  echo "APP: unknown"
+```
+
+For each subproject still on the legacy stack, **delegate to the
+`modernizing-toolchain` skill** for the recipe. Apply the full migration
+end-to-end:
+
+- API: Phases 2 (jest→vitest) and 3 (eslint→oxlint, prettier→oxfmt) of the skill.
+- App: Phase 4 of the skill (vitest+happy-dom, oxlint with vue plugin, oxfmt).
+- BOTH: Phase 5 (`check` / `check:fix` / `check:envs` scripts), Phase 6
+  (`scripts/check-server-start.sh` with the ANSI-strip + `NITRO_PORT` guards),
+  Phase 7 (`config.env.ts` offers pattern), Phase 8 (`scripts/check-envs.sh` +
+  fixture), Phase 9 (`main.ts` log levels + CORS + `QuietHttpExceptionFilter`),
+  Phase 10 (GitLab CI), Phase 11 (docker-compose healthchecks).
+
+**Critical gotchas to surface in TodoWrite progress** (these consumed days in
+the original migration if missed):
+
+1. **`useDefineForClassFields` mismatch** between tsconfig and the swc plugin
+   silently breaks NestJS DI and `@Prop` reflection in vitest. Both must be
+   `true`.
+2. **The @Prop union-type fix**: SWC emits `Object` for TypeScript union types
+   (`'a' | 'b'`, `null | string`); ts-jest emits `String`. Mongoose then
+   refuses the schema with "Cannot determine a type for the X field". Sweep
+   every `@Prop` whose property is a union and add `type: String` (or
+   `type: Object` for record-likes).
+3. **`import * as supertest`**: replace with default-import — the namespace
+   form does not call under SWC's CJS↔ESM interop.
+4. **`PORT` vs `NITRO_PORT`** in `check-server-start.sh` for the App: some
+   Nitro versions crash on string-typed `PORT`. Use `NITRO_PORT` — it is the
+   documented Nitro env knob and is coerced to number reliably.
+5. **ANSI-injection by lerna/nx** in `check-server-start.sh`: a naive
+   `FREE_PORT=$(node -e "...console.log(p)")` captures color codes from the
+   workspace runner. Always strip with
+   `sed $'s/\x1b\\[[0-9;]*m//g' | tr -d '[:space:]'`. **Do not** strip with
+   `tr -cd '0-9'` — the codes contain digits (33, 39) and the result becomes
+   ports like 335454639.
+6. **Phantom Unix sockets** named `[33m12345[39m` in the project root: leftover
+   from check-server-start runs done before the ANSI fix. `rm -f $'\x1b[33m'*$'\x1b[39m'`.
+7. **Wholesale dep sync, not a curated pick** — when aligning the project with
+   the upstream starters, bump every `dependencies` AND `devDependencies` entry
+   to whatever the current `nest-server-starter` / `nuxt-base-starter`
+   `package.json` ships. Surface every major-version delta in the migration
+   log so the operator can read the relevant CHANGELOG. The trap a blanket
+   version-sync does NOT fix is **a missing direct dependency after a peer
+   restructure**: when `Rollup failed to resolve import "X"` or the install-
+   time equivalent appears, the wrapper package no longer pulls X transitively
+   — add X as a direct dep, even if no app code imports it directly.
+
+After the toolchain migration, run `npm run check` (or `pnpm run check`) from
+the monorepo root. **The expected end state is**:
+
+```
+Lerna (powered by Nx)   Successfully ran target check for 2 projects
+```
+
+with both api and app green. Any pre-existing test failure or lint error
+surfaces during this phase — fix them, do not silence. The skill description
+explicitly forbids skipped tests or warning-tolerated lint runs as a "done"
+state for the migration.
+
 ### Phase 6: Sync CLAUDE.md Files
 
 After backend and/or frontend updates, sync the CLAUDE.md files from the
@@ -526,8 +614,12 @@ If blocked at any phase:
 | Update plan approved by user | ✅ |
 | Backend updated (unless skipped) | ✅ |
 | Frontend updated (unless skipped) | ✅ |
+| Toolchain modernized (vitest+oxlint+oxfmt) on BOTH api AND app | ✅ |
 | All builds pass | ✅ |
-| All linting passes | ✅ |
-| All tests pass (no skips) | ✅ |
-| Types regenerated | ✅ |
+| All linting passes (oxlint 0/0 in both subprojects) | ✅ |
+| All tests pass (no skips, no `it.skip`, no `--passWithNoTests`) | ✅ |
+| `<pm> run check` from monorepo root prints "Successfully ran target check for 2 projects" | ✅ |
+| `<pm> run check:envs` (api) prints "All env configurations OK." | ✅ |
+| Pre-existing failures fixed, not silenced | ✅ |
+| Types regenerated (only when api-client is actually imported) | ✅ |
 | Report generated | ✅ |

@@ -103,8 +103,30 @@ Never use any of the following to silence errors:
 - Lint rule downgrades in config files
 - Commenting out broken code
 - Deleting failing tests
+- `it.skip(...)`, `describe.skip(...)`, `test.skip(...)` in test files
+- `--passWithNoTests` flags on the test command
+- Adding `oxlint-disable` directives to suppress real findings
 
 The ONLY permitted "non-fix" is an upstream dependency vulnerability where the escalation ladder has been fully exhausted. Everything else must be fixed at the root.
+
+### Step 6.5 — `check-server-start.sh` failure modes (Nitro/Nest port hazards)
+
+The starter `check` pipeline ends with `bash scripts/check-server-start.sh`, which boots the production build and waits for the readiness log. Three known failure modes — all surface as the same symptom (`ERR_SOCKET_BAD_PORT` from `node:net`) but have different root causes:
+
+1. **Nitro `PORT`-string bug** (App side): the script must use `NITRO_PORT=$FREE_PORT`, never `PORT=$FREE_PORT`. Some Nitro versions read `process.env.PORT` without `parseInt` and crash; `NITRO_PORT` is the documented Nitro-specific knob, goes through Nitro's own env loader, and is coerced to number reliably. Nest does not have this issue — `NSC__PORT` is fine on the API side.
+
+2. **lerna/nx ANSI-injection** (BOTH api and app, only when `check` is invoked from a workspace runner): the runner wraps subprocess stdout and may inject ANSI color escape sequences (`\x1b[33m...\x1b[39m`) into command output. A naive `FREE_PORT=$(node -e "...console.log(p)")` captures the codes too. **A naive `tr -cd '0-9'` makes it worse** — the codes contain digits (33, 39) themselves, producing nonsense ports like 335454639. The only correct fix is to strip the ANSI sequence pattern explicitly with `sed`:
+   ```bash
+   FREE_PORT=$(node -e "..." | sed $'s/\x1b\\[[0-9;]*m//g' | tr -d '[:space:]')
+   ```
+
+3. **Phantom Unix-domain-sockets** named `[33m12345[39m` next to the package.json (mode `srwx`): leftover from earlier failed runs. When Nest's port-parser fell through "string with weird chars" → "treat as Unix socket path", it actually bound a socket file. `cleanup()` SIGTERM kills the process, the file stays. Delete with:
+   ```bash
+   rm -f $'\x1b[33m'*$'\x1b[39m'
+   ```
+   Then re-run `check`.
+
+These hazards are documented in detail in the `modernizing-toolchain` skill (Phase 6). When a `check` run fails with `ERR_SOCKET_BAD_PORT`, the first triage step is to confirm the script in question already has both the `NITRO_PORT` and ANSI-strip fixes applied.
 
 ### Step 7 — Test-duplication avoidance
 
