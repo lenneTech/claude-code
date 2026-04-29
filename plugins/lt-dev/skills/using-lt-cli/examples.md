@@ -345,7 +345,61 @@ lt fullstack init --name TestApp --frontend nuxt --git false \
 
 ---
 
-### 4. Project Types (Examples)
+### 4. Experimental: `--next` (nest-base)
+
+`--next` is an experimental flag that swaps the API template from
+[`nest-server-starter`](https://github.com/lenneTech/nest-server-starter)
+(MongoDB) to [`nest-base`](https://github.com/lenneTech/nest-base)
+(Bun + Prisma 7 + Postgres + Better-Auth).
+
+#### Standalone API
+```bash
+lt server create my-next-api --description "Experimental nest-base API" \
+  --author "Pascal" --next --noConfirm
+```
+
+**What happens:**
+1. Clones `https://github.com/lenneTech/nest-base.git` into `./my-next-api/`
+2. Patches `package.json` (name/description/version) — universal fields only
+3. Skips API mode / vendor mode / install / `lt.config.json` (incompatible)
+
+**Next steps (printed by the CLI):**
+```bash
+cd my-next-api
+bun install
+# Configure .env (see .env.example) and start Postgres
+bun run dev
+```
+
+#### Fullstack Workspace (nuxt + nest-base)
+```bash
+lt fullstack init --name MyNextApp --frontend nuxt --next --noConfirm
+```
+
+**What happens:**
+1. Clones `lt-monorepo` workspace
+2. Sets up Nuxt frontend in `projects/app/`
+3. Clones `nest-base` into `projects/api/` (instead of `nest-server-starter`)
+4. Skips workspace install — install per subproject manually
+
+**Next steps:**
+```bash
+cd MyNextApp
+cd projects/app && pnpm install
+cd ../api && bun install
+# Configure projects/api/.env, start Postgres, run prisma generate / migrate
+```
+
+**Limitations of `--next`:**
+- `lt server module / object / addProp / test / permissions` target the
+  classic nest-server layout (Mongoose, `src/server/modules/`) and will
+  not work on the resulting `nest-base` project.
+- Vendor mode is forced off — `--framework-mode vendor` is ignored.
+- API mode is forced to `Rest` — `--api-mode GraphQL/Both` is ignored.
+- Use for greenfield prototyping; for production builds prefer the
+  default template.
+
+### 5. Project Types (Examples)
 
 #### Client Project (Angular + NestJS)
 ```bash
@@ -390,7 +444,7 @@ lt fullstack init \
 
 ---
 
-### 5. Post-Creation Workflows
+### 6. Post-Creation Workflows
 
 #### After Angular Fullstack Init
 ```bash
@@ -433,7 +487,7 @@ pnpm run dev
 
 ---
 
-### 6. Common Initialization Patterns
+### 7. Common Initialization Patterns
 
 #### Team Project Setup
 ```bash

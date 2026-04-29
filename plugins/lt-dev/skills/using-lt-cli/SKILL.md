@@ -12,6 +12,7 @@ description: 'Provides reference for the lenne.tech CLI tool (lt command). Cover
 - **`lt git reset` is DESTRUCTIVE and irreversible** — Lives next to the safe `lt git get` in the CLI menu. `reset` does `git reset --hard` followed by force-pull, destroying ALL local changes without confirmation. Never run it on a branch with unpushed work. Prefer `git stash` + `lt git get`.
 - **`lt server object X --controller` generates REST, NOT GraphQL** — Default is REST. For GraphQL projects, use `--resolver`. The CLI does not auto-detect from existing project patterns — you must specify explicitly.
 - **`lt fullstack convert-mode` rewrites the source tree** — Switching between `npm` and `vendor` mode moves framework code in/out of `src/core/` (API) or `app/core/` (App). The operation is reversible but NOT idempotent mid-run — always commit before starting, so a failed conversion can be rolled back via `git reset`.
+- **`--next` is experimental and incompatible with `lt server module/object/addProp/test/permissions`** — When `lt server create --next` or `lt fullstack init --next` is used, the API is cloned from [`nest-base`](https://github.com/lenneTech/nest-base) (Bun + Prisma 7 + Postgres + Better-Auth) instead of `nest-server-starter`. The downstream generators target the classic nest-server layout (Mongoose models, src/server/modules/, etc.) and will not work on a nest-base project. Use it for greenfield prototyping only; for production work prefer the default template.
 
 ## Skill Boundaries
 
@@ -54,7 +55,7 @@ Fetches latest from remote, resets current branch to `origin/<branch>`. **Destru
 ```bash
 # Non-interactive
 lt fullstack init --name <Name> --frontend <angular|nuxt> --git <true|false> --noConfirm \
-  [--git-link <URL>] [--api-link <path>] [--frontend-link <path>]
+  [--git-link <URL>] [--api-link <path>] [--frontend-link <path>] [--next]
 ```
 
 | Parameter | Required | Description |
@@ -68,6 +69,7 @@ lt fullstack init --name <Name> --frontend <angular|nuxt> --git <true|false> --n
 | `--frontend-branch` | No | Branch of frontend starter |
 | `--api-copy` / `--api-link` | No | Local API template (copy / symlink) |
 | `--frontend-copy` / `--frontend-link` | No | Local frontend template (copy / symlink) |
+| `--next` | No | **Experimental** — clone [`nest-base`](https://github.com/lenneTech/nest-base) (Bun + Prisma 7 + Postgres + Better-Auth) for the API. Forces `apiMode = Rest`, `frameworkMode = npm`, and skips the workspace install (run `pnpm install` for app and `bun install` for api manually). Downstream `lt server module/object/addProp/test` are NOT compatible with the resulting layout. |
 
 **Priority:** `--*-link` > `--*-copy` > `--*-branch` > default (GitHub clone)
 
@@ -75,7 +77,7 @@ lt fullstack init --name <Name> --frontend <angular|nuxt> --git <true|false> --n
 ```
 <workspace>/
 ├── projects/
-│   ├── api/    ← nest-server-starter
+│   ├── api/    ← nest-server-starter (or nest-base with --next)
 │   └── app/    ← nuxt-base-starter (or ng-base-starter)
 ├── package.json
 └── .gitignore
@@ -86,15 +88,19 @@ lt fullstack init --name <Name> --frontend <angular|nuxt> --git <true|false> --n
 cd <workspace> && pnpm install
 cd projects/api && pnpm start     # Port 3000
 cd projects/app && pnpm start     # Port 3001
+
+# With --next: install per subproject, no workspace install
+cd <workspace>/projects/app && pnpm install
+cd <workspace>/projects/api && bun install
 ```
 
 ### lt server create — Scaffold New Server
 
 ```bash
-lt server create <name> --noConfirm [--branch <branch>] [--copy <path>] [--link <path>]
+lt server create <name> --noConfirm [--branch <branch>] [--copy <path>] [--link <path>] [--next]
 ```
 
-Creates a standalone NestJS project from nest-server-starter. For module/object/property commands, see `generating-nest-servers` skill.
+Creates a standalone NestJS project from nest-server-starter. With `--next`, clones [`nest-base`](https://github.com/lenneTech/nest-base) (Bun + Prisma 7 + Postgres + Better-Auth) instead and skips API-mode / vendor-mode / install / `lt.config.json` processing. For module/object/property commands, see `generating-nest-servers` skill — those are NOT compatible with `--next` projects.
 
 ## Best Practices
 
