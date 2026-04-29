@@ -70,6 +70,7 @@ For each Dockerfile in the diff:
 - [ ] **HEALTHCHECK** directive present
 - [ ] **Minimal final image** — no dev dependencies, no source code in runtime stage
 - [ ] **EXPOSE** matches service port convention (API: 3000, App: 3001)
+- [ ] **API entry path consistency (lt-Stack)** — `nest-server-starter` builds with `tsc -p tsconfig.build.json`, so the entry lives at `dist/src/main.js` (not `dist/main.js`). The Dockerfile `CMD`, any docker-compose `command:` override and every CI invocation (`.gitlab-ci.yml`, GitHub workflows) must agree. Mismatches surface as a silent `MODULE_NOT_FOUND` and a ready-probe time-out — not a clear error. Verify with: `grep -rn "node dist/" Dockerfile docker-compose*.yml .gitlab-ci.yml .github/workflows/ 2>/dev/null`.
 
 #### Development Dockerfiles
 
@@ -127,6 +128,8 @@ For any CI/CD configuration in the diff:
 - [ ] **Cache strategy**: `node_modules` cached between runs
 - [ ] **Pinned images**: CI runner images pinned (not `:latest`)
 - [ ] **Test database**: Uses `app-test` — never `app-dev` or `app-prod`
+- [ ] **E2E DB ↔ API DB alignment** — the `MONGO_URI` / `E2E_MONGO_URI` env vars in the CI job MUST point at the same database the API connects to under that `NODE_ENV` (look up `config.env.ts` → `<env>.config.mongoose.uri`). Mismatch produces `User not found in DB after sign-up` because tests write to one DB and the API authenticates against another. Verify with: `grep -E "E2E_MONGO_URI:|MONGO_URI:" .gitlab-ci.yml .github/workflows/ 2>/dev/null` and cross-check against `projects/api/src/config.env.ts`.
+- [ ] **Service-alias hostname (not 127.0.0.1) in CI test config** — Docker-CI services are reachable via their `alias`, not loopback. Hardcoded `127.0.0.1` in test helpers fails with `ECONNREFUSED` in the Job container. Verify with: `grep -rn "127\.0\.0\.1\|localhost" projects/*/tests/e2e/ 2>/dev/null` and require an `process.env.E2E_*` lookup, not a hardcoded fallback that resolves only on dev machines.
 - [ ] **Environment vars**: From CI/CD secrets — not hardcoded in pipeline
 - [ ] **Image tagging**: `git-sha-short` + `branch-name`
 

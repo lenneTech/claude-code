@@ -173,7 +173,13 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=40s \
   CMD wget --spider -q http://localhost:3000/health || exit 1
 
-CMD ["node", "dist/main.js"]
+# lt-Stack note: nest-server-starter builds with `tsc -p tsconfig.build.json`,
+# NOT `nest build`. tsc preserves the source layout, so the entry point lands
+# at `dist/src/main.js` — not `dist/main.js`. Using the wrong path produces a
+# silent CI failure (MODULE_NOT_FOUND, the API never opens its port, the
+# E2E job times out on the readiness probe). The Dockerfile, docker-compose
+# command override and any GitLab CI `node …main.js` invocation must agree.
+CMD ["node", "dist/src/main.js"]
 ```
 
 #### .dockerignore (MANDATORY)
@@ -346,6 +352,8 @@ When diagnosing issues, follow this exact order:
 | Volume permissions | `docker compose exec <service> ls -la /data` | Verify USER matches volume owner |
 | Port conflict | `lsof -i :3000` | Kill process or change port mapping |
 | MongoDB connection refused | Check `mongo` health, verify `MONGO_URI` | Ensure `depends_on` with health condition |
+| MODULE_NOT_FOUND on `node dist/main.js` in CI | tsc preserves source layout, entry is `dist/src/main.js` | Update Dockerfile + `.gitlab-ci.yml` + docker-compose to `dist/src/main.js` (lt-Stack uses tsc, not `nest build`) |
+| E2E `User not found in DB after sign-up` / `ECONNREFUSED 127.0.0.1:27017` | Test helpers and API connect to different databases or different hosts | Align `E2E_MONGO_URI` with `config.env.ts` (e.g. `NODE_ENV=ci` → `offers-ci`); replace `127.0.0.1` with the service alias (`mongo`) in CI; remove hardcoded URIs in test helpers, read from `process.env.E2E_MONGO_URI` |
 | Hot reload not working | Check volume mounts in compose file | Verify source path matches container path |
 
 ### Phase 7: Verification
@@ -387,7 +395,7 @@ environment:
 FROM node:20-alpine
 COPY . .
 RUN pnpm install && pnpm run build
-CMD ["node", "dist/main.js"]    # USE: Multi-stage build (deps → build → runtime)
+CMD ["node", "dist/main.js"]    # USE: Multi-stage build + correct lt-Stack entry: dist/src/main.js
 
 # FORBIDDEN: Mounting host node_modules
 volumes:
