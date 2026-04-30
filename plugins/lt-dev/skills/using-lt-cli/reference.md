@@ -58,6 +58,42 @@ lt fullstack init --name MyApp --frontend angular --git true --noConfirm \
   --frontend-copy <path/to/ng-base-starter>
 ```
 
+## lt server create / lt fullstack init — `--next` (experimental)
+
+`--next` swaps the API template from
+[`nest-server-starter`](https://github.com/lenneTech/nest-server-starter)
+(MongoDB) to [`nest-base`](https://github.com/lenneTech/nest-base)
+(Bun + Prisma 7 + Postgres + Better-Auth).
+
+```bash
+# Standalone API
+lt server create my-next-api --description "x" --author "y" --next --noConfirm
+
+# Fullstack
+lt fullstack init --name MyNextApp --frontend nuxt --next --noConfirm
+```
+
+**Effects when `--next` is set:**
+- Clones `https://github.com/lenneTech/nest-base.git` instead of `nest-server-starter`.
+- Forces `apiMode = Rest` and `frameworkMode = npm`.
+- Skips nest-server-starter-specific patching (`config.env.ts`,
+  `main.ts` Swagger, `meta.json`, README EJS template, `lt.config.json`,
+  CLAUDE.md API mode).
+- Skips vendor-mode transformation.
+- Skips workspace install in fullstack mode (Bun ≠ pnpm).
+
+**Limitations:**
+- `lt server module / object / addProp / test / permissions` are NOT
+  compatible with the `nest-base` layout.
+- Use for greenfield prototyping; production work should still use the
+  default template.
+
+**Post-creation install (fullstack):**
+```bash
+cd <workspace>/projects/app && pnpm install
+cd <workspace>/projects/api && bun install
+```
+
 ## Troubleshooting
 
 ### Git
