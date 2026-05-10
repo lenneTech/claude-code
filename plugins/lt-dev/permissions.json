@@ -565,7 +565,7 @@
     {
       "pattern": "Bash(docker compose:*)",
       "description": "Run docker compose commands",
-      "usedBy": ["devops", "devops-reviewer"]
+      "usedBy": ["devops", "devops-reviewer", "validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
     },
     {
       "pattern": "Bash(docker build:*)",
@@ -604,23 +604,28 @@
     },
     {
       "pattern": "Bash(curl:*)",
-      "description": "Check dev server availability for browser-based reviews and k6 load tests",
-      "usedBy": ["ux-reviewer", "a11y-reviewer", "frontend-reviewer", "performance-reviewer"]
+      "description": "Check dev server availability for browser-based reviews, health-check probes, k6 load tests, and Swagger discovery",
+      "usedBy": ["ux-reviewer", "a11y-reviewer", "frontend-reviewer", "performance-reviewer", "running-load-tests-with-k6", "validating-production-readiness", "production-readiness-orchestrator", "production-ready"]
     },
     {
       "pattern": "Bash(k6 run:*)",
       "description": "Run k6 load tests for API performance measurement",
-      "usedBy": ["performance-reviewer"]
+      "usedBy": ["performance-reviewer", "running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready"]
     },
     {
       "pattern": "Bash(k6 version:*)",
       "description": "Check k6 version availability",
-      "usedBy": ["performance-reviewer"]
+      "usedBy": ["performance-reviewer", "running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready"]
     },
     {
       "pattern": "Bash(command -v k6:*)",
       "description": "Detect k6 installation",
-      "usedBy": ["performance-reviewer"]
+      "usedBy": ["performance-reviewer", "running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready"]
+    },
+    {
+      "pattern": "Bash(k6:*)",
+      "description": "General k6 invocations (smoke / load / soak scenarios with --summary-export and similar flags)",
+      "usedBy": ["running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready"]
     },
     {
       "pattern": "Bash(nuxt build:*)",
@@ -670,17 +675,107 @@
     {
       "pattern": "Bash(pkill:*)",
       "description": "Terminate background dev servers and watchers to enforce the dev-server lifecycle contract",
-      "usedBy": ["managing-dev-servers", "contributing-to-lt-framework", "building-stories-with-tdd", "developing-lt-frontend", "generating-nest-servers"]
+      "usedBy": ["managing-dev-servers", "contributing-to-lt-framework", "building-stories-with-tdd", "developing-lt-frontend", "generating-nest-servers", "production-readiness-orchestrator", "production-ready"]
     },
     {
       "pattern": "Bash(pgrep:*)",
       "description": "Check whether a background dev server is still running before reporting completion",
-      "usedBy": ["managing-dev-servers", "contributing-to-lt-framework", "building-stories-with-tdd", "developing-lt-frontend", "generating-nest-servers"]
+      "usedBy": ["managing-dev-servers", "contributing-to-lt-framework", "building-stories-with-tdd", "developing-lt-frontend", "generating-nest-servers", "production-readiness-orchestrator", "production-ready"]
     },
     {
       "pattern": "Bash(lsof:*)",
       "description": "Inspect which process holds ports 3000/3001 when diagnosing port collisions",
       "usedBy": ["managing-dev-servers", "contributing-to-lt-framework"]
+    },
+    {
+      "pattern": "Bash(brew install k6:*)",
+      "description": "Install k6 on macOS for load testing",
+      "usedBy": ["running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready"]
+    },
+    {
+      "pattern": "Bash(brew install gitlab-runner:*)",
+      "description": "Install gitlab-runner on macOS for local pipeline reproduction",
+      "usedBy": ["validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+    },
+    {
+      "pattern": "Bash(brew install act:*)",
+      "description": "Install act on macOS for local GitHub Actions reproduction",
+      "usedBy": ["validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+    },
+    {
+      "pattern": "Bash(gitlab-runner:*)",
+      "description": "Run GitLab CI jobs locally via gitlab-runner exec for pipeline parity validation",
+      "usedBy": ["validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+    },
+    {
+      "pattern": "Bash(act:*)",
+      "description": "Run GitHub Actions workflows locally via nektos/act for pipeline parity validation",
+      "usedBy": ["validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+    },
+    {
+      "pattern": "Bash(docker:*)",
+      "description": "General Docker invocations (pull, run, info, network, version) for CI reproduction and load test scaffolding",
+      "usedBy": ["validating-ci-pipelines-locally", "running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready", "devops", "devops-reviewer"]
+    },
+    {
+      "pattern": "Bash(docker-compose:*)",
+      "description": "Older docker-compose v1 binary for legacy projects without docker compose plugin",
+      "usedBy": ["validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+    },
+    {
+      "pattern": "Bash(yq:*)",
+      "description": "Parse YAML files (.gitlab-ci.yml, .github/workflows/*.yml, docker-compose.yml) for job and stage discovery",
+      "usedBy": ["validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+    },
+    {
+      "pattern": "Bash(lt dev:*)",
+      "description": "Start, stop, inspect, install, migrate and diagnose lt-dev managed dev servers (Caddy + HTTPS URLs) for load tests, Playwright runs, and CI reproduction",
+      "usedBy": ["managing-dev-servers", "running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready"]
+    },
+    {
+      "pattern": "Bash(pnpm exec playwright:*)",
+      "description": "Run Playwright via pnpm exec when no script alias is defined",
+      "usedBy": ["developing-lt-frontend", "building-stories-with-tdd", "production-readiness-orchestrator", "production-ready"]
+    },
+    {
+      "pattern": "Bash(command:*)",
+      "description": "Tool availability detection (command -v <tool>) before invoking it",
+      "usedBy": ["running-load-tests-with-k6", "validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+    },
+    {
+      "pattern": "Bash(which:*)",
+      "description": "Tool path resolution alternative for command -v",
+      "usedBy": ["running-load-tests-with-k6", "validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+    },
+    {
+      "pattern": "Bash(test:*)",
+      "description": "POSIX test for file/directory existence in detection logic",
+      "usedBy": ["running-load-tests-with-k6", "validating-ci-pipelines-locally", "validating-production-readiness", "production-readiness-orchestrator", "production-ready", "running-check-script", "check"]
+    },
+    {
+      "pattern": "Bash(mkdir:*)",
+      "description": "Create scratch directories for load-test scaffolding (tests/load/) and CI artefacts (tmp/ci-local/)",
+      "usedBy": ["running-load-tests-with-k6", "validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+    },
+    {
+      "pattern": "Bash(cp:*)",
+      "description": "Copy artefacts between CI job runs and persist k6 baselines",
+      "usedBy": ["running-load-tests-with-k6", "validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+    },
+    {
+      "pattern": "Bash(mv:*)",
+      "description": "Move artefacts during CI reproduction and load-test baseline rotation",
+      "usedBy": ["validating-ci-pipelines-locally", "running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready"]
+    },
+    {
+      "pattern": "Bash(rm:*)",
+      "description": "Clean up scratch artefacts under tmp/ci-local/ between iterations",
+      "usedBy": ["validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+    },
+    {
+      "pattern": "Bash(diff:*)",
+      "description": "Compare k6 summary files against baselines for regression detection",
+      "usedBy": ["running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready"]
     }
   ]
 }

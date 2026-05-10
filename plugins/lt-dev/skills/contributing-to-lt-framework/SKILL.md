@@ -64,18 +64,20 @@ pnpm link --global @lenne.tech/nest-server
 cd "$FRAMEWORK_DIR"
 pnpm build --watch
 
-# Starter side: run the API as usual
+# Starter side: prefer lt dev up — it serves under stable HTTPS URLs
+# and won't collide with other parallel lt sessions on 3000/3001.
 cd "$STARTER_DIR"
-pnpm dev                   # starts nest-server-starter on port 3000
+lt dev up                  # starts nest-server-starter behind Caddy under https://api.<slug>.localhost
+# or (non-lt fallback): pnpm dev    # default port 3000
 ```
 
-**Use `run_in_background: true` for `pnpm build --watch` and `pnpm dev`. Clean up with `pkill -f "pnpm dev"` / `pkill -f "build --watch"` when done.** See `managing-dev-servers` skill.
+**Use `run_in_background: true` for `pnpm build --watch`. Clean up with `pkill -f "build --watch"` when done.** For the starter dev server, prefer `lt dev up`/`lt dev down` — see `managing-dev-servers` skill.
 
 ### 3. Validate
 
 - Run the starter's test suite: `pnpm test`
 - Exercise the changed code path via REST/GraphQL (Chrome DevTools MCP or API calls)
-- If the change touches auth, cookies, or CORS: verify that API port **3000** and App port **3001** are unchanged
+- If the change touches auth, cookies, or CORS: verify that `BASE_URL`/`APP_URL` (set automatically by `lt dev up`) propagate correctly. Auth is bound to those env vars, not to fixed port numbers — see `managing-dev-servers` skill.
 
 ### 4. Unlink
 
@@ -117,16 +119,17 @@ pnpm dev                   # framework dev mode, if available
 
 # Starter side
 cd "$STARTER_DIR"
-pnpm dev                   # starts nuxt-base-starter on port 3001
+lt dev up                  # starts nuxt-base-starter behind Caddy under https://<slug>.localhost
+# or (non-lt fallback): pnpm dev    # default port 3001
 ```
 
-**Same dev-server lifecycle rules apply — use `run_in_background: true` and `pkill` afterwards.**
+**Same dev-server lifecycle rules apply — prefer `lt dev up`/`down`, use `run_in_background: true` + `pkill` for the framework `pnpm build --watch` side.**
 
 ### 3. Validate
 
 - Playwright E2E tests in the starter exercise the integration
 - Chrome DevTools MCP for interactive verification
-- Auth flows require the backend on port 3000 — start both starters if you touch auth composables
+- Auth flows require the backend running — `lt dev up` in the api workspace starts it under `https://api.<slug>.localhost` and exports `NUXT_API_URL` for the app.
 
 ### 4. Unlink
 
@@ -146,7 +149,7 @@ pnpm install
 - **Stale linked build** — after a framework edit, nothing happens in the starter. Cause: `pnpm build` was not re-run or `--watch` is not active. Fix: verify the build output timestamp under `dist/`.
 - **Version mismatch** — starter expects a peer dependency range that does not match the linked framework version. Usually surfaces as a TS type mismatch. Fix: bump the framework's `package.json` version locally or adjust peer ranges for the test cycle (do NOT commit starter-side peer-range changes from this workflow).
 - **Forgotten unlink** — starter continues to resolve the linked framework on the next branch or project. Fix: always run the unlink step at the end; verify via `pnpm why @lenne.tech/nest-server`.
-- **Port collision on 3000/3001** — a leftover dev server from a previous iteration is still bound. Fix: `lsof -i :3000` / `lsof -i :3001`, then `pkill` the process.
+- **Port collision** — a leftover dev server from a previous iteration is still bound. Fix: `lt dev status --all` to see which project owns it, then `lt dev down` in that project (or `pkill` the process for non-lt projects).
 
 ## Related Skills & Agents
 

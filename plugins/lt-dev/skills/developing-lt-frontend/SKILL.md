@@ -22,7 +22,7 @@ paths:
 - **All UI text must be German** — English labels, button captions, toasts, and form placeholders pass lint, pass tests, but fail review. The app targets German-speaking users exclusively. When in doubt, translate, and consider `du` vs `Sie` addressing matches the existing tone of the screen.
 - **Use `useOverlay()` for modals — NOT conditional rendering** — The default instinct is `<MyModal v-if="showModal" />`. This bypasses Nuxt UI's modal stack, breaks focus trapping, and causes z-index issues with nested dialogs. The correct pattern is `useOverlay().create(ModalComponent)` from composables. See `reference/modals.md`.
 - **`types.gen.ts` and `sdk.gen.ts` are GENERATED — never hand-edit** — Manual changes are overwritten on next `generate-types` run. If a type is missing, the fix is on the API side (add `@ApiProperty`, `@Field`, etc.) not in the generated file. `.gitignore` does NOT ignore these files — they ARE committed, but only via the regeneration command.
-- **Better Auth cookies are bound to ports 3000/3001** — Changing the dev server port breaks login silently (401/403 without clear error). See `managing-dev-servers` skill for port rules.
+- **Better Auth derives its origins from BASE_URL/APP_URL — not from a hardcoded port number.** When `lt dev up` is used, these env vars are set automatically to the project's stable HTTPS URLs (`https://api.<slug>.localhost`, `https://<slug>.localhost`) and auth works regardless of internal port. The legacy "3000/3001 only" rule applies ONLY to non-migrated projects with hardcoded URLs. Run `lt dev migrate` once to migrate. See `managing-dev-servers` skill for the full URL rules.
 
 ## Ecosystem Context
 
@@ -103,7 +103,7 @@ project/
 
 ## Dev Server Lifecycle
 
-When starting `nuxt dev` (or any long-running process) for manual testing, Chrome DevTools MCP debugging, or E2E tests: **always** use `run_in_background: true` and `pkill -f "nuxt dev"` afterwards. Leaving dev servers orphaned blocks the Claude Code session ("Unfurling..."). Full rules: `managing-dev-servers` skill.
+When starting the App for manual testing, Chrome DevTools MCP debugging, or E2E tests: **prefer `lt dev up`** over `nuxt dev` directly. It serves the App under a stable HTTPS URL (`https://<slug>.localhost`) via Caddy, sets `NUXT_API_URL`/`NUXT_PUBLIC_SITE_URL`/`NUXT_PUBLIC_STORAGE_PREFIX`/`NUXT_PUBLIC_API_PROXY=false` automatically, and detaches into `<root>/.lt-dev/app.log`. Stop with `lt dev down`. For non-lt-projects (or when explicitly requested): use `run_in_background: true` and `pkill -f "nuxt dev"` afterwards. Leaving dev servers orphaned blocks the Claude Code session ("Unfurling..."). Full rules: `managing-dev-servers` skill.
 
 **In monorepo projects:**
 - `projects/app/` or `packages/app/` → **This skill**

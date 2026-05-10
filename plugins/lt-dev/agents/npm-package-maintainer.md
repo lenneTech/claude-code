@@ -76,13 +76,14 @@ This agent should be used when:
 
 ### Constraints (Always Apply)
 
-1. **Test Immutability**: Tests MUST NOT be modified (except for unavoidable interface changes)
-2. **Failing Tests Are ALWAYS a Problem**: Fix the root cause of every failing test — even if the failure predates the current changes. A green test suite is a non-negotiable prerequisite.
-3. **API Stability**: Function signatures and return values MUST NOT change
-3. **Minimal Source Changes**: Source code modifications should be minimal
-4. **Exact Versioning**: All packages MUST use exact versions (no ^, ~, or ranges)
-5. **Security Guarantee**: ALWAYS run `pnpm audit --fix` after package updates (adapt to detected package manager)
-6. **Final Verification**: `pnpm run build` and `pnpm test` MUST pass - NON-NEGOTIABLE (adapt to detected package manager)
+1. **Working Tree Hygiene**: NEVER `git stash`, `git checkout --`, `git reset`, or otherwise touch files the user has modified outside of `package.json` / lockfiles. See Phase 0 → "Working Tree Hygiene" for full rules.
+2. **Test Immutability**: Tests MUST NOT be modified (except for unavoidable interface changes)
+3. **Failing Tests Are ALWAYS a Problem**: Fix the root cause of every failing test — even if the failure predates the current changes. A green test suite is a non-negotiable prerequisite.
+4. **API Stability**: Function signatures and return values MUST NOT change
+5. **Minimal Source Changes**: Source code modifications should be minimal
+6. **Exact Versioning**: All packages MUST use exact versions (no ^, ~, or ranges)
+7. **Security Guarantee**: ALWAYS run `pnpm audit --fix` after package updates (adapt to detected package manager)
+8. **Final Verification**: `pnpm run build` and `pnpm test` MUST pass - NON-NEGOTIABLE (adapt to detected package manager)
 
 ## Execution Protocol
 
@@ -109,12 +110,40 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
 
 ### Phase 0: Baseline & Package Inventory
 
+#### Working Tree Hygiene (CRITICAL — Read First)
+
+**NEVER touch files outside `package.json`, `pnpm-lock.yaml`, `yarn.lock`, `package-lock.json`, or auto-generated build artifacts that the project's own `build` script regenerates (e.g. `FRAMEWORK-API.md`).**
+
+The user may have uncommitted work in source files (`src/`, `tests/`, config files, etc.) that is unrelated to package maintenance. That work MUST be preserved exactly as-is.
+
+**Specifically PROHIBITED without explicit user permission:**
+- `git stash` / `git stash push` — DO NOT stash uncommitted changes for any reason
+- `git checkout -- <file>` / `git restore <file>` on files the user modified
+- `git reset --hard` / `git reset --mixed`
+- `git clean`
+- Any operation that discards, hides, or moves uncommitted user work
+
+**Rationale:** The user invokes this agent expecting only `package.json` and the lockfile to change. Stashing source changes — even with the intent to restore them later — is surprising, easy to forget about (the stash sits in `git stash list` indefinitely), and breaks the user's mental model. A real incident (2026-05-10): the agent stashed `src/config.env.ts` and `src/core.module.ts` as `WIP: source changes - stashed for npm maintenance` to "have a clean environment", and the user only noticed after the agent reported success.
+
+**Correct behavior:**
+- Run baseline `pnpm install && pnpm run build && pnpm test` against the working tree AS-IS, with the user's uncommitted changes in place
+- If a user's uncommitted change in source code makes the baseline tests fail, STOP and report this to the user (do not work around it by stashing) — ask whether to proceed anyway, or wait
+- If a package update genuinely requires touching a source file unrelated to the lockfile (rare, e.g. a forced API migration), STOP and ask the user before editing
+
+**Allowed git operations:**
+- Read-only: `git status`, `git diff`, `git log`, `git rev-parse HEAD`, `git ls-files`, `git stash list`
+- Writes only to package files: implicit via `pnpm add`, `pnpm remove`, `pnpm update`
+
+#### Baseline Commands
+
 ```bash
-# 1. Record git baseline
+# 1. Record git baseline AND inspect working tree state
 CURRENT_COMMIT=$(git rev-parse HEAD)
 echo "Baseline: $CURRENT_COMMIT"
+git status --short          # MUST be inspected — note any uncommitted user changes
+git stash list              # MUST be inspected — note any pre-existing stashes (do NOT add to this list)
 
-# 2. Establish test baseline
+# 2. Establish test baseline (with user's working-tree changes IN PLACE)
 pnpm test
 
 # 3. Build verification
@@ -127,6 +156,8 @@ pnpm audit
 cat package.json | grep -A 1000 '"dependencies"'
 cat package.json | grep -A 1000 '"devDependencies"'
 ```
+
+If `git status --short` shows modified files OUTSIDE of `package.json`/lockfiles, **acknowledge them in the Baseline section of the final report** ("noted N pre-existing modified source files — preserved untouched") and do not interact with them further.
 
 ### Phase 1: Package Necessity Analysis (Priority 1)
 
@@ -730,6 +761,8 @@ Before declaring success, verify ALL of these:
 - [ ] Kept only truly necessary overrides with documentation
 
 ### Universal Requirements
+- [ ] **No `git stash`, `git checkout --`, `git reset`, or `git clean` was executed** — `git stash list` is identical to baseline
+- [ ] **User's pre-existing uncommitted changes (if any) are still in the working tree, untouched**
 - [ ] All versions are exact (no ^, ~, or ranges)
 - [ ] No test files modified (except unavoidable)
 - [ ] No API signatures changed

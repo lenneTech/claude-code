@@ -86,13 +86,41 @@ lt fullstack init --name <Name> --frontend <angular|nuxt> --git <true|false> --n
 **Post-creation:**
 ```bash
 cd <workspace> && pnpm install
-cd projects/api && pnpm start     # Port 3000
-cd projects/app && pnpm start     # Port 3001
+lt dev install                   # one-time per machine: verify Caddy + CA
+lt dev migrate                   # idempotent: ENV patches + register project
+lt dev up                        # Start API + App behind Caddy under https://<slug>.localhost
 
 # With --next: install per subproject, no workspace install
 cd <workspace>/projects/app && pnpm install
 cd <workspace>/projects/api && bun install
 ```
+
+(Falls back to `pnpm -r --parallel run start` on default ports 3000/3001 if `lt dev` is not used.)
+
+### lt dev — Parallel Project Orchestration (Caddy + HTTPS)
+
+Serves every lt project under stable HTTPS URLs (`<slug>.localhost`, `api.<slug>.localhost`) via Caddy so multiple projects can run side by side without colliding on 3000/3001 and without auth cross-wiring. Use this in every lt-monorepo or standalone API/App project.
+
+```bash
+lt dev install                   # One-time per machine: Caddy + Caddyfile stub + CA reminder
+lt dev migrate                   # Once per project (idempotent): ENV patches + register
+lt dev up                        # Start API + App behind Caddy
+lt dev down                      # Stop processes + remove Caddy block
+lt dev status                    # Show URLs + PIDs + live upstream state for THIS project
+lt dev status --all              # List every registered project + running state
+lt dev doctor                    # Diagnose Caddy / CA / DNS / port issues
+```
+
+What each subcommand does:
+
+- **`install`** — One-time per machine. Verifies `caddy` is on PATH (suggests `brew install caddy` if missing), creates `~/.lenneTech/Caddyfile` stub, validates the file, reminds you to run `sudo caddy trust` so browsers accept `https://*.localhost`.
+- **`migrate`** — Idempotent. Builds the project identity (slug = `package.json` "name", subdomains from monorepo layout), patches legacy hardcoded `port: 3000` / `port: 3001` / Vite-proxy targets / Playwright URLs to env-aware variants (defaults preserved), persists to `~/.lenneTech/projects.json`, injects a "Local Development (lt dev)" URL block into all `CLAUDE.md` files, adds `.lt-dev/` to `.gitignore`.
+- **`up`** — Allocates internal upstream ports (4000+, never 3000/3001), upserts the Caddy block + reloads, exports `PORT`, `BASE_URL`, `APP_URL`, `NUXT_API_URL`, `NUXT_PUBLIC_API_URL`, `NUXT_PUBLIC_SITE_URL`, `NUXT_PUBLIC_STORAGE_PREFIX`, `NUXT_PUBLIC_API_PROXY=false`, `NSC__MONGOOSE__URI`, `DATABASE_URL`, then spawns `pnpm start` (api) + `pnpm dev` (app) detached. Pre-flight checks refuse to start when Caddy is missing, Caddy daemon is down, an existing session is alive, or internal ports are bound. Logs at `<root>/.lt-dev/{api,app}.log`.
+- **`down`** — Sends SIGTERM to the saved process group (negative PID) so children (Vite, Nest watcher, etc.) receive it too. Removes the project's Caddy block + reloads.
+- **`status`** / **`status --all`** — Current project: subdomains → upstream ports, db URI, session PIDs (alive/dead), live `lsof` upstream state. `--all`: every registered project with a `●`/`○` indicator.
+- **`doctor`** — Caddy on PATH, daemon running, Caddyfile valid, ports 80/443 free or held by Caddy, `*.localhost` resolves, registry status.
+
+**Override the spawn binary** via `LT_PNPM_BIN` (e.g. for bun-based projects via wrapper script).
 
 ### lt server create — Scaffold New Server
 

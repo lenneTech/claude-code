@@ -213,7 +213,7 @@ pnpm test  # Or: pnpm test -- tests/stories/your-story.story.test.ts
 
 **Decide:** Test bugs -> Step 3a | Implementation missing -> Step 4
 
-**If this step requires a live dev server** (e.g. Playwright E2E against `nuxt dev`, or an API server for REST/GraphQL probes): follow the `managing-dev-servers` skill — always start with `run_in_background: true` and `pkill` afterwards. Never leave dev servers orphaned between TDD iterations.
+**If this step requires a live dev server** (e.g. Playwright E2E against `nuxt dev`, or an API server for REST/GraphQL probes): follow the `managing-dev-servers` skill. For lt-projects: use `lt dev up` (stable HTTPS URLs, no 3000/3001 collision with other parallel sessions) and `lt dev down` between or after iterations. For non-lt-projects: `run_in_background: true` + `pkill` afterwards. Never leave dev servers orphaned between TDD iterations.
 
 ### Step 3a: Fix Test Errors
 **Details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md) -> Step 3a**

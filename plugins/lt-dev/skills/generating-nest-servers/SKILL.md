@@ -81,7 +81,7 @@ project/
 
 ## Dev Server Lifecycle
 
-When starting `nest start` / `pnpm dev` (or any long-running process) for manual API testing, debugging, or E2E tests: **always** use `run_in_background: true` and `pkill -f "nest start"` afterwards. Leaving dev servers orphaned blocks the Claude Code session ("Unfurling..."). Full rules: `managing-dev-servers` skill.
+When starting the API for manual testing, debugging, or E2E tests: **prefer `lt dev up`** over `nest start` / `pnpm dev` directly. `lt dev up` serves the API under a stable HTTPS URL (`https://api.<slug>.localhost`) via Caddy, sets `BASE_URL`/`APP_URL`/`NSC__MONGOOSE__URI` automatically, and detaches into `<root>/.lt-dev/api.log`. Stop with `lt dev down`. For non-lt-projects (or when explicitly requested): use `run_in_background: true` and `pkill -f "nest start"` afterwards. Leaving dev servers orphaned blocks the Claude Code session ("Unfurling..."). Full rules: `managing-dev-servers` skill.
 
 ## CRITICAL RULES
 

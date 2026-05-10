@@ -76,6 +76,32 @@ if [ -n "$BRANCH" ]; then
   CONTEXT_LINES+=("Branch: ${BRANCH}")
 fi
 
+# Detect lt-dev URLs (from registry) so Claude does not regress to the
+# legacy 3000/3001 assumption after compaction.
+LT_REGISTRY="${LT_DEV_REGISTRY_PATH:-$HOME/.lenneTech/projects.json}"
+# Slug = package.json "name" (scope stripped) or directory basename, slugified.
+LT_SLUG=""
+if [ -f "$PROJECT_DIR/package.json" ] && command -v jq >/dev/null 2>&1; then
+  LT_RAW=$(jq -r '.name // empty' "$PROJECT_DIR/package.json" 2>/dev/null)
+  LT_RAW="${LT_RAW##*/}"
+  LT_SLUG=$(echo "$LT_RAW" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')
+fi
+if [ -z "$LT_SLUG" ]; then
+  LT_SLUG=$(basename "$PROJECT_DIR" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')
+fi
+LT_API_HOST=""
+LT_APP_HOST=""
+if command -v jq >/dev/null 2>&1 && [ -f "$LT_REGISTRY" ]; then
+  LT_API_HOST=$(jq -r --arg s "$LT_SLUG" '.projects[$s].subdomains.api // empty' "$LT_REGISTRY" 2>/dev/null)
+  LT_APP_HOST=$(jq -r --arg s "$LT_SLUG" '.projects[$s].subdomains.app // empty' "$LT_REGISTRY" 2>/dev/null)
+fi
+if [ -n "$LT_API_HOST" ] || [ -n "$LT_APP_HOST" ]; then
+  LT_CTX="lt-dev URLs:"
+  [ -n "$LT_APP_HOST" ] && LT_CTX="$LT_CTX App=https://${LT_APP_HOST}"
+  [ -n "$LT_API_HOST" ] && LT_CTX="$LT_CTX API=https://${LT_API_HOST}"
+  CONTEXT_LINES+=("$LT_CTX (use \`lt dev up\` — never assume 3000/3001)")
+fi
+
 # --- Output context summary ---
 if [ ${#CONTEXT_LINES[@]} -gt 0 ]; then
   echo "--- Post-Compaction Project Context (${TRIGGER}) ---"
