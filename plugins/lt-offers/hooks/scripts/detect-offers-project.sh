@@ -26,12 +26,23 @@ PROMPT_LOWER=$(echo "$PROMPT" | tr '[:upper:]' '[:lower:]')
 # ── Keyword guard: only check filesystem if prompt mentions offers ──
 # This avoids unnecessary filesystem stats on every prompt in unrelated projects
 if echo "$PROMPT_LOWER" | grep -qE '(angebot|offer|content.?block|preistabelle|pricing|vorlage|template.*angebot|angebote\.lenne|analytics|statistik|aufrufe|views|downloads|verweildauer|scroll|wissensdatenbank|knowledge|quellen|sources|briefing|unterlagen)'; then
+
+  # Stage routing — `offers-api` (prod, default) vs `offers-api-demo` (demo).
+  # Trigger: any explicit mention of "demo" inside an offers-related prompt.
+  # The whole-word match avoids false positives like "Demonstrations-Angebot"
+  # being routed to the demo stage when the author meant production.
+  if echo "$PROMPT_LOWER" | grep -qE '(^|[^a-z0-9])demo([^a-z0-9]|$)|demo-angebote\.lenne|demo[- ]?(stage|umgebung|instanz|server|deployment)'; then
+    STAGE_HINT="Demo stage requested. Use the **offers-api-demo** MCP server (https://api.demo-angebote.lenne.tech/mcp) for all offer operations in this prompt. Do NOT call tools on the default \`offers-api\` server — that one is production."
+  else
+    STAGE_HINT="Default stage. Use the **offers-api** MCP server (https://api.angebote.lenne.tech/mcp, production). The sibling \`offers-api-demo\` is available but should only be used when the user explicitly mentions the demo stage."
+  fi
+
   # Check if we're inside the offers project
   if [ -f "$CWD/projects/api/src/server/modules/offer/offer.service.ts" ] || \
      [ -f "$CWD/projects/app/app/interfaces/offer.interface.ts" ]; then
-    CONTEXT="Offers project detected (local development). The project-level .mcp.json overrides offers-api to http://localhost:3000/mcp — MCP tools will use the local API server. Use the creating-offers skill for offer-related tasks."
+    CONTEXT="Offers project detected (local development). The project-level .mcp.json overrides \`offers-api\` to http://localhost:3000/mcp — MCP tools will use the local API server. ${STAGE_HINT} Use the creating-offers skill for offer-related tasks."
   else
-    CONTEXT="Offer-related keywords detected. Use the creating-offers skill for creating and managing offers on angebote.lenne.tech."
+    CONTEXT="Offer-related keywords detected. ${STAGE_HINT} Use the creating-offers skill for creating and managing offers."
   fi
 fi
 

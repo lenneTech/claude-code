@@ -1,6 +1,6 @@
 ---
 name: creating-offers
-description: 'Creates and edits business offers on the lenne.tech Offers platform (angebote.lenne.tech). Knows all 16 content block types, offer lifecycle (draft/sent/viewed/template), custom HTML with Tailwind CSS and NuxtUI components (via rich-component block). Activates when working with offers, content blocks, or the Offers API. Uses MCP tools (offers-api) for all CRUD operations.'
+description: 'Creates and edits business offers on the lenne.tech Offers platform (angebote.lenne.tech) and its demo deployment (demo-angebote.lenne.tech). Knows all 16 content block types, offer lifecycle (draft/sent/viewed/template), custom HTML with Tailwind CSS and NuxtUI components (via rich-component block). Activates when working with offers, content blocks, or the Offers API. Uses MCP tools (offers-api for production, offers-api-demo for demo) for all CRUD operations.'
 ---
 
 # Creating Offers on angebote.lenne.tech
@@ -11,7 +11,7 @@ This skill enables Claude Code to create, optimize, and manage business offers o
 
 - **Content block `order` values must be ascending without gaps** — Gaps in the sequence (e.g., `1, 3, 5`) cause rendering glitches on the offers frontend. When deleting a block, re-normalize remaining orders; when inserting, pick the next consecutive integer. The API does not validate this — the bug only surfaces client-side.
 - **`global-ref` block type is NOT listed in the standard MCP tool catalog** — It's created automatically by the `/offers:create` workflow when a block is promoted to the offers repository. Users attempting to use it directly via `create_offer` will get a schema error. The workflow guards this via the `@lenne.tech` git email check.
-- **OAuth session expires silently across sessions** — The `offers-api` MCP OAuth cookie is tied to the current Claude session. Resuming an earlier offers session (via `--resume`) often hits a 401 on the first MCP call without a clear error. Re-authenticate by running a trivial MCP tool first.
+- **OAuth session expires silently across sessions** — The `offers-api` and `offers-api-demo` MCP OAuth cookies are tied to the current Claude session and tracked per-server. Resuming an earlier offers session (via `--resume`) often hits a 401 on the first MCP call without a clear error. Re-authenticate by running a trivial MCP tool first. The first call against `offers-api-demo` triggers its own OAuth flow even if `offers-api` is already authenticated.
 - **`git config user.email` detection is fragile** — The reusable-block detection uses this to gate the lenne.tech-only flow. It fails for developers with a non-`@lenne.tech` email configured locally (CI machines, temporary clones, rebased-from-fork setups). The step silently skips in those cases, which is the intended fail-safe.
 - **Template offers cannot be published — only duplicated** — Offers with `isTemplate: true` cannot be `mark_sent`. Attempting to publish a template silently returns the unchanged offer. To publish, first `create_from_template` to produce a regular offer, then send that one.
 
@@ -19,7 +19,7 @@ This skill enables Claude Code to create, optimize, and manage business offers o
 
 - User asks to create, edit, or optimize an offer/Angebot
 - User references content blocks, pricing tables, or offer templates
-- User mentions angebote.lenne.tech or the offers platform
+- User mentions angebote.lenne.tech, demo-angebote.lenne.tech, or the offers platform
 - Working inside the offers project repository
 - User wants to generate sharing snippets or manage offer status
 - User asks about offer analytics, views, downloads, or statistics
@@ -40,11 +40,20 @@ This skill enables Claude Code to create, optimize, and manage business offers o
 
 ## MCP Connection
 
-All offer operations go through the `offers-api` MCP server. The connection uses OAuth 2.1 with automatic browser-based login. No API keys or tokens needed.
+All offer operations go through one of two MCP servers — the platform ships a production and a demo deployment:
 
-The default MCP endpoint is `https://api.angebote.lenne.tech/mcp` (production). When working inside the offers project repository, the project-level `.mcp.json` overrides this to `http://localhost:3000/mcp` for local development.
+| MCP Server | URL | When to use |
+|---|---|---|
+| `offers-api` | `https://api.angebote.lenne.tech/mcp` | **Default.** Production — real customer-facing offers. |
+| `offers-api-demo` | `https://api.demo-angebote.lenne.tech/mcp` | Demo stage — sandbox for prospect demos. Use when the user mentions "demo", "Demo-Angebot", "demo-angebote", "Demo-Stage", or "Demo-Umgebung". |
 
-**Available MCP Tools:**
+**Routing rule.** If the user prompt mentions "demo" in an offers context, route ALL tool calls in that prompt to `offers-api-demo`. Otherwise — including for ambiguous prompts — default to `offers-api` (production). The `UserPromptSubmit` hook emits a one-line stage hint that names the correct server; honor that hint.
+
+Both connections use OAuth 2.1 with automatic browser-based login. The OAuth session is per-MCP-server, so the first call against `offers-api-demo` triggers its own browser-auth flow even if `offers-api` is already authenticated.
+
+When working inside the offers project repository (local development), the project-level `.mcp.json` overrides `offers-api` to `http://localhost:3000/mcp` so production-flavored tool calls hit your local API. `offers-api-demo` is unaffected — still points at the deployed demo stage — which is useful for testing demo-only flows from a local dev environment.
+
+**Available MCP Tools (identical on both servers):**
 - `add_lottie_animation` — Upload a Lottie JSON file and create a `lottie` content block in one atomic call (validates the JSON, rejects unsupported features, ≤ 2 MB)
 - `add_offer_source` — Add a source (text/link/file) to an offer
 - `create_from_template` — Create offer from template

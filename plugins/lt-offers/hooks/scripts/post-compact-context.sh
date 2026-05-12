@@ -21,7 +21,7 @@ CONTEXT=""
 # polluting unrelated sessions that happened to compact.
 if [ -f "$CWD/projects/api/src/server/modules/offer/offer.service.ts" ] || \
    [ -f "$CWD/projects/app/app/interfaces/offer.interface.ts" ]; then
-  CONTEXT="Offers project context (restored after compaction). Use the creating-offers skill for offer-related tasks. MCP tools route to the local API server via offers-api."
+  CONTEXT="Offers project context (restored after compaction). Use the creating-offers skill for offer-related tasks. Two MCP servers available: \`offers-api\` (default → local override to http://localhost:3000/mcp via project .mcp.json, or production https://api.angebote.lenne.tech/mcp) and \`offers-api-demo\` (https://api.demo-angebote.lenne.tech/mcp — use only when the user mentions \"demo\")."
 fi
 
 if [ -n "$CONTEXT" ]; then

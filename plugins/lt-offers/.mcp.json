@@ -3,6 +3,10 @@
     "offers-api": {
       "type": "http",
       "url": "https://api.angebote.lenne.tech/mcp"
+    },
+    "offers-api-demo": {
+      "type": "http",
+      "url": "https://api.demo-angebote.lenne.tech/mcp"
     }
   }
 }
