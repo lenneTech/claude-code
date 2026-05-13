@@ -1,6 +1,6 @@
 ---
 name: using-lt-cli
-description: 'Provides reference for the lenne.tech CLI tool (lt command). Covers lt fullstack init (workspace creation with local template symlinks), lt fullstack update (version sync), lt fullstack convert-mode (npm/vendor switch), lt git get/reset (branch management), lt server create (project scaffolding), and lt server object/addProp (element generation). Activates when user mentions "lt", "lt CLI", "lenne.tech CLI", "lt fullstack", "lt git", "lt server", "fullstack workspace", "local templates", "--api-link", "--frontend-link", "--noConfirm", "convert-mode", "npm mode", "vendor mode", or any lt command syntax. NOT for NestJS module/object/property creation (use generating-nest-servers). NOT for Vue/Nuxt frontend code (use developing-lt-frontend).'
+description: 'Provides reference for the lenne.tech CLI tool (lt command). Covers lt fullstack init (workspace creation with local template symlinks), lt fullstack update (version sync), lt fullstack convert-mode (npm/vendor switch), lt git get/reset (branch management), lt server create (project scaffolding), lt server object/addProp (element generation), and lt dev (parallel project orchestration via Caddy + dedicated LaunchAgent — install/uninstall/migrate/up/down/status/doctor/tunnel). Activates when user mentions "lt", "lt CLI", "lenne.tech CLI", "lt fullstack", "lt git", "lt server", "lt dev", "fullstack workspace", "local templates", "--api-link", "--frontend-link", "--noConfirm", "convert-mode", "npm mode", "vendor mode", "Caddy tunnel", "trycloudflare", or any lt command syntax. NOT for NestJS module/object/property creation (use generating-nest-servers). NOT for Vue/Nuxt frontend code (use developing-lt-frontend).'
 ---
 
 # LT CLI Reference
@@ -102,23 +102,27 @@ cd <workspace>/projects/api && bun install
 Serves every lt project under stable HTTPS URLs (`<slug>.localhost`, `api.<slug>.localhost`) via Caddy so multiple projects can run side by side without colliding on 3000/3001 and without auth cross-wiring. Use this in every lt-monorepo or standalone API/App project.
 
 ```bash
-lt dev install                   # One-time per machine: Caddy + Caddyfile stub + CA reminder
+lt dev install                   # One-time per machine: bootstraps dedicated LaunchAgent/systemd unit + Caddyfile stub + CA reminder
+lt dev uninstall [--purge]       # Remove the lt-dev service (--purge also drops Caddyfile + logs)
 lt dev migrate                   # Once per project (idempotent): ENV patches + register
 lt dev up                        # Start API + App behind Caddy
 lt dev down                      # Stop processes + remove Caddy block
 lt dev status                    # Show URLs + PIDs + live upstream state for THIS project
 lt dev status --all              # List every registered project + running state
 lt dev doctor                    # Diagnose Caddy / CA / DNS / port issues
+lt dev tunnel [--api]            # Foreground Cloudflare Quick Tunnel: public *.trycloudflare.com URL
 ```
 
 What each subcommand does:
 
-- **`install`** — One-time per machine. Verifies `caddy` is on PATH (suggests `brew install caddy` if missing), creates `~/.lenneTech/Caddyfile` stub, validates the file, reminds you to run `sudo caddy trust` so browsers accept `https://*.localhost`.
+- **`install`** — One-time per machine. Verifies `caddy` is on PATH (suggests `brew install caddy` if missing), creates `~/.lenneTech/Caddyfile` stub, writes + bootstraps a dedicated LaunchAgent (macOS, `~/Library/LaunchAgents/tech.lenne.lt-dev-caddy.plist`) or systemd-user unit (Linux). Waits up to 8s for the Caddy admin endpoint (`:2019`) to respond, validates the file, and reminds you to run **`sudo -E HOME="$HOME" caddy trust`** (the `-E HOME="$HOME"` is mandatory — without it sudo switches HOME to `/var/root` and the CA install silently fails). **Does NOT use `brew services start caddy`** — its plist hardcodes `--config /opt/homebrew/etc/Caddyfile` and crash-loops against our Caddyfile location.
+- **`uninstall`** — Symmetric counterpart to `install`. Boots out the LaunchAgent / systemd unit, removes the unit file. With `--purge` also deletes `~/.lenneTech/Caddyfile` and caddy logs. Does NOT remove the caddy binary itself (use `brew uninstall caddy` if desired).
 - **`migrate`** — Idempotent. Builds the project identity (slug = `package.json` "name", subdomains from monorepo layout), patches legacy hardcoded `port: 3000` / `port: 3001` / Vite-proxy targets / Playwright URLs to env-aware variants (defaults preserved), persists to `~/.lenneTech/projects.json`, injects a "Local Development (lt dev)" URL block into all `CLAUDE.md` files, adds `.lt-dev/` to `.gitignore`.
-- **`up`** — Allocates internal upstream ports (4000+, never 3000/3001), upserts the Caddy block + reloads, exports `PORT`, `BASE_URL`, `APP_URL`, `NUXT_API_URL`, `NUXT_PUBLIC_API_URL`, `NUXT_PUBLIC_SITE_URL`, `NUXT_PUBLIC_STORAGE_PREFIX`, `NUXT_PUBLIC_API_PROXY=false`, `NSC__MONGOOSE__URI`, `DATABASE_URL`, then spawns `pnpm start` (api) + `pnpm dev` (app) detached. Pre-flight checks refuse to start when Caddy is missing, Caddy daemon is down, an existing session is alive, or internal ports are bound. Logs at `<root>/.lt-dev/{api,app}.log`.
+- **`up`** — Allocates internal upstream ports (4000+, never 3000/3001), upserts the Caddy block with **`reverse_proxy 127.0.0.1:<port>`** + reloads, exports `PORT`, `HOST=127.0.0.1` / `NITRO_HOST=127.0.0.1` (pins dev servers to IPv4 so the upstream is unambiguous), `BASE_URL`, `APP_URL`, `NUXT_API_URL`, `NUXT_PUBLIC_API_URL`, `NUXT_PUBLIC_SITE_URL`, `NUXT_PUBLIC_STORAGE_PREFIX`, `NUXT_PUBLIC_API_PROXY=false`, `NSC__MONGOOSE__URI`, `DATABASE_URL`, `NODE_EXTRA_CA_CERTS` (Caddy root CA so Nuxt SSR fetches trust HTTPS), plus legacy aliases `API_URL` / `SITE_URL` for projects that pre-date the `NUXT_*` convention. Then spawns `pnpm start` (api) + `pnpm dev` (app) detached. Pre-flight checks refuse to start when Caddy is missing, Caddy daemon is down, an existing session is alive, or internal ports are bound. Logs at `<root>/.lt-dev/{api,app}.log`.
 - **`down`** — Sends SIGTERM to the saved process group (negative PID) so children (Vite, Nest watcher, etc.) receive it too. Removes the project's Caddy block + reloads.
 - **`status`** / **`status --all`** — Current project: subdomains → upstream ports, db URI, session PIDs (alive/dead), live `lsof` upstream state. `--all`: every registered project with a `●`/`○` indicator.
-- **`doctor`** — Caddy on PATH, daemon running, Caddyfile valid, ports 80/443 free or held by Caddy, `*.localhost` resolves, registry status.
+- **`doctor`** — Caddy on PATH, **lt-dev LaunchAgent / systemd unit loaded**, daemon running, Caddyfile valid, ports 80/443 free or held by Caddy, `*.localhost` resolves (IPv4 or IPv6 loopback), registry status.
+- **`tunnel`** — Foreground Cloudflare Quick Tunnel: `cloudflared tunnel --url https://<slug>.localhost --http-host-header <slug>.localhost --no-tls-verify`. Prints a public `*.trycloudflare.com` URL (5-10s) and runs until Ctrl-C. Default exposes the App; `--api` switches the target. Auth cookies on the localhost domain are NOT valid on the tunnel URL — add the tunnel URL to Better-Auth's `trustedOrigins` for login flows to succeed. Start a second `lt dev tunnel --api` in parallel for full external usage.
 
 **Override the spawn binary** via `LT_PNPM_BIN` (e.g. for bun-based projects via wrapper script).
 

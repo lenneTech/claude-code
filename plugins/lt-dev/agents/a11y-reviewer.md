@@ -26,7 +26,7 @@ Autonomous agent that reviews HTML output quality — accessibility, form autoco
 
 - **Base branch**: Branch to diff against (default: `main`)
 - **Changed files**: List of changed frontend files
-- **App URL**: Dev server URL (default: `http://localhost:3001`)
+- **App URL**: Dev server URL. Under `lt dev up`: `https://<slug>.localhost` (read from the "Active lt-dev project" context block injected at the top of the prompt). Without `lt dev`: `http://localhost:3001`.
 
 ---
 
@@ -63,15 +63,16 @@ Initial TodoWrite:
 
 2. **Map changed files to routes** — check `app/pages/` to determine which URLs to visit
 
-3. **Check dev server availability:**
+3. **Check dev server availability** — try the lt-dev URL first (read the slug from the "Active lt-dev project" context block), fall back to `localhost:3001`:
    ```bash
-   curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 http://localhost:3001 2>/dev/null || echo "UNAVAILABLE"
+   APP_URL="${APP_URL_FROM_CONTEXT_BLOCK:-http://localhost:3001}"   # e.g. https://crm.localhost
+   curl -sk -o /dev/null -w "%{http_code}" --connect-timeout 2 "$APP_URL" 2>/dev/null || echo "UNAVAILABLE"
    ```
    - HTTP 200/301/302 → dev server is running, browser phases and Lighthouse audit enabled
    - UNAVAILABLE/connection refused → **no dev server detected**
      - Fall back to **static code analysis only** for all phases
      - Skip all Chrome DevTools MCP tool calls (including Lighthouse)
-     - Append to report header: "**Note:** Browser verification and Lighthouse audit skipped — no dev server detected at localhost:3001. Run `pnpm run dev` and re-run review for full browser-based analysis."
+     - Append to report header: "**Note:** Browser verification and Lighthouse audit skipped — no dev server detected at the active URL. Under `lt dev` start with `lt dev up`; otherwise run `pnpm run dev` and re-run review for full browser-based analysis."
 
 4. **Read existing patterns:**
    - Check `nuxt.config.ts` for SEO config, head defaults, sitemap module
@@ -465,7 +466,7 @@ Report Lighthouse scores alongside manual findings:
 
 **If dev server not available:**
 - Mark as "Skipped — dev server not running"
-- Recommend running locally: `pnpm run dev && lighthouse http://localhost:3001`
+- Recommend running locally: under `lt dev`: `lt dev up && lighthouse https://<slug>.localhost`; otherwise `pnpm run dev && lighthouse http://localhost:3001`
 
 ---
 

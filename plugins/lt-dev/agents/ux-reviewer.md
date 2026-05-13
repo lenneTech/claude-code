@@ -25,7 +25,7 @@ Autonomous agent that reviews UX patterns and interaction quality in lenne.tech 
 
 - **Base branch**: Branch to diff against (default: `main`)
 - **Changed files**: List of changed frontend files
-- **App URL**: Dev server URL (default: `http://localhost:3001`)
+- **App URL**: Dev server URL. Under `lt dev up`: `https://<slug>.localhost` (read from the "Active lt-dev project" context block injected at the top of the prompt). Without `lt dev`: `http://localhost:3001`.
 - **Auth credentials**: If provided, used to authenticate before review
 
 ---
@@ -63,15 +63,16 @@ Initial TodoWrite:
 
 2. **Map changed files to routes** — check `app/pages/` to determine which URLs to visit
 
-3. **Detect dev server:**
+3. **Detect dev server** — try the lt-dev URL first (read the slug from the "Active lt-dev project" context block), fall back to `localhost:3001`:
    ```bash
-   curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 http://localhost:3001 2>/dev/null || echo "UNAVAILABLE"
+   APP_URL="${APP_URL_FROM_CONTEXT_BLOCK:-http://localhost:3001}"   # e.g. https://crm.localhost
+   curl -sk -o /dev/null -w "%{http_code}" --connect-timeout 2 "$APP_URL" 2>/dev/null || echo "UNAVAILABLE"
    ```
    - HTTP 200/301/302 → dev server is running, browser phases enabled
    - UNAVAILABLE/connection refused → **no dev server detected**
      - Fall back to **static code analysis only** for all phases
      - Skip all Chrome DevTools MCP tool calls
-     - Append to report header: "**Note:** Browser verification skipped — no dev server detected at localhost:3001. Run `pnpm run dev` and re-run review for full browser-based analysis."
+     - Append to report header: "**Note:** Browser verification skipped — no dev server detected at the active URL. Under `lt dev` start with `lt dev up`; otherwise run `pnpm run dev` and re-run review for full browser-based analysis."
 
 4. **Authenticate if needed** (only if dev server running):
    - Navigate to app URL, take snapshot

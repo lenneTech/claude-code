@@ -1,6 +1,6 @@
 ---
 name: managing-dev-servers
-description: 'Rules for starting, monitoring, and stopping local development servers (nuxt dev, nest start, npm/pnpm run dev, pnpm build --watch, Playwright, etc.) across all lt-dev workflows. Prefers `lt dev up/down/status` for projects registered with the lt CLI — these serve every project under stable HTTPS URLs (`<slug>.localhost`, `api.<slug>.localhost`) via Caddy and inject project-specific env vars (BASE_URL, APP_URL, NUXT_PUBLIC_*, NSC__MONGOOSE__URI, NUXT_PUBLIC_STORAGE_PREFIX) so multiple lt projects can run in parallel without port collisions or auth cross-wiring. Falls back to the run_in_background / pkill contract for non-lt projects to prevent orphaned processes blocking the Claude Code session ("Unfurling..."). Activates whenever a long-running process must be started for manual validation, Chrome DevTools MCP debugging, TDD iterations, framework linking, or any E2E test run. Referenced by building-stories-with-tdd, developing-lt-frontend, generating-nest-servers, and contributing-to-lt-framework.'
+description: 'Rules for starting, monitoring, and stopping local development servers (nuxt dev, nest start, npm/pnpm run dev, pnpm build --watch, Playwright, etc.) across all lt-dev workflows. Prefers `lt dev up/down/status/tunnel` for projects registered with the lt CLI — these serve every project under stable HTTPS URLs (`<slug>.localhost`, `api.<slug>.localhost`) via Caddy (via a dedicated LaunchAgent/systemd-user unit, NOT `brew services caddy`) and inject project-specific env vars (BASE_URL, APP_URL, NUXT_PUBLIC_*, NSC__MONGOOSE__URI, NUXT_PUBLIC_STORAGE_PREFIX, HOST=127.0.0.1, NODE_EXTRA_CA_CERTS, API_URL/SITE_URL legacy aliases) so multiple lt projects can run in parallel without port collisions or auth cross-wiring. `lt dev tunnel` exposes a running project externally via a Cloudflare Quick Tunnel. Falls back to the run_in_background / pkill contract for non-lt projects to prevent orphaned processes blocking the Claude Code session ("Unfurling..."). Activates whenever a long-running process must be started for manual validation, Chrome DevTools MCP debugging, TDD iterations, framework linking, or any E2E test run. Referenced by building-stories-with-tdd, developing-lt-frontend, generating-nest-servers, and contributing-to-lt-framework.'
 user-invocable: false
 ---
 
@@ -19,12 +19,21 @@ The plugin's `detect-lt-dev` hook injects one of three context blocks at the top
 3. **"lt-Stack project detected — not yet migrated"** — Project IS an lt project but the registry entry is missing. **Proactively run `lt dev migrate` first** (idempotent, safe — patches legacy ports, registers, updates CLAUDE.md). Then `lt dev up`. **Do NOT start `pnpm dev` / `pnpm start` as a workaround.**
 4. **No block injected** — Not an lt project. Use the classic `run_in_background: true` + `pkill` pattern documented below.
 
-If `lt dev up` later complains that Caddy is missing or the daemon is not running, run `lt dev install` first (one-time per machine: `brew install caddy && brew services start caddy && sudo caddy trust`) and retry.
+If `lt dev up` later complains that Caddy is missing or the daemon is not running, run `lt dev install` first. One-time per machine:
+
+```bash
+brew install caddy                       # macOS (Linux: https://caddyserver.com/docs/install)
+lt dev install                           # writes + bootstraps the dedicated LaunchAgent / systemd-user unit
+sudo -E HOME="$HOME" caddy trust         # trust the local Caddy root CA system-wide
+```
+
+**Do NOT use `brew services start caddy`** — its plist hardcodes `--config /opt/homebrew/etc/Caddyfile` and crash-loops against the lt-dev Caddyfile at `~/.lenneTech/Caddyfile`. `lt dev install` owns its own dedicated service (`tech.lenne.lt-dev-caddy`) to sidestep that entirely. **The `-E HOME="$HOME"` on `caddy trust` is also mandatory** — without it sudo switches HOME to `/var/root`, caddy fails to find its user-scoped CA, and the trust install silently does nothing.
 
 ## Preferred for lt-Projects: `lt dev up`
 
 ```bash
-lt dev install      # One-time per machine (Caddy + Caddyfile stub + CA reminder)
+lt dev install      # One-time per machine (dedicated LaunchAgent/systemd unit + Caddyfile stub + CA reminder)
+lt dev uninstall    # Remove the lt-dev service (symmetric counterpart; `--purge` also drops Caddyfile + logs)
 lt dev migrate      # Once per project (idempotent — patches + register + CLAUDE.md)
 lt dev up           # Start API + App behind Caddy with stable HTTPS URLs
 lt dev status       # Show what is running for THIS project
@@ -32,6 +41,7 @@ lt dev status --all # List every registered project + running state
 lt dev down         # Stop processes + remove Caddy block + clear ENV bridge
 lt dev doctor       # Diagnose Caddy / CA / DNS / port issues
 lt dev test         # Convenience: ensure up + run E2E tests with bridge env
+lt dev tunnel       # Foreground Cloudflare Quick Tunnel — expose the App publicly (--api for the API)
 ```
 
 ## E2E tests (Playwright + API)
@@ -60,7 +70,9 @@ lt dev test -- --ui crm-login.spec.ts   # forward args to playwright
 - Spawned processes are detached; logs go to `<project>/.lt-dev/{api,app}.log` so the Claude Code session does not block.
 - Clean stop path via `lt dev down` (process-group SIGTERM, Caddy block removed, no orphaned children).
 
-**One-time setup per machine:** run `lt dev install` once. Verifies Caddy is installed (suggests `brew install caddy`), creates the Caddyfile stub, reminds you to run `sudo caddy trust` so browsers accept `https://*.localhost`.
+**One-time setup per machine:** run `lt dev install` once. Verifies Caddy is installed (suggests `brew install caddy`), creates the Caddyfile stub, writes + bootstraps the dedicated LaunchAgent / systemd-user unit (so it auto-starts on login and never collides with `brew services caddy`), then reminds you to run `sudo -E HOME="$HOME" caddy trust` so browsers accept `https://*.localhost`.
+
+**Sharing a running project externally (mobile preview, webhook target, teammate review):** `lt dev tunnel` — opens a Cloudflare Quick Tunnel to the App, prints a public `https://*.trycloudflare.com` URL, runs in the foreground until Ctrl-C. `lt dev tunnel --api` exposes the API instead (start a second one in parallel for full external usage). Requires `cloudflared` on PATH (`brew install cloudflared`). Auth cookies on `*.localhost` are NOT valid on the tunnel URL — Better-Auth's `trustedOrigins` must include the random tunnel URL for login flows to succeed.
 
 **One-time setup for an existing project:** run `lt dev migrate` once. Idempotent — patches legacy hardcoded ports in `config.env.ts` / `nuxt.config.ts` / `playwright.config.ts` to env-aware variants (defaults preserved), registers the project in `~/.lenneTech/projects.json`, and updates the project's `CLAUDE.md` with the URL block.
 
@@ -112,7 +124,7 @@ If two projects compete for the same internal port:
 1. Run `lt dev status --all` to see which projects are registered + running.
 2. For lt-aware projects: `lt dev down` on the other project before `lt dev up` on the new one — internal ports are auto-allocated, so collisions are extremely rare.
 3. For non-lt processes still bound to a port: `lsof -iTCP -sTCP:LISTEN -nP -iTCP:<port>` to find the PID, `pkill -f "<matching process>"` to free it.
-4. If Caddy itself fails to bind 80/443: `lt dev doctor` will identify the culprit. Stop the conflicting webserver, then `brew services restart caddy`.
+4. If Caddy itself fails to bind 80/443: `lt dev doctor` will identify the culprit. Stop the conflicting webserver, then re-run `lt dev install` (it bootstraps the lt-dev LaunchAgent / systemd unit, no `brew services` involved).
 
 Do NOT pick a random alternative port for non-migrated projects — their hardcoded auth config will not match. Either migrate the project with `lt dev migrate`, or fix the collision and use the original port.
 

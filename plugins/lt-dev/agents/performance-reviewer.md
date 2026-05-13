@@ -28,7 +28,7 @@ Received from the `/lt-dev:review` command:
 - **Base branch**: Branch to diff against (default: `main`)
 - **Changed files**: List of all changed files from the diff
 - **Project type**: Backend / Frontend / Fullstack
-- **API URL**: Backend URL if available (e.g., `http://localhost:3000`) — used for k6 load tests
+- **API URL**: Backend URL if available — used for k6 load tests. Under `lt dev up`: `https://api.<slug>.localhost` (from the "Active lt-dev project" context block); fallback: `http://localhost:3000`.
 
 ---
 
@@ -93,9 +93,11 @@ ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
    grep -r "nuxt-build-cache\|analyze\|webpack-bundle-analyzer\|rollup-plugin-visualizer" nuxt.config.* package.json 2>/dev/null
    ```
 
-4. **Detect running backend** (for k6):
+4. **Detect running backend** (for k6) — try the lt-dev URL first if a slug context block was injected, otherwise fall back to `localhost:3000`:
    ```bash
-   curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 2>/dev/null || echo "no backend"
+   curl -sk -o /dev/null -w "%{http_code}" --max-time 2 "https://api.${LT_DEV_SLUG:-_none}.localhost" 2>/dev/null \
+     || curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 2>/dev/null \
+     || echo "no backend"
    ```
 
 5. **Skip phases** not relevant to the project type (e.g., skip frontend phases for backend-only changes)

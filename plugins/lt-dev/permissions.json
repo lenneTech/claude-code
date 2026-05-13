@@ -729,7 +729,7 @@
     },
     {
       "pattern": "Bash(lt dev:*)",
-      "description": "Start, stop, inspect, install, migrate and diagnose lt-dev managed dev servers (Caddy + HTTPS URLs) for load tests, Playwright runs, and CI reproduction",
+      "description": "lt-dev parallel project orchestration (Caddy + HTTPS URLs via dedicated LaunchAgent/systemd unit): install/uninstall/migrate/up/down/status/doctor/test/tunnel — for load tests, Playwright runs, CI reproduction, and external Cloudflare Quick Tunnel exposure",
       "usedBy": ["managing-dev-servers", "running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready"]
     },
     {
