@@ -15,7 +15,7 @@
 #   3. UNREGISTERED-LT — project IS an lt-Stack project (uses @lenne.tech/*
 #                  in package.json) but has no registry entry yet
 #                  → emit "needs migration" hint so Claude proactively
-#                    runs `lt dev migrate`
+#                    runs `lt dev init`
 #   4. NON-LT    — not an lt project → silent exit (untouched)
 
 set -u
@@ -141,7 +141,7 @@ if is_lt_project "$ROOT"; then
   echo "- slug (would be): \`$SLUG\`"
   echo "- root: \`$ROOT\`"
   echo ""
-  echo "**Before starting any dev server in this project: run \`lt dev migrate\` (idempotent — registers the project, patches legacy hardcoded ports, injects URL block into CLAUDE.md). Then \`lt dev up\` to serve under \`https://$SLUG.localhost\` + \`https://api.$SLUG.localhost\`. Do NOT start \`pnpm dev\` / \`pnpm start\` directly — multi-project parallelism + auth cross-wiring guards depend on \`lt dev\`.**"
+  echo "**Before starting any dev server in this project: run \`lt dev init\` (idempotent — also runs \`lt dev install\` automatically if this machine isn't set up yet; registers the project, patches legacy hardcoded ports, injects URL block into CLAUDE.md). Then \`lt dev up\` to serve under \`https://$SLUG.localhost\` + \`https://api.$SLUG.localhost\`. Do NOT start \`pnpm dev\` / \`pnpm start\` directly — multi-project parallelism + auth cross-wiring guards depend on \`lt dev\`.**"
   echo ""
   exit 0
 fi

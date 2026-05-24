@@ -76,7 +76,7 @@ setup_tmp
 echo '{"name":"crm-thing","dependencies":{"@lenne.tech/nest-server":"^11"}}' > "$PROJ/package.json"
 out=$(run_hook "$PROJ" "$REGISTRY")
 assert_contains "$out" "not yet migrated" "emits 'not yet migrated' header"
-assert_contains "$out" "lt dev migrate" "instructs to run lt dev migrate"
+assert_contains "$out" "lt dev init" "instructs to run lt dev init"
 assert_contains "$out" "crm-thing" "shows the slug that would be used"
 cleanup
 

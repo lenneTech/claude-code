@@ -86,8 +86,7 @@ lt fullstack init --name <Name> --frontend <angular|nuxt> --git <true|false> --n
 **Post-creation:**
 ```bash
 cd <workspace> && pnpm install
-lt dev install                   # one-time per machine: verify Caddy + CA
-lt dev migrate                   # idempotent: ENV patches + register project
+lt dev init                      # idempotent: ENV patches + register; auto-runs `lt dev install` first if the machine isn't set up yet
 lt dev up                        # Start API + App behind Caddy under https://<slug>.localhost
 
 # With --next: install per subproject, no workspace install
@@ -104,7 +103,7 @@ Serves every lt project under stable HTTPS URLs (`<slug>.localhost`, `api.<slug>
 ```bash
 lt dev install                   # One-time per machine: bootstraps dedicated LaunchAgent/systemd unit + Caddyfile stub + CA reminder
 lt dev uninstall [--purge]       # Remove the lt-dev service (--purge also drops Caddyfile + logs)
-lt dev migrate                   # Once per project (idempotent): ENV patches + register
+lt dev init                      # Once per project (idempotent): ENV patches + register
 lt dev up                        # Start API + App behind Caddy
 lt dev down                      # Stop processes + remove Caddy block
 lt dev status                    # Show URLs + PIDs + live upstream state for THIS project
@@ -115,9 +114,9 @@ lt dev tunnel [--api]            # Foreground Cloudflare Quick Tunnel: public *.
 
 What each subcommand does:
 
-- **`install`** — One-time per machine. Verifies `caddy` is on PATH (suggests `brew install caddy` if missing), creates `~/.lenneTech/Caddyfile` stub, writes + bootstraps a dedicated LaunchAgent (macOS, `~/Library/LaunchAgents/tech.lenne.lt-dev-caddy.plist`) or systemd-user unit (Linux). Waits up to 8s for the Caddy admin endpoint (`:2019`) to respond, validates the file, and reminds you to run **`sudo -E HOME="$HOME" caddy trust`** (the `-E HOME="$HOME"` is mandatory — without it sudo switches HOME to `/var/root` and the CA install silently fails). **Does NOT use `brew services start caddy`** — its plist hardcodes `--config /opt/homebrew/etc/Caddyfile` and crash-loops against our Caddyfile location.
+- **`install`** — One-time per machine. Verifies `caddy` is on PATH (suggests `brew install caddy` if missing), creates `~/.lenneTech/Caddyfile` stub, writes + bootstraps a dedicated LaunchAgent (macOS, `~/Library/LaunchAgents/tech.lenne.lt-dev-caddy.plist`) or systemd-user unit (Linux). Waits up to 8s for the Caddy admin endpoint (`:2019`) to respond, validates the file, and reminds you to run **`sudo -E HOME="$HOME" caddy trust`** (the `-E HOME="$HOME"` is mandatory — without it sudo switches HOME to `/var/root` and the CA install silently fails). **Does NOT use `brew services start caddy`** — its plist hardcodes `--config /opt/homebrew/etc/Caddyfile` and crash-loops against our Caddyfile location. **Auto-chains:** when run inside an un-initialized lt-dev project, runs `init` afterwards (`--skip-init` to opt out).
 - **`uninstall`** — Symmetric counterpart to `install`. Boots out the LaunchAgent / systemd unit, removes the unit file. With `--purge` also deletes `~/.lenneTech/Caddyfile` and caddy logs. Does NOT remove the caddy binary itself (use `brew uninstall caddy` if desired).
-- **`migrate`** — Idempotent. Builds the project identity (slug = `package.json` "name", subdomains from monorepo layout), patches legacy hardcoded `port: 3000` / `port: 3001` / Vite-proxy targets / Playwright URLs to env-aware variants (defaults preserved), persists to `~/.lenneTech/projects.json`, injects a "Local Development (lt dev)" URL block into all `CLAUDE.md` files, adds `.lt-dev/` to `.gitignore`.
+- **`init`** (alias `migrate`) — Idempotent. Builds the project identity (slug = `package.json` "name", subdomains from monorepo layout), patches legacy hardcoded `port: 3000` / `port: 3001` / Vite-proxy targets / Playwright URLs to env-aware variants (defaults preserved), persists to `~/.lenneTech/projects.json`, injects a "Local Development (lt dev)" URL block into all `CLAUDE.md` files, adds `.lt-dev/` to `.gitignore`. **Auto-chains:** runs `install` first when the machine isn't prepared yet (`--skip-install` to opt out).
 - **`up`** — Allocates internal upstream ports (4000+, never 3000/3001), upserts the Caddy block with **`reverse_proxy 127.0.0.1:<port>`** + reloads, exports `PORT`, `HOST=127.0.0.1` / `NITRO_HOST=127.0.0.1` (pins dev servers to IPv4 so the upstream is unambiguous), `BASE_URL`, `APP_URL`, `NUXT_API_URL`, `NUXT_PUBLIC_API_URL`, `NUXT_PUBLIC_SITE_URL`, `NUXT_PUBLIC_STORAGE_PREFIX`, `NUXT_PUBLIC_API_PROXY=false`, `NSC__MONGOOSE__URI`, `DATABASE_URL`, `NODE_EXTRA_CA_CERTS` (Caddy root CA so Nuxt SSR fetches trust HTTPS), plus legacy aliases `API_URL` / `SITE_URL` for projects that pre-date the `NUXT_*` convention. Then spawns `pnpm start` (api) + `pnpm dev` (app) detached. Pre-flight checks refuse to start when Caddy is missing, Caddy daemon is down, an existing session is alive, or internal ports are bound. Logs at `<root>/.lt-dev/{api,app}.log`.
 - **`down`** — Sends SIGTERM to the saved process group (negative PID) so children (Vite, Nest watcher, etc.) receive it too. Removes the project's Caddy block + reloads.
 - **`status`** / **`status --all`** — Current project: subdomains → upstream ports, db URI, session PIDs (alive/dead), live `lsof` upstream state. `--all`: every registered project with a `●`/`○` indicator.

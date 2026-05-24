@@ -16,7 +16,7 @@ The plugin's `detect-lt-dev` hook injects one of three context blocks at the top
 
 1. **"Active lt-dev project" with `session: yes`** — Project registered AND running. Use the URLs from the block. Do nothing extra; for browser tests / API calls use the URLs as-is.
 2. **"Active lt-dev project" with `session: no`** — Project registered, **not** running. Run `lt dev up` before any browser test, Chrome DevTools MCP call, Playwright run, or API probe.
-3. **"lt-Stack project detected — not yet migrated"** — Project IS an lt project but the registry entry is missing. **Proactively run `lt dev migrate` first** (idempotent, safe — patches legacy ports, registers, updates CLAUDE.md). Then `lt dev up`. **Do NOT start `pnpm dev` / `pnpm start` as a workaround.**
+3. **"lt-Stack project detected — not yet migrated"** — Project IS an lt project but the registry entry is missing. **Proactively run `lt dev init` first** (idempotent, safe — patches legacy ports, registers, updates CLAUDE.md). Then `lt dev up`. **Do NOT start `pnpm dev` / `pnpm start` as a workaround.**
 4. **No block injected** — Not an lt project. Use the classic `run_in_background: true` + `pkill` pattern documented below.
 
 If `lt dev up` later complains that Caddy is missing or the daemon is not running, run `lt dev install` first. One-time per machine:
@@ -34,7 +34,7 @@ sudo -E HOME="$HOME" caddy trust         # trust the local Caddy root CA system-
 ```bash
 lt dev install      # One-time per machine (dedicated LaunchAgent/systemd unit + Caddyfile stub + CA reminder)
 lt dev uninstall    # Remove the lt-dev service (symmetric counterpart; `--purge` also drops Caddyfile + logs)
-lt dev migrate      # Once per project (idempotent — patches + register + CLAUDE.md)
+lt dev init         # Once per project (idempotent — patches + register + CLAUDE.md)
 lt dev up           # Start API + App behind Caddy with stable HTTPS URLs
 lt dev status       # Show what is running for THIS project
 lt dev status --all # List every registered project + running state
@@ -44,13 +44,15 @@ lt dev test         # Convenience: ensure up + run E2E tests with bridge env
 lt dev tunnel       # Foreground Cloudflare Quick Tunnel — expose the App publicly (--api for the API)
 ```
 
+**`init` and `install` auto-chain (idempotent, one hop, no recursion):** running `lt dev init` on a machine that isn't set up runs `lt dev install` first; running `lt dev install` inside an un-initialized project runs `lt dev init` afterwards. So the minimal first run in a fresh project is just **`lt dev init`** then **`lt dev up`** — no need to remember the install step. Opt out with `--skip-install` (init) / `--skip-init` (install). The former name `lt dev migrate` still works as an alias for `lt dev init`.
+
 ## E2E tests (Playwright + API)
 
 **API E2E tests (TestHelper, in-process)** — run unchanged. They start a NestJS test module in-process on a dynamic port and never touch Caddy. Use `pnpm run test:e2e` in `projects/api` as before.
 
 **App E2E tests (Playwright)** under `lt dev up`:
 - `lt dev up` writes a `<root>/.lt-dev/.env` bridge file containing `NUXT_PUBLIC_SITE_URL`, `NUXT_PUBLIC_API_URL`, storage prefix, DB URI, and `NODE_EXTRA_CA_CERTS` (Caddy root CA path).
-- `lt dev migrate` injects a tiny `// >>> lt-dev:bridge >>>` block at the top of `playwright.config.ts` that auto-loads this file. Result: any Playwright invocation (`pnpm test:e2e`, `npx playwright test`, VS Code Playwright Extension, JetBrains test runner) automatically picks up the active URLs and trusts the local CA — no parent-shell env required.
+- `lt dev init` injects a tiny `// >>> lt-dev:bridge >>>` block at the top of `playwright.config.ts` that auto-loads this file. Result: any Playwright invocation (`pnpm test:e2e`, `npx playwright test`, VS Code Playwright Extension, JetBrains test runner) automatically picks up the active URLs and trusts the local CA — no parent-shell env required.
 - Existing env-aware patterns (`process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3001'`) keep working as fallback when `lt dev` is not active (CI, classic local dev).
 
 **The convenience wrapper `lt dev test`** ensures the project is up, waits for the App URL to respond, and runs the test command with the bridge env loaded — useful in TDD loops:
@@ -74,7 +76,7 @@ lt dev test -- --ui crm-login.spec.ts   # forward args to playwright
 
 **Sharing a running project externally (mobile preview, webhook target, teammate review):** `lt dev tunnel` — opens a Cloudflare Quick Tunnel to the App, prints a public `https://*.trycloudflare.com` URL, runs in the foreground until Ctrl-C. `lt dev tunnel --api` exposes the API instead (start a second one in parallel for full external usage). Requires `cloudflared` on PATH (`brew install cloudflared`). Auth cookies on `*.localhost` are NOT valid on the tunnel URL — Better-Auth's `trustedOrigins` must include the random tunnel URL for login flows to succeed.
 
-**One-time setup for an existing project:** run `lt dev migrate` once. Idempotent — patches legacy hardcoded ports in `config.env.ts` / `nuxt.config.ts` / `playwright.config.ts` to env-aware variants (defaults preserved), registers the project in `~/.lenneTech/projects.json`, and updates the project's `CLAUDE.md` with the URL block.
+**One-time setup for an existing project:** run `lt dev init` once. Idempotent — patches legacy hardcoded ports in `config.env.ts` / `nuxt.config.ts` / `playwright.config.ts` to env-aware variants (defaults preserved), registers the project in `~/.lenneTech/projects.json`, and updates the project's `CLAUDE.md` with the URL block.
 
 **If the prompt contains "Active lt-dev project" context, NEVER start with `pnpm dev` / `pnpm start` directly — use `lt dev up`.** The injected context block lists the actual URLs for the current project. If session is `no`, run `lt dev up` first; the URLs only resolve while the Caddy block + processes are active.
 
@@ -100,7 +102,7 @@ Orphaned dev servers block the Claude Code main loop. The session appears to han
 ## Gotchas
 
 - **"Unfurling..." with no token consumption** — This is the most-missed symptom. The spinner continues but nothing is happening. It means a background process was started uncontrolled and is holding the main loop. Recovery requires the user to press ESC; no retry will help. Prevention: always use `run_in_background: true` + eventual `pkill`.
-- **Auth requires consistent BASE_URL/APP_URL — not a specific port number.** Better Auth derives passkey origin and trusted origins from `BASE_URL` (API) and `APP_URL` (App). When `lt dev up` is used, these are set automatically to the project's HTTPS URLs (`https://api.<slug>.localhost`/`https://<slug>.localhost`) — auth works regardless of internal port. The legacy "3000/3001 only" rule applies ONLY to projects that have not yet been migrated to env-aware config (run `lt dev migrate` to migrate). For non-lt projects with hardcoded ports, the original rule still holds: starting on a different port silently breaks auth.
+- **Auth requires consistent BASE_URL/APP_URL — not a specific port number.** Better Auth derives passkey origin and trusted origins from `BASE_URL` (API) and `APP_URL` (App). When `lt dev up` is used, these are set automatically to the project's HTTPS URLs (`https://api.<slug>.localhost`/`https://<slug>.localhost`) — auth works regardless of internal port. The legacy "3000/3001 only" rule applies ONLY to projects that have not yet been migrated to env-aware config (run `lt dev init` to migrate). For non-lt projects with hardcoded ports, the original rule still holds: starting on a different port silently breaks auth.
 - **Cookies between API and App** — Under `lt dev up`, both subdomains share the parent `.<slug>.localhost` so Better Auth's `crossSubDomainCookies` (auto-enabled in the local baseline when `BASE_URL` is set) makes session cookies visible across both. The `NUXT_PUBLIC_API_PROXY=false` default is intentional — the vite-proxy hack is no longer needed.
 - **`pnpm build --watch` is a dev server too** — Framework-linking workflows run both `pnpm build --watch` and `pnpm dev` in parallel. The watch process is easy to forget in cleanup because it produces less visible output. Track it like any other server and `pkill -f "build --watch"` when done.
 - **`pkill -f "<name>"` matches too broadly with short names** — `pkill -f "dev"` can kill unrelated processes (e.g. `devtools`, `developer`). Always match the full command: `pkill -f "nuxt dev"`, `pkill -f "nest start"`, `pkill -f "pnpm build --watch"`.
@@ -126,7 +128,7 @@ If two projects compete for the same internal port:
 3. For non-lt processes still bound to a port: `lsof -iTCP -sTCP:LISTEN -nP -iTCP:<port>` to find the PID, `pkill -f "<matching process>"` to free it.
 4. If Caddy itself fails to bind 80/443: `lt dev doctor` will identify the culprit. Stop the conflicting webserver, then re-run `lt dev install` (it bootstraps the lt-dev LaunchAgent / systemd unit, no `brew services` involved).
 
-Do NOT pick a random alternative port for non-migrated projects — their hardcoded auth config will not match. Either migrate the project with `lt dev migrate`, or fix the collision and use the original port.
+Do NOT pick a random alternative port for non-migrated projects — their hardcoded auth config will not match. Either migrate the project with `lt dev init`, or fix the collision and use the original port.
 
 ## Final-Validation Checklist
 

@@ -74,6 +74,45 @@ export default defineConfig({
 });
 ```
 
+## Running in three environments (classic ports / lt dev / CI)
+
+The **same** Playwright suite must run in three setups. The key: read all URLs
+from env vars with `localhost` fallbacks — never hardcode ports in specs.
+
+| Environment | App URL | API URL | Protocol |
+|---|---|---|---|
+| Classic (manual `pnpm start` + `pnpm dev`) | `http://localhost:3001` | `http://localhost:3000` | HTTP |
+| `lt dev up` | `https://<slug>.localhost` | `https://api.<slug>.localhost` | HTTPS (Caddy) |
+| CI (GitLab / GitHub) | `http://localhost:3001` | `http://localhost:3000` | HTTP |
+
+**Env-driven config** — `playwright.config.ts` and every spec/helper:
+
+```typescript
+baseURL: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3001',
+const API_BASE = process.env.NUXT_PUBLIC_API_URL || process.env.API_URL || 'http://localhost:3000';
+```
+
+**The `.lt-dev/.env` bridge** — `lt dev init` injects a block at the top of
+`playwright.config.ts` that loads `<root>/.lt-dev/.env` (written by `lt dev up`)
+into `process.env`. Any Playwright invocation — `pnpm test:e2e`, `lt dev test`,
+the VS Code extension — then picks up the active `lt dev` URLs.
+
+**Cookie injection gotcha** — when a test injects a captured `Set-Cookie`
+header into the browser context, it MUST:
+
+- preserve the `Secure` attribute — under `lt dev` (HTTPS) Better-Auth issues
+  `Secure` (often `__Secure-`-prefixed) cookies; a `__Secure-`-prefixed cookie
+  injected without `secure` is silently rejected by the browser → the test
+  lands on `/auth/login`;
+- derive the cookie `domain` from the app host (`localhost` for classic/CI,
+  `<slug>.localhost` for `lt dev`) instead of a hardcoded `'localhost'`.
+
+**API test-mode flags** — E2E suites promote a fresh user to admin via a direct
+DB write. The API must skip its rate limiter and Better-Auth user-cache so the
+new role is seen immediately. The API honours `VITEST`, `PLAYWRIGHT` and
+`LT_DEV_ACTIVE` (the last exported automatically by `lt dev up`). In CI, set
+`PLAYWRIGHT=true` on the job.
+
 ### package.json Scripts
 
 ```json
