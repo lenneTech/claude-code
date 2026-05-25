@@ -257,10 +257,16 @@ Frontend path: <frontend-path>
 
 Mode: FULL
 - Update all non-framework dependencies to latest compatible versions
-- Run security audit and fix vulnerabilities
-- Remove unused packages
+- Run security audit and fix vulnerabilities — including TRANSITIVE advisories that
+  require a scoped override (audit --fix cannot close these). Apply the Vulnerability
+  Resolution Workflow: group by root advisory, target the fixed-in version (target MUST
+  be >= the advisory's fixed-in version — an exact-but-too-low target silently leaves it
+  open), then re-audit and confirm 0 / expected residual.
+- Remove unused packages — including unused direct deps that are the root of an advisory
+  chain (removal is a valid security fix and may eliminate overrides).
 
-Validate after each change. Do not touch framework packages
+Audit with the project's OWN package manager (npm vs pnpm resolve transitive trees
+differently). Validate after each change. Do not touch framework packages
 (@lenne.tech/nest-server, @lenne.tech/nuxt-extensions) as they
 were already updated in previous phases.
 ```
@@ -291,7 +297,9 @@ Only sync the targets that were actually updated. Use section-level merge
    cd <backend-path> && pnpm test
    ```
 
-3. **Verify type generation works — conditional:**
+3. **Confirm the security audit** (use the project's own package manager) in each subproject — the residual vulnerability count must match what Phase 5 reported as expected. A package that received an override but still appears means the override target is too low or mis-scoped; do not sign off the update until it is fixed or explicitly accepted with a documented reason.
+
+4. **Verify type generation works — conditional:**
    ```bash
    cd <frontend-path>
    if grep -REq "from ['\"](~|\.|app)/api-client" app/; then

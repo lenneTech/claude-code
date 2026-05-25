@@ -54,7 +54,9 @@ This agent should be used when:
 - Remove ALL packages that are not actively used in the project
 - Check usage across ALL locations: source dirs, config files, monorepo dirs (see Phase 1 for complete list)
 - Exclude dist/ and node_modules/ from analysis
-- **Goal**: Minimize maintenance burden by reducing package count
+- **Unused direct deps inflate the vulnerability surface** — a direct dependency that is never imported can drag in a large vulnerable subtree and force several overrides just to patch it. Removing it clears those vulnerabilities AND lets you delete the overrides that existed only for its chain. This makes removal often the cheaper security fix vs. overriding transitives.
+- **Verify "framework-required" before keeping anything** — do not retain a package as a "framework-mirror" on assumption. Check the framework's own `package.json` (`dependencies` / `peerDependencies`, e.g. `node_modules/@lenne.tech/nest-server/package.json`). A package the framework does not actually depend on, and the project never imports, is a removal candidate — not a keeper.
+- **Goal**: Minimize maintenance burden and attack surface by reducing package count
 
 ### Priority 2: OPTIMIZE DEPENDENCY CATEGORIZATION
 - Move packages from dependencies → devDependencies wherever appropriate
@@ -392,6 +394,8 @@ pnpm audit
 pnpm run build && pnpm test
 ```
 
+**`audit --fix` only updates direct deps within range — it CANNOT fix transitive vulnerabilities that require an override** (e.g. a deep `uuid` or `minimatch` pulled by a fixed-version chain). Any findings remaining after `--fix` go to Phase 6: group them by root advisory, write a scoped override to the fixed-in version, then re-audit and confirm the count drops to the expected residual. A residual is only acceptable once a correctly-targeted override has been proven unable to clear it — never on first sight.
+
 ### Phase 6: Override Management (Priority 4)
 
 **Goal**: Manage `pnpm.overrides` safely — both when ADDING new overrides for security fixes AND when REMOVING unnecessary ones.
@@ -449,22 +453,25 @@ Without this documentation, overrides become unmaintainable and accumulate indef
 
 #### Adding a New Override (Security Fix)
 
-1. **Identify the exact patched version** from the security advisory (e.g. "fixed in vite >= 7.3.2")
-2. **Check the latest fixed version WITHIN THE SAME MAJOR** to avoid accidental major jumps:
+1. **Group findings by root advisory first.** Follow each `audit` finding's `via` chain down to the leaf package — a dozen findings usually collapse to two or three transitive roots. Override the root once and every dependent clears. Fix roots, not symptoms.
+2. **Read the advisory's fixed-in version** (e.g. "fixed in 11.1.1"). The override target MUST be `>=` this version — an exact target that is one patch BELOW the fix (e.g. `uuid: 11.1.0` when the fix is `11.1.1`) silently leaves the advisory open. This is the #1 override trap; confirm it explicitly.
+3. **Check the latest fixed version WITHIN THE SAME MAJOR** to avoid accidental major jumps:
    ```bash
-   pnpm view vite versions --json | jq '[.[] | select(startswith("7."))]' | tail -5
+   pnpm view uuid versions --json | jq '[.[] | select(startswith("11."))]' | tail -5
    ```
-3. **Pick a specific version** and use it as the target:
+4. **Pick a specific version** and use it as the target:
    ```json
    // Form A: range selector on LEFT (preferred — only replaces vulnerable versions)
-   "vite@>=7.0.0 <7.3.2": "7.3.2"
+   "minimatch@<3.1.5": "3.1.5"
 
-   // Form B: package name on LEFT (replaces ALL installed versions)
-   "vite": "7.3.2"
+   // Form B: package name on LEFT (replaces ALL installed versions — npm overrides are global by default)
+   "uuid": "11.1.1"
    ```
-4. **Never use `">=X"` or `"^X"` on the RIGHT side** — those are unbounded and will silently upgrade.
-5. **Run validation:** `pnpm install && pnpm run build && pnpm test` — all must pass.
-6. **Verify the fix:** `pnpm audit` — vulnerability should be gone.
+   Use Form A (or an exact-version selector like `"minimatch@3.0.8": "3.1.5"`) when other majors of the same package must stay untouched (e.g. minimatch 9.x/10.x for glob/ts-morph/nodemon). Use Form B only when every instance must unify.
+5. **Place the override in the correct block for the detected package manager** — `overrides` (npm), `pnpm.overrides` (pnpm), `resolutions` (yarn). npm projects do NOT use a `pnpm.overrides` block.
+6. **Never use `">=X"` or `"^X"` on the RIGHT side** — those are unbounded and will silently upgrade.
+7. **Run validation:** `<pm> install && <pm> run build && <pm> test` — all must pass.
+8. **Verify the fix:** re-run `audit` and confirm the count drops as expected. If a package you just overrode STILL appears, the target is below the fixed-in version (step 2) or the selector missed the vulnerable instance — fix the override and re-audit. Do NOT record an override-able transitive vulnerability as "blocked" or "needs a framework update": that escalation is valid only after a correctly-targeted override has been proven not to clear it.
 
 #### Removing Unnecessary Overrides
 

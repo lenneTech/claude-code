@@ -477,6 +477,12 @@ cd projects/app && pnpm audit 2>/dev/null || npm audit 2>/dev/null || yarn audit
 | moderate | MEDIUM |
 | low | LOW |
 
+**Reporting & remediation notes:**
+- **Audit with the project's OWN package manager.** npm and pnpm resolve transitive trees differently and report different counts — a starter showing "0 vulnerabilities" under pnpm does not clear an npm-based consumer. Never substitute one PM's result for another's.
+- **Group findings by root advisory.** Follow each finding's `via` chain to the leaf; most reports collapse to a few transitive roots. Recommend the fix at the root.
+- **Most advisories are transitive** → the remediation is a scoped override (`overrides` for npm, `pnpm.overrides` for pnpm, `resolutions` for yarn) targeting the advisory's **fixed-in** version. Flag the remediation but defer the actual change to `npm-package-maintainer` / the maintenance commands.
+- **Check existing overrides for false safety.** If a flagged package already has an override, the override target may be below the advisory's fixed-in version (e.g. pinned `11.1.0` when the fix is `11.1.1`) — report this as an unresolved finding, not a pre-existing mitigation.
+
 ### Phase 7: Infrastructure Security (Docker, Env, CORS)
 
 - [ ] No secrets in Dockerfiles or docker-compose files
