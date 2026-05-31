@@ -88,16 +88,16 @@ ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
 
 The 3-layer permission model is the **most critical** review dimension.
 
-#### Layer 1: Controller @Restricted (Class-Level Fallback)
+#### Layer 1: Controller Class-Level Guard (Fallback)
 
-- [ ] Every controller has `@Restricted(RoleEnum.ADMIN)` class decorator
-- [ ] Class-level `@Restricted` is NEVER removed or weakened
+- [ ] **Every controller has a class-level guard** — `@Restricted(RoleEnum.ADMIN)` **or** `@Roles(RoleEnum.ADMIN)` (both cascade to methods without their own decorator), or an explicit `@Roles(RoleEnum.S_EVERYONE)` when the controller is intentionally public.
+- [ ] Class-level guard is NEVER removed or weakened.
+- [ ] **Public-endpoint trap:** a controller where the class AND a method **both** lack any `@Roles`/`@Restricted` is reachable **without authentication** — the roles guard returns `true` when no roles metadata exists on either level (e.g. `BetterAuthRolesGuard.canActivate`). Flag any such endpoint as a critical auth bypass.
 
 ```bash
-# Find controllers without @Restricted
-grep -rn "class.*Controller" src/server/modules/ | while read line; do
-  file=$(echo "$line" | cut -d: -f1)
-  grep -B5 "class.*Controller" "$file" | grep -q "@Restricted" || echo "MISSING: $file"
+# Find controllers with NO class-level guard (neither @Restricted nor @Roles) → public-endpoint trap
+grep -rln "class.*Controller" src/server/modules/ | while read file; do
+  grep -B6 "class.*Controller" "$file" | grep -Eq "@Restricted|@Roles" || echo "MISSING CLASS GUARD: $file"
 done
 ```
 
@@ -273,6 +273,8 @@ Flag: `NO_RESTRICTION`, `NO_ROLES`, `NO_SECURITY_CHECK`, `UNRESTRICTED_FIELD`, `
 - [ ] Bilingual descriptions: `'English text (Deutsche Übersetzung)'`
 - [ ] Class decorators have descriptions: `@ObjectType({ description: '...' })`
 - [ ] No `declare` keyword — use `override` if extending
+- [ ] Properties initialized with `= undefined` (required for `CoreModel.map()` under `useDefineForClassFields: true`; inputs exempt — see typescript-conventions). A required Model property without an initializer is a mapping defect.
+- [ ] **Nested class properties re-instantiated in `map()`** — every property typed as its own class (or array of one) is mapped via `mapClasses`/`mapClassesAsync` in an overridden `map()`. A `map()` that is only `super.map(input)` while the Model has nested class props = defect: nested values stay plain objects, so their embedded `@Restricted`/`@UnifiedField({ roles })` is silently bypassed by `checkRestricted`/`CheckResponseInterceptor` (latent data leak) and `instanceof` is false. ID-refs (`string | ObjectId`) are exempt. Verify a nested-`instanceof` test exists.
 - [ ] `securityCheck()` present and correct (see Phase 1)
 
 **Scoring:**
@@ -282,6 +284,7 @@ Flag: `NO_RESTRICTION`, `NO_ROLES`, `NO_SECURITY_CHECK`, `UNRESTRICTED_FIELD`, `
 | All model rules followed | 100% |
 | Minor description inconsistencies | 80-90% |
 | Non-alphabetical or missing descriptions | 60-75% |
+| Nested class props not mapped via mapClasses (embedded restrictions bypassed) | <50% |
 | Missing securityCheck or declare usage | <50% |
 
 ### Phase 3: Controller & Service Patterns
@@ -293,6 +296,7 @@ Flag: `NO_RESTRICTION`, `NO_ROLES`, `NO_SECURITY_CHECK`, `UNRESTRICTED_FIELD`, `
 - [ ] ObjectId validation on `:id` params: `Types.ObjectId.isValid(id)`
 - [ ] Pagination enforcement: `@Query('limit')` with `Math.min(max, 100)`
 - [ ] Proper error handling with NestJS exceptions (`BadRequestException`, etc.)
+- [ ] **Controller altitude — no business logic in handlers.** A handler should only parse the request, call ONE service, and return/stream the response. Flag: >1 business service injected and orchestrated in one handler, loops/`Promise.all`/`reduce`/calculations, domain-recovery `try/catch`, or cross-module data assembly. Move that into a service method (`buildXxx(...)`). Response streaming/header setup (`res.setHeader`/`send`) is legitimate controller work.
 
 #### Services
 
@@ -301,6 +305,7 @@ Flag: `NO_RESTRICTION`, `NO_ROLES`, `NO_SECURITY_CHECK`, `UNRESTRICTED_FIELD`, `
 - [ ] No blind `serviceOptions` passthrough
 - [ ] Constructor follows pattern: `@InjectModel`, `configService`, then custom deps
 - [ ] **`@InjectModel` audit (instance of Informed-Trade-off Pattern) — applies ONLY to Models that do NOT belong to this Service.** The Service's OWN primary Model (passed to `super({ mainDbModel })`) is the standard pattern and requires nothing extra. For every `@InjectModel` of a Model belonging to a different Service, verify: (1) a code comment states a **good reason** for not using the corresponding Service, AND (2) the corresponding Service has been analyzed — `securityCheck()`, `@Restricted`/`@Roles`, ownership, field filtering, hooks/events, and side-effects are either safely skippable in this context or manually replicated. Unjustified or unanalyzed foreign `@InjectModel` = finding. See Layer 3b below (plain-object responses share the same bypass vectors).
+- [ ] **Hardcoded collection/model lists need a registry-drift test.** Any service that enumerates collections or models by a hardcoded list (backup, export, migration, wipe, seed) MUST have a test comparing the list against `mongoose.connection.modelNames()` → `model.collection.name`. Without it, every new module is silently omitted. Collection names are Mongoose's **pluralization** (`Staff` → `staffs`, `Race` → `races`), never the module name — a hardcoded singular/guessed name is a bug (wrong collection backed up / wiped). Flag a hardcoded list with no drift test.
 
 **Scoring:**
 

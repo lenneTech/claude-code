@@ -43,6 +43,20 @@ After generation, verify all items in this comprehensive checklist:
 
 ---
 
+## Model & Architecture Integrity
+
+- [ ] **`map()` re-instantiates nested class properties** — every Model property typed as its own class (or array of one) is mapped via `mapClasses`/`mapClassesAsync` in an overridden `map()`. A `map()` that is only `super.map(input)` while the Model has nested class props is a defect (embedded `@Restricted`/`@UnifiedField({ roles })` would be silently bypassed). ID-refs (`string | ObjectId`) are exempt.
+- [ ] **Nested-instance test exists** — a roundtrip test asserts nested props are real instances (`expect(result.address).toBeInstanceOf(Address)`); ideally a table-driven suite (`{ ModelClass, { prop: NestedClass } }`) so new models are forced in.
+- [ ] **Model properties initialized with `= undefined`** (required for `CoreModel.map()` under `useDefineForClassFields: true`). Inputs exempt.
+- [ ] **Every controller has a class-level guard** (`@Roles(ADMIN)` / `@Restricted(ADMIN)`, or explicit `@Roles(S_EVERYONE)`). No controller where class AND methods both lack any role decorator (= public-endpoint trap).
+- [ ] **No redundant method `@Roles`/`@UseGuards`** that merely duplicate the class-level guard (rely on cascade; keep only deviations and *additional* guards like RateLimit).
+- [ ] **Embedded sub-docs declared slim** — sub-classes with `@MongooseSchema({ _id: false })` are referenced via `type: () => SubClass` + `mongoose: true`, not a verbose `mongoose: {...}` field block (dead code + drift).
+- [ ] **Backup/export/wipe collection lists are registry-checked** — any hardcoded collection/model list has a drift test comparing it against `mongoose.connection.modelNames()` → `collection.name` (never the module name — Mongoose pluralizes: `Staff` → `staffs`). A hardcoded list without a drift test is a finding.
+- [ ] **Controller altitude** — handlers only parse the request, call ONE service, and return/stream the response. Red flags: >1 business service injected and orchestrated in one handler, loops/`Promise.all`/`reduce`/calculations, domain-recovery `try/catch`. Streaming/header setup is allowed.
+- [ ] **Directory semantics** — `*/services/` holds only `@Injectable` providers; templates (`.template.ts`), types (`.types.ts`) and pure helpers live in a feature subfolder next to their service. Modules with ≥3 embedded sub-models group them under `model/` (analogous to `inputs/`).
+
+---
+
 ## API Tests - Security First
 
 ** CRITICAL: Security analysis MUST be completed BEFORE writing ANY test!**

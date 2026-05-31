@@ -175,6 +175,10 @@ export class ProductController {
 - Shows the class is security-sensitive
 - Fail-safe protection
 
+**⚠️ A controller with NO class-level guard is a public-endpoint trap.** The roles guard (e.g. `BetterAuthRolesGuard.canActivate`) reads `@Roles` metadata from handler AND class (class **cascades** to methods without their own `@Roles`). But if there is **no** `@Roles` (and no class `@Restricted`) on **either** level, the guard returns `true` → the endpoint is reachable **without authentication**. Therefore:
+- **Every controller MUST carry a class-level guard** — either `@Roles(RoleEnum.ADMIN)` or `@Restricted(RoleEnum.ADMIN)` (or an explicit `@Roles(RoleEnum.S_EVERYONE)` when public is intended). A new controller whose class AND methods both lack any role/restriction decorator is a silent auth bypass.
+- **Do not duplicate the class role on every method.** A method-level `@Roles(ADMIN)` identical to the class `@Roles(ADMIN)` is dead code; rely on the cascade and add a method-level `@Roles` ONLY when it differs from the class. Likewise `@Roles` already triggers the global guard incl. JWT auth — a redundant `@UseGuards(AuthGuard(...))` adds nothing (keep only *additional* guards like `RateLimitGuard`).
+
 ---
 
 ## Rule 1: NEVER Weaken Security for Test Convenience

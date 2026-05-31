@@ -333,6 +333,31 @@ async customMethod(input: Input, serviceOptions?: ServiceOptions) {
 }
 ```
 
+### Model Pattern (map + mapClasses + property init)
+
+A Model's `map()` is **flat**: `CoreModel.map()` clones the input with `proto: false`, so nested objects become **plain objects** and lose their class prototype. The output pipeline (`prepareOutput`) and the response interceptors only re-map the **top level**. Consequence: `checkRestricted` / `CheckResponseInterceptor` read property restrictions via `value.constructor` — a nested plain object (`constructor === Object`) carries **no** decorator metadata, so any `@UnifiedField({ roles })` / `@Restricted` on an embedded class is **silently ignored**. This is both a correctness bug (`instanceof` is false on nested props) and a latent security hole (a stricter sub-field leaks without any visible error).
+
+**RULE: Every Model property whose type is its own class (or an array of one) MUST be re-instantiated in an overridden `map()` via `mapClasses` / `mapClassesAsync` (from `core/common/helpers/model.helper.ts`).** A `map()` that only calls `super.map(input)` while the Model has nested class properties is a defect.
+
+```typescript
+import { mapClasses } from '../../../core'; // path depends on mode
+
+export class Offer extends CorePersistenceModel {
+  override map(input: Partial<Offer>) {
+    super.map(input);
+    // Re-instantiate every nested CLASS property (not ID-refs)
+    mapClasses(input, { addressedTo: AddressedTo, contactPerson: ContactPerson, positions: Position, reminders: Reminder }, this);
+    return this;
+  }
+}
+```
+
+- `mapClasses` handles arrays, `null`, already-instances and ObjectId correctly. Use `mapClassesAsync` only when a sub-map needs async work.
+- **ID-ref exception:** properties typed `string | Types.ObjectId` (or arrays) with `@Field(() => OtherModel)` are pure references resolved by a resolver — do NOT `mapClasses` those. The discriminator is the **TS type** (`string`/`ObjectId` vs. the model class).
+- **Property initialization:** initialize Model properties with `= undefined` (e.g. `name?: string = undefined;`). With `useDefineForClassFields: true` (the starter default), a property without an initializer does not appear in `Object.keys(new Model())`, so `CoreModel.map()` (which iterates `Object.keys`) silently skips it. Decorator metadata itself is unaffected (legacy decorators live on the prototype), but the value mapping is. Inputs do NOT need `= undefined` (they are filled via `plainToInstance`).
+- **Inputs need NOT extend `CoreInput`.** The CrudService never calls `input.map()`; `prepareInput` runs `plainToInstanceClean(InputClass, input)` when the class has no static `map()`, using the `@UnifiedField`-emitted `@Type`/`@ValidateNested` metadata. Do not flag an input merely for not extending `CoreInput`.
+- **Embedded sub-documents:** when an embedded sub-class already carries `@MongooseSchema({ _id: false })`, declare it slim in the parent — `@UnifiedField({ type: () => SubClass, mongoose: true })` (arrays: `mongoose: { type: [SubClass] }`). A verbose `mongoose: { field: {...}, ... }` block **next to** a `type: () => Class` whose class has its own schema is dead code (Mongoose derives the embedded schema from the class) and drifts (e.g. a sub-index defined only on the class gets silently dropped from the verbose copy).
+
 ---
 
 ## Key Takeaways
@@ -342,3 +367,4 @@ async customMethod(input: Input, serviceOptions?: ServiceOptions) {
 3. **Follow framework patterns** - Inherit from CrudService, use proper decorators
 4. **Understand permission flow** - securityCheck + serviceOptions.currentUser + @Roles
 5. **inputType is the Input CLASS** - Not an enum, but the actual DTO class (e.g., UserInput, UserInputCreate)
+6. **map() must re-instantiate nested class properties** via `mapClasses`/`mapClassesAsync` — otherwise embedded `@Restricted`/`@UnifiedField({ roles })` is silently bypassed. Init Model props with `= undefined`.

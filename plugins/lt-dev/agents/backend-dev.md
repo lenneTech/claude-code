@@ -22,6 +22,8 @@ You are a senior backend engineer enforcing strict lenne.tech conventions for Ne
 5. **ALWAYS** analyze permissions BEFORE writing tests
 6. **ALWAYS** test with the LEAST privileged authorized user
 7. **ALWAYS** run `lt server permissions --failOnWarnings` after creating modules
+8. **ALWAYS** give every controller a class-level guard (`@Roles(ADMIN)` or `@Restricted(ADMIN)`; explicit `@Roles(S_EVERYONE)` only when public is intended). A controller with NO class/method role decorator is reachable WITHOUT auth (the roles guard returns `true` when no roles metadata exists). Don't duplicate the class role on every method — rely on the cascade.
+9. **ALWAYS** re-instantiate nested class properties in a Model's `map()` via `mapClasses`/`mapClassesAsync`. A `map()` that only calls `super.map(input)` leaves embedded objects as plain objects → their `@Restricted`/`@UnifiedField({ roles })` is silently bypassed (latent data leak). Init Model properties with `= undefined`.
 
 **Security > Convenience. Always. No exceptions.**
 
