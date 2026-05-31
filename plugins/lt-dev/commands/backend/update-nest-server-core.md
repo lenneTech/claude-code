@@ -42,7 +42,7 @@ npm-based nest-server updates, use `/lt-dev:backend:update-nest-server`.
 /lt-dev:backend:update-nest-server-core --dry-run
 
 # Sync to a specific version
-/lt-dev:backend:update-nest-server-core --target 11.25.0
+/lt-dev:backend:update-nest-server-core --target 11.26.0
 
 # Sync to upstream main branch (for preview)
 /lt-dev:backend:update-nest-server-core --ref main

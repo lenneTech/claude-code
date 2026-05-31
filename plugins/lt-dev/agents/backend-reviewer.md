@@ -115,6 +115,15 @@ done
 - [ ] Overridden `securityCheck` actually filters: clears restricted fields (`this.secretField = undefined`) for partial grants, or returns `undefined` for full denial — not just `return this` with no effect
 - [ ] Sensitive fields have `hideField: true` in `@UnifiedField`, or are listed in the framework's `security.secretFields` config (default includes `password`, `verificationToken`, `passwordResetToken`, `refreshTokens`, `tempTokens`)
 - [ ] If a Model appears to expose data to unauthorized users AND only has the default pass-through `securityCheck`: flag as design issue (missing override OR missing field-level `@Restricted`)
+- [ ] **AI module (nest-server ≥ 11.26.0):** if the project enables `ai: { … }` in `config.env.ts`, run these additional checks:
+  - [ ] `apiKeyEncrypted` is in `security.secretFields` (merged in by the framework default — must not have been replaced/removed by a project override)
+  - [ ] `CoreAiConnection.securityCheck` (or any project override of the connection model) never returns the `apiKeyEncrypted` field — `hasApiKey` is the public projection
+  - [ ] Every project-registered `AiTool` routes through a `CrudService` with `ctx.serviceOptions` (NEVER direct `Model.find()` — bypasses `@Restricted` + `securityCheck`)
+  - [ ] Every mutating tool sets `readonly mutating = true`; every destructive tool sets `readonly destructive = true` (the confirmation gate and tool-grant logic key off these flags)
+  - [ ] Tools that modify state implement `authorize(args, ctx)` so plan-mode pre-flight can refuse the run without partial execution
+  - [ ] If `ai.mcp` is set: `@modelcontextprotocol/sdk` is in the project's dependencies (lazy-imported peer; otherwise `/ai/mcp` returns 503)
+  - [ ] If `ai.mcp.oauth: true`: `main.ts` calls `mountAiMcpOAuth(app)` AND `CoreAiMcpOAuthService.authorizeConsent()` is overridden with the project's login/consent UI
+  - [ ] Reference: `generating-nest-servers` skill → `reference/ai-module-integration.md`
 
 #### Layer 3b: Prefer Model Instances in Responses — Plain Objects Lose Model-Specific securityCheck
 

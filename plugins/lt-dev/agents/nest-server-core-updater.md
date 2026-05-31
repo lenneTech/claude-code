@@ -44,7 +44,7 @@ Detect mode from initial prompt arguments:
 | -------------------- | ----------------------------- | ----------------------------------------------- |
 | **Sync-to-latest**   | (default)                     | Sync to the newest upstream tag/release         |
 | **Dry-Run**          | `--dry-run`                   | Analyze only, no file modifications             |
-| **Target Version**   | `--target 11.25.0`            | Sync to a specific upstream version             |
+| **Target Version**   | `--target 11.26.0`            | Sync to a specific upstream version             |
 | **Target Ref**       | `--ref <git-sha-or-branch>`   | Sync to a specific upstream commit/branch       |
 | **Force-Sync**       | `--force`                     | Skip conflict prompts (dangerous — CI only)     |
 
@@ -131,7 +131,7 @@ git clone --depth 1 --branch $TARGET_VERSION https://github.com/lenneTech/nest-s
 ```
 
 **IMPORTANT — Tag format:** nest-server tags have **no** `v` prefix. Use
-`--branch 11.25.0`, not `--branch v11.25.0`.
+`--branch 11.26.0`, not `--branch v11.26.0`.
 
 ### Phase 4: Generate Diffs
 
@@ -169,8 +169,8 @@ Write a structured report (output it to the user, no file needed):
 ```markdown
 # Upstream Sync Report
 
-**From:** 11.24.1 (0f827bd...)
-**To:**   11.25.0 (abc1234...)
+**From:** 11.25.0 (0f827bd...)
+**To:**   11.26.0 (abc1234...)
 **Generated:** 2026-04-12T10:00:00Z
 
 ## Clean picks (42)
@@ -303,10 +303,10 @@ upstream sync this file must be checked for changes and merged into the project.
 
 Commit structure:
 
-1. `chore(framework): sync vendored core from 11.24.1 to 11.25.0 (upstream pick)`
-2. `chore(framework): reapply flatten-fix after 11.25.0 sync` (if flatten files changed)
-3. `fix(framework): apply upstream 11.25.0 breaking changes to consumer code` (if any)
-4. `docs(framework): sync CLAUDE.md from upstream 11.25.0` (if CLAUDE.md changed)
+1. `chore(framework): sync vendored core from 11.25.0 to 11.26.0 (upstream pick)`
+2. `chore(framework): reapply flatten-fix after 11.26.0 sync` (if flatten files changed)
+3. `fix(framework): apply upstream 11.26.0 breaking changes to consumer code` (if any)
+4. `docs(framework): sync CLAUDE.md from upstream 11.26.0` (if CLAUDE.md changed)
 5. `chore(framework): update VENDOR.md sync history`
 
 Update `VENDOR.md`:
@@ -366,8 +366,8 @@ At end of run, produce a report at the same path as the sync-results dir:
 # Upstream Sync Complete
 
 **Status:** ✓ Success / ✗ Failed (details below)
-**Baseline:** 11.24.1 (0f827bd...)
-**Target:**   11.25.0 (abc1234...)
+**Baseline:** 11.25.0 (0f827bd...)
+**Target:**   11.26.0 (abc1234...)
 **Completed:** 2026-04-12T10:42:00Z
 
 ## Summary
@@ -384,6 +384,6 @@ At end of run, produce a report at the same path as the sync-results dir:
 (list from VENDOR.md)
 
 ## Commits
-- `chore(framework): sync vendored core from 11.24.1 to 11.25.0 (abc1234)`
+- `chore(framework): sync vendored core from 11.25.0 to 11.26.0 (abc1234)`
 - ...
 ```

@@ -58,6 +58,7 @@ project/
 | "Create a NestJS module" | **THIS SKILL** |
 | "Debug a service error" | **THIS SKILL** |
 | "Add a REST endpoint" | **THIS SKILL** |
+| "Add an AI tool / chat endpoint / MCP server" (nest-server ≥ 11.26.0) | **THIS SKILL** — see `reference/ai-module-integration.md` + `reference/mcp-integration.md` |
 | "Update nest-server to v14" | nest-server-updating |
 | "Write tests first, then implement" | building-stories-with-tdd |
 | "Update npm packages" | maintaining-npm-packages |
@@ -368,6 +369,7 @@ The scanner detects: missing class-level `@Restricted`, endpoints without `@Role
 | Quality Review | [reference/quality-review.md](${CLAUDE_SKILL_DIR}/reference/quality-review.md) |
 | Verification Checklist | [reference/verification-checklist.md](${CLAUDE_SKILL_DIR}/reference/verification-checklist.md) |
 | TypeScript Conventions | [reference/typescript-conventions.md](${CLAUDE_SKILL_DIR}/reference/typescript-conventions.md) |
+| AI Module Integration | [reference/ai-module-integration.md](${CLAUDE_SKILL_DIR}/reference/ai-module-integration.md) |
 | MCP Integration | [reference/mcp-integration.md](${CLAUDE_SKILL_DIR}/reference/mcp-integration.md) |
 
 ## TypeScript Language Server (Recommended)

@@ -36,7 +36,7 @@ execution, use the matching agents:
 
 | User Intent                                                | Correct Skill                  |
 | ---------------------------------------------------------- | ------------------------------ |
-| "Sync vendored core from upstream v11.25.0"                | **THIS SKILL**                 |
+| "Sync vendored core from upstream v11.26.0"                | **THIS SKILL**                 |
 | "Port this CrudService fix back to nest-server"            | **THIS SKILL**                 |
 | "Apply flatten-fix after upstream copy"                    | **THIS SKILL**                 |
 | "Update nest-server via npm"                               | nest-server-updating           |

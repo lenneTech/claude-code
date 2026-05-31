@@ -322,6 +322,17 @@ Validate security coverage in tests:
 - [ ] **Owner checks** tested — user can only access own resources
 - [ ] **Input validation** tested — malformed input returns 400
 
+**AI module test coverage (only when project enables the `ai` config block):**
+
+- [ ] Every project-registered `AiTool` has at least one e2e test that exercises it via `POST /ai/prompt` as a permitted user (asserting the action records, the response, and the side-effect on the underlying domain) — direct service-level tool tests are insufficient because they bypass the registry's role filter
+- [ ] At least one negative test per tool: same call as a user WITHOUT the required role, asserting that the LLM response indicates the tool was not available (registry filtered it out) and that no side-effect happened
+- [ ] At least one mutating-tool test that asserts the response carries the "confirmation required" state instead of executing on the first attempt (when `confirmation.mutating.default: true` or the tool sets `mutating: true`)
+- [ ] At least one budget-exhaustion test: prompt until `maxPrompts` / `maxTokens` is hit, assert HTTP 429 + `LTNS_0605`
+- [ ] If `ai.mcp` is enabled: 401-without-auth test plus an authenticated initialize + tools/list test through `POST /ai/mcp`
+- [ ] If `ai.mcp.oauth: true`: a roundtrip test through `buildOAuthProvider` for at least the auth-code-exchange and refresh-token rotation paths, including the negative case where a different `client_id` tries to rotate a stolen refresh token
+
+Reference: `generating-nest-servers` skill → `reference/ai-module-integration.md` "Tests to add in the consumer project".
+
 **Grep patterns:**
 ```bash
 # Only admin tests (should also test as regular user)

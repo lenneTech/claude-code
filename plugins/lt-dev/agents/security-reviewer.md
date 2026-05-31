@@ -416,6 +416,26 @@ grep "JWT_SECRET\|BETTER_AUTH_SECRET" .env.example
 - [ ] `.env` in `.gitignore`
 - [ ] `.env.example` has ONLY placeholder values
 
+#### Layer 5c: AI Module Secrets (nest-server ≥ 11.26.0, only when `ai` config block present)
+
+The AI module introduces several new secret/credential surfaces that must be audited in addition to the generic password / token checks above. Skip this layer when the project does not enable the AI module.
+
+```bash
+# AI module enabled at all?
+grep -E "^[[:space:]]*ai:[[:space:]]*\{" projects/api/src/config.env.ts
+```
+
+- [ ] `ai.encryptionSecret` resolves to a 32+ char value via `NSC__AI__ENCRYPTION_SECRET` (or `SECRETS_ENCRYPTION_KEY`) in production — without it, `AiCryptoService.onModuleInit` throws at boot. Verify the `.env.example` lists the variable and the production secret store carries it.
+- [ ] `apiKeyEncrypted` field of `CoreAiConnection` is **never** in an API response — the field is on the framework's default `security.secretFields` list AND should be cleared by the connection model's `securityCheck`. Replacing `security.secretFields` (instead of merging) removes this default. Look for `security: { secretFields: [...] }` that drops `apiKeyEncrypted`.
+- [ ] Project-registered `AiTool`s route through a `CrudService` with `ctx.serviceOptions` — direct `Model.find()` / `.lean()` inside a tool's `execute()` bypasses `@Restricted` + `securityCheck` and silently leaks fields the calling user is not allowed to see.
+- [ ] Mutating tools set `readonly mutating = true`, destructive tools `readonly destructive = true` — without these flags the confirmation policy is bypassed and the LLM can fire-and-forget side-effects.
+- [ ] If `ai.mcp.oauth: true`: `ai.mcp.oauthSecret` (or `ai.encryptionSecret`) resolves to a 32+ char production value — `CoreAiMcpOAuthService.onModuleInit` throws at boot otherwise. The OAuth access tokens are HMAC-signed with this secret.
+- [ ] If `ai.allowedBaseUrlHosts` is set: verify the list does NOT contain internal-network ranges that could enable an SSRF pivot through an admin-controlled connection (`baseUrl` is admin-only, but a compromised admin should not be able to point the provider at `169.254.169.254`).
+- [ ] OAuth `client_secret` (when `ai.mcp.oauth: true`): the framework persists and returns it from `CoreAiMcpOAuthService.getClient()` so the SDK middleware can verify it. A project override that strips `client_secret` silently downgrades confidential clients to public clients — flag immediately.
+- [ ] Refresh-token rotation is bound to `client_id` — `rotateRefreshToken(token, clientId)` signature. A project override using the older single-arg signature would let a stolen refresh token rotate into a different client's session — high-severity finding.
+
+Reference: `generating-nest-servers` skill → `reference/ai-module-integration.md` "Mandatory check before completing the integration".
+
 #### Layer 5b: Error-Response Information Disclosure (ErrorCode Enforcement)
 
 Raw-string exceptions are a **classic OWASP A01/A09 vector**: they frequently leak SQL fragments, stacktrace details, file paths, internal IDs, or user-enumeration signals through the HTTP response body. The `@lenne.tech/nest-server` framework solves this via the typed `ErrorCode` registry — every exception returns `#PREFIX_XXXX: Developer message`, translated client-side via `GET /i18n/errors/:locale`. Full rules: `generating-nest-servers` skill → `reference/error-handling.md`.
