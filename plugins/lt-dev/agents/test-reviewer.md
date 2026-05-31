@@ -168,6 +168,28 @@ grep -n "it(" <test-files> | grep -v "expect"
 grep -n "toMatchSnapshot\|toMatchInlineSnapshot" <test-files>
 ```
 
+#### Streaming / AbortError Tests (`useLtAi*`, nuxt-extensions 1.7.0+)
+
+When a test exercises an SSE stream or any `AbortController`-driven flow, treat `AbortError` as a SUCCESS condition (the user/component chose to stop), NOT a failure. A test that flips `expect(error).toBe(true)` on AbortError is checking the wrong invariant — and may pass today but mask a regression when the underlying composable starts handling abort cleanly.
+
+Acceptance criteria for a streaming test:
+
+- Mock or real backend emits at least one chunk, then aborts
+- After abort, assert that previously streamed `content` is preserved (not cleared)
+- After abort, assert `error.value === null` and `error: true` is NOT set on the assistant turn
+- Network errors (non-Abort) still surface as `error: true` — keep a parallel test for that path
+- For SSE parser tests directly: cover the trailing buffer flush at EOF (no terminating newline), split-JSON across chunks, and the 1 MiB line-cap rejection separately
+
+```bash
+# AbortError treated as a failure — likely wrong
+grep -rnE "AbortError.*toBe\(true\)|expect.*error.*true.*AbortError" <test-files>
+
+# Streaming tests with no abort assertion
+grep -rnE "promptStream|useLtAiChat" <test-files> -l | xargs -I{} sh -c '
+  if ! grep -q "AbortError\|stop\(\)" "{}"; then echo "  → {} streams but does not test stop/abort"; fi
+'
+```
+
 #### ErrorCode Assertions (Backend + Frontend)
 
 Error-path tests must assert **structured error codes** (`#LTNS_XXXX` / `#PROJ_XXXX`), not raw message strings. The codes are the public API contract; messages are translations that change per locale and release. Reference: backend skill `generating-nest-servers/reference/error-handling.md`, frontend composable `useLtErrorTranslation` (`@lenne.tech/nuxt-extensions`).

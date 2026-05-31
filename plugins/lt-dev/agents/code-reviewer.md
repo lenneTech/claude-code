@@ -155,6 +155,14 @@ grep -rn "import .*ErrorCode.* from '@lenne.tech/nest-server'" src/server/ --inc
 - [ ] No excessive complexity
 - [ ] Backward compatibility maintained
 - [ ] Consistent with surrounding codebase
+- [ ] **TypeScript declaration-merge collision** — two `export interface X` (or `export type X`) declarations with the same name in the same module silently merge in TypeScript. The result is often a wrong public type that vue-tsc does NOT flag. Symptom: a property required by one declaration becomes required on the merged shape, breaking call sites of the OTHER declaration. (Real example: `LtAiPromptInput` in nuxt-extensions 1.7.0 — CRUD shape and execution payload silently merged, breaking `useLtAiPrompts().create({...})`.) Check:
+
+```bash
+# Duplicate exported interface / type names in the same file
+git diff <base>...HEAD --name-only | grep -E "\.ts$" | while read f; do
+  awk '/^export (interface|type) /{print FILENAME":"$3}' "$f" | sort | uniq -d
+done
+```
 
 ### Phase 5: Test Coverage Check
 

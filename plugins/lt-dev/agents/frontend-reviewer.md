@@ -203,7 +203,17 @@ Validate composable conventions:
 - [ ] Explicit types on every ref inside composables
 - [ ] Data fetching logic in composables — not in components
 - [ ] Filtering/sorting/pagination logic in dedicated composables
-- [ ] Auth via `useBetterAuth()` with `authClient.useSession(useFetch)`
+- [ ] Auth via `useLtAuth()` with `authClient.useSession(useFetch)`
+
+**AI composable patterns (`useLtAi*`, from nuxt-extensions 1.7.0+):**
+
+- [ ] AI chat consumers use `useLtAiChat().stop()` to abort a streaming turn — NOT a raw `AbortController.abort()` on a parallel signal
+- [ ] No manual `applyFinal`-like duplication: consumer code does NOT re-trigger the final-event handler after `promptStream` resolves (the composable runs it exactly once)
+- [ ] `AbortError` is treated as a clean stop in any custom error branch — never flip `error: true` based on message matching `/abort/i`
+- [ ] `LtAiPromptInput` is used ONLY with `useLtAiPrompts().create/update`; `LtAiPromptRunInput` is used with `useLtAi().prompt/.promptStream` — never swapped
+- [ ] `useLtAiChat().messages` is bound to child components by entry (allowed) but never re-assigned (it's `Readonly<Ref<...>>`)
+- [ ] Long-running chats pass `{ maxMessages: N }` to cap memory (or document the unbounded contract)
+- [ ] SSE consumption goes through `useLtAi()` / `useLtAiChat()` — no hand-rolled `EventSource` for `/ai/stream` (the endpoint is POST with auth)
 
 **Grep patterns:**
 ```bash
@@ -211,6 +221,19 @@ Validate composable conventions:
 grep -n "return {" composables/*.ts  # then check for readonly()
 # UI logic in composables
 grep -n "modalOpen\|isOpen\|showModal\|ref<.*Element>" composables/*.ts
+
+# AI: raw AbortController next to a useLtAi/Chat — flag for manual review
+grep -rnE "useLtAi(Chat)?\(\)" app/ --include="*.vue" --include="*.ts" -l | xargs -I{} sh -c 'grep -l "new AbortController" "{}" && echo "  → raw AbortController used alongside useLtAi* — prefer .stop()"'
+
+# AI: error-on-abort regressions — flipping error flags when AbortError is caught
+grep -rnE "error.*\b(AbortError|abort)\b|\.name === ['\"]?AbortError" app/ --include="*.vue" --include="*.ts" | grep -v "useLtAiChat\|nuxt-extensions"
+
+# AI: type confusion — LtAiPromptInput used where LtAiPromptRunInput is expected (or vice versa)
+grep -rnE "useLtAi\(\)\.(prompt|promptStream)\b" app/ --include="*.vue" --include="*.ts"  # arg type must be LtAiPromptRunInput
+grep -rnE "useLtAiPrompts\(\)\.(create|update)\b" app/ --include="*.vue" --include="*.ts"  # arg type must be LtAiPromptInput
+
+# AI: hand-rolled EventSource against /ai/stream — wrong endpoint shape (POST + auth)
+grep -rnE "new EventSource\([^)]*\/ai\/stream" app/ --include="*.vue" --include="*.ts"
 ```
 
 **Scoring:**

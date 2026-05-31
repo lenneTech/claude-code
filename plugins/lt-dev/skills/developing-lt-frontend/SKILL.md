@@ -61,7 +61,7 @@ project/
 | File (in `node_modules/@lenne.tech/nuxt-extensions/`) | When to Read |
 |-------------------------------------------------------|-------------|
 | `CLAUDE.md` | Start of any frontend task — composables, components, config |
-| `dist/runtime/composables/` | Available composables (useAuth, useApi, etc.) |
+| `dist/runtime/composables/` | Available composables (`useLtAuth`, `useLtAuthClient`, `useLtTusUpload`, `useLtFile`, `useLtShare`, `useLtErrorTranslation`, and from 1.7.0 the `useLtAi*` family) |
 | `dist/runtime/components/` | Available components |
 | `dist/runtime/utils/` | Available utilities |
 | `dist/runtime/types/` | TypeScript type definitions |
@@ -235,7 +235,9 @@ async function onSubmit() {
 - [ ] Logic in composables, modals use `useOverlay`, forms use Valibot
 - [ ] TailwindCSS only, semantic colors only
 - [ ] German UI, English code, no implicit `any`
-- [ ] Auth uses `useBetterAuth()`, protected routes use `middleware: 'auth'`
+- [ ] Auth uses `useLtAuth()`, protected routes use `middleware: 'auth'`
+- [ ] AI chat uses `useLtAiChat().stop()` for clean abort (NEVER raw `AbortController.abort()` on a `useLtAi*` stream — the composable does cleanup and treats AbortError as a clean stop)
+- [ ] `LtAiPromptInput` (CRUD for `useLtAiPrompts`) vs `LtAiPromptRunInput` (execution payload for `useLtAi.prompt()` / `.promptStream()`) — never conflate; pre-1.7.0 they collided as one name and TypeScript silently merged them
 - [ ] No `v-html` with user content, tokens stored securely
 - [ ] All error-handling sites route through `useLtErrorTranslation()` — no raw backend messages in Toasts / UI
 - [ ] Security review passed (`/lt-dev:review` for general scan)

@@ -369,6 +369,22 @@ grep -rn "v-html\|innerHTML\|eval(\|document\.write\|new Function(" app/
 - `v-html` only with DOMPurify-sanitized content
 - `:href` URLs validated against protocol allowlist (`http`/`https`)
 
+#### AI Assistant Streams (useLtAi*, nuxt-extensions 1.7.0+)
+
+LLM-generated text is **untrusted** — it can contain attacker-controlled HTML if the model was prompt-injected (via user message, retrieved document, or tool result). Always render via Vue text interpolation, never via `v-html`.
+
+Severity ladder for AI-stream patterns:
+
+- **CRITICAL** — `v-html` rendering `message.content`, `response.text`, or `assistant.content` from any `useLtAi*` composable
+- **HIGH** — Custom SSE parser instead of `parseLtAiSseStream` (bypasses 1 MiB line cap and AbortSignal honouring)
+- **MEDIUM** — `ltAiRequest` paths interpolating raw `${id}` segments without `encodeURIComponent`
+- **MEDIUM** — Catching and swallowing the `"AI stream line exceeds maximum allowed size"` error (silently disables the DoS guard)
+
+```bash
+grep -rnE "v-html=.*(message\.content|response\.text|assistant\.content)" app/ --include="*.vue"
+grep -rnE "new EventSource" app/ --include="*.ts" --include="*.vue" | grep -i "ai\|stream"
+```
+
 ### Phase 4: Auth & Session Security
 
 #### Backend Auth
