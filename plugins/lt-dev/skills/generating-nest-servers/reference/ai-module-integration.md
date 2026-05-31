@@ -46,6 +46,31 @@ Everything below is in the framework — consumers configure, do not implement:
 
 ## Opt-in surface (the only four things you actually write)
 
+### 0. Wire `CoreAiModule.forRoot()` into the server module
+
+The framework controller stays dormant until the module is imported. In `src/server/server.module.ts`:
+
+```typescript
+import { CoreAiModule, CoreModule, TusModule } from '@lenne.tech/nest-server';
+// ...
+export const imports = [
+  CoreModule.forRoot(envConfig),
+  // ... other modules ...
+  UserModule,
+
+  // Mounts every /ai/* REST + GraphQL endpoint (chat/stream, connections,
+  // preferences, budgets, interactions, slots, prompts, prompt-hints,
+  // placeholders, usage). Tools are opt-in — register them via an
+  // AiToolsModule (see §2). No tools registered = the assistant correctly
+  // answers "I don't have a tool to do that" for domain questions.
+  CoreAiModule.forRoot(),
+];
+```
+
+Also add `CoreAiModule` to the module's `exports` if downstream modules
+depend on its services. Without this line the `/ai/*` routes are 404 even
+when the `ai` config block (§1) is set.
+
 ### 1. Config block in `config.env.ts`
 
 ```typescript

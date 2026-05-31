@@ -52,7 +52,10 @@ export function useBetterAuth() {
 
   const user = computed(() => session.data.value?.user ?? null)
   const isAuthenticated = computed<boolean>(() => !!session.data.value?.session)
-  const isAdmin = computed<boolean>(() => user.value?.role === 'admin')
+  // Accept BOTH role-shapes: nest-server `roles: string[]` AND Better-Auth
+  // singular `role: string`. Use `isAdminUser()` from app/utils/ (nuxt-base-starter
+  // ≥ 2.8.0 auto-imports it). Inline body: `!!u?.roles?.includes('admin') || u?.role === 'admin'`.
+  const isAdmin = computed<boolean>(() => isAdminUser(user.value))
 
   return {
     user, isAuthenticated, isAdmin,

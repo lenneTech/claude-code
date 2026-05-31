@@ -219,6 +219,15 @@ function handleStopClick(): void {
 | SSE consumed via `fetch + ReadableStream` (NOT `EventSource`) | The endpoint is `POST` with auth headers — `EventSource` doesn't support either. Don't try to "modernize" to `EventSource`. |
 | Buffer cap = 1 MiB per SSE line | A malformed proxy that never emits `\n` throws `"AI stream line exceeds maximum allowed size"`. Don't catch and swallow it — surface to ops. |
 
+### Performance Pitfalls
+
+| Pitfall | Why it bites | Fix |
+|---------|-------------|-----|
+| **O(n·m) scroll-watcher source** — `watch(() => messages.value.map((m) => m.content).join('|'), …)` | Allocates a fresh array AND a `\|`-joined string on EVERY SSE token. For 20 messages × 500 tokens each, every additional token = ~10 000-character string allocation just to detect a change. Quadratic memory/CPU under streaming — the slowdown is invisible early but compounds during long replies / long sessions. Shipped in nuxt-base-starter ≤ 2.7.x and fixed in 2.8.0. | Watch only the length + the tail content — O(1) per token: `watch(() => [messages.value.length, messages.value.at(-1)?.content], …)`. Alternatively watch `streaming` and `requestAnimationFrame`-throttle the scroll. |
+| **Unbounded `messages` ref** — instantiating `useLtAiChat()` without `maxMessages` | `useLtAiChat` supports the cap; if you don't pass it, a long-lived chat tab grows the array forever — each message keeps its `actions` array, `pendingActions`, and the full streamed `content` string. Slow leak in dashboards / kiosks. | Pass `useLtAiChat({ maxMessages: 100 })` (or a project-appropriate cap). nuxt-base-starter 2.8.0 ships 100 as the default. |
+| **SSR on authenticated AI pages** — leaving the default `ssr: true` on `/app/ai`, `/app/admin/ai/*`, `/app/settings/ai*` | These pages load all data client-side via composables in `onMounted`. SSR renders an empty skeleton, ships it, and the client immediately blanks it for the real fetch — wasted server CPU and zero UX win. | `definePageMeta({ ssr: false })` per page. nuxt-base-starter 2.8.0 ships this on all 9 AI pages. |
+| **No de-dup on `useLtAiPrompts().load()` across mounts** | Each composable instance owns its own `ref([])`. Navigating settings → chat → settings re-fetches `/ai/prompts` every time. Workable for small lists (< 50 prompts/user); doubles backend load on large lists. | Wrap the list in `useState('lt-ai-prompts', () => ref([]))` so all consumers share one cache, then invalidate-on-mutation. |
+
 ### Admin-only Composable
 
 `useLtAiAdmin()` is auto-imported for ALL signed-in users. Backend enforces `@Restricted(ADMIN)` on every endpoint, so a non-admin caller receives 401/403. For UX, hide the admin UI behind a frontend route guard — but never trust the frontend role check alone.
@@ -234,7 +243,11 @@ export function useBetterAuth() {
 
   const user = computed(() => session.data.value?.user ?? null)
   const isAuthenticated = computed<boolean>(() => !!session.data.value?.session)
-  const isAdmin = computed<boolean>(() => user.value?.role === 'admin')
+  // Dual-shape admin check — see `app/utils/is-admin-user.ts` in the
+  // nuxt-base-starter (≥ 2.8.0). Accepts `roles: string[]` (nest-server) AND
+  // `role: string` (Better-Auth standalone). Inline body if you can't import:
+  //   !!u?.roles?.includes('admin') || u?.role === 'admin'
+  const isAdmin = computed<boolean>(() => isAdminUser(user.value))
   const is2FAEnabled = computed<boolean>(() => !!user.value?.twoFactorEnabled)
   const isLoading = computed<boolean>(() => session.isPending.value)
 

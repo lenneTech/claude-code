@@ -163,7 +163,13 @@ export function useBetterAuth() {
 
   const user = computed(() => session.data.value?.user ?? null)
   const isAuthenticated = computed<boolean>(() => !!session.data.value?.session)
-  const isAdmin = computed<boolean>(() => user.value?.role === 'admin')
+  // Dual-shape admin check — nest-server projects use `roles: string[]`
+  // (the `users` collection field), Better-Auth standalone setups use
+  // `role: string`. Accept either via the canonical helper.
+  // nuxt-base-starter ≥ 2.8.0 ships this as `app/utils/is-admin-user.ts`
+  // (auto-imported). For ad-hoc inline use, the body is:
+  //   !!user?.roles?.includes('admin') || user?.role === 'admin'
+  const isAdmin = computed<boolean>(() => isAdminUser(user.value))
   const is2FAEnabled = computed<boolean>(() => !!user.value?.twoFactorEnabled)
   const isLoading = computed<boolean>(() => session.isPending.value)
 
@@ -508,6 +514,26 @@ For comprehensive frontend security guidelines, see [security.md](./security.md)
 - Use `httpOnly` cookies for refresh tokens
 - Implement session timeout for sensitive applications
 - Clear all client state on logout
+
+### Form-submit race hardening (capture-phase preventDefault)
+
+**Problem.** `<UAuthForm>` (Nuxt UI Pro) attaches its `event.preventDefault()` inside its bubble-phase submit handler — and that handler is only bound during per-component hydration. Between page-paint and hydration-complete there is a window in which a synthetic submit (Playwright, Chrome-DevTools-MCP, or a fast human pressing Enter) triggers the browser's native form GET. With method `GET` the typed password ends up in the URL: `/auth/login?email=…&password=…`. The leak is observable in automation and theoretically reachable by real users on slow devices.
+
+**Fix.** Attach a capture-phase listener in `onMounted` that only calls `preventDefault`. Capture-phase fires BEFORE bubble, so the native submit is killed even while the bubble handler is not yet bound. Once Vue's bubble handler is alive it runs as before and performs the real sign-in. Purely additive — for an already-hydrated form it duplicates the preventDefault that was about to happen anyway.
+
+```typescript
+// app/pages/auth/login.vue
+onMounted(() => {
+  const form = formContainer.value?.querySelector('form');
+  form?.addEventListener('submit', (e) => e.preventDefault(), { capture: true });
+});
+```
+
+**Tests.** nuxt-base-starter ≥ 2.8.0 ships:
+- `tests/e2e/auth-form-hardening.spec.ts` — regression guard, asserts no `password=` in URL AND still on `/auth/login` after a synthetic submit (positive assertion catches navigation crashes too).
+- `tests/e2e/helpers/safe-form-submit.ts` — `page.evaluate(safeFormSubmit, { delayMs: 50 })` reproduces the race deterministically via `form.requestSubmit()` (instead of `press('Enter') + waitForTimeout(50)`, which is timing-fragile on CI).
+
+**Apply to every `<UAuthForm>` page.** Login + Register are the obvious candidates; any future auth-related form (password-reset, MFA enrollment, magic-link request) needs the same listener. The capture-phase technique is also applicable to any other form where the browser's native action would leak data — but for non-auth forms a `method="POST"` form is usually the cleaner fix.
 
 ---
 
