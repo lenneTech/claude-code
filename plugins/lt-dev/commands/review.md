@@ -165,7 +165,7 @@ Cover all quality dimensions: content, security, code quality, tests, documentat
 Produce your structured single-pass report.
 ```
 
-After the single-pass agent completes, present its report as the final output **wrapped in the same Phase 5 envelope** (Sections 1, 2, 4, 5, 8, 9 only — Sections 3, 6, 7 are N/A for the single-pass path). The Executive Summary, Action Roadmap, and Recommended Commands are still mandatory; only the cross-domain analysis and per-domain breakdown are skipped. Section 8 contains the single-pass `code-reviewer` agent's full verbatim report.
+After the single-pass agent completes, present its report as the final output **wrapped in the same Phase 5 envelope** (Sections 0, 1, 2, 4, 5, 8, 9 only — Sections 3, 6, 7 are N/A for the single-pass path). The TL;DR (Section 0), Executive Summary, Action Roadmap, and Recommended Commands are still mandatory; only the cross-domain analysis and per-domain breakdown are skipped. Section 8 contains the single-pass `code-reviewer` agent's full verbatim report.
 
 **Note:** The built-in `/security-review` cross-check is NOT invoked on the small-diff path — the single-pass `code-reviewer` agent already covers security for diffs this small, and the extra Skill call would only add latency.
 
@@ -432,7 +432,8 @@ For each challenged finding:
 
 1. **Every numbered section below is MANDATORY** — do not skip, summarize, or omit any section, even if a domain is N/A.
 2. **Section 8 (Detailed Reviewer Reports) MUST contain the VERBATIM full output of every spawned reviewer agent.** Do NOT paraphrase, compress, or drop reports. If a reviewer returned 400 lines, all 400 lines appear in the final output.
-3. **Section order is fixed.** Top-to-bottom: Executive Summary → Reviewers Spawned → Overall Results → Action Roadmap → Consolidated Remediation Catalog → Informed Trade-offs → Cross-Domain Challenge Results → Detailed Reviewer Reports → Recommended Commands & Tools.
+3. **Section order is fixed.** Top-to-bottom: **TL;DR (Section 0)** → Executive Summary → Reviewers Spawned → Overall Results → Action Roadmap → Consolidated Remediation Catalog → Informed Trade-offs → Cross-Domain Challenge Results → Detailed Reviewer Reports → Recommended Commands & Tools.
+   **Section 0 is mandatory** — it is the single source the user reads when they need a fast picture. Everything below it (Sections 1–9) is the audit trail. Section 0 MUST: (a) state the verdict in one sentence in the user's language (German for lenne.tech projects unless the user wrote the request in English), (b) list every Critical/High/Medium finding grouped Must-Fix / Should-Fix / Nice-to-Have with `file:line` + 1-line action, (c) show a per-domain score table (1 row per spawned reviewer), (d) name 1–3 highest-leverage recommendations the user should act on first. Section 0 must fit in roughly one screen — if a domain has many findings, summarize the bucket ("12 weitere Low-Findings — siehe Section 5") rather than enumerating every entry.
 4. **Wrap each full reviewer report in a `<details><summary>` block** for scannability — but the FULL content stays inside. GitHub, VS Code, and the Claude Code terminal all render these natively.
 5. **If a reviewer failed or returned an error**, show the error verbatim in its `<details>` block. Do not silently drop it.
 6. **No-Loss Guarantee:** EVERY individual finding present in any verbatim report (Section 8) MUST also appear (a) as a row in the Consolidated Remediation Catalog (Section 5) AND (b) as a numbered item under the matching priority bucket in the Action Roadmap (Section 4). Apply across ALL severities including Low and Info — no long-tail dropping.
@@ -444,6 +445,28 @@ Generate a single unified report merging all reviewer results:
 
 ```markdown
 ## Code Review Report
+
+### 0. TL;DR (kompakte Zusammenfassung — die eine Sektion für den Menschen)
+
+In der Sprache des Users (DE für lenne.tech-Projekte, sonst EN). Alle Sections darunter sind der Audit-Trail.
+
+**Verdict:** ✅ Ready to merge / ⚠️ Fixes empfohlen vor Merge / ❌ BLOCKIERT — ein Satz Begründung.
+
+**Findings nach Priorität — Tabellen mit `# | Domain | file:line | Problem | Fix`:**
+
+🔴 **Must-Fix (vor Merge)** — Critical-/High-Findings die wirklich blockieren. Leer ⇒ "Keine Must-Fix-Findings — Branch ist merge-ready."
+
+🟠 **Should-Fix (gleicher Sprint)** — High-/Medium-Findings die Qualität messbar verbessern.
+
+🟡 **Nice-to-Have** — Low-/Info-Findings als knappe Liste.
+
+Lange Buckets (>8 Einträge) zusammenfassen: erste 5 zeigen, Rest als "+N weitere — siehe Section 5".
+
+**Per-Domain-Scores** — eine Zeile pro tatsächlich gespawntem Reviewer (N/A-Domains weglassen): `Domain | Score | ✅/⚠️/❌ | Kurzfazit in einem Satz`.
+
+**Check-Pipeline-Baseline:** `pnpm audit X · format:check ✓/✗ · lint X/X · test X/X · build ✓/✗ · check ✓/✗`.
+
+**Top-3 Empfehlungen (höchster Hebel zuerst):** je eine konkrete Aktion mit Verweis auf Finding-#, geschätzter Kosten/Nutzen.
 
 ### 1. Executive Summary
 
