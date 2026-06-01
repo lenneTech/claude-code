@@ -51,7 +51,7 @@ Parse `$ARGUMENTS` for these optional flags:
    - Contains `github.com` → `gh`
    - Else → `glab` (GitLab)
    - If neither CLI is installed, abort and tell the user which CLI to install.
-5. Create TodoWrite plan with the 9 phases below (including 5.5 Linear handoff).
+5. Create TodoWrite plan with the 10 phases below (STEPs 0–10; STEP 9 = post-merge Linear handoff, STEP 10 = summary).
 
 ---
 
@@ -156,68 +156,6 @@ Delegate to the `/lt-dev:git:create-request` command's STEP 1-4 logic (provider 
 
 **Body:** generate from `git log $BASE_BRANCH..$FEATURE_BRANCH --oneline` + `git diff $BASE_BRANCH..$FEATURE_BRANCH --stat`. Keep it concise — this is the landing PR, not a human review (use `/lt-dev:dev-submit` for that).
 
-## STEP 5.5 — Linear: Comment + "Dev Review" + Unassign
-
-This phase mirrors `/lt-dev:dev-submit` so the ticket signals readiness while the pipeline runs and any human reviewers can pick it up. Skipped automatically if no Linear identifier can be resolved.
-
-### 5.5a. Resolve Linear Issue ID
-
-Try to extract the Linear identifier from `FEATURE_BRANCH`:
-- Pattern: `<prefix>-<digits>` after stripping the leading `feature/` segment (e.g. `feature/svl-123-...` → `SVL-123`, `feature/lin-42-foo` → `LIN-42`).
-- Uppercase the prefix.
-
-**If extraction fails:**
-- Ask the user via `AskUserQuestion`:
-  - "Ich konnte keine Linear-Issue-ID aus dem Branch-Namen ableiten. Bitte gib die Issue-ID an (z.B. `SVL-123`), oder wähle 'Überspringen' wenn dieses Branch kein Linear-Ticket hat."
-  - Options: "ID eingeben (Other)", "Linear-Schritte überspringen"
-- On skip → continue directly to STEP 6, set `LINEAR_UPDATED = false`.
-
-Store as `ISSUE_ID`.
-
-### 5.5b. Fetch Issue Context
-
-- `mcp__plugin_lt-dev_linear__get_issue` for title, description, and current team.
-- `mcp__plugin_lt-dev_linear__list_issue_statuses` for the team's workflow states (used in 5.5d).
-
-### 5.5c. Generate & Post Comment
-
-Generate a **German** comment for non-developers, using commits + diff stat from STEP 5:
-
-```
-## Umsetzung
-
-[1-3 sentences: What was implemented/fixed, in user-facing terms. No technical jargon.]
-
-## Testanleitung
-
-1. [First step — e.g., "Seite X aufrufen"]
-2. [Action to perform]
-3. [Expected result to verify]
-
-## Review
-
-MR/PR: <REQUEST_URL>
-```
-
-Then ask the user via `AskUserQuestion`:
-- Show the generated comment.
-- Options:
-  1. "Posten" → post via `mcp__plugin_lt-dev_linear__save_comment` on `ISSUE_ID`
-  2. "Bearbeiten" → let the user provide a revised version, then post
-  3. "Überspringen" → don't post
-
-### 5.5d. Status → "Dev Review" + Remove Assignee
-
-1. Find the team's review state in the list from 5.5b. Match case-insensitively against: `Dev Review`, `In Review`, `Review`, `Code Review`. Pick the first match.
-   - If none match, ask the user which state to use (offer the team's available states as options).
-2. Update the issue via `mcp__plugin_lt-dev_linear__save_issue` with:
-   - `stateId` = matched review state
-   - `assigneeId` = `null` (explicitly unassign — the implementer is no longer the owner during review)
-
-If the call fails (permissions, archived issue, etc.), surface the error and ask whether to continue with the pipeline-wait anyway. **Do not** retry the call silently.
-
-Set `LINEAR_UPDATED = true` on success.
-
 ---
 
 ## STEP 6 — Wait for CI Pipeline, Retry on Failure
@@ -302,9 +240,73 @@ If `--no-squash` was given, replace `--squash` with `--merge` (GitHub) or omit i
    - The remote branch is already deleted by Phase 7.
    - `git fetch --prune` to clean up stale remote-tracking refs.
 
+## STEP 9 — Linear: Comment + "Dev Review" + Unassign (post-merge)
+
+This phase mirrors `/lt-dev:dev-submit` and runs **only after a successful merge into `$BASE_BRANCH`**. "Dev Review" here means functional / QA review on the dev deployment, not code review of an open MR/PR. Skipped automatically if no Linear identifier can be resolved.
+
+### 9a. Resolve Linear Issue ID
+
+Try to extract the Linear identifier from `FEATURE_BRANCH` (captured at STEP 0, still in memory even though the branch is gone):
+- Pattern: `<prefix>-<digits>` after stripping the leading `feature/` segment (e.g. `feature/svl-123-...` → `SVL-123`, `feature/lin-42-foo` → `LIN-42`).
+- Uppercase the prefix.
+
+**If extraction fails:**
+- Ask the user via `AskUserQuestion`:
+  - "Ich konnte keine Linear-Issue-ID aus dem Branch-Namen ableiten. Bitte gib die Issue-ID an (z.B. `SVL-123`), oder wähle 'Überspringen' wenn dieses Branch kein Linear-Ticket hat."
+  - Options: "ID eingeben (Other)", "Linear-Schritte überspringen"
+- On skip → continue directly to STEP 10 with `LINEAR_UPDATED = false`.
+
+Store as `ISSUE_ID`.
+
+### 9b. Fetch Issue Context
+
+- `mcp__plugin_lt-dev_linear__get_issue` for title, description, and current team.
+- `mcp__plugin_lt-dev_linear__list_issue_statuses` for the team's workflow states (used in 9d).
+
+### 9c. Generate & Post Comment
+
+Generate a **German** comment for non-developers, using commits + diff stat from STEP 5:
+
+```
+## Umsetzung
+
+[1-3 sentences: What was implemented/fixed, in user-facing terms. No technical jargon.]
+
+## Testanleitung
+
+1. [First step — e.g., "Seite X aufrufen"]
+2. [Action to perform]
+3. [Expected result to verify]
+
+## Status
+
+In `<BASE_BRANCH>` gemerged (Squash). Wird beim nächsten Deployment auf dev verfügbar sein.
+
+MR/PR: <REQUEST_URL>
+```
+
+Then ask the user via `AskUserQuestion`:
+- Show the generated comment.
+- Options:
+  1. "Posten" → post via `mcp__plugin_lt-dev_linear__save_comment` on `ISSUE_ID`
+  2. "Bearbeiten" → let the user provide a revised version, then post
+  3. "Überspringen" → don't post
+
+### 9d. Status → "Dev Review" + Remove Assignee
+
+1. Find the team's review state in the list from 9b. Match case-insensitively against: `Dev Review`, `In Review`, `Review`, `Code Review`. Pick the first match.
+   - If none match, ask the user which state to use (offer the team's available states as options).
+2. Update the issue via `mcp__plugin_lt-dev_linear__save_issue` with:
+   - `stateId` = matched review state
+   - `assigneeId` = `null` (explicitly unassign — the implementer is no longer the owner during functional review)
+
+If the call fails (permissions, archived issue, etc.), surface the error and continue to the summary — **do not** retry the call silently. The merge has already landed; Linear state is recoverable manually.
+
+Set `LINEAR_UPDATED = true` on success.
+
 ---
 
-## STEP 9 — Summary
+## STEP 10 — Summary
 
 Print a concise German block:
 
@@ -326,10 +328,10 @@ Print a concise German block:
 - Modus:   Squash + Merge   (oder: Regular Merge)
 - Commit:  <merge-commit-sha-short>  <subject>
 
-🎫 Linear  (nur falls ISSUE_ID erkannt)
+🎫 Linear  (nur falls ISSUE_ID erkannt, nach erfolgreichem Merge)
 - Issue:    #<ISSUE_ID>
 - Comment:  Gepostet / Bearbeitet / Übersprungen
-- Status:   "Dev Review"
+- Status:   "Dev Review"   (funktionaler Review auf dev-Deployment)
 - Assignee: Entfernt
 
 🧪 Tests vor Merge
