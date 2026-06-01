@@ -1,7 +1,7 @@
 ---
-description: Ship the current feature branch into dev — commit, rebase, test, check, MR/PR, wait for CI, squash-merge, delete branch. Auto-retries on pipeline failure.
+description: Ship the current feature branch into dev — commit, rebase, test, check, MR/PR, Linear comment + "Dev Review" + unassign, wait for CI, squash-merge, delete branch. Auto-retries on pipeline failure.
 argument-hint: "[--base=<branch>] [--max-pipeline-retries=<n>] [--no-squash] [--keep-branch]"
-allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__get_issue
+allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__list_issue_statuses
 disable-model-invocation: true
 ---
 
@@ -51,7 +51,7 @@ Parse `$ARGUMENTS` for these optional flags:
    - Contains `github.com` → `gh`
    - Else → `glab` (GitLab)
    - If neither CLI is installed, abort and tell the user which CLI to install.
-5. Create TodoWrite plan with the 8 phases below.
+5. Create TodoWrite plan with the 9 phases below (including 5.5 Linear handoff).
 
 ---
 
@@ -155,6 +155,68 @@ Delegate to the `/lt-dev:git:create-request` command's STEP 1-4 logic (provider 
 **Title:** derive from branch name + Linear ID + ticket title (fetch via `mcp__plugin_lt-dev_linear__get_issue` if the branch carries a Linear identifier).
 
 **Body:** generate from `git log $BASE_BRANCH..$FEATURE_BRANCH --oneline` + `git diff $BASE_BRANCH..$FEATURE_BRANCH --stat`. Keep it concise — this is the landing PR, not a human review (use `/lt-dev:dev-submit` for that).
+
+## STEP 5.5 — Linear: Comment + "Dev Review" + Unassign
+
+This phase mirrors `/lt-dev:dev-submit` so the ticket signals readiness while the pipeline runs and any human reviewers can pick it up. Skipped automatically if no Linear identifier can be resolved.
+
+### 5.5a. Resolve Linear Issue ID
+
+Try to extract the Linear identifier from `FEATURE_BRANCH`:
+- Pattern: `<prefix>-<digits>` after stripping the leading `feature/` segment (e.g. `feature/svl-123-...` → `SVL-123`, `feature/lin-42-foo` → `LIN-42`).
+- Uppercase the prefix.
+
+**If extraction fails:**
+- Ask the user via `AskUserQuestion`:
+  - "Ich konnte keine Linear-Issue-ID aus dem Branch-Namen ableiten. Bitte gib die Issue-ID an (z.B. `SVL-123`), oder wähle 'Überspringen' wenn dieses Branch kein Linear-Ticket hat."
+  - Options: "ID eingeben (Other)", "Linear-Schritte überspringen"
+- On skip → continue directly to STEP 6, set `LINEAR_UPDATED = false`.
+
+Store as `ISSUE_ID`.
+
+### 5.5b. Fetch Issue Context
+
+- `mcp__plugin_lt-dev_linear__get_issue` for title, description, and current team.
+- `mcp__plugin_lt-dev_linear__list_issue_statuses` for the team's workflow states (used in 5.5d).
+
+### 5.5c. Generate & Post Comment
+
+Generate a **German** comment for non-developers, using commits + diff stat from STEP 5:
+
+```
+## Umsetzung
+
+[1-3 sentences: What was implemented/fixed, in user-facing terms. No technical jargon.]
+
+## Testanleitung
+
+1. [First step — e.g., "Seite X aufrufen"]
+2. [Action to perform]
+3. [Expected result to verify]
+
+## Review
+
+MR/PR: <REQUEST_URL>
+```
+
+Then ask the user via `AskUserQuestion`:
+- Show the generated comment.
+- Options:
+  1. "Posten" → post via `mcp__plugin_lt-dev_linear__save_comment` on `ISSUE_ID`
+  2. "Bearbeiten" → let the user provide a revised version, then post
+  3. "Überspringen" → don't post
+
+### 5.5d. Status → "Dev Review" + Remove Assignee
+
+1. Find the team's review state in the list from 5.5b. Match case-insensitively against: `Dev Review`, `In Review`, `Review`, `Code Review`. Pick the first match.
+   - If none match, ask the user which state to use (offer the team's available states as options).
+2. Update the issue via `mcp__plugin_lt-dev_linear__save_issue` with:
+   - `stateId` = matched review state
+   - `assigneeId` = `null` (explicitly unassign — the implementer is no longer the owner during review)
+
+If the call fails (permissions, archived issue, etc.), surface the error and ask whether to continue with the pipeline-wait anyway. **Do not** retry the call silently.
+
+Set `LINEAR_UPDATED = true` on success.
 
 ---
 
@@ -263,6 +325,12 @@ Print a concise German block:
 🔀 Merge
 - Modus:   Squash + Merge   (oder: Regular Merge)
 - Commit:  <merge-commit-sha-short>  <subject>
+
+🎫 Linear  (nur falls ISSUE_ID erkannt)
+- Issue:    #<ISSUE_ID>
+- Comment:  Gepostet / Bearbeitet / Übersprungen
+- Status:   "Dev Review"
+- Assignee: Entfernt
 
 🧪 Tests vor Merge
 - Unit: <n> grün
