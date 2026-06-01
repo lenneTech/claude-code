@@ -17,6 +17,7 @@ disable-model-invocation: true
 
 | Command | Purpose |
 |---------|---------|
+| `/lt-dev:take-ticket` | **Auto-pick** the next highest-prio unassigned ticket + branch setup + tests + check + summary (end-to-end) |
 | `/lt-dev:create-ticket` | Create any ticket type (Story, Task, Bug) |
 | `/lt-dev:create-story` | Create a user story |
 | `/lt-dev:create-task` | Create a technical task |
@@ -29,6 +30,7 @@ disable-model-invocation: true
 | `/lt-dev:backend:test-generate` | Generate tests for existing code |
 
 **Workflow options:**
+- Need the next ticket auto-picked? → `/lt-dev:take-ticket` (orchestrates this command as part of its end-to-end pipeline)
 - Have a Linear ticket? → `/lt-dev:resolve-ticket DEV-123`
 - Have a ticket file? → `/lt-dev:resolve-ticket stories/my-story.md`
 - Need to create a ticket first? → `/lt-dev:create-ticket` → then `/lt-dev:resolve-ticket`

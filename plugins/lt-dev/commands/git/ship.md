@@ -1,0 +1,299 @@
+---
+description: Ship the current feature branch into dev — commit, rebase, test, check, MR/PR, wait for CI, squash-merge, delete branch. Auto-retries on pipeline failure.
+argument-hint: "[--base=<branch>] [--max-pipeline-retries=<n>] [--no-squash] [--keep-branch]"
+allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__get_issue
+disable-model-invocation: true
+---
+
+# Ship Feature Branch to Dev
+
+## When to Use This Command
+
+- Implementation is finished locally and you want the branch landed in `dev` without manual hand-holding
+- You want auto-retry if the remote CI pipeline fails (re-rebase + re-push + re-wait)
+- You want squash-merge + branch cleanup automated, with a safety prompt before the irreversible step
+
+This command is the **closing bookend** to `/lt-dev:take-ticket`. It does **not** create MRs/PRs with Linear integration — for that, use `/lt-dev:dev-submit` instead (or run it before this command). This command focuses on the **landing pipeline**.
+
+## Related Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/lt-dev:take-ticket` | Pick + implement + test a ticket (the typical predecessor) |
+| `/lt-dev:git:rebase` | Standalone rebase onto dev (used internally by Phase 2) |
+| `/lt-dev:git:create-request` | Standalone MR/PR creation (used internally by Phase 5) |
+| `/lt-dev:dev-submit` | MR/PR + Linear comment + Linear status → "Dev Review" (no merge, no pipeline wait) |
+| `/lt-dev:check` | Standalone check-script runner |
+
+**Difference vs. `/lt-dev:dev-submit`:** `dev-submit` hands off to a human reviewer. `ship` lands the branch into dev autonomously after CI is green.
+
+---
+
+## Argument Parsing
+
+Parse `$ARGUMENTS` for these optional flags:
+
+| Flag | Meaning | Default |
+|------|---------|---------|
+| `--base=<branch>` | Target branch | auto-detect: `dev` → `develop` → `main` → `master` |
+| `--max-pipeline-retries=<n>` | Max full retry cycles if CI fails | `3` |
+| `--no-squash` | Use regular merge instead of squash-merge | squash enabled |
+| `--keep-branch` | Don't delete feature branch after merge | delete enabled |
+
+---
+
+## STEP 0 — Bootstrap
+
+1. Verify we are **not** on a protected branch (`main`, `master`, `dev`, `develop`). If we are, abort with a helpful message.
+2. Capture `FEATURE_BRANCH = git branch --show-current`.
+3. Determine `BASE_BRANCH` per the rule above. Probe with `git rev-parse --verify origin/<name>`.
+4. Detect Git provider via `git remote get-url origin`:
+   - Contains `github.com` → `gh`
+   - Else → `glab` (GitLab)
+   - If neither CLI is installed, abort and tell the user which CLI to install.
+5. Create TodoWrite plan with the 8 phases below.
+
+---
+
+## STEP 1 — Commit & Push Local Work
+
+1. Run `git status --porcelain`.
+2. **If there are uncommitted changes:**
+   - Ask via `AskUserQuestion`:
+     - Show the list of changed files.
+     - Option 1: "Automatisch committen & pushen" — proceed below
+     - Option 2: "Ich committe selbst" — pause, then re-check
+     - Option 3: "Abbrechen"
+   - On Option 1:
+     - `git add -A`
+     - Generate a concise commit message from the diff. Prefix with the Linear identifier if the branch name carries one (e.g. `svl-123-...` → `SVL-123: <summary>`).
+     - `git commit -m "<message>"`
+3. **Check unpushed commits:** `git log @{upstream}..HEAD --oneline 2>/dev/null` (or compare against the would-be upstream if no upstream is set).
+4. **If there are unpushed commits or no upstream:**
+   - `git push -u origin "$FEATURE_BRANCH"`
+
+After this phase, the local branch state must equal `origin/$FEATURE_BRANCH`.
+
+---
+
+## STEP 2 — Rebase onto `origin/$BASE_BRANCH`
+
+1. `git fetch origin --prune`
+2. Capture pre-rebase commit: `PRE_REBASE_SHA = git rev-parse HEAD`
+3. Capture pre-rebase diff hash: `PRE_REBASE_DIFF = git rev-parse HEAD:` (tree hash)
+4. Spawn the **`branch-rebaser` agent** via the Agent tool with:
+   ```
+   Rebase the current branch onto <BASE_BRANCH>.
+
+   Parameters:
+   - branch: <FEATURE_BRANCH>
+   - base: <BASE_BRANCH>
+   - mode: single
+   - project-path: <cwd>
+
+   Execute the full rebase workflow (Phases 0-10). Handle conflicts using Linear context if available. Do NOT push at the end — the parent command handles pushing.
+   ```
+5. If the agent reports unresolved conflicts → abort and surface its report.
+6. After the agent returns, capture `POST_REBASE_TREE = git rev-parse HEAD:`.
+7. Compute `REBASE_CHANGED_TREE = (PRE_REBASE_DIFF != POST_REBASE_TREE)` — true if the rebase actually altered the working tree (not just rewrote authors/dates).
+
+---
+
+## STEP 3 — Tests & Check (only if the rebase changed the tree)
+
+**If `REBASE_CHANGED_TREE` is false AND we are not in a pipeline-retry iteration**, skip to STEP 4 directly — there is nothing to re-test.
+
+Otherwise run the full quality loop, same rules as `/lt-dev:take-ticket` STEPs 7-8:
+
+### 3a. Full Test Suite — Iterate Until Green
+
+Discover every `package.json` test script (`test`, `test:unit`, `test:e2e`, `e2e`, `test:integration`, …). Run in order: **unit → integration/API → e2e**.
+
+Hard rules:
+- **No skips.** No `test.skip` / `xit` / `xfail` to silence failures.
+- **No flaky retry-hiding.** A test that needs `retries: N` to pass is broken — fix the root cause.
+- **Pre-existing failures are blockers too** — fix them; never accept "war schon kaputt".
+- For Playwright E2E: follow `managing-dev-servers` (`lt dev up` if available, else `run_in_background: true` + `pkill` after — never orphan dev servers).
+- Stall guard: if 3 full pipeline iterations don't converge on the same suite, stop and surface a structured diagnosis instead of looping forever.
+
+### 3b. Check Script — Iterate Until Green
+
+Use the `running-check-script` skill verbatim:
+- Discover all `check` scripts (monorepo-aware).
+- Iterate-until-green with the mandatory 6-step audit-finding escalation ladder.
+- No bypasses (`--no-verify`, `@ts-ignore`, `eslint-disable`, etc.).
+- If no `check` script anywhere, log and continue.
+
+---
+
+## STEP 4 — Commit & Push Any New Changes
+
+1. Re-run `git status --porcelain`.
+2. **If new uncommitted changes exist** (from Phase 3 fixes):
+   - `git add -A`
+   - `git commit -m "chore: post-rebase fixes (tests + check)"` — or a more specific message if the changes are obviously scoped (e.g. "fix: failing API test for X").
+3. **Push with force-lease** (the rebase rewrote history, so a plain push will be rejected):
+   - `git push --force-with-lease origin "$FEATURE_BRANCH"`
+   - **NEVER** `--force` plain. `--force-with-lease` aborts if remote moved unexpectedly (someone else pushed).
+4. If `--force-with-lease` is rejected → surface to user, do **not** retry with `--force`.
+
+---
+
+## STEP 5 — Create MR/PR (or Reuse Existing)
+
+### 5a. Detect Existing MR/PR
+
+- **GitHub:** `gh pr list --head "$FEATURE_BRANCH" --base "$BASE_BRANCH" --json number,url,state --jq '.[0]'`
+- **GitLab:** `glab mr list --source-branch "$FEATURE_BRANCH" --target-branch "$BASE_BRANCH" --output json | jq '.[0]'`
+
+Store as `REQUEST_URL` and `REQUEST_ID`.
+
+### 5b. If No Open Request Exists
+
+Delegate to the `/lt-dev:git:create-request` command's STEP 1-4 logic (provider detection already done; target branch is `$BASE_BRANCH`). Capture `REQUEST_URL` and `REQUEST_ID` from the created MR/PR.
+
+**Title:** derive from branch name + Linear ID + ticket title (fetch via `mcp__plugin_lt-dev_linear__get_issue` if the branch carries a Linear identifier).
+
+**Body:** generate from `git log $BASE_BRANCH..$FEATURE_BRANCH --oneline` + `git diff $BASE_BRANCH..$FEATURE_BRANCH --stat`. Keep it concise — this is the landing PR, not a human review (use `/lt-dev:dev-submit` for that).
+
+---
+
+## STEP 6 — Wait for CI Pipeline, Retry on Failure
+
+Counter: `PIPELINE_ATTEMPT = 1`. Cap: `MAX = --max-pipeline-retries` (default 3).
+
+### 6a. Wait
+
+- **GitHub:**
+  ```bash
+  gh pr checks "$REQUEST_ID" --watch --required
+  ```
+  This blocks until all required checks finish. Exit code 0 → pass; non-zero → at least one check failed.
+
+- **GitLab:**
+  ```bash
+  glab ci status --pipeline=$(glab mr view "$REQUEST_ID" --output json | jq -r '.pipeline.id') --live
+  ```
+  If `--live` is unavailable in the installed `glab` version, poll every 30s with `glab ci status` until the status is `success`, `failed`, or `canceled`.
+
+### 6b. On Failure
+
+1. Fetch the failed-job logs:
+   - GitHub: `gh run view <run-id> --log-failed` for each failed check run.
+   - GitLab: `glab ci trace <job-id>` for each failed job.
+2. Diagnose: is it a real code failure or an infra flake (runner unavailable, cache miss, network)?
+3. **Infra flake** (user confirmation required): ask the user via `AskUserQuestion` whether to re-run the pipeline without code changes.
+   - On approve: GitHub `gh run rerun <run-id> --failed`; GitLab `glab ci retry`.
+   - Wait again (step 6a).
+4. **Real failure:** loop back to **STEP 2** (re-rebase to pick up any new dev commits, then re-run tests + check + push). Increment `PIPELINE_ATTEMPT`.
+
+### 6c. Cap Exhausted
+
+If `PIPELINE_ATTEMPT > MAX`:
+- Print a structured diagnosis: which checks failed, latest log excerpt, recommended manual next step.
+- **Do not** proceed to merge.
+- Exit.
+
+---
+
+## STEP 7 — Squash & Merge
+
+**This is the irreversible step.** Always require user confirmation:
+
+```
+AskUserQuestion:
+  "Pipeline ist grün. Soll ich jetzt mit Squash-Merge nach $BASE_BRANCH mergen?"
+  Options:
+    1. "Squash + Merge ausführen"  (default)
+    2. "Ich merge selbst im Web"   → exit with REQUEST_URL
+    3. "Abbrechen"
+```
+
+On Option 1 — perform the merge:
+
+- **GitHub:**
+  ```bash
+  gh pr merge "$REQUEST_ID" --squash --delete-branch --subject "<commit-subject>" --body "<commit-body>"
+  ```
+  - `--delete-branch` deletes both the remote feature branch and (after local `git fetch --prune`) the remote-tracking ref.
+  - If `--keep-branch` flag was given, omit `--delete-branch`.
+
+- **GitLab:**
+  ```bash
+  glab mr merge "$REQUEST_ID" --squash --remove-source-branch --yes
+  ```
+  - If `--keep-branch` was given, omit `--remove-source-branch`.
+
+If `--no-squash` was given, replace `--squash` with `--merge` (GitHub) or omit it (GitLab default is merge).
+
+**Commit message for the squash:** derive from MR/PR title + body. Prefix with the Linear ID if present.
+
+---
+
+## STEP 8 — Local Cleanup
+
+1. `git checkout "$BASE_BRANCH"`
+2. `git pull --ff-only origin "$BASE_BRANCH"` — confirms the merge landed.
+3. **Verify the merge actually happened** via `git log --oneline -1 -- ` to see the new commit, or `gh pr view "$REQUEST_ID" --json state --jq .state` (must be `MERGED`).
+4. If `--keep-branch` was NOT given:
+   - `git branch -D "$FEATURE_BRANCH"` (local hard-delete; safe because it's already merged into base via squash).
+   - The remote branch is already deleted by Phase 7.
+   - `git fetch --prune` to clean up stale remote-tracking refs.
+
+---
+
+## STEP 9 — Summary
+
+Print a concise German block:
+
+```
+╔══════════════════════════════════════════════════════════╗
+║ Branch ge-shipped: <FEATURE_BRANCH> → <BASE_BRANCH>     ║
+╚══════════════════════════════════════════════════════════╝
+
+🌿 Branch
+- Feature: <FEATURE_BRANCH>  (lokal gelöscht / behalten)
+- Basis:   <BASE_BRANCH>     (auf neuestem Stand)
+
+📦 Pipeline
+- MR/PR:   <REQUEST_URL>
+- Attempts: <PIPELINE_ATTEMPT> / <MAX>
+- Final:   ✅ grün
+
+🔀 Merge
+- Modus:   Squash + Merge   (oder: Regular Merge)
+- Commit:  <merge-commit-sha-short>  <subject>
+
+🧪 Tests vor Merge
+- Unit: <n> grün
+- API:  <n> grün
+- E2E:  <n> grün
+
+✅ Check
+- check: <ergebnis>
+
+Nächste Schritte:
+- Ticket-Status final updaten (z.B. via Linear UI oder Workflow-Automation)
+- Deployment beobachten (falls Auto-Deploy auf dev läuft)
+```
+
+---
+
+## Hard Rules
+
+- **Never force-push to a protected branch** (`main`, `master`, `dev`, `develop`). The base branch is push-target for the merge only, never for the feature branch's history.
+- **Always `--force-with-lease`, never plain `--force`** when pushing rewritten feature-branch history.
+- **Merge requires explicit user confirmation** — even if the pipeline is green. This is the irreversible step.
+- **Branch deletion only after the merge is confirmed landed in `BASE_BRANCH`** (verified via `git log` or provider API).
+- **Pipeline-retry cap is hard** — if exhausted, surface and exit. Do not loop forever.
+- **Real CI failures must be fixed in code** — never paper over with `[skip ci]` or by disabling failing checks.
+- **No bypass of test rules** during retries — the same no-skip / no-flake-retry rules apply on every iteration.
+
+## Failure Handling
+
+On unrecoverable error at any step:
+
+1. Mark the corresponding TodoWrite item as failed.
+2. Print a structured diagnosis: which phase, what went wrong, current git state (`git status -s`, `git branch --show-current`, `git log --oneline -5`), MR/PR state, recommended next action.
+3. **Never** delete the feature branch on failure — even partial progress is worth keeping.
+4. **Never** print the success summary on failure.

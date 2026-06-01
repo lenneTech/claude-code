@@ -17,6 +17,7 @@ disable-model-invocation: true
 
 | Command | Purpose |
 |---------|---------|
+| `/lt-dev:git:ship` | End-to-end landing: rebase + tests + check + MR/PR + CI-wait + squash-merge + branch-delete |
 | `/lt-dev:git:rebase-mrs` | Batch rebase multiple MRs/PRs |
 | `/lt-dev:git:commit-message` | Generate commit message after rebase |
 | `/lt-dev:git:mr-description` | Generate MR description for rebased branch |

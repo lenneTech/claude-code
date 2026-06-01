@@ -16,6 +16,7 @@ disable-model-invocation: true
 
 | Command | Purpose |
 |---------|---------|
+| `/lt-dev:git:ship` | End-to-end landing: rebase + tests + check + MR/PR + CI-wait + squash-merge + branch-delete |
 | `/lt-dev:git:mr-description` | Generate MR description without creating |
 | `/lt-dev:git:mr-description-clipboard` | Generate MR description and copy to clipboard |
 | `/lt-dev:dev-submit` | Full submission workflow (includes this command) |
