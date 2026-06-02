@@ -216,38 +216,89 @@ For pure-backend or pure-frontend projects, use only the matching half (skip the
 
 ## STEP 7 — Full Test Loop Until Green
 
-**Discover all test scripts** in every `package.json` of the repo (`test`, `test:unit`, `test:e2e`, `e2e`, `test:integration`, etc.). Iterate this loop until **all** tests pass — no skips, no `xit`, no `test.skip`, no flaky retries hidden:
+The full test pipeline has **three pillars** — all must be fully green, no skips, no flakes. Anything skipped or papered-over hides regressions and breaks the remote CI pipeline.
+
+### 7a. Discover All Test Scripts (three pillars)
+
+For every `package.json` in the repo, identify scripts and assign them to a pillar:
+
+- **Unit:** `test`, `test:unit`, `test:cov`, `vitest`, `jest` (without `e2e`/`integration` suffix). Typically backend `projects/api/src/` and frontend `projects/app/app/`.
+- **API / Integration:** `test:e2e` (backend), `test:integration`, `test:api`, `test:stories`, controller + e2e-spec files. Typically backend `projects/api/tests/` (story tests, controller tests).
+- **Frontend E2E:** `test:e2e` (frontend), `e2e`, `playwright`, `pw`, `pw:e2e`. Typically frontend `projects/app/tests/`, `tests/e2e/`, `e2e/`.
+
+**Disambiguation:** A `test:e2e` script can mean *either* "backend e2e-spec" *or* "Playwright frontend e2e" — look at the script body, config files (`playwright.config.ts` → Frontend E2E), and directory location to assign correctly.
+
+If the project has **no** frontend (pure-backend repo), Pillar 3 is naturally empty — fine. If the project **has** a frontend but **no Playwright tests exist yet**, ask the user whether the ticket actually requires E2E coverage; if yes, write them as part of STEP 6 (TDD) before reaching STEP 7.
+
+### 7b. Pre-Run Skip & Flake Audit
+
+Before running, statically scan the test files for hidden skips and flake-hiders. Fail-fast if any are found that were not present at the start of the branch:
+
+```bash
+# in each test directory:
+grep -rnE '\.(skip|todo|only)\b|\b(xit|xdescribe|test\.skip|it\.skip|describe\.skip|fdescribe|fit)\b' --include='*.ts' --include='*.tsx' --include='*.spec.*' --include='*.test.*'
+grep -rnE 'retries\s*:\s*[1-9]|test\.retry|retry\s*\(' --include='*.ts' --include='*.tsx' --include='*.config.*' --include='*.spec.*'
+```
+
+Any hit → surface to the user. New skips/flake-retries introduced by the TDD phase are blockers — remove them before continuing.
+
+### 7c. Iterate Until Fully Green
 
 ```
-1. Run every discovered test script in order: unit → integration/API → e2e
-2. If ALL green and no SKIPPED tests → done
-3. If failures:
-   a. Read the failure output
-   b. Fix root cause (NEVER skip / xfail / add retry-only to hide flakiness)
-   c. If a pre-existing failure surfaces, fix that too — green suite is a hard requirement
-   d. Re-run only the failing script first to confirm the fix, then full pipeline
-4. If a test is skipped: investigate why. Either restore it (preferred) or document the explicit reason and ask the user before continuing.
+Run every discovered test script in order:
+  1. Unit
+  2. API / Integration
+  3. Frontend E2E
+
+Termination conditions:
+  - ALL pillars exit 0 AND no test reported as SKIPPED/PENDING in output → done
+  - Any failure or any SKIPPED test → enter fix loop
+
+Fix loop:
+  a. Read failure output (full stderr + last failing test name)
+  b. Fix root cause in code or test data — NEVER:
+       - add .skip / .todo / xit / xdescribe
+       - raise retries: N
+       - add test.retry / try-catch swallow in test
+       - add timeouts to dodge a real assertion
+  c. Pre-existing failures (unrelated to ticket) are blockers too — fix them
+     and note them in the summary as "Mitgefixt"
+  d. Re-run only the failing pillar first to confirm the fix
+  e. Then re-run all three pillars to catch cross-pillar regressions
+
+Stall guard: >3 full pipeline cycles without convergence on the same failure
+→ stop and surface a structured diagnosis instead of looping forever.
 ```
 
-**For Playwright E2E** that needs a running app: follow `managing-dev-servers` (use `lt dev up` if the project is registered, else `run_in_background: true` + `pkill` afterwards — never orphan dev servers).
+### 7d. Frontend E2E Specifics
 
-**Backend tests** typically need `NODE_ENV=e2e` (local) — never `NODE_ENV=test` (that's customer stage).
+- **Dev-server orchestration:** follow `managing-dev-servers` — use `lt dev up` if the project is registered (the lt-dev hook says so), otherwise `run_in_background: true` for `pnpm dev` / `pnpm start` + `pkill` after — never orphan dev servers.
+- **Browser engines:** Playwright defaults to chromium; run the configured engines (check `playwright.config.ts` for `projects: [...]`).
+- **Headless on CI parity:** run E2E in the same mode CI uses (typically headless) to avoid local-only passes.
+- **Test data isolation:** test emails must use `@test.com` (TestHelper cleanup regex), same rule as the backend.
 
-If the test loop stalls (>3 full-pipeline runs without convergence on the same suite), stop and surface a structured diagnosis to the user instead of looping forever.
+### 7e. Backend Environment
+
+Backend tests typically need `NODE_ENV=e2e` (local). **Never** `NODE_ENV=test` — that is the customer stage, not a test environment.
 
 ---
 
 ## STEP 8 — Check Script Loop
 
-Run `/lt-dev:check` semantics via the **`running-check-script` skill** verbatim:
+**Runs only after STEP 7 reports all three test pillars fully green.** The `check` script is the secondary safety net (typecheck / lint / build / audit) — it must not be used as a substitute for tests.
 
-1. Discover all `package.json` `check` scripts (monorepo-aware).
-2. Iterate-until-green with the mandatory 6-step audit-finding escalation ladder.
-3. No bypasses (`--no-verify`, `@ts-ignore`, `eslint-disable`, etc.).
-4. Classify residuals into Accepted vs Critical.
-5. STOP if Unresolved blockers remain — do not pretend success.
+Follow the **`running-check-script` skill** verbatim:
 
-If the repo has no `check` script anywhere, log "No check script defined" and continue.
+1. Discover all `package.json` `check` scripts (monorepo-aware) across every detected project.
+2. Run `<pm> run check` (pnpm preferred per project's lockfile; fall back to npm/yarn).
+3. Iterate-until-green with the mandatory 6-step audit-finding escalation ladder.
+4. No bypasses (`--no-verify`, `@ts-ignore`, `eslint-disable`, etc.).
+5. Classify residuals into Accepted vs Critical.
+6. STOP if Unresolved blockers remain — do not pretend success.
+
+**If no `check` script exists** in any `package.json`, log `No check script defined — skipping STEP 8` and continue to STEP 9. Do not invent one.
+
+**If `check` introduces changes** (auto-fixes from lint/format/dedupe): re-run STEP 7's three pillars to confirm the auto-fixes didn't break a test. This is rare but possible.
 
 ---
 

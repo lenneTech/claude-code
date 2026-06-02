@@ -105,24 +105,54 @@ After this phase, the local branch state must equal `origin/$FEATURE_BRANCH`.
 
 Otherwise run the full quality loop, same rules as `/lt-dev:take-ticket` STEPs 7-8:
 
-### 3a. Full Test Suite — Iterate Until Green
+### 3a. Full Test Suite — Three Pillars, Iterate Until Green
 
-Discover every `package.json` test script (`test`, `test:unit`, `test:e2e`, `e2e`, `test:integration`, …). Run in order: **unit → integration/API → e2e**.
+The full test pipeline has **three pillars** — all must be fully green, no skips, no flakes. Anything skipped or papered-over hides regressions and breaks the remote CI in STEP 6.
 
-Hard rules:
-- **No skips.** No `test.skip` / `xit` / `xfail` to silence failures.
+**Discover and bucket scripts** across every `package.json`:
+
+- **Unit:** `test`, `test:unit`, `test:cov`, `vitest`, `jest` (without `e2e`/`integration` suffix). Typically backend `src/` and frontend `app/`.
+- **API / Integration:** backend `test:e2e`, `test:integration`, `test:api`, `test:stories` — anything that exercises the API surface (REST/GraphQL) against a running test instance.
+- **Frontend E2E:** frontend `test:e2e`, `e2e`, `playwright`, `pw`, `pw:e2e` — Playwright suites in `tests/` / `tests/e2e/` / `e2e/`.
+
+**Disambiguate `test:e2e`** by inspecting the script body, presence of `playwright.config.ts`, and directory location. Backend `test:e2e` and frontend `test:e2e` are different pillars even though they share a script name.
+
+Run in order: **1. Unit → 2. API / Integration → 3. Frontend E2E.**
+
+**Pre-Run Skip & Flake Audit** (before invoking any script):
+
+```bash
+grep -rnE '\.(skip|todo|only)\b|\b(xit|xdescribe|test\.skip|it\.skip|describe\.skip|fdescribe|fit)\b' --include='*.ts' --include='*.tsx' --include='*.spec.*' --include='*.test.*'
+grep -rnE 'retries\s*:\s*[1-9]|test\.retry|retry\s*\(' --include='*.ts' --include='*.tsx' --include='*.config.*' --include='*.spec.*'
+```
+
+Any hit introduced on this branch is a blocker — remove it.
+
+**Hard rules during the fix loop:**
+
+- **No skips.** No `test.skip` / `xit` / `xdescribe` / `.todo` / `.only` to silence failures.
 - **No flaky retry-hiding.** A test that needs `retries: N` to pass is broken — fix the root cause.
+- **No try-catch swallow in tests.** No timeout-tweaks to dodge a real assertion.
 - **Pre-existing failures are blockers too** — fix them; never accept "war schon kaputt".
-- For Playwright E2E: follow `managing-dev-servers` (`lt dev up` if available, else `run_in_background: true` + `pkill` after — never orphan dev servers).
-- Stall guard: if 3 full pipeline iterations don't converge on the same suite, stop and surface a structured diagnosis instead of looping forever.
+- **Termination:** all three pillars exit 0 **and** no test reports as SKIPPED/PENDING.
+- For **Frontend E2E**: follow `managing-dev-servers` (`lt dev up` if available, else `run_in_background: true` + `pkill` after — never orphan dev servers). Run in the same headless mode CI uses for local/CI parity.
+- For **Backend** tests: `NODE_ENV=e2e` (local) — never `NODE_ENV=test` (customer stage).
+- **Stall guard:** if 3 full pipeline iterations don't converge on the same failure, stop and surface a structured diagnosis instead of looping forever.
+
+If the project has **no frontend**, Pillar 3 is naturally empty — fine. If the project **has a frontend but no Playwright tests** and the diff touches `app/`, surface that gap and ask the user whether to add E2E coverage before continuing.
 
 ### 3b. Check Script — Iterate Until Green
 
+**Runs only after STEP 3a reports all three test pillars fully green.** The `check` script is the secondary safety net (typecheck / lint / build / audit) — never a substitute for tests.
+
 Use the `running-check-script` skill verbatim:
-- Discover all `check` scripts (monorepo-aware).
+
+- Discover all `check` scripts (monorepo-aware) across every detected project.
+- Run `<pm> run check` (pnpm preferred per project's lockfile; fall back to npm/yarn).
 - Iterate-until-green with the mandatory 6-step audit-finding escalation ladder.
 - No bypasses (`--no-verify`, `@ts-ignore`, `eslint-disable`, etc.).
-- If no `check` script anywhere, log and continue.
+- **If `check` introduces auto-fixes** (lint/format/dedupe), re-run STEP 3a's three pillars to confirm the auto-fixes didn't break a test.
+- **If no `check` script** exists anywhere, log `No check script defined — skipping STEP 3b` and continue. Do not invent one.
 
 ---
 
