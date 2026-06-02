@@ -1,5 +1,5 @@
 ---
-description: Ship the current feature branch into dev — commit, rebase, test, check, MR/PR, Linear comment + "Dev Review" + unassign, wait for CI, squash-merge, delete branch. Auto-retries on pipeline failure.
+description: Ship the current feature branch into dev — pre-flight check, commit, rebase, test, check, MR/PR, Linear comment + "Dev Review" + unassign, wait for CI, squash-merge, delete branch. Auto-retries on pipeline failure.
 argument-hint: "[--base=<branch>] [--max-pipeline-retries=<n>] [--no-squash] [--keep-branch]"
 allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__list_issue_statuses
 disable-model-invocation: true
@@ -20,10 +20,10 @@ This command is the **closing bookend** to `/lt-dev:take-ticket`. It does **not*
 | Command | Purpose |
 |---------|---------|
 | `/lt-dev:take-ticket` | Pick + implement + test a ticket (the typical predecessor) |
-| `/lt-dev:git:rebase` | Standalone rebase onto dev (used internally by Phase 2) |
-| `/lt-dev:git:create-request` | Standalone MR/PR creation (used internally by Phase 5) |
+| `/lt-dev:check` | Standalone check-script runner (used internally by Phase 1) |
+| `/lt-dev:git:rebase` | Standalone rebase onto dev (used internally by Phase 3) |
+| `/lt-dev:git:create-request` | Standalone MR/PR creation (used internally by Phase 6) |
 | `/lt-dev:dev-submit` | MR/PR + Linear comment + Linear status → "Dev Review" (no merge, no pipeline wait) |
-| `/lt-dev:check` | Standalone check-script runner |
 
 **Difference vs. `/lt-dev:dev-submit`:** `dev-submit` hands off to a human reviewer. `ship` lands the branch into dev autonomously after CI is green.
 
@@ -51,11 +51,45 @@ Parse `$ARGUMENTS` for these optional flags:
    - Contains `github.com` → `gh`
    - Else → `glab` (GitLab)
    - If neither CLI is installed, abort and tell the user which CLI to install.
-5. Create TodoWrite plan with the 10 phases below (STEPs 0–10; STEP 9 = post-merge Linear handoff, STEP 10 = summary).
+5. Create TodoWrite plan with the 11 phases below (STEPs 0–11; STEP 1 = pre-flight check, STEP 10 = post-merge Linear handoff, STEP 11 = summary).
 
 ---
 
-## STEP 1 — Commit & Push Local Work
+## STEP 1 — Pre-Flight `check` Script (BLOCKING GATE)
+
+**Before `ship` touches anything else**, the project's `check` script must pass cleanly. The whole landing pipeline relies on a known-good baseline; without it, every later failure becomes ambiguous (was it the rebase? the new commit? the existing drift?).
+
+### 1a. Discover
+
+Use the `running-check-script` skill to discover every `package.json` `check` script in the repo (monorepo-aware).
+
+**If no `check` script exists anywhere**, log `No check script defined — STEP 1 skipped` and continue directly to STEP 2. Do not invent one.
+
+### 1b. Run
+
+For every discovered project, run `<pm> run check`:
+
+- pnpm preferred per project's lockfile (`pnpm-lock.yaml`)
+- fall back to npm (`package-lock.json`) or yarn (`yarn.lock`)
+
+### 1c. Iterate-Until-Green
+
+Follow the `running-check-script` skill verbatim:
+
+- Iterate-until-green with the mandatory 6-step audit-finding escalation ladder.
+- No bypasses (`--no-verify`, `@ts-ignore`, `eslint-disable`, etc.).
+- Classify residuals into Accepted vs Critical.
+
+### 1d. Outcome
+
+- **Green** (possibly with accepted residuals documented): continue to STEP 2.
+- **Critical blocker remains:** abort the whole ship workflow. Print a structured diagnosis (which project, which error, which fix attempts ran). Recommend `/lt-dev:check` to drill in. Do **not** proceed to commit/rebase/MR/PR.
+
+This phase is **non-skippable** — it runs even when the working tree is dirty, because `check` is expected to run against the current local state, and unfixable drift must surface here, not three phases deeper.
+
+---
+
+## STEP 2 — Commit & Push Local Work
 
 1. Run `git status --porcelain`.
 2. **If there are uncommitted changes:**
@@ -76,7 +110,7 @@ After this phase, the local branch state must equal `origin/$FEATURE_BRANCH`.
 
 ---
 
-## STEP 2 — Rebase onto `origin/$BASE_BRANCH`
+## STEP 3 — Rebase onto `origin/$BASE_BRANCH`
 
 1. `git fetch origin --prune`
 2. Capture pre-rebase commit: `PRE_REBASE_SHA = git rev-parse HEAD`
@@ -99,15 +133,15 @@ After this phase, the local branch state must equal `origin/$FEATURE_BRANCH`.
 
 ---
 
-## STEP 3 — Tests & Check (only if the rebase changed the tree)
+## STEP 4 — Tests & Check (only if the rebase changed the tree)
 
-**If `REBASE_CHANGED_TREE` is false AND we are not in a pipeline-retry iteration**, skip to STEP 4 directly — there is nothing to re-test.
+**If `REBASE_CHANGED_TREE` is false AND we are not in a pipeline-retry iteration**, skip to STEP 5 directly — there is nothing to re-test (STEP 1's green check is still valid).
 
 Otherwise run the full quality loop, same rules as `/lt-dev:take-ticket` STEPs 7-8:
 
-### 3a. Full Test Suite — Three Pillars, Iterate Until Green
+### 4a. Full Test Suite — Three Pillars, Iterate Until Green
 
-The full test pipeline has **three pillars** — all must be fully green, no skips, no flakes. Anything skipped or papered-over hides regressions and breaks the remote CI in STEP 6.
+The full test pipeline has **three pillars** — all must be fully green, no skips, no flakes. Anything skipped or papered-over hides regressions and breaks the remote CI in STEP 7.
 
 **Discover and bucket scripts** across every `package.json`:
 
@@ -141,9 +175,9 @@ Any hit introduced on this branch is a blocker — remove it.
 
 If the project has **no frontend**, Pillar 3 is naturally empty — fine. If the project **has a frontend but no Playwright tests** and the diff touches `app/`, surface that gap and ask the user whether to add E2E coverage before continuing.
 
-### 3b. Check Script — Iterate Until Green
+### 4b. Check Script — Iterate Until Green
 
-**Runs only after STEP 3a reports all three test pillars fully green.** The `check` script is the secondary safety net (typecheck / lint / build / audit) — never a substitute for tests.
+**Runs only after STEP 4a reports all three test pillars fully green.** The `check` script is the secondary safety net (typecheck / lint / build / audit) — never a substitute for tests.
 
 Use the `running-check-script` skill verbatim:
 
@@ -151,15 +185,15 @@ Use the `running-check-script` skill verbatim:
 - Run `<pm> run check` (pnpm preferred per project's lockfile; fall back to npm/yarn).
 - Iterate-until-green with the mandatory 6-step audit-finding escalation ladder.
 - No bypasses (`--no-verify`, `@ts-ignore`, `eslint-disable`, etc.).
-- **If `check` introduces auto-fixes** (lint/format/dedupe), re-run STEP 3a's three pillars to confirm the auto-fixes didn't break a test.
-- **If no `check` script** exists anywhere, log `No check script defined — skipping STEP 3b` and continue. Do not invent one.
+- **If `check` introduces auto-fixes** (lint/format/dedupe), re-run STEP 4a's three pillars to confirm the auto-fixes didn't break a test.
+- **If no `check` script** exists anywhere, log `No check script defined — skipping STEP 4b` and continue. Do not invent one.
 
 ---
 
-## STEP 4 — Commit & Push Any New Changes
+## STEP 5 — Commit & Push Any New Changes
 
 1. Re-run `git status --porcelain`.
-2. **If new uncommitted changes exist** (from Phase 3 fixes):
+2. **If new uncommitted changes exist** (from Phase 4 fixes):
    - `git add -A`
    - `git commit -m "chore: post-rebase fixes (tests + check)"` — or a more specific message if the changes are obviously scoped (e.g. "fix: failing API test for X").
 3. **Push with force-lease** (the rebase rewrote history, so a plain push will be rejected):
@@ -169,18 +203,18 @@ Use the `running-check-script` skill verbatim:
 
 ---
 
-## STEP 5 — Create MR/PR (or Reuse Existing)
+## STEP 6 — Create MR/PR (or Reuse Existing)
 
-### 5a. Detect Existing MR/PR
+### 6a. Detect Existing MR/PR
 
 - **GitHub:** `gh pr list --head "$FEATURE_BRANCH" --base "$BASE_BRANCH" --json number,url,state --jq '.[0]'`
 - **GitLab:** `glab mr list --source-branch "$FEATURE_BRANCH" --target-branch "$BASE_BRANCH" --output json | jq '.[0]'`
 
 Store as `REQUEST_URL` and `REQUEST_ID`.
 
-### 5b. If No Open Request Exists
+### 6b. If No Open Request Exists
 
-Delegate to the `/lt-dev:git:create-request` command's STEP 1-4 logic (provider detection already done; target branch is `$BASE_BRANCH`). Capture `REQUEST_URL` and `REQUEST_ID` from the created MR/PR.
+Delegate to the `/lt-dev:git:create-request` command's own STEP 1-4 logic (provider detection already done; target branch is `$BASE_BRANCH`). Capture `REQUEST_URL` and `REQUEST_ID` from the created MR/PR.
 
 **Title:** derive from branch name + Linear ID + ticket title (fetch via `mcp__plugin_lt-dev_linear__get_issue` if the branch carries a Linear identifier).
 
@@ -188,11 +222,11 @@ Delegate to the `/lt-dev:git:create-request` command's STEP 1-4 logic (provider 
 
 ---
 
-## STEP 6 — Wait for CI Pipeline, Retry on Failure
+## STEP 7 — Wait for CI Pipeline, Retry on Failure
 
 Counter: `PIPELINE_ATTEMPT = 1`. Cap: `MAX = --max-pipeline-retries` (default 3).
 
-### 6a. Wait
+### 7a. Wait
 
 - **GitHub:**
   ```bash
@@ -206,7 +240,7 @@ Counter: `PIPELINE_ATTEMPT = 1`. Cap: `MAX = --max-pipeline-retries` (default 3)
   ```
   If `--live` is unavailable in the installed `glab` version, poll every 30s with `glab ci status` until the status is `success`, `failed`, or `canceled`.
 
-### 6b. On Failure
+### 7b. On Failure
 
 1. Fetch the failed-job logs:
    - GitHub: `gh run view <run-id> --log-failed` for each failed check run.
@@ -214,10 +248,10 @@ Counter: `PIPELINE_ATTEMPT = 1`. Cap: `MAX = --max-pipeline-retries` (default 3)
 2. Diagnose: is it a real code failure or an infra flake (runner unavailable, cache miss, network)?
 3. **Infra flake** (user confirmation required): ask the user via `AskUserQuestion` whether to re-run the pipeline without code changes.
    - On approve: GitHub `gh run rerun <run-id> --failed`; GitLab `glab ci retry`.
-   - Wait again (step 6a).
-4. **Real failure:** loop back to **STEP 2** (re-rebase to pick up any new dev commits, then re-run tests + check + push). Increment `PIPELINE_ATTEMPT`.
+   - Wait again (step 7a).
+4. **Real failure:** loop back to **STEP 3** (re-rebase to pick up any new dev commits, then re-run tests + check + push). Increment `PIPELINE_ATTEMPT`.
 
-### 6c. Cap Exhausted
+### 7c. Cap Exhausted
 
 If `PIPELINE_ATTEMPT > MAX`:
 - Print a structured diagnosis: which checks failed, latest log excerpt, recommended manual next step.
@@ -226,7 +260,7 @@ If `PIPELINE_ATTEMPT > MAX`:
 
 ---
 
-## STEP 7 — Squash & Merge
+## STEP 8 — Squash & Merge
 
 **This is the irreversible step.** Always require user confirmation:
 
@@ -260,21 +294,21 @@ If `--no-squash` was given, replace `--squash` with `--merge` (GitHub) or omit i
 
 ---
 
-## STEP 8 — Local Cleanup
+## STEP 9 — Local Cleanup
 
 1. `git checkout "$BASE_BRANCH"`
 2. `git pull --ff-only origin "$BASE_BRANCH"` — confirms the merge landed.
 3. **Verify the merge actually happened** via `git log --oneline -1 -- ` to see the new commit, or `gh pr view "$REQUEST_ID" --json state --jq .state` (must be `MERGED`).
 4. If `--keep-branch` was NOT given:
    - `git branch -D "$FEATURE_BRANCH"` (local hard-delete; safe because it's already merged into base via squash).
-   - The remote branch is already deleted by Phase 7.
+   - The remote branch is already deleted by Phase 8.
    - `git fetch --prune` to clean up stale remote-tracking refs.
 
-## STEP 9 — Linear: Comment + "Dev Review" + Unassign (post-merge)
+## STEP 10 — Linear: Comment + "Dev Review" + Unassign (post-merge)
 
 This phase mirrors `/lt-dev:dev-submit` and runs **only after a successful merge into `$BASE_BRANCH`**. "Dev Review" here means functional / QA review on the dev deployment, not code review of an open MR/PR. Skipped automatically if no Linear identifier can be resolved.
 
-### 9a. Resolve Linear Issue ID
+### 10a. Resolve Linear Issue ID
 
 Try to extract the Linear identifier from `FEATURE_BRANCH` (captured at STEP 0, still in memory even though the branch is gone):
 - Pattern: `<prefix>-<digits>` after stripping the leading `feature/` segment (e.g. `feature/svl-123-...` → `SVL-123`, `feature/lin-42-foo` → `LIN-42`).
@@ -284,18 +318,18 @@ Try to extract the Linear identifier from `FEATURE_BRANCH` (captured at STEP 0, 
 - Ask the user via `AskUserQuestion`:
   - "Ich konnte keine Linear-Issue-ID aus dem Branch-Namen ableiten. Bitte gib die Issue-ID an (z.B. `SVL-123`), oder wähle 'Überspringen' wenn dieses Branch kein Linear-Ticket hat."
   - Options: "ID eingeben (Other)", "Linear-Schritte überspringen"
-- On skip → continue directly to STEP 10 with `LINEAR_UPDATED = false`.
+- On skip → continue directly to STEP 11 with `LINEAR_UPDATED = false`.
 
 Store as `ISSUE_ID`.
 
-### 9b. Fetch Issue Context
+### 10b. Fetch Issue Context
 
 - `mcp__plugin_lt-dev_linear__get_issue` for title, description, and current team.
-- `mcp__plugin_lt-dev_linear__list_issue_statuses` for the team's workflow states (used in 9d).
+- `mcp__plugin_lt-dev_linear__list_issue_statuses` for the team's workflow states (used in 10d).
 
-### 9c. Generate & Post Comment
+### 10c. Generate & Post Comment
 
-Generate a **German** comment for non-developers, using commits + diff stat from STEP 5:
+Generate a **German** comment for non-developers, using commits + diff stat from STEP 6:
 
 ```
 ## Umsetzung
@@ -322,9 +356,9 @@ Then ask the user via `AskUserQuestion`:
   2. "Bearbeiten" → let the user provide a revised version, then post
   3. "Überspringen" → don't post
 
-### 9d. Status → "Dev Review" + Remove Assignee
+### 10d. Status → "Dev Review" + Remove Assignee
 
-1. Find the team's review state in the list from 9b. Match case-insensitively against: `Dev Review`, `In Review`, `Review`, `Code Review`. Pick the first match.
+1. Find the team's review state in the list from 10b. Match case-insensitively against: `Dev Review`, `In Review`, `Review`, `Code Review`. Pick the first match.
    - If none match, ask the user which state to use (offer the team's available states as options).
 2. Update the issue via `mcp__plugin_lt-dev_linear__save_issue` with:
    - `stateId` = matched review state
@@ -336,7 +370,7 @@ Set `LINEAR_UPDATED = true` on success.
 
 ---
 
-## STEP 10 — Summary
+## STEP 11 — Summary
 
 Print a concise German block:
 
@@ -370,7 +404,8 @@ Print a concise German block:
 - E2E:  <n> grün
 
 ✅ Check
-- check: <ergebnis>
+- Pre-Flight (STEP 1): <ergebnis>
+- Post-Rebase (STEP 4b): <ergebnis / skipped>
 
 Nächste Schritte:
 - Ticket-Status final updaten (z.B. via Linear UI oder Workflow-Automation)
@@ -381,6 +416,7 @@ Nächste Schritte:
 
 ## Hard Rules
 
+- **Pre-flight `check` is a hard gate** — STEP 1 must be green before STEP 2 runs. No "fix later", no "ignore for now".
 - **Never force-push to a protected branch** (`main`, `master`, `dev`, `develop`). The base branch is push-target for the merge only, never for the feature branch's history.
 - **Always `--force-with-lease`, never plain `--force`** when pushing rewritten feature-branch history.
 - **Merge requires explicit user confirmation** — even if the pipeline is green. This is the irreversible step.
