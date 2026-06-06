@@ -91,6 +91,18 @@ has_lt_dep() {
 }
 
 SLUG=$(slug_for "$ROOT")
+
+# Ticket worktree? A `.lt-dev/ticket` marker (written by `lt ticket start`) tags
+# this worktree with its ticket id, so the effective stack is the SUFFIXED
+# identity `<slug>-<id>` with its OWN URLs + database. Surface it so Claude knows
+# it is working inside an isolated, per-ticket environment that runs parallel to
+# (and must never influence) the other tickets.
+TICKET=""
+if [ -f "$ROOT/.lt-dev/ticket" ]; then
+  TICKET=$(tr -d '[:space:]' < "$ROOT/.lt-dev/ticket" 2>/dev/null)
+  [ -n "$TICKET" ] && SLUG="${SLUG}-${TICKET}"
+fi
+
 REGISTRY_PATH="${LT_DEV_REGISTRY_PATH:-$HOME/.lenneTech/projects.json}"
 
 API_URL=""
@@ -120,6 +132,7 @@ if [ "$REGISTERED" = "yes" ]; then
   echo "## Active lt-dev project"
   echo ""
   echo "- slug: \`$SLUG\`"
+  [ -n "$TICKET" ] && echo "- ticket: \`$TICKET\` — ISOLATED worktree; work ONLY here, never touch another ticket's folder/DB; all tickets: \`lt ticket list\`"
   [ -n "$APP_URL" ] && echo "- App: \`$APP_URL\`"
   [ -n "$API_URL" ] && echo "- API: \`$API_URL\`"
   [ -n "$DB_NAME" ] && echo "- DB:  \`mongodb://127.0.0.1/$DB_NAME\`"
@@ -130,6 +143,18 @@ if [ "$REGISTERED" = "yes" ]; then
   else
     echo "**For Playwright/E2E run \`lt dev test\` — an ISOLATED parallel stack on a dedicated \`<slug>-test\` DB that runs alongside this dev session and never pollutes it (do NOT run E2E against this dev session). For manual browser tests / API calls / Chrome DevTools, use these URLs as \`baseURL\`. Never assume \`localhost:3000\`/\`localhost:3001\`.**"
   fi
+  echo ""
+  exit 0
+fi
+
+# Ticket worktree whose isolated stack is not up yet → guide to `lt dev up` here.
+if [ -n "$TICKET" ]; then
+  echo ""
+  echo "## lt-dev ticket worktree (\`$TICKET\`) — stack not up yet"
+  echo ""
+  echo "- slug: \`$SLUG\`  ·  root: \`$ROOT\`"
+  echo ""
+  echo "**This is an ISOLATED per-ticket worktree (\`lt ticket\`). Run \`lt dev up\` here to serve it on \`https://$SLUG.localhost\` + \`https://api.$SLUG.localhost\` with its own empty database. Work ONLY in this folder; never touch another ticket's folder or database. List all tickets with \`lt ticket list\`; for E2E use \`lt dev test\` (its DB is the per-ticket \`<slug>-test\`).**"
   echo ""
   exit 0
 fi

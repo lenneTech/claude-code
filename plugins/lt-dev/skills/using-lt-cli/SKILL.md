@@ -131,6 +131,29 @@ What each subcommand does:
 
 **Override the spawn binary** via `LT_PNPM_BIN` (e.g. for bun-based projects via wrapper script).
 
+### lt ticket — Parallel ticket dev environments
+
+Work on several tickets/features of ONE project at the same time — each in its
+OWN git worktree + its OWN isolated `lt dev` stack (own URLs, ports, Caddy block,
+empty DB) — so several tickets can be browser-tested AND E2E-tested in parallel
+without any cross-influence.
+
+```bash
+lt ticket start DEV-2200            # worktree (branch feat/DEV-2200 from origin/dev) + pnpm install + lt dev up
+                                    #   → https://svl-2200.localhost / https://api.svl-2200.localhost, DB svl-sports-system-2200 (empty)
+lt ticket start checkout-refactor   # no ticket? a free feature name works too → svl-checkout-refactor.localhost
+lt ticket start DEV-2200 --as cof   # override the short id; --branch / --base override branch / base ref (default origin/dev)
+lt ticket list                      # dashboard: every ticket env + URLs + branch + status + DB (re-view URLs anytime)
+lt ticket switch <id>               # show the worktree path + open it in $LT_EDITOR (default `code`)
+lt ticket test <id> [--shard N]     # run the E2E suite in the ticket's isolated stack/DB (delegates to lt dev test)
+lt ticket stop <id> [--drop-db]     # lt dev down + remove the worktree (branch kept); --drop-db also drops the ticket DBs
+```
+
+- **Isolation:** ticket `DEV-2200` → short id `2200`; a free name is used as-is. Every ticket gets `<slug>-<id>` EVERYWHERE — URLs `<slug>-<id>.localhost` / `api.<slug>-<id>…`, dev DB `<base>-<id>`, test DB `<base>-<id>-test[-<shard>]`, own ports + Caddy block + session. The sibling worktree folder `<parent>/<slug>-<id>` matches the URL, so you always know which ticket you are in.
+- **Always from fresh `dev`:** `start` does `git fetch` + branches from `origin/dev`, so every ticket is independent (`--base <ref>` to start elsewhere). Worktrees share ONE `.git` — one `git fetch` updates all, creation is instant, teardown is git-tracked (vs. a full clone per ticket: slower, duplicates `.git`, untracked).
+- **Claude-aware automatically:** a gitignored `.lt-dev/ticket` marker tags the worktree → every `lt dev *` run in it is ticket-aware with NO flags, and the lt-dev hook surfaces the ticket id + URLs each prompt. The git-tracked `CLAUDE.md` is NEVER modified per ticket (no git noise).
+- **DB-wiping `global-setup`:** allow the per-ticket test-DB pattern `<base>-<id>-test(-<n>)` in the project's allow-list + local-DB guard — only `…-test` names, NEVER a ticket's dev DB. (svl's `global-setup.ts#isAllowedDb` is the reference.)
+
 ### lt server create — Scaffold New Server
 
 ```bash

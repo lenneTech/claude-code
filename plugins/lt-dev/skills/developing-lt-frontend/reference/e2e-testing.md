@@ -625,16 +625,37 @@ export const SHARD_NAV_TIMEOUT = SHARDED ? 60_000 : 15_000; // tight in CI, gene
 - **Per machine (once):** `lt dev install` (Caddy + local CA).
 - **New projects (from `nuxt-base-starter`):** the template `playwright.config.ts`
   already ships the shard-aware block + `ignoreHTTPSErrors` + the `LT_DEV_ACTIVE`
-  webServer guard. Just `lt dev init` to register + done.
+  webServer guard, and the starter has **no DB-wiping `global-setup`** — so sharded
+  AND per-ticket E2E work out of the box. Just `lt dev init` to register + done.
+  (If you later ADD a DB-reset `global-setup`, use the ticket+shard-safe allow-list
+  from the next bullet from the start — the canonical regex already accepts any
+  future ticket id / shard, so it never needs a per-feature update.)
 - **Existing projects — to enable `--shard`:**
   1. **`lt dev init`** — now auto-applies (idempotently) everything in the
      `playwright.config`: env-aware URLs, the webServer `LT_DEV_ACTIVE` guard,
      **`ignoreHTTPSErrors`** (Caddy cert), the shard-aware `LT_DEV_TEST_SHARDS`
      timeout block, and `slowMo: 0` + registration. One command, no manual edits.
-  2. **(Only if the project has a DB-wiping `global-setup`)** allow the per-shard
-     DB `<db>-test-<n>` in its allow-list AND in any local-DB guard (regex
-     `/-(local|ci|e2e|test)(-\d+)?$/`), so each shard resets only its own DB.
-     Too project-specific to auto-patch — add it once by hand.
+  2. **(Only if the project has a DB-wiping `global-setup`)** make its test-DB
+     allow-list accept every `…-test` database `lt dev test` / `lt ticket` may
+     create — the per-shard **and** the per-ticket variants:
+     - per-shard:  `<base>-test-<n>`   (`lt dev test --shard N`)
+     - per-ticket: `<base>-<id>-test[-<n>]`   (`lt ticket`)
+
+     Canonical, ticket+shard-safe predicate — matches ONLY names ending in
+     `test`, so it can NEVER wipe a dev `…-local` DB nor a ticket's DEV DB
+     (`<base>-<id>`):
+
+     ```ts
+     function isAllowedDb(name: string): boolean {
+       return ALLOWED_DBS.includes(name)                          // exact: <base>-local|-ci|-e2e|-test
+         || /^<base>-(?:[a-z0-9-]+-)?test(?:-\d+)?$/.test(name);  // <base>-[<id>-]test[-<shard>]
+     }
+     ```
+
+     Also widen any `assertLocalMongoUri`-style guard to allow the `-test` suffix
+     (`/-(local|ci|e2e|test)(-\d+)?$/`). This is **deliberately NOT auto-patched**
+     by `lt dev init` (bespoke global-setups vary too much to edit safely) — add
+     it once by hand. `svl`'s `tests/global-setup.ts#isAllowedDb` is the reference.
   3. **(Optional, for explicit per-call `waitForURL` timeouts)** gate them via a
      `SHARD_NAV_TIMEOUT` constant (tight in CI / generous under shard) — the
      config-level `navigationTimeout` from step 1 already covers waits without an

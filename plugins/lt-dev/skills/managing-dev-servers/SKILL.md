@@ -91,6 +91,26 @@ lt dev test -- --ui login.spec.ts # forward args to Playwright
 
 **If the prompt contains "Active lt-dev project" context, NEVER start with `pnpm dev` / `pnpm start` directly — use `lt dev up`.** The injected context block lists the actual URLs for the current project. If session is `no`, run `lt dev up` first; the URLs only resolve while the Caddy block + processes are active.
 
+## Local email (Mailpit)
+
+Local transactional mail is caught by a shared **Mailpit** instance (the modern successor to
+MailHog — the lenneTech catcher was migrated; the hostname may still read `mailhog.lenne.tech`
+but it runs Mailpit). Projects send via SMTP on port `1025`; when no SMTP host is configured
+nest-server uses `jsonTransport` and does **not** transmit (so test envs never send). The web
+UI is basic-auth protected — **credentials live in the team vault; never hardcode them.**
+
+To inspect what an app sends — or to harden email templates — Mailpit gives you, per message:
+a correct **HTML preview of `multipart/related` + inline CID images** (old MailHog could not —
+it showed raw MIME boundaries / `=3D` artifacts, a *preview* limitation, not a mail defect), a
+**responsive phone/tablet/desktop preview**, an **HTML Check** client-compatibility score, and
+a **Link Check** — plus a scriptable **REST API** (`/api/v1/messages`,
+`/api/v1/message/{id}/html-check`, `/api/v1/message/{id}/part/{n}`, `DELETE /api/v1/messages`).
+Verify emails via Chrome DevTools MCP (web UI) or the REST API; automated tests must assert
+content **without** sending (jsonTransport or an `EmailService` recording mock).
+
+→ Full details, endpoints, send-a-test-mail recipe, and CID-vs-URL logo trade-offs:
+[reference/local-email-mailpit.md](reference/local-email-mailpit.md).
+
 ## Correct Pattern (for non-lt projects, or when `lt dev` is not applicable)
 
 1. **Start with `run_in_background: true`** — Claude Code tracks the process and surfaces its output on demand.
