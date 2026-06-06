@@ -102,7 +102,8 @@ assert_contains "$out" "Active lt-dev project" "emits 'Active lt-dev project' bl
 assert_contains "$out" "https://crm.localhost" "shows App URL"
 assert_contains "$out" "https://api.crm.localhost" "shows API URL"
 assert_contains "$out" "session: no" "shows session: no"
-assert_contains "$out" "Run \`lt dev up\`" "instructs to run lt dev up"
+assert_contains "$out" "lt dev test" "instructs to use lt dev test for E2E (isolated)"
+assert_contains "$out" "lt dev up" "still mentions lt dev up for manual browser/API work"
 cleanup
 
 # --- Case 4: lt project, registered, ACTIVE session ---

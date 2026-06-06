@@ -458,8 +458,10 @@ app/
 
 | Context | Language |
 |---------|----------|
-| UI labels, button text, validation messages, toast messages | **German** |
+| UI labels, button text, validation messages, toast messages | **The project's UI language** — detect from the project's `CLAUDE.md` / existing `*.vue` text; never assume German |
 | Code, variable names, comments, function names | **English** |
+
+> **Detect the UI language before writing any UI text.** Check the project's `CLAUDE.md` / conventions / i18n config first; if none, match the language already used in existing `*.vue` pages/components; only fall back to German for a true greenfield. **Never bulk-translate an established UI** to another language — it is a destructive, review-failing change.
 
 ## Loading / Empty / Error States (Consistent UX)
 
@@ -527,7 +529,7 @@ toast.add({ title: 'Änderungen verworfen', color: 'info' })
 ```
 
 **Rules:**
-- Toast titles in **German**
+- Toast titles in the **project's UI language** (detected, not assumed)
 - Always `color: 'success' | 'error' | 'info' | 'warning'` — never omit
 - Error toasts SHOULD include a `description` with actionable text
 - Never use `alert()` or `console.log()` for user feedback

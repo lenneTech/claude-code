@@ -19,7 +19,7 @@ paths:
 - **Nuxt's PORT vs NITRO_PORT** — Some Nitro versions read `process.env.PORT` as a string and feed it directly into `net.Server#listen`, which crashes with `ERR_SOCKET_BAD_PORT options.port should be >= 0 and < 65536. Received type string`. Always prefer `NITRO_PORT=<num>` for the production build (`node .output/server/index.mjs`) — `NITRO_PORT` is the documented Nitro-specific knob, goes through Nitro's own env loader, and is coerced to number reliably. The Nuxt dev server (`nuxt dev`) is unaffected — `nuxt.config.ts` `devServer.port` works as expected.
 - **Aligning with the upstream starter is a wholesale dep sync, not a curated pick** — When the project is being brought to the current `nuxt-base-starter` baseline, sync every dep version (both `dependencies` and `devDependencies`) to what the starter ships and read the CHANGELOG of any package whose major moved. The recurring trap that a blanket version-sync does **not** fix is **missing direct deps after a peer-restructure**: when `Rollup failed to resolve import "X"` (or an equivalent module-not-found at install time) appears, the wrapper package no longer pulls "X" transitively — declare X as a direct dependency in `package.json`, even if no app code imports it directly.
 - **`pnpm run generate-types` needs a RUNNING API** — The generator fetches the OpenAPI/GraphQL schema from the API. Under `lt dev up` the URL is `https://api.<slug>.localhost` (see the "Active lt-dev project" context block); without `lt dev` it falls back to `http://localhost:3000`. If the API is not running, the command completes successfully but produces an empty or stale `types.gen.ts` / `sdk.gen.ts` — no error is raised. Always verify the API is up before regenerating (`curl -k https://api.<slug>.localhost/health` for lt-dev mode, `curl http://localhost:3000/health` otherwise).
-- **All UI text must be German** — English labels, button captions, toasts, and form placeholders pass lint, pass tests, but fail review. The app targets German-speaking users exclusively. When in doubt, translate, and consider `du` vs `Sie` addressing matches the existing tone of the screen.
+- **UI language: detect it from the project — NEVER assume German.** UI text (labels, buttons, placeholders, toasts) must match the language the project already uses. Determine it in this order: **(1)** an explicit project rule wins — check the project's `CLAUDE.md`, a conventions doc, or i18n config; **(2)** otherwise infer from existing UI files — match the language already used across `*.vue` pages/components; **(3)** only default to German for a true greenfield with no rule and no existing UI text. **NEVER bulk-translate an existing app from one language to another** — silently flipping an established English UI to German (or vice-versa) is a destructive, review-failing change that has broken a whole project before. The project — not this plugin — decides the language; once detected, stay consistent with it (incl. `du` vs `Sie` tone for German).
 - **Use `useOverlay()` for modals — NOT conditional rendering** — The default instinct is `<MyModal v-if="showModal" />`. This bypasses Nuxt UI's modal stack, breaks focus trapping, and causes z-index issues with nested dialogs. The correct pattern is `useOverlay().create(ModalComponent)` from composables. See `reference/modals.md`.
 - **`types.gen.ts` and `sdk.gen.ts` are GENERATED — never hand-edit** — Manual changes are overwritten on next `generate-types` run. If a type is missing, the fix is on the API side (add `@ApiProperty`, `@Field`, etc.) not in the generated file. `.gitignore` does NOT ignore these files — they ARE committed, but only via the regeneration command.
 - **Better Auth derives its origins from BASE_URL/APP_URL — not from a hardcoded port number.** When `lt dev up` is used, these env vars are set automatically to the project's stable HTTPS URLs (`https://api.<slug>.localhost`, `https://<slug>.localhost`) and auth works regardless of internal port. The legacy "3000/3001 only" rule applies ONLY to non-migrated projects with hardcoded URLs. Run `lt dev init` once to migrate. See `managing-dev-servers` skill for the full URL rules.
@@ -139,7 +139,7 @@ nuxt.config.ts
 
 | Rule | Value |
 |------|-------|
-| UI Labels | German (`Speichern`, `Abbrechen`) |
+| UI Labels | Match the project's language — detect, never assume (see Gotchas) |
 | Code/Comments | English |
 | Styling | TailwindCSS only, no `<style>` |
 | Colors | Semantic only (`primary`, `error`, `success`) |
@@ -201,7 +201,7 @@ async function onSubmit() {
 - [ ] Every error-handling site uses `useLtErrorTranslation()` — no raw `error.message` in Toast descriptions, form errors, or page-level error UI
 - [ ] `loadTranslations(locale)` is called once at app start or on locale change (the composable caches per locale via `useState`)
 - [ ] Code-based branching (`if (parsed.code === 'LTNS_XXXX')`) for flow-control decisions (verification-required redirects, retry prompts) — never branch on message-string contents
-- [ ] Toast titles are hardcoded in German (context-specific, e.g. `'Anmeldung fehlgeschlagen'`); descriptions come from `translateError`
+- [ ] Toast titles are hardcoded in the project's UI language (context-specific, e.g. German `'Anmeldung fehlgeschlagen'` or the project's English equivalent); descriptions come from `translateError`
 - [ ] Tests assert translated messages (not English `error.message`) — see the test-reviewer rules in this plugin
 
 **Full consumer reference: [reference/error-translation.md](${CLAUDE_SKILL_DIR}/reference/error-translation.md)**
@@ -234,7 +234,7 @@ async function onSubmit() {
 - [ ] All API calls via `sdk.gen.ts`, all types from `types.gen.ts`
 - [ ] Logic in composables, modals use `useOverlay`, forms use Valibot
 - [ ] TailwindCSS only, semantic colors only
-- [ ] German UI, English code, no implicit `any`
+- [ ] UI text matches the project's detected language (not assumed German), code/comments English, no implicit `any`
 - [ ] Auth uses `useLtAuth()`, protected routes use `middleware: 'auth'`
 - [ ] AI chat uses `useLtAiChat().stop()` for clean abort (NEVER raw `AbortController.abort()` on a `useLtAi*` stream — the composable does cleanup and treats AbortError as a clean stop)
 - [ ] `LtAiPromptInput` (CRUD for `useLtAiPrompts`) vs `LtAiPromptRunInput` (execution payload for `useLtAi.prompt()` / `.promptStream()`) — never conflate; pre-1.7.0 they collided as one name and TypeScript silently merged them

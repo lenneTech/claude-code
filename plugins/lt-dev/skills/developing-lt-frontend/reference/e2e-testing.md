@@ -82,7 +82,8 @@ from env vars with `localhost` fallbacks — never hardcode ports in specs.
 | Environment | App URL | API URL | Protocol |
 |---|---|---|---|
 | Classic (manual `pnpm start` + `pnpm dev`) | `http://localhost:3001` | `http://localhost:3000` | HTTP |
-| `lt dev up` | `https://<slug>.localhost` | `https://api.<slug>.localhost` | HTTPS (Caddy) |
+| `lt dev up` (manual / dev) | `https://<slug>.localhost` | `https://api.<slug>.localhost` | HTTPS (Caddy) |
+| `lt dev test` (isolated E2E) | `https://<slug>-test.localhost` | `https://api.<slug>-test.localhost` | HTTPS (Caddy) |
 | CI (GitLab / GitHub) | `http://localhost:3001` | `http://localhost:3000` | HTTP |
 
 **Env-driven config** — `playwright.config.ts` and every spec/helper:
@@ -97,6 +98,21 @@ const API_BASE = process.env.NUXT_PUBLIC_API_URL || process.env.API_URL || 'http
 into `process.env`. Any Playwright invocation — `pnpm test:e2e`, `lt dev test`,
 the VS Code extension — then picks up the active `lt dev` URLs.
 
+**Isolated E2E suite (`lt dev test`, preferred)** — for the full suite, `lt dev test`
+brings up a SEPARATE parallel stack (`<slug>-test.localhost`) on a dedicated DB
+`<slug>-test` (reset once before the first test by global-setup), runs Playwright
+via a `.lt-dev/.env.test` bridge, and auto-tears-down residue-free — so it never
+touches your `lt dev up` dev session or its `<slug>-local` DB. Prefer it over running
+the suite against `lt dev up`; `lt dev test down` stops a `--keep`-ed stack
+(`--keep` leaves it up for browser debugging).
+
+Both halves run BUILT for speed + prod-fidelity (compiled API + `nuxt build` →
+`node .output/server/index.mjs`, no Vite cold-compile), and the stack is **cross-origin
+split-host** (`NUXT_PUBLIC_API_PROXY=false`, App on `<slug>-test.localhost` ↔ API on
+`api.<slug>-test.localhost`) — the SAME topology as a deployment. That is exactly why
+the cross-subdomain cookie rule below matters: the same-origin `/api` proxy is only a
+CI artifact, never how `lt dev test` (or prod) runs.
+
 **Cookie injection gotcha** — when a test injects a captured `Set-Cookie`
 header into the browser context, it MUST:
 
@@ -105,7 +121,23 @@ header into the browser context, it MUST:
   injected without `secure` is silently rejected by the browser → the test
   lands on `/auth/login`;
 - derive the cookie `domain` from the app host (`localhost` for classic/CI,
-  `<slug>.localhost` for `lt dev`) instead of a hardcoded `'localhost'`.
+  `<slug>.localhost` / `<slug>-test.localhost` for `lt dev`) instead of a
+  hardcoded `'localhost'`;
+- **on split-host `lt dev` / deployed, inject it as a cross-subdomain DOMAIN
+  cookie (leading dot).** The session must reach BOTH the app origin (for SSR)
+  and the API subdomain (for the client-side cross-origin data fetch). A real
+  Better-Auth `Set-Cookie: Domain=<slug>-test.localhost` is — per RFC 6265 — a
+  DOMAIN cookie that is also sent to `api.<slug>-test.localhost`, which is why a
+  real browser login works cross-origin. But Playwright
+  `addCookies({ domain: '<slug>-test.localhost' })` with a BARE domain (no
+  leading dot) is stored **HOST-ONLY** → NOT sent to the API subdomain → the
+  cross-origin `GET /iam/get-session` returns `null` → the app auto-logs-out to
+  `/auth/login` (the classic split-host E2E auth break). Prefix a leading dot
+  for multi-label hosts (`.<slug>-test.localhost`) so the cookie covers the API
+  subdomain; single-label hosts (CI / `localhost`, IPs) stay host-only — there
+  the app + API share one origin via the `/api` proxy, so no subdomain crossing
+  happens. Misleading symptom: `context.cookies(['https://api.<host>'])` LISTS
+  the cookie, yet the browser never sends it cross-origin.
 
 **API test-mode flags** — E2E suites promote a fresh user to admin via a direct
 DB write. The API must skip its rate limiter and Better-Auth user-cache so the
@@ -549,6 +581,67 @@ jobs:
 - [ ] No orphaned test data in database
 - [ ] CI/CD pipeline configured
 - [ ] Test report reviewed
+
+## Parallel / sharded E2E (`lt dev test --shard N`) — rollout
+
+`lt dev test --shard N` runs the suite split across **N fully-isolated stacks**
+in parallel (each its own URLs/ports/Caddy block AND its own DB
+`<db>-test-<i>`), the local equivalent of the CI `parallel: N` + `--shard=i/N`
+matrix. NEVER use in-process `workers > 1` against one stack — the suite's global
+cleanup / "pick any active season" helpers collide and produce false results.
+
+**Choosing N — local shards share ONE machine (unlike CI's per-shard containers).**
+Each shard runs a built Nuxt/Nitro server + headless Chromium + a compiled API,
+peaking at ~2 **perf** cores during SSR render. Once N shards' demand reaches the
+perf-core count there is no headroom, SSR slows 2-3x, and timing-sensitive
+navigations FAIL regardless of timeout (true over-subscription). Measured on an
+M2 Max (8 perf cores) with a heavy built-SSR suite: **N=2 → 7.4 min, 0 failures
+(stable); N=3 → flaky; N=4 → 6-10 min, flaky + high variance**. So:
+
+- `--shard auto` picks a conservative machine default (`perfCores/4 ≈ logical/6`)
+  that favours a green, repeatable run. Override with an explicit `--shard N`.
+- **Heavy built-SSR suites: start at N=2.** Lighter suites / bigger boxes can go
+  higher. Always measure N vs N±1 (wall-clock AND flakes).
+- CI is unaffected — each CI shard gets its own container, so keep CI's N as-is.
+
+**Timeouts must stay CI-fast.** Relax ONLY under sharded local load, gated on the
+CLI-exported `LT_DEV_TEST_SHARDS` (never set in CI), so CI's fast-failure feedback
+is unchanged:
+
+```ts
+// playwright.config.ts
+const SHARDED = Number(process.env.LT_DEV_TEST_SHARDS || '0') > 1;
+export default defineConfig({
+  timeout: isWindows ? 60_000 : SHARDED ? 180_000 : 90_000,
+  expect: { timeout: SHARDED ? 30_000 : 10_000 },
+  use: { navigationTimeout: SHARDED ? 60_000 : undefined, actionTimeout: SHARDED ? 30_000 : undefined },
+});
+// for explicit per-call waitForURL overrides (they ignore navigationTimeout):
+export const SHARD_NAV_TIMEOUT = SHARDED ? 60_000 : 15_000; // tight in CI, generous under shard
+```
+
+**Rollout checklist**
+
+- **Per machine (once):** `lt dev install` (Caddy + local CA).
+- **New projects (from `nuxt-base-starter`):** the template `playwright.config.ts`
+  already ships the shard-aware block + `ignoreHTTPSErrors` + the `LT_DEV_ACTIVE`
+  webServer guard. Just `lt dev init` to register + done.
+- **Existing projects — to enable `--shard`:**
+  1. **`lt dev init`** — now auto-applies (idempotently) everything in the
+     `playwright.config`: env-aware URLs, the webServer `LT_DEV_ACTIVE` guard,
+     **`ignoreHTTPSErrors`** (Caddy cert), the shard-aware `LT_DEV_TEST_SHARDS`
+     timeout block, and `slowMo: 0` + registration. One command, no manual edits.
+  2. **(Only if the project has a DB-wiping `global-setup`)** allow the per-shard
+     DB `<db>-test-<n>` in its allow-list AND in any local-DB guard (regex
+     `/-(local|ci|e2e|test)(-\d+)?$/`), so each shard resets only its own DB.
+     Too project-specific to auto-patch — add it once by hand.
+  3. **(Optional, for explicit per-call `waitForURL` timeouts)** gate them via a
+     `SHARD_NAV_TIMEOUT` constant (tight in CI / generous under shard) — the
+     config-level `navigationTimeout` from step 1 already covers waits without an
+     explicit timeout.
+  4. Build scripts present (`build` → `.output` / `dist`) — lt projects have these.
+- **Cross-project:** multiple projects' `lt dev test` isolate ports/DBs but share
+  CPU/RAM — run heavy suites one project at a time.
 
 ## Related Documentation
 

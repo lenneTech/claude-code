@@ -126,9 +126,9 @@ if [ "$REGISTERED" = "yes" ]; then
   echo "- session: $SESSION_ACTIVE"
   echo ""
   if [ "$SESSION_ACTIVE" = "no" ]; then
-    echo "**Project is registered but no \`lt dev up\` session is active. Run \`lt dev up\` before browser tests / API calls. Use these URLs (never \`localhost:3000\`/\`localhost:3001\`).**"
+    echo "**Project is registered but no \`lt dev up\` session is active. For Playwright/E2E use \`lt dev test\` — it spins up an ISOLATED, parallel stack on its own \`<slug>-test.localhost\` URLs and a dedicated \`<slug>-test\` database (reset once before the first test), never touches your dev data, and tears itself down automatically (\`lt dev test down\` stops a \`--keep\`-ed stack). For manual browser/API/Chrome-DevTools work, run \`lt dev up\` first. Use these URLs (never \`localhost:3000\`/\`localhost:3001\`).**"
   else
-    echo "**Use these URLs for browser tests, API calls, and Playwright \`baseURL\`. Never assume \`localhost:3000\`/\`localhost:3001\`.**"
+    echo "**For Playwright/E2E run \`lt dev test\` — an ISOLATED parallel stack on a dedicated \`<slug>-test\` DB that runs alongside this dev session and never pollutes it (do NOT run E2E against this dev session). For manual browser tests / API calls / Chrome DevTools, use these URLs as \`baseURL\`. Never assume \`localhost:3000\`/\`localhost:3001\`.**"
   fi
   echo ""
   exit 0

@@ -447,4 +447,4 @@ Naechste Schritte:
 - **Only from Figma** — NEVER invent components or layouts not in the design
 - **Semantic colors** — enforce `text-primary`, `bg-error` etc., never hardcoded hex
 - **Accessibility** — `aria-label` on icon-only buttons, semantic HTML in layouts
-- **German UI labels** — button text, modal titles, placeholder text in German
+- **UI labels in the project's language** — button text, modal titles, placeholder text must match the project's UI language; detect it (project `CLAUDE.md` / existing `*.vue` text) and never assume German

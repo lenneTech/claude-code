@@ -15,7 +15,7 @@ Apply these rules whenever you start any such process — regardless of whether 
 The plugin's `detect-lt-dev` hook injects one of three context blocks at the top of every prompt. Use that block as your switch:
 
 1. **"Active lt-dev project" with `session: yes`** — Project registered AND running. Use the URLs from the block. Do nothing extra; for browser tests / API calls use the URLs as-is.
-2. **"Active lt-dev project" with `session: no`** — Project registered, **not** running. Run `lt dev up` before any browser test, Chrome DevTools MCP call, Playwright run, or API probe.
+2. **"Active lt-dev project" with `session: no`** — Project registered, **not** running. For the **Playwright/E2E suite** run `lt dev test` (isolated parallel stack on a dedicated `<slug>-test` DB — never touches dev data, auto-teardown). For **manual browser tests, Chrome DevTools MCP, or API probes**, run `lt dev up` first.
 3. **"lt-Stack project detected — not yet migrated"** — Project IS an lt project but the registry entry is missing. **Proactively run `lt dev init` first** (idempotent, safe — patches legacy ports, registers, updates CLAUDE.md). Then `lt dev up`. **Do NOT start `pnpm dev` / `pnpm start` as a workaround.**
 4. **No block injected** — Not an lt project. Use the classic `run_in_background: true` + `pkill` pattern documented below.
 
@@ -40,7 +40,8 @@ lt dev status       # Show what is running for THIS project
 lt dev status --all # List every registered project + running state
 lt dev down         # Stop processes + remove Caddy block + clear ENV bridge
 lt dev doctor       # Diagnose Caddy / CA / DNS / port issues
-lt dev test         # Convenience: ensure up + run E2E tests with bridge env
+lt dev test         # ISOLATED Playwright E2E: parallel stack + dedicated DB, auto-teardown
+lt dev test down    # Tear the isolated test stack down (residue-free)
 lt dev tunnel       # Foreground Cloudflare Quick Tunnel — expose the App publicly (--api for the API)
 ```
 
@@ -50,19 +51,29 @@ lt dev tunnel       # Foreground Cloudflare Quick Tunnel — expose the App publ
 
 **API E2E tests (TestHelper, in-process)** — run unchanged. They start a NestJS test module in-process on a dynamic port and never touch Caddy. Use `pnpm run test:e2e` in `projects/api` as before.
 
-**App E2E tests (Playwright)** under `lt dev up`:
+**App E2E tests (Playwright) — preferred: the isolated `lt dev test` (below).** For ad-hoc runs against the dev session, the `lt dev up` bridge still applies:
 - `lt dev up` writes a `<root>/.lt-dev/.env` bridge file containing `NUXT_PUBLIC_SITE_URL`, `NUXT_PUBLIC_API_URL`, storage prefix, DB URI, and `NODE_EXTRA_CA_CERTS` (Caddy root CA path).
 - `lt dev init` injects a tiny `// >>> lt-dev:bridge >>>` block at the top of `playwright.config.ts` that auto-loads this file. Result: any Playwright invocation (`pnpm test:e2e`, `npx playwright test`, VS Code Playwright Extension, JetBrains test runner) automatically picks up the active URLs and trusts the local CA — no parent-shell env required.
 - Existing env-aware patterns (`process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3001'`) keep working as fallback when `lt dev` is not active (CI, classic local dev).
 
-**The convenience wrapper `lt dev test`** ensures the project is up, waits for the App URL to respond, and runs the test command with the bridge env loaded — useful in TDD loops:
+**`lt dev test` — ISOLATED parallel E2E stack (preferred for the suite):** spins up a SECOND, fully separate stack that runs PARALLEL to — and never touches — your `lt dev up` dev session:
+- Own URLs (`<slug>-test.localhost` / `api.<slug>-test.localhost`), own internal ports + Caddy block, and a **dedicated DB `<slug>-test`** — separate from both the dev DB (`<slug>-local`) and the API-test DB (`<slug>-e2e`).
+- Playwright's `global-setup` resets that dedicated DB **once, before the first test** — so a developer keeps working in their own environment while E2E runs, a run never pollutes dev data, and tests may build on each other within the run.
+- The test API runs COMPILED (`node dist`) for stable long suites; the App is a Nuxt dev server. A separate `.lt-dev/.env.test` bridge carries the test URLs + DB.
+- **Auto-teardown** at the end — processes, Caddy block, env bridge, session file, registry entry all removed (residue-free) — with a Ctrl-C signal trap and a stale-session reclaim on the next run.
+
 ```bash
-lt dev test                       # ensure up + pnpm test:e2e in projects/app
-lt dev test --api                 # API tests in projects/api
-lt dev test --teardown            # plus stop session after
+lt dev test                       # isolated Playwright E2E in projects/app (auto-teardown)
+lt dev test --keep                # leave the test stack up afterwards (debug)
+lt dev test down                  # tear the isolated test stack down (residue-free)
+lt dev test --api                 # API tests in projects/api (already isolated on `<slug>-e2e` — no stack)
 lt dev test --debug               # PWDEBUG=1 + headed
-lt dev test -- --ui crm-login.spec.ts   # forward args to playwright
+lt dev test -- --ui login.spec.ts # forward args to Playwright
 ```
+
+**Do NOT run the Playwright suite against the `lt dev up` dev session** — that pollutes (and `global-setup` would reset) your dev DB. Use `lt dev test`.
+
+> **Requires** the lt CLI version that ships the isolated test session. Older lt CLIs run `lt dev test` against the dev session (legacy behavior). The project's `playwright.config.ts` global-setup must reset only the active `MONGO_URI` DB and allow-list `<slug>-test`.
 
 **Why `lt dev` is the preferred path:**
 
@@ -103,7 +114,7 @@ Orphaned dev servers block the Claude Code main loop. The session appears to han
 
 - **"Unfurling..." with no token consumption** — This is the most-missed symptom. The spinner continues but nothing is happening. It means a background process was started uncontrolled and is holding the main loop. Recovery requires the user to press ESC; no retry will help. Prevention: always use `run_in_background: true` + eventual `pkill`.
 - **Auth requires consistent BASE_URL/APP_URL — not a specific port number.** Better Auth derives passkey origin and trusted origins from `BASE_URL` (API) and `APP_URL` (App). When `lt dev up` is used, these are set automatically to the project's HTTPS URLs (`https://api.<slug>.localhost`/`https://<slug>.localhost`) — auth works regardless of internal port. The legacy "3000/3001 only" rule applies ONLY to projects that have not yet been migrated to env-aware config (run `lt dev init` to migrate). For non-lt projects with hardcoded ports, the original rule still holds: starting on a different port silently breaks auth.
-- **Cookies between API and App** — Under `lt dev up`, both subdomains share the parent `.<slug>.localhost` so Better Auth's `crossSubDomainCookies` (auto-enabled in the local baseline when `BASE_URL` is set) makes session cookies visible across both. The `NUXT_PUBLIC_API_PROXY=false` default is intentional — the vite-proxy hack is no longer needed.
+- **Cookies between API and App** — Under `lt dev up` / `lt dev test`, both subdomains share the parent `.<slug>.localhost` so Better Auth's `crossSubDomainCookies` (auto-enabled in the local baseline when `BASE_URL` is set) makes session cookies visible across both. The `NUXT_PUBLIC_API_PROXY=false` default is intentional — the vite-proxy hack is no longer needed. **E2E cookie INJECTION caveat:** a real `Set-Cookie: Domain=<slug>.localhost` is a DOMAIN cookie (RFC 6265: sent to subdomains incl. `api.<slug>.localhost`), but Playwright `addCookies({ domain })` with a BARE domain (no leading dot) is stored HOST-ONLY and is NOT sent to the API subdomain → the cross-origin `/iam/get-session` returns `null` → auto-logout to `/auth/login`. When injecting a captured session, prefix a leading dot for multi-label hosts (`.<slug>-test.localhost`); single-label hosts (CI/`localhost`) stay host-only. See `developing-lt-frontend/reference/e2e-testing.md`.
 - **`pnpm build --watch` is a dev server too** — Framework-linking workflows run both `pnpm build --watch` and `pnpm dev` in parallel. The watch process is easy to forget in cleanup because it produces less visible output. Track it like any other server and `pkill -f "build --watch"` when done.
 - **`pkill -f "<name>"` matches too broadly with short names** — `pkill -f "dev"` can kill unrelated processes (e.g. `devtools`, `developer`). Always match the full command: `pkill -f "nuxt dev"`, `pkill -f "nest start"`, `pkill -f "pnpm build --watch"`.
 

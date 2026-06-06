@@ -164,7 +164,7 @@ Validate general code quality across all changed frontend files:
 
 - [ ] No unnecessary code duplication (DRY) — repeated logic extracted to composables or utilities
 - [ ] Functions/methods have single responsibility
-- [ ] Naming is clear and descriptive (English for code, German for UI labels)
+- [ ] Naming is clear and descriptive (English for code; UI labels in the project's UI language — detect it, do NOT flag English as wrong when the project's UI is English)
 - [ ] No overly complex logic (cyclomatic complexity) — deep nesting > 3 levels split into helpers
 - [ ] Backward compatibility maintained (or breaking changes documented)
 - [ ] Code style consistent with surrounding codebase (follow existing patterns for composables, state management, API calls)
@@ -268,7 +268,7 @@ grep -rn "useLtErrorTranslation\|translateError\|showErrorToast" app/ --include=
 - [ ] Toast descriptions use `translateError(error)` OR `showErrorToast(error, title)` — never raw `error.message` / `error.data.message`
 - [ ] Inline form errors (below input, page-level banner) use `translateError(error)` — not `error.message` directly
 - [ ] Flow-control branching (redirect on verification-required, retry on token-expired) uses `parseError(error).code === 'LTNS_XXXX'` — not `error.message.includes('...')`
-- [ ] Toast titles are hardcoded German strings specific to the action context (`'Anmeldung fehlgeschlagen'`, `'Speichern fehlgeschlagen'`) — `translateError` only supplies the description
+- [ ] Toast titles are hardcoded strings in the project's UI language, specific to the action context (e.g. German `'Anmeldung fehlgeschlagen'` or the project's English equivalent) — `translateError` only supplies the description
 - [ ] `loadTranslations()` is called once at app start (plugin or `app.vue`) OR relied upon via the composable's lazy-load — NOT manually via `$fetch('/i18n/errors/...')`
 - [ ] No hardcoded translation maps duplicating backend codes
 - [ ] SSR-safe: `showErrorToast` is client-only (no-ops on SSR) — any direct Toast call in SSR context is a bug
@@ -395,10 +395,10 @@ Validate styling and naming:
 - [ ] Component naming: PascalCase, Modals with `Modal` prefix, Composables with `use` prefix
 - [ ] Feature-based folder organization
 - [ ] Loading/Empty/Error state handling on every data-driven component
-- [ ] Toast notifications with German messages and color codes
+- [ ] Toast notifications in the project's UI language with color codes
 - [ ] No `console.log` — use `consola.withTag()` (tagged loggers)
 - [ ] No `alert()` for user feedback — use `useToast()`
-- [ ] UI labels in German, code in English
+- [ ] UI labels in the project's UI language (detected, not assumed German), code in English
 - [ ] **Valibot ONLY** for form validation — no Zod imports
 - [ ] **Programmatic modals** via `useOverlay()` — no inline `v-model:open`
 - [ ] **Options object pattern** for optional parameters — no positional optionals
