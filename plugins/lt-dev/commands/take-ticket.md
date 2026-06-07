@@ -19,9 +19,10 @@ This is the **autonomous, project-agnostic** entry point. It works in any projec
 
 | Element | Purpose |
 |---------|---------|
+| `/lt-dev:ticket-cycle` | Full pick → implement → re-analyse → land → Linear-handoff orchestrator (calls `take-ticket` then `git:ship`) |
 | `/lt-dev:resolve-ticket` | Resolve a single ticket by ID/file (no auto-pick, no quality loop) — used internally |
 | `building-stories-with-tdd` skill | Drives the TDD implementation phase |
-| `running-check-script` skill | Drives the `check` script loop |
+| `running-check-script` skill | Drives the `check` script loop (pre-commit + final) |
 | `managing-dev-servers` skill | Rules for any backgrounded servers needed during E2E |
 | `/lt-dev:review` | Optional follow-up: 7-dimension review before submit |
 | `/lt-dev:dev-submit` | Follow-up: MR/PR + Linear comment + status → "Dev Review" |
@@ -56,11 +57,12 @@ Create a TodoWrite plan with these items (mark in progress / completed as you pr
 2. Collect optional context sources (Figma, flows, extra ACs)
 3. Assign self & set ticket "In Progress"
 4. Sync base branch & create feature branch
-5. Analyse all requirement sources
-6. TDD implementation
-7. Run full test suites until green
-8. Run `check` script until green
-9. Print review-ready summary
+5. Analyse all requirement sources (incl. role/permission matrix)
+6. TDD implementation per acceptance criterion — `check` + commit after each green cycle
+7. Final full test-suite sweep (Unit + API + E2E) until fully green
+8. Final `check` script until green
+9. Re-analyse ticket vs. implementation — ask user if anything is missing (loop back to STEP 5/6 if so)
+10. Print review-ready summary
 
 ---
 
@@ -190,13 +192,14 @@ Produce a concise internal plan covering:
 - Data model changes (if any)
 - API contract changes (if any)
 - UI / UX changes (if any)
+- **Role / permission matrix** — for every endpoint / mutation / UI action touched, list every role (e.g. `Admin`, `User`, `Guest`, custom org roles) and whether it is `allowed`, `denied`, or `partial` (own-records-only via `securityCheck`). Derive from `@Restricted` / `@Roles` decorators on the affected services, from the ticket text, and from existing call sites. If no role-aware behaviour applies, explicitly note "Single-role feature — no permission matrix needed".
 - Open questions for the user
 
-**If any open question is blocking** (e.g. unclear data model, missing AC) ask the user before implementation. Non-blocking ambiguities go into the final summary as "Annahmen".
+**If any open question is blocking** (e.g. unclear data model, missing AC, ambiguous role behaviour) ask the user before implementation. Non-blocking ambiguities go into the final summary as "Annahmen".
 
 ---
 
-## STEP 6 — TDD Implementation
+## STEP 6 — TDD Implementation (per Acceptance Criterion, with Pre-Commit `check`)
 
 Follow the **`building-stories-with-tdd` skill** verbatim for the full TDD loop. Key points repeated here so you don't skip them:
 
@@ -211,6 +214,34 @@ Follow the **`building-stories-with-tdd` skill** verbatim for the full TDD loop.
 If the project is fullstack and the Agent Teams flag is enabled, follow the parallel test-writing pattern from the skill. Otherwise sequential.
 
 For pure-backend or pure-frontend projects, use only the matching half (skip the other).
+
+### 6a. Role / Permission Tests (mandatory when STEP 5 produced a permission matrix)
+
+For every entry in the permission matrix from STEP 5, write tests that **prove** the documented behaviour. Coverage rules:
+
+- **`allowed` role** → integration / API test logs that role in, calls the endpoint, expects 2xx + correct payload.
+- **`denied` role** → same setup, expects 401 / 403 (or business-level reject) — never a silent empty result.
+- **`partial` (e.g. own records only)** → at minimum two cases: (a) acting on own record → success, (b) acting on another user's record → reject.
+- **Frontend equivalent** — Playwright E2E logs in as each role and verifies the UI affordance (button visible / hidden / disabled, route accessible / redirected, action error toast).
+
+Place backend permission tests next to the corresponding story tests; place frontend permission E2E in `projects/app/tests/permissions/` if the project doesn't already have a convention.
+
+**A feature with a permission matrix but no role tests is incomplete** — do not proceed to STEP 7.
+
+### 6b. Pre-Commit `check` + Auto-Commit per Green TDD Cycle
+
+Whenever a TDD slice reaches green (red → green for one or more ACs in the same logical unit — typically one entity / one route / one form), follow this commit gate **before** moving on to the next slice:
+
+1. **Run the full discovered `check` script** (`pnpm run check` / `npm run check` / `yarn run check`, monorepo-aware via the `running-check-script` skill). Iterate-until-green using the skill's escalation ladder — **no `--no-verify`, no `@ts-ignore`, no `eslint-disable` bypasses.**
+2. **Re-run the affected test pillar** if `check` introduced auto-fixes (formatter, lint-fix, dedupe). One-pillar re-run is enough at this point; the full three-pillar sweep happens in STEP 7.
+3. **Stage + commit** the slice with a Linear-prefixed conventional-commit message:
+   - Format: `<type>(<scope>): <subject>` — types: `feat`, `fix`, `test`, `refactor`, `docs`, `chore`. Prepend the Linear identifier in the subject **only** if the project's existing commit history uses that convention (check `git log --oneline -20 origin/<base>`); otherwise rely on the branch name to carry the identifier.
+   - Example: `feat(orders): add cancel endpoint with role gating` — body lists the AC numbers covered.
+4. **Do not push** — the local branch stays unpushed until `git:ship` (or `dev-submit`) runs.
+
+If a project has **no `check` script**, log `No check script defined — pre-commit check skipped` and continue. Commits still happen per slice.
+
+The point of this loop is to keep the per-slice diff small enough that a reviewer (and the CI pipeline in `git:ship`) can isolate root causes quickly, and to surface typecheck/lint regressions while the related code is still hot in mind.
 
 ---
 
@@ -300,9 +331,41 @@ Follow the **`running-check-script` skill** verbatim:
 
 **If `check` introduces changes** (auto-fixes from lint/format/dedupe): re-run STEP 7's three pillars to confirm the auto-fixes didn't break a test. This is rare but possible.
 
+If STEP 8 produced staged changes (auto-fixes that needed to be persisted), commit them as `chore: post-implementation check fixes` before moving on. The local branch is still **not** pushed at this point.
+
 ---
 
-## STEP 9 — Review-Ready Summary
+## STEP 9 — Final Re-Analysis & Iteration Loop
+
+After STEP 7 + 8 are fully green, before the summary is printed, perform a **completeness pass** against the original ticket so nothing was silently dropped.
+
+### 9a. Re-Analyse Ticket vs. Implementation
+
+Re-read the original Linear ticket (title + description + all comments) plus any optional sources collected in STEP 2 (Figma node, flow doc, extra ACs). For each AC produced in STEP 5, decide a verdict:
+
+- ✅ done — AC fully implemented + covered by a test (Unit / API / E2E or Permission test)
+- ⚠ partial — AC implemented but with a scope cut or open todo (must surface in summary)
+- ❌ missing — AC not implemented; blocker, must trigger another TDD slice
+
+Also re-check:
+
+- **Permission matrix from STEP 5** — every row has at least one matching test in STEP 6a.
+- **New / changed routes, mutations, UI states** that were *not* in the original AC list — surface as "Mitgenommen" so the user can decide if they belong.
+- **Discovered follow-ups** — anything noted during implementation that is out of scope but worth tracking.
+
+### 9b. User Confirmation Loop
+
+Print a compact German status block showing each AC's verdict, "Mitgenommen"-items, and open follow-ups. Then ask via `AskUserQuestion`:
+
+- Question: "Ist das Ticket damit vollständig umgesetzt, oder gibt es noch etwas zu ergänzen / anzupassen, bevor wir abschließen?"
+- Options:
+  1. "Ja, fertig — Summary drucken und an git:ship übergeben" *(Recommended)*
+  2. "Nein, noch etwas ergänzen" → user describes the additional scope, then **loop back to STEP 5** (analyse → STEP 6 implement → STEP 7 tests → STEP 8 check → STEP 9 re-check). Cap loop iterations at **3** to avoid infinite ping-pong; if hit, surface a structured note and stop.
+  3. "Anpassung an bestehender Umsetzung" → user describes the change, loop back to STEP 6 only (skip re-analysis of unchanged ACs).
+
+On Option 1, continue to STEP 10. On loop-back, re-evaluate the TodoWrite items (mark previously completed ones as in-progress only if they actually need rework).
+
+## STEP 10 — Review-Ready Summary
 
 Print **one** structured German summary block. This is the artefact the user reviews — make it scannable.
 
@@ -345,10 +408,11 @@ Print **one** structured German summary block. This is the artefact the user rev
 - Linear: #<ISSUE_IDENTIFIER> → "In Progress"
 
 Nächste Schritte:
-1. /lt-dev:review        # 7-Dimension Review
-2. /lt-dev:dev-submit    # MR/PR + Linear-Kommentar + Status "Dev Review"
-   ODER
-2. /lt-dev:git:ship      # MR/PR + CI-Wait + Squash-Merge + Branch-Delete (autonomous landing)
+1. /lt-dev:review        # 7-Dimension Review (optional)
+2. Eine der drei Landing-Optionen:
+   - /lt-dev:git:ship          # MR/PR + CI-Wait + Squash-Merge + Branch-Delete (autonom)
+   - /lt-dev:dev-submit        # MR/PR + Linear-Kommentar + Status "Dev Review" (manueller Reviewer)
+   - /lt-dev:ticket-cycle      # Already covered if invoked via orchestrator (skip)
 ```
 
 Adapt sections that don't apply (e.g. no Figma → no Figma references). Never inflate — accuracy over completeness.

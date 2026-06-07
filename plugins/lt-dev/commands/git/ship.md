@@ -19,6 +19,7 @@ This command is the **closing bookend** to `/lt-dev:take-ticket`. It does **not*
 
 | Command | Purpose |
 |---------|---------|
+| `/lt-dev:ticket-cycle` | Full orchestrator: `take-ticket` → this command in one shot |
 | `/lt-dev:take-ticket` | Pick + implement + test a ticket (the typical predecessor) |
 | `/lt-dev:check` | Standalone check-script runner (used internally by Phase 1) |
 | `/lt-dev:git:rebase` | Standalone rebase onto dev (used internally by Phase 3) |
@@ -39,6 +40,8 @@ Parse `$ARGUMENTS` for these optional flags:
 | `--max-pipeline-retries=<n>` | Max full retry cycles if CI fails | `3` |
 | `--no-squash` | Use regular merge instead of squash-merge | squash enabled |
 | `--keep-branch` | Don't delete feature branch after merge | delete enabled |
+| `--auto-merge` | Skip the STEP 8 confirmation prompt — squash-merge as soon as CI is green | off (always asks) |
+| `--skip-reanalysis` | Skip STEP 1.5 ticket re-analysis (use when called from an orchestrator that already did it) | off |
 
 ---
 
@@ -51,7 +54,7 @@ Parse `$ARGUMENTS` for these optional flags:
    - Contains `github.com` → `gh`
    - Else → `glab` (GitLab)
    - If neither CLI is installed, abort and tell the user which CLI to install.
-5. Create TodoWrite plan with the 11 phases below (STEPs 0–11; STEP 1 = pre-flight check, STEP 10 = post-merge Linear handoff, STEP 11 = summary).
+5. Create TodoWrite plan with the 12 phases below (STEPs 0–11 plus STEP 1.5; STEP 1 = pre-flight check, STEP 1.5 = ticket re-analysis, STEP 10 = post-merge Linear handoff, STEP 11 = summary).
 
 ---
 
@@ -86,6 +89,46 @@ Follow the `running-check-script` skill verbatim:
 - **Critical blocker remains:** abort the whole ship workflow. Print a structured diagnosis (which project, which error, which fix attempts ran). Recommend `/lt-dev:check` to drill in. Do **not** proceed to commit/rebase/MR/PR.
 
 This phase is **non-skippable** — it runs even when the working tree is dirty, because `check` is expected to run against the current local state, and unfixable drift must surface here, not three phases deeper.
+
+## STEP 1.5 — Ticket Re-Analysis vs. Branch State
+
+Before any push or MR/PR work, verify the branch actually delivers what the originating ticket asked for. Skipped if `--skip-reanalysis` is passed (typical when invoked from `/lt-dev:ticket-cycle` which already re-analysed in `take-ticket` STEP 9).
+
+### 1.5a. Resolve Linear Issue ID
+
+Extract the Linear identifier from `FEATURE_BRANCH`:
+
+- Pattern: prefix-digits after stripping the leading `feature/` segment (e.g. `feature/svl-123-...` → `SVL-123`).
+- Uppercase the prefix.
+
+If extraction fails OR the branch has no Linear identifier (e.g. ad-hoc refactor branch), log `No Linear ticket linked — STEP 1.5 skipped` and continue to STEP 2.
+
+### 1.5b. Fetch Ticket + Diff
+
+- `mcp__plugin_lt-dev_linear__get_issue` for title, description, ACs.
+- `mcp__plugin_lt-dev_linear__list_comments` for additional requirements posted after creation.
+- `git log --oneline $BASE_BRANCH..HEAD` and `git diff --stat $BASE_BRANCH..HEAD` for what the branch actually contains.
+
+### 1.5c. Coverage Verdict
+
+For each acceptance criterion in the ticket, decide a verdict (done / partial / missing) based on commit messages, diff stat, and (when ambiguous) opening the relevant files.
+
+Also re-check:
+
+- **Permission matrix** — does the diff include role-aware tests for every touched protected endpoint or UI affordance? (grep changed files for `@Restricted`, `@Roles`, `securityCheck`, role-aware Playwright tests.)
+- **Mitgenommene Änderungen** — diff contains files / routes not mentioned in the ticket. Note them; they end up in the MR description.
+
+### 1.5d. User Gate
+
+If any AC is `missing` or `partial` without justification, print a compact German status block and ask via `AskUserQuestion`:
+
+- Question: "Vor dem Ship: <n> AKs sind noch offen oder unvollständig. Wie weiter?"
+- Options:
+  1. "Zurück zur Implementierung — Ship abbrechen" → exit cleanly so the user can finish in `take-ticket` (or manually).
+  2. "Trotzdem shippen — bewusste Scope-Reduktion" → user must provide a one-line justification, which is appended to the MR description body and to the Linear comment in STEP 10. Continue to STEP 2.
+  3. "Ich prüfe noch manuell" → pause until user confirms continuation.
+
+If all ACs are satisfied, log `All acceptance criteria satisfied — proceeding` and continue to STEP 2.
 
 ---
 
@@ -262,16 +305,24 @@ If `PIPELINE_ATTEMPT > MAX`:
 
 ## STEP 8 — Squash & Merge
 
-**This is the irreversible step.** Always require user confirmation:
+**This is the irreversible step.** Behaviour depends on the `--auto-merge` flag:
+
+- **With `--auto-merge`:** skip the prompt and proceed directly to the merge below. The flag is a one-time, explicit user opt-in (set per invocation); it is **never** the default.
+- **Without `--auto-merge`** (default): ask via `AskUserQuestion`:
 
 ```
-AskUserQuestion:
-  "Pipeline ist grün. Soll ich jetzt mit Squash-Merge nach $BASE_BRANCH mergen?"
+"Pipeline ist grün. Wie willst du mergen?"
   Options:
-    1. "Squash + Merge ausführen"  (default)
-    2. "Ich merge selbst im Web"   → exit with REQUEST_URL
-    3. "Abbrechen"
+    1. "Squash + Merge jetzt ausführen"           (default)
+    2. "Jedes weitere Mal automatisch mergen sobald Pipeline grün ist"
+       → user is confirming auto-merge for THIS run only; equivalent to having
+         passed --auto-merge from the start. Note this for the summary so the
+         user remembers what they opted into.
+    3. "Ich merge selbst im Web"  → exit with REQUEST_URL printed
+    4. "Abbrechen"
 ```
+
+Either branch ends with the same merge command below.
 
 On Option 1 — perform the merge:
 

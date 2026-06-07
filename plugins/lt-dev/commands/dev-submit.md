@@ -19,6 +19,7 @@ disable-model-invocation: true
 |---------|---------|
 | `/lt-dev:git:create-request` | Only create MR/PR (without Linear integration) |
 | `/lt-dev:linear-comment` | Only post a comment on a Linear issue |
+| `/lt-dev:ticket-cycle` | Full pick → implement → merge orchestrator (use this instead when no human reviewer is needed before merge) |
 | `/lt-dev:resolve-ticket` | Full ticket resolution (implementation + tests + review) |
 | `/lt-dev:review` | Code review before submitting |
 

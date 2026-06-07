@@ -535,12 +535,22 @@
     {
       "pattern": "Bash(gh pr:*)",
       "description": "GitHub CLI for PR management",
-      "usedBy": ["branch-rebaser", "create-request", "dev-submit", "nuxt-extensions-core-contributor"]
+      "usedBy": ["branch-rebaser", "create-request", "dev-submit", "ship", "take-ticket", "ticket-cycle", "nuxt-extensions-core-contributor"]
+    },
+    {
+      "pattern": "Bash(gh run:*)",
+      "description": "GitHub CLI for inspecting / retrying workflow runs (used during CI-wait + retry loops)",
+      "usedBy": ["ship", "ticket-cycle"]
     },
     {
       "pattern": "Bash(glab mr:*)",
       "description": "GitLab CLI for MR management",
-      "usedBy": ["branch-rebaser", "create-request", "dev-submit"]
+      "usedBy": ["branch-rebaser", "create-request", "dev-submit", "ship", "take-ticket", "ticket-cycle"]
+    },
+    {
+      "pattern": "Bash(glab ci:*)",
+      "description": "GitLab CLI for pipeline status / retry / trace (used during CI-wait + retry loops)",
+      "usedBy": ["ship", "ticket-cycle"]
     },
     {
       "pattern": "Bash(npx oxlint:*)",
