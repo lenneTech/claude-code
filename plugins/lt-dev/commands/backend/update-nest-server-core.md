@@ -31,6 +31,7 @@ npm-based nest-server updates, use `/lt-dev:backend:update-nest-server`.
 | `--target X.Y.Z`             | Sync to a specific upstream version (default: latest tag)     |
 | `--ref <sha-or-branch>`      | Sync to a specific upstream commit or branch                  |
 | `--force`                    | Skip conflict prompts (CI-only, dangerous)                    |
+| `--no-maintain`              | Skip the full `/lt-dev:maintenance:maintain` pass — only raise packages to the upstream baseline |
 
 ## Examples
 
@@ -59,10 +60,13 @@ npm-based nest-server updates, use `/lt-dev:backend:update-nest-server`.
 5. **Present curation proposal** — structured review document for human approval
 6. **Apply approved changes** — patch files, reapply flatten-fix, re-run
    idempotent edge-case fixes
-7. **Validate** — tsc / lint / format / migrate:list / e2e tests, looped
+7. **Sync npm dependencies** — raise the project's packages to **at least** the
+   versions the upstream target declares, add any new runtime helpers, then
+   (unless `--no-maintain`) refresh the rest via `/lt-dev:maintenance:maintain`
+8. **Validate** — tsc / lint / format / migrate:list / e2e tests, looped
    with auto-fix up to 10 times
-8. **Update VENDOR.md** — new baseline, new sync history entry
-9. **Commit in a structured series** — one commit per logical step
+9. **Update VENDOR.md** — new baseline, new sync history entry
+10. **Commit in a structured series** — one commit per logical step
 
 ## Related Elements
 
@@ -99,6 +103,12 @@ Parse the arguments for:
 - --target X.Y.Z: If present, sync to this specific version
 - --ref <sha-or-branch>: If present, sync to this ref
 - --force: If present, skip human conflict prompts (CI-only)
+- --no-maintain: If present, skip the full npm maintenance pass (only raise packages to the upstream baseline)
+
+After adopting core changes, raise the project's npm packages to at least the
+versions the upstream target (/tmp/nest-server-target/package.json) declares,
+add any missing runtime helpers, then — unless --no-maintain or --dry-run —
+run a full dependency refresh via /lt-dev:maintenance:maintain before validating.
 
 Execute the sync workflow according to the detected mode.
 Work fully autonomously but always stop for human review at the conflict

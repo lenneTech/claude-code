@@ -54,6 +54,17 @@
             "timeout": 3
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/vendor-core-edit-guard.sh\"",
+            "timeout": 3,
+            "statusMessage": "Checking vendor core policy"
+          }
+        ]
       }
     ],
     "PostToolUseFailure": [

@@ -59,6 +59,11 @@ Detect mode from initial prompt arguments:
 4. **Local patches survive:** anything in `VENDOR.md`'s local changes log
    is preserved through the merge unless the user explicitly discards.
 5. **Progress visibility:** TodoWrite throughout execution.
+6. **Dependency parity:** after adopting core changes, raise the project's npm
+   packages to at least the versions the upstream target declares, then
+   (unless `--no-maintain`) refresh the rest via `/lt-dev:maintenance:maintain`.
+   Never ship a vendored project with dependencies older than the upstream it
+   now mirrors.
 
 ---
 
@@ -74,6 +79,7 @@ Use TodoWrite at the start:
 [pending] Phase 5: Categorize hunks (clean pick / conflict / not applicable)
 [pending] Phase 6: Present curation proposal for human review
 [pending] Phase 7: Apply approved changes
+[pending] Phase 7b: Sync npm dependencies to the upstream baseline (+ maintenance)
 [pending] Phase 8: Run nuxt build / lint
 [pending] Phase 9: Sync upstream CLAUDE.md into project
 [pending] Phase 10: Update VENDOR.md + commit
@@ -209,6 +215,35 @@ For each approved hunk:
 2. Apply the hunk via `patch` or in-place editor
 
 No flatten-fix is needed -- the mapping is 1:1.
+
+### Phase 7b: Sync npm Dependencies to the Upstream Baseline
+
+After adopting the core changes, bring the project's npm packages up to **at
+least** the versions the upstream target declares — otherwise the nuxt build in
+Phase 8 may fail against stale transitive deps.
+
+1. Read the upstream target manifest:
+   ```bash
+   cat /tmp/nuxt-extensions-target/package.json
+   ```
+2. For every `dependencies` / `peerDependencies` entry the upstream declares
+   that the project also lists in its `package.json`, raise the project range to
+   the upstream version **only when upstream is newer** (semver-max). Never
+   downgrade a project that is already ahead.
+3. Add any new runtime dependency the upstream now requires that the project is
+   missing — vendored code has no automatic dependency resolution (see Known
+   Edge Case 4). The CLI tracks required helpers in
+   `src/config/vendor-frontend-runtime-deps.json`.
+4. After matching the baseline, refresh the remaining packages to their latest
+   compatible versions by delegating to `/lt-dev:maintenance:maintain`. Skip
+   this step when `--no-maintain` is set. In `--dry-run`, only report the diff.
+5. Reinstall so the lockfile reflects the new baseline:
+   ```bash
+   pnpm install
+   ```
+
+Goal: the vendored project never ships dependencies older than the upstream
+version it now mirrors.
 
 ### Phase 8: Validate
 

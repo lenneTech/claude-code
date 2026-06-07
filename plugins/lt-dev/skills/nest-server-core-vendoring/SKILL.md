@@ -248,14 +248,19 @@ When a new upstream version is available, the `nest-server-core-updater` agent:
 6. Shows the curation proposal to the human for review
 7. Applies approved clean-picks
 8. Interactive 3-way merge for conflicts
-9. Runs `pnpm run test` — commits if green
-10. Syncs the upstream `CLAUDE.md` into `projects/api/CLAUDE.md` — the
+9. Raises the project's npm dependencies to **at least** the upstream target's
+   versions (semver-max, never downgrade), adds any new runtime helpers from
+   `vendor-runtime-deps.json`, then — unless `--no-maintain` — refreshes the
+   rest via `/lt-dev:maintenance:maintain`. A vendored project must never ship
+   dependencies older than the upstream it mirrors.
+10. Runs `pnpm run test` — commits if green
+11. Syncs the upstream `CLAUDE.md` into `projects/api/CLAUDE.md` — the
     nest-server CLAUDE.md contains framework-specific instructions that Claude
     Code needs to work correctly with the vendored source. Section-level merge:
     new upstream sections are added, existing project-specific sections are
     preserved. The vendor-mode notice block (`<!-- lt-vendor-marker -->`) is
     always kept.
-11. Updates `VENDOR.md` with new baseline + sync history entry
+12. Updates `VENDOR.md` with new baseline + sync history entry
 
 ## Upstream PR Workflow (contribution)
 

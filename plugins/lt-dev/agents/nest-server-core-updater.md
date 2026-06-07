@@ -60,6 +60,11 @@ Detect mode from initial prompt arguments:
 4. **Local patches survive:** anything in `VENDOR.md`'s "Lokale Änderungen" log
    is preserved through the merge unless the user explicitly discards.
 5. **Progress visibility:** TodoWrite throughout execution.
+6. **Dependency parity:** after adopting core changes, raise the project's npm
+   packages to at least the versions the upstream target declares, then
+   (unless `--no-maintain`) refresh the rest via `/lt-dev:maintenance:maintain`.
+   Never ship a vendored project with dependencies older than the upstream it
+   now mirrors.
 
 ---
 
@@ -75,6 +80,7 @@ Use TodoWrite at the start:
 [pending] Phase 5: Categorize hunks (clean pick / conflict / not applicable)
 [pending] Phase 6: Present curation proposal for human review
 [pending] Phase 7: Apply approved changes + reapply flatten-fix
+[pending] Phase 7b: Sync npm dependencies to the upstream baseline (+ maintenance)
 [pending] Phase 8: Run tsc / lint / tests
 [pending] Phase 9: Sync upstream CLAUDE.md into project
 [pending] Phase 10: Update VENDOR.md + commit
@@ -258,6 +264,38 @@ for (const decl of file.getImportDeclarations()) {
 }
 file.saveSync();
 ```
+
+### Phase 7b: Sync npm Dependencies to the Upstream Baseline
+
+A newer core version usually relies on newer dependency versions. After
+adopting the core changes, bring the project's npm packages up to **at least**
+the versions the upstream target declares — otherwise the tsc/build step in
+Phase 8 fails against stale transitive deps.
+
+1. Read the upstream target manifest:
+   ```bash
+   cat /tmp/nest-server-target/package.json
+   ```
+2. For every `dependencies` / `peerDependencies` entry the upstream declares
+   that the project also lists in `projects/api/package.json`, raise the project
+   range to the upstream version **only when upstream is newer** (semver-max).
+   Never downgrade a project that is already ahead.
+3. Add any **runtime helper** the upstream now requires that the project is
+   missing. The CLI tracks these in `src/config/vendor-runtime-deps.json`
+   (e.g. `find-file-up`); mirror that list — a helper that lives in the
+   framework's own `devDependencies` must become a project `dependency`.
+4. After matching the baseline, refresh the remaining packages to their latest
+   compatible versions by delegating to `/lt-dev:maintenance:maintain` (FULL npm
+   maintenance via the `npm-package-maintainer` agent). Skip this step when
+   `--no-maintain` is set. In `--dry-run`, only report the diff — do not modify
+   `package.json`.
+5. Reinstall so the lockfile reflects the new baseline:
+   ```bash
+   cd projects/api && pnpm install
+   ```
+
+Goal: the vendored project never ships dependencies older than the upstream
+version it now mirrors.
 
 ### Phase 8: Validate
 

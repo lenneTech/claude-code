@@ -209,10 +209,14 @@ When a new upstream version is available, the `nuxt-extensions-core-updater` age
 5. Shows the curation proposal to the human for review
 6. Applies approved clean-picks
 7. Interactive 3-way merge for conflicts
-8. Runs `nuxt build` + `pnpm run lint` -- commits if green
-9. Syncs the upstream `CLAUDE.md` into the frontend project's `CLAUDE.md` --
+8. Raises the project's npm dependencies to **at least** the upstream target's
+   versions (semver-max, never downgrade), adds any new runtime deps, then
+   (unless `--no-maintain`) refreshes the rest via `/lt-dev:maintenance:maintain`.
+   A vendored project must never ship dependencies older than the upstream it mirrors.
+9. Runs `nuxt build` + `pnpm run lint` -- commits if green
+10. Syncs the upstream `CLAUDE.md` into the frontend project's `CLAUDE.md` --
    section-level merge preserving project-specific content
-10. Updates `VENDOR.md` with new baseline + sync history entry
+11. Updates `VENDOR.md` with new baseline + sync history entry
 
 **IMPORTANT -- Tag format:** nuxt-extensions tags have **no** `v` prefix. Use
 `--branch 1.5.3`, not `--branch v1.5.3`.
