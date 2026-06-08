@@ -59,7 +59,7 @@ Create a TodoWrite plan with these items (mark in progress / completed as you pr
 4. Sync base branch & create feature branch
 5. Analyse all requirement sources (incl. role/permission matrix)
 6. TDD implementation per acceptance criterion — `check` + commit after each green cycle
-7. Final full test-suite sweep (Unit + API + E2E) until fully green
+7. Final test sweep until green: full **Unit + API**; Playwright **E2E only the new + affected specs** (full Playwright suite runs in CI / on explicit request)
 8. Final `check` script until green
 9. Re-analyse ticket vs. implementation — ask user if anything is missing (loop back to STEP 5/6 if so)
 10. Print review-ready summary
@@ -209,7 +209,7 @@ Follow the **`building-stories-with-tdd` skill** verbatim for the full TDD loop.
 4. **Tests first, implementation second.** Run them red → green → repeat.
 5. Test data emails must use `@test.com` (cleanup filter).
 6. **Backend before frontend** (frontend depends on generated types).
-7. After each green TDD iteration, run the full test suite — not just the new tests.
+7. After each green TDD iteration, re-run the full **Unit + API** suites (not just the new tests — they are fast and catch regressions). For **Playwright E2E**, run only the **new + affected** specs by default (`lt dev test -- <spec>` / `scripts/e2e-fast.sh -- <spec>`); the full Playwright suite is slow and runs in CI — run it locally only when the user explicitly asks.
 
 If the project is fullstack and the Agent Teams flag is enabled, follow the parallel test-writing pattern from the skill. Otherwise sequential.
 

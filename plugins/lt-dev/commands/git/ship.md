@@ -212,7 +212,7 @@ Any hit introduced on this branch is a blocker — remove it.
 - **No try-catch swallow in tests.** No timeout-tweaks to dodge a real assertion.
 - **Pre-existing failures are blockers too** — fix them; never accept "war schon kaputt".
 - **Termination:** all three pillars exit 0 **and** no test reports as SKIPPED/PENDING.
-- For **Frontend E2E**: follow `managing-dev-servers` — for lt-projects use `lt dev test` (isolated parallel stack on a dedicated `<slug>-test` DB, auto-teardown, never touches dev data); for non-lt-projects `run_in_background: true` + `pkill` after (never orphan dev servers). Run in the same headless mode CI uses for local/CI parity.
+- For **Frontend E2E**: by default run only the **new + affected** specs (`lt dev test -- <spec>` / `scripts/e2e-fast.sh -- <spec>`) — the full Playwright suite is slow and runs in **CI**; run the full local suite only when the user explicitly asks. Follow `managing-dev-servers` — for lt-projects use `lt dev test` (isolated parallel stack on a dedicated `<slug>-test` DB, auto-teardown, never touches dev data); for non-lt-projects `run_in_background: true` + `pkill` after (never orphan dev servers). Run in the same headless mode CI uses for local/CI parity.
 - For **Backend** tests: `NODE_ENV=e2e` (local) — never `NODE_ENV=test` (customer stage).
 - **Stall guard:** if 3 full pipeline iterations don't converge on the same failure, stop and surface a structured diagnosis instead of looping forever.
 
