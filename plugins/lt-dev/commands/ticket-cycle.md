@@ -155,6 +155,7 @@ If `--review` ran, include a one-line summary of remaining (non-blocking) findin
 
 ## Hard Rules
 
+- **Limit local Playwright runs to new + affected specs to keep TDD loops fast.** Both Phase A (`take-ticket`) and Phase C (`git:ship`) default to `lt dev test -- <spec>` / `scripts/e2e-fast.sh -- <spec>`; the full Playwright suite is slow and runs in **CI**. Only run the full local suite when the user explicitly asks.
 - **Never bypass `take-ticket` STEP 9.** The re-analysis user gate is the cycle's contract for completeness — if it didn't run cleanly, this command must not proceed.
 - **Never bypass `git:ship` STEP 8 silently.** Auto-merge requires the explicit `--auto-merge` flag at invocation time (or an in-run user opt-in via the STEP 8 option 2).
 - **No silent fallbacks between phases.** If a phase reports failure or partial state, surface and stop.

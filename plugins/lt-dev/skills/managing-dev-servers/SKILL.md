@@ -73,6 +73,8 @@ lt dev test -- --ui login.spec.ts # forward args to Playwright
 
 **Do NOT run the Playwright suite against the `lt dev up` dev session** — that pollutes (and `global-setup` would reset) your dev DB. Use `lt dev test`.
 
+**Limit local Playwright runs to new + affected specs to keep TDD loops fast.** The full Playwright suite is slow and runs in **CI**. During local development / TDD, default to `lt dev test -- <spec>` (or `lt dev test -- tests/e2e/<file>.spec.ts`); the equivalent for non-lt-projects is `scripts/e2e-fast.sh -- <spec>` / `pnpm dlx playwright test <spec>`. Backend Unit + API stay unrestricted — they're fast. Only run the **full** local Playwright suite when the user explicitly asks (or when an orchestrator like `production-ready` calls for it).
+
 > **Requires** the lt CLI version that ships the isolated test session. Older lt CLIs run `lt dev test` against the dev session (legacy behavior). The project's `playwright.config.ts` global-setup must reset only the active `MONGO_URI` DB and allow-list `<slug>-test`.
 
 **Why `lt dev` is the preferred path:**

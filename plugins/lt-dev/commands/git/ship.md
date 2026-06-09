@@ -467,6 +467,7 @@ Nächste Schritte:
 
 ## Hard Rules
 
+- **Limit local Playwright runs to new + affected specs to keep TDD loops fast.** Default to `lt dev test -- <spec>` / `scripts/e2e-fast.sh -- <spec>`; the full Playwright suite is slow and runs in **CI**. Only run the full local suite when the user explicitly asks.
 - **Pre-flight `check` is a hard gate** — STEP 1 must be green before STEP 2 runs. No "fix later", no "ignore for now".
 - **Never force-push to a protected branch** (`main`, `master`, `dev`, `develop`). The base branch is push-target for the merge only, never for the feature branch's history.
 - **Always `--force-with-lease`, never plain `--force`** when pushing rewritten feature-branch history.

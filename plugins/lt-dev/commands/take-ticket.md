@@ -421,6 +421,7 @@ Adapt sections that don't apply (e.g. no Figma → no Figma references). Never i
 
 ## Hard Rules
 
+- **Limit local Playwright runs to new + affected specs to keep TDD loops fast.** Default to `lt dev test -- <spec>` / `scripts/e2e-fast.sh -- <spec>`; the full Playwright suite is slow and runs in **CI**. Only run the full local suite when the user explicitly asks.
 - **Never push silently.** Branch stays local until the user runs `/lt-dev:dev-submit` or pushes manually.
 - **Never bypass quality gates.** No `--no-verify`, no `.skip`, no flake-retry without an open follow-up note.
 - **Never invent acceptance criteria.** If unclear, ask.

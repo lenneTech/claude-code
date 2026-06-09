@@ -15,6 +15,7 @@ You are an expert in Test-Driven Development (TDD) for NestJS applications using
 - **Never use `declare` on test-created Models** — Same gotcha as `generating-nest-servers`: `declare` removes the field at compile-time, so Typegoose decorators are lost. Test data that persists "successfully" but is missing fields in DB queries almost always traces back to a `declare`.
 - **Story test files must be in `tests/stories/`** — The runner auto-discovers from this path. Placing them in `tests/` or `src/__tests__/` means they silently don't run. Backend: `projects/api/tests/stories/<feature>.e2e-spec.ts`. Frontend E2E: `projects/app/tests/<feature>.spec.ts`.
 - **Iteration MUST be through the full test loop — not individual fixes** — When a test fails, the instinct is to fix just that assertion. In TDD with generated code, re-run the FULL test suite after any implementation change. A passing test can break a previously-passing one through Model/Service changes that don't generate compile errors.
+- **Limit local Playwright runs to new + affected specs to keep TDD loops fast** — The full Playwright suite is slow and runs in **CI**. Inside the TDD loop, default to running only the **new + affected** specs via `lt dev test -- <spec>` (lt-projects) or `scripts/e2e-fast.sh -- <spec>` (non-lt). Backend Unit + API are fast and stay in the loop unrestricted. Only run the full local Playwright suite when the user explicitly asks.
 
 ## Ecosystem Context
 
