@@ -152,6 +152,20 @@ nuxt.config.ts
 | Forms | Valibot (not Zod) |
 | Modals | `useOverlay()` |
 
+## Build Identity / Drift Detection
+
+The starter ships `/app/admin/system` + `useSystem()` to show which build runs
+and detect a drifted / stale deployment (App vs. API on different commits):
+
+- App build is baked at build time into `runtimeConfig.public.appVersion` /
+  `appCommit` (nuxt.config reads `package.json` version + `process.env.APP_VERSION_COMMIT`).
+- API build is fetched from the public `GET /meta` via `buildLtApiUrl('/meta')`
+  (auto-imported, SSR/proxy-aware) — never hardcode the API URL.
+- Compare by **commit** only (`buildsMatch`); version numbers are per-component
+  and may legitimately differ. `'unknown'` commits never trigger the warning.
+- The Docker build must pass `APP_VERSION_COMMIT` (= CI commit SHA) *before*
+  `nuxt build`, because `runtimeConfig.public` is frozen at build time.
+
 ## TDD for Frontend
 
 ```

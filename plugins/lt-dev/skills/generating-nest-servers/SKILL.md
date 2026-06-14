@@ -311,6 +311,22 @@ Generated imports MUST match the project mode:
 
 **Complete framework guide: [reference/framework-guide.md](${CLAUDE_SKILL_DIR}/reference/framework-guide.md)**
 
+## Build Identity / Drift Detection
+
+The starter's `meta` module exposes the running build at public `GET /meta`
+(`S_EVERYONE`): `{ version, commit, environment, package, title }`. `version` is
+the app semver (from `meta.json`); `commit` is the git SHA, read at runtime from
+`process.env.APP_VERSION_COMMIT` (baked into the image at build time from the CI
+commit SHA, `'unknown'` locally). The frontend compares its own baked commit
+against `/meta.commit` to detect a drifted / stale deployment.
+
+- Keep `/meta` public — the App must read it without auth to compare builds.
+- `@lenne.tech/nest-server >= 11.27.0` exports a `getCommit()` helper and adds a
+  build indicator (`commit`/`version`/`env`) to `/health-check`; on older
+  versions the starter resolves the commit from `process.env` itself.
+- When adding build/deploy config, pass `APP_VERSION_COMMIT` (= CI commit SHA) as
+  a Docker build arg to the API image, else `/meta.commit` stays `'unknown'`.
+
 ## Workflow (7 Phases)
 
 1. **Analysis & Planning** - Parse spec, create todo list

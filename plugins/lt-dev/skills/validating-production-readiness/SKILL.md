@@ -116,6 +116,7 @@ The k6 results from the `running-load-tests-with-k6` skill feed directly into th
 | Build is reproducible | Lockfiles (`pnpm-lock.yaml`) committed; CI uses `--frozen-lockfile` | Major |
 | Image scan in CI | `trivy` / `grype` / GitLab container scan stage exists | Major |
 | Image size reasonable | Final image < 500 MB (alpine) / < 1 GB (debian-slim) | Minor |
+| Build identity baked (drift detection) | Both images receive `APP_VERSION_COMMIT` (= CI commit SHA) as a build arg; `GET /meta.commit` returns the real SHA (not `unknown`) and the App `/app/admin/system` compares App vs. API to catch a partial / stale rollout | Major |
 
 ### Pillar 8 — Runbook & Rollback
 
