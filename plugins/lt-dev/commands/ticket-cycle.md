@@ -1,6 +1,6 @@
 ---
 description: Full ticket lifecycle in one command — auto-pick (or take ID), TDD-implement with per-slice check + commit, re-analyse, optional review, browser walk, rebase + tests + check, MR/PR (auto-merge OR reviewer-handoff), CI, squash-merge, delete branch, Linear comment + status handoff
-argument-hint: "[issue-id | --project=<name> --team=<name> --status=<list> --base=<branch> --figma=<url> --flows=<path> --review --no-review --auto-merge --review-handoff[=<linear-user>] --post-merge-status=<dev-review|po-review-inga> --max-pipeline-retries=<n> --no-squash --keep-branch]"
+argument-hint: "[issue-id | --project=<name> --team=<name> --status=<list> --base=<branch> --figma=<url> --flows=<path> --review --no-review --auto-merge --review-handoff[=<linear-user>] --post-merge-status=<dev-review|po-review-inga> --max-deploy-wait=<minutes> --max-pipeline-retries=<n> --no-squash --keep-branch]"
 allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(wc:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__list_teams, mcp__plugin_lt-dev_linear__list_projects, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__list_users, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_screenshot, SlashCommand
 disable-model-invocation: true
 ---
@@ -46,7 +46,8 @@ All flags are optional. The command splits arguments into groups and forwards ea
 | `--no-review` | this command | Skip the STEP 2 prompt and skip Phase B entirely |
 | `--auto-merge` | this command | Skip the STEP 4a prompt and take the auto-merge path |
 | `--review-handoff[=<linear-user>]` | this command | Skip the STEP 4a prompt and take the reviewer-handoff path. If a user identifier is supplied, skip the reviewer picker too |
-| `--post-merge-status=<dev-review\|po-review-inga>` | this command | Skip the STEP 4b prompt (auto-merge path only). `dev-review` = "Dev Review" + unassign (default). `po-review-inga` = "PO Review" + assign Inga |
+| `--post-merge-status=<dev-review\|po-review-inga>` | this command | Skip the STEP 4b prompt (auto-merge path only). `dev-review` = "Dev Review" + unassign (default). `po-review-inga` = "PO Review" + assign Inga (only after the dev deploy is green) |
+| `--max-deploy-wait=<minutes>` | this command | Polling cap for the post-merge deploy pipeline before asking the user how to proceed (only relevant when `POST_MERGE_STATUS = po-review-inga`). Default 30 |
 | `--max-pipeline-retries=<n>` | `git:ship` | CI retry cap (default 3) |
 | `--no-squash` | `git:ship` | Regular merge instead of squash |
 | `--keep-branch` | `git:ship` | Don't delete the feature branch after merge |
@@ -180,13 +181,49 @@ The `--skip-reanalysis` flag tells `git:ship` to bypass its STEP 1.5 because `ta
 
 If `git:ship` reports failure (rebase conflicts unresolved, CI retry cap hit, merge rejected, …), surface its diagnosis and stop. The feature branch is intentionally **not** deleted on failure — manual recovery is always possible.
 
-**3. Post-Merge Linear override** (only when `POST_MERGE_STATUS = po-review-inga`). `git:ship` STEP 10 always sets "Dev Review" + unassign. For the `po-review-inga` choice, override it after `git:ship` succeeds:
+**3. Wait for deploy + Linear override** (only when `POST_MERGE_STATUS = po-review-inga`).
+
+The PO Review transition must **not** happen right after merge — the dev environment must actually be redeployed with the merged code first. Otherwise the PO opens the app, sees a stale build, and burns a test cycle on something that "looks broken" but is just not deployed yet. `git:ship` STEP 10 has already set the ticket to "Dev Review" (unassigned), which is a safe waiting state during deployment.
+
+**3a. Locate the post-merge deploy pipeline.** Capture the merge commit SHA from `git:ship`'s output. Detect the provider from `REQUEST_URL` and locate the pipeline triggered on `<BASE_BRANCH>` by the merge commit:
+
+- GitHub: `gh run list --branch <BASE_BRANCH> --limit 10 --json databaseId,status,conclusion,workflowName,headSha,htmlUrl` — match the entry with `headSha == <merge-sha>` and a workflow name that looks like a deploy (case-insensitive match against `deploy`, `release`, `cd`, `dev`).
+- GitLab: `glab ci list --ref <BASE_BRANCH> --per-page 10 --output json` — match the pipeline whose commit SHA equals the merge SHA.
+
+If no deploy pipeline is found within 60 seconds (some providers take a moment to register the run), ask the user via `AskUserQuestion`:
+
+- Question: "Keine Post-Merge-Deploy-Pipeline für `<merge-sha>` auf `<BASE_BRANCH>` gefunden. Wie weiter?"
+- Options:
+  1. "Weiter suchen — nochmal 60s polling" → retry locate
+  2. "Kein Deployment vorhanden — Linear-Override jetzt durchführen" → continue to step 3c
+  3. "Manuell setzen — Cycle beenden ohne Override" → skip 3c, print a note that PO Review transition is pending manual deployment confirmation
+
+**3b. Wait for deploy completion.** Poll the located pipeline every 30 seconds, capped at `MAX_DEPLOY_WAIT_MINUTES` (default 30, override via `--max-deploy-wait=<minutes>`):
+
+- `success` / `completed` → continue to step 3c.
+- `failed` / `cancelled` / `errored` → surface the pipeline URL and conclusion. Do **NOT** override Linear — the ticket stays on "Dev Review" (unassigned) so no one starts PO QA against a broken deploy. Print:
+  ```
+  ⚠️ Deploy-Pipeline failed — Linear-Status bleibt auf "Dev Review" (unassigned).
+  Pipeline: <pipeline-url>
+  Conclusion: <failed|cancelled|errored>
+  Sobald das Deployment manuell repariert / re-triggered und grün ist,
+  kannst du das Ticket manuell auf "PO Review" + Inga setzen.
+  ```
+  Mark this branch of STEP 4b.3 as **partial-success** for the Final Summary (Variant A): merge landed, deploy failed, Linear NOT overridden.
+- `running` / `pending` / `queued` after the timeout → ask the user via `AskUserQuestion`:
+  - Question: "Deploy-Pipeline läuft länger als <MAX_DEPLOY_WAIT_MINUTES> Min. Wie weiter?"
+  - Options:
+    1. "Weiter warten — nochmal <MAX_DEPLOY_WAIT_MINUTES> Min." → reset timer, continue polling
+    2. "Nicht warten — Linear-Override jetzt durchführen (riskant, PO testet ggf. stale Build)" → continue to step 3c
+    3. "Linear-Status manuell später setzen — Cycle beenden" → skip 3c, print note about pending manual transition
+
+**3c. Override Linear status + assignee.**
 
 1. Resolve "Inga" via `mcp__plugin_lt-dev_linear__list_users` (filter by name; if ambiguous, ask the user via `AskUserQuestion` to disambiguate).
 2. Find the team's "PO Review" workflow state via `mcp__plugin_lt-dev_linear__list_issue_statuses` (case-insensitive match: `PO Review`, `Product Review`, `Product Owner Review`). If no match, surface the error verbatim and skip the override — the merge has already landed, the user can fix Linear manually.
 3. Call `mcp__plugin_lt-dev_linear__save_issue` with `stateId = <po-review state id>` and `assigneeId = <inga user id>`.
 
-If `POST_MERGE_STATUS = dev-review`, do nothing extra — `git:ship` already handled it.
+If `POST_MERGE_STATUS = dev-review`, do nothing extra — `git:ship` already handled it. No deploy wait is needed in this branch: "Dev Review" is for developers / QA who know how to read the deploy state themselves.
 
 #### STEP 4c — Pfad: Reviewer-Handoff
 
@@ -263,12 +300,18 @@ Print one concise German block. The shape depends on the merge strategy.
 - Modus:   Squash + Merge (oder: Regular Merge)
 - Commit:  <merge-commit-sha-short>
 
+🚀 Post-Merge-Deploy  (nur bei POST_MERGE_STATUS = po-review-inga)
+- Pipeline: <pipeline-url>
+- Status:   ✅ grün / ⚠️ failed / ⌛ Timeout (User-Wahl)
+- Wartezeit: <n> Min.
+
 💬 Linear-Comment
 - Gepostet / Bearbeitet / Übersprungen
 
 Nächste Schritte (manuell):
-- Deployment auf dev beobachten
+- Deployment auf dev beobachten (falls nicht schon gewartet)
 - QA / funktionalen Review koordinieren
+- Bei failed Deploy: nach Fix manuell auf "PO Review" + Inga setzen
 ```
 
 **Variant B — Reviewer-Handoff** (when `MERGE_STRATEGY = reviewer-handoff`):
@@ -318,6 +361,7 @@ If `--review` ran (or the user opted in at STEP 2), include a one-line summary o
 - **Never bypass `take-ticket` STEP 9.** The re-analysis user gate is the cycle's contract for completeness — if it didn't run cleanly, this command must not proceed.
 - **The merge-strategy gate (STEP 4a) is mandatory** unless the user passed `--auto-merge` or `--review-handoff` explicitly. The cycle MUST NOT default-to-merge without an explicit decision.
 - **The post-merge-status gate (STEP 4b.1) is mandatory** in the auto-merge path unless the user passed `--post-merge-status=…`. The cycle MUST NOT silently pick a Linear state when two are configured.
+- **The PO Review transition (STEP 4b.3) waits for a green dev deploy.** When `POST_MERGE_STATUS = po-review-inga`, the cycle MUST NOT set the Linear ticket to "PO Review" / assignee=Inga until the post-merge deploy pipeline on `<BASE_BRANCH>` is green. POs starting QA against a stale build burn cycles and erode trust in the handoff. If the deploy fails or times out, the ticket stays on "Dev Review" (unassigned) and the user is told to redo the transition manually after fixing the deploy.
 - **Reviewer-Handoff never merges from inside this command.** Phase D's reviewer-handoff path stops after MR/PR creation, Linear assignment, and MR reviewer assignment. The human reviewer does the merge.
 - **Auto-merge path always runs `git:ship --auto-merge --skip-reanalysis`** because Phase A already did the equivalent re-analysis and STEP 4a already captured the merge consent. Running them twice would re-prompt the user pointlessly.
 - **Auto-merge path MUST rebase onto the latest base branch before pushing — and re-verify if the rebase changed anything.** `git:ship` STEP 3 rebases the feature branch onto a freshly fetched `origin/<base>`; STEP 4 then re-runs the full **Unit + API + affected-E2E** suites AND the `check` script whenever the rebase altered the working tree (it skips re-testing only when the post-rebase tree is byte-identical to the pre-rebase tree). This guarantees the branch is validated against the exact code it will merge into — **never push or merge a branch that was only tested against a stale base.** If the rebase produces conflicts, or the post-rebase re-verify goes red, fix to green before continuing; do not push a branch whose rebased state was not re-validated. The whole pipeline (incl. the `api:audit` security gate) must be green — a pre-existing red job is a blocker, not an excuse.
