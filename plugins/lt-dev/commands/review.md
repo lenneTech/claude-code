@@ -63,7 +63,9 @@ This command is the **direct orchestrator** — it spawns all reviewers in paral
 │
 │  Phase 5: Unified report (Executive Summary → Decision Helper → Action Roadmap → Remediation Catalog → FULL verbatim reports per reviewer → Recommended Commands → Reconciliation)
 │
-└── Phase 6: Decision & Execution (AskUserQuestion with 4 options → fix selected findings or open tracking tickets → closing block)
+│  Phase 6: Decision & Execution (AskUserQuestion with 4 options → fix selected findings or open tracking tickets → closing block)
+│
+└── Phase 7: Browser Validation Walk (validating-changes-in-browser skill — lt dev up + seed + step-by-step list per role + walked autonomously + pre-existing fixes + ship-or-optimize gate)
 ```
 
 ---
@@ -808,4 +810,33 @@ After execution, print a short closing block:
 - **Remaining findings:** N (see Section 5 for IDs)
 - **Suggested next step:** [`/lt-dev:check` to re-validate / Create PR / Re-run `/lt-dev:review` if many fixes / etc.]
 ```
+
+### Phase 7: Browser Validation Walk
+
+After Phase 6's fixes have been applied (or the user picked "Nichts jetzt"), run a manual-style end-to-end browser pass. This is the last chance to catch what tests + check + the multi-dimensional review could not see: broken empty states, console errors, mobile glitches, regressed flows on roles, latent bugs in adjacent pages the change accidentally exposed.
+
+**Skip condition:** Phase 7 is skipped only when (a) Phase 6 resulted in `⏭️ Nichts jetzt — Tracking-Tickets erstellen` AND (b) the user explicitly opts out of the walk via the closing AskUserQuestion below. Critical findings must NEVER ship without the walk — surface a warning if the user tries to skip it while Critical-severity findings remain unresolved.
+
+Follow the [`validating-changes-in-browser`](${CLAUDE_PLUGIN_ROOT}/../skills/validating-changes-in-browser/SKILL.md) skill end-to-end:
+
+1. Boot `lt dev up` (or the fallback per `managing-dev-servers`).
+2. Seed `@test.com` accounts that cover every role surfaced in the review (security-reviewer, backend-reviewer, frontend-reviewer permission matrices). Build the account registry — every credential will be exposed to the user in the final summary.
+3. Derive a step-by-step test list from the diff `<base-branch>...HEAD`. Every step explicitly names its account (or marks it as a no-login / public step), so the user can re-walk without follow-up questions.
+4. Walk the list yourself via Chrome DevTools MCP. Fix every finding — including pre-existing ones — in the same loop. Note them as also-fixed for the final summary.
+5. The skill renders the walked list and closes with its own AskUserQuestion ship-or-optimize gate.
+
+After the skill returns, print a short final block:
+
+```markdown
+## Phase 7 Result
+
+- **Verdict:** READY-TO-SHIP / OPTIMIZE / WAITING-FOR-USER / CANCELLED
+- **Walked steps:** N (all green)
+- **Mitgefixt during walk:** N findings (file:line list)
+- **Out-of-scope findings:** N (file:line list — recommend separate tickets)
+- **Test accounts surfaced to user:** N (account registry rendered for re-walk)
+- **Stack state:** running on https://<slug>.localhost / torn down
+```
+
+If the verdict is `OPTIMIZE`, the user's notes feed back into a new review iteration — re-run from Phase 1 with the user's scope. If `WAITING-FOR-USER`, stop; the user will return with a verdict. If `CANCELLED`, stop without recommending the PR / ship step. If `READY-TO-SHIP`, the review is complete and the user can proceed to `/lt-dev:dev-submit` or create the PR directly.
 

@@ -50,6 +50,9 @@ This command is the **direct orchestrator**. Plugin sub-agents cannot spawn sub-
 │  Phase 5 (between Phase 4 and Phase 6): /lt-dev:review iterate-until-clean
 │         orchestrated DIRECTLY by this command (sub-agent cannot do it)
 │
+│  Phase 8 (after Phase 7): validating-changes-in-browser skill — final
+│         user-eye browser walk with seeded accounts + ship-or-optimize gate
+│
 └── Final consolidated report
 ```
 
@@ -240,9 +243,32 @@ Agent tool with subagent_type "lt-dev:production-readiness-orchestrator":
   - Blocking jobs with root-cause analysis
 ```
 
+### Phase 8 — Browser Validation Walk
+
+After all seven previous phases reached their terminal verdicts (Phase 1 green, Phase 2 coverage complete, Phase 3 thresholds passed, Phase 4 READY, Phase 5 clean, Phase 6 GREEN, Phase 7 PASS), run the final manual-style browser pass. This is the single phase the user actually walks alongside — the others are automated gates.
+
+Follow the [`validating-changes-in-browser`](${CLAUDE_PLUGIN_ROOT}/../skills/validating-changes-in-browser/SKILL.md) skill end-to-end:
+
+1. The skill boots `lt dev up` (or fallback per `managing-dev-servers`).
+2. It seeds `@test.com` accounts covering every role surfaced across Phase 4 (production-readiness audit), Phase 5 (security/backend/frontend review) permission matrices. Builds the account registry — every credential will appear in the final report.
+3. It derives a step-by-step test list from the diff `<base>...HEAD` and walks it autonomously via Chrome DevTools MCP. Every step names its account explicitly.
+4. Pre-existing issues found during the walk are fixed in the same loop (noted as also-fixed). Stall guard after 3 unsuccessful fix attempts.
+5. The skill renders the walked list and closes with its own AskUserQuestion ship-or-optimize gate.
+
+**Phase 8 verdict mapping for the final report:**
+
+- Skill verdict `READY-TO-SHIP` → Phase 8 PASS.
+- Skill verdict `OPTIMIZE` → Phase 8 FAIL. The user supplied scope notes. Loop back to Phase 1 with the new scope (counts as one iteration against `--max-iterations`).
+- Skill verdict `WAITING-FOR-USER` → Phase 8 PENDING. Stop the workflow. The user will return with a verdict. The final report cannot be emitted yet.
+- Skill verdict `CANCELLED` → Phase 8 ABORTED. Surface the skill's closing block. Do NOT emit `READY-FOR-PRODUCTION` global verdict.
+
+If the skill returns `boot_failed` or `stall_guard_triggered`, the global verdict cannot be `READY-FOR-PRODUCTION` — surface the diagnosis and stop.
+
+**Skip rule:** Phase 8 can only be bypassed via `--skip-step=8`. A skipped Phase 8 means the global verdict cannot be `READY-FOR-PRODUCTION` (the no-skip rule from the Behaviour Summary applies here too).
+
 ### Final Consolidated Report
 
-Concatenate the Phase 1–7 reports (Phase 5 is the SlashCommand output's executive summary), then emit:
+Concatenate the Phase 1–8 reports (Phase 5 is the SlashCommand output's executive summary, Phase 8 is the validating-changes-in-browser skill's final block), then emit:
 
 ```
 # Production Readiness — Final Report
@@ -263,6 +289,7 @@ Wallclock:   <total time>
 | 5. /lt-dev:review               | … | … | … | … | no |
 | 6. pnpm run check               | … | … | … | … | no |
 | 7. Local CI pipeline            | … | … | … | … | no |
+| 8. Browser validation walk      | … | — | … | … | no |
 
 Global verdict: <READY-FOR-PRODUCTION|NOT-READY|PARTIAL>
 

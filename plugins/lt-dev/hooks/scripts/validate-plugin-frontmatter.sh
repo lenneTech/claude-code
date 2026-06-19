@@ -2,9 +2,17 @@
 # Plugin Frontmatter Validation Hook
 #
 # Validates YAML frontmatter in plugin markdown files (skills, commands, agents).
-# Called as PreToolUse hook for Write operations on plugin files.
+# Called as PreToolUse hook for Write/Edit operations on plugin files.
 #
-# Fail-open: on any error, allow the operation.
+# Strategy:
+#   - Write tool: validate the new file content directly (it IS the full file).
+#   - Edit tool: load the existing file, apply the (old_string -> new_string)
+#     substitution honoring replace_all, then validate the RESULTING file content.
+#     This avoids false positives when the new_string contains markdown rules
+#     (---) or table separators (|---|) that look like YAML frontmatter markers
+#     in isolation but are perfectly fine inside the larger file.
+#
+# Fail-open: on any unexpected error, allow the operation.
 
 INPUT=$(cat)
 
@@ -41,35 +49,62 @@ else
   TOOL=$(echo "$INPUT" | grep -o '"tool_name"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"tool_name"[[:space:]]*:[[:space:]]*"//;s/"$//')
 fi
 
-# ── Edit tool: only validate if frontmatter is being touched ──
-if [ "$TOOL" = "Edit" ]; then
-  if command -v jq &>/dev/null; then
-    OLD_STRING=$(echo "$INPUT" | jq -r '.tool_input.old_string // ""')
-    NEW_STRING=$(echo "$INPUT" | jq -r '.tool_input.new_string // ""')
-  else
-    OLD_STRING=$(echo "$INPUT" | grep -o '"old_string"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"old_string"[[:space:]]*:[[:space:]]*"//;s/"$//')
-    NEW_STRING=$(echo "$INPUT" | grep -o '"new_string"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"new_string"[[:space:]]*:[[:space:]]*"//;s/"$//')
-  fi
+# ── Compute the file content that WILL exist after this tool call ──
+# CONTENT after this block is the canonical target the validator works on:
+#   - Write: tool_input.content (the tool replaces the file with this verbatim).
+#   - Edit:  read the existing file, apply (old_string -> new_string) substitution
+#            honoring tool_input.replace_all. If the existing file cannot be read
+#            (new file, race condition, permission error), fall back to fail-open —
+#            Edit will surface the underlying error itself, no need to second-guess.
+CONTENT=""
 
-  # If neither old_string nor new_string contains ---, the edit is not touching frontmatter → allow
-  if ! echo "$OLD_STRING" | grep -q '\-\-\-' && ! echo "$NEW_STRING" | grep -q '\-\-\-'; then
+if [ "$TOOL" = "Edit" ]; then
+  # Require jq for Edit validation — the legacy regex fallback cannot reliably
+  # extract multi-line old_string / new_string from the JSON payload, so without
+  # jq we cannot perform an accurate substitution. Fail-open in that case.
+  if ! command -v jq &>/dev/null; then
     exit 0
   fi
 
-  # Frontmatter is being edited — validate new_string as the content to check
-  CONTENT="$NEW_STRING"
-  [ -z "$CONTENT" ] && exit 0
+  OLD_STRING=$(echo "$INPUT" | jq -r '.tool_input.old_string // ""')
+  NEW_STRING=$(echo "$INPUT" | jq -r '.tool_input.new_string // ""')
+  REPLACE_ALL=$(echo "$INPUT" | jq -r '.tool_input.replace_all // false')
+
+  # Existing file must be readable for us to compute the resulting content.
+  # If not (new file via Edit is an Edit-tool error anyway), fail-open.
+  [ -r "$FILE_PATH" ] || exit 0
+
+  # Use node for the substitution. Node is robust against any UTF-8, newlines,
+  # quotes, and backslashes in the strings (passed as argv, not interpolated).
+  # Node is already an allowed bash pattern in this plugin's permissions.json.
+  if ! command -v node &>/dev/null; then
+    exit 0
+  fi
+
+  # node -e places user-args starting at argv[1] (no script-path slot),
+  # so destructure with a single skip.
+  CONTENT=$(node -e '
+    const fs = require("node:fs");
+    const [, path, oldStr, newStr, replaceAll] = process.argv;
+    let content;
+    try { content = fs.readFileSync(path, "utf8"); }
+    catch { process.exit(0); }
+    const out = replaceAll === "true"
+      ? content.split(oldStr).join(newStr)
+      : content.replace(oldStr, newStr);
+    process.stdout.write(out);
+  ' "$FILE_PATH" "$OLD_STRING" "$NEW_STRING" "$REPLACE_ALL" 2>/dev/null) || exit 0
 else
-  # ── Write tool: extract content from JSON input ──
+  # ── Write tool: tool_input.content is the full file content verbatim ──
   if command -v jq &>/dev/null; then
     CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // ""')
   else
     # Fallback: extract content between quotes (limited but sufficient for frontmatter check)
     CONTENT=$(echo "$INPUT" | sed -n 's/.*"content"[[:space:]]*:[[:space:]]*"//p' | sed 's/"[[:space:]]*}.*$//')
   fi
-
-  [ -z "$CONTENT" ] && exit 0
 fi
+
+[ -z "$CONTENT" ] && exit 0
 
 # ── JSON deny helper ──
 deny() {

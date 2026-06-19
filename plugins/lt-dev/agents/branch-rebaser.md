@@ -5,7 +5,7 @@ model: inherit
 tools: Bash, Read, Grep, Glob, Write, Edit, TodoWrite
 memory: project
 isolation: worktree
-skills: generating-nest-servers, developing-lt-frontend, rebasing-branches, running-check-script
+skills: generating-nest-servers, developing-lt-frontend, rebasing-branches, running-check-script, validating-changes-in-browser
 maxTurns: 100
 ---
 
@@ -54,6 +54,7 @@ Initial TodoWrite:
 [pending] Phase 8: Urgency check for critical optimizations
 [pending] Phase 9: Iterate (re-lint, re-test if needed)
 [pending] Phase 10: Code review via /lt-dev:review
+[pending] Phase 10.5: Browser validation walk via validating-changes-in-browser skill
 ```
 
 For batch mode, add:
@@ -314,6 +315,27 @@ Apply the `rebasing-branches` skill review guidelines (loaded via `skills:` fron
 3. Fix issues classified as High priority
 4. Document Medium/Low issues in the report
 5. Re-run tests after fixes
+
+### Phase 10.5: Browser Validation Walk
+
+After Phase 10 reports green, run the manual-style end-to-end browser pass. The rebase often surfaces latent integration issues that no test covered.
+
+Follow the `validating-changes-in-browser` skill end-to-end (loaded via `skills:` frontmatter):
+
+1. Boot `lt dev up` (or fallback per `managing-dev-servers`).
+2. Seed `@test.com` accounts covering every role present in the rebased branch.
+3. Derive a step-by-step test list from the full feature-branch delta against the updated base. Every step explicitly names the account it uses.
+4. Walk the list yourself via Chrome DevTools MCP. Fix every finding, including pre-existing ones, in the same loop.
+5. The skill renders the walked list and closes with its own AskUserQuestion ship-or-optimize gate.
+
+Skill verdict drives the outcome:
+
+- READY-TO-SHIP: continue to Phase 11 (batch mode) or report the rebase as complete (single mode).
+- OPTIMIZE: loop back to Phase 5 with the user notes. Cap iterations at 3.
+- WAITING-FOR-USER: leave `lt dev up` running and stop. Do NOT force-push in batch mode.
+- CANCELLED: tear the stack down. Do NOT force-push in batch mode.
+
+If the skill returns `boot_failed` or `stall_guard_triggered`, the rebase is NOT considered done. Surface the diagnosis and stop.
 
 ---
 

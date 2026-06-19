@@ -91,6 +91,26 @@ After `review` completes, ask the user via `AskUserQuestion`:
 
 If `--review` was not passed, skip STEP 2 entirely.
 
+### STEP 2.5 — Browser Validation Walk (between review and ship)
+
+After Phase B (or directly after Phase A when `--review` was not passed), run a manual-style end-to-end browser pass to catch what tests, check and review could not see (broken empty states, console errors, regressed roles, mobile glitches, latent bugs in adjacent pages).
+
+Follow the [`validating-changes-in-browser`](${CLAUDE_PLUGIN_ROOT}/../skills/validating-changes-in-browser/SKILL.md) skill end-to-end. The skill receives:
+
+- `diff_base`: the resolved base branch from Phase A
+- `ticket_id`: the issue identifier from Phase A
+- `permission_matrix`: the matrix produced in `take-ticket` STEP 5
+- `mitgefixt_carryover`: anything already mitgefixt during Phase A/B
+
+Skill verdict drives the cycle:
+
+- `READY-TO-SHIP` → continue to STEP 3 (Phase C ship).
+- `OPTIMIZE` → loop back to Phase A's implementation steps with the user's notes (cap iterations at **3** total across all phases). Re-run STEP 2 (review) afterwards before re-entering STEP 2.5.
+- `WAITING-FOR-USER` → leave `lt dev up` running, print the walked list + account registry, stop and wait for the user's next message. Do NOT enter Phase C.
+- `CANCELLED` → tear the stack down, surface the closing block, stop without entering Phase C. The feature branch is intentionally left intact for manual recovery.
+
+If the skill returns `boot_failed` or `stall_guard_triggered`, surface the diagnosis verbatim and stop. Do NOT proceed to Phase C.
+
 ### STEP 3 — Phase C: git:ship
 
 Invoke via the `SlashCommand` tool:

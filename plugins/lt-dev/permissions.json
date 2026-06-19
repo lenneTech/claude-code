@@ -30,7 +30,7 @@
     {
       "pattern": "Bash(npm run dev:*)",
       "description": "Run development server",
-      "usedBy": ["developing-lt-frontend", "generating-nest-servers"]
+      "usedBy": ["developing-lt-frontend", "generating-nest-servers", "validating-changes-in-browser"]
     },
     {
       "pattern": "Bash(npm start:*)",
@@ -185,7 +185,7 @@
     {
       "pattern": "Bash(pnpm run dev:*)",
       "description": "Run development server via pnpm",
-      "usedBy": ["developing-lt-frontend", "generating-nest-servers"]
+      "usedBy": ["developing-lt-frontend", "generating-nest-servers", "validating-changes-in-browser"]
     },
     {
       "pattern": "Bash(pnpm start:*)",
@@ -320,7 +320,7 @@
     {
       "pattern": "Bash(yarn run dev:*)",
       "description": "Run development server via yarn",
-      "usedBy": ["developing-lt-frontend", "generating-nest-servers"]
+      "usedBy": ["developing-lt-frontend", "generating-nest-servers", "validating-changes-in-browser"]
     },
     {
       "pattern": "Bash(yarn start:*)",
@@ -614,8 +614,8 @@
     },
     {
       "pattern": "Bash(curl:*)",
-      "description": "Check dev server availability for browser-based reviews, health-check probes, k6 load tests, and Swagger discovery",
-      "usedBy": ["ux-reviewer", "a11y-reviewer", "frontend-reviewer", "performance-reviewer", "running-load-tests-with-k6", "validating-production-readiness", "production-readiness-orchestrator", "production-ready"]
+      "description": "Check dev server availability for browser-based reviews, health-check probes, k6 load tests, Swagger discovery, and backend smoke-pass requests during browser validation",
+      "usedBy": ["ux-reviewer", "a11y-reviewer", "frontend-reviewer", "performance-reviewer", "running-load-tests-with-k6", "validating-production-readiness", "production-readiness-orchestrator", "production-ready", "validating-changes-in-browser"]
     },
     {
       "pattern": "Bash(k6 run:*)",
@@ -685,12 +685,12 @@
     {
       "pattern": "Bash(pkill:*)",
       "description": "Terminate background dev servers and watchers to enforce the dev-server lifecycle contract",
-      "usedBy": ["managing-dev-servers", "contributing-to-lt-framework", "building-stories-with-tdd", "developing-lt-frontend", "generating-nest-servers", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": ["managing-dev-servers", "contributing-to-lt-framework", "building-stories-with-tdd", "developing-lt-frontend", "generating-nest-servers", "production-readiness-orchestrator", "production-ready", "validating-changes-in-browser"]
     },
     {
       "pattern": "Bash(pgrep:*)",
       "description": "Check whether a background dev server is still running before reporting completion",
-      "usedBy": ["managing-dev-servers", "contributing-to-lt-framework", "building-stories-with-tdd", "developing-lt-frontend", "generating-nest-servers", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": ["managing-dev-servers", "contributing-to-lt-framework", "building-stories-with-tdd", "developing-lt-frontend", "generating-nest-servers", "production-readiness-orchestrator", "production-ready", "validating-changes-in-browser"]
     },
     {
       "pattern": "Bash(lsof:*)",
@@ -739,8 +739,8 @@
     },
     {
       "pattern": "Bash(lt dev:*)",
-      "description": "lt-dev parallel project orchestration (Caddy + HTTPS URLs via dedicated LaunchAgent/systemd unit): install/uninstall/migrate/up/down/status/doctor/test/tunnel — for load tests, Playwright runs, CI reproduction, and external Cloudflare Quick Tunnel exposure",
-      "usedBy": ["managing-dev-servers", "running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready"]
+      "description": "lt-dev parallel project orchestration (Caddy + HTTPS URLs via dedicated LaunchAgent/systemd unit): install/uninstall/migrate/up/down/status/doctor/test/tunnel — for load tests, Playwright runs, CI reproduction, browser validation, and external Cloudflare Quick Tunnel exposure",
+      "usedBy": ["managing-dev-servers", "running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready", "validating-changes-in-browser"]
     },
     {
       "pattern": "Bash(pnpm exec playwright:*)",

@@ -363,7 +363,25 @@ Print a compact German status block showing each AC's verdict, "Mitgenommen"-ite
   2. "Nein, noch etwas ergänzen" → user describes the additional scope, then **loop back to STEP 5** (analyse → STEP 6 implement → STEP 7 tests → STEP 8 check → STEP 9 re-check). Cap loop iterations at **3** to avoid infinite ping-pong; if hit, surface a structured note and stop.
   3. "Anpassung an bestehender Umsetzung" → user describes the change, loop back to STEP 6 only (skip re-analysis of unchanged ACs).
 
-On Option 1, continue to STEP 10. On loop-back, re-evaluate the TodoWrite items (mark previously completed ones as in-progress only if they actually need rework).
+On Option 1, continue to STEP 9.5. On loop-back, re-evaluate the TodoWrite items (mark previously completed ones as in-progress only if they actually need rework).
+
+## STEP 9.5 — Browser Validation Walk
+
+Before printing the review-ready summary, run a manual-style end-to-end browser pass to surface anything tests + check could not catch (broken empty states, missing toasts, regressed roles, console errors, mobile glitches, latent bugs in adjacent pages).
+
+Follow the [`validating-changes-in-browser`](${CLAUDE_PLUGIN_ROOT}/../skills/validating-changes-in-browser/SKILL.md) skill end-to-end:
+
+1. Boot `lt dev up` (or fallback per `managing-dev-servers`).
+2. Seed `@test.com` accounts that cover every role from the permission matrix produced in STEP 5 (and every entity state the diff touches). Maintain the account registry — every credential will be surfaced to the user.
+3. Derive a step-by-step test list from the diff `origin/<BASE>...HEAD`. Every step explicitly names its account (or marks it as a no-login / public step), so the user can re-walk without follow-up questions.
+4. Walk the list yourself via Chrome DevTools MCP. Fix every finding — including pre-existing console errors, layout glitches, broken empty states — in the same loop. Note them as also-fixed for the summary.
+5. Render the walked list. Skill verdict drives next step:
+   - `READY-TO-SHIP` → continue to STEP 10. Fold the walked list and account registry into the summary.
+   - `OPTIMIZE` → user supplied scope notes; loop back to STEP 5/6 (cap iterations at **3** combined with the STEP 9b loop).
+   - `WAITING-FOR-USER` → print the walked list + the account registry, leave `lt dev up` running, stop and wait for the user's next message.
+   - `CANCELLED` → tear the stack down, surface a closing block stating the branch is intact and unpushed. Skip STEP 10.
+
+If the skill returns `boot_failed` or `stall_guard_triggered`, do NOT proceed to STEP 10 — surface the diagnosis and stop.
 
 ## STEP 10 — Review-Ready Summary
 
@@ -401,6 +419,19 @@ Print **one** structured German summary block. This is the artefact the user rev
 - Annahmen, die getroffen wurden: <liste>
 - Bewusst NICHT umgesetzt: <liste, falls scope-cut>
 - Empfohlene Manual-Smoke-Tests: <1-3 schritte>
+
+🌐 Browser-Walk (aus STEP 9.5)
+- Verdict: READY-TO-SHIP / OPTIMIZE / WAITING-FOR-USER / CANCELLED
+- Mitgefixt waehrend Walk: kurze Liste oder "keine"
+- Out-of-scope-Findings: kurze Liste oder "keine"
+
+Test-Accounts (fuer deinen Re-Walk im Browser):
+- email / password / Rolle / Herkunft (z.B. admin@test.com / TestPass123! / Admin / bestehender Seed)
+- ...
+
+Walk-Liste (vollstaendig durchgegangen):
+[v] 1. Step — Account: email — Beobachtung: ...
+[v] 2. ...
 
 🌿 Branch
 - Feature: <feature-branch>

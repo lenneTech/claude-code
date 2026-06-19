@@ -178,7 +178,7 @@ claude plugins install typescript-lsp --marketplace claude-plugins-official
 
 **Complete workflow details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md)**
 
-**Process:** Step 1 (Analysis) -> Step 2 (Create Test) -> Step 3 (Run Tests) -> [Step 3a: Fix Tests if needed] -> Step 4 (Implement) -> Step 5 (Validate) -> Step 5a (Quality Check) -> Step 5b (Final Validation)
+**Process:** Step 1 (Analysis) -> Step 2 (Create Test) -> Step 3 (Run Tests) -> [Step 3a: Fix Tests if needed] -> Step 4 (Implement) -> Step 5 (Validate) -> Step 5a (Quality Check) -> Step 5b (Final Validation) -> Step 5c (Browser Validation Walk)
 
 ---
 
@@ -249,7 +249,28 @@ Review: Code quality (`code-quality.md`), Database indexes (`database-indexes.md
 ### Step 5b: Final Validation
 **Details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md) -> Step 5b**
 
-Run all tests, verify quality checks, generate final report. DONE!
+Run all tests, verify quality checks, generate final report. After tests + quality checks are green, proceed to Step 5c (Browser Validation) before declaring DONE.
+
+### Step 5c: Browser Validation Walk
+
+After Step 5b reports green and the final report has been drafted, run the manual-style end-to-end browser pass. This catches what unit / API / story tests cannot see: broken empty states, missing toasts, regressed flows on roles, console errors, mobile glitches, latent bugs in adjacent pages.
+
+Follow the `validating-changes-in-browser` skill end-to-end (located at `plugins/lt-dev/skills/validating-changes-in-browser/SKILL.md` in the lt-dev plugin):
+
+1. Boot `lt dev up` (or fallback per `managing-dev-servers`).
+2. Seed `@test.com` accounts that cover every role from the implementation's permission matrix. Maintain the account registry — every credential will be surfaced to the user.
+3. Derive a step-by-step test list from the diff `<base>...HEAD`. Every step explicitly names the account it uses (or marks it as a no-login / public step).
+4. Walk the list yourself via Chrome DevTools MCP (`mcp__plugin_lt-dev_chrome-devtools__*`). Fix every finding — including pre-existing console errors, layout glitches, broken empty states — in the same loop. Note them as also-fixed.
+5. The skill renders the walked list and closes with its own AskUserQuestion ship-or-optimize gate.
+
+Skill verdict drives the next step:
+
+- `READY-TO-SHIP` → fold the walked list and account registry into the final report. DONE!
+- `OPTIMIZE` → user supplied scope notes; loop back to Step 3 (Run Tests) with the new scope, then Step 4 (Implement) → Step 5 → Step 5a → Step 5b → Step 5c again.
+- `WAITING-FOR-USER` → leave `lt dev up` running, print the walked list + account registry, stop and wait for the user's next message.
+- `CANCELLED` → tear the stack down, surface the closing block, stop. Branch remains intact and unpushed.
+
+If the skill returns `boot_failed` or `stall_guard_triggered`, do NOT report DONE — surface the diagnosis and stop.
 
 ## Handling Existing Tests When Modifying Code
 

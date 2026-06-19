@@ -165,6 +165,28 @@ Options:
 
 If implementing: Apply the fix, run tests, present the result.
 
+### Step 7.5: Browser Validation Walk (only when a fix was implemented)
+
+After the fix has been applied and tests are green, run the manual-style end-to-end browser pass. This catches what unit / API tests cannot see — a console error introduced by the fix, a regressed empty state on a sibling page, a layout glitch surfaced by the new behaviour.
+
+**Skip condition:** Step 7.5 is skipped when Step 7's option was `Weitere Untersuchung` or `Abbrechen` (no fix was implemented). It is mandatory when option `Fix implementieren` was chosen.
+
+Follow the [`validating-changes-in-browser`](${CLAUDE_PLUGIN_ROOT}/../skills/validating-changes-in-browser/SKILL.md) skill end-to-end. The skill receives:
+
+- `diff_base`: the resolved base branch (default `main`)
+- `ticket_id`: extracted from $ARGUMENTS if a Linear ID was provided
+- `permission_matrix`: any role context surfaced during Step 5 of the debug investigation
+- `mitgefixt_carryover`: anything already noted as pre-existing during the hypothesis investigation
+
+The skill walks the list, fixes everything it finds (including pre-existing issues), renders the final list to the user, and closes with the ship-or-optimize gate. Skill verdict drives the next step:
+
+- `READY-TO-SHIP` → continue to Step 8 cleanup.
+- `OPTIMIZE` → user wants more changes; loop back to Step 7 (Implementation Offer) with the new scope.
+- `WAITING-FOR-USER` → leave `lt dev up` running, print the walked list + account registry, stop and wait for the user's next message.
+- `CANCELLED` → tear the stack down, stop without Step 8.
+
+If the skill returns `boot_failed` or `stall_guard_triggered`, surface the diagnosis and stop. Do NOT proceed to Step 8.
+
 ### Step 8: Cleanup
 
 - Shutdown all teammates
