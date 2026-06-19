@@ -1,7 +1,7 @@
 ---
-description: Auto-pick the next Linear ticket (highest priority, unassigned) — or take an explicit ID — then branch, TDD-implement, run all tests, run check, and report a review-ready summary
+description: Auto-pick the next Linear ticket (open, ranked by priority DESC → bug-flag DESC → assigned-to-me DESC → createdAt ASC; tickets assigned to other users are excluded) — or take an explicit ID — then branch, TDD-implement, run all tests, run check, and report a review-ready summary
 argument-hint: "[issue-id | --project=<name> --team=<name> --status=<list> --base=<branch> --figma=<url> --flows=<path>]"
-allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, Bash(git:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(wc:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run test:e2e:*), Bash(pnpm run e2e:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__list_teams, mcp__plugin_lt-dev_linear__list_projects, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__list_users, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_screenshot
+allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, Bash(git:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(wc:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run test:e2e:*), Bash(pnpm run e2e:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__list_teams, mcp__plugin_lt-dev_linear__list_projects, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__list_users, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_screenshot
 disable-model-invocation: true
 ---
 
@@ -89,27 +89,52 @@ Create a TodoWrite plan with these items (mark in progress / completed as you pr
    - Offer the top 3 candidates as options. Always include "Anderes Projekt/Team angeben" as a fallback.
 5. If `--project=` / `--team=` were passed, use them directly without asking.
 
-**Determine status priority list:**
+**Resolve current user, open states, bug labels:**
 
-- Use `--status=` if provided, else default to `Open,Backlog`.
-- Resolve each name to a Linear state ID via `mcp__plugin_lt-dev_linear__list_issue_statuses` for the selected team. Tolerate variants ("Open", "Todo", "Ready", "Backlog").
+1. Call `mcp__plugin_lt-dev_linear__get_user` (authenticated viewer) → `CURRENT_USER_ID`.
+2. Use `--status=` if provided, else resolve via `mcp__plugin_lt-dev_linear__list_issue_statuses`:
+   - Default: all states whose Linear **type** is exactly `unstarted` (this is Linear's "Open" category). Tolerate name variants: `Open`, `Todo`, `Ready`.
+   - **Backlog states are explicitly excluded** — never include states whose Linear type is `backlog`, regardless of their name. Auto-pick must not pull tickets the team has consciously deferred. If the user wants backlog tickets, they pass `--status=Backlog` explicitly.
+   - Capture the matched state IDs as `OPEN_STATE_IDS`.
+3. Call `mcp__plugin_lt-dev_linear__list_issue_labels` for the team and capture all label IDs whose name matches `bug` (case-insensitive) → `BUG_LABEL_IDS`. If the team has no bug label, `BUG_LABEL_IDS = []` (every ticket counts as non-bug).
 
-**Fetch and rank candidates:**
+**Selection rule:**
 
-For each status in priority order, call `mcp__plugin_lt-dev_linear__list_issues` with:
+The selection has two distinct phases — first a **hard filter** that defines the eligible pool, then a **multi-key sort** that ranks the rows in that pool.
+
+**Phase 1 — Hard filter (eligibility).** A ticket is only a candidate if **both** conditions hold:
+
+- `stateId` ∈ `OPEN_STATE_IDS` (the ticket is in an Open state).
+- `assigneeId` ∈ `[CURRENT_USER_ID, null]` (the ticket is either assigned to me or to nobody — tickets assigned to **other users are excluded outright** and never enter the sort).
+
+**Phase 2 — Multi-key sort (ranking inside the eligible pool).** Priority is the **primary** ranking — a higher-priority non-bug always beats a lower-priority bug. Bug-flag and assigned-to-me are **tie-breakers** that only matter when priority is equal.
+
+Sort eligible candidates by:
+
+1. `priority` DESC (Urgent → High → Medium → Low → None) — primary key.
+2. Bug-flag DESC (ticket carries a label from `BUG_LABEL_IDS` → `1`, else `0`) — tie-breaker for equal priority.
+3. Assigned-to-me DESC (`assigneeId = CURRENT_USER_ID` → `1`, `assigneeId = null` → `0`) — tie-breaker for equal priority + equal bug-flag.
+4. `createdAt` ASC — final tie-breaker (oldest first).
+
+Take the first row.
+
+**Implementation:**
+
+Query `mcp__plugin_lt-dev_linear__list_issues` once (or twice merged) with the Phase 1 filter:
+
 - `teamId` = resolved team
 - `projectId` = resolved project (if applicable)
-- `stateId` = current status
-- `assigneeId` = `null` (unassigned only)
-- Order by priority DESC (Urgent → High → Medium → Low → None), then by createdAt ASC.
+- `stateId` IN `OPEN_STATE_IDS`
+- `assigneeId` IN `[CURRENT_USER_ID, null]` — if the Linear filter cannot express this OR, run **two** filtered queries (`assigneeId = CURRENT_USER_ID` + `assigneeId = null`) and merge the results. **Never** include tickets assigned to other users in the merged set.
+- Order by `priority` DESC, then `createdAt` ASC (server-side); then apply the bug-flag + assigned-to-me tie-breakers client-side on the returned rows.
 
-Pick the **first match** found. If a status returns nothing, fall through to the next status. If all statuses are empty:
+**If the eligible pool is empty:**
 
-- Show the user the empty result and ask: "Kein passendes Ticket gefunden. Soll ich (a) eine breitere Suche starten, (b) ein bestimmtes Ticket übernehmen, oder (c) abbrechen?"
+- Show the user the empty result and ask: "Kein passendes Ticket gefunden. Soll ich (a) eine breitere Suche starten (auch `In Progress` / andere Status), (b) ein bestimmtes Ticket übernehmen, oder (c) abbrechen?"
 
 **Confirm the pick** via `AskUserQuestion`:
-- Show: Identifier, title, priority, status, project, 1-line description excerpt
-- Options: "Übernehmen", "Nächstes Ticket vorschlagen", "Anderes Ticket eingeben", "Abbrechen"
+- Show: Identifier, title, priority, **bug-flag** ("🐞 Bug" if matched), assignment ("dir zugeordnet" / "nicht zugeordnet"), status, project, 1-line description excerpt
+- Options: "Übernehmen", "Nächstes Ticket vorschlagen" (re-runs the sort skipping this ticket), "Anderes Ticket eingeben", "Abbrechen"
 
 Store the chosen `ISSUE_ID`, `ISSUE_IDENTIFIER` (e.g. `SVL-123`), `ISSUE_TITLE`, `TEAM_KEY`, `STATE_IDS` (full state list for this team).
 
