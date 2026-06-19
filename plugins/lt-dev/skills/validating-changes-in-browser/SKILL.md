@@ -43,7 +43,9 @@ Activates at the end of these workflows (invoked from each):
 4. **Never reuse production data.** Seeds use `@test.com` emails and clearly fake names so they're filterable / wipeable.
 5. **Never leave dev servers orphaned.** Follow [managing-dev-servers](${CLAUDE_PLUGIN_ROOT}/skills/managing-dev-servers/SKILL.md) for start + stop semantics. If you used `lt dev up`, leave it up only if the user wants to continue testing manually.
 6. **Account visibility is mandatory.** Every step that requires a login MUST explicitly name the account (email, password, role). The developer reads the list as their own re-walk manual — they must be able to log into the stack without follow-up questions. This applies to both reused seed accounts AND newly-created accounts. For public/unauthenticated steps, mark them explicitly as `Account: no login (public / incognito)` (translated to the user's session language) instead of omitting the field.
-7. **The user's final answer is binary in spirit:** ship or optimize further. The `AskUserQuestion` at the end always offers both — never end the workflow without that gate.
+7. **Ticket context block is mandatory.** Every walked list begins with a short context block stating (a) what the task / bug was in 1–3 sentences ("task summary"), (b) how it was implemented or fixed in 1–3 sentences plus the most-relevant `file:line` references ("implementation summary"), and (c) the ticket link when the originating workflow knows one (Linear URL, GitHub issue URL, file path of a `*.md` story). The user uses this block to orient themselves before re-walking — they should not need to switch context to remember what the branch is about.
+8. **URL-per-step is mandatory for UI steps.** Every step that touches a browser route MUST carry the fully-qualified URL the user navigates to (e.g. `URL: https://<slug>.localhost/users/new`). Deep links (with query params, route params, or hash fragments) include the exact form you used during the walk. The user clicks straight from the list. For non-UI steps (backend smoke pass, CLI flow), record the equivalent locator (`curl` URL + method, command line). Omit only when the step is genuinely location-less.
+9. **The user's final answer is binary in spirit:** ship or optimize further. The `AskUserQuestion` at the end always offers both — never end the workflow without that gate.
 
 ## Workflow
 
@@ -102,10 +104,15 @@ Build the list **from the actual diff**, not from a generic template. For every 
 
 Never leave the account implicit — the user reads the list as their own re-walk manual.
 
-Render the test plan in the **language the user has been speaking in this session**. The English template below is illustrative — translate the headings, account-list labels, and step prose when you produce the actual output:
+Render the test plan in the **language the user has been speaking in this session**. The English template below is illustrative — translate the headings, account-list labels, and step prose when you produce the actual output. Always include the ticket-context block (task summary + implementation summary + ticket link) and a `URL:` field per UI step:
 
 ```
 🧪 Test Plan: <Ticket-ID / Feature Name>
+
+🎫 Ticket
+- Link    : <Linear URL / GitHub issue URL / file:path-to-story.md, or "no ticket — ad-hoc fix">
+- Task    : <1–3 sentence summary of what needed to happen — copied / paraphrased from ticket>
+- Done by : <1–3 sentence summary of how it was implemented or fixed, with the most-relevant file:line refs>
 
 🌐 Server : https://<slug>.localhost  (App) / https://api.<slug>.localhost (API)
 
@@ -116,9 +123,10 @@ Render the test plan in the **language the user has been speaking in this sessio
 - (no login) / — / — / public routes
 
 📋 Steps
-[ ] 1. <Page / Flow / Component> — Account: <email> — <concrete action> — <expected result>
-[ ] 2. <Page / Flow> — Account: no login (public) — <action> — <expectation>
-[ ] 3. ...
+[ ] 1. <Page / Flow / Component> — Account: <email> — URL: https://<slug>.localhost/<route> — <concrete action> — <expected result>
+[ ] 2. <Page / Flow> — Account: no login (public) — URL: https://<slug>.localhost/<public-route> — <action> — <expectation>
+[ ] 3. <Backend smoke> — Account: <email or "anonymous"> — URL: POST https://api.<slug>.localhost/<endpoint> — <action> — <expectation>
+[ ] 4. ...
 ```
 
 Coverage rules (apply each that fits the diff):
@@ -179,12 +187,17 @@ If a finding is truly out-of-scope and high-risk to fix in this branch (e.g. a m
 
 ### Step 7 — Show the user the walked list
 
-Render the **final** list (every step ticked) in a structured block. **Repeat the account registry verbatim** so the user can log in without scrolling back. Render in the language the user has been speaking; the English template below is illustrative:
+Render the **final** list (every step ticked) in a structured block. **Repeat the ticket-context block AND the account registry verbatim** so the user can re-walk from a single screen without scrolling back. Each executed check carries its `URL:` field again so the user can click straight to the page. Render in the language the user has been speaking; the English template below is illustrative:
 
 ```
 ╔══════════════════════════════════════════════════════════╗
 ║ Manual Browser Walk: <Ticket-ID / Feature>              ║
 ╚══════════════════════════════════════════════════════════╝
+
+🎫 Ticket
+- Link    : <Linear URL / GitHub issue URL / file:path-to-story.md, or "no ticket — ad-hoc fix">
+- Task    : <1–3 sentence summary of what needed to happen>
+- Done by : <1–3 sentence summary of how it was implemented or fixed, with the most-relevant file:line refs>
 
 🌐 Stack
 - App:  <URL>
@@ -198,9 +211,9 @@ Render the **final** list (every step ticked) in a structured block. **Repeat th
 - (no login) / — / — / public routes
 
 📋 Executed checks
-[✓] 1. <Step> — Account: <email> — Observation: <short note on what actually happened>
-[✓] 2. <Step> — Account: no login — Observation: ...
-[✓] 3. <Step> — Account: <email> — Observation: ...
+[✓] 1. <Step> — Account: <email> — URL: https://<slug>.localhost/<route> — Observation: <short note on what actually happened>
+[✓] 2. <Step> — Account: no login — URL: https://<slug>.localhost/<public-route> — Observation: ...
+[✓] 3. <Step> — Account: <email> — URL: POST https://api.<slug>.localhost/<endpoint> — Observation: ...
 
 🛠 Also fixed during the walk
 - <file:line> — <short reason — what was broken>
@@ -245,6 +258,9 @@ This skill is **invoked from** another workflow — never the entry point on its
 - **Inputs** the originating workflow MUST pass:
   - `diff_base` (e.g. `origin/dev`) so the skill can compute the diff.
   - `ticket_id` (if any) for the list header.
+  - `ticket_url` (if any) — full URL to the originating ticket (e.g. `https://linear.app/<workspace>/issue/DEV-123`, GitHub issue URL, or the absolute repo-relative path to the story file). The skill renders this verbatim in the ticket-context block; if the originating workflow only knows the identifier, it should derive the URL from the workspace conventions before invoking the skill.
+  - `task_summary` — 1–3 sentences describing what the task / bug was, in the user's session language. Used in the ticket-context block. Source: ticket description for ticket-driven workflows, the bug description for `/lt-dev:debug`, the diff intent for ad-hoc rebases.
+  - `implementation_summary` — 1–3 sentences describing how it was implemented or fixed, plus the most-relevant `file:line` references. Used in the ticket-context block.
   - `permission_matrix` (if Step 5 of the originating workflow produced one) — the skill uses it directly for role coverage.
   - `also_fixed_carryover` (any pre-existing issues already noted by earlier steps) — the skill will avoid double-fixing them.
 
@@ -272,5 +288,7 @@ This skill is **invoked from** another workflow — never the entry point on its
 - The user only sees the **walked** list, never a draft. If you couldn't walk a step, that step's status is documented and the user is told.
 - Fixing pre-existing issues during the walk is the default behavior, not an exception.
 - Every step in the list names the account it uses — no implicit logins. New accounts created during this walk are listed with their literal credentials.
+- Every UI step in the list carries the fully-qualified URL the user navigates to (deep links included), so the user can click straight to the page.
+- The walked list opens with a ticket-context block (link + task summary + implementation summary) so the user knows what the branch is about without leaving the list.
 - The `AskUserQuestion` at the end is mandatory — there is no path that returns to the originating workflow without it.
 - All user-facing artefacts (test plan, walked list, status labels, AskUserQuestion text + options) are translated to the language the user has been speaking in this session — never hardcode the output language.
