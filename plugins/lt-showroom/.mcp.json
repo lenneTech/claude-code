@@ -6,8 +6,8 @@
     },
     "chrome-devtools": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp@latest"]
+      "command": "${CLAUDE_PLUGIN_ROOT}/scripts/chrome-devtools-mcp-launcher.sh",
+      "args": []
     }
   }
 }

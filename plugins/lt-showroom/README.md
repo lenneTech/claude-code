@@ -13,7 +13,13 @@ claude plugin install lenne-tech/showroom
 | Server | Type | Purpose |
 |--------|------|---------|
 | `showroom-api` | http | Showcase CRUD, screenshot upload, analytics |
-| `chrome-devtools` | stdio | Browser automation for screenshot capture |
+| `chrome-devtools` | stdio | Browser automation for screenshot capture (auto-uses Chrome Canary when installed on macOS — see below) |
+
+### Chrome DevTools MCP — Canary auto-detection
+
+The `chrome-devtools` MCP server is launched via `scripts/chrome-devtools-mcp-launcher.sh`. On macOS the launcher checks for Google Chrome Canary in `/Applications/`, `~/Applications/`, and via `mdfind` on the bundle identifier `com.google.Chrome.canary`. If Canary is present, it appends `--channel=canary` so the automated browser shows up with the yellow Canary icon in the window switcher and is clearly distinguishable from the developer's daily-driver Chrome. Without Canary (or on non-macOS systems) it behaves exactly like the previous static invocation — stable Chrome, no extra flags.
+
+Override the auto-detection with the `CHROME_MCP_CHANNEL` environment variable (`stable` or `canary`).
 
 ## Skills
 

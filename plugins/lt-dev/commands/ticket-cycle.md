@@ -76,15 +76,16 @@ Invoke via the `SlashCommand` tool:
 
 **Phase 1 — Filter (welche Tickets sind überhaupt Kandidaten?).** Ein Ticket ist nur Kandidat, wenn **beide** Bedingungen gelten:
 
-- Status ist "Open" (Linear-Kategorie `unstarted` — typischerweise `Open`, `Todo`, `Ready`). **Backlog-Tickets sind ausgeschlossen** — was bewusst zurückgestellt wurde, wird nicht automatisch angegangen. Wer ein Backlog-Ticket möchte, übergibt explizit `--status=Backlog`.
+- Status ist "Open" (Linear-Kategorie `unstarted` — typischerweise `Open`, `Todo`, `Ready`) **oder** "Fix needed" (Name-Match auf `Fix needed` / `Fix Needed` / `Needs Fix` / `needs-fix` / `fix-needed`, case-insensitive — unabhängig von der Linear-Kategorie). **Backlog-Tickets sind ausgeschlossen** — was bewusst zurückgestellt wurde, wird nicht automatisch angegangen. Wer ein Backlog-Ticket möchte, übergibt explizit `--status=Backlog`. Ein explizit gesetztes `--status=<liste>` ist der absolute Filter.
 - Es ist entweder dem aktuellen Nutzer ODER niemandem zugeordnet. Tickets, die anderen Personen zugeordnet sind, sind **immer außen vor** und nehmen an der Sortierung gar nicht teil.
 
-**Phase 2 — Sortierung (welcher Kandidat gewinnt?).** Aus dem gefilterten Pool wird der erste nach dieser Mehrschlüssel-Sortierung gepickt:
+**Phase 2 — Sortierung (welcher Kandidat gewinnt?).** Status ist primär, Priorität zweit, Zuordnung dritt — alles andere sind Tie-Breaker.
 
-1. **Priorität DESC** (Urgent → High → Medium → Low → None) — primärer Schlüssel. Eine höhere Priorität schlägt immer eine niedrigere, unabhängig von Bug-Status oder Zuordnung.
-2. **Bug-Flag DESC** (Bug vor Nicht-Bug) — Tie-Breaker bei gleicher Priorität.
-3. **Mir zugeordnet DESC** (mir zugeordnet vor niemandem zugeordnet) — Tie-Breaker bei gleicher Priorität und gleichem Bug-Status.
-4. **createdAt ASC** (älter zuerst) — finaler Tie-Breaker.
+1. **Fix-needed-Flag DESC** (Fix needed vor Open) — primärer Schlüssel. Ein Low-Prio-Ticket in "Fix needed" schlägt ein Urgent-Ticket in "Open".
+2. **Priorität DESC** (Urgent → High → Medium → Low → None) — zweiter Schlüssel. Innerhalb desselben Status schlägt eine höhere Priorität immer eine niedrigere, unabhängig davon, wem das Ticket zugeordnet ist.
+3. **Mir zugeordnet DESC** (mir vor niemandem) — dritter Schlüssel. Bei gleichem Status und gleicher Priorität schlägt mein Ticket ein freies.
+4. **Bug-Flag DESC** (Bug vor Nicht-Bug) — vierter Schlüssel.
+5. **createdAt ASC** (älter zuerst) — finaler Tie-Breaker.
 
 Wait for `take-ticket` to print its STEP 10 review-ready summary. The user's STEP 9 confirmation inside `take-ticket` is the **first human gate** of the cycle:
 

@@ -1,5 +1,5 @@
 ---
-description: Auto-pick the next Linear ticket (open, ranked by priority DESC → bug-flag DESC → assigned-to-me DESC → createdAt ASC; tickets assigned to other users are excluded) — or take an explicit ID — then branch, TDD-implement, run all tests, run check, and report a review-ready summary
+description: 'Auto-pick the next Linear ticket (default pool: Fix needed + Open states; ranked by status DESC (Fix needed before Open) → priority DESC → assigned-to-me DESC → bug-flag DESC → createdAt ASC; tickets assigned to other users are excluded) — or take an explicit ID — then branch, TDD-implement, run all tests, run check, and report a review-ready summary'
 argument-hint: "[issue-id | --project=<name> --team=<name> --status=<list> --base=<branch> --figma=<url> --flows=<path>]"
 allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, Bash(git:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(wc:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run test:e2e:*), Bash(pnpm run e2e:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__list_teams, mcp__plugin_lt-dev_linear__list_projects, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__list_users, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_screenshot
 disable-model-invocation: true
@@ -39,7 +39,7 @@ Parse `$ARGUMENTS` as a free-form string. Recognise (all optional, all combinabl
 | `ABC-123` or bare digits | Explicit Linear issue ID — skip auto-pick |
 | `--project="<name>"` | Restrict auto-pick to one Linear project |
 | `--team="<name>"` | Restrict auto-pick to one Linear team |
-| `--status="Open,Backlog"` | Comma-separated status priority list (default: `Open,Backlog`) |
+| `--status="Open,Fix needed"` | Comma-separated state name list. Default: all `unstarted`-type states (Open / Todo / Ready) **plus** any state whose name matches `Fix needed` / `Fix Needed` / `Needs Fix` / `needs-fix` / `fix-needed` (case-insensitive). Backlog states are always excluded unless named explicitly. |
 | `--base=<branch>` | Base branch for the feature branch (default: auto-detect `dev` → `develop` → `main` → `master`) |
 | `--figma=<url>` | Figma design URL — fetch design context as additional requirement |
 | `--flows=<path>` | Relative path containing user-flow docs (e.g. `docs/flows`) |
@@ -89,13 +89,14 @@ Create a TodoWrite plan with these items (mark in progress / completed as you pr
    - Offer the top 3 candidates as options. Always include "Anderes Projekt/Team angeben" as a fallback.
 5. If `--project=` / `--team=` were passed, use them directly without asking.
 
-**Resolve current user, open states, bug labels:**
+**Resolve current user, eligible states, bug labels:**
 
 1. Call `mcp__plugin_lt-dev_linear__get_user` (authenticated viewer) → `CURRENT_USER_ID`.
-2. Use `--status=` if provided, else resolve via `mcp__plugin_lt-dev_linear__list_issue_statuses`:
-   - Default: all states whose Linear **type** is exactly `unstarted` (this is Linear's "Open" category). Tolerate name variants: `Open`, `Todo`, `Ready`.
-   - **Backlog states are explicitly excluded** — never include states whose Linear type is `backlog`, regardless of their name. Auto-pick must not pull tickets the team has consciously deferred. If the user wants backlog tickets, they pass `--status=Backlog` explicitly.
-   - Capture the matched state IDs as `OPEN_STATE_IDS`.
+2. Resolve state IDs into two named buckets via `mcp__plugin_lt-dev_linear__list_issue_statuses`:
+   - `OPEN_STATE_IDS` — all states whose Linear **type** is exactly `unstarted` (Linear's "Open" category). Tolerate name variants: `Open`, `Todo`, `Ready`.
+   - `FIX_NEEDED_STATE_IDS` — all states whose **name** matches `Fix needed` / `Fix Needed` / `Needs Fix` / `needs-fix` / `fix-needed` (case-insensitive; underscores treated as hyphens). Independent of Linear type. If the team has no such state, the bucket stays empty — no error, the sort just falls through to Open.
+   - **Backlog states are always excluded** — never include states whose Linear type is `backlog`, regardless of their name. Auto-pick must not pull tickets the team has consciously deferred. If the user wants backlog tickets, they pass `--status=Backlog` explicitly.
+   - If `--status=<list>` is provided, it is the **absolute filter**: only states whose name matches one of the listed entries (case-insensitive) end up in the eligible pool. The `OPEN_STATE_IDS` / `FIX_NEEDED_STATE_IDS` split is still computed inside that filtered set, so the sort-key "Fix needed > Open" continues to work when the user opted into both buckets explicitly.
 3. Call `mcp__plugin_lt-dev_linear__list_issue_labels` for the team and capture all label IDs whose name matches `bug` (case-insensitive) → `BUG_LABEL_IDS`. If the team has no bug label, `BUG_LABEL_IDS = []` (every ticket counts as non-bug).
 
 **Selection rule:**
@@ -104,17 +105,18 @@ The selection has two distinct phases — first a **hard filter** that defines t
 
 **Phase 1 — Hard filter (eligibility).** A ticket is only a candidate if **both** conditions hold:
 
-- `stateId` ∈ `OPEN_STATE_IDS` (the ticket is in an Open state).
+- `stateId` ∈ `OPEN_STATE_IDS ∪ FIX_NEEDED_STATE_IDS` (the ticket is in an Open or Fix-needed state). If `--status=<list>` was passed, this is the user's filtered set as resolved above.
 - `assigneeId` ∈ `[CURRENT_USER_ID, null]` (the ticket is either assigned to me or to nobody — tickets assigned to **other users are excluded outright** and never enter the sort).
 
-**Phase 2 — Multi-key sort (ranking inside the eligible pool).** Priority is the **primary** ranking — a higher-priority non-bug always beats a lower-priority bug. Bug-flag and assigned-to-me are **tie-breakers** that only matter when priority is equal.
+**Phase 2 — Multi-key sort (ranking inside the eligible pool).** Status (Fix needed vs Open) is the **primary** ranking. Inside one status, priority decides; inside one status + one priority, assignment to me decides. All other keys are downstream tie-breakers.
 
 Sort eligible candidates by:
 
-1. `priority` DESC (Urgent → High → Medium → Low → None) — primary key.
-2. Bug-flag DESC (ticket carries a label from `BUG_LABEL_IDS` → `1`, else `0`) — tie-breaker for equal priority.
-3. Assigned-to-me DESC (`assigneeId = CURRENT_USER_ID` → `1`, `assigneeId = null` → `0`) — tie-breaker for equal priority + equal bug-flag.
-4. `createdAt` ASC — final tie-breaker (oldest first).
+1. **Fix-needed-flag DESC** — `stateId ∈ FIX_NEEDED_STATE_IDS` → `1`, else `0`. Primary key. A Low-priority Fix-needed ticket beats an Urgent Open ticket.
+2. **Priority DESC** (Urgent → High → Medium → Low → None) — second key. Inside one status, a higher-priority ticket always beats a lower-priority one, regardless of who it's assigned to.
+3. **Assigned-to-me DESC** (`assigneeId = CURRENT_USER_ID` → `1`, `assigneeId = null` → `0`) — third key. Inside one status + one priority, my ticket beats an unassigned one.
+4. **Bug-flag DESC** (ticket carries a label from `BUG_LABEL_IDS` → `1`, else `0`) — fourth key.
+5. **`createdAt` ASC** — final tie-breaker (oldest first).
 
 Take the first row.
 
@@ -124,9 +126,9 @@ Query `mcp__plugin_lt-dev_linear__list_issues` once (or twice merged) with the P
 
 - `teamId` = resolved team
 - `projectId` = resolved project (if applicable)
-- `stateId` IN `OPEN_STATE_IDS`
+- `stateId` IN `OPEN_STATE_IDS ∪ FIX_NEEDED_STATE_IDS` (or the `--status=`-filtered set). If the Linear filter cannot express the union, run **two** filtered queries (one per bucket) and merge the results.
 - `assigneeId` IN `[CURRENT_USER_ID, null]` — if the Linear filter cannot express this OR, run **two** filtered queries (`assigneeId = CURRENT_USER_ID` + `assigneeId = null`) and merge the results. **Never** include tickets assigned to other users in the merged set.
-- Order by `priority` DESC, then `createdAt` ASC (server-side); then apply the bug-flag + assigned-to-me tie-breakers client-side on the returned rows.
+- Server-side ordering is best-effort (`priority` DESC, `createdAt` ASC). The full five-key sort above is applied **client-side** on the returned rows — the server cannot express the "Fix needed > Open" primary key directly.
 
 **If the eligible pool is empty:**
 

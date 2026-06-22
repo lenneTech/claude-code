@@ -42,8 +42,19 @@ These plugins are **optional** but enhance the experience when working with this
 - **24 Agents** - Autonomous task execution
 - **52 Commands** - User-triggered actions via `/lt-dev:<name>`
 - **13 Hook Scripts** across 7 event types (SessionStart, PreToolUse, PostToolUse, PostToolUseFailure, UserPromptSubmit, StopFailure, PostCompact) - Automated project detection and validation
-- **Helper Scripts** - Plugin-local shell helpers under `plugins/lt-dev/scripts/` (e.g. `discover-check-scripts.sh` for monorepo-aware `check` discovery)
+- **Helper Scripts** - Plugin-local shell helpers under `plugins/lt-dev/scripts/` (e.g. `discover-check-scripts.sh` for monorepo-aware `check` discovery, `chrome-devtools-mcp-launcher.sh` as Chrome MCP wrapper)
 - **5 MCP Servers** - Chrome DevTools, Linear, Nuxt UI, Better Auth, and Figma Desktop integration
+
+## Chrome DevTools MCP — Canary auto-detection
+
+The `chrome-devtools` MCP server is launched via `scripts/chrome-devtools-mcp-launcher.sh`. On macOS the launcher checks for Google Chrome Canary in `/Applications/`, `~/Applications/`, and via `mdfind` on the bundle identifier `com.google.Chrome.canary`. If Canary is present, it appends `--channel=canary` so the automated browser shows up with the yellow Canary icon in the window switcher and is clearly distinguishable from the developer's daily-driver Chrome. Without Canary (or on non-macOS systems) the launcher behaves exactly like the previous static invocation — stable Chrome, no extra flags.
+
+Override the auto-detection with the `CHROME_MCP_CHANNEL` environment variable:
+
+```bash
+CHROME_MCP_CHANNEL=stable claude   # force stable even if Canary is installed
+CHROME_MCP_CHANNEL=canary claude   # force canary (only useful for testing the flag)
+```
 
 ## Framework consumption modes (nest-server)
 

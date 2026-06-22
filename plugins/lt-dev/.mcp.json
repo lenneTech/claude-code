@@ -2,8 +2,8 @@
   "mcpServers": {
     "chrome-devtools": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp@latest", "--isolated"]
+      "command": "${CLAUDE_PLUGIN_ROOT}/scripts/chrome-devtools-mcp-launcher.sh",
+      "args": ["--isolated"]
     },
     "linear": {
       "type": "http",
