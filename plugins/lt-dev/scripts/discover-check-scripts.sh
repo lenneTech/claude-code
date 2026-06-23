@@ -76,6 +76,13 @@ script_includes_tests() {
   local script="$2"
   local pattern='(^|[[:space:]&|;])(test|vitest|jest|playwright)([[:space:]]|$|:)|((pnpm|npm|yarn)([[:space:]]+run)?[[:space:]]+test)'
 
+  # The lt check.mjs wrapper orchestrates each workspace project's `check`
+  # chain (which includes the test step), so a wrapper-based check runs tests.
+  if echo "$script" | grep -q "check.mjs"; then
+    echo "yes"
+    return
+  fi
+
   if echo "$script" | grep -qE "$pattern"; then
     echo "yes"
     return
