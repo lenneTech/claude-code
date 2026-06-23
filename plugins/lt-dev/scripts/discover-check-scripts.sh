@@ -8,7 +8,16 @@
 #   - the detected package manager (pnpm/yarn/npm)
 #
 # Output format (TSV, one project per line):
-#   <package.json path>\t<check script>\t<includes_tests:yes|no>\t<package manager>
+#   <package.json path>\t<check script>\t<includes_tests:no|unit+api|yes>\t<package manager>
+#
+# includes_tests values:
+#   no       — no test runner detected in the check chain
+#   unit+api — known partial-coverage wrapper (lt check.mjs): runs Unit + API
+#              tests but deliberately skips Playwright/E2E (those run via
+#              `lt dev test` / CI). Callers MUST treat Playwright as uncovered.
+#   yes      — direct pattern match on test|vitest|jest|playwright in the
+#              check chain. Scope is whatever the script defines; if Playwright
+#              coverage matters, callers should verify it themselves.
 #
 # Discovery uses git ls-files (respects .gitignore, skips node_modules automatically).
 # JSON parsing falls back through jq → node → grep+sed for portability.
@@ -77,9 +86,12 @@ script_includes_tests() {
   local pattern='(^|[[:space:]&|;])(test|vitest|jest|playwright)([[:space:]]|$|:)|((pnpm|npm|yarn)([[:space:]]+run)?[[:space:]]+test)'
 
   # The lt check.mjs wrapper orchestrates each workspace project's `check`
-  # chain (which includes the test step), so a wrapper-based check runs tests.
+  # chain and runs Unit (app) + API (api) test steps, but deliberately skips
+  # Playwright/E2E (Playwright runs via `lt dev test` / CI — see check.mjs).
+  # Emit a distinct value so callers can decide whether Playwright still needs
+  # a separate test phase.
   if echo "$script" | grep -q "check.mjs"; then
-    echo "yes"
+    echo "unit+api"
     return
   fi
 

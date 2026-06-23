@@ -32,14 +32,21 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh" "$(pwd)"
 Output is TSV, one project per line:
 
 ```
-<package.json path>\t<check script>\t<includes_tests:yes|no>\t<package manager>
+<package.json path>\t<check script>\t<includes_tests:no|unit+api|yes>\t<package manager>
 ```
+
+`includes_tests` values — callers decide what to do with each, the discovery itself prescribes no behavior:
+
+| Value | Meaning | Playwright coverage |
+|-------|---------|---------------------|
+| `no` | No test runner detected in the check chain. | Not covered. |
+| `unit+api` | The `check` chain delegates to the lt `check.mjs` wrapper, which runs **Unit (app) + API (api)** test steps and **deliberately skips Playwright** (Playwright runs via `lt dev test` / CI — see `scripts/check.mjs`). | **Not covered** — Playwright must still be run separately if needed. |
+| `yes` | Direct pattern match on `test`, `vitest`, `jest`, or `playwright` in the check chain (transitively, one level of composite resolution). Scope is whatever the script defines. | Unknown — callers should verify locally if Playwright coverage is required. |
 
 The helper:
 - Uses `git ls-files "package.json" "**/package.json"` so it respects `.gitignore` and skips `node_modules`
 - Parses JSON via `jq` → `node -e` → `grep+sed` fallback chain (works even without `jq` installed)
 - Resolves single-level composite scripts (`"check": "pnpm run ci"` → looks up `ci`)
-- Detects whether `check` transitively invokes a test runner (`test`, `vitest`, `jest`, `playwright`)
 - Detects the package manager per project via lockfile (`pnpm-lock.yaml` → `pnpm`, etc.; default `pnpm`)
 
 If the helper returns nothing → no project defines `check` → skip the rest of this skill.
@@ -143,10 +150,18 @@ git -C <project-dir> status --porcelain             # working-tree baseline
 
 A subsequent test phase (e.g. `branch-rebaser` Phase 7, `code-reviewer` Phase 5, `test-reviewer`) may **skip** running tests for a project when ALL of the following hold:
 
-1. The discovery output marked the project's `check` as `includes_tests=yes`
+1. The discovery output marked the project's `check` as covering the test category in question (see table below)
 2. The project ended Step 3 in GREEN status (or YELLOW with only Accepted Residuals)
 3. `git rev-parse HEAD` matches the baseline (no new commits)
 4. `git status --porcelain` matches the baseline (no working-tree changes since)
+
+Skip eligibility per `includes_tests` value:
+
+| `includes_tests` | Unit/API test phase | Playwright/E2E test phase |
+|------------------|---------------------|---------------------------|
+| `no` | Run normally | Run normally |
+| `unit+api` | Skip-eligible (conditions 2–4 still apply) | **Run normally — `check.mjs` does not execute Playwright** |
+| `yes` | Skip-eligible (conditions 2–4 still apply) | Skip-eligible **only if** the caller has independently verified Playwright is part of the project's `check` chain; otherwise run normally |
 
 If any condition fails → run tests as normal.
 
