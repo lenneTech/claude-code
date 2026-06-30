@@ -140,6 +140,41 @@ success=1
   echo "=== run complete (success=$success) ==="
 } >> "$LT_PLUGINS_LOG_FILE" 2>&1
 
+# Pre-warm the npx cache for this plugin's npx-based MCP servers so they connect
+# within Claude Code's 30s MCP connection timeout on the NEXT session start. The
+# first-run `npx -y <pkg>@latest` downloads the package (chrome-devtools-mcp also
+# launches Chrome), which routinely exceeds 30s on a cold cache → "connection
+# timed out". This runs detached (the whole script is), best-effort, and is
+# throttled to once per ~20h. node/npm are already on PATH via ensure_node_on_path
+# above. Portable per-package watchdog (no GNU `timeout` dependency on macOS).
+{
+  prewarm_stamp="$LT_PLUGINS_STATE_DIR/mcp-prewarm.stamp"
+  prewarm_due=1
+  if [ -f "$prewarm_stamp" ]; then
+    now_ts=$(date +%s 2>/dev/null || echo 0)
+    last_ts=$(cat "$prewarm_stamp" 2>/dev/null || echo 0)
+    [ $((now_ts - last_ts)) -lt 72000 ] && prewarm_due=0
+  fi
+  if [ "$prewarm_due" -eq 1 ] && command -v npx >/dev/null 2>&1; then
+    echo "=== pre-warm npx MCP packages: $(date) ==="
+    for pkg in \
+      chrome-devtools-mcp@latest \
+      nuxt-ui-mcp@latest \
+      @nicepkg/aide-mcp-server@latest \
+      @anthropic-ai/claude-code-figma-mcp@latest; do
+      ( npx -y "$pkg" --version >/dev/null 2>&1 ) &
+      pw_pid=$!
+      ( sleep 120; kill -TERM "$pw_pid" 2>/dev/null; sleep 2; kill -KILL "$pw_pid" 2>/dev/null ) &
+      pw_wd=$!
+      wait "$pw_pid" 2>/dev/null || true
+      kill -TERM "$pw_wd" 2>/dev/null || true
+      echo "pre-warmed: $pkg"
+    done
+    date +%s > "$prewarm_stamp" 2>/dev/null || true
+    echo "=== pre-warm done ==="
+  fi
+} >> "$LT_PLUGINS_LOG_FILE" 2>&1
+
 if [ -f "$LT_PLUGINS_LOG_FILE" ]; then
   tail -n 500 "$LT_PLUGINS_LOG_FILE" > "$LT_PLUGINS_LOG_FILE.tmp" 2>/dev/null \
     && mv "$LT_PLUGINS_LOG_FILE.tmp" "$LT_PLUGINS_LOG_FILE"
