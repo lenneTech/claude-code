@@ -11,18 +11,18 @@
     },
     "nuxt-ui-remote": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "nuxt-ui-mcp@latest"]
+      "command": "${CLAUDE_PLUGIN_ROOT}/scripts/npx-mcp-launcher.sh",
+      "args": ["nuxt-ui-mcp@latest"]
     },
     "better-auth": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@nicepkg/aide-mcp-server@latest", "--url=https://www.better-auth.com"]
+      "command": "${CLAUDE_PLUGIN_ROOT}/scripts/npx-mcp-launcher.sh",
+      "args": ["@nicepkg/aide-mcp-server@latest", "--url=https://www.better-auth.com"]
     },
     "figma-desktop": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@anthropic-ai/claude-code-figma-mcp@latest"]
+      "command": "${CLAUDE_PLUGIN_ROOT}/scripts/npx-mcp-launcher.sh",
+      "args": ["@anthropic-ai/claude-code-figma-mcp@latest"]
     }
   }
 }

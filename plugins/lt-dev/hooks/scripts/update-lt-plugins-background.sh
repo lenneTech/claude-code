@@ -22,8 +22,15 @@ read_pkg_version() {
   awk -F\" '/"version"[[:space:]]*:/ {print $4; exit}' "$pkg_json"
 }
 
-# The hook inherits PATH from the Claude Code process, which already has the
-# correct Node/npm on it. We only add Homebrew + /usr/local as benign fallbacks.
+# Claude Code's sandbox (≈ extension 2.1.19x) no longer guarantees Node/npm on
+# the hook PATH — it used to inherit the login-shell PATH (with the fnm/nvm/volta
+# init). Resolve a Node version-manager bin dir onto PATH; benign no-op when npm
+# is already present. Homebrew + /usr/local are kept as additional fallbacks.
+if [ -r "$SCRIPT_DIR/../../scripts/lib/ensure-node-path.sh" ]; then
+  # shellcheck source=../../scripts/lib/ensure-node-path.sh
+  . "$SCRIPT_DIR/../../scripts/lib/ensure-node-path.sh"
+  ensure_node_on_path || true
+fi
 export PATH="$PATH:/opt/homebrew/bin:/usr/local/bin"
 
 success=1
