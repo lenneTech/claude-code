@@ -23,11 +23,17 @@ set -u
 MAX_AGE_HOURS="${CHROME_MCP_MAX_AGE_HOURS:-72}"
 MAX_AGE_SECS=$(( MAX_AGE_HOURS * 3600 ))
 
-# Ancestor PIDs of this hook process (includes our session's claude process).
+# Ancestor PIDs of this hook process, up to and INCLUDING our session's claude
+# process — and no further. Ancestors above claude (login shell, iTerm/Terminal,
+# launchd) are shared with every other session on the machine; including them
+# would make every session look like our own and protect all of them.
 own_ancestors=" "
 pid=$$
 while [ "$pid" -gt 1 ] 2>/dev/null; do
   own_ancestors="$own_ancestors$pid "
+  case "$(ps -o comm= -p "$pid" 2>/dev/null)" in
+    *claude*) break ;;
+  esac
   pid=$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')
   [ -n "$pid" ] || break
 done
