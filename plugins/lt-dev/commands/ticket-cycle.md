@@ -263,6 +263,14 @@ If the platform CLI call fails (missing handle mapping, permission denied), surf
 
 ### STEP 5 — Final Consolidated Summary
 
+**Clear the VStab window-tab title first** (best effort, non-blocking) — the cycle for this ticket is over, the tab must not keep advertising a finished ticket:
+
+```
+bash ${CLAUDE_PLUGIN_ROOT}/scripts/vs-tab-title.sh --clear
+```
+
+Silent no-op when the VStab extension is not installed; a failure here never blocks the summary. On the failure path (see "Failure Handling") the title is deliberately **kept**, since the ticket is still in progress. The title was set by `take-ticket` STEP 3b.
+
 Print one concise German block. The shape depends on the merge strategy.
 
 **Variant A — Auto-Merge** (when `MERGE_STRATEGY = auto-merge` and `git:ship` reported success):

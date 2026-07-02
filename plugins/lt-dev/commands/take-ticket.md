@@ -169,6 +169,23 @@ Persist collected sources in a working note (in-context). Do **not** write a mar
 
 If the call fails (permissions, archived issue, etc.), surface the error and ask the user whether to continue with implementation anyway.
 
+### 3b. Set VStab Window-Tab Title (best effort)
+
+Label the VS Code window tab with the ticket now being worked on, so multi-window setups show at a glance which window handles which ticket. Format: `<PROJECT_CODE>: <ISSUE_IDENTIFIER> <SHORT_DESC>` — e.g. `VST: DEV-123 Login-Fix`.
+
+1. **Derive `<PROJECT_CODE>`** — the issue identifier carries only the team key (usually `DEV-…`), which says nothing about the project. Derive a concise 2–5 uppercase-letter code from the ticket's **Linear project name** (from `get_issue` → project):
+   - Multi-word name → initials, uppercased (`Session Notifier` → `SN`).
+   - Single-word name → first 3–4 letters, uppercased (`VStab` → `VST`, `Showroom` → `SHOW`).
+   - No Linear project on the issue → use the repository folder name instead (same rules).
+2. **Derive `<SHORT_DESC>`** — distil the ticket title to 1–3 words (same language as the ticket title). Drop filler like "implementieren", "hinzufügen" when the remaining words still identify the topic.
+3. **Set the title:**
+
+   ```
+   bash ${CLAUDE_PLUGIN_ROOT}/scripts/vs-tab-title.sh "<PROJECT_CODE>: <ISSUE_IDENTIFIER> <SHORT_DESC>"
+   ```
+
+This is a **non-blocking convenience step**: the script is a silent no-op when the VStab extension is not installed, and any failure here must never stall the ticket flow — log one line and continue. The title clears automatically when the Claude Code session ends; `/lt-dev:ticket-cycle` additionally clears it after a successful hand-off/merge.
+
 ---
 
 ## STEP 4 — Sync Base Branch & Create Feature Branch
