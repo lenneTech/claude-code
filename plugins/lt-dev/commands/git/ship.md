@@ -239,6 +239,8 @@ Use the `running-check-script` skill verbatim:
 2. **If new uncommitted changes exist** (from Phase 4 fixes):
    - `git add -A`
    - `git commit -m "chore: post-rebase fixes (tests + check)"` — or a more specific message if the changes are obviously scoped (e.g. "fix: failing API test for X").
+
+   > ⚠️ **The `check` script auto-fixes format/lint in the WORKING TREE, not in the commit.** If the check ran *after* the commit was created (typical post-rebase order), its formatter fixes are sitting uncommitted — pushing without this `git status` sweep ships the unformatted commit and the remote `lint` job fails on `format:check` (seen live: oxfmt fix left in the tree, CI red on exactly one file). This step is therefore MANDATORY after every check run, not optional.
 3. **Push with force-lease** (the rebase rewrote history, so a plain push will be rejected):
    - `git push --force-with-lease origin "$FEATURE_BRANCH"`
    - **NEVER** `--force` plain. `--force-with-lease` aborts if remote moved unexpectedly (someone else pushed).
@@ -251,7 +253,16 @@ Use the `running-check-script` skill verbatim:
 ### 6a. Detect Existing MR/PR
 
 - **GitHub:** `gh pr list --head "$FEATURE_BRANCH" --base "$BASE_BRANCH" --json number,url,state --jq '.[0]'`
-- **GitLab:** `glab mr list --source-branch "$FEATURE_BRANCH" --target-branch "$BASE_BRANCH" --output json | jq '.[0]'`
+- **GitLab (jq-safe — never pipe `glab mr list --output json` to `jq`):** take the iid from the line-based **text** output, which cannot break on a description's control chars:
+
+  ```bash
+  # First `!<iid>` token in the text listing; empty ⇒ no open MR → STEP 6b:
+  REQUEST_ID=$(glab mr list --source-branch "$FEATURE_BRANCH" --target-branch "$BASE_BRANCH" | grep -oE '![0-9]+' | head -1 | tr -d '!')
+  # URL comes from the text view (never `--output json | jq`):
+  [ -n "$REQUEST_ID" ] && REQUEST_URL=$(glab mr view "$REQUEST_ID" | awk -F'[[:space:]]*:[[:space:]]*' 'tolower($1) ~ /url/ {print $2; exit}')
+  ```
+
+  > ⚠️ Piping `glab mr list --output json` to `jq` aborts if **any** listed MR's `description` / `title` carries literal control chars (raw newlines, emoji from a multi-line body) → empty → silently reads as "no existing MR" → a **duplicate** MR gets created. Same class of bug as STEP 7a; the text listing is control-char-safe.
 
 Store as `REQUEST_URL` and `REQUEST_ID`.
 
@@ -278,10 +289,33 @@ Counter: `PIPELINE_ATTEMPT = 1`. Cap: `MAX = --max-pipeline-retries` (default 3)
   This blocks until all required checks finish. Exit code 0 → pass; non-zero → at least one check failed.
 
 - **GitLab:**
+
+  > ⚠️ **Never pipe `glab mr view` / `glab mr list --output json` to `jq` when polling.** glab serialises the MR `description` / `title` with **literal control characters** (raw newlines, emoji from a multi-line body); `jq` then aborts with `Invalid string: control characters from U+0000 through U+001F must be escaped`, the command substitution yields an **empty** string, and a poll that reads empty as "still running" loops **blind** — indistinguishable from a running pipeline — until its cap is hit. Derive state from an endpoint that carries **no free-text field**: the MR's *pipelines* list and the *pipeline* object.
+
   ```bash
-  glab ci status --pipeline=$(glab mr view "$REQUEST_ID" --output json | jq -r '.pipeline.id') --live
+  # Pipeline id from the pipelines endpoint (no description → jq-safe):
+  PIPELINE_ID=$(glab api "projects/:id/merge_requests/$REQUEST_ID/pipelines" | jq -r '.[0].id')
+
+  # Poll the pipeline object (jq-safe) until a terminal state — fail loud on empty:
+  while :; do
+    S=$(glab api "projects/:id/pipelines/$PIPELINE_ID" | jq -r '.status // empty')
+    case "$S" in
+      success)                  echo "pipeline green"; break ;;
+      failed|canceled|skipped)  echo "pipeline $S"; break ;;   # → STEP 7b
+      "")                       echo "WARN: empty pipeline status — retry, do NOT treat as running" ;;
+      *)                        : ;;                            # running/pending/created → keep waiting
+    esac
+    sleep 30
+  done
   ```
-  If `--live` is unavailable in the installed `glab` version, poll every 30s with `glab ci status` until the status is `success`, `failed`, or `canceled`.
+  `glab ci status --live` MAY be used for interactive watching, but the **pipeline id it needs must come from the pipelines endpoint above, never from `glab mr view --output json | jq`.** The poll MUST exit on **every** terminal state (`success` / `failed` / `canceled` / `skipped`) and treat an empty / parse-failed read as a transient retry, **never** as "still running".
+
+  **Watch-loop hygiene (hard rules — each one has bitten in production):**
+
+  1. **Verify the probe ONCE in the foreground before arming any background wait.** Run the exact status command interactively and confirm it prints a real state (`running`/`pending`). A probe with a broken inline parser (typo'd `node -e` one-liner, wrong jq path) yields an empty string on every iteration — the loop never breaks, never reports, and a FAILED pipeline sits undetected until the watch times out. `jq -r '.status // "poll-error"'` only, never hand-rolled `node -e` JSON parsing.
+  2. **The watch must EMIT on every terminal state immediately, not only report at loop end.** A `for i in $(seq …)`-style wait that only `echo`s after the loop delivers the verdict at timeout in the failure case. Structure the watch so `failed`/`canceled`/`skipped` terminates it just as fast as `success` (the loop in the snippet above does this; keep that shape).
+  3. **After every force-push, re-resolve the pipeline id from `glab api "projects/:id/merge_requests/$REQUEST_ID"` → `.head_pipeline.id`** — the amended SHA gets a NEW pipeline, the old id keeps reporting the stale (failed) run, and `glab ci list` can lag behind the API. Also **re-arm auto-merge** (`glab mr merge … --auto-merge`) after the new pipeline is `running`: a force-push can drop the previous arming.
+  4. **Check back on the FIRST early jobs (~2–5 min in), not only at the projected end.** `lint`/`format:check` fail within minutes; discovering that after a 35-minute full-suite wait costs a whole cycle.
 
 ### 7b. On Failure
 
@@ -474,6 +508,7 @@ Nächste Schritte:
 - **Merge requires explicit user confirmation** — even if the pipeline is green. This is the irreversible step.
 - **Branch deletion only after the merge is confirmed landed in `BASE_BRANCH`** (verified via `git log` or provider API).
 - **Pipeline-retry cap is hard** — if exhausted, surface and exit. Do not loop forever.
+- **Never `jq` `glab mr view` / `glab mr list --output json` output** (see STEP 6a / 7a): glab emits literal control chars in `description` / `title`, `jq` aborts, and an empty result silently reads as "still running" (blind poll) or "no existing MR" (duplicate MR). Derive CI state from the free-text-free **pipelines endpoint** (`glab api "projects/:id/merge_requests/<iid>/pipelines"` → `.[0].id`, then `glab api "projects/:id/pipelines/<id>"` → `.status`); take an MR iid from `glab mr list` **text** output. A status poll must exit on every terminal state and never treat empty/parse-failure as "keep waiting".
 - **Real CI failures must be fixed in code** — never paper over with `[skip ci]` or by disabling failing checks.
 - **No bypass of test rules** during retries — the same no-skip / no-flake-retry rules apply on every iteration.
 

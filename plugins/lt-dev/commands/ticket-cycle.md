@@ -1,5 +1,5 @@
 ---
-description: Full ticket lifecycle in one command — auto-pick (or take ID), TDD-implement with per-slice check + commit, re-analyse, optional review, browser walk, rebase + tests + check, MR/PR (auto-merge OR reviewer-handoff), CI, squash-merge, delete branch, Linear comment + status handoff
+description: Full ticket lifecycle in one command — auto-pick (or take ID), TDD-implement with per-slice check + commit, re-analyse, optional review, browser walk, manual re-test handoff (summary + credentials + test data + step-by-step), rebase + tests + check, MR/PR (auto-merge OR reviewer-handoff), CI, squash-merge, delete branch, Linear comment + status handoff
 argument-hint: "[issue-id | --project=<name> --team=<name> --status=<list> --base=<branch> --figma=<url> --flows=<path> --review --no-review --auto-merge --review-handoff[=<linear-user>] --post-merge-status=<dev-review|po-review-inga> --max-deploy-wait=<minutes> --max-pipeline-retries=<n> --no-squash --keep-branch]"
 allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(wc:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__list_teams, mcp__plugin_lt-dev_linear__list_projects, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__list_users, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_screenshot, SlashCommand
 disable-model-invocation: true
@@ -61,8 +61,9 @@ Create a TodoWrite plan with these items:
 1. Phase A — `/lt-dev:take-ticket` (pick, branch, TDD, tests, check, re-analyse)
 2. Phase B (optional) — `/lt-dev:review`
 3. Phase C — Browser-Validation-Walk via `validating-changes-in-browser` skill
-4. Phase D — Merge-Strategie wählen + Auto-Merge (`/lt-dev:git:ship`) ODER Reviewer-Handoff (`/lt-dev:dev-submit` + Linear-/MR-Assign)
-5. Final consolidated summary
+4. Manuelle Nachtest-Anleitung + Freigabe-Gate (Änderungs-Zusammenfassung, Credentials, Testdaten, Schritt-für-Schritt)
+5. Phase D — Merge-Strategie wählen + Auto-Merge (`/lt-dev:git:ship`) ODER Reviewer-Handoff (`/lt-dev:dev-submit` + Linear-/MR-Assign)
+6. Final consolidated summary
 
 ### STEP 1 — Phase A: take-ticket
 
@@ -135,12 +136,71 @@ Follow the [`validating-changes-in-browser`](${CLAUDE_PLUGIN_ROOT}/../skills/val
 
 Skill verdict drives the cycle:
 
-- `READY-TO-SHIP` → continue to STEP 4 (Phase D).
+- `READY-TO-SHIP` → continue to STEP 3b (manual re-test handoff), then Phase D.
 - `OPTIMIZE` → loop back to Phase A's implementation steps with the user's notes (cap iterations at **3** total across all phases). Re-run STEP 2 (review) afterwards before re-entering STEP 3.
 - `WAITING-FOR-USER` → leave `lt dev up` running, print the walked list + account registry, stop and wait for the user's next message. Do NOT enter Phase D.
 - `CANCELLED` → tear the stack down, surface the closing block, stop without entering Phase D. The feature branch is intentionally left intact for manual recovery.
 
 If the skill returns `boot_failed` or `stall_guard_triggered`, surface the diagnosis verbatim and stop. Do NOT proceed to Phase D.
+
+### STEP 3b — Manuelle Nachtest-Anleitung + Freigabe-Gate
+
+Phase C walked the browser flows **autonomously** and fixed what it found. This step turns that walk into a **human-reproducible test manual** so the developer (or a QA colleague) can re-verify the change by hand **before** it merges. It runs **only** on a `READY-TO-SHIP` verdict from STEP 3 — the other verdicts already stop the cycle (`WAITING-FOR-USER`, `CANCELLED`) or loop back (`OPTIMIZE`).
+
+**No new browser work here.** The manual is assembled purely from the outputs Phase C already returned (`final_list`, `accounts_registry`, `also_fixed`, `out_of_scope_findings`) plus Phase A's `task_summary` / `implementation_summary`.
+
+**1. Consolidate the four sections:**
+
+- **Änderungs-Zusammenfassung** ← Phase A's `task_summary` + `implementation_summary` (with the most-relevant `file:line` refs), plus every `also_fixed` entry (each flagged **vorbestehend** or **aus dieser Umsetzung**).
+- **Credentials** ← `accounts_registry` verbatim: email / password / role / *existing-seed-or-new-for-this-walk*. Every login-bound step must be reproducible without a follow-up question. Public routes are listed explicitly as `kein Login`.
+- **Testdaten** ← the seed + fixtures the walk relied on (`@test.com` accounts, any records the walk created) and the active Stack URLs (App, API, DB slug) from `lt dev status`.
+- **Schritt-für-Schritt-Testanleitung** ← `final_list`, but **rewritten from "what I walked" into imperative "do this → expect that" steps.** Each step carries: the account to log in with, the fully-qualified URL, the action to perform, and the **expected** result the human should observe. Include the `out_of_scope_findings` as a separate "offen / separat empfohlen" list.
+
+**2. Print one structured block** (render in the user's session language; German template shown, consistent with this command's other output blocks):
+
+```
+╔══════════════════════════════════════════════════════════╗
+║ Manuelle Nachtest-Anleitung: <ISSUE_IDENTIFIER>         ║
+╚══════════════════════════════════════════════════════════╝
+
+🎫 Was wurde geändert
+- Ticket:    <ISSUE_IDENTIFIER> — <Titel>  (<Linear-/Issue-URL>)
+- Aufgabe:   <1–3 Sätze: was sollte passieren>
+- Umsetzung: <1–3 Sätze: wie umgesetzt, wichtigste file:line-Referenzen>
+- Mitgefixt: <also_fixed — je "vorbestehend" / "aus dieser Umsetzung"; oder "keine">
+
+🌐 Stack & Testdaten
+- App:      <URL>
+- API:      <URL>
+- DB:       <slug>-local   (Seed: @test.com)
+- Fixtures: <während des Walks angelegte Testdaten — oder "keine">
+
+👥 Zugangsdaten (zum Einloggen beim Nachtesten)
+- admin@test.com / TestPass123! / Admin / Seed
+- user1@test.com / TestPass123! / User  / neu für diesen Walk
+- (kein Login)   / —            / —     / öffentliche Routen
+
+📋 Schritt-für-Schritt (so testest du es selbst nach)
+1. Login als <email> → <URL> → <Aktion> → erwartet: <Ergebnis>
+2. Account: kein Login → <URL> → <Aktion> → erwartet: <Ergebnis>
+3. …
+
+⚠ Offen / separat empfohlen
+- <out_of_scope_findings — oder "keine">
+```
+
+The block must be **scannable and self-contained** — the user re-walks from this single screen without scrolling back to the Phase C walked list.
+
+**3. Freigabe-Gate.** Ask the user via `AskUserQuestion`:
+
+- Question: "Manuelle Nachtest-Anleitung erstellt. Wie weiter?"
+- Options:
+  1. "Direkt zu Phase D — Claude hat bereits getestet, jetzt mergen" (default) → continue to STEP 4.
+  2. "Ich teste erst manuell — pausieren" → keep `lt dev up` running, leave the manual on screen, stop and wait for the user's next message. Do **NOT** enter Phase D. When the user returns with a go, resume at STEP 4; if they report a problem, re-enter Phase A's implementation loop (counts against the **3**-iteration cap) and re-run STEP 2 → 3 → 3b.
+  3. "Doch noch optimieren" → free-text scope; loop back to Phase A's implementation steps (cap **3** total), then re-run STEP 2 → 3 → 3b.
+  4. "Abbrechen" → stop here, branch remains local, nothing merged.
+
+Only option 1 proceeds to Phase D. The manual is printed on **every** path so the user always has the reproduction steps in hand.
 
 ### STEP 4 — Phase D: Merge-Strategie + Ship
 
@@ -199,7 +259,7 @@ If no deploy pipeline is found within 60 seconds (some providers take a moment t
   2. "Kein Deployment vorhanden — Linear-Override jetzt durchführen" → continue to step 3c
   3. "Manuell setzen — Cycle beenden ohne Override" → skip 3c, print a note that PO Review transition is pending manual deployment confirmation
 
-**3b. Wait for deploy completion.** Poll the located pipeline every 30 seconds, capped at `MAX_DEPLOY_WAIT_MINUTES` (default 30, override via `--max-deploy-wait=<minutes>`):
+**3b. Wait for deploy completion.** Poll the located pipeline every 30 seconds, capped at `MAX_DEPLOY_WAIT_MINUTES` (default 30, override via `--max-deploy-wait=<minutes>`). Poll the **pipeline object** by id, which carries no free-text field — GitHub `gh run view <id> --json status,conclusion`, GitLab `glab api "projects/:id/pipelines/<id>" | jq -r '.status'`. **Never** derive the status by `jq`-ing `glab mr view/list --output json` — glab emits literal control chars in the MR `description`/`title`, `jq` aborts, the read comes back empty, and a poll that treats empty as "still running" loops **blind** past the actual green/failed state (see `git:ship` STEP 7a). Treat an empty/parse-failed read as a transient retry, and exit on every terminal state:
 
 - `success` / `completed` → continue to step 3c.
 - `failed` / `cancelled` / `errored` → surface the pipeline URL and conclusion. Do **NOT** override Linear — the ticket stays on "Dev Review" (unassigned) so no one starts PO QA against a broken deploy. Print:
@@ -368,6 +428,7 @@ If `--review` ran (or the user opted in at STEP 2), include a one-line summary o
 
 - **Limit local Playwright runs to new + affected specs to keep TDD loops fast.** Both Phase A (`take-ticket`) and Phase D (`git:ship` auto-merge path) default to `lt dev test -- <spec>` / `scripts/e2e-fast.sh -- <spec>`; the full Playwright suite is slow and runs in **CI**. Only run the full local suite when the user explicitly asks.
 - **Never bypass `take-ticket` STEP 9.** The re-analysis user gate is the cycle's contract for completeness — if it didn't run cleanly, this command must not proceed.
+- **The manual re-test handoff (STEP 3b) always runs before Phase D on a `READY-TO-SHIP` verdict.** The cycle MUST NOT jump from the autonomous browser walk straight into merging without first emitting the manual re-test manual (Änderungs-Zusammenfassung + Credentials + Testdaten + Schritt-für-Schritt) and passing its Freigabe-Gate. The manual is assembled from Phase C's returned outputs — no second browser walk — and only the explicit "Direkt zu Phase D" choice proceeds to STEP 4.
 - **The merge-strategy gate (STEP 4a) is mandatory** unless the user passed `--auto-merge` or `--review-handoff` explicitly. The cycle MUST NOT default-to-merge without an explicit decision.
 - **The post-merge-status gate (STEP 4b.1) is mandatory** in the auto-merge path unless the user passed `--post-merge-status=…`. The cycle MUST NOT silently pick a Linear state when two are configured.
 - **The PO Review transition (STEP 4b.3) waits for a green dev deploy.** When `POST_MERGE_STATUS = po-review-inga`, the cycle MUST NOT set the Linear ticket to "PO Review" / assignee=Inga until the post-merge deploy pipeline on `<BASE_BRANCH>` is green. POs starting QA against a stale build burn cycles and erode trust in the handoff. If the deploy fails or times out, the ticket stays on "Dev Review" (unassigned) and the user is told to redo the transition manually after fixing the deploy.
