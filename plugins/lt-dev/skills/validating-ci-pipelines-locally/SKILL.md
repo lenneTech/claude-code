@@ -70,6 +70,36 @@ yq eval '.jobs | keys' .github/workflows/*.yml
 
 Order the jobs by stage (`stages:` field in GitLab; jobs in GitHub default to graph order via `needs:`). The consumer executes them in that order.
 
+### Check whether a job has *ever* run
+
+A job restricted to `only: merge_requests` (GitLab) or `on: pull_request`
+(GitHub) never executes on a direct push. In a repository where everybody pushes
+straight to `dev`/`main`, such a job can sit broken for months and nobody
+notices — its first real execution is somebody's first merge request, which then
+fails for reasons that have nothing to do with their change.
+
+Before trusting a green pipeline history, confirm the test jobs actually ran.
+This uses the GitLab CLI `glab` (authenticate once with `glab auth login`) and `jq`:
+
+```bash
+proj="<url-encoded-path>"   # e.g. group%2Fsubgroup%2Fproject
+
+# List the job names of the 10 most recent pipelines — do api:test / app:test appear at all?
+glab api "projects/$proj/pipelines?per_page=10" | jq -r '.[].id' | while read -r pid; do
+  echo "pipeline $pid:"
+  glab api "projects/$proj/pipelines/$pid/jobs" | jq -r '.[] | "  \(.name) [\(.status)]"'
+done
+
+# Any merge request ever? (jq prints 0 ⇒ none exist ⇒ merge_requests-only jobs have never run)
+glab api "projects/$proj/merge_requests?state=all&per_page=1" | jq 'length'
+```
+
+If the last command prints `0`, the `merge_requests`-only jobs have never been
+executed. Treat them as **unverified**, not as passing. Typical breakage found
+this way: service containers addressed as `127.0.0.1` instead of their service
+hostname, and `cd x && cmd &` backgrounding the whole compound so the subsequent
+`cd ..` walks out of the workspace.
+
 ## Step 4 — Resolve the runner image per job
 
 Each job declares an image. The local execution MUST use the **same** image so dependency versions match:

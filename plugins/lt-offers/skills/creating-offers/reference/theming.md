@@ -48,7 +48,14 @@ Order applied at render time (browser, PDF, share-preview):
 
 The API merges the resolved theme into the offer payload before sending it down — `get_offer` and `findBySlug` both apply this. Consumers (browser, PDF service) never need to read settings directly; they always see a fully resolved `theme.light` / `theme.dark`.
 
-## MCP Tools
+## Forced Color Mode (`offer.colorMode`)
+
+Orthogonal to the palette: `offer.colorMode` (`'system' | 'light' | 'dark'`, default `'system'`) decides **which** of the two palettes the customer-facing page uses.
+
+- `'system'` — follows the visitor's browser/OS preference (the pre-existing behavior).
+- `'light'` / `'dark'` — the offer page sets the Nuxt color-mode preference on load, overriding the visitor's preference.
+
+Use a forced mode when the offer design is tuned for one appearance (e.g. a brand-heavy light design for a corporate customer). Configure it via `create_offer` / `update_offer` (`colorMode` field) or in the offer editor's color card (radio group: Browser-Default / Hell / Dunkel). PDFs are unaffected — they always render the light palette.
 
 ### Per-offer
 

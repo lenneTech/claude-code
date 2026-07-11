@@ -1,6 +1,6 @@
 # Content Block Types Reference
 
-All 16 supported content block types for offers and templates. Each block has:
+All 18 supported content block types for offers and templates. Each block has:
 
 ```typescript
 {
@@ -58,10 +58,19 @@ Provider: `youtube` or `vimeo`. URL is the full video URL.
 ## 5. `download` — Downloadable Files
 
 ```json
-{ "files": [{ "fileId": "gridfs-file-id", "label": "Projektplan.pdf" }] }
+{
+  "files": [
+    {
+      "fileId": "gridfs-file-id",
+      "fileName": "Projektplan (PDF)",
+      "description": "Optional short description shown below the file name",
+      "includeInPdf": true
+    }
+  ]
+}
 ```
 
-List of downloadable files with labels.
+List of downloadable files. `includeInPdf` controls whether the file is listed in the generated offer PDF. Upload files beforehand via `create_upload_ticket` + HTTP POST (see Block Usage Tips).
 
 ---
 
@@ -240,10 +249,43 @@ Renders a [Lottie](https://lottiefiles.com/) JSON animation. Auto-plays only onc
 
 ---
 
+## 18. `html-embed` — Self-contained Interactive HTML (Click-Dummies)
+
+```json
+{
+  "fileId": "gridfs-file-id",
+  "fileName": "klick-dummy.html",
+  "height": 950,
+  "hint": "Am besten im Vollbildmodus ausprobieren",
+  "caption": "Optional caption shown below the embed",
+  "previewFileId": ""
+}
+```
+
+Renders an uploaded, self-contained HTML file (e.g. an interactive click-dummy or prototype) inside a sandboxed iframe on the offer page. The frontend fetches the file and injects it via `srcdoc` with `sandbox="allow-scripts"` (no `allow-same-origin`), so embedded scripts run isolated from the offers app. A fullscreen button is provided.
+
+`hint` (optional) renders a highlighted note with a fullscreen icon directly *above* the embed — use it to point users at the fullscreen button before they interact. `caption` (optional) renders a muted line *below* the embed.
+
+**Constraints**
+- The HTML must be **fully self-contained**: inline all CSS/JS, embed fonts and images as data URIs. External `<script src>`, external stylesheets and remote media trigger upload warnings (they will not load reliably in the sandbox).
+- Max 5 MB per file; upload validator checks UTF-8 and HTML structure.
+- `height` is clamped to 200–1600 px.
+- PDFs cannot run the embed: the PDF builder uses `previewFileId` (author-uploaded PNG/JPG) when set, otherwise a placeholder ("Interaktiver Inhalt — im Online-Angebot verfügbar").
+
+**Authoring paths**
+- **MCP one-shot:** `add_html_embed` uploads base64 HTML and inserts the block in one atomic call (same insert-at-order pattern as `add_lottie_animation`). Suitable for small files only — base64 through a tool call gets unwieldy fast.
+- **Recommended for real files:** `create_upload_ticket` with `purpose: "html-embed"`, then `POST` the file via HTTP to the returned `uploadUrl` (multipart field `file`), then reference the returned file `id` as `fileId` in an `update_offer` call.
+- **Editor:** the block editor accepts direct `.html` uploads and manages height/caption/preview.
+
+The field is named `fileId` on purpose: orphan-file cleanup and backup remapping treat it like every other file reference automatically.
+
+---
+
 ## Block Usage Tips
 
 - **Order**: Start at 0, increment by 1
 - **Visible**: Always `true` unless intentionally hiding (e.g., draft blocks)
 - **ShowInToc**: Set to `true` for major sections, `false` for dividers/small blocks
-- **File references**: Use existing `fileId` values from uploaded files. For Lottie files, use `add_lottie_animation`; for offer-source files (briefing material, NOT content blocks) use `upload_offer_source_file`.
+- **File references**: Use existing `fileId` values from uploaded files. For Lottie files, use `add_lottie_animation`; for HTML embeds, use `add_html_embed` or an upload ticket; for offer-source files (briefing material, NOT content blocks) use `upload_offer_source_file`.
+- **Uploading new files via MCP**: `create_upload_ticket` (`purpose`: `"html-embed"` | `"image"` | `"file"`) returns a single-use upload URL valid for 15 minutes. `POST` the file as multipart form-data (field `file`) to that URL — no session required, the token IS the authorization. Purpose selects the server-side validation: `html-embed` (validated HTML, ≤ 5 MB), `image` (`image/*`, ≤ 10 MB), `file` (any type, ≤ 25 MB). Caveat: `curl` sends `application/octet-stream` for less-common extensions like `.webp` — set the MIME type explicitly (`-F "file=@shot.webp;type=image/webp"`), otherwise an `image` ticket rejects the upload with 400 and the single-use ticket is burned.
 - **Image tokens**: Inside `text`, `custom-html`, `rich-component` blocks, embed GridFS images via `{{fileUrl:<24-hex-id>}}` — the renderer expands these at view/PDF time and keeps the HTML portable across environments.

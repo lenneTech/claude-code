@@ -53,7 +53,7 @@ case "$FILE_PATH" in
   */src/core/*)
     core_root="${FILE_PATH%%/src/core/*}/src/core"
     if [ -f "$core_root/VENDOR.md" ]; then
-      emit "You edited the VENDORED @lenne.tech/nest-server core (${core_root}/). Vendor Modification Policy: only edit src/core/ for changes that are generally useful to EVERY consumer (bugfixes, security, broad enhancements) — project-specific logic belongs OUTSIDE the core (inheritance, extension, ICoreModuleOverrides). If this change is generally useful, log it in src/core/VENDOR.md and run /lt-dev:backend:contribute-nest-server-core to send it upstream so it survives the next sync. See the nest-server-core-vendoring skill."
+      emit "You edited the VENDORED @lenne.tech/nest-server core (${core_root}/). Vendor Modification Policy: (1) FIRST verify a newer upstream version doesn't already contain this fix/optimization — compare the baseline in src/core/VENDOR.md against the latest @lenne.tech/nest-server release AND the upstream develop branch, and read the upstream version of the file you changed; if it is already fixed upstream, revert your hand-patch and adopt it via /lt-dev:backend:update-nest-server-core instead (a divergent local patch conflicts on the next sync and often reimplements it worse). (2) Only edit src/core/ for changes generally useful to EVERY consumer (bugfixes, security, broad enhancements) — project-specific logic belongs OUTSIDE the core (inheritance, extension, ICoreModuleOverrides). (3) If the fix is genuinely missing upstream and generally useful, log it in src/core/VENDOR.md and run /lt-dev:backend:contribute-nest-server-core so it survives the next sync. See the nest-server-core-vendoring skill."
     fi
     ;;
 esac
@@ -63,7 +63,7 @@ case "$FILE_PATH" in
   */app/core/*)
     core_root="${FILE_PATH%%/app/core/*}/app/core"
     if [ -f "$core_root/VENDOR.md" ]; then
-      emit "You edited the VENDORED @lenne.tech/nuxt-extensions core (${core_root}/). Vendor Modification Policy: only edit app/core/ for changes that are generally useful to EVERY consumer (bugfixes, security, broad enhancements, SSR fixes) — project-specific logic belongs OUTSIDE the core (app/composables/, app/components/, plugin overrides). If this change is generally useful, log it in app/core/VENDOR.md and run /lt-dev:frontend:contribute-nuxt-extensions-core to send it upstream so it survives the next sync. See the nuxt-extensions-core-vendoring skill."
+      emit "You edited the VENDORED @lenne.tech/nuxt-extensions core (${core_root}/). Vendor Modification Policy: (1) FIRST verify a newer upstream version doesn't already contain this fix/optimization — compare the baseline in app/core/VENDOR.md against the latest @lenne.tech/nuxt-extensions release AND the upstream default branch, and read the upstream version of the file you changed; if it is already fixed upstream, revert your hand-patch and adopt it via /lt-dev:frontend:update-nuxt-extensions-core instead (a divergent local patch conflicts on the next sync and often reimplements it worse). (2) Only edit app/core/ for changes generally useful to EVERY consumer (bugfixes, security, broad enhancements, SSR fixes) — project-specific logic belongs OUTSIDE the core (app/composables/, app/components/, plugin overrides). (3) If the fix is genuinely missing upstream and generally useful, log it in app/core/VENDOR.md and run /lt-dev:frontend:contribute-nuxt-extensions-core so it survives the next sync. See the nuxt-extensions-core-vendoring skill."
     fi
     ;;
 esac

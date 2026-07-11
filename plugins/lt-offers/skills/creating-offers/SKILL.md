@@ -1,6 +1,6 @@
 ---
 name: creating-offers
-description: 'Creates and edits business offers on the lenne.tech Offers platform (angebote.lenne.tech) and its demo deployment (demo-angebote.lenne.tech). Knows all 16 content block types, offer lifecycle (draft/sent/viewed/template), custom HTML with Tailwind CSS and NuxtUI components (via rich-component block). Activates when working with offers, content blocks, or the Offers API. Uses MCP tools (offers-api for production, offers-api-demo for demo) for all CRUD operations.'
+description: 'Creates and edits business offers on the lenne.tech Offers platform (angebote.lenne.tech) and its demo deployment (demo-angebote.lenne.tech). Knows all 18 content block types, offer lifecycle (draft/sent/viewed/template), custom HTML with Tailwind CSS and NuxtUI components (via rich-component block), HTML embeds for click-dummies, per-offer themes and color mode, and file uploads via single-use upload tickets. Activates when working with offers, content blocks, or the Offers API. Uses MCP tools (offers-api for production, offers-api-demo for demo) for all CRUD operations.'
 ---
 
 # Creating Offers on angebote.lenne.tech
@@ -54,11 +54,13 @@ Both connections use OAuth 2.1 with automatic browser-based login. The OAuth ses
 When working inside the offers project repository (local development), the project-level `.mcp.json` overrides `offers-api` to `http://localhost:3000/mcp` so production-flavored tool calls hit your local API. `offers-api-demo` is unaffected — still points at the deployed demo stage — which is useful for testing demo-only flows from a local dev environment.
 
 **Available MCP Tools (identical on both servers):**
+- `add_html_embed` — Upload a self-contained HTML file (base64) and create an `html-embed` content block in one atomic call (validates the HTML, ≤ 5 MB). For larger files prefer `create_upload_ticket` + HTTP upload
 - `add_lottie_animation` — Upload a Lottie JSON file and create a `lottie` content block in one atomic call (validates the JSON, rejects unsupported features, ≤ 2 MB)
 - `add_offer_source` — Add a source (text/link/file) to an offer
 - `create_from_template` — Create offer from template
 - `create_knowledge` — Create a knowledge base entry
-- `create_offer` — Create new offer (returns offer + access code). Accepts an optional `theme: { enabled, light, dark }` per-offer override
+- `create_offer` — Create new offer (returns offer + access code). Accepts an optional `theme: { enabled, light, dark }` per-offer override and an optional `colorMode: 'system' | 'light' | 'dark'` (forces the offer page into light/dark; default `system` = browser preference)
+- `create_upload_ticket` — Create a single-use upload URL (valid 15 min) for uploading files via plain HTTP instead of base64 through MCP. `purpose` selects validation: `html-embed` (validated HTML, ≤ 5 MB), `image` (`image/*`, ≤ 10 MB), `file` (any, ≤ 25 MB). POST multipart form-data with field `file` to the returned `uploadUrl`; the response contains the GridFS file `id` for use as `fileId` in content blocks
 - `delete_knowledge` — Delete a knowledge base entry
 - `delete_offer` — Delete offer permanently
 - `duplicate_offer` — Clone offer with new slug + access code (theme is carried over)
@@ -80,14 +82,14 @@ When working inside the offers project repository (local development), the proje
 - `set_default_theme` — Configure the app-wide default theme (light/dark hex palettes). Admin-only on the underlying SettingsService
 - `update_knowledge` — Update a knowledge base entry
 - `update_lottie_animation` — Replace the Lottie JSON of an existing block (keeps the block ID + position; resets first-frame snapshot)
-- `update_offer` — Update offer fields and content blocks. Accepts an optional `theme` to set/clear the per-offer palette
+- `update_offer` — Update offer fields and content blocks. Accepts an optional `theme` to set/clear the per-offer palette and an optional `colorMode` ('system'/'light'/'dark')
 - `upload_knowledge_file` — Upload file to knowledge entry (base64)
 - `upload_offer_source_file` — Upload file as offer source (base64)
 
 ## Reference Files
 
-- `${CLAUDE_SKILL_DIR}/reference/content-blocks.md` — All 17 block types with schemas (incl. `lottie`)
-- `${CLAUDE_SKILL_DIR}/reference/offer-model.md` — Offer model, status lifecycle, per-offer theme field
+- `${CLAUDE_SKILL_DIR}/reference/content-blocks.md` — All 18 block types with schemas (incl. `lottie`, `html-embed`) and upload-ticket usage
+- `${CLAUDE_SKILL_DIR}/reference/offer-model.md` — Offer model, status lifecycle, per-offer theme and colorMode fields
 - `${CLAUDE_SKILL_DIR}/reference/knowledge-base.md` — Knowledge base schema and categories
 - `${CLAUDE_SKILL_DIR}/reference/custom-html-guide.md` — HTML + Tailwind + NuxtUI guide (incl. WYSIWYG editor)
 - `${CLAUDE_SKILL_DIR}/reference/theming.md` — Per-offer theme override, app-wide default theme, MCP & UI workflows
@@ -181,7 +183,7 @@ Use `get_offer_analytics` to check how an offer performs. In Claude Desktop, an 
 - **Structure**: Start with greeting/intro, then main content, end with CTA
 - **Block order**: text → image/video → pricing-table → testimonial/reference → cta
 - **Pricing**: Always use `pricing-table` block for prices, not inline text
-- **File references**: For v1, reference existing `fileId` values. No file upload via MCP yet.
+- **File references**: Reference existing `fileId` values, or upload new files via `create_upload_ticket` + HTTP POST (recommended), `add_html_embed` / `add_lottie_animation` (small files, base64).
 
 ## Pre-Submission Checklist
 

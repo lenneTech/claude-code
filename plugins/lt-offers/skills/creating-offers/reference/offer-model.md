@@ -17,6 +17,7 @@
 | `contentBlocks` | array | Content blocks (see content-blocks.md) |
 | `tags` | string[] | Tags for categorization |
 | `theme` | object | Per-offer theme override `{ enabled, light, dark }` — see [theming.md](./theming.md). When `enabled: false` (or missing), the renderer falls back to the app-wide default theme (`set_default_theme`); when neither is configured, the platform palette applies. |
+| `colorMode` | string | `'system'` / `'light'` / `'dark'` (default `'system'`). Forces the customer-facing offer page into light or dark mode on load; `'system'` follows the browser preference. Independent of `theme` — the theme defines the palettes, `colorMode` picks which one is active. |
 | `validUntil` | Date | Expiration date (optional) |
 | `showTableOfContents` | boolean | Show TOC on offer page (default: true) |
 | `customerContacts` | array | Additional contacts `[{ name, email?, position? }]` |

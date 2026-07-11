@@ -8,7 +8,7 @@ description: 'Provides knowledge and resources for projects that have vendored t
 ## Gotchas
 
 - **Flatten-fix edge case on `core-persistence-model.interface.ts`** — During flatten-fix, most files get `'../../..'` rewritten to `'../..'`. This file is an exception: it sits one directory deeper and needs `'../../..'` → `'../..'` → `'..'`. Missing this step causes a silent `Cannot find module` at runtime, not compile-time.
-- **`migrate` CLI disappears after vendoring** — The upstream `@lenne.tech/nest-server` package exports a `migrate` binary in its `package.json`. When vendored (no longer a dependency), this binary is gone. Projects that relied on `pnpm migrate` will need to run the migration script directly from `src/core/`.
+- **`migrate` CLI disappears after vendoring** — The upstream `@lenne.tech/nest-server` package exports a `migrate` binary in its `package.json`. When vendored (no longer a dependency), that binary is gone from `node_modules/.bin/`. `convert-mode` copies `bin/migrate.js` into the project and repoints the `migrate:*` scripts at it. See "The migrate CLI in a Vendored Project" below — and note that the **production** path differs from the local ts-node path, which is how migrations end up silently never running in the container.
 - **Cosmetic commits are tempting upstream PR candidates** — Formatting-only, linting-only, or rename-only commits look substantive but offer no value as upstream PRs. The contributor agent filters these — if authoring manually, verify the commit changes behavior, not just style.
 - **Local patches in `src/core/` are invisible to future `/update-nest-server-core` runs** — The updater does AI-driven curation but cannot read your intent. Document every intentional local deviation in `src/core/LOCAL-PATCHES.md` so the next sync doesn't silently undo your work.
 
@@ -69,23 +69,37 @@ Vendoring copies the framework source into the project tree so Claude Code
 can read it directly — this is a **comprehension aid**, not an invitation to
 fork. The policy:
 
-1. **Change `src/core/` ONLY when the change is generally useful to all
+1. **FIRST check whether upstream already has the fix — prefer updating over
+   hand-patching.** Before changing anything in `src/core/`, confirm the
+   vendored baseline is current: compare the version/commit recorded in
+   `src/core/VENDOR.md` against the latest `@lenne.tech/nest-server` release
+   **and** the upstream `develop` branch, and read the upstream version of the
+   exact file you intend to change. If a newer release — or upstream HEAD —
+   already contains the fix, optimization, or enhancement, adopt it via
+   `/lt-dev:backend:update-nest-server-core` instead of writing a local patch.
+   A hand-patch that duplicates or diverges from an upstream fix creates a
+   needless merge conflict on the next sync and often reimplements the change
+   worse than the maintainers already did. Only hand-patch when the fix
+   genuinely does not exist upstream yet — and then still contribute it
+   (step 4). Run `pnpm run check:vendor-freshness` (or read `VENDOR.md`) if
+   unsure whether the baseline is stale.
+2. **Change `src/core/` ONLY when the change is generally useful to all
    nest-server consumers.** Valid reasons:
    - Bugfixes that apply to every consumer
    - Framework enhancements with broad applicability
    - Closing security vulnerabilities
    - Build/TypeScript compatibility fixes that every consumer would hit
-2. **Every other change belongs in project code** (outside `src/core/`),
+3. **Every other change belongs in project code** (outside `src/core/`),
    via modification, inheritance, extension, or `ICoreModuleOverrides`.
    Project-specific business rules, customer enums, or proprietary
    integration adapters must never live in the vendored core.
-3. **Generally-useful changes MUST be submitted as an upstream PR** to
+4. **Generally-useful changes MUST be submitted as an upstream PR** to
    `github.com/lenneTech/nest-server`. Use
    `/lt-dev:backend:contribute-nest-server-core` to prepare the PR. Do not
    let useful fixes rot in a single project's vendor tree — they belong
    upstream so every consumer benefits and the local patch disappears on
    the next sync.
-4. **When in doubt, ask before editing `src/core/`.** The contributor
+5. **When in doubt, ask before editing `src/core/`.** The contributor
    agent exists precisely to keep the vendor tree close to upstream.
 
 The `nest-server-core-contributor` agent enforces this distinction by
@@ -194,39 +208,44 @@ agent should recognize them and suggest them as Upstream-PR candidates.
 ## The migrate CLI in a Vendored Project
 
 Upstream ships a `migrate` CLI as a `bin` field in `@lenne.tech/nest-server`
-package.json. Since we drop that package, the CLI is no longer auto-installed
-into `node_modules/.bin/`. Two workarounds:
+package.json. Since vendoring drops that package, the CLI is no longer installed
+into `node_modules/.bin/`. `lt fullstack convert-mode` therefore copies
+`bin/migrate.js` into the project and repoints every `migrate:*` script at it —
+no global install, no hand-written wrapper needed.
 
-1. **Recommended:** Keep a global `migrate` CLI available
-   (`npm i -g @lenne.tech/nest-server` once per dev machine). The vendored
-   store/compiler files are resolved locally — the CLI itself is a thin
-   wrapper.
-2. **Alternative:** Add a thin wrapper script in `migrations-utils/cli.js`
-   that imports the vendored `migrate-runner` directly. More robust, more work.
+Locally the scripts pass `--compiler ts:./migrations-utils/ts-compiler.js`, a
+ts-node bootstrap that exists because the project `tsconfig.json` usually
+restricts `types` to `vitest/globals`, which strips `@types/node` and crashes
+ts-node when it compiles vendored core files.
 
-The `migrate:*` scripts in `package.json` should use a **local ts-node bootstrap**
-because the project-level `tsconfig.json` usually restricts `types` to
-`vitest/globals` only, which strips out `@types/node` and crashes the ts-node
-compile of vendored core files:
+### The production trap: migrations that never run
 
-```js
-// migrations-utils/ts-compiler.js
-const tsNode = require('ts-node');
-tsNode.register({
-  transpileOnly: true,
-  compilerOptions: {
-    module: 'commonjs',
-    target: 'es2022',
-    esModuleInterop: true,
-    experimentalDecorators: true,
-    emitDecoratorMetadata: true,
-    skipLibCheck: true,
-    types: ['node'],
-  },
-});
+**The dev path (ts-node) and the container path (compiled JS) are different, and
+only the dev path is exercised while you work.** A vendored project must satisfy
+all four of these, or the container silently skips every migration — no error,
+no failed deploy, just data that was never migrated:
+
+| Requirement | Provided by | Symptom when missing |
+|---|---|---|
+| Migrations compiled to `.js` | `tsconfig.build.json` includes `migrations/**/*.ts` | CLI cannot load `.ts`, no ts-node in the image |
+| `dist/bin/migrate.js` exists | `copy:bin` script | entrypoint's `[ -f … ]` guard fails → **silent skip** |
+| No `*.d.ts` in `dist/migrations/` | `prune:migrations` script | runner loads the declaration file as a second migration and throws on `export declare` |
+| Store works without ts-node | `migrations-utils/migrate.js` probes for the compiled helper before `require('./ts-compiler')` | `MODULE_NOT_FOUND` under `set -e` → container never starts |
+
+Current `lt` versions wire all four up automatically. **When auditing an older
+project, verify them explicitly** — the failure is invisible until a real data
+migration quietly does not run:
+
+```bash
+pnpm run build
+ls projects/api/dist/bin/migrate.js        # must exist
+ls projects/api/dist/migrations/           # only *.js, no *.d.ts
+grep -c ts-compiler projects/api/migrations-utils/migrate.js   # must be guarded, not top-level
 ```
 
-Then in `package.json` scripts: `--compiler ts:./migrations-utils/ts-compiler.js`.
+To prove the whole chain end-to-end, run the entrypoint's exact command against
+the built output with `NODE_ENV=production` — that is the only way to catch a
+silent skip before the deploy does.
 
 ## Upstream Sync Workflow (curated)
 

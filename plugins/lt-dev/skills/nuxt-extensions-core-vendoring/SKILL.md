@@ -69,24 +69,38 @@ Vendoring copies the nuxt-extensions source into the project tree so Claude
 Code can read it directly -- this is a **comprehension aid**, not an
 invitation to fork. The policy:
 
-1. **Change `app/core/` ONLY when the change is generally useful to all
+1. **FIRST check whether upstream already has the fix — prefer updating over
+   hand-patching.** Before changing anything in `app/core/`, confirm the
+   vendored baseline is current: compare the version/commit recorded in
+   `app/core/VENDOR.md` against the latest `@lenne.tech/nuxt-extensions`
+   release **and** the upstream default branch, and read the upstream version
+   of the exact file you intend to change. If a newer release — or upstream
+   HEAD — already contains the fix, optimization, or enhancement, adopt it via
+   `/lt-dev:frontend:update-nuxt-extensions-core` instead of writing a local
+   patch. A hand-patch that duplicates or diverges from an upstream fix
+   creates a needless merge conflict on the next sync and often reimplements
+   the change worse than the maintainers already did. Only hand-patch when the
+   fix genuinely does not exist upstream yet — and then still contribute it
+   (step 4). Run `pnpm run check:vendor-freshness` (or read `VENDOR.md`) if
+   unsure whether the baseline is stale.
+2. **Change `app/core/` ONLY when the change is generally useful to all
    nuxt-extensions consumers.** Valid reasons:
    - Bugfixes that apply to every consumer
    - Framework enhancements with broad applicability (new composables,
      better defaults, SSR fixes)
    - Closing security vulnerabilities
    - Type/config compatibility fixes that every consumer would hit
-2. **Every other change belongs in project code** (outside `app/core/`),
+3. **Every other change belongs in project code** (outside `app/core/`),
    via project-level composables, components, middleware, or plugin
    overrides. Project-specific business rules, customer branding, or
    proprietary integrations must never live in the vendored core.
-3. **Generally-useful changes MUST be submitted as an upstream PR** to
+4. **Generally-useful changes MUST be submitted as an upstream PR** to
    `github.com/lenneTech/nuxt-extensions`. Use
    `/lt-dev:frontend:contribute-nuxt-extensions-core` to prepare the PR.
    Do not let useful fixes rot in a single project's vendor tree -- they
    belong upstream so every consumer benefits and the local patch
    disappears on the next sync.
-4. **When in doubt, ask before editing `app/core/`.** The contributor
+5. **When in doubt, ask before editing `app/core/`.** The contributor
    agent exists precisely to keep the vendor tree close to upstream.
 
 The `nuxt-extensions-core-contributor` agent enforces this distinction by
