@@ -36,8 +36,27 @@ For comprehensive npm package maintenance, use the **lt-dev:npm-package-maintain
 | "Update npm packages" | **THIS SKILL** |
 | "npm audit fix" | **THIS SKILL** |
 | "Remove unused dependencies" | **THIS SKILL** |
-| "Update nest-server to v14" | nest-server-updating |
+| "Bring the whole project up to date" | `/lt-dev:maintenance:maintain` — orchestrates framework updates first, then this skill |
+| "Update nest-server across a major" | nest-server-updating (owns the migration guides) |
+| "Sync the vendored core (`src/core/`)" | nest-server-core-vendoring / nuxt-extensions-core-vendoring |
 | "Fix NestJS service" | generating-nest-servers |
+
+### Frameworks come before packages
+
+A CVE inside a **framework-pinned** dependency cannot be closed with an override.
+`@lenne.tech/nest-server` pins `better-auth` and the `@nestjs/*` family to exact
+versions; overriding past that pin overrules the framework and produces a combination
+nobody tested. Raise the framework instead — it ships the patched version.
+
+Real incident (offers, 2026-07): a critical `better-auth` advisory was "fixed" via
+override. `pnpm audit` went green and an API test went red. The correct fix was
+nest-server `11.25.2 → 11.27.6`. Afterwards the `@nestjs/*` family had to be aligned
+to the framework's pin (`11.1.23`), because two copies of `@nestjs/schedule` broke the
+build with a type error that pointed nowhere near the cause.
+
+Practical consequence: when a security finding sits in a framework-pinned dependency,
+**stop and raise the framework** (or report it blocked if no release carries the fix).
+Do not force it with an override.
 
 ## Related Skills
 
@@ -117,6 +136,30 @@ When the agent ADDS an entry to `pnpm.overrides` (typically to force a security-
 **Why this matters:** In April 2026 the TurboOps monorepo received an override `"vite@>=7.0.0 <=7.3.1": ">=7.3.2"` from a security maintenance run. Because the target `">=7.3.2"` was unbounded, pnpm silently installed `vite@8.0.8` (major version jump), which broke peer dependencies in `@nuxt/test-utils`, dropped `drizzle-orm` from `better-auth`, and caused 13 e2e test regressions. The fix was switching every override target to a fixed version.
 
 **Reference implementation:** `https://github.com/lenneTech/nest-server-starter/blob/main/package.json` — canonical example of correctly-written `pnpm.overrides` for the lenne.tech stack. Align with this file when in doubt. The detailed rule is in `@lenne.tech/nest-server/.claude/rules/package-management.md` → "Overrides".
+
+## Override Retention Rule (Critical)
+
+**Raise overrides. Do not delete them.** Every entry in `pnpm.overrides` is there
+because a transitive CVE could not be closed any other way, and the parallel
+`//overrides` block records which. Treat it as a contract.
+
+⚠️ **A clean `pnpm audit` is not evidence that an override is obsolete** — the audit is
+clean *because the override is working*. "No vulnerability reported, so the override
+can go" is circular reasoning, and it is precisely how a real maintenance run deleted
+20+ security overrides (`axios`, `lodash`, `kysely`, `drizzle-orm`, `unhead`, `qs`,
+`hono`, …), re-opening every one of those advisories.
+
+| Situation | Action |
+| --- | --- |
+| Target below the advisory's fixed-in version | **RAISE** to the highest release in the same major |
+| Target at/above fixed-in, package still in the tree | **KEEP** |
+| `pnpm why <pkg>` shows the package left the tree | **REMOVE** (entry + its `//overrides` comment), then re-audit |
+| Audit is clean | **KEEP** |
+| Build breaks after a framework bump | **KEEP** — raise the outdated meta-module instead |
+
+Off-by-one pins are the most common real finding: in one audit, 8 of 36 overrides sat
+exactly one patch below their fix (e.g. `vite` pinned to `7.3.2` when the advisory was
+fixed in `7.3.5`) — exact, maintained-looking, and still vulnerable.
 
 ## Vulnerability Resolution Workflow
 

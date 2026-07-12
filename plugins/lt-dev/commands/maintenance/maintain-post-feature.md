@@ -33,7 +33,7 @@ Execute all priorities:
 1. Remove unused packages (especially if feature changed dependencies)
 2. Optimize dependency categorization (ensure new deps are correctly placed)
 3. Update packages to latest versions (stay current after feature work)
-4. Cleanup unnecessary overrides
+4. **Raise** overrides that sit below their advisory's fixed-in version
 
 Check for:
 - Unused dependencies that can be removed (especially from feature work)
@@ -42,7 +42,10 @@ Check for:
 - Outdated dependencies (all types: security, features, patches)
 - Security vulnerabilities introduced by new dependencies
 - Compatibility issues with newly added packages
-- Overrides that are no longer necessary (parent packages now include fixed versions)
+- Overrides pinned **below** their fixed-in version (raise them — this is the common
+  real finding). Overrides are never deleted just because the audit is clean; the
+  audit is clean *because* they work. Removal requires `pnpm why` proof that the
+  package has left the dependency tree.
 
 This is the standard comprehensive maintenance mode, ideal after completing feature development to ensure the codebase stays clean and dependencies stay current.
 

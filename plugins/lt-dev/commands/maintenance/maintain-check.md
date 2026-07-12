@@ -32,7 +32,8 @@ Analyze and report WITHOUT making changes:
 - Analyze categorization (what WOULD be moved to devDependencies)
 - Detect deprecated packages (what WOULD be replaced and with which alternatives)
 - Discover outdated packages (what WOULD be updated)
-- Analyze overrides (which COULD be removed)
+- Analyze overrides (which are pinned BELOW their advisory's fixed-in version and
+  should be raised; which — if any — have left the dependency tree per `pnpm why`)
 - Check security vulnerabilities
 - Estimate risk levels for all potential changes
 
@@ -43,7 +44,10 @@ Generate comprehensive report including:
 - Packages that could be recategorized
 - Deprecated packages with recommended replacements
 - Available updates categorized by risk (SAFE/MEDIUM/HIGH)
-- Overrides that may no longer be necessary (with analysis)
+- Overrides pinned below their fixed-in version (with the target they should be raised to)
+- Framework drift: is `@lenne.tech/nest-server` / `@lenne.tech/nuxt-extensions` behind,
+  and does any advisory sit in a dependency the framework pins? (Those cannot be fixed
+  with an override — they need the framework raised.)
 - Security vulnerabilities found
 - Estimated impact and time requirements
 
