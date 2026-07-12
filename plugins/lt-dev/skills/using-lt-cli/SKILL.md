@@ -13,6 +13,8 @@ description: 'Provides reference for the lenne.tech CLI tool (lt command). Cover
 - **`lt server object X --controller` generates REST, NOT GraphQL** — Default is REST. For GraphQL projects, use `--resolver`. The CLI does not auto-detect from existing project patterns — you must specify explicitly.
 - **`lt fullstack convert-mode` rewrites the source tree** — Switching between `npm` and `vendor` mode moves framework code in/out of `src/core/` (API) or `app/core/` (App). The operation is reversible but NOT idempotent mid-run — always commit before starting, so a failed conversion can be rolled back via `git reset`.
 - **`--next` is experimental and incompatible with `lt server module/object/addProp/test/permissions`** — When `lt server create --next` or `lt fullstack init --next` is used, the API is cloned from [`nest-base`](https://github.com/lenneTech/nest-base) (Bun + Prisma 7 + Postgres + Better-Auth) instead of `nest-server-starter`. The downstream generators target the classic nest-server layout (Mongoose models, src/server/modules/, etc.) and will not work on a nest-base project. Use it for greenfield prototyping only; for production work prefer the default template.
+- **macOS: a long `$TMPDIR` breaks Nuxt SSR under `lt dev up`** — On macOS, `$TMPDIR` is a long per-user path (`/var/folders/…`, often >~49 chars). Nuxt 4.4.7's vite-node builds a Unix domain socket path under it that exceeds the OS 104-character limit → SSR crashes with a 500. Workaround: start with a short tmp dir, `TMPDIR=/tmp lt dev up`. (Linux `$TMPDIR=/tmp` is short, so this only bites on macOS.)
+- **macOS: HMR WebSocket port 24678 collides between parallel `lt dev` projects** — Two `lt dev` projects running at once both try to bind Vite's HMR WS port 24678. `vite.server.hmr.port` is **ignored by Nuxt 4.4.7**, so you cannot reassign it in config. This is **non-fatal** — SSR recompile still works; only live-HMR pushes on the second project are affected. Reload the page to pick up changes there.
 
 ## Skill Boundaries
 
@@ -25,6 +27,8 @@ description: 'Provides reference for the lenne.tech CLI tool (lt command). Cover
 | "lt server permissions" | generating-nest-servers |
 | "Create a NestJS module" | generating-nest-servers |
 | "Build a Vue component" | developing-lt-frontend |
+| "lt deployment create" | **THIS SKILL** (see the `lt deployment create` command) |
+| "Deploy to TurboOps / go live / turbo deploy / deployment stage" | deploying-to-turboops |
 
 **After `lt fullstack init`:**
 - Backend work (projects/api/) → `generating-nest-servers`
@@ -162,6 +166,25 @@ lt server create <name> --noConfirm [--branch <branch>] [--copy <path>] [--link 
 
 Creates a standalone NestJS project from nest-server-starter. With `--next`, clones [`nest-base`](https://github.com/lenneTech/nest-base) (Bun + Prisma 7 + Postgres + Better-Auth) instead and skips API-mode / vendor-mode / install / `lt.config.json` processing. For module/object/property commands, see `generating-nest-servers` skill — those are NOT compatible with `--next` projects.
 
+### lt deployment create — Wire the Project to TurboOps
+
+```bash
+lt deployment create --noConfirm
+```
+
+Run from the repo root. Writes `.turboops.json` = `{ "project": "<slug>" }` at
+the repo root — the link between the repo and its TurboOps project (`<slug>` =
+the TurboOps project slug). CI reads this file, so **commit it**.
+
+This is only the first step of taking an lt fullstack project live. The complete
+end-to-end flow — GitLab CI/CD variables (`TURBOOPS_PROJECT` + the masked
+`TURBOOPS_TOKEN` minted in the TurboOps web UI), creating a **multi-service**
+deployment stage via the TurboOps web UI (never the single-service MCP
+bootstrap), DNS-before-Let's-Encrypt, the swarm Mongo URI, and CI-driven
+redeploys — is documented in the **`deploying-to-turboops`** skill and driven by
+the `/lt-dev:deployment:setup` command. Read that skill before creating a stage;
+it documents the two MCP traps that silently produce a broken fullstack deploy.
+
 ## Best Practices
 
 - **Always** use `--noConfirm` from Claude Code to avoid blocking prompts
@@ -195,3 +218,4 @@ The authoritative references live in the `lenneTech/cli` GitHub repository. Fetc
 - `generating-nest-servers` — `lt server module`, `lt server object`, `lt server addProp`, `lt server permissions`
 - `developing-lt-frontend` — Nuxt/Vue frontend development
 - `building-stories-with-tdd` — TDD workflow orchestration
+- `deploying-to-turboops` — take an lt fullstack project live on TurboOps via CI/CD (the full flow after `lt deployment create`)
