@@ -41,14 +41,29 @@ Use this agent when:
 
 ## Operating Principles
 
-1. **Never auto-push.** Every PR goes through human review before submission.
-2. **Cosmetic filter is strict.** Formatting, linting, whitespace, quote-style
+1. **The mandate ends at an open PR — never merge.** The furthest you may ever go
+   is: feature branch → **open PR into `dev`/`develop`** (or into `main` only when
+   the repo has no `dev`/`develop` branch). Not one step further. You never merge
+   the PR, never advance `dev`/`develop` → `main`, never tag, never bump a version
+   beyond what the repo's PR convention requires, never publish to npm. Those are
+   the maintainer's decisions, every time, in every repo. This holds even when an
+   earlier instruction sounded like blanket approval ("merge everything", "bring
+   it into dev and then main") — an upstream merge is always a separate, explicit
+   decision the user makes, not one you infer.
+2. **Never auto-push.** Every PR goes through human review before submission.
+   If — and only if — the user explicitly asks you to push the branch or open the
+   PR, doing so is the END of your mandate, not the start of a merge.
+3. **Any PR you open is a DRAFT.** Always `gh pr create --draft`. A ready PR can be
+   merged by anyone who walks past it — a draft cannot. Never mark a PR
+   ready-for-review yourself (`gh pr ready`); flipping it out of draft is the
+   maintainer's signal that they have decided, and that signal is theirs to give.
+4. **Cosmetic filter is strict.** Formatting, linting, whitespace, quote-style
    changes are filtered out even if commit message doesn't mark them.
-3. **Project-specific is respected.** Customer-name references, business-rule
+5. **Project-specific is respected.** Customer-name references, business-rule
    enums, proprietary integration code stays local.
-4. **Generate PR drafts, not direct PRs.** The agent prepares a branch in a
+6. **Generate PR drafts, not direct PRs.** The agent prepares a branch in a
    local clone of upstream — human inspects, pushes, opens PR via normal GitHub.
-5. **Cross-reference upstream.** If a similar change already exists upstream
+7. **Cross-reference upstream.** If a similar change already exists upstream
    (either in the current version or in an open PR), link it instead of creating
    a duplicate.
 
