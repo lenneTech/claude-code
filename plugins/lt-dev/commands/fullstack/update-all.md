@@ -87,6 +87,22 @@ Parse `$ARGUMENTS` for flags:
 - `--skip-frontend`: Skip frontend (App) update
 - `--skip-packages`: Skip package maintenance phase
 
+### Phase 0: CLI Self-Heals (unless --dry-run)
+
+Run the lt CLI's deterministic self-heals FIRST — they are NOT covered by any
+agent phase below and take ~2 seconds:
+
+```bash
+lt fullstack update
+```
+
+This idempotently (a) syncs `scripts/check.mjs` to the CLI's canonical version
+(idle-watchdog, hoisted install, summed test metrics — skips the sync when the
+file has UNCOMMITTED local edits and says so), (b) adds `.lt-dev/` to
+`.gitignore` if missing, and (c) refreshes the CLAUDE.md vendor-notice blocks.
+It also prints the mode detection, which cross-checks Phase 1. Report anything
+it changed (or skipped) in the final report's summary.
+
 ### Phase 1: Detect Modes
 
 1. **Detect project structure:**
@@ -286,20 +302,21 @@ Only sync the targets that were actually updated. Use section-level merge
 
 ### Phase 7: Cross-Validation
 
-1. **Build both projects:**
+1. **Run the canonical workspace check** (from the workspace root):
    ```bash
-   cd <backend-path> && pnpm run build
-   cd <frontend-path> && pnpm run build
+   pnpm run check
    ```
+   This supersedes separate per-project build/test runs: the report-driven
+   wrapper executes audit + format + lint + unit/API tests + build +
+   server-start for BOTH subprojects, with the idle-watchdog guarding the test
+   steps and the e2e-run governor queuing against parallel sessions. A run
+   printing `[e2e-governor] waiting for a free e2e slot` every 15s is QUEUED
+   behind another session's tests, not hung — let it wait. Must exit 0; apply
+   the `running-check-script` skill's iterate-until-green loop on failures.
 
-2. **Run tests:**
-   ```bash
-   cd <backend-path> && pnpm test
-   ```
+2. **Confirm the security audit** (use the project's own package manager) in each subproject — the residual vulnerability count must match what Phase 5 reported as expected. A package that received an override but still appears means the override target is too low or mis-scoped; do not sign off the update until it is fixed or explicitly accepted with a documented reason.
 
-3. **Confirm the security audit** (use the project's own package manager) in each subproject — the residual vulnerability count must match what Phase 5 reported as expected. A package that received an override but still appears means the override target is too low or mis-scoped; do not sign off the update until it is fixed or explicitly accepted with a documented reason.
-
-4. **Verify type generation works — conditional:**
+3. **Verify type generation works — conditional:**
    ```bash
    cd <frontend-path>
    if grep -REq "from ['\"](~|\.|app)/api-client" app/; then
@@ -312,6 +329,17 @@ Only sync the targets that were actually updated. Use section-level merge
    the generated api-client is pure noise — the output is an unused
    reference artifact, and the prettier/oxfmt format difference surfaces
    as a false `check` failure the operator has to chase.
+
+4. **Run the environment diagnostics** (from the workspace root):
+   ```bash
+   lt dev doctor
+   ```
+   Post-update it verifies exactly what the update was supposed to fix:
+   `scripts/check.mjs` matches the canonical CLI version (drift warning),
+   the Playwright global-setup allow-list is ticket/shard-safe, and the
+   slug/registry/Caddy state is consistent. Treat every WARN as a report
+   item — fix what the update caused; pre-existing environment WARNs
+   (e.g. Caddy service issues) are reported but do not block sign-off.
 
 ### Phase 8: Report
 

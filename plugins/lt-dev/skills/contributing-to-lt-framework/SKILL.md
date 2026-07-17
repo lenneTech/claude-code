@@ -26,18 +26,35 @@ Framework-level development happens in the **framework repositories**, not in co
 | "Sync vendored core from upstream" | nest-server-core-vendoring / nuxt-extensions-core-vendoring |
 | "Open a PR with my vendored-core change" | nest-server-core-vendoring → `nest-server-core-contributor` agent |
 
-## Prerequisites
+## The Base Repos ("Grund-Repos")
 
-Four git repositories must be available locally on the user's machine, all cloned from `github.com/lenneTech/`:
+When the user says **"Grund-Repos"** (or "base repos" / "the foundation repos"), they mean **exactly these seven** — the repositories every customer project inherits from:
 
 | Repo | Role |
 |------|------|
 | `nest-server` | Backend framework source |
-| `nest-server-starter` | Backend template that consumes `@lenne.tech/nest-server` |
-| `nuxt-extensions` | Frontend framework source |
-| `nuxt-base-starter` | Frontend template that consumes `@lenne.tech/nuxt-extensions` |
+| `nest-server-starter` | Backend template → `projects/api` |
+| `nuxt-extensions` | Frontend library source |
+| `nuxt-base-starter` | Frontend template → `projects/app` |
+| `lt-monorepo` | Fullstack monorepo template |
+| `cli` | The `lt` command line (`lt dev`, `lt ticket`, `lt fullstack`, …) |
+| `lt-dev` | This Claude Code plugin (`claude-code/plugins/lt-dev`) — commands, agents, skills |
 
-The exact filesystem location is user-specific (e.g. side-by-side sibling directories). Ask the user for the paths at the start of the workflow, or detect them via shell history / common parent directories. All commands below use **`$FRAMEWORK_DIR`** and **`$STARTER_DIR`** as placeholders — resolve them to the user's actual paths before execution.
+All are cloned from `github.com/lenneTech/` and live side by side in one directory on the user's machine (ask for the path, or detect it — do not hardcode). `lt-dev` is a subdirectory of the `claude-code` marketplace repo, not a repo of its own.
+
+### The rule that makes them matter
+
+**A defect that every project in the stack would inherit belongs in the base repo — not (only) in the customer project.** A local patch fixes one project; the base repo fixes every project that will ever be created.
+
+Two consequences, both easy to get wrong:
+
+1. **Look upstream BEFORE building your own.** When a project-level problem looks structural (test setup, dev-server orchestration, config layout, auth wiring), first check whether the base repo already solved it. Reinventing it locally creates a divergence that breaks on the next framework update — and the base repo's version is usually the better-tested one.
+   *Real case:* a customer project's API test suite kept failing at random under parallel runs because all working copies shared one e2e database that the global setup drops on start. `nest-server` and `nest-server-starter` had solved this long before (a database per test RUN, plus a lifecycle reporter that cleans up). The project had simply never adopted it. The fix was to port the framework solution — not to invent a third scheme.
+2. **Push project-grown improvements back up.** A guard, fix, or hardening that was written in a project because the framework lacked it is a **contribution owed upstream** (see the workflows below). Same case: the project had a safety guard refusing to drop a database that is not recognizably a test DB — the base repos did **not** have it, and without it a running `lt dev` session (which points `MONGODB_URI` / `NSC__MONGOOSE__URI` at the DEVELOPMENT database) would let a test run wipe the developer's data.
+
+## Prerequisites
+
+For the link workflows below, resolve **`$FRAMEWORK_DIR`** and **`$STARTER_DIR`** to the user's actual clone paths before executing any command.
 
 ## Workflow A — Backend Framework (`@lenne.tech/nest-server`)
 

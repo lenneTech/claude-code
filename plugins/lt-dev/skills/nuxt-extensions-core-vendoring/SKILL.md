@@ -263,6 +263,36 @@ When a local change in the vendored core looks generally useful, the
    change as upstream-delivered and can remove the local patch from
    `VENDOR.md`'s local-changes log
 
+**The ceiling is an open DRAFT PR into `main` — never a merge.** Never merge the
+PR, never tag/release/publish. Always `gh pr create --draft`; never `gh pr ready`.
+Taking a PR out of draft is how the maintainer says they have decided — that signal
+is theirs to give. This holds even when an earlier instruction sounded like blanket
+approval ("merge everything").
+
+### Upstream branch model + PR shape (lenneTech/nuxt-extensions)
+
+This repo has **no `develop` branch** — base every contribution on **`main`**.
+
+The contribution shape (derived from merged PR #4 and the 1.8.2/1.8.3/1.8.4 release
+commits; it is documented nowhere else):
+
+- **One single commit per PR**, subject = `<target-version>: <what + why>`
+  (e.g. `1.8.5: accept the nest-server roles: string[] shape in isAdmin …`).
+- The commit **bumps `package.json` itself** (patch for a bugfix).
+- The commit carries **src + tests only — NO `CHANGELOG.md` entry.** The maintainer
+  adds it separately as `docs: add <version> changelog entry` on `main` after the
+  merge. Adding one in the PR duplicates that and causes review churn.
+- A pre-commit hook (`.githooks`) auto-runs `oxfmt --write src/` + `oxlint src/`.
+- Full gate before committing: `format:check`, `lint`, `dev:prepare`, `test:types`,
+  `test`, `build` (`pnpm run check:raw` chains them plus `pnpm audit`).
+
+**Flag the version bump to the user:** if two contribution PRs are open at once,
+the second one's bump collides and needs a rebase.
+
+**Upstream vitest needs `pnpm run dev:prepare` first** (it generates
+`.nuxt/tsconfig.json`) — without it every test file fails at transform, which looks
+like a broken port but is not.
+
 ## No Reverse Flatten-Fix Needed
 
 Unlike backend contributions (where `./common/` must become `./core/common/`

@@ -309,6 +309,45 @@ When a local change in the vendored core looks generally useful, the
    change as upstream-delivered and can remove the local patch from
    `VENDOR.md`'s local-changes log
 
+**The ceiling is an open DRAFT PR into `develop` — never a merge.** Never merge
+the PR, never advance `develop` → `main`, never tag/release/publish. Always
+`gh pr create --draft`; never `gh pr ready`. Taking a PR out of draft is how the
+maintainer says they have decided — that signal is theirs to give. This holds even
+when an earlier instruction sounded like blanket approval ("merge everything").
+
+### Upstream branch model (lenneTech/nest-server)
+
+The default branch is **`develop`**; feature/fix PRs target `develop`. `main` only
+receives merge commits (`Merge pull request #NNN from lenneTech/develop`), one per
+release. Consequences:
+
+- **Base contribution branches on `develop`, not `main`.**
+- `VENDOR.md` baseline SHAs are **`main` merge commits**, so
+  `git merge-base --is-ancestor <baseline> origin/develop` returns **false** even
+  when the content matches. To find upstream changes since the baseline, diff by
+  path (`git log <baseline>..origin/main -- <path>`) or compare `develop` HEAD
+  content directly — do not conclude "no changes" from the ancestor check.
+- `pnpm run build` regenerates the checked-in `FRAMEWORK-API.md` (timestamp-only
+  diff). Discard it before committing — it is not part of any fix.
+
+### Verifying an SWC / circular-import fix
+
+nest-server ships no `.swcrc`, but `@swc/core` is installed and `npx madge` works.
+
+- `nest start -b swc` ≈ swc with `module.type=commonjs`, `jsc.target=es2021`,
+  `legacyDecorator: true`, `decoratorMetadata: true`, `keepClassNames: true`.
+  Supply that as a config file — **swc defaults alone will NOT reproduce
+  decorator-driven TDZ crashes**, and you will wrongly conclude there is no bug.
+- Compile output must land **inside the repo** (e.g. `./.swc-tdz`), or Node cannot
+  resolve `@nestjs/common` / `reflect-metadata` from it. SWC keeps the `src/`
+  prefix → require from `<out>/src/core/...`.
+- `git stash -u` swallows untracked probe scripts — write the probe **after**
+  stashing when A/B-testing baseline vs. patched.
+- **Only cycles dereferenced at module-evaluation time are fatal** — e.g. a DI
+  token inside `@Inject(...)`, which is evaluated when the class is defined. A cycle
+  that merely touches a class lazily inside a method body is benign. Do not "fix"
+  those; madge will keep reporting them and that is correct.
+
 ## Cosmetic-vs-Substantial: Why Filter
 
 Running `pnpm run format` and `pnpm run lint` on a freshly vendored upstream
