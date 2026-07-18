@@ -144,9 +144,24 @@ In GitLab → **Settings → CI/CD → Variables**, add:
 | `TURBOOPS_PROJECT` | `<slug>` | plain |
 | `TURBOOPS_TOKEN` | deploy token (see below) | **Masked**, **Protected = false** |
 
-- **`TURBOOPS_TOKEN` is created only in the TurboOps web UI** — Project →
-  Settings → Tokens. There is **no CLI or MCP path** to mint it. Copy it once at
-  creation; it is not shown again.
+- **`TURBOOPS_TOKEN` can be minted WITHOUT the web UI** (verified 2026-07 in the
+  lt-smoke-test run). After a `turbo login` (browser flow — needs an active
+  turbo-ops.de session), the CLI API mints a project token:
+
+  ```bash
+  # user token + tenant from ~/Library/Preferences/turboops-cli-nodejs/config.json
+  curl -X POST https://api.turbo-ops.de/cli/deployment/tokens \
+    -H "Authorization: Bearer $USER_TOKEN" -H "X-Tenant-Id: $TENANT_ID" \
+    -H "Content-Type: application/json" \
+    -d '{"project":"<projectId>","name":"gitlab-ci"}'
+  # → response.plainToken (shown ONCE) = TURBOOPS_TOKEN;
+  #   permissions: deploy, rollback, logs, registryPush, registryPull
+  ```
+
+  Then set both CI variables non-interactively:
+  `GITLAB_HOST=<host> glab variable set TURBOOPS_PROJECT <slug> -R <group>/<repo>`
+  and `echo "$TOKEN" | glab variable set TURBOOPS_TOKEN -R <group>/<repo> --masked`.
+  The web UI (Project → Settings → Tokens) remains the manual alternative.
 - **Protected = false is required.** The `deploy-dev` job runs on the `dev`
   branch, which is typically *not* a protected branch. A protected variable is
   invisible to unprotected branches, so the dev deploy would fail with a missing
@@ -176,6 +191,23 @@ Make sure **one** of these is true so the compose actually reaches the server
 - **The TurboOps web UI** — creating/editing the stage there also parses
   `docker-compose.yml` and registers all services. This is just **one
   alternative** way to register the compose, **not** a required manual step.
+- **The CLI API, BEFORE the first deploy** (verified 2026-07): a user-token
+  `POST /cli/deployment/projects/<projectId>/compose` with
+  `{"content": "<docker-compose.yml content>", "message": "..."}` syncs all
+  services onto every EXISTING stage immediately — a fully-scripted setup can
+  therefore avoid the single-service first deploy entirely.
+
+**Service domains are NOT derived by the compose sync.** After registering the
+services on an MCP/API-created stage, set the api service's hostname explicitly
+(the app is served via the stage-root `primaryDomain`; setting the same hostname
+on the app service is rejected as a collision):
+
+```
+update_service_domain(stageId, serviceName: "api", primary: "api.<root-domain>")
+```
+
+Without this, the deploy generates no route for `api.<root>` even though all
+containers come up healthy.
 
 Then:
 
@@ -338,6 +370,64 @@ the deployed swarm stack, so the api boots without a database.
 Let's Encrypt issuance happens on deploy. If the root and `api.` records are not
 resolving to the server yet, cert issuance fails and the stage comes up without
 valid TLS. Create + verify DNS first, then deploy.
+
+### Trap 5 — a green `--wait` does NOT prove external reachability (foreign-Traefik servers)
+
+Empirically hit on the **Turbo-Dev** server (116.203.82.155) during the 2026-07
+lt-smoke-test run: the deploy job goes green (`3/3 containers healthy`), but
+every stage URL answers **404 with `CN=TRAEFIK DEFAULT CERT`**. `--wait` checks
+container health only — it never performs an external HTTP probe.
+
+**Root cause:** the server's Traefik was provisioned by **deploy.party**, not by
+TurboOps. TurboOps writes its per-stage routing config to
+`/opt/traefik/dynamic/{slug}.yml`, but the deploy.party Traefik's file provider
+watches `/etc/traefik/dynamic` ← host-mount `/var/opt/deploy-party/dynamic`
+(read-only) and routes its own stacks via **swarm service labels** gated by
+`--providers.swarm.constraints=Label(traefik.constraint-label, traefik-public)`
+with `exposedByDefault=false`. TurboOps' config files land nowhere Traefik looks,
+and TurboOps-deployed services carry no labels → no router, 404.
+
+**Diagnose** (all via MCP `exec_in_container` on the traefik container):
+`cat /proc/1/cmdline` (which providers/constraints?) and
+`grep dynamic /proc/1/mountinfo` (which host dir actually backs the file
+provider?). `reload_traefik_config` "succeeds" but changes nothing — it writes
+to the path nobody reads.
+
+**Workaround (per deploy — labels are wiped by every `docker stack deploy`):**
+add the deploy.party-style labels directly to the swarm services, via a
+container that has the docker CLI + RW socket (on Turbo-Dev:
+`deploy-party_api`):
+
+```
+docker service update <stack>_app -d \
+  --label-add traefik.enable=true \
+  --label-add traefik.constraint-label=traefik-public \
+  --label-add traefik.docker.network=traefik-public \
+  --label-add 'traefik.http.routers.<name>-http.entrypoints=http' \
+  --label-add 'traefik.http.routers.<name>-http.rule=Host("<domain>")' \
+  --label-add 'traefik.http.routers.<name>-http.middlewares=https-redirect@swarm' \
+  --label-add 'traefik.http.routers.<name>-https.entrypoints=https' \
+  --label-add 'traefik.http.routers.<name>-https.rule=Host("<domain>")' \
+  --label-add 'traefik.http.routers.<name>-https.tls=true' \
+  --label-add 'traefik.http.routers.<name>-https.tls.certresolver=le' \
+  --label-add 'traefik.http.services.<name>.loadbalancer.server.port=3000' \
+  --label-add 'traefik.http.services.<name>.loadbalancer.passhostheader=true'
+```
+
+(same for `<stack>_api` with `api.<domain>`). Notes: use `Host("…")` with double
+quotes — backticks die in the SSH/exec shell layer; the TurboOps-prepared stack
+already attaches services to `traefik-public`, so no network change is needed;
+Let's Encrypt issues the cert within seconds once the router exists.
+
+**Real fix (infra decision, not per-project):** migrate the server to the
+TurboOps-provisioned Traefik (`install_service` with `serviceType: TRAEFIK`) —
+but ONLY with a migration plan: the deploy.party Traefik owns ports 80/443 and
+serves that server's existing deploy.party stacks. Until then, treat every
+TurboOps pipeline deploy to such a server as "needs the label pass afterwards".
+
+**Verify-checklist addition:** after ANY deploy, curl the real stage URLs
+(expect the app 200/302 and `GET api.<root>/health-check` 200 with a Let's
+Encrypt issuer) — never trust the green deploy job alone.
 
 ### CI completeness (mirrors `pnpm run check`)
 
