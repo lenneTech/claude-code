@@ -133,6 +133,18 @@ Execute the contributor workflow:
 NEVER auto-push. NEVER open PRs automatically. Every PR draft is for human
 review and manual submission.
 
+THE CEILING IS AN OPEN DRAFT PR — NEVER A MERGE. The furthest this flow may ever
+go is: feature branch → open **draft** PR into `dev`/`develop` (or into `main` only
+when the repo has no `dev`/`develop` branch). Not one step further. Never merge the
+PR, never advance `dev`/`develop` → `main`, never tag, never release, never publish
+to npm. Those are always the maintainer's decision — including when an earlier
+instruction sounded like blanket approval ("merge everything", "bring it into dev
+and then main"). Ask; do not infer.
+
+ALWAYS `gh pr create --draft`. A ready PR can be merged by anyone who walks past
+it; a draft cannot. Never run `gh pr ready` — taking a PR out of draft is the
+maintainer's way of saying they have decided, and that signal is theirs to give.
+
 Project-specific signals to reject: Volksbank, imo, customer-specific enums,
 business-rule hardcoded values, API endpoints with customer domains.
 

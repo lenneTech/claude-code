@@ -137,6 +137,30 @@ The starter `check` pipeline ends with `bash scripts/check-server-start.sh`, whi
 
 These hazards are documented in detail in the `modernizing-toolchain` skill (Phase 6). When a `check` run fails with `ERR_SOCKET_BAD_PORT`, the first triage step is to confirm the script in question already has both the `NITRO_PORT` and ANSI-strip fixes applied.
 
+### Step 6.6 — API tests fail only inside `check`? Suspect a shared test database
+
+**Symptom:** `check` fails at `api · test` with one or two failures, but the very same suite is **green when run on its own**, and the failing spec **moves between runs** — a missing admin user in one run, a missing season in the next, always in a `prepare` / `beforeAll` step (`Cannot read properties of null (reading '_id')`, `404` on a record the setup just created).
+
+**This is not flakiness and not load.** It is a second test run — from another working copy — dropping the database out from under this one. The API e2e global setup **drops its database on start**; if two checkouts resolve to the *same* database name, whoever starts second wipes the first one mid-run. Parallel checkouts are routine (`lt ticket` slots, a second clone, another agent session), so this hits often and reads as random.
+
+**Triage, in this order:**
+
+1. Run the failing suite **alone**. Green in isolation + wandering failure inside `check` ⇒ this bug, not a real defect. Do **not** "fix" the spec.
+2. Check for a competing run: `ps aux | grep [v]itest`. A run in *another* directory of the same project is the smoking gun.
+3. Confirm the database name is shared: it must contain a per-run (or at least per-working-copy) component. A constant like `myproject-e2e` is the bug.
+
+**The fix belongs in the project, not in the spec** — and it very likely already exists upstream. `nest-server` / `nest-server-starter` give every test RUN its own database (`<base>-e2e-run-<timestamp>-p<pid>`, set in `tests/global-setup.ts` before the workers fork) plus a `db-lifecycle.reporter.ts` that drops it on green, keeps it on red for debugging, and collects the leftovers of crashed runs. A project still on a fixed database name has simply not adopted it — **port the base-repo solution rather than inventing a local one** (see the `contributing-to-lt-framework` skill).
+
+Things to preserve when porting:
+
+- **The drop guard.** A test setup that drops "whatever the URI points at" is dangerous, because a running `lt dev` session exports `NSC__MONGOOSE__URI` / `MONGODB_URI` pointing at the **development** database — a suite started in that shell would wipe the developer's data. Refuse to drop any database whose name does not look disposable (`/(e2e|ci|test|acctest)/i`).
+- **Derived databases.** A spec that needs its own database must derive it from the run's database (`deriveTestDbUri(...)`), never invent a global name: a fixed name is shared by concurrent runs, and its leftovers are collected by nothing — an aborted run skips the spec's own cleanup, and the databases pile up (one real machine had accumulated ~140).
+- **The startup sweep + run governor (11.29.0+).** `tests/global-setup.ts` additionally (a) sweeps stale leftover DBs of this project BEFORE the run (dead-PID/age guarded) — this is what survives SIGKILL and `--reporter` overrides, and (b) acquires a machine-wide e2e slot (`tests/e2e-run-slots.ts`, `<tmpdir>/lt-e2e-run-slots`) so concurrent `check` runs from parallel sessions queue instead of starving each other. **A run printing `[e2e-governor] waiting for a free e2e slot` every 15s is QUEUED, not hung** — do not kill it and do not misread it as a deadlock. The config also drops to low-resource mode (reduced forks) when another run is active.
+
+### Step 6.7 — `api · test` looks deadlocked (0% CPU, no output)? It is usually a retry grind
+
+A spec file whose app/socket state broke (historically: resource starvation from overlapping runs) grinds through `(1+retry)` attempts × `testTimeout` × tests-per-file — with `retry: 5` that was up to an hour at 0% CPU, which the watchdog kills as "workers idle". Base repos now ship `retry: 2` and the run governor removes the starvation trigger. If you still see it: check `pgrep -f vitest` for a single surviving fork at 0% CPU, read which spec file last logged, and re-run that file alone. Never raise `retry` to paper over it.
+
 ### Step 7 — Test-duplication avoidance
 
 Tests must not run twice if `check` already covered them on an unchanged working tree.

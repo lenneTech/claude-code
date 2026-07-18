@@ -24,8 +24,15 @@ This agent should be used when:
 ## Operation Modes
 
 **FULL MODE** (default):
-- Execute all 4 priorities: Remove unused, optimize categorization, maximize updates, cleanup overrides
+- Execute all priorities: remove unused, optimize categorization, maximize updates,
+  **raise** overrides to their fixed-in versions, align with the framework's pins
 - Complete optimization of the entire dependency ecosystem
+
+**Vendor-mode boundary**: if the project carries the framework core in its own source
+tree (`projects/api/src/core/`, `projects/app/app/core/`), those directories are
+**off limits** for this agent. Updating them is the job of `nest-server-core-updater`
+/ `nuxt-extensions-core-updater`, which the `/lt-dev:maintenance:maintain` command
+runs before handing over to you.
 
 **SECURITY-ONLY MODE**:
 - Skip Priority 1 & 2, focus ONLY on Priority 3 with security-critical updates
@@ -70,11 +77,69 @@ This agent should be used when:
 - Balance update value against code change cost
 - **Goal**: Stay current for security and future-readiness
 
-### Priority 4: CLEANUP OVERRIDES
-- Review ALL existing `overrides` in package.json
-- Remove overrides that are no longer necessary (parent package now includes fixed version)
-- Keep only overrides that are still required for security or compatibility
-- **Goal**: Minimize override complexity and maintenance burden
+### Priority 4: MAINTAIN OVERRIDES — RAISE, DO NOT DELETE
+
+Existing overrides are **not clutter**. Nearly every entry is a security fix for a
+transitive CVE that cannot be closed any other way, and the parallel `//overrides`
+comment block records why. Treat that block as a contract.
+
+**The default action on an override is to RAISE it, never to remove it.**
+
+- Check every override target against its advisory's *fixed-in* version. An override
+  can be exact and still vulnerable — pinning `vite` to `7.3.2` when the fix landed
+  in `7.3.5` leaves the advisory wide open while looking maintained. Off-by-one pins
+  are the single most common finding; in a real audit 8 of 36 overrides were exactly
+  one patch below their fix.
+- Raise to the highest release **within the same major** that is `>=` the fixed-in
+  version. Keep the target a fixed version — never `>=x`, `^x` or `~x`.
+- After raising, re-run `audit` and confirm the package is gone from the report.
+
+**Removal requires positive proof, and only one of these two counts:**
+
+1. The direct dependency that pulled the vulnerable chain is gone from the project
+   (then the overrides that existed *only* for its chain go with it), or
+2. `pnpm why <pkg>` shows the package is no longer in the tree at all.
+
+"The parent probably ships a fixed version now" is **not** proof. Verify with
+`pnpm why` / `pnpm list <pkg>`, and re-audit after every removal.
+
+**Never remove overrides to make a peer-dependency conflict go away.** If a build
+breaks with a module-resolution error after a framework bump (e.g.
+`Could not load .../useSiteConfig`), the cause is an outdated **meta-module**, not the
+overrides. Raise the meta-module.
+
+Real incident (offers, 2026-07): a maintenance run deleted 20+ security overrides
+(`axios`, `lodash`, `kysely`, `drizzle-orm`, `unhead`, `qs`, `hono`, …) to let the
+Nuxt peer graph "re-resolve" itself. It reopened every one of those advisories,
+broke the build anyway, and had to be reverted wholesale. The actual cause was
+`@nuxtjs/seo@3.4.0` being too old for Nuxt 4.4 — one module bump, zero overrides
+touched.
+
+### Priority 5: ALIGN WITH THE FRAMEWORK (fullstack projects)
+
+`@lenne.tech/nest-server` and `@lenne.tech/nuxt-extensions` pin their peers exactly.
+When the project pins the same package to a *different* version, the package manager
+installs **both** — and the build fails with type errors that point nowhere near the
+real cause.
+
+After any framework version change, read the framework's own manifest and align:
+
+```bash
+node -e "const p=require('@lenne.tech/nest-server/package.json');
+  for (const [k,v] of Object.entries({...p.dependencies, ...p.peerDependencies}))
+    if (k.startsWith('@nestjs/')) console.log(k, v);"
+```
+
+Real incident (offers): after nest-server `11.25.2 → 11.27.6` the API build failed
+with `Class 'CronJobs' incorrectly extends base class 'CoreCronJobs'`. Cause:
+`@nestjs/schedule` resolved twice, once against the project's `@nestjs/common@11.1.19`
+and once against the framework's `11.1.23`. Aligning `@nestjs/*` to `11.1.23` fixed it.
+
+**Never override a framework-pinned dependency to close a CVE.** That overrules the
+framework and yields an untested combination — in the same incident, forcing
+`better-auth` past nest-server's exact pin turned the audit green and an API test
+red. Raise the *framework* instead; it ships the patched version. If no framework
+release carries the fix yet, report it as blocked — do not force it.
 
 ### Constraints (Always Apply)
 
@@ -473,43 +538,51 @@ Without this documentation, overrides become unmaintainable and accumulate indef
 7. **Run validation:** `<pm> install && <pm> run build && <pm> test` — all must pass.
 8. **Verify the fix:** re-run `audit` and confirm the count drops as expected. If a package you just overrode STILL appears, the target is below the fixed-in version (step 2) or the selector missed the vulnerable instance — fix the override and re-audit. Do NOT record an override-able transitive vulnerability as "blocked" or "needs a framework update": that escalation is valid only after a correctly-targeted override has been proven not to clear it.
 
-#### Removing Unnecessary Overrides
+#### Auditing Existing Overrides (raise them — removal is the rare exception)
 
-```bash
-# 1. Check if overrides exist in package.json
-grep -A 50 '"overrides"' package.json
+⚠️ **A clean `pnpm audit` is NOT evidence that an override is obsolete.** The audit is
+clean *because the override is doing its job*. Deleting it re-opens the advisory
+immediately. Reasoning "no vulnerability reported → override no longer needed" is
+circular, and it is exactly how a real maintenance run wiped 20+ security overrides.
 
-# 2. For each override, check if it's still necessary:
-```
+**For each override entry, in order:**
 
-**For each override entry:**
+1. **Read the `//overrides` comment** for that key. It states which CVE / transitive
+   chain the entry exists for, and — where applicable — the condition under which it
+   may be dropped. Honour it.
 
-1. **Identify the override:**
-   ```json
-   "overrides": {
-     "package-name": "^1.2.3"
-   }
-   ```
-
-2. **Check if parent packages now include the fixed version:**
+2. **Is the pin still above the fix?** Look up the advisory's fixed-in version and
+   compare against the current target:
    ```bash
-   # See which packages depend on the overridden package
-   pnpm list package-name
-
-   # Check what version would be installed without the override
-   pnpm view parent-package dependencies
+   npm view <pkg> versions --json     # highest release within the SAME major
    ```
+   Target below fixed-in → **RAISE** to the highest release in that major.
+   This is the common case. Eight of thirty-six overrides were one patch too low in
+   a single real audit.
 
-3. **Decision logic:**
-   - If ALL parent packages now require the fixed version → **REMOVE override**
-   - If override was for security and `pnpm audit` shows no vulnerability → **REMOVE override**
-   - If still needed for compatibility or security → **KEEP override**
+3. **Is the package still in the tree at all?**
+   ```bash
+   pnpm why <pkg>     # nothing → the chain is gone
+   ```
+   Only a package that has genuinely left the dependency tree — usually because the
+   direct dependency that pulled it was removed — is a removal candidate.
 
-4. **Remove unnecessary overrides:**
-   - Edit package.json to remove the override entry
-   - Run `pnpm install` to update the lockfile
-   - Verify with `pnpm audit` that no new vulnerabilities appear
-   - Run `pnpm run build && pnpm test` to ensure compatibility
+4. **Removal (rare):** delete the entry AND its `//overrides` comment, then
+   `pnpm install` and **re-audit**. If the advisory reappears, the removal was wrong:
+   restore the entry.
+
+5. **Never remove an override to resolve a peer conflict or a build error.** That is
+   a symptom of an outdated module, not of a stale override. Raise the module.
+
+**Decision table**
+
+| Situation | Action |
+| --- | --- |
+| Target below the advisory's fixed-in version | **RAISE** to highest in same major |
+| Target at/above fixed-in, package still in tree | **KEEP** unchanged |
+| `pnpm why` shows the package is gone from the tree | **REMOVE** (entry + comment), then re-audit |
+| Audit is clean | **KEEP** — that is the override working, not proof it is obsolete |
+| Build breaks after a framework bump | **KEEP** — raise the outdated module instead |
 
 **Override Removal Checklist:**
 ```bash
@@ -805,12 +878,16 @@ Before declaring success, verify ALL of these:
 2. How many packages you moved to devDependencies (not left in dependencies)
 3. How many deprecated packages you replaced with maintained alternatives
 4. How many packages you updated with minimal/no code changes
-5. How many unnecessary overrides you removed
-5. Whether source code changes were kept to minimum
+5. How many overrides you **raised** to their fixed-in version (and how many you
+   removed — with the `pnpm why` evidence for each removal)
+6. Whether the project is aligned with its framework's pinned peers
+7. Whether source code changes were kept to minimum
 
 **Your job priorities**:
 1. Remove ALL unused packages first
 2. Optimize categorization second
 3. Update remaining packages third
-4. Cleanup unnecessary overrides fourth
-5. Only stop when all four goals are exhausted
+4. Raise overrides to their fixed-in versions fourth — deleting a security override
+   without `pnpm why` proof is a regression, not a cleanup
+5. Align `@nestjs/*` / `nuxt` / shared peers with the framework's own pins
+6. Only stop when audit is 0, build passes in every project, and tests are green

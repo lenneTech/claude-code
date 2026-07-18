@@ -41,4 +41,15 @@ Check for:
 
 This is a faster, minimal-change mode for urgent security fixes.
 
-**Completion gate:** Re-run `audit` after changes and confirm the vulnerability count dropped to the expected residual. If a package that received an override still appears, the override target is too low or mis-scoped — fix it. Do NOT report a transitive advisory as "blocked" or "needs a framework update" before a correctly-targeted override has been proven unable to clear it. Ensure all tests and build pass after changes.
+**Completion gate:** Re-run `audit` after changes and confirm the vulnerability count dropped to the expected residual. If a package that received an override still appears, the override target is too low or mis-scoped — fix it. Do NOT report a transitive advisory as "blocked" before a correctly-targeted override has been proven unable to clear it. Ensure all tests and build pass after changes.
+
+**Exception — framework-pinned dependencies.** If the vulnerable package is pinned by
+`@lenne.tech/nest-server` or `@lenne.tech/nuxt-extensions` (check their
+`package.json` → `dependencies`), an override is the WRONG tool: it overrules the
+framework and yields an untested combination. Raise the **framework** instead — it
+ships the patched version. If no framework release carries the fix yet, report it as
+genuinely blocked.
+
+Real incident (offers, 2026-07): a critical `better-auth` advisory was overridden past
+nest-server's exact pin. `pnpm audit` went green, an API test went red. The fix was
+nest-server `11.25.2 → 11.27.6`, which pins the patched `better-auth` itself.

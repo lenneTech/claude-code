@@ -269,6 +269,29 @@ afterAll(async () => {
 
 **Use separate test database:** `app-test` instead of `app-dev`
 
+### E2E Database Isolation — the shared-DB 401 flake (CRITICAL)
+
+E2e specs run in **parallel forks** sharing **one** database. A spec that clears a GLOBAL collection
+(BetterAuth's `jwks` signing keys, `users`, `session`, `ratelimitstates`, …) corrupts every parallel
+file mid-run → **spurious 401** / missing data. It passes in isolation and only fails under the full
+run, so it is routinely misdiagnosed as "just flaky — re-run it". **It is a real concurrency bug.**
+
+Fix = **per-worker DB isolation**: `tests/setup.ts` (a `setupFiles` entry, runs per fork before
+`config.env.ts`) appends the vitest pool id to the DB URI so each concurrent fork gets its own DB:
+
+```typescript
+if (process.env.MONGODB_URI && !/-w\d+(\?|$)/.test(process.env.MONGODB_URI)) {
+  const poolId = process.env.VITEST_POOL_ID || process.env.VITEST_WORKER_ID || '0';
+  process.env.MONGODB_URI = process.env.MONGODB_URI.replace(/(\/[^/?]+)(\?|$)/, `$1-w${poolId}$2`);
+}
+```
+
+**And** the `db-lifecycle.reporter.ts` cleanup of other runs' DBs MUST be `isPidAlive` + age guarded —
+an unconditional pattern-drop wipes a *concurrent* run's live databases.
+
+**Full mechanism, cross-run-safety proof, anti-patterns, and a review checklist:
+[reference/e2e-database-isolation.md](${CLAUDE_SKILL_DIR}/reference/e2e-database-isolation.md)**
+
 ## Framework Source Files (MUST READ before guessing)
 
 **ALWAYS read actual source code** before guessing framework behavior. lenne.tech projects ship the framework source in one of two consumption modes:

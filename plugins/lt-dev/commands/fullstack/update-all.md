@@ -87,6 +87,22 @@ Parse `$ARGUMENTS` for flags:
 - `--skip-frontend`: Skip frontend (App) update
 - `--skip-packages`: Skip package maintenance phase
 
+### Phase 0: CLI Self-Heals (unless --dry-run)
+
+Run the lt CLI's deterministic self-heals FIRST — they are NOT covered by any
+agent phase below and take ~2 seconds:
+
+```bash
+lt fullstack update
+```
+
+This idempotently (a) syncs `scripts/check.mjs` to the CLI's canonical version
+(idle-watchdog, hoisted install, summed test metrics — skips the sync when the
+file has UNCOMMITTED local edits and says so), (b) adds `.lt-dev/` to
+`.gitignore` if missing, and (c) refreshes the CLAUDE.md vendor-notice blocks.
+It also prints the mode detection, which cross-checks Phase 1. Report anything
+it changed (or skipped) in the final report's summary.
+
 ### Phase 1: Detect Modes
 
 1. **Detect project structure:**
@@ -174,8 +190,14 @@ Apply migration guides, update dependencies, fix breaking changes.
 Work fully autonomously without asking questions.
 After the version update, also sync with nest-server-starter:
 - Compare project config files against latest starter
-- Update tsconfig.json, nest-cli.json, .eslintrc if needed
-- Add new scripts from starter package.json
+- Update tsconfig.json, nest-cli.json, .oxlintrc.json (rule config incl. the
+  no-underscore-dangle allow-list), .oxlintignore if needed
+- Add new scripts from starter package.json AND update existing check/test
+  chains (check:raw, check:fix, check:naf, test, test:ci) to the starter
+  shape, preserving project-specific steps
+- Sync scripts/check.mjs (and the other scripts/ helpers) verbatim from the
+  starter — compare against the starter's CURRENT state, not just the tag
+  delta, so projects that missed earlier syncs converge too
 - Sync .env.example
 Validate: build, lint, test -- fix issues until all pass.
 ```
@@ -194,6 +216,13 @@ apply approved changes, reapply flatten-fix, validate with tsc/lint/tests.
 
 Remember the flatten-fix edge cases: index.ts, core.module.ts, test/test.helper.ts,
 common/interfaces/core-persistence-model.interface.ts.
+
+Also sync the starter toolchain alongside the core: compare scripts/check.mjs
+(and the other scripts/ helpers) plus the check/test script chains in
+package.json against the latest nest-server-starter and adopt upstream changes,
+preserving project-specific steps (e.g. check:vendor-freshness, check:swc-tdz).
+The check wrapper drifts silently otherwise — an outdated copy loses upstream
+fixes like the wedged-test watchdog and multi-vitest test counting.
 
 Work fully autonomously.
 ```
@@ -218,7 +247,12 @@ Backend path: <backend-path> (for generate-types, only if api-client is imported
 
 Execute frontend update:
 1. Install @lenne.tech/nuxt-extensions@latest
-2. Sync with nuxt-base-starter (config, components, middleware)
+2. Sync with nuxt-base-starter (config, components, middleware) — including
+   the toolchain: scripts/check.mjs verbatim from nuxt-base-template, and the
+   check chains (check:raw, check:fix, check:naf) at script-entry level,
+   preserving project-specific steps. Compare against the template's CURRENT
+   state, not just the tag delta. Convert a direct `check` chain to the
+   wrapper + `check:raw` pattern if the project still has the old shape.
 3. Detect whether the frontend imports the generated api-client:
      grep -REq "from ['\"](~|\.|app)/api-client" app/
    If matches: run `pnpm run generate-types` (needs backend on port 3000).
@@ -242,6 +276,14 @@ No flatten-fix needed -- direct 1:1 file mapping.
 
 Execute the sync workflow: fetch upstream, generate diffs, categorize hunks,
 apply approved changes, validate with nuxt build + lint.
+
+Also sync the template toolchain alongside the core: compare scripts/check.mjs
+(and the other scripts/ helpers) plus the check/test script chains in
+package.json against the latest nuxt-base-starter (nuxt-base-template/) and
+adopt upstream changes, preserving project-specific steps (e.g.
+check:vendor-freshness). Older projects may still carry a direct `check` chain
+without the scripts/check.mjs wrapper — convert them to the wrapper +
+`check:raw` pattern the template ships.
 
 Work fully autonomously.
 ```
@@ -271,7 +313,7 @@ differently). Validate after each change. Do not touch framework packages
 were already updated in previous phases.
 ```
 
-### Phase 6: CLAUDE.md Sync
+### Phase 6: CLAUDE.md + Workspace Toolchain Sync
 
 Sync CLAUDE.md files from upstream starters:
 
@@ -284,22 +326,41 @@ Sync CLAUDE.md files from upstream starters:
 Only sync the targets that were actually updated. Use section-level merge
 (keep project-specific customizations, add new upstream sections).
 
+Then sync the workspace-ROOT toolchain from `lenneTech/lt-monorepo` — no other
+phase covers the root level, and it drifts silently otherwise (a real case:
+projects whose root check.mjs predated the wrapper-member fix ran the root
+check with the api project silently dropped — "api tests never ran"):
+
+| Source (`lt-monorepo`) | Target (root) |
+|------------------------|---------------|
+| `scripts/check.mjs` | `scripts/check.mjs` |
+| `scripts/check-workspace-consistency.mjs` | `scripts/check-workspace-consistency.mjs` |
+| `scripts/check-packagemanager-pin.mjs` | `scripts/check-packagemanager-pin.mjs` |
+| `package.json` -> check/check:raw/check:fix/check:naf/check:workspace/check:pin | root `package.json` scripts (merge, keep project-specific entries) |
+
+Copy the scripts/ files verbatim (they are generic and carry no project
+customizations). For package.json, merge at the script-entry level. Verify
+afterwards that `pnpm run check:workspace` and `pnpm run check:pin` pass —
+if check:pin fails on CI files, align them with the corepack-free derive-line
+pattern from the current starters.
+
 ### Phase 7: Cross-Validation
 
-1. **Build both projects:**
+1. **Run the canonical workspace check** (from the workspace root):
    ```bash
-   cd <backend-path> && pnpm run build
-   cd <frontend-path> && pnpm run build
+   pnpm run check
    ```
+   This supersedes separate per-project build/test runs: the report-driven
+   wrapper executes audit + format + lint + unit/API tests + build +
+   server-start for BOTH subprojects, with the idle-watchdog guarding the test
+   steps and the e2e-run governor queuing against parallel sessions. A run
+   printing `[e2e-governor] waiting for a free e2e slot` every 15s is QUEUED
+   behind another session's tests, not hung — let it wait. Must exit 0; apply
+   the `running-check-script` skill's iterate-until-green loop on failures.
 
-2. **Run tests:**
-   ```bash
-   cd <backend-path> && pnpm test
-   ```
+2. **Confirm the security audit** (use the project's own package manager) in each subproject — the residual vulnerability count must match what Phase 5 reported as expected. A package that received an override but still appears means the override target is too low or mis-scoped; do not sign off the update until it is fixed or explicitly accepted with a documented reason.
 
-3. **Confirm the security audit** (use the project's own package manager) in each subproject — the residual vulnerability count must match what Phase 5 reported as expected. A package that received an override but still appears means the override target is too low or mis-scoped; do not sign off the update until it is fixed or explicitly accepted with a documented reason.
-
-4. **Verify type generation works — conditional:**
+3. **Verify type generation works — conditional:**
    ```bash
    cd <frontend-path>
    if grep -REq "from ['\"](~|\.|app)/api-client" app/; then
@@ -312,6 +373,17 @@ Only sync the targets that were actually updated. Use section-level merge
    the generated api-client is pure noise — the output is an unused
    reference artifact, and the prettier/oxfmt format difference surfaces
    as a false `check` failure the operator has to chase.
+
+4. **Run the environment diagnostics** (from the workspace root):
+   ```bash
+   lt dev doctor
+   ```
+   Post-update it verifies exactly what the update was supposed to fix:
+   `scripts/check.mjs` matches the canonical CLI version (drift warning),
+   the Playwright global-setup allow-list is ticket/shard-safe, and the
+   slug/registry/Caddy state is consistent. Treat every WARN as a report
+   item — fix what the update caused; pre-existing environment WARNs
+   (e.g. Caddy service issues) are reported but do not block sign-off.
 
 ### Phase 8: Report
 

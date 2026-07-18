@@ -464,6 +464,24 @@ the original migration if missed):
    time equivalent appears, the wrapper package no longer pulls X transitively
    — add X as a direct dep, even if no app code imports it directly.
 
+**Wrapper parity (also for projects already on the modern stack):** a project
+can be fully `vitest + oxlint + oxfmt` and still carry OUTDATED copies of the
+`scripts/check.mjs` orchestrator family — they drift silently because version
+diffs between the crossed tags miss fixes the project never received. Compare
+against the CURRENT state (not the tag delta) and adopt verbatim:
+
+- `<api-path>/scripts/check.mjs` from nest-server-starter
+- `<frontend-path>/scripts/check.mjs` from nuxt-base-starter
+  (`nuxt-base-template/`) — convert a direct `check` chain to the wrapper +
+  `check:raw` pattern if the project still has the old shape
+- root `scripts/check.mjs` + `scripts/check-workspace-consistency.mjs` +
+  `scripts/check-packagemanager-pin.mjs` from lt-monorepo, plus the root
+  package.json check chains (merge, keep project-specific entries)
+
+Known drift symptom: an old root check.mjs SILENTLY DROPS members whose
+`check` is itself the wrapper — the api tests then never run at root level
+while everything looks green.
+
 After the toolchain migration, run `npm run check` (or `pnpm run check`) from
 the monorepo root. **The expected end state is**:
 
