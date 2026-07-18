@@ -50,15 +50,30 @@ exists — the publish.yml action takes minutes.
   "no identities" push via HTTPS:
   `git -c credential.helper='!gh auth git-credential' push https://github.com/lenneTech/<repo>.git <branch>`.
   `gh release create` is unaffected.
-- **Dependency maintenance:** per repo via the `lt-dev:npm-package-maintainer`
-  agent (FULL mode, skill `maintaining-npm-packages`) — the agent updates,
-  audits and iterates `check` to green but **never commits** (the orchestrator
-  commits and releases in a controlled way).
+- **Dependency maintenance:** per repo via the `/lt-dev:maintenance:maintain`
+  command (FULL) — it raises the lenne.tech **frameworks first** (npm + vendor
+  core), aligns their pinned ecosystem, and only then hands off to the
+  `lt-dev:npm-package-maintainer` agent (skill `maintaining-npm-packages`) for
+  the surrounding packages, iterating `check` to green. Framework-first is not
+  optional: a CVE inside a framework-pinned dependency cannot be fixed with an
+  `override`, only by raising the framework. Maintenance **never commits** (the
+  orchestrator commits and releases in a controlled way). For a repo that IS a
+  framework (nest-server, nuxt-extensions) the framework phase is a no-op and
+  it degrades to plain package maintenance.
 - **Never force-push/squash** where the flow does not call for it; the
   nest-server PR is merged explicitly WITHOUT squash (merge commit).
 - **Version convention for npm packages:** set the version manually in
   `package.json`, then `pnpm i`/`npm i` (lockfile!), commit message exactly
   `NEW_VERSION: COMMIT_MESSAGE` (e.g. `1.11.0: update deps, fix X`).
+- **Commit message:** the CONVENTION is non-negotiable — `NEW_VERSION: MESSAGE`
+  for npm packages, conventional-commits for templates (so
+  `commit-and-tag-version` derives the bump), and the fixed
+  `Updated to nest-server version <X.Y.Z>` for a nest-server-starter version
+  bump. `/lt-dev:git:commit-message` is the recommended helper for crafting the
+  descriptive part — but it is a helper, not a gate: skip it when the change
+  already dictates an obvious, convention-compliant message (a focused one-line
+  fix, or the fixed starter message). How you arrive at the wording is free;
+  the convention is not.
 - **Language:** every published artifact — release notes, commit messages,
   PR bodies, migration guides, descriptions — is written in **English**.
 - **Release notes are for CONSUMERS, not for the log.** Audience: developers
@@ -80,14 +95,14 @@ exists — the publish.yml action takes minutes.
 
 ### nuxt-extensions (npm package `@lenne.tech/nuxt-extensions`)
 
-1. Maintenance (agent) → `pnpm i` → `pnpm run check` green.
+1. Maintenance (`/lt-dev:maintenance:maintain`) → `pnpm i` → `pnpm run check` green.
 2. New version in `package.json`, `pnpm i`.
 3. `git add . && git commit -am 'NEW_VERSION: MESSAGE'` → push (main).
 4. `gh release create` for NEW_VERSION → publish.yml publishes to npm.
 
 ### nest-server (npm package `@lenne.tech/nest-server`, branch `develop`)
 
-1. Work on `develop`. Maintenance (agent) → `pnpm i` → `pnpm run check` green.
+1. Work on `develop`. Maintenance (`/lt-dev:maintenance:maintain`) → `pnpm i` → `pnpm run check` green.
 2. New version in `package.json`, `pnpm i`.
 3. **Migration guide**: create `migration-guides/<old>-to-<new>.md` following
    `TEMPLATE.md` — even for dependency-only releases (short: "no code changes
@@ -99,7 +114,7 @@ exists — the publish.yml action takes minutes.
 
 ### lt-monorepo (template, not an npm package)
 
-1. Maintenance (agent) → `pnpm run check` green.
+1. Maintenance (`/lt-dev:maintenance:maintain`) → `pnpm run check` green.
 2. `git add . && git commit -am 'MESSAGE'`.
 3. `pnpm run release[:minor|:major]` (commit-and-tag-version) →
    `git push --follow-tags origin main` (HTTPS fallback applies — the release
@@ -107,7 +122,7 @@ exists — the publish.yml action takes minutes.
 
 ### lt CLI (npm package `@lenne.tech/cli`)
 
-1. Maintenance (agent) → `npm run check` green (note: npm, not pnpm; the
+1. Maintenance (`/lt-dev:maintenance:maintain`) → `npm run check` green (note: npm, not pnpm; the
    audit gate aborts on ANY finding — fix via `overrides` + the `//overrides`
    doc object, see cli/CLAUDE.md).
 2. New version in `package.json`, `npm i`.
@@ -118,7 +133,7 @@ exists — the publish.yml action takes minutes.
 
 0. **Wait** until `npm view @lenne.tech/nuxt-extensions version` shows the new version.
 1. Bump the dependency in `nuxt-base-template/package.json`.
-2. Maintenance (agent) → repo root: `pnpm i` + `pnpm run check`; additionally
+2. Maintenance (`/lt-dev:maintenance:maintain`) → repo root: `pnpm i` + `pnpm run check`; additionally
    `cd nuxt-base-template && pnpm i && pnpm run check`.
 3. Optional but recommended before UI-lib bumps: `pnpm run test:e2e` in the
    template (Playwright is NOT part of `check`).
@@ -134,7 +149,7 @@ exists — the publish.yml action takes minutes.
    nest-server version (starter version == nest-server version, lock-step).
 2. `pnpm run update` → apply the relevant migration guides from
    `nest-server/migration-guides/` → `pnpm run check` green.
-3. Maintenance (agent) → `pnpm run check` again.
+3. Maintenance (`/lt-dev:maintenance:maintain`) → `pnpm run check` again.
 4. Commit: on a nest-server version change exactly
    `Updated to nest-server version <X.Y.Z>`, otherwise a normal message →
    push main.
@@ -147,10 +162,12 @@ nest-server-starter; nuxt-extensions → nuxt-base-starter). The target repo
 is auto-detected from the current working directory (origin remote matched
 against the six base repos) or passed explicitly. Differences to the full
 cycle: uncommitted changes in the source repo are the payload (not a
-preflight error — but stop on unrelated-looking files), the smoke test is
-opt-in instead of mandatory, and the chain ends after the direct consumers.
-Everything else — maintenance agent before release, no-change gate,
-release-note conventions, propagation waits — applies unchanged.
+preflight error — but stop on unrelated-looking files); maintenance is an
+interactive gate — the command ASKS "publish directly" vs. "maintain first"
+(`/lt-dev:maintenance:maintain`) rather than auto-running it; the smoke test is
+opt-in instead of mandatory; and the chain ends after the direct consumers.
+Everything else — the no-change gate, commit-message convention, release-note
+conventions, propagation waits — applies unchanged.
 
 ## Validation: smoke test as release gate
 
@@ -199,6 +216,10 @@ from the local working tree.
 
 ## Related
 
+- Command `/lt-dev:maintenance:maintain` — FULL per-repo maintenance
+  (frameworks first, then packages) run before each release; never commits.
+- Command `/lt-dev:git:commit-message` — recommended helper for crafting a
+  convention-following commit message (helper, not a mandatory gate).
 - Skill `maintaining-npm-packages` — the 5 maintenance modes (agents use FULL).
 - Skill `running-check-script` — iterate `check` until green.
 - Command `/lt-dev:fullstack:smoke-test` — the release gate.
