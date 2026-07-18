@@ -68,10 +68,12 @@ while IFS= read -r f; do
   # Token-/Secret-Checks NICHT in Markdown (Tutorials zeigen legitim Beispielwerte);
   # echte Secrets gehören in .env/Config/Daten, nicht in .md.
   if [[ "$f" != *.md ]]; then
-    # 3) Secret-/Token-Zuweisungen mit echtem Wert (Platzhalter erlaubt)
-    if grep -inE '(API_?KEY|API_?TOKEN|SECRET|PASSWORD|PASSWD|AUTH_?TOKEN|ACCESS_?TOKEN|PRIVATE_?KEY|CLOCKODO_API_KEY)[[:space:]]*[:=][[:space:]]*["'"'"']?[A-Za-z0-9/+_.-]{16,}' "$f" \
-        | grep -viE "$PLACEHOLDER" | head -1 | grep -q .; then
-      report "$f" "Sieht aus wie ein echter Secret/Token-Wert (kein Platzhalter)."
+    # 3) Secret-/Token-Zuweisung mit QUOTIERTEM Literal (kein Code-Verweis wie
+    #    process.env.X oder keys.secret, kein Platzhalter). Unquotierte Secrets in
+    #    .env fängt Check 1 (Dateiname); rohe 32-Hex-Tokens fängt Check 4.
+    if grep -inE '(API_?KEY|API_?TOKEN|SECRET|PASSWORD|PASSWD|AUTH_?TOKEN|ACCESS_?TOKEN|PRIVATE_?KEY|CLOCKODO_API_KEY)[[:space:]]*[:=][[:space:]]*["'"'"'][A-Za-z0-9/+_.-]{16,}' "$f" \
+        | grep -viE "$PLACEHOLDER|process\.env|import\.meta|\.env\.|getenv" | head -1 | grep -q .; then
+      report "$f" "Sieht aus wie ein echter Secret/Token-Wert (quotiertes Literal, kein Platzhalter)."
     fi
     # 4) Freistehende 32-Hex-Tokens (z. B. Clockodo-API-Key = 32 hex). Genau 32,
     #    von Nicht-Hex umgeben → schließt 40-stellige Git-SHAs aus.
