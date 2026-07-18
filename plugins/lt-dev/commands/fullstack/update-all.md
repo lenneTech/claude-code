@@ -190,8 +190,14 @@ Apply migration guides, update dependencies, fix breaking changes.
 Work fully autonomously without asking questions.
 After the version update, also sync with nest-server-starter:
 - Compare project config files against latest starter
-- Update tsconfig.json, nest-cli.json, .eslintrc if needed
-- Add new scripts from starter package.json
+- Update tsconfig.json, nest-cli.json, .oxlintrc.json (rule config incl. the
+  no-underscore-dangle allow-list), .oxlintignore if needed
+- Add new scripts from starter package.json AND update existing check/test
+  chains (check:raw, check:fix, check:naf, test, test:ci) to the starter
+  shape, preserving project-specific steps
+- Sync scripts/check.mjs (and the other scripts/ helpers) verbatim from the
+  starter — compare against the starter's CURRENT state, not just the tag
+  delta, so projects that missed earlier syncs converge too
 - Sync .env.example
 Validate: build, lint, test -- fix issues until all pass.
 ```
@@ -210,6 +216,13 @@ apply approved changes, reapply flatten-fix, validate with tsc/lint/tests.
 
 Remember the flatten-fix edge cases: index.ts, core.module.ts, test/test.helper.ts,
 common/interfaces/core-persistence-model.interface.ts.
+
+Also sync the starter toolchain alongside the core: compare scripts/check.mjs
+(and the other scripts/ helpers) plus the check/test script chains in
+package.json against the latest nest-server-starter and adopt upstream changes,
+preserving project-specific steps (e.g. check:vendor-freshness, check:swc-tdz).
+The check wrapper drifts silently otherwise — an outdated copy loses upstream
+fixes like the wedged-test watchdog and multi-vitest test counting.
 
 Work fully autonomously.
 ```
@@ -234,7 +247,12 @@ Backend path: <backend-path> (for generate-types, only if api-client is imported
 
 Execute frontend update:
 1. Install @lenne.tech/nuxt-extensions@latest
-2. Sync with nuxt-base-starter (config, components, middleware)
+2. Sync with nuxt-base-starter (config, components, middleware) — including
+   the toolchain: scripts/check.mjs verbatim from nuxt-base-template, and the
+   check chains (check:raw, check:fix, check:naf) at script-entry level,
+   preserving project-specific steps. Compare against the template's CURRENT
+   state, not just the tag delta. Convert a direct `check` chain to the
+   wrapper + `check:raw` pattern if the project still has the old shape.
 3. Detect whether the frontend imports the generated api-client:
      grep -REq "from ['\"](~|\.|app)/api-client" app/
    If matches: run `pnpm run generate-types` (needs backend on port 3000).
@@ -258,6 +276,14 @@ No flatten-fix needed -- direct 1:1 file mapping.
 
 Execute the sync workflow: fetch upstream, generate diffs, categorize hunks,
 apply approved changes, validate with nuxt build + lint.
+
+Also sync the template toolchain alongside the core: compare scripts/check.mjs
+(and the other scripts/ helpers) plus the check/test script chains in
+package.json against the latest nuxt-base-starter (nuxt-base-template/) and
+adopt upstream changes, preserving project-specific steps (e.g.
+check:vendor-freshness). Older projects may still carry a direct `check` chain
+without the scripts/check.mjs wrapper — convert them to the wrapper +
+`check:raw` pattern the template ships.
 
 Work fully autonomously.
 ```
@@ -287,7 +313,7 @@ differently). Validate after each change. Do not touch framework packages
 were already updated in previous phases.
 ```
 
-### Phase 6: CLAUDE.md Sync
+### Phase 6: CLAUDE.md + Workspace Toolchain Sync
 
 Sync CLAUDE.md files from upstream starters:
 
@@ -299,6 +325,24 @@ Sync CLAUDE.md files from upstream starters:
 
 Only sync the targets that were actually updated. Use section-level merge
 (keep project-specific customizations, add new upstream sections).
+
+Then sync the workspace-ROOT toolchain from `lenneTech/lt-monorepo` — no other
+phase covers the root level, and it drifts silently otherwise (a real case:
+projects whose root check.mjs predated the wrapper-member fix ran the root
+check with the api project silently dropped — "api tests never ran"):
+
+| Source (`lt-monorepo`) | Target (root) |
+|------------------------|---------------|
+| `scripts/check.mjs` | `scripts/check.mjs` |
+| `scripts/check-workspace-consistency.mjs` | `scripts/check-workspace-consistency.mjs` |
+| `scripts/check-packagemanager-pin.mjs` | `scripts/check-packagemanager-pin.mjs` |
+| `package.json` -> check/check:raw/check:fix/check:naf/check:workspace/check:pin | root `package.json` scripts (merge, keep project-specific entries) |
+
+Copy the scripts/ files verbatim (they are generic and carry no project
+customizations). For package.json, merge at the script-entry level. Verify
+afterwards that `pnpm run check:workspace` and `pnpm run check:pin` pass —
+if check:pin fails on CI files, align them with the corepack-free derive-line
+pattern from the current starters.
 
 ### Phase 7: Cross-Validation
 

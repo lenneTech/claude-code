@@ -245,6 +245,20 @@ Phase 8 may fail against stale transitive deps.
 Goal: the vendored project never ships dependencies older than the upstream
 version it now mirrors.
 
+### Phase 7c: Sync Template Toolchain Scripts
+
+Syncing only the core tree lets the template toolchain drift silently. Compare
+against the latest `nuxt-base-starter` (`nuxt-base-template/`) and adopt
+upstream changes:
+
+- `scripts/check.mjs` (and the other `scripts/` helpers): copy verbatim — the
+  wrapper is generic project code.
+- `package.json` check chains (`check:raw`, `check:fix`, `check:naf`): merge at
+  script-entry level, PRESERVING project-specific steps (e.g.
+  `check:vendor-freshness`). Older projects may still carry a direct `check`
+  chain without the wrapper — convert them to the template's wrapper +
+  `check:raw` pattern.
+
 ### Phase 8: Validate
 
 ```bash

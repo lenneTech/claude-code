@@ -305,6 +305,14 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
    - Use `generating-nest-servers` skill for NestJS changes
    - Update imports, APIs, configurations
 
+5. **Sync starter toolchain to CURRENT state (not just the tag delta):**
+   - `scripts/check.mjs` (and the other `scripts/` helpers) verbatim from
+     nest-server-starter — the orchestrator family drifts silently; version
+     diffs between the crossed tags miss fixes the project never received
+   - `package.json` check/test chains (`check:raw`, `check:fix`, `check:naf`,
+     `test`, `test:ci`) at script-entry level, PRESERVING project-specific
+     steps (e.g. `check:vendor-freshness`, `check:swc-tdz`)
+
 ### Phase 4: Validation Loop
 
 ```

@@ -297,6 +297,22 @@ Phase 8 fails against stale transitive deps.
 Goal: the vendored project never ships dependencies older than the upstream
 version it now mirrors.
 
+### Phase 7c: Sync Starter Toolchain Scripts
+
+Syncing only the core tree lets the starter toolchain drift silently. Compare
+against the latest `nest-server-starter` and adopt upstream changes:
+
+- `scripts/check.mjs` (and the other `scripts/` helpers): copy verbatim — the
+  wrapper is generic project code. An outdated copy loses upstream fixes such
+  as the wedged-test watchdog, multi-vitest test counting, and the
+  wrapper-member resolution.
+- `package.json` check/test chains (`check:raw`, `check:fix`, `check:naf`,
+  `test`, `test:ci`): merge at script-entry level, PRESERVING project-specific
+  steps (e.g. `check:vendor-freshness`, `check:swc-tdz`).
+- Lint/format config (`.oxlintrc.json`, `.oxlintignore`): adopt upstream rule
+  changes — a stale `no-underscore-dangle` allow-list makes the vendored core
+  emit dozens of warnings that upstream lints clean.
+
 ### Phase 8: Validate
 
 ```bash
