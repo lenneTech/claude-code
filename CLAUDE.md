@@ -356,3 +356,19 @@ Run `/lt-dev:plugin:check` periodically or before releases to verify:
 - [ ] **CLAUDE.md**: Repository structure matches actual layout
 - [ ] **CLAUDE.md**: Configuration file docs are current
 - [ ] All cross-references between elements are valid
+
+## 🔒 Sicherheit: Keine Kundendaten/Secrets im öffentlichen Marktplatz
+
+**Dieses Repo ist ÖFFENTLICH.** NIEMALS committen: echte Kundennamen/Kundenlisten, Projekt-/Ticket-Zuordnungen mit Kundenbezug, geschäftssensible Notizen (Abrechnungs-/Vertragsdetails), API-Tokens/Secrets, `.env`-Dateien, lokale `/Users/<name>/`-Pfade oder sonstige personenbezogene Daten.
+
+Plugins liefern NUR **anonymisierte Beispiele** (ohne Rechtsform, z. B. „Beispielkunde", „Muster-Kunde"). Echte Stammdaten werden pro Nutzer LOKAL generiert (z. B. `~/.lt-time`) oder liegen in PRIVATEN Repos — nie im Marktplatz.
+
+**Commit/Push in dieses Repo IMMER nur mit ausdrücklicher Freigabe des Maintainers.**
+
+**Schutzschichten** (nach dem Klonen einmalig `scripts/install-hooks.sh` ausführen):
+- `scripts/scan-secrets.sh` — Scanner (Secrets, 32-Hex-Tokens, `/Users/`-Pfade, Kunden-Roster mit Rechtsform).
+- `.githooks/pre-commit` + `.githooks/pre-push` — blocken lokal vor Commit/Push.
+- `.github/workflows/secrets-guard.yml` — CI-Backstop (serverseitig, lokal nicht umgehbar).
+- Empfohlen serverseitig: Branch-Schutz auf `main` (PR-Pflicht + grüner „Secrets & Client-Data Guard"-Check, keine Direct-/Force-Pushes) sowie GitHub **Secret Scanning + Push Protection**.
+
+Fehlalarm? Datei/Muster in `.secrets-allow` eintragen — mit Bedacht und Review.

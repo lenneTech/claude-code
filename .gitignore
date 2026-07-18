@@ -3,3 +3,15 @@ bun.lockb
 .DS_Store
 .idea/
 .claude/worktrees/
+
+# --- Sicherheit: niemals Secrets/lokale Daten committen (öffentliches Repo!) ---
+.env
+*.env
+!*.env.example
+.secrets-allow.local
+# Lokale Zeiterfassungs-Daten (lt-time) gehören NIE ins Repo
+.lt-time/
+**/data/clockodo.json
+**/data/calendar.json
+**/token.json
+**/credentials.json

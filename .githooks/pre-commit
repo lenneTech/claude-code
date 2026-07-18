@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Blockt Commits mit Secrets/Kundendaten (öffentlicher Marktplatz!).
+exec "$(git rev-parse --show-toplevel)/scripts/scan-secrets.sh" --staged

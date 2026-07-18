@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Letzte Verteidigungslinie vor dem Push in ein ÖFFENTLICHES Repo.
+exec "$(git rev-parse --show-toplevel)/scripts/scan-secrets.sh" --all
