@@ -74,6 +74,10 @@ The comprehensive guide for the full lenne.tech fullstack ecosystem — covering
 
 Both documents reference each other and are kept in sync with CLI releases.
 
+## For lenne.tech team members
+
+Authorized lenne.tech team members have access to **additional internal plugins** via a private, unlisted marketplace (separate from the public `lenne-tech` marketplace). Access and setup are covered in internal onboarding — ask your team lead if you don't have it yet.
+
 ## License
 
 MIT - lenne.tech GmbH
