@@ -38,6 +38,12 @@ exists — the publish.yml action takes minutes.
   tooling pins — justifies a new version; do not second-guess whether a
   change is "release-worthy". An unchanged repo is reported as
   "already current — no release" and skipped.
+  The reference is the PUBLISHED ARTIFACT: for npm packages, commits that
+  cannot reach the tarball (outside the package.json `files` set — e.g.
+  `.claude/agent-memory/**`, CI config) do not trigger a release of their
+  own; verify with `npm pack --dry-run` when unsure. Such commits simply
+  ride along with the next real release. For templates the artifact is the
+  repo itself, so every commit counts.
 
 - **Push channel:** the SSH agent is frequently empty (1Password requires an
   interactive approval). ALWAYS check (`timeout 5 ssh-add -l`); on
