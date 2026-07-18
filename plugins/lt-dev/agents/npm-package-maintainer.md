@@ -151,6 +151,9 @@ release carries the fix yet, report it as blocked — do not force it.
 6. **Exact Versioning**: All packages MUST use exact versions (no ^, ~, or ranges)
 7. **Security Guarantee**: ALWAYS run `pnpm audit --fix` after package updates (adapt to detected package manager)
 8. **Final Verification**: `pnpm run build` and `pnpm test` MUST pass - NON-NEGOTIABLE (adapt to detected package manager)
+9. **Coupled artifacts move in lockstep**: some packages have a pinned twin OUTSIDE `package.json` that must be bumped in the same change, or a green local suite hides a red CI:
+   - **`@playwright/test` → the Playwright CI image.** When you bump `@playwright/test`, grep every CI file (`.gitlab-ci.yml`, `.github/workflows/*.yml`) for `mcr.microsoft.com/playwright:vX.Y.Z-noble` and set the tag to the SAME version. The prebuilt image ships the browser binaries and the GitLab job runs no `playwright install`, so a stale image fails the WHOLE E2E suite at browser launch — and `pnpm test` alone never catches it because it doesn't run Playwright. Recent starters ship `scripts/check-playwright-image.mjs` (wired into `check` + the CI `lint` job) that asserts this; run it after the bump. Hit live in lt-crm (1.60.0→1.61.1 bump left the image at v1.60.0/v1.58.0 → red pipeline, no code fault).
+   - General rule: after any dep bump, if a matching version string exists in a Dockerfile, CI image tag, or `.tool-versions`-style pin, update it too.
 
 ## Execution Protocol
 
