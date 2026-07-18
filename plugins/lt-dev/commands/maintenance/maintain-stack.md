@@ -38,12 +38,12 @@ Parallelisierung erlaubt (getrennte Verzeichnisse); CPU-schwere `check`-Läufe
 max. 2 gleichzeitig. `--release-as` steuert die Version (Default: aus
 Diff-Analyse ableiten; Dependency-only ⇒ patch).
 
-**Release-Gate pro Repo (Skill-Regel "No change → no release"):** Nach der
-Maintenance entscheiden — nur bei echter Änderung am veröffentlichten
-Artefakt (Dependencies/Code/Scaffold-Dateien) wird versioniert + released.
-Reine Tooling-Metadaten (z. B. pnpm-Pin) werden committet, aber NICHT
-released; unveränderte Repos werden als "already current — no release"
-übersprungen.
+**Release-Gate pro Repo (Skill-Regel "No change → no release"):** Nur ein
+Repo, in dem sich WIRKLICH NICHTS geändert hat (Working Tree clean UND keine
+Commits seit der letzten released Version), wird als "already current — no
+release" übersprungen — niemals eine Version ohne jegliche Änderung mineten.
+JEDE echte Repo-Änderung (Dependencies, Code, Scripts, Lockfile, Tooling-Pins)
+rechtfertigt eine neue Version.
 
 ### Phase 2 — npm-Propagation
 
