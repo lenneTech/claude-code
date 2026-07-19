@@ -48,6 +48,13 @@
 - Use `fill` and `click` tools to authenticate
 - Then navigate back to intended page
 
+## Cleanup & Tab Economy
+
+The Chrome DevTools MCP drives a **real Chrome instance** — every `new_page` is a live tab consuming memory until closed. Keep the footprint minimal and release it when done:
+
+- **One tab, reused.** Open the app once with `new_page`, then move between pages with `navigate_page`. Do not stack a fresh tab per check. `list_pages` shows what is open; close any surplus with `close_page`.
+- **Close the browser after verifying.** When you finish verifying the feature(s), `close_page` every tab you opened so the browser does not linger idle for the rest of the session — the same discipline you apply to dev servers. See [managing-dev-servers](../../managing-dev-servers/SKILL.md).
+
 ## Nuxt UI MCP (Component Documentation)
 
 **Use the Nuxt UI MCP tools for component documentation:**

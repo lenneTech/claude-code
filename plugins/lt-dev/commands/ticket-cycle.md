@@ -58,12 +58,29 @@ All flags are optional. The command splits arguments into groups and forwards ea
 
 Create a TodoWrite plan with these items:
 
+0. Pre-Flight — Stale-Leftover-Branch-Cleanup + Basis aktualisieren (STEP 0.5)
 1. Phase A — `/lt-dev:take-ticket` (pick, branch, TDD, tests, check, re-analyse)
 2. Phase B (optional) — `/lt-dev:review`
 3. Phase C — Browser-Validation-Walk via `validating-changes-in-browser` skill
 4. Manuelle Nachtest-Anleitung + Freigabe-Gate (Änderungs-Zusammenfassung, Credentials, Testdaten, Schritt-für-Schritt)
 5. Phase D — Merge-Strategie wählen + Auto-Merge (`/lt-dev:git:ship`) ODER Reviewer-Handoff (`/lt-dev:dev-submit` + Linear-/MR-Assign)
 6. Final consolidated summary
+
+### STEP 0.5 — Pre-Flight: Stale-Leftover-Branch-Cleanup + Basis aktualisieren
+
+Runs **before** STEP 1, only in the current worktree. A previous cycle may have **shipped** its ticket (branch merged, remote source branch auto-deleted) yet left the **local** feature branch still checked out and the local base branch un-pulled — so the worktree is stale: the next pick would branch off outdated code, or worse, stack a new ticket on top of a dead leftover branch. Clean this up first — but **never discard unmerged work**.
+
+1. **Resolve the base branch** (the `--base=` override, else auto-detect `dev` → `develop` → `main` → `master`), then `git fetch origin --quiet`.
+2. **Is HEAD a stale, already-shipped leftover?** Only if **all** hold:
+   - HEAD is a **feature branch**, not the base branch itself, and the working tree is **clean** (`git status --porcelain` empty).
+   - Its remote upstream is gone (`git status -b` shows `[origin/<branch>: gone]`) **or** no open MR/PR exists for it.
+   - Its content is **already in the base** — either a true ancestor (`git merge-base --is-ancestor HEAD origin/<base>` → yes), **or** squash/patch-equivalent: even when `git cherry origin/<base> HEAD` prints `+` commits (a squash-merge rewrites patch-ids, so `git branch -d` refusing is **not** proof of unmerged work), the touched files are byte-identical to the base. Verify with `git diff origin/<base> HEAD -- <files-of-those-commits>` coming back **empty** (or a `git range-diff <base-merge>~1..<base-merge> <tip>~N..<tip>` showing only metadata/message deltas).
+   - It is **not** checked out in another worktree (`git branch -vv` shows no `(…path…)` marker on it) and **not** a deliberately kept `backup/*` / `*-backup` / `*-presquash` branch.
+3. **Qualifies as a fully-merged leftover** → `git checkout <base>` → `git pull --ff-only origin <base>` → `git branch -D <leftover>`. `log()` what was deleted and the base SHA it advanced to.
+4. **Content NOT provably in the base** (genuine unmerged commits, dirty tree, or *any* doubt) → do **NOT** delete anything. Surface the finding (which commits/files are unmerged) and let the user decide. Never `-D` on uncertainty — the branch is intentionally kept for manual recovery.
+5. **HEAD is already the base branch** → `git pull --ff-only origin <base>` and continue. **HEAD is a fresh, un-shipped feature branch** (its work is NOT in the base) → leave it untouched and continue; this is real work-in-progress, not a leftover.
+
+Scope guard: this **only ever** touches the just-shipped leftover of the **current** worktree. It is never a mass purge of historical local branches, never a branch owned by another worktree, and never a `backup/*` branch.
 
 ### STEP 1 — Phase A: take-ticket
 
@@ -138,7 +155,7 @@ Skill verdict drives the cycle:
 
 - `READY-TO-SHIP` → continue to STEP 3b (manual re-test handoff), then Phase D.
 - `OPTIMIZE` → loop back to Phase A's implementation steps with the user's notes (cap iterations at **3** total across all phases). Re-run STEP 2 (review) afterwards before re-entering STEP 3.
-- `WAITING-FOR-USER` → leave `lt dev up` running, print the walked list + account registry, stop and wait for the user's next message. Do NOT enter Phase D.
+- `WAITING-FOR-USER` → leave `lt dev up` running (but the skill still closes its automation browser), print the walked list + account registry, stop and wait for the user's next message. Do NOT enter Phase D.
 - `CANCELLED` → tear the stack down, surface the closing block, stop without entering Phase D. The feature branch is intentionally left intact for manual recovery.
 
 If the skill returns `boot_failed` or `stall_guard_triggered`, surface the diagnosis verbatim and stop. Do NOT proceed to Phase D.
@@ -426,7 +443,9 @@ If `--review` ran (or the user opted in at STEP 2), include a one-line summary o
 
 ## Hard Rules
 
+- **STEP 0.5 pre-flight cleanup never discards unmerged work.** The cycle deletes a leftover local branch **only** after proving its content is already in the base (true ancestor, or squash/patch-equivalent verified by empty per-file diffs) — a squash-merge rewrites patch-ids, so `git branch -d` refusing is not proof of unmerged work; verify content, then `-D`. On any doubt, a dirty tree, another worktree's branch, or a `backup/*` branch, it deletes **nothing** and surfaces the finding instead. It is scoped to the current worktree's just-shipped leftover, never a mass purge.
 - **Limit local Playwright runs to new + affected specs to keep TDD loops fast.** Both Phase A (`take-ticket`) and Phase D (`git:ship` auto-merge path) default to `lt dev test -- <spec>` / `scripts/e2e-fast.sh -- <spec>`; the full Playwright suite is slow and runs in **CI**. Only run the full local suite when the user explicitly asks.
+- **Phase C releases its own browser — no idle Chrome survives the cycle.** The `validating-changes-in-browser` skill drives Chrome via the Chrome DevTools MCP; it reuses a single tab wherever possible (`navigate_page`, not a fresh tab per step) and `close_page`s every tab it opened once the walk concludes — on every skill verdict. This is independent of the dev-server decision: even when `lt dev up` is left running (e.g. `WAITING-FOR-USER`, or the STEP 3b "pausieren" choice) so the user can re-test, the automation browser is still closed to save resources.
 - **Never bypass `take-ticket` STEP 9.** The re-analysis user gate is the cycle's contract for completeness — if it didn't run cleanly, this command must not proceed.
 - **The manual re-test handoff (STEP 3b) always runs before Phase D on a `READY-TO-SHIP` verdict.** The cycle MUST NOT jump from the autonomous browser walk straight into merging without first emitting the manual re-test manual (Änderungs-Zusammenfassung + Credentials + Testdaten + Schritt-für-Schritt) and passing its Freigabe-Gate. The manual is assembled from Phase C's returned outputs — no second browser walk — and only the explicit "Direkt zu Phase D" choice proceeds to STEP 4.
 - **The merge-strategy gate (STEP 4a) is mandatory** unless the user passed `--auto-merge` or `--review-handoff` explicitly. The cycle MUST NOT default-to-merge without an explicit decision.

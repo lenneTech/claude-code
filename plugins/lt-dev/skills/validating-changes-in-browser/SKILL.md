@@ -46,6 +46,7 @@ Activates at the end of these workflows (invoked from each):
 7. **Ticket context block is mandatory.** Every walked list begins with a short context block stating (a) what the task / bug was in 1–3 sentences ("task summary"), (b) how it was implemented or fixed in 1–3 sentences plus the most-relevant `file:line` references ("implementation summary"), and (c) the ticket link when the originating workflow knows one (Linear URL, GitHub issue URL, file path of a `*.md` story). The user uses this block to orient themselves before re-walking — they should not need to switch context to remember what the branch is about.
 8. **URL-per-step is mandatory for UI steps.** Every step that touches a browser route MUST carry the fully-qualified URL the user navigates to (e.g. `URL: https://<slug>.localhost/users/new`). Deep links (with query params, route params, or hash fragments) include the exact form you used during the walk. The user clicks straight from the list. For non-UI steps (backend smoke pass, CLI flow), record the equivalent locator (`curl` URL + method, command line). Omit only when the step is genuinely location-less.
 9. **The user's final answer is binary in spirit:** ship or optimize further. The `AskUserQuestion` at the end always offers both — never end the workflow without that gate.
+10. **Keep the browser lean and close it when the walk ends.** Reuse a single Chrome DevTools MCP page across steps (`navigate_page`, not a fresh `new_page` per step); open a second tab only when a step truly needs two contexts at once, and `close_page` it immediately after. When the walk concludes — on **every** `AskUserQuestion` outcome — close every page you opened via `close_page` so the MCP releases the Chrome instance, even when you leave `lt dev up` running for the user's own re-test (they use their own browser). Browser-close is independent of the dev-server keep/stop decision. See [managing-dev-servers](${CLAUDE_PLUGIN_ROOT}/skills/managing-dev-servers/SKILL.md).
 
 ## Workflow
 
@@ -147,11 +148,13 @@ For non-UI tickets (backend-only, no consumer): the list is shorter — endpoint
 
 For each step, drive Chrome DevTools MCP using the `mcp__plugin_lt-dev_chrome-devtools__*` tools (NOT the Playwright-based browser MCP — see [managing-dev-servers](${CLAUDE_PLUGIN_ROOT}/skills/managing-dev-servers/SKILL.md)).
 
+**Tab economy:** open the app **once** with `new_page`, then drive every subsequent step by `navigate_page` on that same page — do not open a fresh tab per step. Spawn a second tab only when a step genuinely needs two contexts at once (two roles side-by-side, an OAuth / popup window), and `close_page` it the moment that step is done. `list_pages` shows what is open. See [managing-dev-servers → Chrome DevTools MCP — Browser-Tabs & Cleanup](${CLAUDE_PLUGIN_ROOT}/skills/managing-dev-servers/SKILL.md).
+
 Typical tool calls per step intent:
 
-- **Open the app** → `new_page` with the URL from Step 2.
+- **Open the app** → `new_page` with the URL from Step 2 (once — reuse it via `navigate_page` afterwards).
 - **Sign in as a role** → `fill_form` on the login form using the credentials from the registry built in Step 3.
-- **Navigate** → `navigate_page`.
+- **Navigate** → `navigate_page` (prefer over a new tab).
 - **Click / interact** → `click` (with `take_snapshot` first to get stable selectors), `fill`, `press_key`, `hover`, `drag`.
 - **Verify state** → `take_snapshot` (DOM tree) + `take_screenshot` (visual confirmation).
 - **Inspect console** → `list_console_messages` after the action.
@@ -243,13 +246,15 @@ Always close with `AskUserQuestion`. **Translate the question text and the four 
   3. "👀 I'll re-test myself first — wait" — pause; leave `lt dev up` running; the user will return with a verdict.
   4. "❌ Cancel — leave branch as-is" — stop, no shipping; leave the branch as-is for the user.
 
-On option 1: clean up dev servers (`lt dev down` if you started it, `pkill` non-lt processes) **after** asking the user one last time if they want to keep the stack running for a final sanity check. Then return control to the originating workflow with verdict `READY-TO-SHIP`.
+**On every outcome, close the automation browser first.** The walk is over, so `close_page` every Chrome DevTools MCP page you opened — `list_pages` should show no leftover tab. This is independent of the stack decision below: even when the dev server stays up, the browser is released (the user re-tests in their own browser).
 
-On option 2: collect the user's notes, return to the originating workflow's implementation step with that scope. After the fixes, this skill runs again from Step 4 (new list from the new diff).
+On option 1: close the browser (above), then clean up dev servers (`lt dev down` if you started it, `pkill` non-lt processes) **after** asking the user one last time if they want to keep the stack running for a final sanity check. Then return control to the originating workflow with verdict `READY-TO-SHIP`.
 
-On option 3: don't tear down the stack. Print the account registry + URLs prominently again. Stop, wait for the user's next message.
+On option 2: close the browser (above), collect the user's notes, return to the originating workflow's implementation step with that scope. After the fixes, this skill runs again from Step 4 (new list from the new diff) — a fresh `new_page` reopens the browser then.
 
-On option 4: tear down the stack the same way as option 1. Surface a closing block stating the branch is intact and unpushed (if the originating workflow normally pushes).
+On option 3: close the browser (above) but **don't** tear down the stack. Print the account registry + URLs prominently again. Stop, wait for the user's next message — they re-test in their own browser against the still-running stack.
+
+On option 4: close the browser (above), then tear down the stack the same way as option 1. Surface a closing block stating the branch is intact and unpushed (if the originating workflow normally pushes).
 
 ## Working with the originating workflow
 
@@ -291,4 +296,5 @@ This skill is **invoked from** another workflow — never the entry point on its
 - Every UI step in the list carries the fully-qualified URL the user navigates to (deep links included), so the user can click straight to the page.
 - The walked list opens with a ticket-context block (link + task summary + implementation summary) so the user knows what the branch is about without leaving the list.
 - The `AskUserQuestion` at the end is mandatory — there is no path that returns to the originating workflow without it.
+- Keep tabs to a minimum during the walk (one page, `navigate_page`) and `close_page` every automation tab once the walk ends — the browser is never left idle, regardless of whether the dev server stays up.
 - All user-facing artefacts (test plan, walked list, status labels, AskUserQuestion text + options) are translated to the language the user has been speaking in this session — never hardcode the output language.

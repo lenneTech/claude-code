@@ -1,6 +1,6 @@
 ---
 name: managing-dev-servers
-description: 'Rules for starting, monitoring, and stopping local development servers (nuxt dev, nest start, npm/pnpm run dev, pnpm build --watch, Playwright, etc.) across all lt-dev workflows. Prefers `lt dev up/down/status/tunnel` for projects registered with the lt CLI — these serve every project under stable HTTPS URLs (`<slug>.localhost`, `api.<slug>.localhost`) via Caddy (via a dedicated LaunchAgent/systemd-user unit, NOT `brew services caddy`) and inject project-specific env vars (BASE_URL, APP_URL, NUXT_PUBLIC_*, NSC__MONGOOSE__URI, NUXT_PUBLIC_STORAGE_PREFIX, HOST=127.0.0.1, NODE_EXTRA_CA_CERTS, API_URL/SITE_URL legacy aliases) so multiple lt projects can run in parallel without port collisions or auth cross-wiring. `lt dev tunnel` exposes a running project externally via a Cloudflare Quick Tunnel. Falls back to the run_in_background / pkill contract for non-lt projects to prevent orphaned processes blocking the Claude Code session ("Unfurling..."). Activates whenever a long-running process must be started for manual validation, Chrome DevTools MCP debugging, TDD iterations, framework linking, or any E2E test run. Referenced by building-stories-with-tdd, developing-lt-frontend, generating-nest-servers, and contributing-to-lt-framework.'
+description: 'Rules for starting, monitoring, and stopping local development servers (nuxt dev, nest start, npm/pnpm run dev, pnpm build --watch, Playwright, etc.) and for closing the Chrome DevTools MCP browser and minimizing tabs after tests. Prefers `lt dev up/down/status/tunnel` for lt CLI projects — stable HTTPS URLs (`<slug>.localhost`, `api.<slug>.localhost`) via Caddy, project-scoped env vars, parallel projects without port or auth cross-wiring. `lt dev tunnel` exposes a project via a Cloudflare Quick Tunnel. Falls back to the run_in_background / pkill contract for non-lt projects to prevent orphaned processes blocking the Claude Code session ("Unfurling..."). Activates whenever a long-running process starts for manual validation, Chrome DevTools MCP debugging, TDD, framework linking, or E2E, or when browser tabs must be closed / minimized after a walk. Referenced by building-stories-with-tdd, developing-lt-frontend, generating-nest-servers, validating-changes-in-browser, and contributing-to-lt-framework.'
 user-invocable: false
 ---
 
@@ -113,6 +113,21 @@ content **without** sending (jsonTransport or an `EmailService` recording mock).
 → Full details, endpoints, send-a-test-mail recipe, and CID-vs-URL logo trade-offs:
 [reference/local-email-mailpit.md](reference/local-email-mailpit.md).
 
+## Chrome DevTools MCP — Browser-Tabs & Cleanup
+
+The Chrome DevTools MCP (`mcp__…_chrome-devtools__*`) drives a **real Chrome instance**. Every `new_page` is a real tab holding a live renderer process — memory and CPU that keep running until the tab is closed. Treat the browser exactly like a dev server: minimal footprint while it runs, fully released when the work is done.
+
+**Tab economy — use as few tabs as possible:**
+
+- Open the app **once** with `new_page`, then move through every subsequent step by `navigate_page` on that same page. Do **not** spawn a fresh tab per step.
+- Open a **second** tab only when a step genuinely needs two contexts at once (e.g. comparing two roles side-by-side, an OAuth / popup window, a before/after view). Close it again with `close_page` the moment that step is over.
+- `list_pages` shows what is open; `select_page` switches the active tab. If tabs have piled up, close the surplus with `close_page` before continuing.
+
+**Close the browser after the tests:**
+
+- When the browser work for the current task is finished, close every page you opened via `close_page` so the MCP can release the Chrome instance. **A browser must never linger idle after a test walk** — that is wasted memory for the rest of the session.
+- Do this **even when you leave the dev server (`lt dev up`) running** for the user's own re-test: the user opens their own browser against the live stack, so Claude's automation browser has no reason to stay open. Server-lifecycle and browser-lifecycle are decided independently.
+
 ## Correct Pattern (for non-lt projects, or when `lt dev` is not applicable)
 
 1. **Start with `run_in_background: true`** — Claude Code tracks the process and surfaces its output on demand.
@@ -168,6 +183,7 @@ Do NOT pick a random alternative port for non-migrated projects — their hardco
 Before reporting a task complete:
 
 - [ ] If `lt dev up` was used: `lt dev down` was called (or the user explicitly agreed to leave it running)
+- [ ] Every Chrome DevTools MCP tab opened during testing was closed via `close_page` — `list_pages` shows no leftover automation tab (this is independent of the dev-server keep/stop decision)
 - [ ] All background servers started via `run_in_background: true` have been terminated with `pkill`
 - [ ] `pgrep -f "nuxt dev"` and `pgrep -f "nest start"` (and any `build --watch`) return no matches — or the user has been asked and agreed to leave them running
 - [ ] The active project's URLs are free (use `lt dev status` for lt-projects, `lsof -i :3000 -i :3001` for the default fallback) unless the user asked for a running server
