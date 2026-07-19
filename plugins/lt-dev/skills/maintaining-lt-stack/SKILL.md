@@ -148,7 +148,17 @@ exists — the publish.yml action takes minutes.
 1. Set `version` AND `@lenne.tech/nest-server` in `package.json` to the new
    nest-server version (starter version == nest-server version, lock-step).
 2. `pnpm run update` → apply the relevant migration guides from
-   `nest-server/migration-guides/` → `pnpm run check` green.
+   `nest-server/migration-guides/` → `pnpm run check` green. **"Apply the
+   migration guide" is NOT only about code changes.** A guide that says "no
+   code changes required for most projects" still routinely introduces new
+   opt-in configuration (env vars, Docker knobs) that the starter — as the
+   REFERENCE project consumers copy — must surface. So for every guide, also
+   check its "What's new / config" section against the starter's reference
+   config surfaces (`.env.example`, `docker-entrypoint.sh`, `src/config.env.ts`)
+   and document any new opt-in knob there (commented-out, default-off), even
+   when zero code lines change. A pure lock-step version bump is an incomplete
+   downstream update. Applies in publish-directly mode too (this is part of the
+   recipe, not the dependency-maintenance step that `--skip-maintenance` skips).
 3. Maintenance (`/lt-dev:maintenance:maintain`) → `pnpm run check` again.
 4. Commit: on a nest-server version change exactly
    `Updated to nest-server version <X.Y.Z>`, otherwise a normal message →
