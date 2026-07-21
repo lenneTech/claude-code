@@ -62,7 +62,7 @@ Create a TodoWrite plan with these items:
 1. Phase A — `/lt-dev:take-ticket` (pick, branch, TDD, tests, check, re-analyse)
 2. Phase B (optional) — `/lt-dev:review`
 3. Phase C — Browser-Validation-Walk via `validating-changes-in-browser` skill
-4. Manuelle Nachtest-Anleitung + Freigabe-Gate (Änderungs-Zusammenfassung, Credentials, Testdaten, Schritt-für-Schritt) — auf der "Ich teste erst manuell"-Wahl zusätzlich: Testdaten in der DB vorbereiten + Upload-Testdateien erzeugen (falls sinnvoll)
+4. Manuelle Nachtest-Anleitung + Freigabe-Gate (Änderungs-Zusammenfassung, Credentials, Testdaten, Schritt-für-Schritt) — bei der Wahl "Ich teste selbst" ist es PFLICHT, VOR dem Pausieren alle 5 Deliverables zu liefern: (a) Testdaten in der laufenden Dev-DB vorbereiten, (b) Upload-Testdateien erzeugen falls eine Upload-Fläche betroffen ist, (c) kurze verständliche Zusammenfassung, (d) Credentials mit literalen Passwörtern, (e) Schritt-für-Schritt mit klickbaren Deep-Links (was/wie/warum)
 5. Phase D — Merge-Strategie wählen + Auto-Merge (`/lt-dev:git:ship`) ODER Reviewer-Handoff (`/lt-dev:dev-submit` + Linear-/MR-Assign)
 6. Final consolidated summary
 
@@ -170,9 +170,9 @@ Phase C walked the browser flows **autonomously** and fixed what it found. This 
 
 - **Änderungs-Zusammenfassung (kurz & leicht verständlich)** ← Phase A's `task_summary` + `implementation_summary`, written so a non-author (a QA colleague) grasps *what the ticket was* and *what to verify now* in a few plain sentences — no jargon, no internal shorthand. Still carry the most-relevant `file:line` refs and every `also_fixed` entry (each flagged **vorbestehend** or **aus dieser Umsetzung**).
 - **Credentials** ← `accounts_registry` verbatim: email / password / role / *existing-seed-or-new-for-this-walk*. Every login-bound step must be reproducible without a follow-up question. Public routes are listed explicitly as `kein Login`.
-- **Testdaten** ← the concrete records each manual step acts on (`@test.com` accounts, the seeded entities) plus the active Stack URLs (App, API, DB slug) from `lt dev status`. On the "Ich teste erst manuell" path these are **actively prepared in the DB** and their real IDs baked into the deep-links — see step 4.
+- **Testdaten** ← the concrete records each manual step acts on (`@test.com` accounts, the seeded entities) plus the active Stack URLs (App, API, DB slug) from `lt dev status`. On the "Ich teste selbst" path these are **actively prepared in the DB** and their real IDs baked into the deep-links — see step 4.
 - **Testdateien für Upload** ← only when the diff touches a file-upload surface (CSV/XLSX import, document/image/avatar upload, TUS, …): the concrete sample file(s) to upload, with their absolute on-disk path. Generated in step 4 on the manual-test path. When no upload surface is affected, this section states "keine Upload-Felder betroffen — keine Testdateien nötig".
-- **Schritt-für-Schritt-Testanleitung (was / wie / warum)** ← `final_list`, **rewritten from "what I walked" into imperative "do this → expect that" steps.** Each step carries: the account to log in with, the fully-qualified URL, the **exact action** (which control, what value / which file), the **expected** result the human should observe, and a one-clause **warum** (what the step proves) so the tester understands the point, not just the mechanics. Include the `out_of_scope_findings` as a separate "offen / separat empfohlen" list.
+- **Schritt-für-Schritt-Testanleitung (was / wie / warum)** ← `final_list`, **rewritten from "what I walked" into imperative "do this → expect that" steps.** Each step carries: the account to log in with, the fully-qualified URL **rendered as a clickable markdown link** — `[<Seite / Route>](<URL>)`, so the tester clicks straight through (the session renders GitHub-flavored markdown; deep-links keep their exact query/route/hash params), the **exact action** (which control, what value / which file), the **expected** result the human should observe, and a one-clause **warum** (what the step proves) so the tester understands the point, not just the mechanics. Include the `out_of_scope_findings` as a separate "offen / separat empfohlen" list.
 
 **2. Print one structured block** (render in the user's session language; German template shown, consistent with this command's other output blocks):
 
@@ -181,33 +181,34 @@ Phase C walked the browser flows **autonomously** and fixed what it found. This 
 ║ Manuelle Nachtest-Anleitung: <ISSUE_IDENTIFIER>         ║
 ╚══════════════════════════════════════════════════════════╝
 
-🎫 Was wurde geändert (kurz & verständlich)
+Was wurde geändert (kurz & verständlich)
 - Ticket:    <ISSUE_IDENTIFIER> — <Titel>  (<Linear-/Issue-URL>)
 - Aufgabe:   <1–3 einfache Sätze: was war das Problem / die Aufgabe>
 - Zu testen: <1–2 Sätze: was soll jetzt konkret verifiziert werden>
 - Umsetzung: <1–2 Sätze: wie umgesetzt, wichtigste file:line-Referenzen>
 - Mitgefixt: <also_fixed — je "vorbestehend" / "aus dieser Umsetzung"; oder "keine">
 
-🌐 Stack & Testdaten
+Stack & Testdaten
 - App:      <URL>
 - API:      <URL>
 - DB:       <slug>-local   (Seed: @test.com)
 - Testdaten: <in der DB vorbereitete Datensätze mit ihren IDs — oder "keine">
 
-📎 Testdateien für Upload
+Testdateien für Upload
 - <absoluter Pfad zur Sample-Datei + wofür> — oder "keine Upload-Felder betroffen — keine Testdateien nötig"
 
-👥 Zugangsdaten (zum Einloggen beim Nachtesten)
+Zugangsdaten (zum Einloggen beim Nachtesten)
 - admin@test.com / TestPass123! / Admin / Seed
 - user1@test.com / TestPass123! / User  / neu für diesen Walk
 - (kein Login)   / —            / —     / öffentliche Routen
 
-📋 Schritt-für-Schritt (so testest du es selbst nach — was / wie / warum)
-1. Login als <email> → <vollständige URL> → <genaue Aktion: welches Control, welcher Wert/welche Datei> → erwartet: <Ergebnis> → prüft: <warum / was der Schritt beweist>
-2. Account: kein Login → <vollständige URL> → <Aktion> → erwartet: <Ergebnis> → prüft: <warum>
+Schritt-für-Schritt (so testest du es selbst nach — was / wie / warum)
+   (URLs als klickbare Links: [Seite/Route](vollständige URL) — inkl. Deep-Link-Query auf konkrete Datensätze)
+1. Login als <email> → [<Seite / Route>](<vollständige URL>) → <genaue Aktion: welches Control, welcher Wert/welche Datei> → erwartet: <Ergebnis> → prüft: <warum / was der Schritt beweist>
+2. Account: kein Login → [<Seite / Route>](<vollständige URL>) → <Aktion> → erwartet: <Ergebnis> → prüft: <warum>
 3. …
 
-⚠ Offen / separat empfohlen
+Offen / separat empfohlen
 - <out_of_scope_findings — oder "keine">
 ```
 
@@ -218,21 +219,24 @@ The block must be **scannable and self-contained** — the user re-walks from th
 - Question: "Manuelle Nachtest-Anleitung erstellt. Wie weiter?"
 - Options:
   1. "Direkt zu Phase D — Claude hat bereits getestet, jetzt mergen" (default) → continue to STEP 4.
-  2. "Ich teste erst manuell — pausieren" → **run the Manual-Test Preparation routine (step 4 below) FIRST**, then keep `lt dev up` running, leave the enriched manual on screen, stop and wait for the user's next message. Do **NOT** enter Phase D. When the user returns with a go, resume at STEP 4; if they report a problem, re-enter Phase A's implementation loop (counts against the **3**-iteration cap) and re-run STEP 2 → 3 → 3b.
+  2. "Ich teste selbst — Testdaten + Anleitung vorbereiten" → **run the Manual-Test Preparation routine (step 4 below) FIRST**, then keep `lt dev up` running, leave the enriched manual on screen, stop and wait for the user's next message. Do **NOT** enter Phase D. When the user returns with a go, resume at STEP 4; if they report a problem, re-enter Phase A's implementation loop (counts against the **3**-iteration cap) and re-run STEP 2 → 3 → 3b.
+     - **Never label this option merely "pausieren".** The label is what the model reads back when the answer arrives — by that point, in a long cycle, this command text may already have been compressed out of context. The work must therefore live *in the label itself*, not only in the prose here.
+     - **The option's `description` MUST spell out the obligation**, e.g.: "Claude bereitet zuerst passende Testdaten in der Dev-DB vor, erzeugt ggf. Upload-Dateien und liefert Zusammenfassung + Credentials + klickbare Schritt-für-Schritt-Anleitung — und pausiert ERST danach."
+     - **Free-text fallback:** any "Other" answer that means the user wants to test first ("teste selbst", "ich schaue erst drauf", "pausieren", "warte") routes to this option — with the identical five-deliverable obligation. Never treat such an answer as a bare pause.
   3. "Doch noch optimieren" → free-text scope; loop back to Phase A's implementation steps (cap **3** total), then re-run STEP 2 → 3 → 3b.
   4. "Abbrechen" → stop here, branch remains local, nothing merged.
 
 Only option 1 proceeds to Phase D. The manual is printed on **every** path so the user always has the reproduction steps in hand.
 
-**4. Manual-Test Preparation — run ONLY when the user chose "Ich teste erst manuell".** The point of that choice is that the user re-tests by hand; make the stack genuinely ready so they can walk every step without any setup work of their own. Prepare and (re-)output all five deliverables:
+**4. Manual-Test Preparation — run ONLY when the user chose "Ich teste selbst" (option 2, incl. any free-text equivalent).** The point of that choice is that the user re-tests by hand; make the stack genuinely ready so they can walk every step without any setup work of their own. Prepare and (re-)output all five deliverables:
 
 - **a. Passende Testdaten in der DB vorbereiten.** Seed / ensure the concrete records each manual step acts on exist in the **running dev DB** (from `lt dev status` — never the `-test` DB) with `@test.com` / obviously-fake data. Use the project's seed script (e.g. `pnpm run seed:demo` / `pnpm run seed:test-data`, pointed at the active dev DB + an `@test.com` admin) or, for a small targeted fixture, direct API calls / `mongosh` inserts against the active DB. Cover every role in the permission matrix and every entity state the steps touch (populated + empty + edge). Re-use what Phase C already seeded; only add what is missing. Capture the concrete record IDs and bake them into the deep-link URLs in the step list so each link lands on a real record.
-- **b. Testdateien zum Upload erzeugen — nur falls sinnvoll.** When a step involves a file upload (CSV/XLSX import, document/image/avatar upload, TUS), generate small, **valid** sample file(s) in the scratchpad dir and reference their absolute path in the "📎 Testdateien für Upload" section and in the relevant step. Match the format/columns/size the feature expects (a real header row for a CSV import, a tiny valid PNG/PDF for a document field). When no upload surface is touched, generate nothing and keep the "keine Upload-Felder betroffen" line.
-- **c. Kurze, leicht verständliche Zusammenfassung** of what the ticket was and what to test now (the "🎫 Was wurde geändert" block) — plain language, no jargon.
-- **d. Credentials** for every account the manual needs (the "👥 Zugangsdaten" block), with literal passwords.
-- **e. Schritt-für-Schritt-Anleitung (was / wie / warum)** with fully-qualified URLs (now pointing at the real seeded records) and, per step, the exact action, the expected result, and the reason the step exists.
+- **b. Testdateien zum Upload erzeugen — nur falls sinnvoll.** When a step involves a file upload (CSV/XLSX import, document/image/avatar upload, TUS), generate small, **valid** sample file(s) in the scratchpad dir and reference their absolute path in the "Testdateien für Upload" section and in the relevant step. Match the format/columns/size the feature expects (a real header row for a CSV import, a tiny valid PNG/PDF for a document field). When no upload surface is touched, generate nothing and keep the "keine Upload-Felder betroffen" line.
+- **c. Kurze, leicht verständliche Zusammenfassung** of what the ticket was and what to test now (the "Was wurde geändert" block) — plain language, no jargon.
+- **d. Credentials** for every account the manual needs (the "Zugangsdaten" block), with literal passwords.
+- **e. Schritt-für-Schritt-Anleitung (was / wie / warum)** with fully-qualified URLs **rendered as clickable markdown links** `[Seite/Route](URL)` (now pointing at the real seeded records — deep-links carry the concrete record IDs / query params) and, per step, the exact action, the expected result, and the reason the step exists.
 
-Then **re-emit the enriched manual block** (reflecting the prepared data, the generated upload-file paths, and the precise steps) and pause with `lt dev up` running and the automation browser closed. Never pause on this path without these five deliverables in hand — that is the contract of the "Ich teste erst manuell" choice.
+Then **re-emit the enriched manual block** (reflecting the prepared data, the generated upload-file paths, and the precise steps) and pause with `lt dev up` running and the automation browser closed. Never pause on this path without these five deliverables in hand — that is the contract of the "Ich teste selbst" choice.
 
 ### STEP 4 — Phase D: Merge-Strategie + Ship
 
@@ -298,7 +302,7 @@ If no deploy pipeline is found within 60 seconds (some providers take a moment t
 - `success` / `completed` → continue to step 3c.
 - `failed` / `cancelled` / `errored` → surface the pipeline URL and conclusion. Do **NOT** override Linear — the ticket stays on "Dev Review" (unassigned) so no one starts PO QA against a broken deploy. Print:
   ```
-  ⚠️ Deploy-Pipeline failed — Linear-Status bleibt auf "Dev Review" (unassigned).
+  Deploy-Pipeline failed — Linear-Status bleibt auf "Dev Review" (unassigned).
   Pipeline: <pipeline-url>
   Conclusion: <failed|cancelled|errored>
   Sobald das Deployment manuell repariert / re-triggered und grün ist,
@@ -380,41 +384,41 @@ Print one concise German block. The shape depends on the merge strategy.
 ║ Ticket-Cycle abgeschlossen: <ISSUE_IDENTIFIER>          ║
 ╚══════════════════════════════════════════════════════════╝
 
-🎫 Ticket
+Ticket
 - Issue:    <ISSUE_IDENTIFIER> — <Titel>
 - Status:   <"Dev Review" | "PO Review">  (vorher: "In Progress")
 - Assignee: <entfernt | Inga>
 
-🌿 Branch
+Branch
 - Feature: <FEATURE_BRANCH>  (lokal gelöscht / behalten)
 - Basis:   <BASE_BRANCH>     (auf neuestem Stand)
 
-🛠 Umsetzung
+Umsetzung
 - ACs umgesetzt: <n>/<total>
 - Iter-Loops in take-ticket STEP 9: <n>
 - Rollen-/Permission-Tests: <n>
 - Mitgenommene Änderungen: <liste oder "keine">
 
-🧪 Tests vor Merge
+Tests vor Merge
 - Unit: <n> grün
 - API:  <n> grün
 - E2E:  <n> grün
 
-📦 Pipeline
+Pipeline
 - MR/PR:    <REQUEST_URL>
 - Attempts: <n>/<MAX>
-- Final:    ✅ grün
+- Final:    grün
 
-🔀 Merge
+Merge
 - Modus:   Squash + Merge (oder: Regular Merge)
 - Commit:  <merge-commit-sha-short>
 
-🚀 Post-Merge-Deploy  (nur bei POST_MERGE_STATUS = po-review-inga)
+Post-Merge-Deploy  (nur bei POST_MERGE_STATUS = po-review-inga)
 - Pipeline: <pipeline-url>
-- Status:   ✅ grün / ⚠️ failed / ⌛ Timeout (User-Wahl)
+- Status:   grün / failed / Timeout (User-Wahl)
 - Wartezeit: <n> Min.
 
-💬 Linear-Comment
+Linear-Comment
 - Gepostet / Bearbeitet / Übersprungen
 
 Nächste Schritte (manuell):
@@ -430,31 +434,31 @@ Nächste Schritte (manuell):
 ║ Ticket-Cycle an Reviewer übergeben: <ISSUE_IDENTIFIER>  ║
 ╚══════════════════════════════════════════════════════════╝
 
-🎫 Ticket
+Ticket
 - Issue:    <ISSUE_IDENTIFIER> — <Titel>
 - Status:   "Dev Review"     (vorher: "In Progress")
 - Assignee: <REVIEWER.displayName>
 
-🌿 Branch
+Branch
 - Feature: <FEATURE_BRANCH>  (lokal noch vorhanden, nicht gemergt)
 - Basis:   <BASE_BRANCH>
 
-🛠 Umsetzung
+Umsetzung
 - ACs umgesetzt: <n>/<total>
 - Iter-Loops in take-ticket STEP 9: <n>
 - Rollen-/Permission-Tests: <n>
 - Mitgenommene Änderungen: <liste oder "keine">
 
-🧪 Tests
+Tests
 - Unit: <n> grün
 - API:  <n> grün
 - E2E:  <n> grün
 
-📦 MR/PR
+MR/PR
 - URL:       <REQUEST_URL>
 - Reviewer:  <REVIEWER.displayName>  (auf MR eingetragen: ja/nein)
 
-💬 Linear-Comment
+Linear-Comment
 - Gepostet / Bearbeitet / Übersprungen
 
 Nächste Schritte (manuell):
@@ -471,7 +475,7 @@ If `--review` ran (or the user opted in at STEP 2), include a one-line summary o
 - **Phase C releases its own browser — no idle Chrome survives the cycle.** The `validating-changes-in-browser` skill drives Chrome via the Chrome DevTools MCP; it reuses a single tab wherever possible (`navigate_page`, not a fresh tab per step) and `close_page`s every tab it opened once the walk concludes — on every skill verdict. This is independent of the dev-server decision: even when `lt dev up` is left running (e.g. `WAITING-FOR-USER`, or the STEP 3b "pausieren" choice) so the user can re-test, the automation browser is still closed to save resources.
 - **Never bypass `take-ticket` STEP 9.** The re-analysis user gate is the cycle's contract for completeness — if it didn't run cleanly, this command must not proceed.
 - **The manual re-test handoff (STEP 3b) always runs before Phase D on a `READY-TO-SHIP` verdict.** The cycle MUST NOT jump from the autonomous browser walk straight into merging without first emitting the manual re-test manual (Änderungs-Zusammenfassung + Credentials + Testdaten + Schritt-für-Schritt) and passing its Freigabe-Gate. The manual is assembled from Phase C's returned outputs — no second browser walk — and only the explicit "Direkt zu Phase D" choice proceeds to STEP 4.
-- **When the user picks "Ich teste erst manuell" (STEP 3b option 2, or the Phase C `WAITING-FOR-USER` verdict), the cycle MUST first run the Manual-Test Preparation routine and hand over all five deliverables before pausing:** (1) passende Testdaten in der laufenden Dev-DB vorbereitet (nicht die `-test`-DB), (2) Upload-Testdateien erzeugt *falls* die Änderung ein Upload-Feld betrifft (sonst bewusst keine), (3) kurze, leicht verständliche Zusammenfassung von Ticket + Testziel, (4) Credentials aller benötigten Accounts mit literalen Passwörtern, (5) Schritt-für-Schritt-Anleitung mit vollständigen URLs (auf echte Datensätze zeigend) und genauem was/wie/warum je Schritt. Pausing on this path without these five is a contract violation.
+- **When the user picks "Ich teste selbst" (STEP 3b option 2 — incl. any free-text equivalent — or the Phase C `WAITING-FOR-USER` verdict), the cycle MUST first run the Manual-Test Preparation routine and hand over all five deliverables before pausing:** (1) passende Testdaten in der laufenden Dev-DB vorbereitet (nicht die `-test`-DB), (2) Upload-Testdateien erzeugt *falls* die Änderung ein Upload-Feld betrifft (sonst bewusst keine), (3) kurze, leicht verständliche Zusammenfassung von Ticket + Testziel, (4) Credentials aller benötigten Accounts mit literalen Passwörtern, (5) Schritt-für-Schritt-Anleitung mit vollständigen URLs (auf echte Datensätze zeigend) und genauem was/wie/warum je Schritt. Pausing on this path without these five is a contract violation.
 - **The merge-strategy gate (STEP 4a) is mandatory** unless the user passed `--auto-merge` or `--review-handoff` explicitly. The cycle MUST NOT default-to-merge without an explicit decision.
 - **The post-merge-status gate (STEP 4b.1) is mandatory** in the auto-merge path unless the user passed `--post-merge-status=…`. The cycle MUST NOT silently pick a Linear state when two are configured.
 - **A ticket is DONE only after a clean, healthy dev deploy (STEP 4b.3) — for EVERY ticket, including pure dev-tooling / config-only / test-only changes.** The auto-merge path MUST NOT report the cycle complete, and MUST NOT transition / push the Linear status forward, until (a) the post-merge deploy pipeline on `<BASE_BRANCH>` is green AND (b) the **new** containers/replicas of the merged commit are verifiably running and healthy. A green merge or a green deploy *job* is not enough: the platform's aggregate "healthy" count can include old/superseded containers that keep serving while the new ones crash-loop (observed: a "3/3 healthy" deploy while the new API crash-looped and Swarm served the 22h-old build — dev stale for ~22h, unnoticed). Verify container health against the merged image tag (`get_deployment_status` + `list_deployment_containers` in this stack). If the new containers are unhealthy or the deploy failed/timed out, the ticket stays on "Dev Review" (unassigned), the crash logs are surfaced, and the **root cause is fixed** (in scope even when pre-existing/infra; grund-repo if stack-wide) before the ticket counts as done.
