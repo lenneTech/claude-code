@@ -215,9 +215,18 @@ from the local working tree.
 - **Starter lockfiles:** after bumping a dependency in the template ALWAYS
   run `pnpm i` there too (the template has its OWN lockfile next to the repo
   root's).
-- **Agent memory side-effects:** maintainer agents may write
-  `.claude/agent-memory/**` files into the repo — commit ONLY
-  `package.json`/lockfile (+ intended files), never the agent memory.
+- **Agent memory — decide by whether the repo already tracks it, never leave it
+  in unstaged limbo.** Reviewer/maintainer agents write `.claude/agent-memory/**`
+  (findings, measurements, recurring pitfalls). First check whether the repo
+  ALREADY tracks such files: `git ls-files .claude/agent-memory/ | head -1`.
+  - **Already tracked (established practice):** no user question needed — just
+    judge whether the new/changed notes are sensible (genuine, reusable
+    knowledge). Sensible → keep. Throwaway scratch → `git checkout --` / delete.
+    Do not ask; the team has already opted into tracking them.
+  - **None tracked before (would introduce the directory):** this is a repo-
+    hygiene decision the user owns — ASK via `AskUserQuestion` with three
+    options: **1. commit** (start tracking them), **2. leave** (keep as local
+    uncommitted, e.g. still gitignore-pending), **3. delete**.
 - **Release scripts that push themselves** (nuxt-base-starter `release`):
   with an empty SSH agent their embedded `git push` hangs — run the version
   tool directly and push via HTTPS yourself.
