@@ -47,7 +47,7 @@ All flags are optional. The command splits arguments into groups and forwards ea
 | `--auto-merge` | this command | Skip the STEP 4a prompt and take the auto-merge path |
 | `--review-handoff[=<linear-user>]` | this command | Skip the STEP 4a prompt and take the reviewer-handoff path. If a user identifier is supplied, skip the reviewer picker too |
 | `--post-merge-status=<dev-review\|po-review-inga>` | this command | Skip the STEP 4b prompt (auto-merge path only). `dev-review` = "Dev Review" + unassign (default). `po-review-inga` = "PO Review" + assign Inga (only after the dev deploy is green) |
-| `--max-deploy-wait=<minutes>` | this command | Polling cap for the post-merge deploy pipeline before asking the user how to proceed (only relevant when `POST_MERGE_STATUS = po-review-inga`). Default 30 |
+| `--max-deploy-wait=<minutes>` | this command | Polling cap for the post-merge deploy **job** before asking the user how to proceed. Default 30 |
 | `--max-pipeline-retries=<n>` | `git:ship` | CI retry cap (default 3) |
 | `--no-squash` | `git:ship` | Regular merge instead of squash |
 | `--keep-branch` | `git:ship` | Don't delete the feature branch after merge |
@@ -284,10 +284,19 @@ A ticket is only **done** — and its Linear status is only transitioned / pushe
 
 `git:ship` STEP 10 has already set the ticket to "Dev Review" (unassigned) — a safe waiting state during deployment. For `POST_MERGE_STATUS = po-review-inga`, the PO Review transition additionally must **not** happen until the deploy is healthy (a PO opening a stale build burns a test cycle). For `dev-review`, no status override follows, but the cycle is **not** reported complete until this verification passes.
 
-**3a. Locate the post-merge deploy pipeline.** Capture the merge commit SHA from `git:ship`'s output. Detect the provider from `REQUEST_URL` and locate the pipeline triggered on `<BASE_BRANCH>` by the merge commit:
+**3a. Locate the post-merge deploy pipeline — and the deploy JOB inside it.** Capture the merge commit SHA from `git:ship`'s output. Detect the provider from `REQUEST_URL` and locate the pipeline triggered on `<BASE_BRANCH>` by the merge commit:
 
 - GitHub: `gh run list --branch <BASE_BRANCH> --limit 10 --json databaseId,status,conclusion,workflowName,headSha,htmlUrl` — match the entry with `headSha == <merge-sha>` and a workflow name that looks like a deploy (case-insensitive match against `deploy`, `release`, `cd`, `dev`).
 - GitLab: `glab ci list --ref <BASE_BRANCH> --per-page 10 --output json` — match the pipeline whose commit SHA equals the merge SHA.
+
+Then resolve `DEPLOY_JOB` — the single job inside that pipeline that performs the **server rollout**:
+
+- GitLab: `glab api "projects/:id/pipelines/<pipeline-id>/jobs?per_page=100"` → pick the job whose `name` matches `deploy` / `rollout` / `release` (case-insensitive), preferring an exact stage match (`stage == "deploy"`) and, when several match, the one whose name contains `<BASE_BRANCH>` (`deploy-dev` on `dev`, `deploy-test` on `test`).
+- GitHub: `gh run view <run-id> --json jobs` → same name matching over `.jobs[].name`.
+
+**Why the job and not the pipeline:** a pipeline routinely carries work that has nothing to do with the rollout — image builds for other consumers, artifact publishing, notification jobs. Waiting for the *pipeline* conflates two different questions: "is the merged code running on the server?" and "are all side artefacts finished?". Observed live (SVL, DEV-2636): a pipeline built a multi-arch appliance image alongside the rollout; the server was healthy after ~6 minutes while that image kept building for over an hour, and the pipeline was still `running` — a pipeline-level wait would have reported a perfectly good deployment as pending, then as failed when the unrelated build died. Deploy verification must therefore anchor on the deploy job, and the container-health check in 3b-2 remains the actual proof.
+
+If no deploy **job** can be identified inside the pipeline, fall back to polling the **pipeline object** as before (the pre-existing behaviour) and note in the summary that the verification was pipeline-scoped, not job-scoped.
 
 If no deploy pipeline is found within 60 seconds (some providers take a moment to register the run), ask the user via `AskUserQuestion`:
 
@@ -297,20 +306,32 @@ If no deploy pipeline is found within 60 seconds (some providers take a moment t
   2. "Kein Deployment vorhanden — Linear-Override jetzt durchführen" → continue to step 3c
   3. "Manuell setzen — Cycle beenden ohne Override" → skip 3c, print a note that PO Review transition is pending manual deployment confirmation
 
-**3b. Wait for deploy completion.** Poll the located pipeline every 30 seconds, capped at `MAX_DEPLOY_WAIT_MINUTES` (default 30, override via `--max-deploy-wait=<minutes>`). Poll the **pipeline object** by id, which carries no free-text field — GitHub `gh run view <id> --json status,conclusion`, GitLab `glab api "projects/:id/pipelines/<id>" | jq -r '.status'`. **Never** derive the status by `jq`-ing `glab mr view/list --output json` — glab emits literal control chars in the MR `description`/`title`, `jq` aborts, the read comes back empty, and a poll that treats empty as "still running" loops **blind** past the actual green/failed state (see `git:ship` STEP 7a). Treat an empty/parse-failed read as a transient retry, and exit on every terminal state:
+**3b. Wait for the DEPLOY JOB to complete.** Poll `DEPLOY_JOB` every 30 seconds, capped at `MAX_DEPLOY_WAIT_MINUTES` (default 30, override via `--max-deploy-wait=<minutes>`) — **not** the pipeline as a whole (see 3a). Poll the **job object** by id, which carries no free-text field — GitLab `glab api "projects/:id/jobs/<job-id>" | jq -r '.status'`, GitHub `gh run view <run-id> --json jobs` → the matched job's `status`/`conclusion`. On the 3a fallback (no deploy job identifiable) poll the pipeline object instead: GitHub `gh run view <id> --json status,conclusion`, GitLab `glab api "projects/:id/pipelines/<id>" | jq -r '.status'`.
 
-- `success` / `completed` → continue to step 3c.
-- `failed` / `cancelled` / `errored` → surface the pipeline URL and conclusion. Do **NOT** override Linear — the ticket stays on "Dev Review" (unassigned) so no one starts PO QA against a broken deploy. Print:
+**Never** derive the status by `jq`-ing `glab mr view/list --output json` — glab emits literal control chars in the MR `description`/`title`, `jq` aborts, the read comes back empty, and a poll that treats empty as "still running" loops **blind** past the actual green/failed state (see `git:ship` STEP 7a). Treat an empty/parse-failed read as a transient retry, and exit on every terminal state.
+
+A GitLab job stays `created` while it waits on its `needs:` predecessors — that is *pending*, not a terminal state; keep polling. `skipped` **is** terminal and means the rollout never ran (typically because an earlier stage failed): treat it exactly like `failed`.
+
+- `success` / `completed` → continue to step 3b-2. If the surrounding pipeline is still `running`, that is **not** a problem — report it explicitly rather than waiting it out:
   ```
-  Deploy-Pipeline failed — Linear-Status bleibt auf "Dev Review" (unassigned).
+  Deployment grün und verifiziert (Job: <deploy-job-name>).
+  Pipeline läuft weiter — offene Jobs: <namen>. Deren Ausgang ist eine
+  separate Aussage und blockiert das Ticket nicht.
+  ```
+- `failed` / `cancelled` / `errored` / `skipped` → surface the job log and the pipeline URL. Do **NOT** override Linear — the ticket stays on "Dev Review" (unassigned) so no one starts PO QA against a broken deploy. Print:
+  ```
+  Deploy-Job <deploy-job-name> failed — Linear-Status bleibt auf "Dev Review" (unassigned).
+  Job:      <job-url>
   Pipeline: <pipeline-url>
-  Conclusion: <failed|cancelled|errored>
+  Conclusion: <failed|cancelled|errored|skipped>
   Sobald das Deployment manuell repariert / re-triggered und grün ist,
   kannst du das Ticket manuell auf "PO Review" + Inga setzen.
   ```
+  Read the **job's own log** for the diagnosis, not the pipeline overview — a deploy job that fails in seconds usually names its cause outright (missing image tag, auth failure, unhealthy service). Note that deploy logs often stream the target's container logs, so filter to the deploy tool's own output rather than reading the tail blindly.
+
   Mark this branch of STEP 4b.3 as **partial-success** for the Final Summary (Variant A): merge landed, deploy failed, Linear NOT overridden.
-- `running` / `pending` / `queued` after the timeout → ask the user via `AskUserQuestion`:
-  - Question: "Deploy-Pipeline läuft länger als <MAX_DEPLOY_WAIT_MINUTES> Min. Wie weiter?"
+- `running` / `pending` / `created` / `queued` after the timeout → ask the user via `AskUserQuestion`:
+  - Question: "Deploy-Job läuft länger als <MAX_DEPLOY_WAIT_MINUTES> Min. Wie weiter?"
   - Options:
     1. "Weiter warten — nochmal <MAX_DEPLOY_WAIT_MINUTES> Min." → reset timer, continue polling
     2. "Nicht warten — Linear-Override jetzt durchführen (riskant, PO testet ggf. stale Build)" → continue to step 3c
@@ -413,10 +434,11 @@ Merge
 - Modus:   Squash + Merge (oder: Regular Merge)
 - Commit:  <merge-commit-sha-short>
 
-Post-Merge-Deploy  (nur bei POST_MERGE_STATUS = po-review-inga)
-- Pipeline: <pipeline-url>
-- Status:   grün / failed / Timeout (User-Wahl)
-- Wartezeit: <n> Min.
+Post-Merge-Deploy  (immer — auch bei POST_MERGE_STATUS = dev-review)
+- Deploy-Job:  <job-name> — grün / failed / Timeout (User-Wahl)
+- Container:   <n> healthy auf Image-Tag <merge-sha-short>
+- Wartezeit:   <n> Min.
+- Restpipeline: abgeschlossen / läuft weiter (<offene jobs>) — separat vom Deployment
 
 Linear-Comment
 - Gepostet / Bearbeitet / Übersprungen
@@ -478,7 +500,7 @@ If `--review` ran (or the user opted in at STEP 2), include a one-line summary o
 - **When the user picks "Ich teste selbst" (STEP 3b option 2 — incl. any free-text equivalent — or the Phase C `WAITING-FOR-USER` verdict), the cycle MUST first run the Manual-Test Preparation routine and hand over all five deliverables before pausing:** (1) passende Testdaten in der laufenden Dev-DB vorbereitet (nicht die `-test`-DB), (2) Upload-Testdateien erzeugt *falls* die Änderung ein Upload-Feld betrifft (sonst bewusst keine), (3) kurze, leicht verständliche Zusammenfassung von Ticket + Testziel, (4) Credentials aller benötigten Accounts mit literalen Passwörtern, (5) Schritt-für-Schritt-Anleitung mit vollständigen URLs (auf echte Datensätze zeigend) und genauem was/wie/warum je Schritt. Pausing on this path without these five is a contract violation.
 - **The merge-strategy gate (STEP 4a) is mandatory** unless the user passed `--auto-merge` or `--review-handoff` explicitly. The cycle MUST NOT default-to-merge without an explicit decision.
 - **The post-merge-status gate (STEP 4b.1) is mandatory** in the auto-merge path unless the user passed `--post-merge-status=…`. The cycle MUST NOT silently pick a Linear state when two are configured.
-- **A ticket is DONE only after a clean, healthy dev deploy (STEP 4b.3) — for EVERY ticket, including pure dev-tooling / config-only / test-only changes.** The auto-merge path MUST NOT report the cycle complete, and MUST NOT transition / push the Linear status forward, until (a) the post-merge deploy pipeline on `<BASE_BRANCH>` is green AND (b) the **new** containers/replicas of the merged commit are verifiably running and healthy. A green merge or a green deploy *job* is not enough: the platform's aggregate "healthy" count can include old/superseded containers that keep serving while the new ones crash-loop (observed: a "3/3 healthy" deploy while the new API crash-looped and Swarm served the 22h-old build — dev stale for ~22h, unnoticed). Verify container health against the merged image tag (`get_deployment_status` + `list_deployment_containers` in this stack). If the new containers are unhealthy or the deploy failed/timed out, the ticket stays on "Dev Review" (unassigned), the crash logs are surfaced, and the **root cause is fixed** (in scope even when pre-existing/infra; grund-repo if stack-wide) before the ticket counts as done.
+- **A ticket is DONE only after a clean, healthy dev deploy (STEP 4b.3) — for EVERY ticket, including pure dev-tooling / config-only / test-only changes.** The auto-merge path MUST NOT report the cycle complete, and MUST NOT transition / push the Linear status forward, until (a) the post-merge **deploy job** on `<BASE_BRANCH>` is green AND (b) the **new** containers/replicas of the merged commit are verifiably running and healthy. Anchor on the deploy *job*, not the pipeline: a pipeline may carry unrelated long-running work (image builds for other consumers, publishing, notifications) whose outcome says nothing about whether the server is running the merged code — waiting for it either stalls a finished deployment or paints it red for a foreign failure (observed: an appliance image build ran >1 h next to a 6-minute rollout). A green merge or a green deploy *job* is not enough: the platform's aggregate "healthy" count can include old/superseded containers that keep serving while the new ones crash-loop (observed: a "3/3 healthy" deploy while the new API crash-looped and Swarm served the 22h-old build — dev stale for ~22h, unnoticed). Verify container health against the merged image tag (`get_deployment_status` + `list_deployment_containers` in this stack). If the new containers are unhealthy or the deploy failed/timed out, the ticket stays on "Dev Review" (unassigned), the crash logs are surfaced, and the **root cause is fixed** (in scope even when pre-existing/infra; grund-repo if stack-wide) before the ticket counts as done.
 - **The PO Review transition (STEP 4b.3) additionally waits for that healthy dev deploy.** When `POST_MERGE_STATUS = po-review-inga`, the cycle MUST NOT set the Linear ticket to "PO Review" / assignee=Inga until the healthy-deploy verification above passes. POs starting QA against a stale build burn cycles and erode trust in the handoff. If the deploy fails or times out, the ticket stays on "Dev Review" (unassigned) and the user is told to redo the transition manually after fixing the deploy.
 - **Reviewer-Handoff never merges from inside this command.** Phase D's reviewer-handoff path stops after MR/PR creation, Linear assignment, and MR reviewer assignment. The human reviewer does the merge.
 - **Auto-merge path always runs `git:ship --auto-merge --skip-reanalysis`** because Phase A already did the equivalent re-analysis and STEP 4a already captured the merge consent. Running them twice would re-prompt the user pointlessly.

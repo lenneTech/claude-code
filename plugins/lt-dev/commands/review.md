@@ -63,7 +63,11 @@ This command is the **direct orchestrator** — it spawns all reviewers in paral
 │
 │  Phase 5: Unified report (Executive Summary → Decision Helper → Action Roadmap → Remediation Catalog → FULL verbatim reports per reviewer → Recommended Commands → Reconciliation)
 │
-│  Phase 6: Decision & Execution (AskUserQuestion with 4 options → fix selected findings or open tracking tickets → closing block)
+│  Phase 6: Decision & Execution
+│  ├── 6.0 MANDATORY cumulative findings table (all reviewers merged, per severity,
+│  │        with Art / Ort / Problem / Empfehlung / Aufwand / Quellen + verified non-findings)
+│  ├── 6.1 AskUserQuestion with 4 options
+│  └── 6.2 Fix selected findings or open tracking tickets → closing block
 │
 └── Phase 7: Browser Validation Walk (validating-changes-in-browser skill — lt dev up + seed + step-by-step list per role + walked autonomously + pre-existing fixes + ship-or-optimize gate)
 ```
@@ -766,7 +770,67 @@ Source per severity (Critical / High / Medium / Low / Info / Total):
 
 ### Phase 6: Decision & Execution
 
-After the unified report is rendered (Phase 5 output is on screen), ask the user how to proceed via the `AskUserQuestion` tool. Always present FOUR options derived from Section 1.5:
+#### Phase 6.0: Cumulative Findings Table — MANDATORY, ALWAYS BEFORE THE QUESTION
+
+**Never call `AskUserQuestion` without rendering this table first.** The user cannot make an informed
+choice from bucket counts alone ("10 Findings, ~4 h") — they need to see *what* is in each bucket.
+This is not optional, not skippable for small reviews, and not satisfied by Section 0's TL;DR
+(which deliberately abbreviates long buckets) or by Section 5's catalog (which is an audit-trail
+format, not a decision aid).
+
+Render **one table per severity bucket**, in the user's language (German for lenne.tech projects),
+containing **every** finding from every reviewer — deduplicated across reviewers, but never dropped:
+
+| Column | Content |
+|--------|---------|
+| `#` | Stable ID (`C1`, `H3`, `M7`, `L12`) — reusable in the user's free-text answer |
+| Art | **Type of the planned change** — see the taxonomy below. Drives sequencing and reviewability. |
+| Ort | `file:line` as a clickable markdown link |
+| Was ist das Problem | 1–3 sentences in plain language: the mechanism AND the concrete consequence. Not a category label. State when something is pre-existing rather than introduced by the diff. |
+| Empfehlung | The concrete fix, not a restatement of the problem |
+| Aufw. | Effort glyphs: `▪` ≈ 5 min · `▪▪` ≈ 15 min · `▪▪▪` ≈ 30 min · `▪▪▪▪` ≈ 60 min+ |
+| Quellen | Which reviewers found it (`SEC`·`BE`·`TST`·`PRF`·`OPS`·`DOC`·`ORCH`). **Multiple sources = higher confidence** — say so where it applies. |
+
+**`Art` taxonomy** — exactly one per finding, the one that describes the *artifact being changed*:
+
+| Art | Meaning | Risk profile |
+|-----|---------|--------------|
+| Code | Application/framework source behaviour changes | Needs tests + review; can regress |
+| Test | Test files only — no shipped behaviour changes | Safe to land eagerly; raises the safety net |
+| Doku | Markdown, JSDoc, comments, `.env.example` | Zero runtime risk; batchable |
+| Config | `package.json`, `nodemon.json`, `tsconfig`, lint/format configs | No app logic, but can change how everything runs |
+| Deps | Dependency versions, `overrides:`, lockfile | Blast radius is the whole tree; verify with `audit` + lockfile diff |
+| Infra | Dockerfile, compose, entrypoint, CI workflows | Only provable in a real deploy; often untestable locally |
+| Release | Version bump, migration guide, changelog | Gated on everything else landing first |
+
+Why this column earns its width: it tells the user what they can land *without* a full re-verify.
+Doku/Test findings are near-zero-risk and can be batched into one commit; Code/Deps/Infra each need
+their own verification. A bucket that looks like "18 Findings, ~4 h" often decomposes into "3 code
+fixes plus 15 doc lines" — which is a completely different decision. Where a bucket is dominated by
+one Art, say so in one sentence under the table.
+
+**Output style: no emoji, no icons.** Severity is carried by the bucket heading and the `Art` column
+by its word, not by pictographs. This applies to the whole review output, not just this table.
+
+Rules:
+
+1. **Deduplicate across reviewers, never drop.** Two reviewers reporting the same defect become ONE
+   row listing both sources. A finding that appears in no row is a review failure.
+2. **Add a "Bewusst *kein* Finding" table** listing what was investigated and verified CORRECT
+   (with the verifying sources). Reviewers spend real effort dismissing candidates; hiding that
+   makes the review look like it only knows how to complain, and the user loses the reassurance
+   that the risky-looking parts were actually checked.
+3. **Close with the finding total** broken down per severity, plus the count of verified non-findings.
+4. **Long buckets are NOT truncated here.** Section 0 may summarize ("+12 weitere"); Phase 6.0 may not.
+   This is the one place the user sees everything at once.
+5. Where reviewers disagreed, show the RESOLVED severity and note the disagreement in the
+   problem column — the user is entitled to know a call was contested.
+
+Only after this table is on screen, ask the question.
+
+#### Phase 6.1: The Question
+
+Ask the user how to proceed via the `AskUserQuestion` tool. Always present FOUR options derived from Section 1.5:
 
 ```
 AskUserQuestion tool:
