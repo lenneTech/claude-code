@@ -70,8 +70,9 @@ Create a TodoWrite plan with these items (mark in progress / completed as you pr
 
 ### 1a. If an explicit ID is in `$ARGUMENTS`
 
-- Fetch via `mcp__plugin_lt-dev_linear__get_issue` + `mcp__plugin_lt-dev_linear__list_comments`
-- Skip auto-pick. Continue at STEP 2.
+- Fetch via `mcp__plugin_lt-dev_linear__get_issue` + `mcp__plugin_lt-dev_linear__list_comments`.
+- **Resolve and store the exact same working variables the auto-pick path stores** — they are the inputs STEP 3 (assign + "In Progress") and STEP 3b (VStab tab title) consume, and omitting them here is precisely why a directly-passed ID would otherwise reach *neither*: `ISSUE_ID`, `ISSUE_IDENTIFIER` (e.g. `SVL-123`), `ISSUE_TITLE`, the ticket's **Linear project name** (from `get_issue` → project, needed for STEP 3b's `<PROJECT_CODE>`), `TEAM_KEY`, and `STATE_IDS` — the full workflow-state list for the ticket's team, resolved via `mcp__plugin_lt-dev_linear__list_issue_statuses`. Without `STATE_IDS` STEP 3 has no "In Progress" state to match; without the project name + identifier STEP 3b cannot build the tab title.
+- Skip auto-pick **and** the pick-confirmation — the user named the ticket explicitly, so no confirmation is needed. But **STEP 2, STEP 3, and STEP 3b are NOT part of the auto-pick branch; they are shared post-resolution steps and run in full on this path too.** Continue at STEP 2.
 
 ### 1b. Auto-Pick Flow
 
@@ -217,6 +218,8 @@ Persist collected sources in a working note (in-context). Do **not** write a mar
 
 ## STEP 3 — Assign Self & Set Ticket "In Progress"
 
+**Runs identically no matter how STEP 1 resolved the ticket** — explicit ID (1a) and auto-pick (1b) both converge here, and this step is mandatory on both. "The user already named the ticket" is never a reason to skip the assignment or the state transition.
+
 1. Resolve current Linear user via `mcp__plugin_lt-dev_linear__get_user` (the authenticated viewer — no ID needed).
 2. Find the team's "In Progress" state ID from `STATE_IDS`. Match case-insensitively against: `In Progress`, `Started`, `Doing`. If none match, ask the user which state to use.
 3. Update the issue via `mcp__plugin_lt-dev_linear__save_issue` with:
@@ -227,7 +230,7 @@ If the call fails (permissions, archived issue, etc.), surface the error and ask
 
 ### 3b. Set VStab Window-Tab Title (best effort)
 
-Label the VS Code window tab with the ticket now being worked on, so multi-window setups show at a glance which window handles which ticket. Format: `<PROJECT_CODE>: <ISSUE_IDENTIFIER> <SHORT_DESC>` — e.g. `VST: DEV-123 Login-Fix`.
+**Fires on every path** — for an explicitly passed ID (STEP 1a) exactly as for an auto-picked ticket (STEP 1b). Label the VS Code window tab with the ticket now being worked on, so multi-window setups show at a glance which window handles which ticket. Format: `<PROJECT_CODE>: <ISSUE_IDENTIFIER> <SHORT_DESC>` — e.g. `VST: DEV-123 Login-Fix`.
 
 1. **Derive `<PROJECT_CODE>`** — the issue identifier carries only the team key (usually `DEV-…`), which says nothing about the project. Derive a concise 2–5 uppercase-letter code from the ticket's **Linear project name** (from `get_issue` → project):
    - Multi-word name → initials, uppercased (`Session Notifier` → `SN`).
@@ -561,6 +564,7 @@ Adapt sections that don't apply (e.g. no Figma → no Figma references). Never i
 - **Always ask before destructive git ops** (force-push, hard reset, branch delete) — they are never part of this command.
 - **Failing tests are always blockers**, even if they predate the current changes. Fix root causes.
 - **Linear state updates are reversible if they fail mid-run** — surface the error, never assume success silently.
+- **Assigning + "In Progress" (STEP 3) and the VStab window-tab title (STEP 3b) run on EVERY path.** They are shared steps after ticket resolution, not part of the auto-pick branch: an explicitly passed ticket ID (STEP 1a) reaches them through the identical STEP 2 → 3 → 3b sequence as an auto-picked one (STEP 1b). Never skip the Linear transition or the window-tab label just because the ticket was named directly instead of being auto-picked — both are guaranteed regardless of how the ticket was chosen.
 
 ## Failure Handling
 
