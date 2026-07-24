@@ -395,7 +395,8 @@ Also re-check:
 
 - **Permission matrix from STEP 5** — every row has at least one matching test in STEP 6a.
 - **New / changed routes, mutations, UI states** that were *not* in the original AC list — surface as "Mitgenommen" so the user can decide if they belong.
-- **Discovered follow-ups** — anything noted during implementation that is out of scope but worth tracking.
+- **Discovered follow-ups** — anything noted during implementation that is out of scope but worth tracking. **Default to implementing, not deferring:** if it can reasonably be done inside this ticket, do it now instead of spinning off a new ticket. A *separate* follow-up ticket is justified only when the work is (a) a genuinely necessary additional feature, (b) **completely** out of the current ticket's scope, and (c) implementable in parallel / independently of this change. Everything else stays in scope and is implemented here.
+  - **Dependency gate — do NOT create a follow-up yet if it depends on this ticket landing.** If the follow-up can only be worked once this ticket is fully implemented **and merged into the base branch** (`dev` / `development`), it must **not** be created now. The auto-pick pool (STEP 1b Phase 1) is *Open ∪ Fix-needed* **and** *unassigned-or-mine* — a dependent follow-up dropped into "Open" becomes immediately pickable, so a parallel `ticket-cycle` session would grab it and start on code that isn't merged yet. Note such follow-ups in the STEP 10 summary **only**, and create the real ticket **after** the base merge has landed (standalone: once you've merged; orchestrated via `ticket-cycle`: after its STEP 4b healthy-deploy verification). Only genuinely independent, parallelizable follow-ups may be filed immediately.
 
 ### 9b. User Confirmation Loop
 
@@ -499,6 +500,7 @@ Adapt sections that don't apply (e.g. no Figma → no Figma references). Never i
 - **Limit local Playwright runs to new + affected specs to keep TDD loops fast.** Default to `lt dev test -- <spec>` / `scripts/e2e-fast.sh -- <spec>`; the full Playwright suite is slow and runs in **CI**. Only run the full local suite when the user explicitly asks.
 - **Never push silently.** Branch stays local until the user runs `/lt-dev:dev-submit` or pushes manually.
 - **Never bypass quality gates.** No `--no-verify`, no `.skip`, no flake-retry without an open follow-up note.
+- **Minimise follow-up tickets — implement in scope by default.** Do not defer work into new tickets to shrink the current change; anything that can reasonably be done inside this ticket is done here. A separate follow-up is justified only when it is a genuinely necessary, **completely** out-of-scope feature that can be built in parallel. If a follow-up depends on this ticket being merged into the base branch (`dev` / `development`), do **not** create it until that merge has landed — the auto-pick pool admits every unassigned "Open" ticket, so a premature dependent follow-up gets grabbed by another `ticket-cycle` session before it can be worked. Until then, note it in the summary only.
 - **Never invent acceptance criteria.** If unclear, ask.
 - **Always ask before destructive git ops** (force-push, hard reset, branch delete) — they are never part of this command.
 - **Failing tests are always blockers**, even if they predate the current changes. Fix root causes.

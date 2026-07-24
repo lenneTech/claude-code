@@ -78,6 +78,12 @@ Use the `building-stories-with-tdd` skill to execute the full implementation cyc
 4. **Implement** — Write code until tests pass (use `generating-nest-servers` for backend, `developing-lt-frontend` for frontend)
 5. **Validate** — ALL tests green (not just new ones), code quality check, security review
 
+### Scope & Follow-ups
+
+**Default to implementing, not deferring.** Resolve the ticket as completely as possible in this pass — if something can reasonably be done inside this ticket, do it now instead of spinning off a new ticket. A *separate* follow-up ticket is justified only when the work is (a) a genuinely necessary additional feature, (b) **completely** out of the current ticket's scope, and (c) implementable in parallel / independently of this change. Everything else stays in scope and is implemented here.
+
+**Dependency gate — do NOT create a follow-up yet if it depends on this ticket landing.** If the follow-up can only be worked once this ticket is fully implemented **and merged into the base branch** (`dev` / `development`), do **not** create it now. `ticket-cycle` / `take-ticket` auto-pick every unassigned "Open" ticket, so a dependent follow-up dropped into "Open" becomes immediately pickable — a parallel session would grab it and start on code that isn't merged yet. Note such follow-ups for the user **only**, and create the real ticket **after** the base merge has landed. Only genuinely independent, parallelizable follow-ups may be filed immediately.
+
 ### MANDATORY: Regression Tests for Bug/Security Fixes
 
 **When ticket type is Bug or Security**, the following additional rules apply:
