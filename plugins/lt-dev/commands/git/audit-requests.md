@@ -2,7 +2,7 @@
 description: Audit open Pull Requests (GitHub) and Merge Requests (GitLab) of the current repository — or of all repositories in the immediate sub-directories — and produce a tabular report with sense-check and obsolescence analysis per request.
 allowed-tools: Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(ls:*), Bash(find:*), Bash(test:*), Read, Grep, Glob, AskUserQuestion
 argument-hint: "[--scope=current|children|auto] [--include-drafts] [--limit=N]"
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Audit Open Pull / Merge Requests

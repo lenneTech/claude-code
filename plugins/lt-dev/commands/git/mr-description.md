@@ -1,7 +1,7 @@
 ---
 description: Generate Merge Request description
 allowed-tools: Bash(git:*), Read
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Generate MR Description

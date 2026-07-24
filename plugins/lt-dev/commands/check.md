@@ -2,7 +2,7 @@
 description: Run the project's package.json `check` script across all discovered projects (monorepo-aware) with iterate-until-green auto-fix, mandatory audit-finding fix escalation ladder, and structured report. Guarantees project runnability.
 argument-hint: '[--project=path]'
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Bash(jq:*), Bash(cat:*), Bash(ls:*), Bash(test:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm audit:*), Bash(npm audit:*), Bash(yarn audit:*), Bash(pnpm update:*), Bash(npm update:*), Bash(yarn upgrade:*), Bash(pnpm add:*), Bash(npm install:*), Bash(yarn add:*), Bash(pnpm install:*)
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Check Script Runner

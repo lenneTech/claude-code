@@ -1,7 +1,7 @@
 ---
 description: Generate MR description and save to clipboard
 allowed-tools: Bash(git:*), Bash(pbcopy:*), Read
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Generate MR Description (Clipboard)

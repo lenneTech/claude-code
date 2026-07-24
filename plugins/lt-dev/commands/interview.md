@@ -3,7 +3,7 @@ description: Deep-dive interview about an architecture plan or specification to 
 argument-hint: "[plan-file-path]"
 model: opus
 allowed-tools: Read, Grep, Glob, Bash(ls:*), AskUserQuestion, Write, Edit
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Plan Interview

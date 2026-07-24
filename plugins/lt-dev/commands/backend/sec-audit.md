@@ -2,7 +2,7 @@
 description: OWASP security audit for dependencies, config, and code
 allowed-tools: Bash(npm audit:*), Bash(npm outdated:*), Bash(npm list:*), Bash(pnpm audit:*), Bash(pnpm outdated:*), Bash(pnpm list:*), Bash(yarn audit:*), Bash(yarn outdated:*), Bash(yarn list:*), Bash(lt server:*), Read, Grep, Glob, Write
 argument-hint: "[--full | --deps-only | --config-only | --code-only]"
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # OWASP Security Audit

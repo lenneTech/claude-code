@@ -1,7 +1,7 @@
 ---
 description: Dry-run npm package analysis without changes
 allowed-tools: Agent
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # NPM Package Maintenance Check (Dry-Run)

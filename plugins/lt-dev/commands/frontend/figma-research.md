@@ -2,7 +2,7 @@
 description: Discover Figma file structure and generate project-local config for figma-to-code
 argument-hint: "[figma-url-or-file-key] [--page page-name]"
 allowed-tools: Bash(pnpm run:*), Bash(npm run:*), Bash(yarn run:*), Bash(npx:*), Bash(git:*), Bash(ls:*), Bash(cat:*), Bash(find:*), Read, Write, Glob, Grep, AskUserQuestion, mcp__plugin_lt-dev_figma-desktop__get_metadata, mcp__plugin_lt-dev_figma-desktop__get_screenshot
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Figma Research
