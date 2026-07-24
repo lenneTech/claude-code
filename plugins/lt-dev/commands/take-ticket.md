@@ -1,5 +1,5 @@
 ---
-description: 'Auto-pick the next Linear ticket (default pool: Fix needed + Open states; ranked by status DESC (Fix needed before Open) → priority DESC → assigned-to-me DESC → bug-flag DESC → createdAt ASC; tickets assigned to other users are excluded) — or take an explicit ID — then branch, TDD-implement, run all tests, run check, and report a review-ready summary'
+description: 'Auto-pick the next Linear ticket (default pool: Fix needed + Open states; ranked by priority DESC → fix-needed tie-break → assigned-to-me DESC → bug-flag DESC → createdAt ASC; tickets assigned to other users are excluded) — or take an explicit ID — then branch, TDD-implement, run all tests, run check, and report a review-ready summary'
 argument-hint: "[issue-id | --project=<name> --team=<name> --status=<list> --base=<branch> --figma=<url> --flows=<path>]"
 allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, Bash(git:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(wc:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run test:e2e:*), Bash(pnpm run e2e:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__list_teams, mcp__plugin_lt-dev_linear__list_projects, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__list_users, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_screenshot
 disable-model-invocation: true
@@ -75,6 +75,43 @@ Create a TodoWrite plan with these items (mark in progress / completed as you pr
 
 ### 1b. Auto-Pick Flow
 
+**Optional fast-path — `pick-next-ticket.mjs` (token-saving accelerator).**
+Before the manual MCP flow below, you MAY resolve the ranked candidate pool in a
+single deterministic call instead of paging `mcp__…__list_issues` (whose
+whole-team, all-fields dumps routinely exceed the model's token budget and have
+to be spilled to a file and re-parsed):
+
+```
+node ${CLAUDE_PLUGIN_ROOT}/scripts/pick-next-ticket.mjs --team <TEAM> [--project "<PROJECT>"] [--status "<list>"] [--assignee me+null]
+```
+
+It reproduces this section's Phase-1 hard filter and Phase-2 five-key sort
+**exactly** (proven offline in `scripts/pick-next-ticket.test.mjs`) and prints a
+compact ranked table plus a machine-readable block:
+
+```
+===PICK_RESULT_JSON===
+{ "pool": {…}, "top": {…}, "candidates": [ { "rank", "identifier", "priorityName", "status", "fixNeeded", "assignedToMe", "bug", "createdAt", "url", "description" }, … ] }
+===END_PICK_RESULT_JSON===
+```
+
+`top` is the pick; `candidates[*].description` (top 3 by default) feed the pick
+confirmation directly — no follow-up fetch. Parse that block and jump straight to
+**Confirm the pick**.
+
+Requirements & graceful fallback — the accelerator NEVER changes *which* ticket
+is picked, only *how cheaply* the pool is fetched:
+- Needs a Linear Personal API Key (`LINEAR_API_KEY` env, or macOS Keychain
+  `security add-generic-password -s linear-api -w …`). The hosted Linear MCP's
+  OAuth token is not reusable from a standalone script.
+- Exit `4` (no key) / `5` (API error) / `6` (team/project unresolved) → tell the
+  user in **one line** (e.g. "Pick-Helper nicht verfügbar (kein Linear-PAT) — nutze
+  MCP-Fallback") and **CONTINUE** with the MCP `list_issues` flow below. Never
+  abort the pick over a helper failure. Exit `3` → eligible pool empty (handle
+  like the "empty pool" branch). Exit `0` → use the JSON block.
+- Always project-scope (`--project`) when the repo maps to one Linear project;
+  that alone avoids the token blow-up even on the MCP fallback path.
+
 **Detect the target Linear project / team:**
 
 1. Read project signals (in order, stop on first hit):
@@ -108,13 +145,13 @@ The selection has two distinct phases — first a **hard filter** that defines t
 - `stateId` ∈ `OPEN_STATE_IDS ∪ FIX_NEEDED_STATE_IDS` (the ticket is in an Open or Fix-needed state). If `--status=<list>` was passed, this is the user's filtered set as resolved above.
 - `assigneeId` ∈ `[CURRENT_USER_ID, null]` (the ticket is either assigned to me or to nobody — tickets assigned to **other users are excluded outright** and never enter the sort).
 
-**Phase 2 — Multi-key sort (ranking inside the eligible pool).** Status (Fix needed vs Open) is the **primary** ranking. Inside one status, priority decides; inside one status + one priority, assignment to me decides. All other keys are downstream tie-breakers.
+**Phase 2 — Multi-key sort (ranking inside the eligible pool).** Priority is the **primary** ranking — an Urgent ticket beats a non-Urgent one regardless of status. Fix-needed only breaks ties **at equal priority**; assignment to me is the next tie-breaker. All remaining keys are downstream tie-breakers.
 
 Sort eligible candidates by:
 
-1. **Fix-needed-flag DESC** — `stateId ∈ FIX_NEEDED_STATE_IDS` → `1`, else `0`. Primary key. A Low-priority Fix-needed ticket beats an Urgent Open ticket.
-2. **Priority DESC** (Urgent → High → Medium → Low → None) — second key. Inside one status, a higher-priority ticket always beats a lower-priority one, regardless of who it's assigned to.
-3. **Assigned-to-me DESC** (`assigneeId = CURRENT_USER_ID` → `1`, `assigneeId = null` → `0`) — third key. Inside one status + one priority, my ticket beats an unassigned one.
+1. **Priority DESC** (Urgent → High → Medium → Low → None) — primary key. A higher-priority ticket always beats a lower-priority one, regardless of status or assignee. So an Urgent Open ticket beats a Low-priority Fix-needed ticket; a Medium Open beats a Low Fix-needed.
+2. **Fix-needed-flag DESC** — `stateId ∈ FIX_NEEDED_STATE_IDS` → `1`, else `0`. Second key: at **equal priority**, a Fix-needed ticket beats an Open one. Fix-needed never jumps a higher priority.
+3. **Assigned-to-me DESC** (`assigneeId = CURRENT_USER_ID` → `1`, `assigneeId = null` → `0`) — third key. At equal priority + equal fix-needed flag, my ticket beats an unassigned one.
 4. **Bug-flag DESC** (ticket carries a label from `BUG_LABEL_IDS` → `1`, else `0`) — fourth key.
 5. **`createdAt` ASC** — final tie-breaker (oldest first).
 
@@ -128,11 +165,30 @@ Query `mcp__plugin_lt-dev_linear__list_issues` once (or twice merged) with the P
 - `projectId` = resolved project (if applicable)
 - `stateId` IN `OPEN_STATE_IDS ∪ FIX_NEEDED_STATE_IDS` (or the `--status=`-filtered set). If the Linear filter cannot express the union, run **two** filtered queries (one per bucket) and merge the results.
 - `assigneeId` IN `[CURRENT_USER_ID, null]` — if the Linear filter cannot express this OR, run **two** filtered queries (`assigneeId = CURRENT_USER_ID` + `assigneeId = null`) and merge the results. **Never** include tickets assigned to other users in the merged set.
-- Server-side ordering is best-effort (`priority` DESC, `createdAt` ASC). The full five-key sort above is applied **client-side** on the returned rows — the server cannot express the "Fix needed > Open" primary key directly.
+- Server-side ordering is best-effort (`priority` DESC, `createdAt` ASC). The full five-key sort above is applied **client-side** on the returned rows — the server cannot express the fix-needed tie-break directly.
 
 **If the eligible pool is empty:**
 
-- Show the user the empty result and ask: "Kein passendes Ticket gefunden. Soll ich (a) eine breitere Suche starten (auch `In Progress` / andere Status), (b) ein bestimmtes Ticket übernehmen, oder (c) abbrechen?"
+- **First, scan the `Blocked` column for tickets that may no longer be blocked.**
+  Re-run the helper with `--blocked` (or query the Blocked-state tickets that are
+  mine-or-unassigned in this project) and read the `blocked` section. For each
+  blocked ticket it reports whether its `blocks` blockers are all Done/Canceled
+  (`likelyUnblocked: true`), still active (`false`), or absent from the relations
+  (`null` — the block is only a status, so read the description + comments for the
+  real reason). **A blocked ticket is NEVER auto-picked.**
+- If one or more blocked tickets look releasable, present them to the user **with
+  the concrete reason** they are probably no longer blocked (e.g. "Blocker
+  DEV-1234 ist seit dem Merge auf Done", "kein aktiver Blocker mehr in den
+  Relations") so the user can make an informed call, and ask for an **explicit
+  release** before taking one — via `AskUserQuestion`, one option per releasable
+  ticket plus "Keins — anders vorgehen". Only on an explicit release do you move
+  it to In Progress and continue at STEP 2; otherwise treat it as declined. Never
+  release a `null`/`false` ticket without the user confirming the reason no longer
+  applies.
+- If nothing in Blocked looks releasable (or the user declines), show the empty
+  result and ask: "Kein passendes Ticket gefunden. Soll ich (a) eine breitere
+  Suche starten (auch `In Progress` / andere Status), (b) ein bestimmtes Ticket
+  übernehmen, oder (c) abbrechen?"
 
 **Confirm the pick** via `AskUserQuestion`:
 - Show: Identifier, title, priority, **bug-flag** ("🐞 Bug" if matched), assignment ("dir zugeordnet" / "nicht zugeordnet"), status, project, 1-line description excerpt

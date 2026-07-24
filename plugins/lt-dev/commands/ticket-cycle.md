@@ -97,11 +97,11 @@ Invoke via the `SlashCommand` tool:
 - Status ist "Open" (Linear-Kategorie `unstarted` — typischerweise `Open`, `Todo`, `Ready`) **oder** "Fix needed" (Name-Match auf `Fix needed` / `Fix Needed` / `Needs Fix` / `needs-fix` / `fix-needed`, case-insensitive — unabhängig von der Linear-Kategorie). **Backlog-Tickets sind ausgeschlossen** — was bewusst zurückgestellt wurde, wird nicht automatisch angegangen. Wer ein Backlog-Ticket möchte, übergibt explizit `--status=Backlog`. Ein explizit gesetztes `--status=<liste>` ist der absolute Filter.
 - Es ist entweder dem aktuellen Nutzer ODER niemandem zugeordnet. Tickets, die anderen Personen zugeordnet sind, sind **immer außen vor** und nehmen an der Sortierung gar nicht teil.
 
-**Phase 2 — Sortierung (welcher Kandidat gewinnt?).** Status ist primär, Priorität zweit, Zuordnung dritt — alles andere sind Tie-Breaker.
+**Phase 2 — Sortierung (welcher Kandidat gewinnt?).** Priorität ist primär, Fix-needed bricht nur den Gleichstand bei gleicher Priorität, Zuordnung ist der nächste Tie-Breaker — alles andere folgt danach.
 
-1. **Fix-needed-Flag DESC** (Fix needed vor Open) — primärer Schlüssel. Ein Low-Prio-Ticket in "Fix needed" schlägt ein Urgent-Ticket in "Open".
-2. **Priorität DESC** (Urgent → High → Medium → Low → None) — zweiter Schlüssel. Innerhalb desselben Status schlägt eine höhere Priorität immer eine niedrigere, unabhängig davon, wem das Ticket zugeordnet ist.
-3. **Mir zugeordnet DESC** (mir vor niemandem) — dritter Schlüssel. Bei gleichem Status und gleicher Priorität schlägt mein Ticket ein freies.
+1. **Priorität DESC** (Urgent → High → Medium → Low → None) — primärer Schlüssel. Eine höhere Priorität schlägt immer eine niedrigere, unabhängig vom Status. Ein Urgent-Ticket in "Open" schlägt also ein Fix-needed-Ticket niedrigerer Priorität; ein Medium-Open schlägt ein Low-Fix-needed.
+2. **Fix-needed-Flag DESC** (Fix needed vor Open) — zweiter Schlüssel: bei **gleicher Priorität** schlägt "Fix needed" ein "Open". Fix-needed überspringt nie eine höhere Priorität.
+3. **Mir zugeordnet DESC** (mir vor niemandem) — dritter Schlüssel. Bei gleicher Priorität und gleichem Fix-needed-Flag schlägt mein Ticket ein freies.
 4. **Bug-Flag DESC** (Bug vor Nicht-Bug) — vierter Schlüssel.
 5. **createdAt ASC** (älter zuerst) — finaler Tie-Breaker.
 
