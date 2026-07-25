@@ -860,7 +860,7 @@ After the user picks an option:
 - 🚀 **Minimal** — Iterate findings filtered by severity = Critical. For each, propose the diff and apply after confirmation (or auto-apply if user said "alles fixen, nicht fragen").
 - 🎯 **Standard** — Same iteration on Critical + High.
 - 💎 **Komplett** — Same iteration on all severities, in priority order.
-- ⏭️ **Nichts** — Create one tracking ticket per Critical/High finding via `mcp__plugin_lt-dev_linear__save_issue` (or print a markdown ticket-list if Linear MCP is unavailable). Confirm ticket IDs back to the user. Do NOT fix code.
+- ⏭️ **Nichts** — Create one tracking ticket per Critical/High finding via `mcp__plugin_lt-dev_linear__save_issue` (or print a markdown ticket-list if Linear MCP is unavailable). Confirm ticket IDs back to the user. Do NOT fix code. Create them in **`Open`** (never `Backlog`) unless the user asks otherwise — the auto-pick pool of `take-ticket` / `ticket-cycle` excludes `Backlog`, so a backlog ticket is never picked up again.
 - **Free-text IDs** — Iterate only the listed IDs.
 
 After execution, print a short closing block:

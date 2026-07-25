@@ -49,8 +49,12 @@
 //   node pick-next-ticket.mjs --team <key|name> [options]
 //
 //   --team <k|n>        Linear team key (e.g. DEV) or name (required)
-//   --project <name>    Restrict to one Linear project (STRONGLY recommended —
-//                       this is the single biggest token saver)
+//   --project <name>    Restrict to one Linear project. Matched TOLERANTLY against
+//                       the team's projects: exact name → unique prefix → unique
+//                       substring (case-insensitive), so a short alias like "SVL"
+//                       resolves "SVL - Kontingent". An unknown or ambiguous name
+//                       is a hard error (exit 6) — never a silent empty pool.
+//                       STRONGLY recommended — the single biggest token saver.
 //   --status <list>     Comma-separated state-name allow-list (absolute filter).
 //                       Default: all `unstarted` states + any fix-needed state.
 //   --assignee <who>    me+null (default) | me | null | any
@@ -80,7 +84,7 @@
 //   3  eligible pool empty (no error — nothing to pick)
 //   4  no Linear API key available
 //   5  Linear API / network error
-//   6  team (or project) could not be resolved
+//   6  team or project could not be resolved (unknown or ambiguous name)
 
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
@@ -119,6 +123,43 @@ export function computeEligibleStates(states, statusAllow = null) {
   });
   const fixNeededIds = new Set(eligible.filter((s) => isFixNeededName(s.name)).map((s) => s.id));
   return { eligible, fixNeededIds };
+}
+
+/**
+ * Resolve a `--project` needle to exactly one of the team's projects. Mirrors the
+ * tolerant team resolution in run(): an exact (trimmed, case-insensitive) name
+ * match wins; otherwise a UNIQUE case-insensitive prefix match; otherwise a
+ * UNIQUE case-insensitive substring match (so "SVL" resolves "SVL - Kontingent").
+ * Anything unmatched or ambiguous returns `{ project: null, error }` so the caller
+ * can fail loudly (exit 6) instead of silently filtering the whole pool to empty —
+ * a bare server-side `name: { eq }` matches nothing on a short alias, which is
+ * indistinguishable from "no tickets" and this helper's most confusing failure.
+ *
+ * @param {{id:string,name:string}[]} projects  the team's projects
+ * @param {string} needle                        the raw --project value
+ * @returns {{ project: {id:string,name:string}|null, error: string|null }}
+ */
+export function resolveProject(projects, needle) {
+  const list = (Array.isArray(projects) ? projects : []).filter((p) => p && p.name != null);
+  const n = String(needle == null ? '' : needle).trim().toLowerCase();
+  if (!n) return { project: null, error: 'empty --project value' };
+  const norm = (p) => p.name.trim().toLowerCase();
+  const available = () => (list.length ? list.map((p) => p.name).join(', ') : '(team has no projects)');
+
+  const exact = list.filter((p) => norm(p) === n);
+  if (exact.length) return { project: exact[0], error: null };
+
+  const tiers = [
+    ['prefix', list.filter((p) => norm(p).startsWith(n))],
+    ['substring', list.filter((p) => norm(p).includes(n))],
+  ];
+  for (const [kind, hits] of tiers) {
+    if (hits.length === 1) return { project: hits[0], error: null };
+    if (hits.length > 1) {
+      return { project: null, error: `ambiguous project "${needle}" — ${kind} matches: ${hits.map((p) => p.name).join(', ')}. Pass the exact name.` };
+    }
+  }
+  return { project: null, error: `project not found: "${needle}" (available: ${available()})` };
 }
 
 /** Phase-1 assignee eligibility. `mode`: me+null (default) | me | null | any. */
@@ -293,7 +334,7 @@ async function gql(token, query, variables = {}) {
 
 function emit(pool, candidates, args, blocked = null) {
   if (!args.json) {
-    const p = pool.project ? ` · project "${pool.project}"` : '';
+    const p = pool.project ? ` · project "${pool.project}"${pool.projectInput ? ` (matched "${pool.projectInput}")` : ''}` : '';
     process.stdout.write(`Team ${pool.team.key} (${pool.team.name})${p} · viewer ${pool.viewer.name} · eligible states: ${pool.eligibleStates.map((s) => s.name + (s.fixNeeded ? '*' : '')).join(', ')}\n`);
     if (candidates.length === 0) {
       process.stdout.write('No eligible candidates (Open/Fix-needed, mine-or-unassigned).\n');
@@ -331,17 +372,33 @@ async function run(args, token) {
   ) || A.teams.nodes.find((t) => t.name.toLowerCase().includes(teamNeedle));
   if (!team) die(6, `team not found: "${args.team}" (available: ${A.teams.nodes.map((t) => t.key).join(', ')})`);
 
-  // Query B — the team's workflow states, to compute the eligible state-id set.
-  const B = await gql(token, `query($id: String!) { team(id: $id) { states(first: 100) { nodes { id name type } } } }`, { id: team.id });
+  // Query B — the team's workflow states (+ its projects when --project is set),
+  // to compute the eligible state-id set and resolve the project scope.
+  const B = await gql(
+    token,
+    `query($id: String!) { team(id: $id) { states(first: 100) { nodes { id name type } }${args.project ? ' projects(first: 250) { nodes { id name } }' : ''} } }`,
+    { id: team.id },
+  );
   const statusAllow = args.status ? args.status.split(',') : null;
   const { eligible: eligibleStates, fixNeededIds } = computeEligibleStates(B.team.states.nodes, statusAllow);
   if (eligibleStates.length === 0) {
     die(6, `no eligible states resolved for team ${team.key}` + (args.status ? ` matching --status="${args.status}"` : ''));
   }
 
+  // Resolve --project tolerantly against the team's projects and scope by its ID.
+  // A bare `name: { eq }` matches nothing on a short alias ("SVL" vs the real
+  // "SVL - Kontingent"), which then reads exactly like an empty pool — so fail
+  // loudly (exit 6) on an unknown/ambiguous name instead.
+  let resolvedProject = null;
+  if (args.project) {
+    const { project, error } = resolveProject((B.team.projects && B.team.projects.nodes) || [], args.project);
+    if (!project) die(6, error);
+    resolvedProject = project;
+  }
+
   // Query C — candidate issues, minimal fields only (NO description).
   const filter = { team: { id: { eq: team.id } }, state: { id: { in: eligibleStates.map((s) => s.id) } } };
-  if (args.project) filter.project = { name: { eq: args.project } };
+  if (resolvedProject) filter.project = { id: { eq: resolvedProject.id } };
   const C = await gql(token, `
     query($filter: IssueFilter!, $limit: Int!) {
       issues(filter: $filter, first: $limit) {
@@ -360,7 +417,10 @@ async function run(args, token) {
 
   const pool = {
     team: { id: team.id, key: team.key, name: team.name },
-    project: args.project || null,
+    project: resolvedProject ? resolvedProject.name : null,
+    // Raw --project alias, surfaced only when it differs from the resolved name,
+    // so the caller/user can see "SVL" actually resolved "SVL - Kontingent".
+    projectInput: resolvedProject && resolvedProject.name !== args.project ? args.project : undefined,
     viewer: { id: meId, name: A.viewer.name, email: A.viewer.email },
     eligibleStates: eligibleStates.map((s) => ({ name: s.name, type: s.type, fixNeeded: fixNeededIds.has(s.id) })),
     assigneeMode: args.assignee,
@@ -373,7 +433,7 @@ async function run(args, token) {
   let blocked = null;
   if (args.blocked) {
     blocked = await fetchBlocked(token, {
-      team, project: args.project, states: B.team.states.nodes,
+      team, project: resolvedProject, states: B.team.states.nodes,
       meId, assignee: args.assignee, descCount: args.descCount, limit: args.limit,
     });
   }
@@ -421,7 +481,7 @@ async function fetchBlocked(token, { team, project, states, meId, assignee, desc
   if (blockedStates.length === 0) return { state: null, candidates: [] };
 
   const filter = { team: { id: { eq: team.id } }, state: { id: { in: blockedStates.map((s) => s.id) } } };
-  if (project) filter.project = { name: { eq: project } };
+  if (project) filter.project = { id: { eq: project.id } };
   const relSel = 'nodes { type issue { identifier state { name type } } relatedIssue { identifier state { name type } } }';
   const E = await gql(token, `
     query($filter: IssueFilter!, $limit: Int!) {

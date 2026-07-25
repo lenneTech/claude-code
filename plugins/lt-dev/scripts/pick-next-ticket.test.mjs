@@ -14,6 +14,7 @@ import {
   isBlockedName,
   priorityRank,
   computeEligibleStates,
+  resolveProject,
   filterByAssignee,
   rankCandidates,
   analyzeBlocked,
@@ -151,6 +152,63 @@ test('rank key 1 dominates key 5: higher priority beats older createdAt', () => 
     issue({ identifier: 'NEW-HIGH', priority: 2, createdAt: '2026-07-24T00:00:00Z', stateId: 's-open' }),
   ];
   assert.deepEqual(rankCandidates(rows, ME, fixNeededIds).map((d) => d.r.identifier), ['NEW-HIGH', 'OLD-LOW']);
+});
+
+// ── Project resolution (tolerant --project matching) ────────────────────────
+
+// Two SVL projects (no bare "SVL") + an unrelated one — the real trap that made
+// `--project "SVL"` silently return an empty pool under the old `name: { eq }`.
+const PROJECTS = [
+  { id: 'p-kont', name: 'SVL - Kontingent' },
+  { id: 'p-fix', name: 'SVL - Fixpreis' },
+  { id: 'p-show', name: 'Showroom' },
+];
+
+test('resolveProject: exact (trimmed, case-insensitive) name wins', () => {
+  const { project, error } = resolveProject(PROJECTS, '  svl - kontingent ');
+  assert.equal(error, null);
+  assert.equal(project.id, 'p-kont');
+});
+
+test('resolveProject: exact name beats an otherwise-ambiguous substring', () => {
+  const withBare = [{ id: 'x', name: 'SVL' }, ...PROJECTS];
+  const { project, error } = resolveProject(withBare, 'SVL');
+  assert.equal(error, null);
+  assert.equal(project.id, 'x'); // "SVL" exact, not ambiguous against the two "SVL - …"
+});
+
+test('resolveProject: unique substring resolves a short alias', () => {
+  const { project, error } = resolveProject(PROJECTS, 'Kontingent');
+  assert.equal(error, null);
+  assert.equal(project.id, 'p-kont');
+});
+
+test('resolveProject: a unique prefix wins even when the substring set is ambiguous', () => {
+  const projs = [{ id: 'a', name: 'Alpha' }, { id: 'b', name: 'Beta Alpha' }];
+  const { project, error } = resolveProject(projs, 'alph'); // prefix→Alpha only; substring→both
+  assert.equal(error, null);
+  assert.equal(project.id, 'a');
+});
+
+test('resolveProject: an ambiguous alias fails loudly, does not guess', () => {
+  const { project, error } = resolveProject(PROJECTS, 'SVL'); // prefix matches both SVL projects
+  assert.equal(project, null);
+  assert.match(error, /ambiguous project "SVL"/);
+  assert.match(error, /SVL - Kontingent/);
+  assert.match(error, /SVL - Fixpreis/);
+});
+
+test('resolveProject: an unknown name lists the available projects', () => {
+  const { project, error } = resolveProject(PROJECTS, 'Nonexistent');
+  assert.equal(project, null);
+  assert.match(error, /project not found: "Nonexistent"/);
+  assert.match(error, /Showroom/);
+});
+
+test('resolveProject: empty needle and empty/absent project list are handled', () => {
+  assert.match(resolveProject(PROJECTS, '   ').error, /empty --project value/);
+  assert.match(resolveProject([], 'SVL').error, /team has no projects/);
+  assert.match(resolveProject(null, 'SVL').error, /team has no projects/);
 });
 
 // ── Blocked-column analysis ─────────────────────────────────────────────────

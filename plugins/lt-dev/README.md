@@ -65,6 +65,24 @@ lenne.tech api projects can consume `@lenne.tech/nest-server` in one of two mode
 
 **Detection**: `test -f <api-root>/src/core/VENDOR.md` → vendored, else npm. The `detect-nest-server` hook, the `nest-server-updater` agent, and the `nest-server-core-vendoring` skill all perform this check automatically and branch accordingly. All skills and agents that reference framework files (`generating-nest-servers`, `building-stories-with-tdd`, `backend-dev`, etc.) carry a preamble listing both path conventions.
 
+## Linear conventions
+
+**New tickets are created in `Open` — always, unless the user explicitly asks for
+another status.** This is not cosmetic: the auto-pick pool of
+`/lt-dev:take-ticket` and `/lt-dev:ticket-cycle` is *Open ∪ Fix needed* and
+deliberately **excludes `Backlog`** (what the team consciously deferred must not
+be picked up automatically). A ticket filed in `Backlog` is therefore invisible to
+the whole cycle until someone moves it by hand.
+
+This applies everywhere a ticket is created — the guided `/lt-dev:create-*`
+commands, follow-ups spun off during `take-ticket` / `ticket-cycle` / `review`,
+and ad-hoc tickets created directly via the Linear MCP.
+
+The one deliberate exception: a follow-up that can only be worked **after the
+current change is merged** is not created at all until that merge has landed
+(see the dependency gate in `take-ticket` STEP 9a) — precisely because an `Open`
+ticket is immediately pickable by a parallel session.
+
 ## Further Reading
 
 The comprehensive guide for the full lenne.tech fullstack ecosystem — covering both the `lt` CLI and this `lt-dev` plugin — is maintained in the CLI repository:
