@@ -58,6 +58,7 @@ Create a TodoWrite plan with these items (mark in progress / completed as you pr
 3. Assign self & set ticket "In Progress"
 4. Sync base branch & create feature branch
 5. Analyse all requirement sources (incl. role/permission matrix)
+5b. **Relevance check — is the ticket still current?** (timestamps vs. base-branch history, parallel work, does the problem still reproduce)
 6. TDD implementation per acceptance criterion — `check` + commit after each green cycle
 7. Final test sweep until green: full **Unit + API**; Playwright **E2E only the new + affected specs** (full Playwright suite runs in CI / on explicit request)
 8. Final `check` script until green
@@ -220,11 +221,17 @@ Persist collected sources in a working note (in-context). Do **not** write a mar
 
 **Runs identically no matter how STEP 1 resolved the ticket** — explicit ID (1a) and auto-pick (1b) both converge here, and this step is mandatory on both. "The user already named the ticket" is never a reason to skip the assignment or the state transition.
 
-1. Resolve current Linear user via `mcp__plugin_lt-dev_linear__get_user` (the authenticated viewer — no ID needed).
-2. Find the team's "In Progress" state ID from `STATE_IDS`. Match case-insensitively against: `In Progress`, `Started`, `Doing`. If none match, ask the user which state to use.
-3. Update the issue via `mcp__plugin_lt-dev_linear__save_issue` with:
+1. **Re-read the ticket's CURRENT status first — do not trust the value STEP 1 resolved.** Minutes can pass between picking and starting (context gathering, user questions), and the user runs several sessions in parallel. Re-fetch the issue and check:
+   - Status still `Open` (or `Fix Needed` / whatever the pool admitted it under) **and** assignee still empty or the current user → proceed.
+   - Status already `In Progress` / `Dev Review` / `PO Review` / `Blocked`, **or** assigned to someone else → **stop and ask the user.** Another session is on it; taking it now produces two branches for one ticket. Do not "just continue because we already started".
+   - Before asking, gather the facts the user needs to decide: `git worktree list` (every parallel checkout + its branch), `git ls-remote --heads origin | grep <ticket-number>` (pushed branches), and how many commits each branch carries. Present those, then let the user decide who continues — never decide it yourself.
+2. Resolve current Linear user via `mcp__plugin_lt-dev_linear__get_user` (the authenticated viewer — no ID needed).
+3. Find the team's "In Progress" state ID from `STATE_IDS`. Match case-insensitively against: `In Progress`, `Started`, `Doing`. If none match, ask the user which state to use.
+4. Update the issue via `mcp__plugin_lt-dev_linear__save_issue` with:
    - `assigneeId` = current user
    - `stateId` = matched in-progress state
+
+**Set `In Progress` here and only here — at the actual start of work.** Never earlier, e.g. right after creating a follow-up you intend to take next (see STEP 9a): a ticket parked in `In Progress` that nobody is actually working reads as busy and gets picked up by no one, which loses it silently.
 
 If the call fails (permissions, archived issue, etc.), surface the error and ask the user whether to continue with implementation anyway.
 
@@ -299,6 +306,42 @@ Produce a concise internal plan covering:
 - Open questions for the user
 
 **If any open question is blocking** (e.g. unclear data model, missing AC, ambiguous role behaviour) ask the user before implementation. Non-blocking ambiguities go into the final summary as "Annahmen".
+
+---
+
+## STEP 5b — Relevance Check: Is This Ticket Still Current?
+
+**Run this before writing a single line. A ticket describes the world as it was when it was written — implementing a stale one does not merely waste time, it can actively do damage:** re-introducing a pattern that was deliberately removed since, undoing a newer fix, or building a second mechanism next to one that already solves the problem (two guards for one invariant, and nobody can tell which is authoritative).
+
+Base branch is already synced at STEP 4, so the current history is available locally.
+
+**1. Age signal — timestamps, not intuition.** Compare the ticket's `createdAt` and the timestamp of its **newest** comment against the base branch history:
+
+```
+git log --since="<newest ticket/comment timestamp>" --oneline origin/<BASE>
+git log --since="<…>" --oneline origin/<BASE> -- <paths from the requirements map>
+```
+
+Nothing since that date → age is not a concern; skip to step 3. Commits touching the affected paths → read them. Also search the history for the ticket's own key (`git log --grep=<ISSUE_IDENTIFIER> origin/<BASE>`): if it is already there, the ticket has landed and you are about to build it twice.
+
+**2. Parallel work — the ticket may be in flight right now.** `git worktree list`, `git ls-remote --heads origin | grep <ticket-number>` and (where used) `lt ticket list`. A branch or worktree for this ticket that is not yours means another session is on it — stop and ask, exactly as STEP 3 requires.
+
+**3. Substance — timestamps are a hint, not proof.** An untouched date proves nothing if a related refactor solved the problem from a different angle, and a recent commit proves nothing if it merely brushed the same file. So verify the premise the ticket rests on **against the current code**:
+
+- Does the described defect still reproduce? Run the failing case, hit the endpoint, open the page.
+- Do the files, symbols and flags the ticket names still exist under those names?
+- Does something already implement the requested behaviour under a different name?
+
+**4. Verdict.** State it explicitly in the STEP 10 summary — never let it stay implicit:
+
+| Finding | Action |
+|---|---|
+| Ticket still applies unchanged | proceed to STEP 6 |
+| Partly done / scope shrunk | tell the user what is left, get confirmation, implement only the remainder |
+| Already solved | do **not** implement. Present the evidence (commit, file:line, test) and ask the user whether to close the ticket. |
+| Premise no longer holds (code restructured, feature dropped) | stop and ask. Do not translate the ticket into "what it probably means now" on your own. |
+
+**When in doubt, ask.** The cost of one question is a minute; the cost of implementing a stale ticket is a change that has to be found and reverted later — by someone who no longer knows why it was made.
 
 ---
 
@@ -455,7 +498,8 @@ Also re-check:
 - **Permission matrix from STEP 5** — every row has at least one matching test in STEP 6a.
 - **New / changed routes, mutations, UI states** that were *not* in the original AC list — surface as "Mitgenommen" so the user can decide if they belong.
 - **Discovered follow-ups** — anything noted during implementation that is out of scope but worth tracking. **Default to implementing, not deferring:** if it can reasonably be done inside this ticket, do it now instead of spinning off a new ticket. A *separate* follow-up ticket is justified only when the work is (a) a genuinely necessary additional feature, (b) **completely** out of the current ticket's scope, and (c) implementable in parallel / independently of this change. Everything else stays in scope and is implemented here.
-  - **Dependency gate — do NOT create a follow-up yet if it depends on this ticket landing.** If the follow-up can only be worked once this ticket is fully implemented **and merged into the base branch** (`dev` / `development`), it must **not** be created now. The auto-pick pool (STEP 1b Phase 1) is *Open ∪ Fix-needed* **and** *unassigned-or-mine* — a dependent follow-up dropped into "Open" becomes immediately pickable, so a parallel `ticket-cycle` session would grab it and start on code that isn't merged yet. Note such follow-ups in the STEP 10 summary **only**, and create the real ticket **after** the base merge has landed (standalone: once you've merged; orchestrated via `ticket-cycle`: after its STEP 4b healthy-deploy verification). Only genuinely independent, parallelizable follow-ups may be filed immediately. Whenever a follow-up IS filed, create it in **`Open`** (never `Backlog`) unless the user asks otherwise — the auto-pick pool excludes `Backlog`, so a backlog ticket never reaches the cycle.
+  - **A filed follow-up is created in `Open`** (never `Backlog`, and never pre-set to `In Progress`) with a **project assigned**, unless the user asks otherwise. `Backlog` is excluded from the auto-pick pool, and a ticket with no project never reaches the cycle either — both make the follow-up silently unreachable. Do **not** set `In Progress` ahead of time to reserve it for yourself: `In Progress` means "being worked right now", so a reserved-but-abandoned ticket looks busy and is never picked up again by anyone. That silent loss is worse than the duplicate work it tries to prevent.
+  - **Dependency gate — a follow-up that needs this ticket merged goes to `Blocked`, not `Open`.** If it can only be worked once this ticket is implemented **and merged into the base branch** (`dev` / `development`), create it in **`Blocked`** with an explicit reference to the blocking ticket in the description (and a Linear `blockedBy` relation where available). The auto-pick pool (STEP 1b Phase 1) is *Open ∪ Fix-needed* **and** *unassigned-or-mine* — a dependent follow-up left in `Open` is immediately pickable, so a parallel `ticket-cycle` session would grab it and start on code that is not merged yet. `Blocked` keeps it visible and tracked while keeping it out of the pool; move it to `Open` once the base merge has landed (standalone: after your merge; orchestrated via `ticket-cycle`: after its STEP 4b healthy-deploy verification). Do not merely note it in the summary — a ticket that exists only in prose is lost.
 
 ### 9b. User Confirmation Loop
 
@@ -559,7 +603,9 @@ Adapt sections that don't apply (e.g. no Figma → no Figma references). Never i
 - **Limit local Playwright runs to new + affected specs to keep TDD loops fast.** Default to `lt dev test -- <spec>` / `scripts/e2e-fast.sh -- <spec>`; the full Playwright suite is slow and runs in **CI**. Only run the full local suite when the user explicitly asks.
 - **Never push silently.** Branch stays local until the user runs `/lt-dev:dev-submit` or pushes manually.
 - **Never bypass quality gates.** No `--no-verify`, no `.skip`, no flake-retry without an open follow-up note.
-- **Minimise follow-up tickets — implement in scope by default.** Do not defer work into new tickets to shrink the current change; anything that can reasonably be done inside this ticket is done here. A separate follow-up is justified only when it is a genuinely necessary, **completely** out-of-scope feature that can be built in parallel. If a follow-up depends on this ticket being merged into the base branch (`dev` / `development`), do **not** create it until that merge has landed — the auto-pick pool admits every unassigned "Open" ticket, so a premature dependent follow-up gets grabbed by another `ticket-cycle` session before it can be worked. Until then, note it in the summary only.
+- **Never implement a ticket without checking it is still current (STEP 5b).** A ticket is a snapshot of the past; the base branch has moved since. Compare the ticket's and its comments' timestamps against `origin/<BASE>`'s history, look for parallel work on it, and verify the described problem still reproduces in the current code. Blind execution is not neutral — it can re-introduce something that was deliberately removed, undo a newer fix, or bolt a second mechanism onto one that already covers the case. If the ticket is already solved or its premise no longer holds, **stop and ask**; do not reinterpret it into "what it probably means now".
+- **Minimise follow-up tickets — implement in scope by default.** Do not defer work into new tickets to shrink the current change; anything that can reasonably be done inside this ticket is done here. A separate follow-up is justified only when it is a genuinely necessary, **completely** out-of-scope feature that can be built in parallel.
+- **Ticket states are a claim protocol, not decoration.** A filed follow-up goes to **`Open` with a project** — `Backlog` and "no project" both drop it out of the auto-pick pool for good. One that first needs this ticket merged goes to **`Blocked`** with a reference to the blocking ticket, and is moved to `Open` after that merge. **Never** pre-set `In Progress` to reserve a ticket: it then reads as actively worked, and if anything intervenes nobody ever picks it up again — a silent loss, worse than the duplicate work it was meant to avoid. `In Progress` is set at STEP 3, when work actually starts, and only after re-checking that the ticket is still unclaimed.
 - **Never invent acceptance criteria.** If unclear, ask.
 - **Always ask before destructive git ops** (force-push, hard reset, branch delete) — they are never part of this command.
 - **Failing tests are always blockers**, even if they predate the current changes. Fix root causes.
