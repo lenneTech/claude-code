@@ -5,787 +5,1605 @@
     {
       "pattern": "Bash(npm test:*)",
       "description": "Run npm test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "backend-dev", "backend-reviewer", "test-reviewer", "frontend-reviewer", "branch-rebaser", "coordinating-agent-teams", "refactor-frontend", "code-cleanup"]
+      "usedBy": [
+        "building-stories-with-tdd",
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "nest-server-updater",
+        "fullstack-updater",
+        "review",
+        "backend-dev",
+        "backend-reviewer",
+        "test-reviewer",
+        "frontend-reviewer",
+        "branch-rebaser",
+        "coordinating-agent-teams",
+        "refactor-frontend",
+        "code-cleanup"
+      ]
     },
     {
       "pattern": "Bash(npm run test:*)",
       "description": "Run npm run test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "backend-dev", "backend-reviewer", "test-reviewer", "frontend-reviewer", "branch-rebaser", "coordinating-agent-teams", "refactor-frontend", "code-cleanup"]
+      "usedBy": [
+        "building-stories-with-tdd",
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "nest-server-updater",
+        "fullstack-updater",
+        "review",
+        "backend-dev",
+        "backend-reviewer",
+        "test-reviewer",
+        "frontend-reviewer",
+        "branch-rebaser",
+        "coordinating-agent-teams",
+        "refactor-frontend",
+        "code-cleanup",
+        "ai-model-review"
+      ]
     },
     {
       "pattern": "Bash(npm run test\\:e2e:*)",
       "description": "Run end-to-end tests",
-      "usedBy": ["generating-nest-servers", "building-stories-with-tdd", "developing-lt-frontend", "review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": [
+        "generating-nest-servers",
+        "building-stories-with-tdd",
+        "developing-lt-frontend",
+        "review",
+        "branch-rebaser",
+        "coordinating-agent-teams"
+      ]
     },
     {
       "pattern": "Bash(npx playwright:*)",
       "description": "Run Playwright E2E tests",
-      "usedBy": ["developing-lt-frontend", "building-stories-with-tdd", "coordinating-agent-teams"]
+      "usedBy": [
+        "developing-lt-frontend",
+        "building-stories-with-tdd",
+        "coordinating-agent-teams"
+      ]
     },
     {
       "pattern": "Bash(npx vitest:*)",
       "description": "Run Vitest tests directly",
-      "usedBy": ["building-stories-with-tdd", "generating-nest-servers", "branch-rebaser"]
+      "usedBy": [
+        "building-stories-with-tdd",
+        "generating-nest-servers",
+        "branch-rebaser"
+      ]
     },
     {
       "pattern": "Bash(npm run dev:*)",
       "description": "Run development server",
-      "usedBy": ["developing-lt-frontend", "generating-nest-servers", "validating-changes-in-browser"]
+      "usedBy": [
+        "developing-lt-frontend",
+        "generating-nest-servers",
+        "validating-changes-in-browser"
+      ]
     },
     {
       "pattern": "Bash(npm start:*)",
       "description": "Start the application",
-      "usedBy": ["generating-nest-servers"]
+      "usedBy": [
+        "generating-nest-servers"
+      ]
     },
     {
       "pattern": "Bash(npm run start:*)",
       "description": "Start the application in different modes",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend"]
+      "usedBy": [
+        "generating-nest-servers",
+        "developing-lt-frontend"
+      ]
     },
     {
       "pattern": "Bash(npm run build:*)",
       "description": "Build the application",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
+      "usedBy": [
+        "generating-nest-servers",
+        "developing-lt-frontend",
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "nest-server-updater",
+        "fullstack-updater",
+        "review",
+        "coordinating-agent-teams",
+        "env-migrate",
+        "backend-dev",
+        "frontend-dev",
+        "test-reviewer",
+        "frontend-reviewer",
+        "refactor-frontend",
+        "code-cleanup",
+        "vendor-mode-converter-frontend",
+        "nuxt-extensions-core-updater"
+      ]
     },
     {
       "pattern": "Bash(npm run lint:*)",
       "description": "Run linter checks",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend", "code-cleanup", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
+      "usedBy": [
+        "generating-nest-servers",
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "fullstack-updater",
+        "review",
+        "branch-rebaser",
+        "coordinating-agent-teams",
+        "env-migrate",
+        "backend-dev",
+        "frontend-dev",
+        "test-reviewer",
+        "frontend-reviewer",
+        "a11y-reviewer",
+        "refactor-frontend",
+        "code-cleanup",
+        "vendor-mode-converter-frontend",
+        "nuxt-extensions-core-updater"
+      ]
     },
     {
       "pattern": "Bash(npm run check:*)",
       "description": "Run project check script (typecheck + lint + build)",
-      "usedBy": ["review", "code-reviewer", "branch-rebaser"]
+      "usedBy": [
+        "review",
+        "code-reviewer",
+        "branch-rebaser",
+        "ai-model-review"
+      ]
     },
     {
       "pattern": "Bash(npm run typecheck:*)",
       "description": "Run TypeScript type checking",
-      "usedBy": ["review", "code-reviewer", "branch-rebaser", "backend-reviewer", "frontend-reviewer"]
+      "usedBy": [
+        "review",
+        "code-reviewer",
+        "branch-rebaser",
+        "backend-reviewer",
+        "frontend-reviewer"
+      ]
     },
     {
       "pattern": "Bash(npm run generate-types:*)",
       "description": "Generate TypeScript types from backend API",
-      "usedBy": ["developing-lt-frontend", "fullstack-updater", "frontend-dev"]
+      "usedBy": [
+        "developing-lt-frontend",
+        "fullstack-updater",
+        "frontend-dev"
+      ]
     },
     {
       "pattern": "Bash(npx tsc:*)",
       "description": "Run TypeScript compiler checks",
-      "usedBy": ["backend-dev", "frontend-dev"]
+      "usedBy": [
+        "backend-dev",
+        "frontend-dev"
+      ]
     },
     {
       "pattern": "Bash(pnpm exec tsc:*)",
       "description": "Run TypeScript compiler checks",
-      "usedBy": ["backend-dev", "frontend-dev"]
+      "usedBy": [
+        "backend-dev",
+        "frontend-dev"
+      ]
     },
     {
       "pattern": "Bash(yarn tsc:*)",
       "description": "Run TypeScript compiler checks",
-      "usedBy": ["backend-dev", "frontend-dev"]
+      "usedBy": [
+        "backend-dev",
+        "frontend-dev"
+      ]
     },
     {
       "pattern": "Bash(lt server:*)",
       "description": "Execute lt server commands (module, object, addProp, create, permissions)",
-      "usedBy": ["generating-nest-servers", "code-reviewer", "backend-reviewer", "security-reviewer", "sec-audit", "backend-dev"]
+      "usedBy": [
+        "generating-nest-servers",
+        "code-reviewer",
+        "backend-reviewer",
+        "security-reviewer",
+        "sec-audit",
+        "backend-dev"
+      ]
     },
     {
       "pattern": "Bash(lt frontend:*)",
       "description": "Execute lt frontend CLI commands (convert-mode)",
-      "usedBy": ["vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
+      "usedBy": [
+        "vendor-mode-converter-frontend",
+        "nuxt-extensions-core-updater"
+      ]
     },
     {
       "pattern": "Bash(lt:*)",
       "description": "Execute general lt CLI commands (git, fullstack)",
-      "usedBy": ["using-lt-cli"]
+      "usedBy": [
+        "using-lt-cli"
+      ]
     },
     {
       "pattern": "Bash(npm audit:*)",
       "description": "Run security audit on npm packages",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit", "review", "code-reviewer", "branch-rebaser", "coordinating-agent-teams", "security-reviewer"]
+      "usedBy": [
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "sec-audit",
+        "review",
+        "code-reviewer",
+        "branch-rebaser",
+        "coordinating-agent-teams",
+        "security-reviewer"
+      ]
     },
     {
       "pattern": "Bash(npm update:*)",
       "description": "Update npm packages to latest compatible version (escalation-ladder step 1)",
-      "usedBy": ["review", "code-reviewer", "branch-rebaser", "maintaining-npm-packages"]
+      "usedBy": [
+        "review",
+        "code-reviewer",
+        "branch-rebaser",
+        "maintaining-npm-packages"
+      ]
     },
     {
       "pattern": "Bash(npm install:*)",
       "description": "Install npm packages",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "branch-rebaser", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
+      "usedBy": [
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "nest-server-updater",
+        "fullstack-updater",
+        "branch-rebaser",
+        "vendor-mode-converter-frontend",
+        "nuxt-extensions-core-updater"
+      ]
     },
     {
       "pattern": "Bash(npm uninstall:*)",
       "description": "Uninstall npm packages",
-      "usedBy": ["maintaining-npm-packages"]
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
     },
     {
       "pattern": "Bash(npx ncu:*)",
       "description": "Check for npm package updates using npm-check-updates",
-      "usedBy": ["maintaining-npm-packages"]
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
     },
     {
       "pattern": "Bash(lt server module:*)",
       "description": "Create new NestJS module",
-      "usedBy": ["generating-nest-servers", "backend-dev"]
+      "usedBy": [
+        "generating-nest-servers",
+        "backend-dev"
+      ]
     },
     {
       "pattern": "Bash(lt server addProp:*)",
       "description": "Add property to NestJS module",
-      "usedBy": ["generating-nest-servers", "backend-dev"]
+      "usedBy": [
+        "generating-nest-servers",
+        "backend-dev"
+      ]
     },
     {
       "pattern": "Bash(lt git get:*)",
       "description": "Checkout or create git branch",
-      "usedBy": ["using-lt-cli"]
+      "usedBy": [
+        "using-lt-cli"
+      ]
     },
     {
       "pattern": "Bash(npm run update:*)",
       "description": "Run project update script",
-      "usedBy": ["nest-server-updating", "nest-server-updater", "fullstack-updater"]
+      "usedBy": [
+        "nest-server-updating",
+        "nest-server-updater",
+        "fullstack-updater"
+      ]
     },
     {
       "pattern": "Bash(npm list:*)",
       "description": "List installed npm packages",
-      "usedBy": ["nest-server-updating", "sec-audit", "fullstack-updater", "backend-reviewer", "architect"]
+      "usedBy": [
+        "nest-server-updating",
+        "sec-audit",
+        "fullstack-updater",
+        "backend-reviewer",
+        "architect"
+      ]
     },
     {
       "pattern": "Bash(npm outdated:*)",
       "description": "Check for outdated npm packages",
-      "usedBy": ["sec-audit", "npm-package-maintainer"]
+      "usedBy": [
+        "sec-audit",
+        "npm-package-maintainer"
+      ]
     },
     {
       "pattern": "Bash(npm view:*)",
       "description": "View npm package information",
-      "usedBy": ["nest-server-updating", "fullstack-updater"]
+      "usedBy": [
+        "nest-server-updating",
+        "fullstack-updater"
+      ]
     },
     {
       "pattern": "Bash(pnpm test:*)",
       "description": "Run pnpm test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup"]
+      "usedBy": [
+        "building-stories-with-tdd",
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "nest-server-updater",
+        "fullstack-updater",
+        "review",
+        "branch-rebaser",
+        "coordinating-agent-teams",
+        "backend-dev",
+        "test-reviewer",
+        "frontend-reviewer",
+        "refactor-frontend",
+        "code-cleanup"
+      ]
     },
     {
       "pattern": "Bash(pnpm run test:*)",
       "description": "Run pnpm run test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup"]
+      "usedBy": [
+        "building-stories-with-tdd",
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "nest-server-updater",
+        "fullstack-updater",
+        "review",
+        "branch-rebaser",
+        "coordinating-agent-teams",
+        "backend-dev",
+        "test-reviewer",
+        "frontend-reviewer",
+        "refactor-frontend",
+        "code-cleanup",
+        "ai-model-review"
+      ]
     },
     {
       "pattern": "Bash(pnpm run test\\:e2e:*)",
       "description": "Run end-to-end tests via pnpm",
-      "usedBy": ["generating-nest-servers", "building-stories-with-tdd", "developing-lt-frontend", "review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": [
+        "generating-nest-servers",
+        "building-stories-with-tdd",
+        "developing-lt-frontend",
+        "review",
+        "branch-rebaser",
+        "coordinating-agent-teams"
+      ]
     },
     {
       "pattern": "Bash(pnpm dlx playwright:*)",
       "description": "Run Playwright E2E tests via pnpm",
-      "usedBy": ["developing-lt-frontend", "building-stories-with-tdd", "coordinating-agent-teams"]
+      "usedBy": [
+        "developing-lt-frontend",
+        "building-stories-with-tdd",
+        "coordinating-agent-teams"
+      ]
     },
     {
       "pattern": "Bash(pnpm dlx vitest:*)",
       "description": "Run Vitest tests via pnpm",
-      "usedBy": ["building-stories-with-tdd", "generating-nest-servers", "branch-rebaser"]
+      "usedBy": [
+        "building-stories-with-tdd",
+        "generating-nest-servers",
+        "branch-rebaser"
+      ]
     },
     {
       "pattern": "Bash(pnpm run dev:*)",
       "description": "Run development server via pnpm",
-      "usedBy": ["developing-lt-frontend", "generating-nest-servers", "validating-changes-in-browser"]
+      "usedBy": [
+        "developing-lt-frontend",
+        "generating-nest-servers",
+        "validating-changes-in-browser"
+      ]
     },
     {
       "pattern": "Bash(pnpm start:*)",
       "description": "Start the application via pnpm",
-      "usedBy": ["generating-nest-servers"]
+      "usedBy": [
+        "generating-nest-servers"
+      ]
     },
     {
       "pattern": "Bash(pnpm run start:*)",
       "description": "Start the application in different modes via pnpm",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend"]
+      "usedBy": [
+        "generating-nest-servers",
+        "developing-lt-frontend"
+      ]
     },
     {
       "pattern": "Bash(pnpm run build:*)",
       "description": "Build the application via pnpm",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
+      "usedBy": [
+        "generating-nest-servers",
+        "developing-lt-frontend",
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "nest-server-updater",
+        "fullstack-updater",
+        "review",
+        "coordinating-agent-teams",
+        "env-migrate",
+        "backend-dev",
+        "frontend-dev",
+        "test-reviewer",
+        "frontend-reviewer",
+        "refactor-frontend",
+        "code-cleanup",
+        "vendor-mode-converter-frontend",
+        "nuxt-extensions-core-updater"
+      ]
     },
     {
       "pattern": "Bash(pnpm run lint:*)",
       "description": "Run linter checks via pnpm",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend", "code-cleanup", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
+      "usedBy": [
+        "generating-nest-servers",
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "fullstack-updater",
+        "review",
+        "branch-rebaser",
+        "coordinating-agent-teams",
+        "env-migrate",
+        "backend-dev",
+        "frontend-dev",
+        "test-reviewer",
+        "frontend-reviewer",
+        "a11y-reviewer",
+        "refactor-frontend",
+        "code-cleanup",
+        "vendor-mode-converter-frontend",
+        "nuxt-extensions-core-updater"
+      ]
     },
     {
       "pattern": "Bash(pnpm run check:*)",
       "description": "Run project check script via pnpm (typecheck + lint + build)",
-      "usedBy": ["review", "code-reviewer", "branch-rebaser"]
+      "usedBy": [
+        "review",
+        "code-reviewer",
+        "branch-rebaser",
+        "ai-model-review"
+      ]
+    },
+    {
+      "pattern": "Bash(pnpm run bench\\:ai:*)",
+      "description": "Run the project's AI model benchmark (spends provider tokens; opt-in, never part of `test`)",
+      "usedBy": [
+        "ai-model-review"
+      ]
     },
     {
       "pattern": "Bash(pnpm run typecheck:*)",
       "description": "Run TypeScript type checking via pnpm",
-      "usedBy": ["review", "code-reviewer", "branch-rebaser", "backend-reviewer", "frontend-reviewer"]
+      "usedBy": [
+        "review",
+        "code-reviewer",
+        "branch-rebaser",
+        "backend-reviewer",
+        "frontend-reviewer"
+      ]
     },
     {
       "pattern": "Bash(pnpm run generate-types:*)",
       "description": "Generate TypeScript types via pnpm",
-      "usedBy": ["developing-lt-frontend", "fullstack-updater", "frontend-dev"]
+      "usedBy": [
+        "developing-lt-frontend",
+        "fullstack-updater",
+        "frontend-dev"
+      ]
     },
     {
       "pattern": "Bash(pnpm audit:*)",
       "description": "Run security audit via pnpm",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit", "review", "code-reviewer", "branch-rebaser", "coordinating-agent-teams", "security-reviewer"]
+      "usedBy": [
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "sec-audit",
+        "review",
+        "code-reviewer",
+        "branch-rebaser",
+        "coordinating-agent-teams",
+        "security-reviewer"
+      ]
     },
     {
       "pattern": "Bash(pnpm update:*)",
       "description": "Update packages to latest compatible version via pnpm (escalation-ladder step 1)",
-      "usedBy": ["review", "code-reviewer", "branch-rebaser", "maintaining-npm-packages"]
+      "usedBy": [
+        "review",
+        "code-reviewer",
+        "branch-rebaser",
+        "maintaining-npm-packages"
+      ]
     },
     {
       "pattern": "Bash(pnpm install:*)",
       "description": "Install packages via pnpm",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "branch-rebaser", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
+      "usedBy": [
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "nest-server-updater",
+        "fullstack-updater",
+        "branch-rebaser",
+        "vendor-mode-converter-frontend",
+        "nuxt-extensions-core-updater"
+      ]
     },
     {
       "pattern": "Bash(pnpm add:*)",
       "description": "Add packages via pnpm",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "branch-rebaser", "vendor-mode-converter-frontend"]
+      "usedBy": [
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "fullstack-updater",
+        "branch-rebaser",
+        "vendor-mode-converter-frontend"
+      ]
     },
     {
       "pattern": "Bash(pnpm remove:*)",
       "description": "Remove packages via pnpm",
-      "usedBy": ["maintaining-npm-packages"]
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
     },
     {
       "pattern": "Bash(pnpm dlx ncu:*)",
       "description": "Check for package updates via pnpm",
-      "usedBy": ["maintaining-npm-packages"]
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
     },
     {
       "pattern": "Bash(pnpm run update:*)",
       "description": "Run project update script via pnpm",
-      "usedBy": ["nest-server-updating", "nest-server-updater", "fullstack-updater"]
+      "usedBy": [
+        "nest-server-updating",
+        "nest-server-updater",
+        "fullstack-updater"
+      ]
     },
     {
       "pattern": "Bash(pnpm list:*)",
       "description": "List installed packages via pnpm",
-      "usedBy": ["nest-server-updating", "sec-audit", "fullstack-updater", "backend-reviewer", "architect"]
+      "usedBy": [
+        "nest-server-updating",
+        "sec-audit",
+        "fullstack-updater",
+        "backend-reviewer",
+        "architect"
+      ]
     },
     {
       "pattern": "Bash(pnpm outdated:*)",
       "description": "Check for outdated packages via pnpm",
-      "usedBy": ["sec-audit", "npm-package-maintainer"]
+      "usedBy": [
+        "sec-audit",
+        "npm-package-maintainer"
+      ]
     },
     {
       "pattern": "Bash(pnpm view:*)",
       "description": "View package information via pnpm",
-      "usedBy": ["nest-server-updating", "fullstack-updater"]
+      "usedBy": [
+        "nest-server-updating",
+        "fullstack-updater"
+      ]
     },
     {
       "pattern": "Bash(pnpm run format:*)",
       "description": "Run code formatter via pnpm",
-      "usedBy": ["review", "branch-rebaser", "coordinating-agent-teams", "refactor-frontend"]
+      "usedBy": [
+        "review",
+        "branch-rebaser",
+        "coordinating-agent-teams",
+        "refactor-frontend"
+      ]
     },
     {
       "pattern": "Bash(pnpm run prettier:*)",
       "description": "Run Prettier via pnpm",
-      "usedBy": ["review", "coordinating-agent-teams"]
+      "usedBy": [
+        "review",
+        "coordinating-agent-teams"
+      ]
     },
     {
       "pattern": "Bash(pnpm dlx oxlint:*)",
       "description": "Run oxlint via pnpm",
-      "usedBy": ["branch-rebaser"]
+      "usedBy": [
+        "branch-rebaser"
+      ]
     },
     {
       "pattern": "Bash(pnpm dlx oxfmt:*)",
       "description": "Run oxfmt via pnpm",
-      "usedBy": ["branch-rebaser"]
+      "usedBy": [
+        "branch-rebaser"
+      ]
     },
     {
       "pattern": "Bash(yarn test:*)",
       "description": "Run yarn test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup"]
+      "usedBy": [
+        "building-stories-with-tdd",
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "nest-server-updater",
+        "fullstack-updater",
+        "review",
+        "branch-rebaser",
+        "coordinating-agent-teams",
+        "backend-dev",
+        "test-reviewer",
+        "frontend-reviewer",
+        "refactor-frontend",
+        "code-cleanup"
+      ]
     },
     {
       "pattern": "Bash(yarn run test:*)",
       "description": "Run yarn run test commands",
-      "usedBy": ["building-stories-with-tdd", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "backend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup"]
+      "usedBy": [
+        "building-stories-with-tdd",
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "nest-server-updater",
+        "fullstack-updater",
+        "review",
+        "branch-rebaser",
+        "coordinating-agent-teams",
+        "backend-dev",
+        "test-reviewer",
+        "frontend-reviewer",
+        "refactor-frontend",
+        "code-cleanup"
+      ]
     },
     {
       "pattern": "Bash(yarn run test\\:e2e:*)",
       "description": "Run end-to-end tests via yarn",
-      "usedBy": ["generating-nest-servers", "building-stories-with-tdd", "developing-lt-frontend", "review", "branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": [
+        "generating-nest-servers",
+        "building-stories-with-tdd",
+        "developing-lt-frontend",
+        "review",
+        "branch-rebaser",
+        "coordinating-agent-teams"
+      ]
     },
     {
       "pattern": "Bash(yarn dlx playwright:*)",
       "description": "Run Playwright E2E tests via yarn",
-      "usedBy": ["developing-lt-frontend", "building-stories-with-tdd", "coordinating-agent-teams"]
+      "usedBy": [
+        "developing-lt-frontend",
+        "building-stories-with-tdd",
+        "coordinating-agent-teams"
+      ]
     },
     {
       "pattern": "Bash(yarn dlx vitest:*)",
       "description": "Run Vitest tests via yarn",
-      "usedBy": ["building-stories-with-tdd", "generating-nest-servers", "branch-rebaser"]
+      "usedBy": [
+        "building-stories-with-tdd",
+        "generating-nest-servers",
+        "branch-rebaser"
+      ]
     },
     {
       "pattern": "Bash(yarn run dev:*)",
       "description": "Run development server via yarn",
-      "usedBy": ["developing-lt-frontend", "generating-nest-servers", "validating-changes-in-browser"]
+      "usedBy": [
+        "developing-lt-frontend",
+        "generating-nest-servers",
+        "validating-changes-in-browser"
+      ]
     },
     {
       "pattern": "Bash(yarn start:*)",
       "description": "Start the application via yarn",
-      "usedBy": ["generating-nest-servers"]
+      "usedBy": [
+        "generating-nest-servers"
+      ]
     },
     {
       "pattern": "Bash(yarn run start:*)",
       "description": "Start the application in different modes via yarn",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend"]
+      "usedBy": [
+        "generating-nest-servers",
+        "developing-lt-frontend"
+      ]
     },
     {
       "pattern": "Bash(yarn run build:*)",
       "description": "Build the application via yarn",
-      "usedBy": ["generating-nest-servers", "developing-lt-frontend", "maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "review", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "refactor-frontend", "code-cleanup", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
+      "usedBy": [
+        "generating-nest-servers",
+        "developing-lt-frontend",
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "nest-server-updater",
+        "fullstack-updater",
+        "review",
+        "coordinating-agent-teams",
+        "env-migrate",
+        "backend-dev",
+        "frontend-dev",
+        "test-reviewer",
+        "frontend-reviewer",
+        "refactor-frontend",
+        "code-cleanup",
+        "vendor-mode-converter-frontend",
+        "nuxt-extensions-core-updater"
+      ]
     },
     {
       "pattern": "Bash(yarn run lint:*)",
       "description": "Run linter checks via yarn",
-      "usedBy": ["generating-nest-servers", "maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "review", "branch-rebaser", "coordinating-agent-teams", "env-migrate", "backend-dev", "frontend-dev", "test-reviewer", "frontend-reviewer", "a11y-reviewer", "refactor-frontend", "code-cleanup", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
+      "usedBy": [
+        "generating-nest-servers",
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "fullstack-updater",
+        "review",
+        "branch-rebaser",
+        "coordinating-agent-teams",
+        "env-migrate",
+        "backend-dev",
+        "frontend-dev",
+        "test-reviewer",
+        "frontend-reviewer",
+        "a11y-reviewer",
+        "refactor-frontend",
+        "code-cleanup",
+        "vendor-mode-converter-frontend",
+        "nuxt-extensions-core-updater"
+      ]
     },
     {
       "pattern": "Bash(yarn run check:*)",
       "description": "Run project check script via yarn (typecheck + lint + build)",
-      "usedBy": ["review", "code-reviewer", "branch-rebaser"]
+      "usedBy": [
+        "review",
+        "code-reviewer",
+        "branch-rebaser"
+      ]
     },
     {
       "pattern": "Bash(yarn run typecheck:*)",
       "description": "Run TypeScript type checking via yarn",
-      "usedBy": ["review", "code-reviewer", "branch-rebaser", "backend-reviewer", "frontend-reviewer"]
+      "usedBy": [
+        "review",
+        "code-reviewer",
+        "branch-rebaser",
+        "backend-reviewer",
+        "frontend-reviewer"
+      ]
     },
     {
       "pattern": "Bash(yarn run generate-types:*)",
       "description": "Generate TypeScript types via yarn",
-      "usedBy": ["developing-lt-frontend", "fullstack-updater", "frontend-dev"]
+      "usedBy": [
+        "developing-lt-frontend",
+        "fullstack-updater",
+        "frontend-dev"
+      ]
     },
     {
       "pattern": "Bash(yarn audit:*)",
       "description": "Run security audit via yarn",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "sec-audit", "review", "code-reviewer", "branch-rebaser", "coordinating-agent-teams", "security-reviewer"]
+      "usedBy": [
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "sec-audit",
+        "review",
+        "code-reviewer",
+        "branch-rebaser",
+        "coordinating-agent-teams",
+        "security-reviewer"
+      ]
     },
     {
       "pattern": "Bash(yarn upgrade:*)",
       "description": "Upgrade packages via yarn (escalation-ladder step 1)",
-      "usedBy": ["review", "code-reviewer", "branch-rebaser", "maintaining-npm-packages"]
+      "usedBy": [
+        "review",
+        "code-reviewer",
+        "branch-rebaser",
+        "maintaining-npm-packages"
+      ]
     },
     {
       "pattern": "Bash(yarn install:*)",
       "description": "Install packages via yarn",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "nest-server-updater", "fullstack-updater", "branch-rebaser", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
+      "usedBy": [
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "nest-server-updater",
+        "fullstack-updater",
+        "branch-rebaser",
+        "vendor-mode-converter-frontend",
+        "nuxt-extensions-core-updater"
+      ]
     },
     {
       "pattern": "Bash(yarn add:*)",
       "description": "Add packages via yarn",
-      "usedBy": ["maintaining-npm-packages", "nest-server-updating", "fullstack-updater", "branch-rebaser"]
+      "usedBy": [
+        "maintaining-npm-packages",
+        "nest-server-updating",
+        "fullstack-updater",
+        "branch-rebaser"
+      ]
     },
     {
       "pattern": "Bash(yarn remove:*)",
       "description": "Remove packages via yarn",
-      "usedBy": ["maintaining-npm-packages"]
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
     },
     {
       "pattern": "Bash(yarn dlx ncu:*)",
       "description": "Check for package updates via yarn",
-      "usedBy": ["maintaining-npm-packages"]
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
     },
     {
       "pattern": "Bash(yarn run update:*)",
       "description": "Run project update script via yarn",
-      "usedBy": ["nest-server-updating", "nest-server-updater", "fullstack-updater"]
+      "usedBy": [
+        "nest-server-updating",
+        "nest-server-updater",
+        "fullstack-updater"
+      ]
     },
     {
       "pattern": "Bash(yarn list:*)",
       "description": "List installed packages via yarn",
-      "usedBy": ["nest-server-updating", "sec-audit", "fullstack-updater", "backend-reviewer", "architect"]
+      "usedBy": [
+        "nest-server-updating",
+        "sec-audit",
+        "fullstack-updater",
+        "backend-reviewer",
+        "architect"
+      ]
     },
     {
       "pattern": "Bash(yarn outdated:*)",
       "description": "Check for outdated packages via yarn",
-      "usedBy": ["sec-audit", "npm-package-maintainer"]
+      "usedBy": [
+        "sec-audit",
+        "npm-package-maintainer"
+      ]
     },
     {
       "pattern": "Bash(yarn info:*)",
       "description": "View package information via yarn",
-      "usedBy": ["nest-server-updating", "fullstack-updater"]
+      "usedBy": [
+        "nest-server-updating",
+        "fullstack-updater"
+      ]
     },
     {
       "pattern": "Bash(yarn run format:*)",
       "description": "Run code formatter via yarn",
-      "usedBy": ["review", "branch-rebaser", "coordinating-agent-teams", "refactor-frontend"]
+      "usedBy": [
+        "review",
+        "branch-rebaser",
+        "coordinating-agent-teams",
+        "refactor-frontend"
+      ]
     },
     {
       "pattern": "Bash(yarn run prettier:*)",
       "description": "Run Prettier via yarn",
-      "usedBy": ["review", "coordinating-agent-teams"]
+      "usedBy": [
+        "review",
+        "coordinating-agent-teams"
+      ]
     },
     {
       "pattern": "Bash(yarn dlx oxlint:*)",
       "description": "Run oxlint via yarn",
-      "usedBy": ["branch-rebaser"]
+      "usedBy": [
+        "branch-rebaser"
+      ]
     },
     {
       "pattern": "Bash(yarn dlx oxfmt:*)",
       "description": "Run oxfmt via yarn",
-      "usedBy": ["branch-rebaser"]
+      "usedBy": [
+        "branch-rebaser"
+      ]
     },
     {
       "pattern": "Bash(gh release:*)",
       "description": "Access GitHub releases via gh CLI",
-      "usedBy": ["nest-server-updating", "fullstack-updater", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater", "nuxt-extensions-core-contributor"]
+      "usedBy": [
+        "nest-server-updating",
+        "fullstack-updater",
+        "vendor-mode-converter-frontend",
+        "nuxt-extensions-core-updater",
+        "nuxt-extensions-core-contributor"
+      ]
     },
     {
       "pattern": "Bash(gh api:*)",
       "description": "Access GitHub API via gh CLI for migration guides and changelogs",
-      "usedBy": ["nest-server-updating", "fullstack-updater", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
+      "usedBy": [
+        "nest-server-updating",
+        "fullstack-updater",
+        "vendor-mode-converter-frontend",
+        "nuxt-extensions-core-updater"
+      ]
     },
     {
       "pattern": "Bash(jq:*)",
       "description": "Parse and extract fields from JSON files (e.g. package.json scripts)",
-      "usedBy": ["review", "code-reviewer", "branch-rebaser", "maintaining-npm-packages", "running-check-script", "check"]
+      "usedBy": [
+        "review",
+        "code-reviewer",
+        "branch-rebaser",
+        "maintaining-npm-packages",
+        "running-check-script",
+        "check"
+      ]
     },
     {
       "pattern": "Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*)",
       "description": "Run plugin helper bash scripts in plugins/lt-dev/scripts/ (e.g. discover-check-scripts.sh) — narrowly scoped to prevent arbitrary shell execution",
-      "usedBy": ["review", "code-reviewer", "branch-rebaser", "running-check-script", "check"]
+      "usedBy": [
+        "review",
+        "code-reviewer",
+        "branch-rebaser",
+        "running-check-script",
+        "check"
+      ]
     },
     {
       "pattern": "Bash(node:*)",
       "description": "Run node for JSON parsing fallback and small helper computations",
-      "usedBy": ["review", "code-reviewer", "branch-rebaser", "running-check-script", "check"]
+      "usedBy": [
+        "review",
+        "code-reviewer",
+        "branch-rebaser",
+        "running-check-script",
+        "check"
+      ]
     },
     {
       "pattern": "Bash(git clone:*)",
       "description": "Clone repositories for comparison",
-      "usedBy": ["nest-server-updating", "fullstack-updater", "vendor-mode-converter-frontend", "nuxt-extensions-core-updater", "nuxt-extensions-core-contributor"]
+      "usedBy": [
+        "nest-server-updating",
+        "fullstack-updater",
+        "vendor-mode-converter-frontend",
+        "nuxt-extensions-core-updater",
+        "nuxt-extensions-core-contributor"
+      ]
     },
     {
       "pattern": "Bash(git diff:*)",
       "description": "Compare versions in repositories",
-      "usedBy": ["fullstack-updater", "review", "debug", "coordinating-agent-teams", "code-reviewer", "test-reviewer", "frontend-reviewer", "backend-reviewer", "ux-reviewer", "docs-reviewer", "a11y-reviewer", "architect", "nuxt-extensions-core-updater", "nuxt-extensions-core-contributor"]
+      "usedBy": [
+        "fullstack-updater",
+        "review",
+        "debug",
+        "coordinating-agent-teams",
+        "code-reviewer",
+        "test-reviewer",
+        "frontend-reviewer",
+        "backend-reviewer",
+        "ux-reviewer",
+        "docs-reviewer",
+        "a11y-reviewer",
+        "architect",
+        "nuxt-extensions-core-updater",
+        "nuxt-extensions-core-contributor"
+      ]
     },
     {
       "pattern": "Bash(git log:*)",
       "description": "Read git history of repositories",
-      "usedBy": ["fullstack-updater", "review", "debug", "coordinating-agent-teams", "code-reviewer", "architect", "nuxt-extensions-core-updater", "nuxt-extensions-core-contributor"]
+      "usedBy": [
+        "fullstack-updater",
+        "review",
+        "debug",
+        "coordinating-agent-teams",
+        "code-reviewer",
+        "architect",
+        "nuxt-extensions-core-updater",
+        "nuxt-extensions-core-contributor"
+      ]
     },
     {
       "pattern": "Bash(git tag:*)",
       "description": "List git tags for version comparison",
-      "usedBy": ["fullstack-updater", "nuxt-extensions-core-updater"]
+      "usedBy": [
+        "fullstack-updater",
+        "nuxt-extensions-core-updater"
+      ]
     },
     {
       "pattern": "Bash(git fetch:*)",
       "description": "Fetch latest changes from remote repositories",
-      "usedBy": ["fullstack-updater", "branch-rebaser", "nuxt-extensions-core-updater"]
+      "usedBy": [
+        "fullstack-updater",
+        "branch-rebaser",
+        "nuxt-extensions-core-updater"
+      ]
     },
     {
       "pattern": "Bash(npm run format:*)",
       "description": "Run code formatter",
-      "usedBy": ["review", "branch-rebaser", "coordinating-agent-teams", "refactor-frontend"]
+      "usedBy": [
+        "review",
+        "branch-rebaser",
+        "coordinating-agent-teams",
+        "refactor-frontend"
+      ]
     },
     {
       "pattern": "Bash(npm run prettier:*)",
       "description": "Run Prettier code formatter",
-      "usedBy": ["review", "coordinating-agent-teams"]
+      "usedBy": [
+        "review",
+        "coordinating-agent-teams"
+      ]
     },
     {
       "pattern": "Bash(git status:*)",
       "description": "Check git working tree status",
-      "usedBy": ["review", "branch-rebaser", "coordinating-agent-teams", "code-reviewer"]
+      "usedBy": [
+        "review",
+        "branch-rebaser",
+        "coordinating-agent-teams",
+        "code-reviewer"
+      ]
     },
     {
       "pattern": "Bash(git rebase:*)",
       "description": "Rebase branches onto target branch",
-      "usedBy": ["branch-rebaser"]
+      "usedBy": [
+        "branch-rebaser"
+      ]
     },
     {
       "pattern": "Bash(git checkout:*)",
       "description": "Checkout git branches",
-      "usedBy": ["branch-rebaser"]
+      "usedBy": [
+        "branch-rebaser"
+      ]
     },
     {
       "pattern": "Bash(git push:*)",
       "description": "Push changes to remote (includes force push with lease)",
-      "usedBy": ["branch-rebaser"]
+      "usedBy": [
+        "branch-rebaser"
+      ]
     },
     {
       "pattern": "Bash(git stash:*)",
       "description": "Stash and restore working changes",
-      "usedBy": ["branch-rebaser"]
+      "usedBy": [
+        "branch-rebaser"
+      ]
     },
     {
       "pattern": "Bash(git branch:*)",
       "description": "List and manage git branches",
-      "usedBy": ["branch-rebaser"]
+      "usedBy": [
+        "branch-rebaser"
+      ]
     },
     {
       "pattern": "Bash(git remote:*)",
       "description": "Inspect remote repository configuration",
-      "usedBy": ["branch-rebaser"]
+      "usedBy": [
+        "branch-rebaser"
+      ]
     },
     {
       "pattern": "Bash(git add:*)",
       "description": "Stage files for commit",
-      "usedBy": ["branch-rebaser"]
+      "usedBy": [
+        "branch-rebaser"
+      ]
     },
     {
       "pattern": "Bash(git commit:*)",
       "description": "Create git commits",
-      "usedBy": ["branch-rebaser"]
+      "usedBy": [
+        "branch-rebaser"
+      ]
     },
     {
       "pattern": "Bash(gh pr:*)",
       "description": "GitHub CLI for PR management",
-      "usedBy": ["branch-rebaser", "create-request", "dev-submit", "ship", "take-ticket", "ticket-cycle", "nuxt-extensions-core-contributor"]
+      "usedBy": [
+        "branch-rebaser",
+        "create-request",
+        "dev-submit",
+        "ship",
+        "take-ticket",
+        "ticket-cycle",
+        "nuxt-extensions-core-contributor"
+      ]
     },
     {
       "pattern": "Bash(gh run:*)",
       "description": "GitHub CLI for inspecting / retrying workflow runs (used during CI-wait + retry loops)",
-      "usedBy": ["ship", "ticket-cycle"]
+      "usedBy": [
+        "ship",
+        "ticket-cycle"
+      ]
     },
     {
       "pattern": "Bash(glab mr:*)",
       "description": "GitLab CLI for MR management",
-      "usedBy": ["branch-rebaser", "create-request", "dev-submit", "ship", "take-ticket", "ticket-cycle"]
+      "usedBy": [
+        "branch-rebaser",
+        "create-request",
+        "dev-submit",
+        "ship",
+        "take-ticket",
+        "ticket-cycle"
+      ]
     },
     {
       "pattern": "Bash(glab ci:*)",
       "description": "GitLab CLI for pipeline status / retry / trace (used during CI-wait + retry loops)",
-      "usedBy": ["ship", "ticket-cycle"]
+      "usedBy": [
+        "ship",
+        "ticket-cycle"
+      ]
     },
     {
       "pattern": "Bash(npx oxlint:*)",
       "description": "Run oxlint for code quality checks",
-      "usedBy": ["branch-rebaser"]
+      "usedBy": [
+        "branch-rebaser"
+      ]
     },
     {
       "pattern": "Bash(npx oxfmt:*)",
       "description": "Run oxfmt for code formatting",
-      "usedBy": ["branch-rebaser"]
+      "usedBy": [
+        "branch-rebaser"
+      ]
     },
     {
       "pattern": "Bash(git blame:*)",
       "description": "Show line-by-line commit history for debugging",
-      "usedBy": ["debug", "coordinating-agent-teams"]
+      "usedBy": [
+        "debug",
+        "coordinating-agent-teams"
+      ]
     },
     {
       "pattern": "Bash(git worktree:*)",
       "description": "Manage git worktrees for parallel branch operations",
-      "usedBy": ["branch-rebaser", "coordinating-agent-teams"]
+      "usedBy": [
+        "branch-rebaser",
+        "coordinating-agent-teams"
+      ]
     },
     {
       "pattern": "Bash(docker compose:*)",
       "description": "Run docker compose commands",
-      "usedBy": ["devops", "devops-reviewer", "validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "devops",
+        "devops-reviewer",
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     },
     {
       "pattern": "Bash(docker build:*)",
       "description": "Build Docker images",
-      "usedBy": ["devops"]
+      "usedBy": [
+        "devops"
+      ]
     },
     {
       "pattern": "Bash(docker stats:*)",
       "description": "Show Docker container resource usage",
-      "usedBy": ["devops", "devops-reviewer"]
+      "usedBy": [
+        "devops",
+        "devops-reviewer"
+      ]
     },
     {
       "pattern": "Bash(docker volume:*)",
       "description": "Manage Docker volumes",
-      "usedBy": ["devops"]
+      "usedBy": [
+        "devops"
+      ]
     },
     {
       "pattern": "Bash(docker ps:*)",
       "description": "List Docker containers",
-      "usedBy": ["devops", "devops-reviewer"]
+      "usedBy": [
+        "devops",
+        "devops-reviewer"
+      ]
     },
     {
       "pattern": "Bash(docker logs:*)",
       "description": "View Docker container logs",
-      "usedBy": ["devops", "devops-reviewer"]
+      "usedBy": [
+        "devops",
+        "devops-reviewer"
+      ]
     },
     {
       "pattern": "Bash(docker exec:*)",
       "description": "Execute commands in Docker containers",
-      "usedBy": ["devops"]
+      "usedBy": [
+        "devops"
+      ]
     },
     {
       "pattern": "Bash(docker images:*)",
       "description": "List Docker images",
-      "usedBy": ["devops", "devops-reviewer"]
+      "usedBy": [
+        "devops",
+        "devops-reviewer"
+      ]
     },
     {
       "pattern": "Bash(curl:*)",
       "description": "Check dev server availability for browser-based reviews, health-check probes, k6 load tests, Swagger discovery, and backend smoke-pass requests during browser validation",
-      "usedBy": ["ux-reviewer", "a11y-reviewer", "frontend-reviewer", "performance-reviewer", "running-load-tests-with-k6", "validating-production-readiness", "production-readiness-orchestrator", "production-ready", "validating-changes-in-browser"]
+      "usedBy": [
+        "ux-reviewer",
+        "a11y-reviewer",
+        "frontend-reviewer",
+        "performance-reviewer",
+        "running-load-tests-with-k6",
+        "validating-production-readiness",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "validating-changes-in-browser"
+      ]
     },
     {
       "pattern": "Bash(k6 run:*)",
       "description": "Run k6 load tests for API performance measurement",
-      "usedBy": ["performance-reviewer", "running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "performance-reviewer",
+        "running-load-tests-with-k6",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     },
     {
       "pattern": "Bash(k6 version:*)",
       "description": "Check k6 version availability",
-      "usedBy": ["performance-reviewer", "running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "performance-reviewer",
+        "running-load-tests-with-k6",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     },
     {
       "pattern": "Bash(command -v k6:*)",
       "description": "Detect k6 installation",
-      "usedBy": ["performance-reviewer", "running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "performance-reviewer",
+        "running-load-tests-with-k6",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     },
     {
       "pattern": "Bash(k6:*)",
       "description": "General k6 invocations (smoke / load / soak scenarios with --summary-export and similar flags)",
-      "usedBy": ["running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "running-load-tests-with-k6",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     },
     {
       "pattern": "Bash(nuxt build:*)",
       "description": "Run Nuxt build for validation",
-      "usedBy": ["vendor-mode-converter-frontend", "nuxt-extensions-core-updater", "fullstack-updater"]
+      "usedBy": [
+        "vendor-mode-converter-frontend",
+        "nuxt-extensions-core-updater",
+        "fullstack-updater"
+      ]
     },
     {
       "pattern": "Bash(nuxt typecheck:*)",
       "description": "Run Nuxt type checking",
-      "usedBy": ["vendor-mode-converter-frontend", "nuxt-extensions-core-updater"]
+      "usedBy": [
+        "vendor-mode-converter-frontend",
+        "nuxt-extensions-core-updater"
+      ]
     },
     {
       "pattern": "Bash(pnpm link:*)",
       "description": "Link a local package into a consumer project for framework-level development",
-      "usedBy": ["contributing-to-lt-framework"]
+      "usedBy": [
+        "contributing-to-lt-framework"
+      ]
     },
     {
       "pattern": "Bash(pnpm unlink:*)",
       "description": "Unlink a previously linked local package after framework-level development",
-      "usedBy": ["contributing-to-lt-framework"]
+      "usedBy": [
+        "contributing-to-lt-framework"
+      ]
     },
     {
       "pattern": "Bash(npm link:*)",
       "description": "Link a local package into a consumer project for framework-level development",
-      "usedBy": ["contributing-to-lt-framework"]
+      "usedBy": [
+        "contributing-to-lt-framework"
+      ]
     },
     {
       "pattern": "Bash(npm unlink:*)",
       "description": "Unlink a previously linked local package after framework-level development",
-      "usedBy": ["contributing-to-lt-framework"]
+      "usedBy": [
+        "contributing-to-lt-framework"
+      ]
     },
     {
       "pattern": "Bash(yarn link:*)",
       "description": "Link a local package into a consumer project for framework-level development",
-      "usedBy": ["contributing-to-lt-framework"]
+      "usedBy": [
+        "contributing-to-lt-framework"
+      ]
     },
     {
       "pattern": "Bash(yarn unlink:*)",
       "description": "Unlink a previously linked local package after framework-level development",
-      "usedBy": ["contributing-to-lt-framework"]
+      "usedBy": [
+        "contributing-to-lt-framework"
+      ]
     },
     {
       "pattern": "Bash(pnpm why:*)",
       "description": "Inspect package resolution to verify link/unlink state",
-      "usedBy": ["contributing-to-lt-framework"]
+      "usedBy": [
+        "contributing-to-lt-framework"
+      ]
     },
     {
       "pattern": "Bash(pkill:*)",
       "description": "Terminate background dev servers and watchers to enforce the dev-server lifecycle contract",
-      "usedBy": ["managing-dev-servers", "contributing-to-lt-framework", "building-stories-with-tdd", "developing-lt-frontend", "generating-nest-servers", "production-readiness-orchestrator", "production-ready", "validating-changes-in-browser"]
+      "usedBy": [
+        "managing-dev-servers",
+        "contributing-to-lt-framework",
+        "building-stories-with-tdd",
+        "developing-lt-frontend",
+        "generating-nest-servers",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "validating-changes-in-browser"
+      ]
     },
     {
       "pattern": "Bash(pgrep:*)",
       "description": "Check whether a background dev server is still running before reporting completion",
-      "usedBy": ["managing-dev-servers", "contributing-to-lt-framework", "building-stories-with-tdd", "developing-lt-frontend", "generating-nest-servers", "production-readiness-orchestrator", "production-ready", "validating-changes-in-browser"]
+      "usedBy": [
+        "managing-dev-servers",
+        "contributing-to-lt-framework",
+        "building-stories-with-tdd",
+        "developing-lt-frontend",
+        "generating-nest-servers",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "validating-changes-in-browser"
+      ]
     },
     {
       "pattern": "Bash(lsof:*)",
       "description": "Inspect which process holds ports 3000/3001 when diagnosing port collisions",
-      "usedBy": ["managing-dev-servers", "contributing-to-lt-framework"]
+      "usedBy": [
+        "managing-dev-servers",
+        "contributing-to-lt-framework"
+      ]
     },
     {
       "pattern": "Bash(brew install k6:*)",
       "description": "Install k6 on macOS for load testing",
-      "usedBy": ["running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "running-load-tests-with-k6",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     },
     {
       "pattern": "Bash(brew install gitlab-runner:*)",
       "description": "Install gitlab-runner on macOS for local pipeline reproduction",
-      "usedBy": ["validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     },
     {
       "pattern": "Bash(brew install act:*)",
       "description": "Install act on macOS for local GitHub Actions reproduction",
-      "usedBy": ["validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     },
     {
       "pattern": "Bash(gitlab-runner:*)",
       "description": "Run GitLab CI jobs locally via gitlab-runner exec for pipeline parity validation",
-      "usedBy": ["validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     },
     {
       "pattern": "Bash(act:*)",
       "description": "Run GitHub Actions workflows locally via nektos/act for pipeline parity validation",
-      "usedBy": ["validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     },
     {
       "pattern": "Bash(docker:*)",
       "description": "General Docker invocations (pull, run, info, network, version) for CI reproduction and load test scaffolding",
-      "usedBy": ["validating-ci-pipelines-locally", "running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready", "devops", "devops-reviewer"]
+      "usedBy": [
+        "validating-ci-pipelines-locally",
+        "running-load-tests-with-k6",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "devops",
+        "devops-reviewer"
+      ]
     },
     {
       "pattern": "Bash(docker-compose:*)",
       "description": "Older docker-compose v1 binary for legacy projects without docker compose plugin",
-      "usedBy": ["validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     },
     {
       "pattern": "Bash(yq:*)",
       "description": "Parse YAML files (.gitlab-ci.yml, .github/workflows/*.yml, docker-compose.yml) for job and stage discovery",
-      "usedBy": ["validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     },
     {
       "pattern": "Bash(lt dev:*)",
       "description": "lt-dev parallel project orchestration (Caddy + HTTPS URLs via dedicated LaunchAgent/systemd unit): install/uninstall/migrate/up/down/status/doctor/test/tunnel — for load tests, Playwright runs, CI reproduction, browser validation, and external Cloudflare Quick Tunnel exposure",
-      "usedBy": ["managing-dev-servers", "running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready", "validating-changes-in-browser"]
+      "usedBy": [
+        "managing-dev-servers",
+        "running-load-tests-with-k6",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "validating-changes-in-browser"
+      ]
     },
     {
       "pattern": "Bash(pnpm exec playwright:*)",
       "description": "Run Playwright via pnpm exec when no script alias is defined",
-      "usedBy": ["developing-lt-frontend", "building-stories-with-tdd", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "developing-lt-frontend",
+        "building-stories-with-tdd",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     },
     {
       "pattern": "Bash(command:*)",
       "description": "Tool availability detection (command -v <tool>) before invoking it",
-      "usedBy": ["running-load-tests-with-k6", "validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "running-load-tests-with-k6",
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     },
     {
       "pattern": "Bash(which:*)",
       "description": "Tool path resolution alternative for command -v",
-      "usedBy": ["running-load-tests-with-k6", "validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "running-load-tests-with-k6",
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     },
     {
       "pattern": "Bash(test:*)",
       "description": "POSIX test for file/directory existence in detection logic",
-      "usedBy": ["running-load-tests-with-k6", "validating-ci-pipelines-locally", "validating-production-readiness", "production-readiness-orchestrator", "production-ready", "running-check-script", "check"]
+      "usedBy": [
+        "running-load-tests-with-k6",
+        "validating-ci-pipelines-locally",
+        "validating-production-readiness",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "running-check-script",
+        "check"
+      ]
     },
     {
       "pattern": "Bash(mkdir:*)",
       "description": "Create scratch directories for load-test scaffolding (tests/load/) and CI artefacts (tmp/ci-local/)",
-      "usedBy": ["running-load-tests-with-k6", "validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "running-load-tests-with-k6",
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     },
     {
       "pattern": "Bash(cp:*)",
       "description": "Copy artefacts between CI job runs and persist k6 baselines",
-      "usedBy": ["running-load-tests-with-k6", "validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "running-load-tests-with-k6",
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     },
     {
       "pattern": "Bash(mv:*)",
       "description": "Move artefacts during CI reproduction and load-test baseline rotation",
-      "usedBy": ["validating-ci-pipelines-locally", "running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "validating-ci-pipelines-locally",
+        "running-load-tests-with-k6",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     },
     {
       "pattern": "Bash(rm:*)",
       "description": "Clean up scratch artefacts under tmp/ci-local/ between iterations",
-      "usedBy": ["validating-ci-pipelines-locally", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     },
     {
       "pattern": "Bash(diff:*)",
       "description": "Compare k6 summary files against baselines for regression detection",
-      "usedBy": ["running-load-tests-with-k6", "production-readiness-orchestrator", "production-ready"]
+      "usedBy": [
+        "running-load-tests-with-k6",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
     }
   ]
 }

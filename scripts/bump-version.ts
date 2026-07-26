@@ -7,17 +7,18 @@ import { $ } from 'bun';
 const rootDir = join(import.meta.dir, '..');
 const pluginsDir = join(rootDir, 'plugins');
 const packageJsonPath = join(rootDir, 'package.json');
+const marketplaceJsonPath = join(rootDir, '.claude-plugin', 'marketplace.json');
 
 const bumpType = Bun.argv[2] || 'patch';
 const changeDescription = Bun.argv.slice(3).join(' ');
 
 if (!['patch', 'minor', 'major'].includes(bumpType)) {
-  console.error('Usage: bun scripts/bump-version.ts [patch|minor|major] [description of changes]');
+  console.error('Usage: npm run version:[patch|minor|major] "<description of changes>"');
   console.error('');
   console.error('Examples:');
-  console.error('  bun run version:patch "Fixed hook detection for monorepos"');
-  console.error('  bun run version:minor "Added new skill for API testing"');
-  console.error('  bun run version:major "Breaking changes in hook configuration"');
+  console.error('  npm run version:patch "Fixed hook detection for monorepos"');
+  console.error('  npm run version:minor "Added new skill for API testing"');
+  console.error('  npm run version:major "Breaking changes in hook configuration"');
   process.exit(1);
 }
 
@@ -55,6 +56,15 @@ if (existsSync(packageLockPath)) {
   }
   writeFileSync(packageLockPath, JSON.stringify(packageLock, null, 2) + '\n');
   console.log(`✓ Updated package-lock.json: ${oldVersion} → ${newVersion}`);
+}
+
+// Update the marketplace manifest so it stays in lock-step with package.json
+if (existsSync(marketplaceJsonPath)) {
+  const marketplaceJson = JSON.parse(readFileSync(marketplaceJsonPath, 'utf8'));
+  const previousMarketplaceVersion = marketplaceJson.version ?? oldVersion;
+  marketplaceJson.version = newVersion;
+  writeFileSync(marketplaceJsonPath, JSON.stringify(marketplaceJson, null, 2) + '\n');
+  console.log(`✓ Updated .claude-plugin/marketplace.json: ${previousMarketplaceVersion} → ${newVersion}`);
 }
 
 // Update all plugin.json files in plugins/*/

@@ -84,7 +84,7 @@ Skills, Commands, Hooks and Agents for Frontend (Nuxt 4), Backend (NestJS/nest-s
 | `branch-rebaser` | Autonomous rebase execution for feature branches |
 | `code-reviewer` | Single-pass code review across 6 quality dimensions |
 
-### Commands (32)
+### Commands (36)
 
 **Root:**
 - `/create-ticket` - Create Linear Ticket (Story, Task, or Bug)
@@ -103,6 +103,10 @@ Skills, Commands, Hooks and Agents for Frontend (Nuxt 4), Backend (NestJS/nest-s
 
 **Backend (`/backend/`):**
 - `/backend:update-nest-server` - Update @lenne.tech/nest-server with automated migration
+- `/backend:update-nest-server-core` - Adopt upstream changes into a vendored nest-server core
+- `/backend:contribute-nest-server-core` - Prepare vendored-core changes as upstream PRs
+- `/backend:convert-to-vendor` / `/backend:convert-to-npm` - Switch framework mode
+- `/backend:ai-model-review` - Recurring per-usage AI model review (inventory → research → measure → adopt)
 - `/backend:sec-audit` - OWASP security audit for dependencies, config, and code
 - `/backend:sec-review` - Perform security review
 - `/backend:code-cleanup` - Clean up and optimize code

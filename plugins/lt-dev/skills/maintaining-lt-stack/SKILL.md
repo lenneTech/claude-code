@@ -164,13 +164,45 @@ exists — the publish.yml action takes minutes.
    `Updated to nest-server version <X.Y.Z>`, otherwise a normal message →
    push main.
 
+### Marketplace repos (`claude-code` public, `claude-code-internal` private)
+
+Not part of the stack waves — they ship Claude Code plugins, not application
+code, and nothing consumes them via npm. Both use the same one-step release,
+**always through the npm script**, never a hand-made version edit or commit:
+
+```bash
+npm run version:patch "<commit message>"   # or version:minor / version:major
+```
+
+`scripts/bump-version.ts` bumps `package.json`, `.claude-plugin/marketplace.json`
+and every `plugins/*/plugin.json` to the same version, commits, tags `vX.Y.Z`
+and pushes — a complete release, so run it only when everything is final. The
+message is mandatory: it becomes the commit body and the tag annotation. Quote
+it as one argument; `npm run` forwards it without a `--` separator.
+
+- **Release gate:** `claude plugin validate plugins/<name>` per changed plugin
+  (plus `/lt-dev:plugin:check` when elements were added or restructured). No
+  `check` script, no smoke test, no npm propagation wait.
+- **Version bumps are mandatory.** Plugins run from the versioned cache
+  `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`; without a bump the
+  same folder is overwritten, which costs rollback and traceability.
+- **Secrets guard:** `scripts/scan-secrets.sh` runs via pre-commit/pre-push and
+  aborts the release on findings — critical for the PUBLIC `claude-code`. Fix
+  findings, never bypass with `--no-verify`.
+- **Push channel:** `claude-code` → GitHub (SSH-agent check + HTTPS fallback as
+  above); `claude-code-internal` → `gitlab.lenne.tech:intern/claude-code-internal`,
+  where `gh` does not apply and no GitHub release is created.
+- **Consumers:** `lt claude plugins` refreshes the marketplace cache and updates
+  every plugin; a Claude Code restart applies it.
+
 ## Single-repo fast path (`/lt-dev:publish`)
 
 The same recipes serve a second entry point: publish ONE repo's changes
 quickly and update only its downstream chain (nest-server →
 nest-server-starter; nuxt-extensions → nuxt-base-starter). The target repo
 is auto-detected from the current working directory (origin remote matched
-against the six base repos) or passed explicitly. Differences to the full
+against the six stack repos plus the two marketplace repos) or passed
+explicitly. Differences to the full
 cycle: uncommitted changes in the source repo are the payload (not a
 preflight error — but stop on unrelated-looking files); maintenance is an
 interactive gate — the command ASKS "publish directly" vs. "maintain first"

@@ -1,6 +1,6 @@
 ---
-description: 'Publish the current lt base repo (or a named one) as a new version and immediately update its downstream base repos. Auto-detects which base repo the current working directory belongs to (nest-server, nuxt-extensions, lt-monorepo, cli, nuxt-base-starter, nest-server-starter), analyzes its committed AND uncommitted changes, then ASKS whether to refresh dependencies (FULL maintenance) before publishing or publish the change directly, releases per the repo recipe, waits for npm propagation, then bumps + maintains + releases the dependent base repos (nest-server → nest-server-starter, nuxt-extensions → nuxt-base-starter). No smoke test by default (opt-in via --smoke-test). Complements /lt-dev:maintenance:maintain-stack, which cycles ALL base repos with the full release gate.'
-argument-hint: '[nest-server|nuxt-extensions|lt-monorepo|cli|nuxt-base-starter|nest-server-starter] [--release-as=patch|minor|major] [--skip-downstream] [--maintenance|--skip-maintenance] [--smoke-test] [--dry-run]'
+description: 'Publish the current lt base repo (or a named one) as a new version and immediately update its downstream base repos. Auto-detects which base repo the current working directory belongs to (nest-server, nuxt-extensions, lt-monorepo, cli, nuxt-base-starter, nest-server-starter, claude-code, claude-code-internal), analyzes its committed AND uncommitted changes, then ASKS whether to refresh dependencies (FULL maintenance) before publishing or publish the change directly, releases per the repo recipe, waits for npm propagation, then bumps + maintains + releases the dependent base repos (nest-server → nest-server-starter, nuxt-extensions → nuxt-base-starter). Marketplace repos release via their own bump-version.ts and have no downstream. No smoke test by default (opt-in via --smoke-test). Complements /lt-dev:maintenance:maintain-stack, which cycles ALL base repos with the full release gate.'
+argument-hint: '[nest-server|nuxt-extensions|lt-monorepo|cli|nuxt-base-starter|nest-server-starter|claude-code|claude-code-internal] [--release-as=patch|minor|major] [--skip-downstream] [--maintenance|--skip-maintenance] [--smoke-test] [--dry-run]'
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, SlashCommand, TodoWrite, ToolSearch
 disable-model-invocation: true
 effort: high
@@ -26,9 +26,29 @@ command only narrows the orchestration to a single chain.
 
 Without an argument, detect which base repo the current working directory
 belongs to (walk up to the git root, match the `origin` remote against
-`lenneTech/{nest-server,nuxt-extensions,lt-monorepo,cli,nuxt-base-starter,nest-server-starter}`;
+`lenneTech/{nest-server,nuxt-extensions,lt-monorepo,cli,nuxt-base-starter,nest-server-starter,claude-code}`
+or `gitlab.lenne.tech:intern/claude-code-internal`;
 fall back to the directory name). If the cwd is NOT a base repo, stop and
 list the valid targets — never guess. An explicit argument always wins.
+
+Note that the marketplace repos can be reached from a nested path: working in
+`claude-code/plugins/lt-dev/…` resolves to the `claude-code` repo, since the
+git root is what counts.
+
+**Plugin names are accepted as aliases for their marketplace repo**, because
+that is how the base repos are usually referred to:
+
+| Argument | Resolves to |
+|---|---|
+| `lt-dev`, `lt-offers`, `lt-showroom` | `claude-code` |
+| `lt-time`, `lt-ops` | `claude-code-internal` |
+
+State the resolution in the report ("lt-dev → releasing claude-code"), since a
+marketplace release always bumps ALL of its plugins in lock-step, not just the
+named one. If that is not wanted, the change has to be split across releases.
+
+With these two repos, all eight base repos per the user's CLAUDE.md are
+covered: the six stack repos plus both marketplaces.
 
 Then summarize what would be published: commits ahead of the remote plus
 uncommitted changes (`git status` + `git log @{u}..`). This summary goes
@@ -41,8 +61,55 @@ into the release notes analysis and the final report.
 | `nest-server` | `nest-server-starter` (lock-step version, `pnpm run update`, migration guides) |
 | `nuxt-extensions` | `nuxt-base-starter` (bump dep in `nuxt-base-template/`) |
 | `lt-monorepo`, `cli`, starters | none (chain ends there) |
+| `claude-code`, `claude-code-internal` | none — consumers pull via `lt claude plugins` |
 
-## Flow
+## Marketplace repos (`claude-code`, `claude-code-internal`)
+
+Both marketplaces release identically — **always via the npm script**, never by
+editing versions or crafting the commit by hand:
+
+```bash
+npm run version:patch "<commit message>"    # or version:minor / version:major
+```
+
+`scripts/bump-version.ts` bumps `package.json`, `.claude-plugin/marketplace.json`
+and **every** `plugins/*/plugin.json` to the same version, then commits, tags
+(`vX.Y.Z`) and pushes. It is a complete release in one step — run it only once
+all changes are final.
+
+**Always pass the message.** It becomes the body of the bump commit and the tag
+annotation; without it the release reads only "chore: bump version to X.Y.Z".
+Quote it as a single argument — `npm run` forwards it as-is, no `--` needed.
+Derive it from the change summary of step 0 (`/lt-dev:git:commit-message` is the
+helper when the wording is not obvious).
+
+What differs from the npm/template recipes:
+
+- **No npm propagation wait** — nothing is published to a registry. Skip flow step 4.
+- **No dependency maintenance** — these repos have no runtime dependencies worth
+  refreshing. Default to "publish directly"; only offer the maintenance gate when
+  the user explicitly asks.
+- **No `check` script** — the release gate is `claude plugin validate plugins/<name>`
+  for every changed plugin plus valid JSON in `marketplace.json`. Run
+  `/lt-dev:plugin:check` when elements were added or restructured.
+- **Version bumping is mandatory, not cosmetic.** Claude Code caches each plugin
+  under `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`. Without a bump
+  the same folder is overwritten: no rollback, and no way to tell which state runs
+  where.
+- **`claude-code` is PUBLIC.** The secrets guard (`scripts/scan-secrets.sh` via
+  pre-commit/pre-push) blocks the release on customer data, tokens or
+  `/Users/<name>/` paths. Never bypass it with `--no-verify` — fix the finding.
+- **Push channel:** `claude-code` goes to GitHub (SSH-agent check + HTTPS fallback
+  per the skill), `claude-code-internal` to `gitlab.lenne.tech` — `gh` does not
+  apply there, and there is no GitHub release to create.
+
+Afterwards, tell the user how to pull the new version:
+
+```bash
+lt claude plugins        # updates the marketplace cache, then every plugin
+```
+
+A restart of Claude Code is required — running sessions keep the old version.
 
 1. **Preflight** (skill rules): correct branch (nest-server: `develop`),
    `git pull` current, `gh auth` + SSH-agent check (HTTPS fallback).
@@ -67,7 +134,8 @@ into the release notes analysis and the final report.
    maintenance runs and afterwards there is genuinely NO change to the
    published artifact, stop with "already current — nothing to publish"
    (skill rule: no change → no release).
-3. **Release source repo** per skill recipe (version bump, commit convention,
+3. **Release source repo** per skill recipe — for `claude-code` /
+   `claude-code-internal` use the marketplace section above instead — (version bump, commit convention,
    PR flow for nest-server incl. migration guide, `gh release create`,
    consumer-oriented English notes, no time estimates). For the commit message,
    follow the repo convention (`NEW_VERSION: MESSAGE` for npm packages,
@@ -82,10 +150,11 @@ into the release notes analysis and the final report.
    version per its recipe (lock-step + migration guides for
    nest-server-starter), run `/lt-dev:maintenance:maintain` (latest frameworks
    + packages), iterate `check` green, release.
-6. **Validate**: downstream `check` green is the default gate. With
+6. **Validate**: downstream `check` green is the default gate; for marketplace
+   repos it is `claude plugin validate` per changed plugin. With
    `--smoke-test`, run `/lt-dev:fullstack:smoke-test` afterwards (recommended
    when the change touches scaffold-critical paths: build wiring, auth, SSR,
-   deploy contract).
+   deploy contract). The smoke test does not apply to marketplace repos.
 7. **Report**: versions old→new per repo, release links, what was NOT
    released and why, leftovers (none expected — this flow creates no test
    systems unless `--smoke-test` ran, which cleans up after itself).
