@@ -501,7 +501,7 @@ test('complete order workflow', async ({ page }) => {
 **Limit local Playwright runs to new + affected specs to keep TDD loops fast.** The full Playwright suite is slow and runs in **CI**. During the local TDD loop, default to running only the **new + affected** specs:
 
 - **lt-projects:** `lt dev test -- tests/e2e/<spec>.spec.ts` (isolated parallel stack on a dedicated `<slug>-test` DB)
-- **non-lt projects:** `scripts/e2e-fast.sh -- tests/e2e/<spec>.spec.ts` (or `pnpm dlx playwright test tests/e2e/<spec>.spec.ts`)
+- **non-lt projects:** `pnpm exec playwright test tests/e2e/<spec>.spec.ts` (or `pnpm dlx playwright test tests/e2e/<spec>.spec.ts` when Playwright is not installed locally)
 - **Backend Unit + API** stay unrestricted — they're fast and catch cross-pillar regressions in every iteration.
 - Only run the **full local Playwright suite** when the user explicitly asks.
 

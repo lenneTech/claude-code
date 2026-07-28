@@ -85,7 +85,7 @@ Several Nuxt/Vue framework conventions have a **standard safe path** and an **op
 
 **CRITICAL: Failing tests are ALWAYS a problem.** Fix the root cause of every failing test — even if the failure predates the current changes or seems unrelated to the current task. A green test suite is a non-negotiable prerequisite. Never ignore, skip, or defer test failures.
 
-**CRITICAL: Limit local Playwright runs to new + affected specs to keep TDD loops fast.** The full Playwright suite is slow and runs in **CI**. Inside the dev loop, default to `lt dev test -- <spec>` (lt-projects) or `scripts/e2e-fast.sh -- <spec>` / `pnpm dlx playwright test <spec>` (non-lt). Backend Unit + API stay unrestricted — they're fast. Only run the full local Playwright suite when the user explicitly asks.
+**CRITICAL: Limit local Playwright runs to new + affected specs to keep TDD loops fast.** The full Playwright suite is slow and runs in **CI**. Inside the dev loop, default to `lt dev test -- <spec>` (lt-projects) or `pnpm exec playwright test <spec>` (non-lt). Backend Unit + API stay unrestricted — they're fast. Only run the full local Playwright suite when the user explicitly asks.
 
 ## Type System Rules (ZERO TOLERANCE)
 
