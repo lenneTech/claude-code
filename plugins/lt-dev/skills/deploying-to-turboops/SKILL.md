@@ -320,6 +320,33 @@ missing from the CI deploy command (or the project has no `detectedConfig`). Add
 
 ## Gotchas / Traps
 
+### The image build fails long after every test went green
+
+The Docker build is the LAST gate before a deploy, and it exercises things no
+test touches. Two traps seen in the wild:
+
+**`patches/` is not copied into the image.** The deps stage copies manifests,
+`pnpm-lock.yaml`, `pnpm-workspace.yaml` and `.npmrc` — but `pnpm-workspace.yaml`
+also references `patchedDependencies: patches/<pkg>.patch`, and pnpm reads those
+files during install. Without them `pnpm install --frozen-lockfile` dies with
+`ENOENT: … patches/<pkg>.patch`. Since those patches usually close CVEs, an
+image built without them would not be what was tested anyway. Both starter
+Dockerfiles copy `patches/` now — check for it when a project's Dockerfile
+predates that.
+
+**A migration step that never returns.** `migrate up` used to leave a GridFS
+connection open, so the CLI printed "All migrations completed successfully" and
+then hung forever. In a container entrypoint of the shape
+`migrate up && node main.js` the server is never reached; in CI the job blocks
+until its timeout. Fixed in `@lenne.tech/nest-server` — if a vendored core
+predates the fix, `uploadFileToGridFS` is the place to look.
+
+**Build the image locally before pushing a Dockerfile change.**
+`docker build --target deps -f projects/api/Dockerfile .` reproduces the exact
+stage CI runs in under a minute. A pipeline round trip to learn the same thing
+costs ten.
+
+
 These are empirically verified failures. The first two are **the same root cause
 as above** seen through MCP tools that look right but skip the compose upload —
 the CLI `--compose docker-compose.yml` path bypasses both.

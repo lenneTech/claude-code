@@ -159,6 +159,68 @@ new role is seen immediately. The API honours `VITEST`, `PLAYWRIGHT` and
 }
 ```
 
+## CI must be sharded — check before you touch the pipeline
+
+**A `.gitlab-ci.yml` that runs the whole Playwright suite in ONE job with
+`nuxt dev` and a ts-node API is out of date.** Projects scaffolded before the
+sharded template still carry it. Check `parallel:` in the `app:test` job first —
+if it is missing, port the current `lt-monorepo` template job before doing
+anything else with that pipeline.
+
+Three costs, in the order they hurt:
+
+| Cost | Symptom | Fix |
+|---|---|---|
+| `nuxt dev` in CI | Vite recompiles every route on first hit, per device project — by far the largest share of runtime | `E2E_BUILT_SERVER=true` + the `build` job's `projects/app/.output` artifact |
+| ts-node API | slow boot, occasional mid-run death | `pnpm run start:e2e:dist` + the `projects/api/dist` artifact |
+| One serial job | wall-clock = sum of everything | `parallel: 4` + `--shard=$CI_NODE_INDEX/$CI_NODE_TOTAL` |
+
+`workers: 1` stays in `playwright.config.ts`. CI parallelism is across
+**processes** (one container per shard, each with its own API and its own mongo
+via `FF_NETWORK_PER_BUILD`), never across in-process workers — those collide on
+the virtual WebAuthn authenticator and on shared seed data.
+
+**Migrations do not run themselves.** `start:e2e:dist` and `start:nodemon` are
+bare node/ts-node — only `pnpm start` chains `migrate:up`. Without an explicit
+`migrate:up` step the CI database has no seed data, and every test that depends
+on it skips itself. **A suite that quietly skips reports green and proves
+nothing** — always read the summary line (`N passed`, `M skipped`), never just
+the exit code.
+
+### Never guess an optional feature's availability — and never define a credential twice
+
+Two failure shapes cost a full CI round each, and both look like app bugs until
+you read closely.
+
+**Optional features.** AI, voice, camera — anything gated on server config — are
+`available` in one environment and absent in another. A test that asserts them
+unconditionally fails wherever the key is missing (CI, a fresh stage); one that
+asserts their *absence* fails wherever it is present. Neither is the promise.
+Assert what the app actually guarantees: the affordance is *visible* (a disabled
+button still tells people the feature exists), the fallback path keeps working,
+and nothing blocks. If a test must branch on availability, read it from the same
+source the app does — not from a second `fetch` the test invents, which fails
+differently (CORS, credentials) and silently takes the wrong branch.
+
+**Credentials.** Define each test account in exactly ONE module and import it
+everywhere else. A second `process.env.X || 'default'` for the same account is
+not redundancy, it is a delayed-action trap: `global-setup` creates the account
+with default A, the spec signs in with default B. Locally it never surfaces —
+the account survives from an earlier run with whatever password it was created
+with. On a fresh database, i.e. every CI run, sign-in fails and every dependent
+test skips itself.
+
+### A CI run far slower than the local one is a finding, not a fact of life
+
+Local `lt dev test` and CI run the same suite. A CI job taking multiples of the
+local wall-clock means something is wrong with the *setup*, not with CI being
+"slower" — and the usual answer is one of the three rows above. Two runners
+sharing a machine explain a factor of ~2, not more.
+
+Before diagnosing, read the whole job definition once. Editing a pipeline you
+have only skimmed is how a one-line change turns into a series of hour-long
+red runs.
+
 ## Writing E2E Tests
 
 ### Test Structure

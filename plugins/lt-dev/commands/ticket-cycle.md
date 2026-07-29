@@ -33,6 +33,7 @@ If you only need part of the cycle, use the underlying commands directly:
 | `running-check-script` skill | Drives the check loop (per-slice + final, both ship paths) |
 | `managing-dev-servers` skill | Rules for backgrounded servers during E2E |
 | `rebasing-branches` skill | Drives the rebase inside the auto-merge path |
+| `managing-agent-memory` skill | Agent-memory commit policy + pre-commit curation (runs inside `git:ship` STEP 2) |
 
 ## Argument Parsing
 

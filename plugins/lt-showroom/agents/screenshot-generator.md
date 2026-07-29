@@ -13,7 +13,7 @@ maxTurns: 100
 Automates the complete screenshot lifecycle: reads SHOWCASE.md for context, starts the application (Docker preferred), creates realistic demo data, captures feature screenshots at multiple viewports, saves to `docs/showcase/screenshots/`, and cleans up all processes.
 
 > **MCP Dependencies (REQUIRED):**
-> - **`chrome-devtools`** — browser automation for screenshot capture, realistic interaction flows, and demo data creation via form filling
+> - **`chrome-devtools`** — browser automation for screenshot capture, realistic interaction flows, and demo data creation via form filling. Provided by the **`lt-dev` plugin**; this plugin does not declare its own instance, so `lt-dev` must be installed alongside it.
 > - **`showroom-api`** — uploading captured screenshots to GridFS and linking them to showcase feature entries
 >
 > Both MCP servers MUST be configured in the user's session. Without them, the agent cannot complete the screenshot lifecycle.

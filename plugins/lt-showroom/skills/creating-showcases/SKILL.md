@@ -29,7 +29,7 @@ This skill implements a **5-phase workflow** built around SHOWCASE.md as the sin
 
 ## MCP Connection
 
-All showcase operations go through the `showroom-api` MCP server. Screenshot capture uses the `chrome-devtools` MCP server.
+All showcase operations go through the `showroom-api` MCP server. Screenshot capture uses the `chrome-devtools` MCP server, which the `lt-dev` plugin provides — this plugin relies on that instance instead of declaring a second one, so both plugins belong in the session for screenshot workflows.
 
 The default MCP endpoint is `https://api.showroom.lenne.tech/mcp` (production). When working inside the showroom project repository, the project-level `.mcp.json` overrides this to `http://localhost:3000/mcp` for local development.
 

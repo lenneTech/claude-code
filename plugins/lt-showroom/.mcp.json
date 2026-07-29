@@ -3,11 +3,6 @@
     "showroom-api": {
       "type": "http",
       "url": "https://api.showroom.lenne.tech/mcp"
-    },
-    "chrome-devtools": {
-      "type": "stdio",
-      "command": "${CLAUDE_PLUGIN_ROOT}/scripts/chrome-devtools-mcp-launcher.sh",
-      "args": ["--isolated"]
     }
   }
 }

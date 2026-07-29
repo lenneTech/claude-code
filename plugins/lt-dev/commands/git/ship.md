@@ -25,6 +25,7 @@ This command is the **closing bookend** to `/lt-dev:take-ticket`. It does **not*
 | `/lt-dev:git:rebase` | Standalone rebase onto dev (used internally by Phase 3) |
 | `/lt-dev:git:create-request` | Standalone MR/PR creation (used internally by Phase 6) |
 | `/lt-dev:dev-submit` | MR/PR + Linear comment + Linear status → "Dev Review" (no merge, no pipeline wait) |
+| [`managing-agent-memory`](../../skills/managing-agent-memory/SKILL.md) skill | Agent-memory commit policy + pre-commit curation (STEP 2) |
 
 **Difference vs. `/lt-dev:dev-submit`:** `dev-submit` hands off to a human reviewer. `ship` lands the branch into dev autonomously after CI is green.
 
@@ -163,6 +164,11 @@ If all ACs are satisfied, log `All acceptance criteria satisfied — proceeding`
 ## STEP 2 — Commit & Push Local Work
 
 1. Run `git status --porcelain`.
+1b. **If anything under `.claude/agent-memory/` is dirty**, follow the
+   [`managing-agent-memory`](../../skills/managing-agent-memory/SKILL.md) skill
+   FIRST — it resolves the repo's commit policy (asking at most once, then
+   remembering the answer locally) and curates the notes so no note that a
+   rename or a fix has invalidated gets committed. Only then continue below.
 2. **If there are uncommitted changes:**
    - Ask via `AskUserQuestion`:
      - Show the list of changed files.
