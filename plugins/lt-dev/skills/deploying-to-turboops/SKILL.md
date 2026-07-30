@@ -104,8 +104,26 @@ NSC__MONGOOSE__URI=mongodb://<stack>_mongo:27017/<db>
 # e.g. mongodb://<slug>-production_mongo:27017/<db>
 ```
 
-Using the short `mongo` host works in local compose but **not** in the deployed
-swarm stack — the api container cannot resolve it and boots without a DB.
+**The short `mongo` host does NOT fail loudly — that is what makes it dangerous.**
+It resolves fine in the deployed swarm. TurboOps puts every stack on a shared
+overlay network, and a service literally named `mongo` exposes that bare name as
+a network alias there. So `mongodb://mongo:27017/<db>` reaches **some** MongoDB —
+just not yours. It lands on whichever foreign stack's `mongo` answers first, and
+that can differ per connection.
+
+Consequences, none of which look like a configuration problem:
+
+- The api boots, is healthy, serves data. Nothing in the logs is wrong.
+- Your project's own `<stack>_mongo` volume stays **completely empty**.
+- Two stacks answering the same alias produce **two parallel datasets**; requests
+  hit one or the other, so records "appear and disappear" between calls, sessions
+  vanish after a reconnect, and GridFS files are found only half the time.
+- Your data sits in another customer's database. This has happened twice in
+  production (DEV-2120, DEV-2140), the second time in a container that also held
+  an unrelated project's **production** database.
+
+Do not conclude from "the API is up and returns data" that the URI is correct.
+That inference is exactly what the bare host survives on.
 
 ## Step-by-Step: First Go-Live
 
@@ -318,6 +336,34 @@ Either symptom means **no real compose reached the server** → `--compose` is
 missing from the CI deploy command (or the project has no `detectedConfig`). Add
 `--compose docker-compose.yml` and re-run the deploy job.
 
+### Symptom → diagnosis: data that will not hold still
+
+These all have one cause and it is never the application code. If you see any of
+them, check the DB host **before** debugging anything else (Trap 3):
+
+| Symptom | What is actually happening |
+|---|---|
+| A record exists on one request and is gone on the next | Two stacks answer the same `mongo` alias — you are talking to two databases in turn |
+| Users are logged out at random | The session was written to one instance, the next connection reads the other |
+| An image/file 404s or 502s while its DB record looks perfect | The GridFS chunks live in the other instance |
+| The seed ran twice and produced two datasets with different IDs | Same |
+| Everything works, but your stage's own mongo volume is empty | You have never used your own database |
+
+One command settles it — if the api's mongo and the stack's mongo are different
+hosts, that is the bug:
+
+```bash
+docker exec $(docker ps -q -f name=<stack>_api | head -1) \
+  sh -c 'getent hosts mongo; getent hosts <stack>_mongo'
+```
+
+**A 502 from a single route while every other route answers** is a different
+bug and not this one: it is an unhandled error on a streamed response (e.g.
+`stream.pipe(res)` with no `error` handler), which destroys the socket
+mid-response. The proxy reports a gateway error, so it reads as "server down"
+while the server is fine. Look for a missing stream error handler, not at
+infrastructure.
+
 ## Gotchas / Traps
 
 ### The image build fails long after every test went green
@@ -389,8 +435,31 @@ projects.
 
 `NSC__MONGOOSE__URI` in the deployed stage must target
 `mongodb://<stack>_mongo:27017/<db>` (stack-qualified), **not** the short
-`mongodb://mongo:27017/<db>`. The short host resolves in local compose but not in
-the deployed swarm stack, so the api boots without a database.
+`mongodb://mongo:27017/<db>`.
+
+The bare host does **not** produce a startup failure — it resolves to a FOREIGN
+stack's MongoDB over the shared overlay, so the api boots healthy and serves
+data while its own database stays empty. See "MongoDB URI" above for the full
+failure picture.
+
+**Verify it, do not assume it** (a green stage proves nothing here):
+
+```bash
+# 1. Which mongo does the api actually reach?
+docker exec $(docker ps -q -f name=<stack>_api | head -1) getent hosts mongo
+docker exec $(docker ps -q -f name=<stack>_api | head -1) getent hosts <stack>_mongo
+#    Two different IPs, and the URI uses the short name → you are on a foreign DB.
+
+# 2. The decisive check — is YOUR mongo actually being used?
+docker exec $(docker ps -q -f name=<stack>_mongo | head -1) \
+  mongosh --quiet --eval 'db.adminCommand({listDatabases:1}).databases.forEach(d=>print(d.name))'
+#    Only admin/config/local = your database is empty and the data is elsewhere.
+```
+
+TurboOps rejects bare DB hosts and isolates bare-named DB services from the shared
+overlay **since v1.72.0** (DEV-2140). Check the running version (bottom left of the
+TurboOps UI, or `GET api.turbo-ops.de/meta`) — on an older instance nothing stops
+you, and existing stacks keep their old networking until they are redeployed.
 
 ### Trap 4 — DNS must point at the server before the first deploy
 
