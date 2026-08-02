@@ -2,6 +2,7 @@
 name: npm-package-maintainer
 description: Specialized agent for maintaining, updating, and auditing npm packages. Use when performing package maintenance, security audits, dependency optimization, or before/after releases.
 model: inherit
+effort: high
 tools: Bash, Read, Grep, Glob, Write, Edit, TodoWrite, WebFetch
 memory: project
 skills: maintaining-npm-packages

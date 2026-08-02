@@ -16,8 +16,7 @@ disable-model-invocation: false
 
 | Command | Purpose |
 |---------|---------|
-| `/lt-dev:git:mr-description` | Generate MR description for branch |
-| `/lt-dev:git:mr-description-clipboard` | Generate MR description with clipboard copy |
+| `/lt-dev:git:mr-description` | Generate MR description (`--clipboard` copies it) for branch |
 
 ---
 

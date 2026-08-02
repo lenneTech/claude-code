@@ -3,7 +3,9 @@
     "chrome-devtools": {
       "type": "stdio",
       "command": "${CLAUDE_PLUGIN_ROOT}/scripts/chrome-devtools-mcp-launcher.sh",
-      "args": ["--isolated"]
+      "args": [
+        "--isolated"
+      ]
     },
     "linear": {
       "type": "http",
@@ -12,17 +14,9 @@
     "nuxt-ui-remote": {
       "type": "stdio",
       "command": "${CLAUDE_PLUGIN_ROOT}/scripts/npx-mcp-launcher.sh",
-      "args": ["nuxt-ui-mcp@latest"]
-    },
-    "better-auth": {
-      "type": "stdio",
-      "command": "${CLAUDE_PLUGIN_ROOT}/scripts/npx-mcp-launcher.sh",
-      "args": ["@nicepkg/aide-mcp-server@latest", "--url=https://www.better-auth.com"]
-    },
-    "figma-desktop": {
-      "type": "stdio",
-      "command": "${CLAUDE_PLUGIN_ROOT}/scripts/npx-mcp-launcher.sh",
-      "args": ["@anthropic-ai/claude-code-figma-mcp@latest"]
+      "args": [
+        "nuxt-ui-mcp@1.0.1"
+      ]
     }
   }
 }

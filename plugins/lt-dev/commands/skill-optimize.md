@@ -1,6 +1,6 @@
 ---
 description: Optimize and validate Claude skill files
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash(wc:*), Bash(echo:*), Bash(find:*)
+allowed-tools: Read, Write, Edit, Glob, Grep, WebFetch, Bash(wc:*), Bash(echo:*), Bash(find:*)
 disable-model-invocation: true
 ---
 
@@ -360,7 +360,7 @@ echo "  Skill Validation Report"
 echo "=================================="
 echo ""
 echo " Summary:"
-total=$(find src/templates/claude-skills -name "SKILL.md" | wc -l)
+total=$(find plugins/lt-dev/skills -name "SKILL.md" | wc -l)
 echo "Total skills validated: $total"
 echo ""
 

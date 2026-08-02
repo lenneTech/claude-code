@@ -1,6 +1,6 @@
 ---
 name: modernizing-toolchain
-description: 'Migrates lenne.tech projects from the legacy jest+eslint+prettier toolchain to the current vitest+oxlint+oxfmt baseline used by nest-server-starter and nuxt-base-starter. Covers swc decoratorMetadata config, the @Prop union-type fix for SWC, supertest default-import correction, ESM/CJS interop, the Nitro PORT-vs-NITRO_PORT bug, ANSI escape stripping in workspace runners (lerna/nx), free-port logic for check-server-start.sh, the offers-pattern config.env.ts (NSC__-only + fail-fast + auto-derived appUrl), and the multi-phase check-envs.sh smoke test. Activates whenever someone is migrating an existing project to the new toolchain, debugging "Cannot determine a type for the X field" Mongoose errors, ERR_SOCKET_BAD_PORT crashes from check-server-start, or wants to align an existing project with the current starter conventions.'
+description: 'Migrates lenne.tech projects from the legacy jest+eslint+prettier toolchain to the current vitest+oxlint+oxfmt baseline used by nest-server-starter and nuxt-base-starter. Covers swc decoratorMetadata config, the @Prop union-type fix for SWC, supertest default-import correction, ESM/CJS interop, the Nitro PORT-vs-NITRO_PORT bug, ANSI escape stripping in workspace runners (lerna/nx), free-port logic for check-server-start.sh, the config.env.ts pattern (NSC__-only + fail-fast + auto-derived appUrl), and the multi-phase check-envs.sh smoke test. Activates when migrating a project to the new toolchain, debugging "Cannot determine a type for the X field" Mongoose errors or ERR_SOCKET_BAD_PORT crashes, or aligning a project with current starter conventions. NOT for dependency version bumps (use maintaining-npm-packages). NOT for nest-server major upgrades (use nest-server-updating).'
 ---
 
 # Modernizing the lenne.tech Toolchain
@@ -474,3 +474,13 @@ After all phases, both must be true:
 | "Update all packages" / "audit + fix" | `maintaining-npm-packages` |
 | "Run my check pipeline" / "check failed" | `running-check-script` (this skill cross-references it) |
 | "Build a new feature" / "add a service" | `generating-nest-servers` or `developing-lt-frontend` |
+
+## Related Skills & Commands
+
+| Element | Relationship |
+|---------|--------------|
+| `running-check-script` skill | Defers the `ERR_SOCKET_BAD_PORT` / ANSI-strip hazards to this skill's Phase 6 |
+| `maintaining-npm-packages` skill | Handles version bumps; this skill handles the toolchain switch itself |
+| `nest-server-updating` skill | nest-server major upgrades, which often surface the same swc/decorator issues |
+| `/lt-dev:fullstack:update-all` | Syncs the workspace-root toolchain from `lt-monorepo` |
+| `/lt-dev:check` | Verifies the migrated toolchain actually runs green |

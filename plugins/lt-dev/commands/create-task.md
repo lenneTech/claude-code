@@ -1,7 +1,7 @@
 ---
 description: Create a technical task ticket for Linear
 argument-hint: "[task-idea]"
-allowed-tools: AskUserQuestion, Write, Read, Glob, mcp__plugin_lt-dev_linear__*
+allowed-tools: AskUserQuestion, Write, Read, Glob, mcp__plugin_lt-dev_linear__*, SlashCommand
 disable-model-invocation: true
 ---
 
@@ -25,6 +25,12 @@ Guide the user through creating a well-structured technical task ticket for Line
 | `/lt-dev:create-story` | Create a user story (feature with user value) |
 | `/lt-dev:create-bug` | Create a bug report |
 | `/lt-dev:resolve-ticket` | Resolve ticket end-to-end with TDD |
+
+**Related Skills:**
+
+| Skill | Purpose |
+|-------|---------|
+| `grilling-decisions` | The facts-vs-decisions split and the frontier-round loop behind Step 2's questioning |
 
 **Workflow:** Create task → `/lt-dev:resolve-ticket` to implement
 
@@ -101,10 +107,14 @@ For each missing or unclear element, formulate a **specific question in German**
 
 ### Questioning Strategy
 
-1. **Ask only about missing/unclear elements** — Don't ask for information already provided
-2. **Be specific** — Reference what was said and ask for clarification
-3. **Group related questions** — Ask 2-4 questions at once, not one by one
-4. **Accept refusal gracefully** — If the user refuses to answer, proceed with available information
+Ask in **rounds** over the frontier: every open question whose prerequisites are already settled. A question that only makes sense once another in this round is answered belongs to the next round.
+
+1. **Ask only about missing or unclear elements** — anything already stated is answered
+2. **Be specific** — reference what was said, and ask for the part that is genuinely ambiguous
+3. **One round, numbered, with your recommendation on every question** — 2 to 4 per round. The user confirms in one word instead of writing the task themselves
+4. **Look facts up yourself** — which packages, configs, or scripts are in place today, what the neighbouring project did, what a `git log` on the affected paths shows. Ask the user for **decisions**, never for facts the repo already holds (the `grilling-decisions` skill has the full split)
+5. **Press hardest on "done"** — a technical task without a checkable verification is the one that comes back. "Migration läuft durch" is not checkable; "`pnpm run migrate` läuft auf einer Kopie der Dev-DB fehlerfrei durch und `users` hat danach das Feld `locale`" is
+6. **Accept refusal gracefully** — proceed on stated assumptions and mark them as such in the ticket
 
 ### Proactive Suggestion Strategy
 
@@ -314,8 +324,8 @@ When the user chooses direct implementation:
 
 1. Confirm: "Starte Implementierung..."
 2. Invoke `/lt-dev:resolve-ticket` depending on whether a Linear ticket exists:
-   - **Ticket exists:** Use the Skill tool with `skill: "lt-dev:resolve-ticket", args: "<ticket-id>"`
-   - **No ticket (markdown/direct):** Use the Skill tool with `skill: "lt-dev:resolve-ticket", args: "<file-path-or-context>"`
+   - **Ticket exists:** Invoke via the `SlashCommand` tool: `/lt-dev:resolve-ticket <ticket-id>`
+   - **No ticket (markdown/direct):** Invoke via the `SlashCommand` tool: `/lt-dev:resolve-ticket <file-path-or-context>`
 
 ---
 

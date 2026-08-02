@@ -2,6 +2,7 @@
 name: nest-server-updater
 description: Autonomous agent for updating @lenne.tech/nest-server to the latest version. Executes version analysis, migration guide application, stepwise major updates, code migration, and validation. Works fully automated.
 model: inherit
+effort: high
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, TodoWrite
 skills: nest-server-updating, generating-nest-servers, maintaining-npm-packages
 memory: project
@@ -106,8 +107,7 @@ if [ -n "$VENDOR_MD" ]; then
   if ! grep -q '"@lenne.tech/nest-server"' "$PROJECT_DIR/package.json" 2>/dev/null; then
     echo "DETECTED: vendored nest-server core at $VENDOR_MD"
     echo "This project uses the vendor pattern. Delegating to nest-server-core-updater."
-    # → Spawn lt-dev:nest-server-core-updater with the same arguments
-    # → Abort this agent
+    # → Stop this agent and tell the user to run /lt-dev:backend:update-nest-server-core
   fi
 fi
 ```

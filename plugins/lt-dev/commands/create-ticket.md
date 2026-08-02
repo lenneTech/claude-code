@@ -1,7 +1,7 @@
 ---
 description: Create a Linear ticket (Story, Task, or Bug) with guided workflow
 argument-hint: "[ticket-idea]"
-allowed-tools: AskUserQuestion, Read, Glob
+allowed-tools: AskUserQuestion, Read, Glob, SlashCommand
 disable-model-invocation: true
 ---
 
@@ -87,28 +87,28 @@ Use AskUserQuestion with options:
 
 ## Step 3: Delegate to Specialized Command
 
-Once the ticket type is determined, delegate using the Skill tool:
+Once the ticket type is determined, delegate via the `SlashCommand` tool (these targets are commands, not skills):
 
 ### Story
 Invoke `/lt-dev:create-story` with the user's input as context.
 
 Tell the user (in German): "Das klingt nach einer **User Story**. Starte den Story-Erstellungsprozess..."
 
-Then use the Skill tool: `skill: "lt-dev:create-story", args: "<user's input>"`
+Then invoke via the `SlashCommand` tool: `/lt-dev:create-story "<user's input>"`
 
 ### Task
 Invoke `/lt-dev:create-task` with the user's input as context.
 
 Tell the user (in German): "Das klingt nach einem **technischen Task**. Starte den Task-Erstellungsprozess..."
 
-Then use the Skill tool: `skill: "lt-dev:create-task", args: "<user's input>"`
+Then invoke via the `SlashCommand` tool: `/lt-dev:create-task "<user's input>"`
 
 ### Bug
 Invoke `/lt-dev:create-bug` with the user's input as context.
 
 Tell the user (in German): "Das klingt nach einem **Bug-Report**. Starte den Bug-Erstellungsprozess..."
 
-Then use the Skill tool: `skill: "lt-dev:create-bug", args: "<user's input>"`
+Then invoke via the `SlashCommand` tool: `/lt-dev:create-bug "<user's input>"`
 
 ---
 

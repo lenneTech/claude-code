@@ -1,6 +1,6 @@
 ---
 name: nuxt-extensions-core-vendoring
-description: 'Provides knowledge and resources for projects that have vendored the @lenne.tech/nuxt-extensions module directly into their source tree (under app/core/ instead of consuming via npm). Covers the vendor model, the Upstream-to-Project sync workflow, the Project-to-Upstream PR workflow, typical conflicts, and how cosmetic changes are distinguished from substantial upstream candidates. Activates for vendored nuxt-extensions discussions, "sync frontend core from upstream", "port local frontend core change to upstream", conflict resolution during frontend vendor sync, or questions about the frontend vendor pattern. Delegates execution to lt-dev:nuxt-extensions-core-updater (for syncs) and lt-dev:nuxt-extensions-core-contributor (for upstream PR preparation). NOT for npm-based nuxt-extensions updates (use developing-lt-frontend). NOT for writing new Nuxt code (use developing-lt-frontend).'
+description: 'Knowledge base for projects that vendored the @lenne.tech/nuxt-extensions module into their source tree (app/core/, no npm dependency). Covers the vendor model, the upstream sync workflow, the upstream-PR workflow, typical conflicts, and cosmetic-vs-substantial classification. Activates for vendored nuxt-extensions discussions, "sync frontend core from upstream", "port local frontend core change to upstream", or frontend vendor-sync conflict resolution. Delegates to lt-dev:nuxt-extensions-core-updater (syncs) and lt-dev:nuxt-extensions-core-contributor (upstream PR prep). NOT for npm-based nuxt-extensions updates or new Nuxt code (use developing-lt-frontend).'
 ---
 
 # Vendored nuxt-extensions core Knowledge Base
@@ -335,3 +335,15 @@ This restores `@lenne.tech/nuxt-extensions` as an npm dependency and removes the
 - Changelog: https://github.com/lenneTech/nuxt-extensions/blob/main/CHANGELOG.md
 - Releases: https://github.com/lenneTech/nuxt-extensions/releases
 - Backend vendor skill (for comparison): `nest-server-core-vendoring`
+
+## Related Skills & Commands
+
+| Element | Relationship |
+|---------|--------------|
+| **Agent**: `nuxt-extensions-core-updater` | Executes the upstream-to-project sync |
+| **Agent**: `nuxt-extensions-core-contributor` | Prepares project-to-upstream PRs |
+| `/lt-dev:frontend:update-nuxt-extensions-core` | User-facing entry point for the sync |
+| `/lt-dev:frontend:contribute-nuxt-extensions-core` | User-facing entry point for the PR prep |
+| `developing-lt-frontend` skill | npm-mode consumption and general Nuxt work |
+| `contributing-to-lt-framework` skill | Editing the framework repo itself via `pnpm link` |
+| `nest-server-core-vendoring` skill | The backend mirror of this pattern |

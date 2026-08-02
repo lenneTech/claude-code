@@ -1,7 +1,7 @@
 ---
 description: Create a bug report ticket for Linear
 argument-hint: "[bug-description]"
-allowed-tools: AskUserQuestion, Write, Read, Glob, mcp__plugin_lt-dev_linear__*
+allowed-tools: AskUserQuestion, Write, Read, Glob, mcp__plugin_lt-dev_linear__*, SlashCommand
 disable-model-invocation: true
 ---
 
@@ -25,6 +25,12 @@ Guide the user through creating a well-structured bug report for Linear. Collect
 | `/lt-dev:create-task` | Create a technical task |
 | `/lt-dev:resolve-ticket` | Resolve ticket end-to-end with TDD |
 | `/lt-dev:debug` | Adversarial debugging with Agent Teams |
+
+**Related Skills:**
+
+| Skill | Purpose |
+|-------|---------|
+| `grilling-decisions` | The facts-vs-decisions split behind Step 2's questioning |
 
 **Workflow:** Create bug report → `/lt-dev:resolve-ticket` to fix
 
@@ -102,10 +108,14 @@ For each missing or unclear element, formulate a **specific question in German**
 
 ### Questioning Strategy
 
-1. **Ask only about missing/unclear elements** — Don't ask for information already provided
-2. **Be specific** — Reference what was said and ask for clarification
-3. **Group related questions** — Ask 2-4 questions at once, not one by one
-4. **Accept refusal gracefully** — If the user doesn't have details, proceed with available information
+A bug report is worth exactly what its reproduction is worth. Whoever picks it up starts by building a signal that goes red on **this** bug, and every detail missing here is one they have to reconstruct without the person who saw it. So aim the questions at one target: **could someone else make it fail?**
+
+1. **Ask only about missing or unclear elements** — anything already stated is answered
+2. **Ask for the exact symptom, not a paraphrase** — the literal error text, the wrong value, the actual timing. "Speichern geht nicht" and "PUT /items/42 antwortet 500, Toast bleibt aus" lead to different investigations
+3. **Establish the reproduction rate** — always, sometimes, once. A bug that fails half the time is debuggable; one that failed once needs whatever artefact survived (log, screenshot, request), so ask for that instead of for steps nobody can repeat
+4. **Ask in rounds, numbered, with your assumption on each** — 2 to 4 per round, and only questions whose prerequisites are settled. The user confirms in one word instead of writing a report
+5. **Look facts up yourself** — whether the named route, page, or field still exists, what changed there recently (`git log -- <path>`), whether a test already covers it. Ask the user only for what they observed
+6. **Accept refusal gracefully** — proceed on stated assumptions, and mark in the report which details are assumed rather than observed, so the next person knows what to distrust
 
 ### Proactive Suggestion Strategy
 
@@ -317,8 +327,8 @@ When the user chooses to fix immediately:
 
 1. Confirm: "Starte Bug-Fix..."
 2. Invoke `/lt-dev:resolve-ticket` based on whether a Linear ticket exists:
-   - **Ticket exists:** Use the Skill tool with `skill: "lt-dev:resolve-ticket", args: "<ticket-id>"`
-   - **No ticket:** Use the Skill tool with `skill: "lt-dev:resolve-ticket"` with the bug report as context
+   - **Ticket exists:** Invoke via the `SlashCommand` tool: `/lt-dev:resolve-ticket <ticket-id>`
+   - **No ticket:** Invoke via the `SlashCommand` tool: `/lt-dev:resolve-ticket`, passing the bug report as context
 
 ---
 

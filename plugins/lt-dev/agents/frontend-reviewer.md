@@ -2,6 +2,7 @@
 name: frontend-reviewer
 description: Autonomous frontend code review agent for Nuxt 4 / Vue applications. Analyzes component structure, TypeScript strictness, composable patterns, accessibility, SSR safety, performance, and styling conventions. Produces structured report with fulfillment grades per dimension. Enforces frontend-dev agent guidelines as review baseline.
 model: inherit
+effort: medium
 tools: Bash, Read, Grep, Glob, TodoWrite
 skills: developing-lt-frontend, building-stories-with-tdd
 memory: project

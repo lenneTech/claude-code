@@ -501,7 +501,7 @@ pnpm run test:e2e
 
 ### Step 5: Browser Debugging
 
-**For direct browser testing and debugging, always use the Chrome DevTools MCP (`mcp__chrome-devtools__*`) unless the user explicitly requests otherwise.** The Playwright-based Browser MCP (`mcp__MCP_DOCKER__browser_*`) is used for creating and running Playwright E2E tests.
+**For direct browser testing and debugging, always use the Chrome DevTools MCP (`mcp__plugin_lt-dev_chrome-devtools__*`) unless the user explicitly requests otherwise.** The Playwright-based Browser MCP (`mcp__MCP_DOCKER__browser_*`) is used for creating and running Playwright E2E tests.
 
 **Use Chrome DevTools MCP for:**
 - Live debugging during development

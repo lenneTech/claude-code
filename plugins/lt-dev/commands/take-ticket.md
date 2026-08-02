@@ -21,6 +21,7 @@ This is the **autonomous, project-agnostic** entry point. It works in any projec
 |---------|---------|
 | `/lt-dev:ticket-cycle` | Full pick → implement → re-analyse → land → Linear-handoff orchestrator (calls `take-ticket` then `git:ship`) |
 | `/lt-dev:resolve-ticket` | Resolve a single ticket by ID/file (no auto-pick, no quality loop) — used internally |
+| `grilling-decisions` skill | Settles open questions with the user at STEP 5a, the STEP 5b stale-ticket verdicts, and the STEP 9b delta |
 | `building-stories-with-tdd` skill | Drives the TDD implementation phase |
 | `running-check-script` skill | Drives the `check` script loop (pre-commit + final) |
 | `managing-dev-servers` skill | Rules for any backgrounded servers needed during E2E |
@@ -305,7 +306,18 @@ Produce a concise internal plan covering:
 - **Role / permission matrix** — for every endpoint / mutation / UI action touched, list every role (e.g. `Admin`, `User`, `Guest`, custom org roles) and whether it is `allowed`, `denied`, or `partial` (own-records-only via `securityCheck`). Derive from `@Restricted` / `@Roles` decorators on the affected services, from the ticket text, and from existing call sites. If no role-aware behaviour applies, explicitly note "Single-role feature — no permission matrix needed".
 - Open questions for the user
 
-**If any open question is blocking** (e.g. unclear data model, missing AC, ambiguous role behaviour) ask the user before implementation. Non-blocking ambiguities go into the final summary as "Annahmen".
+### 5a. Grill the open questions before writing code
+
+Every open question this map produced is settled here, via the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/../skills/grilling-decisions/SKILL.md) skill: decision tree in dependency order, one question at a time, a recommended answer carried on each, facts looked up rather than asked.
+
+This gate is where the cycle is cheapest to correct. Everything downstream — TDD slices, the full test loop, the check script, the review, the browser walk, the merge, the deploy verification — is built on the understanding fixed here, so an assumption that turns out wrong is paid for by all of it.
+
+The skill's split governs how far the cycle proceeds:
+
+- **Blocking questions** (unclear data model, missing acceptance criterion, ambiguous role behaviour, a contract other code consumes) are answered by the user before STEP 6 starts.
+- **Non-blocking ambiguities** proceed on a stated assumption and travel into the STEP 10 summary as `Annahmen`, so the user can overturn them while the context is still fresh.
+
+When the requirements map produced no open question at all, say so explicitly and continue. A silent skip and a genuinely unambiguous ticket look identical in the summary otherwise.
 
 ---
 
@@ -337,11 +349,13 @@ Nothing since that date → age is not a concern; skip to step 3. Commits touchi
 | Finding | Action |
 |---|---|
 | Ticket still applies unchanged | proceed to STEP 6 |
-| Partly done / scope shrunk | tell the user what is left, get confirmation, implement only the remainder |
-| Already solved | do **not** implement. Present the evidence (commit, file:line, test) and ask the user whether to close the ticket. |
-| Premise no longer holds (code restructured, feature dropped) | stop and ask. Do not translate the ticket into "what it probably means now" on your own. |
+| Partly done / scope shrunk | grill the remainder with the user, then implement only what they confirm is left |
+| Already solved | leave the code untouched. Present the evidence (commit, file:line, test) and ask the user whether to close the ticket. |
+| Premise no longer holds (code restructured, feature dropped) | stop and grill. The ticket's current meaning is the user's call, not a translation you make on your own. |
 
-**When in doubt, ask.** The cost of one question is a minute; the cost of implementing a stale ticket is a change that has to be found and reverted later — by someone who no longer knows why it was made.
+The three verdicts that end in a question run through the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/../skills/grilling-decisions/SKILL.md) skill, with the evidence you just gathered as the facts on the table: what the history shows, what still reproduces, which symbols survived. Present that first, then ask what it should mean.
+
+**When in doubt, ask.** The cost of one question is a minute; the cost of implementing a stale ticket is a change that has to be found and reverted later, by someone who no longer knows why it was made.
 
 ---
 
@@ -466,12 +480,15 @@ Backend tests typically need `NODE_ENV=e2e` (local). **Never** `NODE_ENV=test` �
 
 Follow the **`running-check-script` skill** verbatim:
 
+This runs in the skill's **Blocking** mode — everything downstream (review, browser walk, MR/PR, merge) builds on a green `check`.
+
 1. Discover all `package.json` `check` scripts (monorepo-aware) across every detected project.
 2. Run `<pm> run check` (pnpm preferred per project's lockfile; fall back to npm/yarn).
-3. Iterate-until-green with the mandatory 6-step audit-finding escalation ladder.
-4. No bypasses (`--no-verify`, `@ts-ignore`, `eslint-disable`, etc.).
-5. Classify residuals into Accepted vs Critical.
-6. STOP if Unresolved blockers remain — do not pretend success.
+3. Iterate until green, with the mandatory 6-step audit-finding escalation ladder.
+4. **Fix every error, pre-existing ones included.** Whether an error came from this ticket or was already in the tree makes no difference to whether the project runs, and it blocks the next person just as hard either way. The only question is whether it can be fixed; while the answer is yes, it gets fixed. `STALLED` means change approach, not stop.
+5. No bypasses (`--no-verify`, `@ts-ignore`, `eslint-disable`, `.skip`, deleted tests, rule downgrades).
+6. Classify residuals. The only Accepted one is a dependency CVE whose full escalation ladder is exhausted and documented.
+7. **STOP if anything else remains unresolved.** Print which project failed, the remaining errors, and what was already attempted, then stop the cycle. The branch stays local. Do not continue to STEP 9, and do not let a red `check` reach a review, an MR/PR, or a merge.
 
 **If no `check` script exists** in any `package.json`, log `No check script defined — skipping STEP 8` and continue to STEP 9. Do not invent one.
 
@@ -507,7 +524,11 @@ Also re-check:
 
 ### 9b. User Confirmation Loop
 
-Print a compact German status block showing each AC's verdict, "Mitgenommen"-items, and open follow-ups. Then ask via `AskUserQuestion`:
+Print a compact German status block showing each AC's verdict, "Mitgenommen"-items, and open follow-ups.
+
+**Grill the delta first, then ask the closing question.** Whenever 9a produced a `⚠ partial` verdict, a `❌ missing` verdict, or a "Mitgenommen"-item whose fate is genuinely open, run those through the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/../skills/grilling-decisions/SKILL.md) skill: one question per open item, each carrying your recommendation (implement now, cut with a stated reason, or file as a follow-up per the rules above). A single "ist das vollständig?" over a list of unresolved items invites a yes that nobody has actually checked, and each such yes returns as an iteration of the loop below. When every AC came back `✅ done` and nothing was carried along, skip straight to the question.
+
+Then ask via `AskUserQuestion`:
 
 - Question: "Ist das Ticket damit vollständig umgesetzt, oder gibt es noch etwas zu ergänzen / anzupassen, bevor wir abschließen?"
 - Options:
@@ -605,16 +626,16 @@ Adapt sections that don't apply (e.g. no Figma → no Figma references). Never i
 ## Hard Rules
 
 - **Limit local Playwright runs to new + affected specs to keep TDD loops fast.** Default to `lt dev test -- <spec>` (non-lt projects: `pnpm exec playwright test <spec>`); the full Playwright suite is slow and runs in **CI**. Only run the full local suite when the user explicitly asks.
-- **Never push silently.** Branch stays local until the user runs `/lt-dev:dev-submit` or pushes manually.
-- **Never bypass quality gates.** No `--no-verify`, no `.skip`, no flake-retry without an open follow-up note.
-- **Never implement a ticket without checking it is still current (STEP 5b).** A ticket is a snapshot of the past; the base branch has moved since. Compare the ticket's and its comments' timestamps against `origin/<BASE>`'s history, look for parallel work on it, and verify the described problem still reproduces in the current code. Blind execution is not neutral — it can re-introduce something that was deliberately removed, undo a newer fix, or bolt a second mechanism onto one that already covers the case. If the ticket is already solved or its premise no longer holds, **stop and ask**; do not reinterpret it into "what it probably means now".
-- **Minimise follow-up tickets — implement in scope by default.** Do not defer work into new tickets to shrink the current change; anything that can reasonably be done inside this ticket is done here. A separate follow-up is justified only when it is a genuinely necessary, **completely** out-of-scope feature that can be built in parallel.
-- **Ticket states are a claim protocol, not decoration.** A filed follow-up goes to **`Open` with a project** — `Backlog` and "no project" both drop it out of the auto-pick pool for good. One that first needs this ticket merged goes to **`Blocked`** with a reference to the blocking ticket, and is moved to `Open` after that merge. **Never** pre-set `In Progress` to reserve a ticket: it then reads as actively worked, and if anything intervenes nobody ever picks it up again — a silent loss, worse than the duplicate work it was meant to avoid. `In Progress` is set at STEP 3, when work actually starts, and only after re-checking that the ticket is still unclaimed.
-- **Never invent acceptance criteria.** If unclear, ask.
-- **Always ask before destructive git ops** (force-push, hard reset, branch delete) — they are never part of this command.
+- **The branch stays local; the user owns the push.** It leaves the machine when the user runs `/lt-dev:dev-submit` or pushes by hand.
+- **Quality gates run as written.** `--no-verify`, `.skip`, and flake-retries each need an open follow-up note stating why, so a bypass is always visible as a decision someone made.
+- **STEP 5b runs before the first line of code (see STEP 5b for the procedure).** A ticket is a snapshot of the past and the base branch has moved since, so blind execution is not neutral: it can re-introduce something deliberately removed, undo a newer fix, or bolt a second mechanism onto one that already covers the case. The three verdicts that need a human answer go through the `grilling-decisions` skill, with the gathered evidence on the table. What the ticket means today is the user's call.
+- **Findings get implemented in scope by default.** Anything that can reasonably be done inside this ticket is done here; STEP 9a's parallel-work test decides the exceptions, and it owns that rule in full.
+- **Ticket states are a claim protocol, not decoration.** A filed follow-up goes to **`Open` with a project** — `Backlog` and "no project" both drop it out of the auto-pick pool for good. One that first needs this ticket merged goes to **`Blocked`** with a reference to the blocking ticket, and moves to `Open` after that merge lands. `In Progress` means "being worked right now": it is set at STEP 3, when work actually starts, and only after re-checking the ticket is still unclaimed. Setting it early to reserve a ticket makes the ticket read as actively worked, so if anything intervenes nobody picks it up again — a silent loss, worse than the duplicate work it was meant to prevent.
+- **Acceptance criteria come from the sources, or from the user.** Where the requirements map leaves one open, STEP 5a settles it by asking.
+- **Destructive git ops (force-push, hard reset, branch delete) belong to the user.** This command asks first; they are outside its own scope.
 - **Failing tests are always blockers**, even if they predate the current changes. Fix root causes.
-- **Linear state updates are reversible if they fail mid-run** — surface the error, never assume success silently.
-- **Assigning + "In Progress" (STEP 3) and the VStab window-tab title (STEP 3b) run on EVERY path.** They are shared steps after ticket resolution, not part of the auto-pick branch: an explicitly passed ticket ID (STEP 1a) reaches them through the identical STEP 2 → 3 → 3b sequence as an auto-picked one (STEP 1b). Never skip the Linear transition or the window-tab label just because the ticket was named directly instead of being auto-picked — both are guaranteed regardless of how the ticket was chosen.
+- **Linear state updates report their outcome.** A failed transition mid-run is surfaced with its error, so the run's real state is the one the user sees; they are reversible from there.
+- **Assigning + "In Progress" (STEP 3) and the VStab window-tab title (STEP 3b) run on EVERY path.** They are shared steps after ticket resolution rather than part of the auto-pick branch: an explicitly passed ticket ID (STEP 1a) reaches them through the identical STEP 2 → 3 → 3b sequence as an auto-picked one (STEP 1b), so both are guaranteed regardless of how the ticket was chosen.
 
 ## Failure Handling
 

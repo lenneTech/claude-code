@@ -60,6 +60,12 @@ Analyze the extracted content and identify:
 4. **Dependencies** — External systems, APIs, libraries needed
 5. **Implicit requirements** — Things not stated but necessary (auth, validation, error handling, tests)
 
+### Step 2b: Settle the open decisions before slicing
+
+Point 5 is where specs are thinnest, and a task list is the worst place to discover it: an unstated decision becomes a guessed acceptance criterion, which becomes a ticket someone implements against. Where the analysis surfaced a genuine open decision (which roles may do this, what happens to existing records, what an empty result returns), run the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/../skills/grilling-decisions/SKILL.md) skill: one question at a time, each carrying your recommendation, facts read from the codebase rather than asked.
+
+Fold each answer into the acceptance criteria of the task it belongs to. When the spec answers everything, say so and continue.
+
 ### Step 3: Task Generation
 
 Generate tasks following these rules:
@@ -80,18 +86,29 @@ Each task must have:
 - **Medium**: Supporting functionality, UI polish, error handling
 - **Low**: Nice-to-have, optimization, documentation
 
-#### Ordering Rules (inspired by Ralph's fix_plan.md)
+#### Cut vertical slices, not layers
 
-1. Infrastructure and setup tasks first (DB schema, module scaffolding)
-2. Backend API endpoints before frontend integration
-3. Core happy-path before edge cases and error handling
-4. Tests alongside each implementation task (TDD)
-5. Integration and E2E tests after component tasks
+Each task is a **tracer bullet**: a narrow but complete path through every layer it touches — model, service, endpoint, generated types, UI, tests — for one capability. A completed slice is demoable on its own.
+
+The alternative, slicing by layer (all models, then all services, then all pages), produces tasks that can never be verified individually: nothing works until the last one lands, every integration problem surfaces at the end at once, and a wrong assumption in task 1 is discovered in task 12.
+
+Within a slice, the stack's own order still holds — backend before frontend, because the frontend consumes generated types from the running API. That is sequencing *inside* a slice, not a reason to split the slice in two.
+
+**The exception is a wide mechanical change** — renaming a field, retyping a shared symbol — whose blast radius fans across the codebase, so no vertical slice can land green. Sequence those as expand, migrate, contract: add the new form beside the old (nothing breaks), migrate the call sites in batches sized by blast radius (each batch its own task, each keeping the suite green because the old form still exists), then delete the old form once no caller remains.
+
+#### Ordering Rules
+
+1. Prefactoring first: the mechanical change that makes the following slices easy to write ("make the change easy, then make the easy change")
+2. Infrastructure and setup only where a slice genuinely cannot run without it (DB schema, module scaffolding)
+3. The slice that proves the riskiest assumption early, before slices that depend on it
+4. Core happy-path slices before the edge-case and error-handling slices layered on top
+5. Tests inside each slice (TDD), never as a trailing task
+6. Cross-slice integration and E2E tests after the slices they span
 
 #### Size Guidelines
 
-- Split any XL task into smaller tasks
-- Each task should be completable in a single `/lt-dev:resolve-ticket` run
+- Split any XL task into smaller **slices** — narrower capability, still full-depth. Splitting an XL task into "backend part" and "frontend part" is the layer cut this section rules out.
+- Each task should be completable in a single `/lt-dev:resolve-ticket` run, in one fresh context window
 - Prefer many small tasks over few large ones
 
 ### Step 4: Output

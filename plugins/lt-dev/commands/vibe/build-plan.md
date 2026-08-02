@@ -1,7 +1,7 @@
 ---
 description: Plan + Build in one go (no interruption)
 argument-hint: "[spec-file]"
-allowed-tools: Read, Write, Edit, Glob, Grep, Agent, Bash(docker:*), Bash(docker-compose:*), Bash(pnpm run:*), Bash(npm run:*), Bash(yarn run:*), Bash(git:*), Bash(curl:*), mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__evaluate_script, AskUserQuestion
+allowed-tools: Read, Write, Edit, Glob, Grep, Agent, Bash(docker:*), Bash(docker-compose:*), Bash(pnpm run:*), Bash(npm run:*), Bash(yarn run:*), Bash(git:*), Bash(curl:*), mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__evaluate_script, mcp__plugin_lt-dev_chrome-devtools__take_snapshot, mcp__plugin_lt-dev_chrome-devtools__fill, mcp__plugin_lt-dev_chrome-devtools__click, mcp__plugin_lt-dev_chrome-devtools__list_console_messages, mcp__plugin_lt-dev_chrome-devtools__list_network_requests, AskUserQuestion
 disable-model-invocation: true
 ---
 
@@ -244,16 +244,16 @@ Role:     admin
 
 #### Browser Testing Commands (Chrome DevTools MCP)
 
-**For direct browser testing and debugging, always use the Chrome DevTools MCP (`mcp__chrome-devtools__*`) unless the user explicitly requests otherwise.**
+**For direct browser testing and debugging, always use the Chrome DevTools MCP (`mcp__plugin_lt-dev_chrome-devtools__*`) unless the user explicitly requests otherwise.**
 
 | Command | Purpose |
 |---------|---------|
-| `mcp__chrome-devtools__navigate_page` | Go to URL |
-| `mcp__chrome-devtools__take_snapshot` | Get page elements |
-| `mcp__chrome-devtools__fill` | Enter text in input |
-| `mcp__chrome-devtools__click` | Click element |
-| `mcp__chrome-devtools__list_console_messages` | Check for errors |
-| `mcp__chrome-devtools__list_network_requests` | Debug API calls |
+| `mcp__plugin_lt-dev_chrome-devtools__navigate_page` | Go to URL |
+| `mcp__plugin_lt-dev_chrome-devtools__take_snapshot` | Get page elements |
+| `mcp__plugin_lt-dev_chrome-devtools__fill` | Enter text in input |
+| `mcp__plugin_lt-dev_chrome-devtools__click` | Click element |
+| `mcp__plugin_lt-dev_chrome-devtools__list_console_messages` | Check for errors |
+| `mcp__plugin_lt-dev_chrome-devtools__list_network_requests` | Debug API calls |
 
 #### Completion Criteria
 

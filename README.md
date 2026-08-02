@@ -123,8 +123,7 @@ Skills, Commands, Hooks and Agents for Frontend (Nuxt 4), Backend (NestJS/nest-s
 
 **Git (`/git/`):**
 - `/git:commit-message` - Generate commit message
-- `/git:mr-description` - Create Merge Request description
-- `/git:mr-description-clipboard` - Copy MR description to clipboard
+- `/git:mr-description` - Create Merge Request description (`--clipboard` copies it)
 - `/git:rebase` - Rebase current branch onto dev/develop
 - `/git:rebase-mrs` - Batch rebase for open MRs/PRs
 

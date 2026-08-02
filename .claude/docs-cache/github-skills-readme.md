@@ -1,9 +1,11 @@
 > **Note:** This repository contains Anthropic's implementation of skills for Claude. For information about the Agent Skills standard, see [agentskills.io](http://agentskills.io).
 
+[![skills.sh](https://skills.sh/b/anthropics/skills)](https://skills.sh/anthropics/skills)
+
 # Skills
 
 > **Source:** https://raw.githubusercontent.com/anthropics/skills/main/README.md
-> **Generated:** 2026-04-21T03:27:59.373Z
+> **Generated:** 2026-08-02T08:53:43.194Z
 
 ---
 

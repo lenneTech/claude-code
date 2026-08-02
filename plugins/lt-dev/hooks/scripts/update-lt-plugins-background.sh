@@ -157,10 +157,11 @@ success=1
   fi
   if [ "$prewarm_due" -eq 1 ] && command -v npx >/dev/null 2>&1; then
     echo "=== pre-warm npx MCP packages: $(date) ==="
+    # Keep this list in sync with the servers declared in .mcp.json — pre-warming a
+    # package no server launches costs a download for nothing.
     for pkg in \
       chrome-devtools-mcp@latest \
       nuxt-ui-mcp@latest \
-      @nicepkg/aide-mcp-server@latest \
       @anthropic-ai/claude-code-figma-mcp@latest; do
       ( npx -y "$pkg" --version >/dev/null 2>&1 ) &
       pw_pid=$!

@@ -1,6 +1,6 @@
 ---
 name: managing-agent-memory
-description: Decide PER PROJECT whether `.claude/agent-memory/**` is committed, remember that decision next to the memory it governs, and curate the notes before every commit that carries them. Use before committing when agent-memory files are dirty — git:ship, ticket-cycle, review runs, or any standalone commit.
+description: 'Decides per project whether `.claude/agent-memory/**` is committed, records that decision next to the memory it governs, and curates the notes before every commit that carries them. Activates before committing when agent-memory files are dirty: git:ship, ticket-cycle, review runs, or any standalone commit.'
 ---
 
 # Managing Agent Memory
@@ -157,3 +157,12 @@ If curating would take longer than the change being shipped, do the cheap
 correctness pass (deletions + rename repair + dangling links) and say plainly which
 notes and which scopes you did not review. Silent partial curation reads as "all
 checked".
+
+## Related Skills & Commands
+
+| Element | Relationship |
+|---------|--------------|
+| `/lt-dev:git:ship` | Runs this skill's commit policy in its STEP 2 commit phase |
+| `/lt-dev:ticket-cycle` | Inherits it through `git:ship` |
+| `/lt-dev:review` | Curates agent-memory notes before a review commit |
+| `maintaining-lt-stack` skill | Same decision applies per base repo during a stack release |

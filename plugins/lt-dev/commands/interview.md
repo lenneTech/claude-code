@@ -1,82 +1,59 @@
 ---
-description: Deep-dive interview about an architecture plan or specification to uncover gaps and refine details
+description: Grill a plan or specification until every open decision is settled, then write the outcome back into the plan file
 argument-hint: "[plan-file-path]"
 model: opus
-allowed-tools: Read, Grep, Glob, Bash(ls:*), AskUserQuestion, Write, Edit
+allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(git:*), AskUserQuestion, Write, Edit, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
 disable-model-invocation: false
 ---
 
 # Plan Interview
 
-Read the plan file at `$ARGUMENTS` and conduct a thorough interview about it.
+Run a grilling session against the plan at `$ARGUMENTS`, then record what it settled.
 
-## Goal
+## When to Use This Command
 
-Uncover gaps, ambiguities, and hidden assumptions in the plan through structured questioning. Refine the specification until it's complete enough for direct implementation by `backend-dev` and `frontend-dev` agents.
+- A plan, spec, or architecture document exists and you want its gaps found before anyone implements it.
+- You want the outcome written back into the document, so the next session inherits the decisions instead of re-deriving them.
 
-## Interview Protocol
+Without a path in `$ARGUMENTS`, grill the plan currently in the conversation and offer to write it to a file at the end.
 
-### Phase 1: Understanding
+For grilling that happens **inside** another workflow (an ambiguous ticket in `take-ticket`, a spec being drafted in `vibe:plan`), those commands invoke the `grilling-decisions` skill directly. This command is the standalone door to the same loop.
 
-Read the plan file thoroughly. Identify:
-- Unstated assumptions
-- Missing edge cases
-- Ambiguous requirements
-- Implicit dependencies
-- Security considerations not addressed
-- UX decisions left open
+## Related Commands & Skills
 
-### Phase 2: Deep-Dive Questions
+| Element | Purpose |
+|---------|---------|
+| `grilling-decisions` skill | The interview loop this command runs |
+| `/lt-dev:vibe:plan` | Creates the plan file this command sharpens |
+| `/lt-dev:spec-to-tasks` | Turns the sharpened plan into tasks |
+| `/lt-dev:take-ticket` | Grills open ticket questions inside the implementation flow |
 
-Ask questions using AskUserQuestion — one topic at a time, grouped by category:
+## Execution
 
-**Technical Implementation:**
-- Data model decisions (embedding vs referencing, index strategy)
-- API contract specifics (error codes, pagination, filtering)
-- Permission model edge cases (who sees what, ownership rules)
-- State management (what's shared, what's local, cache invalidation)
+### 1. Read the plan and the code around it
 
-**UI & UX:**
-- User flows and interaction patterns
-- Error states and empty states
-- Loading behavior and optimistic updates
-- Mobile responsiveness considerations
-- Accessibility requirements
+Read the plan file in full. Then establish the facts it rests on: the modules it names, the entities and generated types it touches, the permission decorators already in place, the tests that cover those paths today. The grilling skill's fact-lookup table governs what you resolve yourself rather than ask.
 
-**Business Logic:**
-- Validation rules and constraints
-- Edge cases (empty data, max limits, concurrent access)
-- Ordering and sorting defaults
-- Deletion behavior (soft delete, cascade, orphan handling)
+### 2. Grill
 
-**Security & Permissions:**
-- Role-based access for each operation
-- Data visibility rules per role
-- Input validation boundaries
-- File upload constraints (types, sizes)
+Follow the `grilling-decisions` skill end-to-end: decision tree in dependency order, one question at a time via `AskUserQuestion`, a recommended answer on every question, no action until the user confirms the understanding is shared.
 
-**Infrastructure:**
-- Environment-specific behavior
-- Migration strategy for existing data
-- Performance expectations (data volume, concurrent users)
+Coverage worth walking for a plan of this kind, as branches of the tree rather than a checklist to march through:
 
-### Phase 3: Refinement
+- **Data model** — embedding against referencing, index strategy, migration path for existing records, deletion behaviour (soft, hard, cascade, orphan).
+- **API contract** — error codes, pagination, filtering, sort defaults, what an empty result returns.
+- **Permissions** — per role and per operation, plus own-records-only cases via `securityCheck`. This is the branch that most often turns out to be underspecified.
+- **State and UI** — what is shared against local, cache invalidation, loading and empty and error states, optimistic updates, mobile behaviour, accessibility requirements.
+- **Business rules** — validation boundaries, concurrent access, maximum sizes and limits.
+- **Operations** — environment-specific behaviour, expected data volume, upload constraints (types, sizes).
 
-After each answer, follow up with deeper questions if the answer reveals new ambiguities. Continue until all critical aspects are covered.
+### 3. Write the outcome back
 
-**Rules:**
-- Ask non-obvious questions — skip anything clearly answered in the plan
-- One focused question per AskUserQuestion call
-- Group related follow-ups together
-- Challenge assumptions: "What happens if X is empty/null/very large?"
-- Explore failure modes: "What should happen when Y fails?"
+Update the plan file so the next reader inherits the decisions:
 
-### Phase 4: Specification Update
+- Fold each clarified requirement into the section it belongs to, in the plan's own vocabulary.
+- Add a `## Decisions` section: the question, the answer, and the reason it went that way. The reason is what keeps a future session from re-litigating it.
+- Add the edge cases and error handling the grilling surfaced.
+- List remaining open questions explicitly, each marked blocking or non-blocking, so nobody mistakes silence for agreement.
 
-Once the interview is complete, update the plan file with all gathered details:
-- Add clarified requirements inline
-- Add a "Decisions" section with interview outcomes
-- Add edge cases and error handling specifications
-- Mark any remaining open questions
-
-Inform the user that the spec has been updated and is ready for implementation.
+Tell the user which sections changed and that the plan is ready for implementation.

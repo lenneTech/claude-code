@@ -1,6 +1,6 @@
 ---
 name: running-check-script
-description: 'Single source of truth for running the package.json `check` script across lt-dev review and rebase workflows. Defines discovery (multi-package monorepo aware), the iterate-until-green auto-fix loop, the mandatory audit-finding fix escalation ladder, residual classification (Accepted vs Critical), test-duplication avoidance, and report formatting. Activates whenever an agent or command needs to validate runnability via `check` — currently used by `/lt-dev:review`, `code-reviewer`, `branch-rebaser`, and `test-reviewer`. NOT for general npm package maintenance (use maintaining-npm-packages). NOT for the rebase orchestration itself (use rebasing-branches).'
+description: 'Single source of truth for running the package.json `check` script across lt-dev review and rebase workflows. Defines discovery (multi-package monorepo aware), the iterate-until-green auto-fix loop, the mandatory audit-finding fix escalation ladder, residual classification (Accepted vs Critical), test-duplication avoidance, and report formatting. Activates whenever an agent or command must validate runnability via `check`. NOT for general npm package maintenance (use maintaining-npm-packages). NOT for the rebase orchestration itself (use rebasing-branches).'
 user-invocable: false
 ---
 
@@ -12,12 +12,24 @@ This skill is the **single source of truth** for executing the `package.json` `c
 
 ## When to Use This Skill
 
-| Caller | Phase | Trigger |
-|--------|-------|---------|
-| `/lt-dev:review` | Phase 1.5 | Before spawning any specialized reviewer |
-| `lt-dev:code-reviewer` | Phase 1.5 | Before single-pass review (skip if orchestrator already ran it) |
-| `lt-dev:branch-rebaser` | Phase 6.5 | After lint/format, before tests |
-| `lt-dev:test-reviewer` | (input briefing) | Honors the skip semantics defined here |
+| Caller | Phase | Trigger | Mode |
+|--------|-------|---------|------|
+| `/lt-dev:review` | Phase 1.5 | Before spawning any specialized reviewer | Advisory |
+| `lt-dev:code-reviewer` | Phase 1.5 | Before single-pass review (skip if orchestrator already ran it) | Advisory |
+| `lt-dev:test-reviewer` | (input briefing) | Honors the skip semantics defined here | Advisory |
+| `/lt-dev:take-ticket` | STEP 8 | After all test pillars are green | **Blocking** |
+| `/lt-dev:git:ship` | STEP 1, STEP 4b | Pre-flight, and after the post-rebase re-verify | **Blocking** |
+| `/lt-dev:ticket-cycle` | via take-ticket + git:ship | Whole cycle | **Blocking** |
+| `lt-dev:branch-rebaser` | Phase 6.5 | After lint/format, before tests | **Blocking** |
+
+## Caller modes
+
+The procedure is identical in both modes. Only what happens with an unresolved error differs, and that difference is the whole point of the distinction:
+
+- **Advisory** — the caller's job is to *report*. A red `check` is surfaced as a Critical finding and the workflow continues, because the user still wants the rest of the review.
+- **Blocking** — the caller's job is to *ship*. A red `check` stops the workflow. Nothing gets pushed, no MR/PR is created, nothing is merged.
+
+**Every path that leads to an MR/PR or a merge runs in Blocking mode.** A red `check` reaching the base branch costs the whole team: CI goes red for everyone, the next `take-ticket` branches off broken code, and the person who eventually fixes it has no idea which change caused it. That is why the ladder in Step 3 has no iteration cap and why Step 5's residual list is as narrow as it is.
 
 ## Procedure
 
@@ -67,12 +79,14 @@ Capture stdout, stderr, and exit code. Track an iteration counter starting at 1.
 If a project's `check` exits non-zero:
 
 1. **Parse all errors** from the current run (typecheck, lint, build, missing imports, type mismatches, unused symbols, audit findings, etc.)
-2. **Fix each error at the root cause** via `Read` + `Edit`. Includes pre-existing errors unrelated to the diff — runnability overrides scope boundaries.
+2. **Fix every error at the root cause** via `Read` + `Edit`. **Pre-existing errors are fixed too** — whether an error came from this diff or was already there makes no difference to whether the project runs, and a red `check` blocks the next person exactly as hard either way. Scope boundaries do not apply to runnability. The one question that decides anything here is "can this be fixed?", and while the answer is yes, it gets fixed.
 3. **Re-run `check` from scratch.** Never trust partial state.
 4. **Continue iterating** until one of these terminal conditions:
    - **(a) GREEN** — `check` exits 0 → done for this project
-   - **(b) STALLED** — a full iteration produced no net reduction in error count → stop and classify residuals
+   - **(b) STALLED** — a full iteration produced no net reduction in error count
 5. **No hard iteration cap.** As long as each iteration strictly reduces the error count, keep going. The goal is true green.
+
+**STALLED is a signal to change approach, not permission to stop.** The count stops falling when the same fix is being retried, so the next iteration has to attack the error differently: read the failing file in full rather than patching around the reported line, check whether two errors share one cause, look at how a working sibling module solves the same thing, run the failing step alone to see output the aggregate run swallowed, check whether it is one of the known hazards in Steps 6.5 to 6.7. Only when a genuinely different approach has been tried and the count still holds does the residual classification in Step 5 apply — and in **Blocking** mode, everything except an exhausted-ladder dependency vulnerability still stops the workflow.
 
 ### Step 4 — Audit findings: mandatory fix escalation ladder
 
@@ -215,8 +229,17 @@ Every caller must include this block in its final report:
 
 ### Step 9 — Gating
 
-- All projects GREEN, or only Accepted Residuals remain → continue with the caller's next phase
-- Any Unresolved blocker → continue the workflow (so the user still gets review feedback) but list the blockers prominently in the Consolidated Remediation Catalog with Critical priority and surface them in the header status
+Both modes share the green case and split on the red one:
+
+| Outcome | Advisory caller | Blocking caller |
+|---|---|---|
+| All projects GREEN | Continue | Continue |
+| Only Accepted Residuals (exhausted-ladder dependency CVEs) | Continue | Continue, residuals named in the summary |
+| Any Unresolved blocker | Continue the workflow so the user still gets the rest of the review; list the blockers in the Consolidated Remediation Catalog with Critical priority and surface them in the header status | **Stop.** Nothing is pushed, no MR/PR is created, nothing is merged |
+
+**What a Blocking caller does on red:** print which project failed, which errors remain, which fixes were attempted, and which approaches Step 3 already ruled out — then stop and hand it to the user. The branch stays local and intact, so nothing is lost and the work can resume the moment the cause is understood.
+
+The green requirement covers **every** discovered project. A monorepo where `projects/api` is green and `projects/app` is red is red: CI runs both, so shipping on a partial green just moves the failure to the pipeline, where it costs a full round-trip instead of one more local iteration.
 
 ## Skip Coordination Between Callers
 

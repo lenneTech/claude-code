@@ -1,6 +1,8 @@
 ---
 description: Optimize this marketplace based on official Claude Code documentation and optional secondary sources
-argument-hint: [--update-cache|--skip-cache] [secondary-sources...]
+argument-hint: "[--update-cache|--skip-cache] [secondary-sources...]"
+allowed-tools: Read, Write, Edit, Glob, Grep, Agent, AskUserQuestion, TodoWrite, WebFetch, Bash(bun .claude/scripts/:*), Bash(claude plugin validate:*), Bash(git:*), Bash(ls:*), Bash(wc:*), Bash(find:*), Bash(jq:*), Bash(awk:*), Bash(sed:*), Bash(grep:*), Bash(bash scripts/:*)
+disable-model-invocation: true
 ---
 
 # Optimize Marketplace

@@ -1,7 +1,7 @@
 ---
 description: Comprehensive fullstack update -- updates backend and frontend frameworks (mode-aware for npm/vendor), applies migrations, updates all packages, syncs CLAUDE.md, and validates everything
 argument-hint: "[--dry-run] [--skip-backend] [--skip-frontend] [--skip-packages]"
-allowed-tools: Read, Grep, Glob, Bash(npm run:*), Bash(pnpm run:*), Bash(yarn run:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(rm:*), Write, Edit, Agent, AskUserQuestion, WebFetch, TodoWrite
+allowed-tools: Read, Grep, Glob, Bash(npm run:*), Bash(pnpm run:*), Bash(yarn run:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(rm:*), Write, Edit, Agent, AskUserQuestion, WebFetch, TodoWrite, SlashCommand
 disable-model-invocation: true
 ---
 
@@ -36,6 +36,7 @@ agent for each combination.
 | **Agent**: `lt-dev:fullstack-updater` | Frontend npm-mode update (with --skip-backend) |
 | **Agent**: `lt-dev:nuxt-extensions-core-updater` | Frontend vendor-mode update |
 | **Agent**: `lt-dev:npm-package-maintainer` | Package optimization |
+| **Command**: `/lt-dev:fullstack:sync-claude-md` | Owns Phase 6's CLAUDE.md sync incl. template-variable replacement |
 | **Command**: `/lt-dev:fullstack:update` | Simpler fullstack update (npm-only) |
 | **Command**: `/lt-dev:backend:update-nest-server` | Standalone backend npm update |
 | **Command**: `/lt-dev:backend:update-nest-server-core` | Standalone backend vendor update |
@@ -315,16 +316,30 @@ were already updated in previous phases.
 
 ### Phase 6: CLAUDE.md + Workspace Toolchain Sync
 
-Sync CLAUDE.md files from upstream starters:
+**Delegate the CLAUDE.md half to its owner.** Invoke via the `SlashCommand` tool:
+
+```
+/lt-dev:fullstack:sync-claude-md
+```
+
+`sync-claude-md` owns the source mapping, the section-level merge, and — the part
+that is easy to miss — the **template-variable replacement** in the root monorepo
+CLAUDE.md (`{{PROJECT_NAME}}`, `{{PROJECT_DIR}}`, `{{FRONTEND_FRAMEWORK}}`,
+`{{API_MODE}}`). A second copy of the mapping here would drift from it, and the
+first thing to fall out of a copy is exactly that replacement step: the sync then
+writes literal `{{PROJECT_NAME}}` placeholders into a customer project's CLAUDE.md
+and nothing reports an error.
+
+For reference, the mapping it applies:
 
 | Source | Target |
 |--------|--------|
 | `lenneTech/nest-server` -> `CLAUDE.md` | `<backend-path>/CLAUDE.md` |
 | `lenneTech/nuxt-base-starter` -> `nuxt-base-template/CLAUDE.md` | `<frontend-path>/CLAUDE.md` |
-| `lenneTech/lt-monorepo` -> `CLAUDE.md` | `./CLAUDE.md` (root) |
+| `lenneTech/lt-monorepo` -> `CLAUDE.md` | `./CLAUDE.md` (root, with variable replacement) |
 
-Only sync the targets that were actually updated. Use section-level merge
-(keep project-specific customizations, add new upstream sections).
+Pass along which targets were actually updated in the earlier phases, so only
+those are synced.
 
 Then sync the workspace-ROOT toolchain from `lenneTech/lt-monorepo` — no other
 phase covers the root level, and it drifts silently otherwise (a real case:

@@ -10,11 +10,16 @@
 # Skip slash commands — they have their own skill associations
 [[ "$CLAUDE_USER_PROMPT" == /* ]] && exit 0
 
+# Resolve the project root once. CLAUDE_PROJECT_DIR is normally set by Claude Code,
+# but an unset value would turn every "$PROJECT_DIR/..." check below into an absolute
+# path from the filesystem root (e.g. /app/core), so the hook would silently never fire.
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
+
 # Check for security keywords in prompt
 if echo "$CLAUDE_USER_PROMPT" | grep -iqE '(security.audit|xss|csrf|csp|owasp|vulnerabilit|sicherheit|injection|sanitize|security.review|security.header|cookie.*(secure|httponly|samesite)|content.security.policy)'; then
   # Check if this is a web project (has package.json with any web framework)
   has_web_project=false
-  for pkg in "$CLAUDE_PROJECT_DIR/package.json" "$CLAUDE_PROJECT_DIR"/projects/*/package.json "$CLAUDE_PROJECT_DIR"/packages/*/package.json; do
+  for pkg in "$PROJECT_DIR/package.json" "$PROJECT_DIR"/projects/*/package.json "$PROJECT_DIR"/packages/*/package.json; do
     if [ -f "$pkg" ]; then
       if grep -qE '(react|vue|angular|nuxt|next|svelte|astro|solid|lit|express|koa|fastify|hapi|nest)' "$pkg" 2>/dev/null; then
         has_web_project=true

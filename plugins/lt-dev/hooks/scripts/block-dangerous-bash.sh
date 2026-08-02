@@ -7,7 +7,20 @@
 [ "${CLAUDE_SKIP_DANGEROUS_BASH_CHECK:-0}" = "1" ] && exit 0
 
 INPUT=$(cat)
-COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
+
+# Extract the command with a jq-free fallback, matching protect-files.sh and the
+# circuit-breaker scripts. This blocklist is the one hook where an unavailable jq
+# would be silently catastrophic: `jq -r` alone leaves COMMAND empty, the guard
+# below exits 0, and every rule here (rm -rf, force-push to a base branch,
+# git reset --hard, sudo rm, chmod 777) stops applying with nothing on screen to
+# say so. A stripped-down CI or container image without jq is enough to trigger it.
+if command -v jq &>/dev/null; then
+  COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
+else
+  COMMAND=$(echo "$INPUT" | tr -d '\n' | grep -o '"command"[[:space:]]*:[[:space:]]*"\(\\.\|[^"\\]\)*"' | head -1 | sed 's/.*"command"[[:space:]]*:[[:space:]]*"//;s/"$//')
+  # Unescape the JSON string so the patterns below match what will actually run.
+  COMMAND=$(printf '%b' "${COMMAND//\\\"/\"}")
+fi
 
 [ -z "$COMMAND" ] && exit 0
 

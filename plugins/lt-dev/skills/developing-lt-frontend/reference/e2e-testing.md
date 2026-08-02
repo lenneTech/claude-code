@@ -452,7 +452,7 @@ test('should complete 2FA verification', async ({ page }) => {
 
 ## Debugging with Chrome DevTools MCP
 
-**CRITICAL: For direct browser testing and debugging, always use the Chrome DevTools MCP (`mcp__chrome-devtools__*`) unless the user explicitly requests otherwise.** The Playwright-based Browser MCP (`mcp__MCP_DOCKER__browser_*`) is used for creating and running Playwright E2E tests.
+**CRITICAL: For direct browser testing and debugging, always use the Chrome DevTools MCP (`mcp__plugin_lt-dev_chrome-devtools__*`) unless the user explicitly requests otherwise.** The Playwright-based Browser MCP (`mcp__MCP_DOCKER__browser_*`) is used for creating and running Playwright E2E tests.
 
 ### During Test Development
 
@@ -460,20 +460,20 @@ Use Chrome DevTools MCP to debug failing tests:
 
 ```typescript
 // 1. Navigate to the page
-mcp__chrome-devtools__navigate_page({ url: 'http://localhost:3001/products' });
+mcp__plugin_lt-dev_chrome-devtools__navigate_page({ url: 'http://localhost:3001/products' });
 
 // 2. Take snapshot to understand structure
-mcp__chrome-devtools__take_snapshot();
+mcp__plugin_lt-dev_chrome-devtools__take_snapshot();
 
 // 3. Check for console errors
-mcp__chrome-devtools__list_console_messages({ types: ['error'] });
+mcp__plugin_lt-dev_chrome-devtools__list_console_messages({ types: ['error'] });
 
 // 4. Verify API calls
-mcp__chrome-devtools__list_network_requests();
+mcp__plugin_lt-dev_chrome-devtools__list_network_requests();
 
 // 5. Interact with elements
-mcp__chrome-devtools__click({ uid: 'button-create' });
-mcp__chrome-devtools__fill({ uid: 'input-name', value: 'Test' });
+mcp__plugin_lt-dev_chrome-devtools__click({ uid: 'button-create' });
+mcp__plugin_lt-dev_chrome-devtools__fill({ uid: 'input-name', value: 'Test' });
 ```
 
 ### Common Debugging Scenarios

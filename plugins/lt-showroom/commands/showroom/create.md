@@ -15,6 +15,25 @@ This command runs Phase 4 (showcase creation) and Phase 5 (presentation) of the 
 - User has a `SHOWCASE.md` in the project and wants it turned into a live showcase
 - Running after `/showroom:analyze` and optionally `/showroom:screenshot`
 
+## Related Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/lt-showroom:showroom:analyze` | Analyze the project and write SHOWCASE.md (start here) |
+| `/lt-showroom:showroom:screenshot` | Capture feature screenshots from the running app |
+| `/lt-showroom:showroom:create` | Publish the showcase to showroom.lenne.tech |
+| `/lt-showroom:showroom:update` | Re-analyze after source changes and update the showcase |
+| `/lt-showroom:showroom:sync-schema` | Refresh content-block schemas from the platform |
+
+**Related Skills:**
+
+| Skill | Purpose |
+|-------|---------|
+| `analyzing-projects` | Deep source analysis behind `analyze` and `update` |
+| `creating-showcases` | The five-phase showcase workflow this command belongs to |
+
+**Workflow:** `analyze` → `screenshot` → `create` → (later) `update`
+
 ## Prerequisites
 
 - `SHOWCASE.md` must exist in the project root (or `docs/showcase/SHOWCASE.md`)

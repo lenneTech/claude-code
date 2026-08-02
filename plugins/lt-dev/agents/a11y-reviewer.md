@@ -2,6 +2,7 @@
 name: a11y-reviewer
 description: Autonomous HTML quality review agent for lenne.tech fullstack projects. Audits accessibility (ARIA labels, roles, keyboard navigation, focus management, color contrast, screen reader support), form autocomplete attributes (email, password, name, tel, address, OTP), semantic HTML (heading hierarchy, landmark elements, interactive elements), SEO essentials (useHead, OG tags, lang attribute, structured headings), and crawlability (SSR content, robots.txt, sitemap). Combines static code analysis with Lighthouse audit via Chrome DevTools MCP. Produces structured report with fulfillment grades per dimension.
 model: inherit
+effort: medium
 tools: Bash, Read, Grep, Glob, TodoWrite
 skills: developing-lt-frontend
 memory: project
@@ -444,7 +445,7 @@ ls app/error.vue 2>/dev/null
 **Only if dev server is available.** Run Lighthouse accessibility, SEO, **and performance** audits.
 
 ```
-Use mcp__chrome-devtools__lighthouse_audit on each changed page URL:
+Use mcp__plugin_lt-dev_chrome-devtools__lighthouse_audit on each changed page URL:
 - Categories: accessibility, seo, performance
 ```
 

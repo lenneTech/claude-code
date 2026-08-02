@@ -14,6 +14,11 @@
 # Skip slash commands — they have their own skill associations
 [[ "$CLAUDE_USER_PROMPT" == /* ]] && exit 0
 
+# Resolve the project root once. CLAUDE_PROJECT_DIR is normally set by Claude Code,
+# but an unset value would turn every "$PROJECT_DIR/..." check below into an absolute
+# path from the filesystem root (e.g. /app/core), so the hook would silently never fire.
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
+
 check_nuxt() {
   [ -f "$1/nuxt.config.ts" ] || [ -f "$1/nuxt.config.js" ]
 }
@@ -33,10 +38,10 @@ check_nuxt_extensions_vendored() {
 
 find_nuxt_extensions_vendor_path() {
   for candidate in \
-    "$CLAUDE_PROJECT_DIR/app/core" \
-    "$CLAUDE_PROJECT_DIR/projects/app/app/core" \
-    "$CLAUDE_PROJECT_DIR/packages/app/app/core" \
-    "$CLAUDE_PROJECT_DIR/apps/app/app/core"; do
+    "$PROJECT_DIR/app/core" \
+    "$PROJECT_DIR/projects/app/app/core" \
+    "$PROJECT_DIR/packages/app/app/core" \
+    "$PROJECT_DIR/apps/app/app/core"; do
     if [ -f "$candidate/VENDOR.md" ]; then
       echo "$candidate"
       return 0
@@ -65,10 +70,10 @@ check_tdd_keywords() {
 
 find_nuxt_extensions_path() {
   for candidate in \
-    "$CLAUDE_PROJECT_DIR/node_modules/@lenne.tech/nuxt-extensions" \
-    "$CLAUDE_PROJECT_DIR/projects/app/node_modules/@lenne.tech/nuxt-extensions" \
-    "$CLAUDE_PROJECT_DIR/packages/app/node_modules/@lenne.tech/nuxt-extensions" \
-    "$CLAUDE_PROJECT_DIR/apps/app/node_modules/@lenne.tech/nuxt-extensions"; do
+    "$PROJECT_DIR/node_modules/@lenne.tech/nuxt-extensions" \
+    "$PROJECT_DIR/projects/app/node_modules/@lenne.tech/nuxt-extensions" \
+    "$PROJECT_DIR/packages/app/node_modules/@lenne.tech/nuxt-extensions" \
+    "$PROJECT_DIR/apps/app/node_modules/@lenne.tech/nuxt-extensions"; do
     if [ -d "$candidate/dist" ]; then
       echo "$candidate"
       return 0
@@ -125,8 +130,8 @@ emit_context() {
 
 # Check for vendored state FIRST (takes priority over npm-based detection)
 # Project root
-if check_nuxt "$CLAUDE_PROJECT_DIR" && check_app_dir "$CLAUDE_PROJECT_DIR"; then
-  if check_nuxt_extensions_vendored "$CLAUDE_PROJECT_DIR"; then
+if check_nuxt "$PROJECT_DIR" && check_app_dir "$PROJECT_DIR"; then
+  if check_nuxt_extensions_vendored "$PROJECT_DIR"; then
     emit_context "" "vendored"
   else
     emit_context "" "npm"
@@ -135,7 +140,7 @@ if check_nuxt "$CLAUDE_PROJECT_DIR" && check_app_dir "$CLAUDE_PROJECT_DIR"; then
 fi
 
 # Check monorepo patterns
-for dir in "$CLAUDE_PROJECT_DIR"/projects/app "$CLAUDE_PROJECT_DIR"/packages/app "$CLAUDE_PROJECT_DIR"/apps/app; do
+for dir in "$PROJECT_DIR"/projects/app "$PROJECT_DIR"/packages/app "$PROJECT_DIR"/apps/app; do
   if [ -d "$dir" ] && check_nuxt "$dir"; then
     if check_nuxt_extensions_vendored "$dir"; then
       emit_context " in monorepo" "vendored"

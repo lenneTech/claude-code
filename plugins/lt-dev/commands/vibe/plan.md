@@ -1,7 +1,7 @@
 ---
 description: Create detailed implementation plan from SPEC.md
 argument-hint: "[spec-file]"
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash(docker:*), Bash(docker-compose:*), Bash(git:*), Bash(pnpm run lint:*), Bash(pnpm run build:*), Bash(npm run lint:*), Bash(npm run build:*), Bash(yarn run lint:*), Bash(yarn run build:*), AskUserQuestion
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash(docker:*), Bash(docker-compose:*), Bash(git:*), Bash(pnpm run lint:*), Bash(pnpm run build:*), Bash(npm run lint:*), Bash(npm run build:*), Bash(yarn run lint:*), Bash(yarn run build:*), AskUserQuestion, Agent
 disable-model-invocation: false
 ---
 
@@ -19,6 +19,7 @@ disable-model-invocation: false
 - `/lt-dev:vibe:build-plan` - Plan + Build in one go (no interruption)
 
 **For higher quality (recommended):**
+- Use `grilling-decisions` skill to settle the spec's open decisions before the plan is written
 - Use `building-stories-with-tdd` skill for Test-Driven Development
 - TDD workflow: Backend tests → Backend → Frontend E2E tests → Frontend
 
@@ -35,6 +36,20 @@ Create detailed implementation plan from SPEC.md.
    - If SPEC.md is missing, ask: "Keine SPEC.md gefunden. Soll ich helfen eine zu erstellen, oder einen anderen Dateinamen verwenden?"
 
 Read SPEC.md and create a comprehensive implementation plan.
+
+2. **Settle the spec's open decisions before planning**
+
+   A spec that leaves a decision open does not remove it, it defers it into the plan, where it gets guessed and baked into eight phases of checkboxes. Read the spec, gather the facts it rests on from the codebase, and where a genuine decision is still open, run the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/../skills/grilling-decisions/SKILL.md) skill: one question at a time, each carrying your recommendation, facts looked up rather than asked.
+
+   Fold the answers into the plan's **Architecture & Tech Stack** rationale, so the next reader sees the decision and the reason together. When the spec is genuinely unambiguous, say so and continue.
+
+3. **Let the architect agent design the blueprint**
+
+   Spawn `lt-dev:architect` via the `Agent` tool with the spec, the settled decisions from step 2, and the detected project layout. It returns exact file paths, the MongoDB data model, REST contracts, the `@Restricted` / `@Roles` / `securityCheck` permission hierarchy, frontend state design, and a phased build sequence, all in a form `backend-dev` and `frontend-dev` can execute directly.
+
+   Two reasons it runs as an agent rather than inline: the codebase exploration it does is high-volume and would otherwise fill this conversation before the plan is even written, and its output is the same blueprint the build commands consume, so the plan and the build agree by construction.
+
+   Fold its blueprint into the plan below: its file paths feed the **File/folder structure** requirement, its build sequence feeds the phase list, and its data model and API contracts feed **Architecture & Tech Stack**. Where its proposal conflicts with something the user settled in step 2, the user's decision wins and the conflict is stated in the plan.
 
 ### CRITICAL: Implementation Order
 

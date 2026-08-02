@@ -35,15 +35,16 @@ These plugins are **optional** but enhance the experience when working with this
 - **Plugin Development**: Claude Code plugin best practices and validation
 - **Framework Contribution**: Local `pnpm link` workflow for modifying `@lenne.tech/nest-server` / `@lenne.tech/nuxt-extensions` and validating changes from a starter
 - **Dev Server Lifecycle**: Enforced `run_in_background` / `pkill` contract to prevent orphaned processes across TDD, framework linking, and MCP-driven debugging
+- **Alignment before code**: A grilling loop that walks the open decisions one at a time, each with a recommendation, and looks facts up in the codebase rather than asking — wired into ticket creation, planning, and the implementation flow
 
 ## Included
 
-- **15 Skills** - Auto-detected contextual expertise (includes `running-check-script` for runnability validation, `managing-dev-servers` for dev-server lifecycle rules, and `contributing-to-lt-framework` for pnpm link workflows)
-- **24 Agents** - Autonomous task execution
-- **52 Commands** - User-triggered actions via `/lt-dev:<name>`
+- **24 Skills** - Auto-detected contextual expertise (includes `grilling-decisions` for settling open decisions before implementation, `running-check-script` for runnability validation, `managing-dev-servers` for dev-server lifecycle rules, and `contributing-to-lt-framework` for pnpm link workflows)
+- **25 Agents** - Autonomous task execution
+- **63 Commands** - User-triggered actions via `/lt-dev:<name>`
 - **13 Hook Scripts** across 7 event types (SessionStart, PreToolUse, PostToolUse, PostToolUseFailure, UserPromptSubmit, StopFailure, PostCompact) - Automated project detection and validation
 - **Helper Scripts** - Plugin-local shell helpers under `plugins/lt-dev/scripts/` (e.g. `discover-check-scripts.sh` for monorepo-aware `check` discovery, `chrome-devtools-mcp-launcher.sh` as Chrome MCP wrapper)
-- **5 MCP Servers** - Chrome DevTools, Linear, Nuxt UI, Better Auth, and Figma Desktop integration
+- **3 MCP Servers** - Chrome DevTools, Linear, and Nuxt UI (Figma via the official `figma` plugin as a companion)
 
 ## Chrome DevTools MCP — Canary auto-detection
 

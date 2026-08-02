@@ -2,6 +2,7 @@
 name: nuxt-extensions-core-contributor
 description: Autonomous agent for identifying substantial local changes in a vendored nuxt-extensions core (app/core/) and preparing them as Upstream Pull Requests to the @lenne.tech/nuxt-extensions repository. Filters cosmetic commits, categorizes substantial commits as upstream-candidate or project-specific, and prepares PR drafts for human review. Never auto-pushes.
 model: inherit
+effort: high
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, TodoWrite
 skills: nuxt-extensions-core-vendoring, developing-lt-frontend
 memory: project

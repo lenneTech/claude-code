@@ -8,6 +8,11 @@
 # Skip slash commands — they have their own skill associations
 [[ "$CLAUDE_USER_PROMPT" == /* ]] && exit 0
 
+# Resolve the project root once. CLAUDE_PROJECT_DIR is normally set by Claude Code,
+# but an unset value would turn every "$PROJECT_DIR/..." check below into an absolute
+# path from the filesystem root (e.g. /app/core), so the hook would silently never fire.
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
+
 check_nest_server() {
   [ -f "$1" ] && grep -q '@lenne\.tech/nest-server' "$1" 2>/dev/null
 }
@@ -23,10 +28,10 @@ check_nest_server_vendored() {
 
 find_nest_server_vendor_path() {
   for candidate in \
-    "$CLAUDE_PROJECT_DIR/src/core" \
-    "$CLAUDE_PROJECT_DIR/projects/api/src/core" \
-    "$CLAUDE_PROJECT_DIR/packages/api/src/core" \
-    "$CLAUDE_PROJECT_DIR/apps/api/src/core"; do
+    "$PROJECT_DIR/src/core" \
+    "$PROJECT_DIR/projects/api/src/core" \
+    "$PROJECT_DIR/packages/api/src/core" \
+    "$PROJECT_DIR/apps/api/src/core"; do
     if [ -f "$candidate/VENDOR.md" ]; then
       echo "$candidate"
       return 0
@@ -55,10 +60,10 @@ check_tdd_keywords() {
 
 find_nest_server_path() {
   for candidate in \
-    "$CLAUDE_PROJECT_DIR/node_modules/@lenne.tech/nest-server" \
-    "$CLAUDE_PROJECT_DIR/projects/api/node_modules/@lenne.tech/nest-server" \
-    "$CLAUDE_PROJECT_DIR/packages/api/node_modules/@lenne.tech/nest-server" \
-    "$CLAUDE_PROJECT_DIR/apps/api/node_modules/@lenne.tech/nest-server"; do
+    "$PROJECT_DIR/node_modules/@lenne.tech/nest-server" \
+    "$PROJECT_DIR/projects/api/node_modules/@lenne.tech/nest-server" \
+    "$PROJECT_DIR/packages/api/node_modules/@lenne.tech/nest-server" \
+    "$PROJECT_DIR/apps/api/node_modules/@lenne.tech/nest-server"; do
     if [ -d "$candidate/src" ]; then
       echo "$candidate"
       return 0
@@ -116,12 +121,12 @@ emit_context() {
 
 # Check for vendored state FIRST (takes priority over npm-based detection)
 # Project root
-if check_nest_server_vendored "$CLAUDE_PROJECT_DIR"; then
+if check_nest_server_vendored "$PROJECT_DIR"; then
   emit_context "" "vendored"
   exit 0
 fi
 # Monorepo subprojects
-for subproject in "$CLAUDE_PROJECT_DIR"/projects/* "$CLAUDE_PROJECT_DIR"/packages/* "$CLAUDE_PROJECT_DIR"/apps/*; do
+for subproject in "$PROJECT_DIR"/projects/* "$PROJECT_DIR"/packages/* "$PROJECT_DIR"/apps/*; do
   if check_nest_server_vendored "$subproject"; then
     emit_context " in monorepo" "vendored"
     exit 0
@@ -129,13 +134,13 @@ for subproject in "$CLAUDE_PROJECT_DIR"/projects/* "$CLAUDE_PROJECT_DIR"/package
 done
 
 # Fall back to classic npm-based detection
-if check_nest_server "$CLAUDE_PROJECT_DIR/package.json"; then
+if check_nest_server "$PROJECT_DIR/package.json"; then
   emit_context "" "npm"
   exit 0
 fi
 
 # Check monorepo patterns for npm-based
-for pkg in "$CLAUDE_PROJECT_DIR"/projects/*/package.json "$CLAUDE_PROJECT_DIR"/packages/*/package.json "$CLAUDE_PROJECT_DIR"/apps/*/package.json; do
+for pkg in "$PROJECT_DIR"/projects/*/package.json "$PROJECT_DIR"/packages/*/package.json "$PROJECT_DIR"/apps/*/package.json; do
   if check_nest_server "$pkg"; then
     emit_context " in monorepo" "npm"
     exit 0

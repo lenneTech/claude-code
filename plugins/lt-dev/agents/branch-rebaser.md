@@ -2,6 +2,7 @@
 name: branch-rebaser
 description: Autonomous agent for rebasing feature branches onto the development branch. Handles conflict resolution, Linear ticket analysis, code optimization, linting (oxfmt/oxlint), testing, and code review.
 model: inherit
+effort: high
 tools: Bash, Read, Grep, Glob, Write, Edit, TodoWrite
 memory: project
 isolation: worktree
@@ -244,7 +245,12 @@ Guarantee project runnability post-rebase. Rebase conflicts and upstream changes
 
 **Follow the `running-check-script` skill verbatim** (loaded via `skills:` frontmatter). It defines discovery, the iterate-until-green auto-fix loop, the mandatory audit escalation ladder, residual classification, the bypass policy, the test-duplication baseline, and the report block format.
 
-**Rebase-specific gating:** If Unresolved blockers remain after the skill finishes, document them in the final report and do NOT proceed with force-push in batch mode. Accepted Residuals alone do NOT block the rebase.
+**Rebase-specific gating (Blocking mode).** The skill runs here in its **Blocking** mode, because a force-push is what makes the rebased state everyone else's state.
+
+- **Green across every discovered project** → continue to Phase 7. Accepted Residuals (an exhausted-ladder dependency CVE) do not block the rebase and are named in the report.
+- **Any unresolved error** → document it in the final report and do **not** force-push, in single-branch mode exactly as in batch mode. The local rebase result stays intact, so the work is preserved and the push happens once the cause is fixed.
+
+Every error is fixed at its root first, pre-existing ones included: a rebase is precisely where upstream breakage surfaces, and pushing it onward makes it look like this branch's fault.
 
 ### Phase 7: Tests
 

@@ -1,6 +1,6 @@
 ---
 description: Generate Docker setup for development and production
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash(docker:*), Bash(docker-compose:*), Bash(curl:*), Bash(ls:*), Bash(mkdir:*), Bash(cp:*), Bash(cat:*), Bash(git:*)
+allowed-tools: Read, Write, Edit, Glob, Grep, Agent, Bash(docker:*), Bash(docker-compose:*), Bash(curl:*), Bash(ls:*), Bash(mkdir:*), Bash(cp:*), Bash(cat:*), Bash(git:*)
 disable-model-invocation: true
 ---
 
@@ -37,6 +37,14 @@ Create a complete Docker setup for this project with the following requirements:
 5. Identify if SSR is being used
 6. Find out which ports the app(s) use
 7. Check if a database is already configured (Prisma, Drizzle, TypeORM, etc.)
+
+### Step 2: Delegate the configuration to the devops agent
+
+With the analysis in hand, spawn `lt-dev:devops` via the `Agent` tool, passing the detected framework, package manager, ports, database, and monorepo layout. It owns this stack's infrastructure conventions and produces the artefacts Phase 2 describes: multi-stage Dockerfiles with pinned base images and non-root users, a dev compose file with hot reload and volume-based `node_modules`, a hardened production compose file, health checks, and the port conventions (API 3000, App 3001, MongoDB 27017).
+
+It runs as an agent rather than inline because writing a Docker setup means reading a lot of the project first, and that exploration belongs in its own context rather than in this conversation.
+
+Review its output against Phase 2 below before writing anything to disk: Phase 2 is the acceptance criteria for what the agent returns, not a second implementation of it. Phase 3 then starts the stack and validates it.
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 description: Refactor entire frontend app to match frontend-dev agent guidelines using parallel agent teams
 argument-hint: "[--scope=all|pages|components|composables] [--dry-run]"
-allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(wc:*), Bash(find:*), Bash(git:*), Bash(echo:*), Agent, AskUserQuestion, TodoWrite
+allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(wc:*), Bash(find:*), Bash(git:*), Bash(echo:*), Bash(pnpm run format:*), Bash(npm run format:*), Bash(yarn run format:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Agent, AskUserQuestion, TodoWrite, SlashCommand
 disable-model-invocation: true
 ---
 

@@ -1,7 +1,7 @@
 ---
 description: Clean up and optimize backend code quality for NestJS / @lenne.tech/nest-server projects
 argument-hint: "[--scope=all|modules|services|models] [--dry-run]"
-allowed-tools: Read, Grep, Glob, Edit, TodoWrite, Bash(npm run build:*), Bash(npm run lint:*), Bash(npm run test:*), Bash(pnpm run build:*), Bash(pnpm run lint:*), Bash(pnpm run test:*), Bash(yarn run build:*), Bash(yarn run lint:*), Bash(yarn run test:*), Bash(git:*), Bash(ls:*), Bash(find:*), Bash(wc:*)
+allowed-tools: Read, Grep, Glob, Edit, TodoWrite, Bash(npm run build:*), Bash(npm run lint:*), Bash(npm run test:*), Bash(pnpm run build:*), Bash(pnpm run lint:*), Bash(pnpm run test:*), Bash(yarn run build:*), Bash(yarn run lint:*), Bash(yarn run test:*), Bash(git:*), Bash(ls:*), Bash(find:*), Bash(wc:*), Agent
 disable-model-invocation: true
 ---
 
@@ -62,6 +62,14 @@ From `$ARGUMENTS`:
 ```bash
 ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
 ```
+
+### 2b. Delegate the rewriting to the backend-dev agent
+
+The cleanup rules below are `lt-dev:backend-dev`'s own conventions, so spawn that agent via the `Agent` tool to apply them rather than re-deriving them here. Pass it the resolved scope, the package manager, the file list in scope, and the `--dry-run` flag.
+
+It enforces exactly what this command asks for and is the single source of those rules: `@Restricted` / `@Roles` on every endpoint, `securityCheck()` on every model, `CrudService` inheritance, alphabetical properties, bilingual descriptions, zero implicit `any`, and the options-object pattern. Keeping the rules in one place means a convention change is a one-file edit rather than a diff across a command and an agent that then drift apart.
+
+On `--dry-run`, tell the agent to report findings without editing. Either way, the "What MUST NOT Change" list below and the mandatory Verification section stay this command's responsibility: they gate whatever the agent returns.
 
 ### 3. Progress Tracking
 

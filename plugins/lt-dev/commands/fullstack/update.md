@@ -1,7 +1,7 @@
 ---
 description: Sync fullstack project with latest nest-server-starter and nuxt-base-starter
 argument-hint: "[--dry-run] [--skip-backend] [--skip-frontend]"
-allowed-tools: Read, Grep, Glob, Bash(npm run:*), Bash(pnpm run:*), Bash(yarn run:*), Bash(npx ncu:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(rm:*), Write, Edit, Agent, AskUserQuestion, WebFetch, TodoWrite
+allowed-tools: Read, Grep, Glob, Bash(npm run:*), Bash(pnpm run:*), Bash(yarn run:*), Bash(pnpm list:*), Bash(npm list:*), Bash(yarn list:*), Bash(pnpm view:*), Bash(npm view:*), Bash(yarn info:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(npx ncu:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(rm:*), Write, Edit, Agent, AskUserQuestion, WebFetch, TodoWrite
 disable-model-invocation: true
 ---
 

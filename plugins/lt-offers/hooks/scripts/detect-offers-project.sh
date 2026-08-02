@@ -18,7 +18,11 @@ fi
 
 # Fallback to CLAUDE_USER_PROMPT env var and PWD
 PROMPT="${PROMPT:-${CLAUDE_USER_PROMPT:-}}"
-CWD="${CWD:-$PWD}"
+# Prefer the stable project root over the hook payload's cwd: the agent's working
+# directory changes mid-session (see the CwdChanged event), so after a `cd projects/api`
+# a check on "$CWD/projects/api/..." would look for projects/api/projects/api/... and
+# miss. CLAUDE_PROJECT_DIR stays put; .cwd and PWD remain the fallbacks.
+CWD="${CLAUDE_PROJECT_DIR:-${CWD:-$PWD}}"
 
 CONTEXT=""
 PROMPT_LOWER=$(echo "$PROMPT" | tr '[:upper:]' '[:lower:]')

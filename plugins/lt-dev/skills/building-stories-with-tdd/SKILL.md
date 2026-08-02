@@ -131,6 +131,7 @@ afterAll(async () => {
 **User-facing command:** `/lt-dev:resolve-ticket [issue-id | story-file]` — Resolves a ticket using this skill
 
 **Works closely with:**
+- `grilling-decisions` skill - Settles the story's open decisions and confirms the seams before Step 2
 - `generating-nest-servers` skill - For code implementation (modules, objects, properties)
 - `using-lt-cli` skill - For Git operations and project initialization
 - `developing-lt-frontend` skill - For frontend E2E tests and implementation
@@ -169,8 +170,33 @@ claude plugins install typescript-lsp --marketplace claude-plugins-official
 1. **Test through API only** — Use `testHelper.rest()` / `testHelper.graphQl()`. NEVER call Services directly or query DB in test logic. Exception: DB access only for setup/cleanup (roles, verified status).
 2. **Verify before assuming** — ALWAYS read Controllers/Services/Models before writing tests. Never assume endpoints, methods, or properties exist.
 3. **Failing tests are ALWAYS a problem** — Fix the root cause of every failing test, even if the failure predates the current changes or seems unrelated to the current task. A green test suite is a non-negotiable prerequisite. Never ignore, skip, or defer test failures.
+4. **Agree the seams before writing the first test** — see [Seams](#seams-agree-them-before-step-2) below. A test at an unconfirmed seam is written on a guess about where behaviour should be observable.
 
 **Full details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md) -> Steps 1, 2, and 4**
+
+---
+
+## Seams: agree them before Step 2
+
+A **seam** is the public boundary a test observes behaviour through, without reaching inside. Every test sits at one. Which seams a story is tested at is a **design decision made with the user**, not a by-product of writing the first test.
+
+Testing everything is not possible, so the seam agreement is what puts the effort on the critical paths and the complex logic instead of spreading it evenly over every edge. Made explicit up front, it also settles the argument that otherwise surfaces during review, when the tests already exist.
+
+This stack's seams are established, so the question is which ones this story uses:
+
+| Seam | Test type | Location |
+|---|---|---|
+| REST / GraphQL surface | API story test via `testHelper.rest()` / `testHelper.graphQl()` | `projects/api/tests/stories/` |
+| Exported pure function or class | Unit test | beside the source, `*.spec.ts` |
+| Rendered application against the real backend | Playwright E2E | `projects/app/tests/` |
+
+**Before Step 2, name the seams and confirm them.** Prefer the highest seam that can observe the behaviour, and an existing seam over a new one: fewer seams means fewer places a later refactor has to be re-taught. State them as a short list and ask, in the shape the `grilling-decisions` skill uses — your recommendation first, so the user confirms in one word:
+
+> "Ich würde an drei Nahtstellen testen: (1) `POST /items` und `GET /items` als API-Story-Test inkl. Rollen-Matrix, (2) `calculatePosition()` als Unit-Test, weil die Sortierlogik eigenständig komplex ist, (3) den Anlege-Flow als Playwright-E2E. Die Detailseite deckt (1) und (3) mit ab, dafür brauche ich keine eigene Naht. Passt das?"
+
+When a behaviour is only observable through a seam that does not exist yet, that absence is the finding: the module is shaped so its behaviour cannot be verified from outside. Reshaping it is the better answer than testing past it.
+
+**Anti-patterns that make a green test worthless — read before writing tests: [test-anti-patterns.md](${CLAUDE_SKILL_DIR}/test-anti-patterns.md)** (implementation-coupled, tautological, horizontal slicing, mocking past the boundary).
 
 ---
 
@@ -187,12 +213,15 @@ claude plugins install typescript-lsp --marketplace claude-plugins-official
 
 - Read story, verify existing API structure (read Controllers/Resolvers)
 - Document what exists vs what needs creation
-- Ask for clarification if ambiguous (use AskUserQuestion)
+- Where the story is ambiguous, settle it with the `grilling-decisions` skill: facts read from the code, decisions put to the user one at a time with your recommendation
+- **Name the seams and get them confirmed** (see [Seams](#seams-agree-them-before-step-2)) — the last thing Step 1 produces, and the input Step 2 runs on
 
 ### Step 2: Create Story Test
 **Details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md) -> Step 2**
 
 **CRITICAL: Test through API only - NEVER direct Service/DB access!**
+
+Tests go at the seams confirmed in Step 1, and only there. **One slice at a time**: one test, one implementation, repeat — never a batch of tests up front (that is horizontal slicing, see [test-anti-patterns.md](${CLAUDE_SKILL_DIR}/test-anti-patterns.md)). Each test is a tracer bullet that responds to what the previous cycle taught you.
 
 - Use `testHelper.rest()` or `testHelper.graphQl()`
 - NEVER call Services directly or query DB in test logic

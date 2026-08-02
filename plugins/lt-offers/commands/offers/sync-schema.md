@@ -1,6 +1,6 @@
 ---
 description: Update content block schemas and NuxtUI component whitelist from the API and nuxt-ui-remote MCP
-allowed-tools: Read, Write, Edit, Grep, Glob, Agent
+allowed-tools: Read, Write, Edit, Grep, Glob, Agent, mcp__plugin_lt-dev_nuxt-ui-remote__list-components, mcp__plugin_lt-dev_nuxt-ui-remote__get-component, mcp__plugin_lt-dev_nuxt-ui-remote__get-component-metadata
 disable-model-invocation: true
 ---
 
@@ -11,6 +11,22 @@ disable-model-invocation: true
 - After API changes to content block types
 - After NuxtUI version updates
 - To verify the plugin's reference docs are up-to-date
+
+## Related Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/lt-offers:offers:create` | Create a new offer from a guided interview |
+| `/lt-offers:offers:optimize` | Improve an existing offer's text, structure, and completeness |
+| `/lt-offers:offers:sync-schema` | Refresh content-block schemas and the NuxtUI whitelist from the API |
+
+**Related Skills:**
+
+| Skill | Purpose |
+|-------|---------|
+| `creating-offers` | Block types, offer lifecycle, and the API behind these commands |
+
+**Workflow:** `create` → `optimize` → send
 
 ## Workflow
 

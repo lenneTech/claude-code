@@ -15,7 +15,7 @@
 import { chromium, type Page, type BrowserContext } from "playwright";
 import TurndownService from "turndown";
 import { gfm } from "turndown-plugin-gfm";
-import { existsSync, readFileSync } from "fs";
+import { existsSync, readFileSync, statSync } from "fs";
 import { writeFile } from "fs/promises";
 import { dirname, join } from "path";
 import type { Source, SourcesConfig, FetchResult } from "./types";
@@ -28,6 +28,54 @@ const SOURCES_FILE = join(OUTPUT_DIR, "sources.json");
 
 // Configuration
 const TIMEOUT = 30000; // 30 seconds per page
+
+/**
+ * Content-regression guard.
+ *
+ * A fetch can succeed while the extraction produces almost nothing: the page moved,
+ * the docs were restructured and the old URL now serves a stub, or the renderer hit
+ * a layout the selectors no longer match. Writing that result would replace a good
+ * cache with an empty one and report success, which is how `slash-commands.md` went
+ * from 527 lines to 8 while the run printed a green check.
+ *
+ * So a result that is drastically smaller than what is already cached counts as a
+ * failed extraction: the existing file stays, and the run reports the source as
+ * failed-but-preserved, exactly like a network error.
+ */
+const MIN_CACHE_BYTES = 500; // below this, a first-time fetch is not real content
+const MIN_CACHE_RATIO = 0.5; // a rewrite must keep at least half the existing bytes
+
+/** Thrown when fresh content looks like a failed extraction rather than a real update. */
+class CacheRegressionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CacheRegressionError";
+  }
+}
+
+/**
+ * Write a cache file, refusing results that look like a failed extraction.
+ * Throws CacheRegressionError so the caller's existing catch preserves the old file.
+ */
+async function writeCacheFile(outputPath: string, content: string): Promise<void> {
+  const newBytes = Buffer.byteLength(content, "utf-8");
+
+  if (existsSync(outputPath)) {
+    const oldBytes = statSync(outputPath).size;
+    if (oldBytes > 0 && newBytes < oldBytes * MIN_CACHE_RATIO) {
+      const pct = Math.round((newBytes / oldBytes) * 100);
+      throw new CacheRegressionError(
+        `extraction returned ${newBytes} bytes vs. ${oldBytes} cached (${pct}%) — page likely moved or restructured; check its URL in sources.json`
+      );
+    }
+  } else if (newBytes < MIN_CACHE_BYTES) {
+    throw new CacheRegressionError(
+      `extraction returned only ${newBytes} bytes and there is no cache to fall back on — check the URL in sources.json`
+    );
+  }
+
+  await writeFile(outputPath, content, "utf-8");
+}
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -356,7 +404,7 @@ async function fetchMarkdownDirect(source: Source): Promise<FetchResult> {
     content = addSourceInfo(content, source.url, true);
 
     const outputPath = join(OUTPUT_DIR, `${source.name}.md`);
-    await writeFile(outputPath, content, "utf-8");
+    await writeCacheFile(outputPath, content);
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
     log(`✓ ${source.name} (${duration}s) [md]`, true);
@@ -403,7 +451,7 @@ async function fetchHtmlAndConvert(
     markdown = cleanMarkdown(markdown, title, source.url);
 
     const outputPath = join(OUTPUT_DIR, `${source.name}.md`);
-    await writeFile(outputPath, markdown, "utf-8");
+    await writeCacheFile(outputPath, markdown);
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
     log(`✓ ${source.name} (${duration}s) [html]`, true);
@@ -447,7 +495,7 @@ async function fetchSpaAndConvert(
     markdown = cleanMarkdown(markdown, title, source.url);
 
     const outputPath = join(OUTPUT_DIR, `${source.name}.md`);
-    await writeFile(outputPath, markdown, "utf-8");
+    await writeCacheFile(outputPath, markdown);
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
     log(`✓ ${source.name} (${duration}s) [spa]`, true);

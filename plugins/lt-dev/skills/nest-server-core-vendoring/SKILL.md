@@ -1,6 +1,6 @@
 ---
 name: nest-server-core-vendoring
-description: 'Provides knowledge and resources for projects that have vendored the @lenne.tech/nest-server core directly into their source tree (under projects/api/src/core/ instead of consuming via npm). Covers the vendor model, the flatten-fix pattern, the Upstream-to-Project sync workflow, the Project-to-Upstream PR workflow, typical conflicts, and how cosmetic changes are distinguished from substantial upstream candidates. Activates for vendored nest-server core discussions, "sync core from upstream", "port local core change to upstream", conflict resolution during vendor sync, or questions about the vendor pattern. Delegates execution to lt-dev:nest-server-core-updater (for syncs) and lt-dev:nest-server-core-contributor (for upstream PR preparation). NOT for npm-based nest-server updates (use nest-server-updating). NOT for writing new NestJS code (use generating-nest-servers).'
+description: 'Knowledge base for projects that vendored the @lenne.tech/nest-server core into their source tree (projects/api/src/core/, no npm dependency). Covers the vendor model, the flatten-fix pattern, the upstream sync workflow, the upstream-PR workflow, typical conflicts, and cosmetic-vs-substantial classification. Activates for vendored nest-server core discussions, "sync core from upstream", "port local core change to upstream", or vendor-sync conflict resolution. Delegates to lt-dev:nest-server-core-updater (syncs) and lt-dev:nest-server-core-contributor (upstream PR prep). NOT for npm-based nest-server updates (use nest-server-updating). NOT for writing new NestJS code (use generating-nest-servers).'
 ---
 
 # Vendored nest-server core Knowledge Base
@@ -389,3 +389,15 @@ This restores `@lenne.tech/nest-server` as an npm dependency and removes the
 - nest-server-starter: https://github.com/lenneTech/nest-server-starter
 - Migration guides (for npm-based upgrades): https://github.com/lenneTech/nest-server/tree/main/migration-guides
 - CLI vendor pipeline source: `cli/src/extensions/server.ts#convertCloneToVendored` (https://github.com/lenneTech/cli)
+
+## Related Skills & Commands
+
+| Element | Relationship |
+|---------|--------------|
+| **Agent**: `nest-server-core-updater` | Executes the upstream-to-project sync |
+| **Agent**: `nest-server-core-contributor` | Prepares project-to-upstream PRs |
+| `/lt-dev:backend:update-nest-server-core` | User-facing entry point for the sync |
+| `/lt-dev:backend:contribute-nest-server-core` | User-facing entry point for the PR prep |
+| `nest-server-updating` skill | The npm-mode counterpart to this vendor mode |
+| `contributing-to-lt-framework` skill | Editing the framework repo itself via `pnpm link` |
+| `nuxt-extensions-core-vendoring` skill | The frontend mirror of this pattern |

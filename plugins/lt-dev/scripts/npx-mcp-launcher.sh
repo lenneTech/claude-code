@@ -10,8 +10,14 @@
 #
 # Usage in .mcp.json:
 #   "command": "${CLAUDE_PLUGIN_ROOT}/scripts/npx-mcp-launcher.sh",
-#   "args": ["<package>@latest", "--any", "--server", "--flags"]
+#   "args": ["<package>@<exact-version>", "--any", "--server", "--flags"]
 # (the launcher prepends `npx -y`).
+#
+# PIN THE VERSION, do not use @latest: resolving "latest" costs an npm-registry
+# roundtrip on every server start (measured 3-22s for chrome-devtools-mcp) against
+# Claude Code's 30s MCP startup timeout, so a slow network turns into a server that
+# never comes up. An exact version is served straight from the local npx cache.
+# Bump the version in .mcp.json when a new release should roll out.
 
 set -eu
 

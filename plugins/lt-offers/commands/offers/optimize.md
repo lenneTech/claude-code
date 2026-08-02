@@ -1,6 +1,6 @@
 ---
 description: Analyze and improve an existing offer — text quality, structure, missing sections
-allowed-tools: Read, Grep, Glob, Bash(command -v:*), Bash(git config:*), Bash(git clone:*), Bash(git pull:*), Bash(git status:*), Agent
+allowed-tools: Read, Grep, Glob, Bash(command -v:*), Bash(git config:*), Bash(git clone:*), Bash(git pull:*), Bash(git status:*), Agent, mcp__plugin_lt-offers_offers-api__get_offer_context, mcp__plugin_lt-offers_offers-api__list_offers, mcp__plugin_lt-offers_offers-api__get_offer, mcp__plugin_lt-offers_offers-api__create_offer, mcp__plugin_lt-offers_offers-api__update_offer, mcp__plugin_lt-offers_offers-api__list_templates, mcp__plugin_lt-offers_offers-api__create_from_template, mcp__plugin_lt-offers_offers-api__list_globals, mcp__plugin_lt-offers_offers-api__add_offer_source, mcp__plugin_lt-offers_offers-api__upload_offer_source_file, mcp__plugin_lt-offers_offers-api__mark_sent, mcp__plugin_lt-offers_offers-api__generate_snippet, mcp__plugin_lt-offers_offers-api-demo__get_offer_context, mcp__plugin_lt-offers_offers-api-demo__list_offers, mcp__plugin_lt-offers_offers-api-demo__get_offer, mcp__plugin_lt-offers_offers-api-demo__create_offer, mcp__plugin_lt-offers_offers-api-demo__update_offer, mcp__plugin_lt-offers_offers-api-demo__list_templates, mcp__plugin_lt-offers_offers-api-demo__create_from_template, mcp__plugin_lt-offers_offers-api-demo__list_globals, mcp__plugin_lt-offers_offers-api-demo__add_offer_source, mcp__plugin_lt-offers_offers-api-demo__upload_offer_source_file, mcp__plugin_lt-offers_offers-api-demo__mark_sent, mcp__plugin_lt-offers_offers-api-demo__generate_snippet
 argument-hint: "[offer-id]"
 disable-model-invocation: true
 ---
@@ -11,6 +11,22 @@ disable-model-invocation: true
 
 - User wants to improve an existing offer
 - User mentions "optimieren", "verbessern", "ueberarbeiten" in context of an offer
+
+## Related Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/lt-offers:offers:create` | Create a new offer from a guided interview |
+| `/lt-offers:offers:optimize` | Improve an existing offer's text, structure, and completeness |
+| `/lt-offers:offers:sync-schema` | Refresh content-block schemas and the NuxtUI whitelist from the API |
+
+**Related Skills:**
+
+| Skill | Purpose |
+|-------|---------|
+| `creating-offers` | Block types, offer lifecycle, and the API behind these commands |
+
+**Workflow:** `create` → `optimize` → send
 
 ## Workflow
 

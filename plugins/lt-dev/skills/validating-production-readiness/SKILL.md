@@ -1,6 +1,6 @@
 ---
 name: validating-production-readiness
-description: 'Single source of truth for the lenne.tech fullstack production-readiness checklist. Defines the eight pillars (configuration & secrets, observability & logging, health & lifecycle, security hardening, data durability, resilience under load, deployment hygiene, runbook & rollback) with concrete file/line evidence requirements per pillar, severity classification (Critical / Major / Minor), and a canonical machine-parseable report block. Activates whenever an agent or command needs to gate a release on production-readiness — currently used by /lt-dev:production-ready, lt-dev:production-readiness-orchestrator, and the devops-reviewer (read-only). NOT for OWASP-style code-level security review (use security-reviewer). NOT for npm dependency audits (use maintaining-npm-packages).'
+description: 'Single source of truth for the lenne.tech fullstack production-readiness checklist. Defines the eight pillars (configuration & secrets, observability & logging, health & lifecycle, security hardening, data durability, resilience under load, deployment hygiene, runbook & rollback) with concrete file/line evidence requirements per pillar, severity classification (Critical / Major / Minor), and a canonical machine-parseable report block. Activates whenever a release must be gated on production-readiness. NOT for OWASP-style code-level security review (use security-reviewer). NOT for npm dependency audits (use maintaining-npm-packages).'
 user-invocable: false
 ---
 

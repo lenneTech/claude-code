@@ -29,6 +29,7 @@ Guide the user through creating a well-structured user story that can be used as
 
 | Skill | Purpose |
 |-------|---------|
+| `grilling-decisions` | The facts-vs-decisions split and the frontier-round loop behind Step 2's questioning |
 | `coordinating-agent-teams` | Parallel test writing coordination for fullstack stories |
 
 **Workflow:** Create story → Save to Linear → `/lt-dev:resolve-ticket` to implement
@@ -165,17 +166,20 @@ For each missing or unclear element, formulate a **specific question in German**
 
 ### Questioning Strategy
 
-1. **Ask only about missing/unclear elements** - Don't ask for information already provided
-2. **Be specific** - Reference what was said and ask for clarification
-3. **Group related questions** - Ask 2-4 questions at once, not one by one
-4. **Suggest improvements** - If something seems incomplete, suggest additions
-5. **Accept refusal gracefully** - If the user refuses to answer or provides no input, accept it and make the best of available information
+Ask in **rounds**, and let each round cover the **frontier**: every open question whose prerequisites are already settled, so no answer rests on a guess about an answer you have not heard yet. A question that only makes sense once another one in this round is answered belongs to the *next* round.
 
-**Example question (in German):**
-"Deine Story-Idee ist klar bezüglich des Grundfeatures. Ich brauche noch ein paar Details:
-1. Du hast erwähnt, dass Admins Items verwalten können - können Gäste sie auch sehen?
-2. Sollen die Items eine bestimmte Reihenfolge/Position haben?
-3. Was passiert, wenn jemand versucht, ein Item zu löschen, das anderswo referenziert wird?"
+1. **Ask only about missing or unclear elements** — anything already stated is answered; asking again spends the user's attention for nothing
+2. **Be specific** — reference what was said, and ask for the part that is genuinely ambiguous
+3. **One round, numbered, with your recommendation on every question** — the user then confirms in one word instead of composing the story from scratch. 2 to 4 questions per round is the readable size
+4. **Look facts up yourself** — which roles the affected services already allow, whether the entity exists, how the neighbouring feature solved it. Ask the user for **decisions**, never for facts the repo already holds (the `grilling-decisions` skill has the full split)
+5. **Recompute the frontier after each round** — settled answers unblock the next questions and often retire others entirely
+6. **Accept refusal gracefully** — when the user skips, fall through to the Proactive Suggestion Strategy below
+
+**Example round (in German), each question carrying its recommendation:**
+"Deine Story-Idee ist klar bezüglich des Grundfeatures. Drei Punkte sind noch offen — mein Vorschlag steht jeweils dabei:
+1. Sichtbarkeit für Gäste: `UserService` erlaubt Gästen aktuell nur Lesezugriff. **Vorschlag: Gäste sehen die Items, verwalten dürfen weiterhin nur Admins.** Passt das?
+2. Reihenfolge: **Vorschlag: manuelle Sortierung über ein `position`-Feld**, weil die Liste redaktionell gepflegt wird. Oder reicht alphabetisch?
+3. Löschen eines referenzierten Items: **Vorschlag: blockieren mit klarer Fehlermeldung**, statt kaskadierend zu löschen — kaskadierendes Löschen ist später nicht mehr nachvollziehbar. Einverstanden?"
 
 **If user refuses or skips questions:**
 - Accept the decision without pushing further

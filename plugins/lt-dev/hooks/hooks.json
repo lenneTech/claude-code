@@ -26,15 +26,23 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/validate-plugin-frontmatter.sh\"",
-            "timeout": 5,
-            "statusMessage": "Validating plugin frontmatter"
-          },
-          {
-            "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/protect-files.sh\"",
             "timeout": 3,
             "statusMessage": "Checking file protection"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/validate-plugin-frontmatter.sh\"",
+            "timeout": 5,
+            "statusMessage": "Validating plugin frontmatter",
+            "if": "Write(**/*.md)"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/validate-plugin-frontmatter.sh\"",
+            "timeout": 5,
+            "statusMessage": "Validating plugin frontmatter",
+            "if": "Edit(**/*.md)"
           }
         ]
       },
@@ -52,7 +60,6 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Bash|Write|Edit",
         "hooks": [
           {
             "type": "command",
@@ -68,7 +75,29 @@
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/vendor-core-edit-guard.sh\"",
             "timeout": 3,
-            "statusMessage": "Checking vendor core policy"
+            "statusMessage": "Checking vendor core policy",
+            "if": "Write(**/src/core/**)"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/vendor-core-edit-guard.sh\"",
+            "timeout": 3,
+            "statusMessage": "Checking vendor core policy",
+            "if": "Edit(**/src/core/**)"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/vendor-core-edit-guard.sh\"",
+            "timeout": 3,
+            "statusMessage": "Checking vendor core policy",
+            "if": "Write(**/app/core/**)"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/vendor-core-edit-guard.sh\"",
+            "timeout": 3,
+            "statusMessage": "Checking vendor core policy",
+            "if": "Edit(**/app/core/**)"
           }
         ]
       }
@@ -138,7 +167,19 @@
         "hooks": [
           {
             "type": "command",
-            "command": "rm -f /tmp/.claude-circuit-breaker/* 2>/dev/null; true"
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/circuit-breaker-cleanup.sh\"",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/circuit-breaker-cleanup.sh\"",
+            "timeout": 1
           }
         ]
       }

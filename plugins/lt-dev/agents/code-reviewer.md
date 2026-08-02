@@ -155,6 +155,19 @@ grep -rn "import .*ErrorCode.* from '@lenne.tech/nest-server'" src/server/ --inc
 - [ ] No excessive complexity
 - [ ] Backward compatibility maintained
 - [ ] Consistent with surrounding codebase
+- [ ] **Design Smell Baseline** — the checks above cover the project's own rules; this covers the *shape* of the code, where a diff that satisfies every rule can still make the codebase harder to change. Bound by three rules: a documented repo standard (`CLAUDE.md`, `CONTRIBUTING.md`, starter conventions) always overrides it, anything oxlint / oxfmt / `tsc` / the `check` script already enforces is skipped, and every entry is reported as a judgement call ("possible Feature Envy") that informs the Code Quality grade without blocking a merge. Match against the diff, not the whole codebase:
+  - **Mysterious Name** — name does not reveal what it does or holds. Rename; when no honest name comes, the design underneath is murky
+  - **Duplicated Code** — the same logic shape in more than one hunk of this change. Extract, call from both
+  - **Feature Envy** — a method reaching into another object's data more than its own. Move it onto the data it envies
+  - **Data Clumps** — the same fields or params always travelling together, a type waiting to be born
+  - **Primitive Obsession** — a `string` or `number` standing in for a domain concept (an id, a role, a currency amount)
+  - **Repeated Switches** — the same `switch` / `if`-cascade over the same type recurring. Polymorphism, or one shared map
+  - **Shotgun Surgery** — one logical change forcing scattered edits across many files in this diff
+  - **Divergent Change** — one file edited for several unrelated reasons. Split per reason to change
+  - **Speculative Generality** — abstraction or hooks for needs the ticket does not have. Inline it back
+  - **Message Chains** — long `a.b().c().d()` the caller should not depend on. Hide the walk behind one method
+  - **Middle Man** — a class or function that mostly delegates onward. Cut it, call the real target
+  - **Refused Bequest** — a subclass ignoring or overriding most of what it inherits. Composition instead
 - [ ] **TypeScript declaration-merge collision** — two `export interface X` (or `export type X`) declarations with the same name in the same module silently merge in TypeScript. The result is often a wrong public type that vue-tsc does NOT flag. Symptom: a property required by one declaration becomes required on the merged shape, breaking call sites of the OTHER declaration. (Real example: `LtAiPromptInput` in nuxt-extensions 1.7.0 — CRUD shape and execution payload silently merged, breaking `useLtAiPrompts().create({...})`.) Check:
 
 ```bash

@@ -16,6 +16,25 @@ This command runs Phase 1 (analysis) and Phase 3 (SHOWCASE.md creation) of the s
 - User asks what a project does or how it is built
 - Starting point before running `/showroom:screenshot` or `/showroom:create`
 
+## Related Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/lt-showroom:showroom:analyze` | Analyze the project and write SHOWCASE.md (start here) |
+| `/lt-showroom:showroom:screenshot` | Capture feature screenshots from the running app |
+| `/lt-showroom:showroom:create` | Publish the showcase to showroom.lenne.tech |
+| `/lt-showroom:showroom:update` | Re-analyze after source changes and update the showcase |
+| `/lt-showroom:showroom:sync-schema` | Refresh content-block schemas from the platform |
+
+**Related Skills:**
+
+| Skill | Purpose |
+|-------|---------|
+| `analyzing-projects` | Deep source analysis behind `analyze` and `update` |
+| `creating-showcases` | The five-phase showcase workflow this command belongs to |
+
+**Workflow:** `analyze` → `screenshot` → `create` → (later) `update`
+
 ## Workflow
 
 ### Step 1: Determine Project Path

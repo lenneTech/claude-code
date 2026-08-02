@@ -9,6 +9,31 @@ disable-model-invocation: true
 
 Detects what changed since the last analysis using git tree hashes, re-analyzes only affected areas, updates SHOWCASE.md, and publishes changes.
 
+## When to Use This Command
+
+- The project's source has changed since the showcase was published
+- You want the showcase refreshed without re-running the full analysis
+- After a release, to keep features and screenshots in sync with the code
+
+## Related Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/lt-showroom:showroom:analyze` | Analyze the project and write SHOWCASE.md (start here) |
+| `/lt-showroom:showroom:screenshot` | Capture feature screenshots from the running app |
+| `/lt-showroom:showroom:create` | Publish the showcase to showroom.lenne.tech |
+| `/lt-showroom:showroom:update` | Re-analyze after source changes and update the showcase |
+| `/lt-showroom:showroom:sync-schema` | Refresh content-block schemas from the platform |
+
+**Related Skills:**
+
+| Skill | Purpose |
+|-------|---------|
+| `analyzing-projects` | Deep source analysis behind `analyze` and `update` |
+| `creating-showcases` | The five-phase showcase workflow this command belongs to |
+
+**Workflow:** `analyze` → `screenshot` → `create` → (later) `update`
+
 ## Workflow
 
 ### Step 1: Read Current State

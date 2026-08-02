@@ -44,6 +44,7 @@ This command is the **direct orchestrator** — it spawns all reviewers in paral
 │
 │  Phase 1: Diff analysis & domain detection
 │  Phase 2: Content validation (requirements, scope, edge cases)
+│          + Design Smell Baseline assembled (shared input, pasted into the code reviewers)
 │
 │  Phase 3A: Code-only reviewers — ALL spawned in parallel (single message):
 │  ├── security-reviewer      (always — OWASP, Permissions, Injection, XSS, Auth, Secrets, Dependencies)
@@ -199,6 +200,35 @@ Run directly in this command (not delegated to sub-agents):
    grep -rn "TODO\|FIXME\|HACK\|XXX\|console\.log\|debugger" $(git diff <base-branch>...HEAD --name-only) 2>/dev/null
    ```
 
+---
+
+### Design Smell Baseline (shared input for the code reviewers)
+
+The domain reviewers each check their own rules — decorators, SSR safety, query patterns. None of them looks at the **shape** of the code, which is where a diff that passes every rule can still make the codebase harder to change. This baseline is that missing lens: a fixed set of Fowler smells (_Refactoring_, ch. 3) that applies even where nothing is documented.
+
+Two rules bind it:
+
+- **The repo overrides.** A documented project standard (`CLAUDE.md`, `CONTRIBUTING.md`, the conventions in the starters) always wins. Where the repo endorses something this list would flag, the finding is suppressed.
+- **Every entry is a judgement call**, reported as "possible Feature Envy", never as a violation. It informs the Code Quality dimension's grade; on its own it never blocks a merge.
+- **Skip what tooling already enforces.** oxlint, oxfmt, `tsc`, and the `check` script have already run in Phase 1.5. Re-reporting what they catch spends reviewer attention on findings the developer never has to think about.
+
+Each entry reads *what it is*, then *how to fix it*. Match against the diff, not the whole codebase:
+
+- **Mysterious Name** — a function, variable, or type whose name does not reveal what it does or holds. Rename it; when no honest name comes, the design underneath is murky.
+- **Duplicated Code** — the same logic shape in more than one hunk or file of this change. Extract it, call it from both.
+- **Feature Envy** — a method that reaches into another object's data more than its own. Move it onto the data it envies.
+- **Data Clumps** — the same few fields or parameters keep travelling together, a type waiting to be born. Bundle them into one type and pass that.
+- **Primitive Obsession** — a `string` or `number` standing in for a domain concept that deserves its own type (an id, a currency amount, a role).
+- **Repeated Switches** — the same `switch` or `if`-cascade over the same type recurring across the change. Replace with polymorphism, or one map both sites share.
+- **Shotgun Surgery** — one logical change forcing scattered edits across many files in this diff. Gather what changes together into one module.
+- **Divergent Change** — one file edited for several unrelated reasons. Split it so each module changes for one reason.
+- **Speculative Generality** — abstraction, parameters, or hooks added for needs the ticket does not have. Delete it; inline it back until a real need appears.
+- **Message Chains** — long `a.b().c().d()` navigation the caller should not depend on. Hide the walk behind one method on the first object.
+- **Middle Man** — a class or function that mostly just delegates onward. Cut it and call the real target.
+- **Refused Bequest** — a subclass or implementer that ignores or overrides most of what it inherits. Drop the inheritance, use composition.
+
+**Passing this to the reviewers:** the sub-agents have no other access to this list, so the Backend Reviewer and Frontend Reviewer prompts paste it in **full**, together with the two binding rules above.
+
 ### Phase 3A: Parallel Code Reviews (no browser)
 
 **CRITICAL:** Send ALL Agent tool calls **and the built-in `/security-review` Skill call** in a **single message** so they execute in parallel. Do NOT send them one by one — that makes them sequential.
@@ -289,6 +319,12 @@ Changed files:
 
 Check security decorators & permission model, model rules, controller & service patterns,
 type strictness & input validation, code quality, test coverage, and formatting.
+
+Design Smell Baseline — apply to the Code Quality dimension, in addition to the rules above.
+A documented repo standard overrides it; skip anything oxlint/oxfmt/tsc/check already enforces;
+report every entry as a judgement call ("possible Feature Envy"), never as a hard violation:
+<paste the full Design Smell Baseline block from Phase 2 here, including its two binding rules>
+
 Produce your structured backend review report with fulfillment grades.
 ```
 
@@ -358,6 +394,12 @@ Check TypeScript strictness, component structure & decomposition, code quality (
 complexity, naming), composable patterns, accessibility (a11y), SSR safety, performance,
 styling conventions, Tailwind/CSS quality, and tests/formatting.
 Use Chrome DevTools MCP to navigate to affected pages and verify rendering.
+
+Design Smell Baseline — apply to the Code Quality dimension, in addition to the rules above.
+A documented repo standard overrides it; skip anything oxlint/oxfmt/tsc/check already enforces;
+report every entry as a judgement call ("possible Feature Envy"), never as a hard violation:
+<paste the full Design Smell Baseline block from Phase 2 here, including its two binding rules>
+
 Produce your structured frontend review report with fulfillment grades.
 ```
 

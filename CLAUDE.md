@@ -171,11 +171,15 @@ Defines MCP (Model Context Protocol) servers required by the plugin.
 **Current servers:**
 | Server | Type | Used By |
 |--------|------|---------|
-| `chrome-devtools` | stdio | vibe commands, developing-lt-frontend, building-stories-with-tdd (browser testing & debugging) |
-| `linear` | http | resolve-ticket, create-story, create-ticket, create-task, create-bug, review, debug, linear-comment, dev-submit (issue tracking & project management) |
-| `nuxt-ui-remote` | stdio | developing-lt-frontend, frontend-dev agent (Nuxt UI component reference) |
-| `better-auth` | stdio | frontend-dev agent (Better Auth documentation reference) |
-| `figma-desktop` | stdio | figma-init, figma-research, figma-to-code (Figma design extraction) |
+| `chrome-devtools` | stdio | validating-changes-in-browser, developing-lt-frontend, building-stories-with-tdd, vibe commands, frontend-reviewer, ux-reviewer, a11y-reviewer (browser testing & debugging) |
+| `linear` | http | take-ticket, ticket-cycle, resolve-ticket, spec-to-tasks, create-story, create-ticket, create-task, create-bug, review, debug, linear-comment, dev-submit, git:ship, rebasing-branches, branch-rebaser, backend-reviewer, code-reviewer, frontend-reviewer (issue tracking & project management) |
+| `nuxt-ui-remote` | stdio | developing-lt-frontend, figma-to-code, frontend-dev agent (Nuxt UI component reference) |
+
+**Tool naming:** a plugin-bundled server's callable tool name is `mcp__plugin_<plugin>_<server>__<tool>` — e.g. `mcp__plugin_lt-dev_chrome-devtools__take_snapshot`. The unscoped form (`mcp__chrome-devtools__…`) never matches for a bundled server, so an `allowed-tools` entry written that way silently grants nothing.
+
+**Pin stdio server versions.** Servers launched through `scripts/npx-mcp-launcher.sh` name an exact version, never `@latest`: resolving "latest" costs an npm-registry roundtrip on every start (measured 3-22s) against Claude Code's 30s MCP startup timeout, so a slow network becomes a server that never comes up. `chrome-devtools` has its own launcher with a global-binary fast path plus a pinned npx fallback.
+
+**Figma runs through the official `figma` plugin, not through lt-dev.** All Figma work — `figma-init`, `figma-research`, `figma-to-code`, and the `--figma=<url>` flag of `take-ticket` / `ticket-cycle` — uses `mcp__plugin_figma_figma__*`, served by that plugin's HTTP endpoint. lt-dev declares no Figma server of its own, so the plugin is a **required companion** for those commands; everything else in lt-dev works without it.
 
 ### plugin.json
 Plugin manifest with metadata. Update `version` before releases.
@@ -267,6 +271,20 @@ skills: optional-skill-names
 - **Compact content:** Minimize tokens while maintaining clarity and completeness
 - **No over-compression:** Never remove important information for token savings
 
+#### Exception: documented incidents are kept, deliberately
+
+The two rules above target *changelog noise* — a feature described by when it arrived rather than by what it does. They do **not** cover the incident notes that carry a rule's reason:
+
+> Observed live on DEV-2574: the MR merged on a `pending` pipeline, so the full validation ran post-merge on `dev` instead of gating the merge.
+
+That sentence is why the rule around it exists. It names a concrete failure, so a future reader can tell whether the rule still applies to their situation, and a future optimizer cannot quietly delete it as "obviously redundant". Stripped to a timeless paraphrase, the rule survives but its justification does not, and the next person removes the rule.
+
+**Keep** an incident note when it records something actually observed and names the failure precisely: the ticket id, the deploy that served a 22h-old build while reporting healthy, the advisory that went green in the audit but stayed vulnerable. Give it a date or a ticket reference — that is what makes it checkable rather than folklore.
+
+**Do not** turn this into a licence for version chatter. "Added in v5.4.0", "new since 2.1.80", "recently changed" in a description are still exactly what the rules above forbid.
+
+The test: does the passage explain **why a rule exists** (keep), or merely **when something was built** (cut)?
+
 ## Creating New Elements
 
 Use the `/lt-dev:plugin:element` command to interactively create new elements with:
@@ -350,6 +368,7 @@ Run `/lt-dev:plugin:check` periodically or before releases to verify:
 ### Content Standards
 - [ ] No history references in any element ("new", "updated", "since vX.Y")
 - [ ] No version-specific markers in descriptions
+- [ ] Documented-incident notes are intact — they explain *why* a rule exists and are exempt (see Content Rules)
 - [ ] Content is complete (no over-compression)
 
 ### Documentation

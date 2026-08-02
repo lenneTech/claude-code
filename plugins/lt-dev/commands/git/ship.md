@@ -265,6 +265,15 @@ Use the `running-check-script` skill verbatim:
 - **If `check` introduces auto-fixes** (lint/format/dedupe), re-run STEP 4a's three pillars to confirm the auto-fixes didn't break a test.
 - **If no `check` script** exists anywhere, log `No check script defined — skipping STEP 4b` and continue. Do not invent one.
 
+### 4b Outcome (BLOCKING GATE)
+
+This runs in the skill's **Blocking** mode: it is the last check before the branch is pushed and an MR/PR exists, so its verdict decides whether the branch ships at all.
+
+- **Green across every discovered project** (Accepted Residuals from an exhausted audit ladder are fine and are named in the summary) → continue to STEP 5.
+- **Any unresolved error** → stop the ship workflow here. Print which project failed, the remaining errors, the fixes already attempted, and the approaches Step 3 of the skill ruled out. Do **not** push, do **not** create an MR/PR, do **not** merge. The feature branch stays local and intact, so nothing is lost.
+
+Pre-existing errors are fixed here like any other. The question is only whether an error can be fixed, never whose change introduced it: a red `check` on the base branch turns CI red for everyone, and the next `take-ticket` run branches off that broken state.
+
 ---
 
 ## STEP 5 — Commit & Push Any New Changes
