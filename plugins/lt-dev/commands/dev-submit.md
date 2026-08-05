@@ -2,10 +2,19 @@
 description: Submit current work for dev review — creates MR/PR, posts Linear comment, and moves ticket to Dev Review
 argument-hint: "[issue-id]"
 allowed-tools: Read, Bash(git:*), Bash(gh pr:*), Bash(glab mr:*), mcp__plugin_lt-dev_linear__*, AskUserQuestion
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Dev Submit — Work for Review bereitstellen
+
+> **Invocation policy.** Start this command only when the user asks for it explicitly
+> (`/lt-dev:dev-submit`) **or** when an orchestrating lt-dev command invokes it as a
+> documented step — `/lt-dev:ticket-cycle` STEP 4c (reviewer-handoff path) is the canonical
+> caller. Never start it off your own initiative: it pushes the branch, opens an MR/PR, posts
+> a Linear comment and moves the ticket to "Dev Review" — all outward-facing.
+>
+> This rule replaces a former `disable-model-invocation: true`, which made the reviewer-handoff
+> path of `ticket-cycle` unreachable.
 
 ## When to Use This Command
 

@@ -2,10 +2,18 @@
 description: Create a user story for TDD implementation
 argument-hint: "[story-idea]"
 allowed-tools: AskUserQuestion, Write, Read, Glob, mcp__plugin_lt-dev_linear__*
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # User Story erstellen
+
+> **Invocation policy.** Start this command only when the user asks for it explicitly
+> (`/lt-dev:create-story`) **or** when an orchestrating lt-dev command invokes it as a
+> documented step — `/lt-dev:create-ticket` routes here once it classifies the input as a
+> story. Never start it off your own initiative: it writes a ticket into Linear.
+>
+> This rule replaces a former `disable-model-invocation: true`, which made the router's
+> story branch unreachable.
 
 Guide the user through creating a well-structured user story that can be used as a prompt for Claude Code to implement with Test-Driven Development (TDD).
 

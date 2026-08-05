@@ -2,11 +2,20 @@
 description: Comprehensive code review with content validation, security, documentation, tests, backend, frontend, UX, a11y, and devops reviewers. Runs package.json check script with auto-fix. Small diffs use single-pass agent; larger diffs spawn parallel domain specialists with cross-domain challenge.
 argument-hint: '[issue-id] [--base=main] [--weights="Security:25,..."]'
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Bash(jq:*), Bash(cat:*), Bash(ls:*), Bash(test:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Agent, Skill, AskUserQuestion, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
-disable-model-invocation: true
+disable-model-invocation: false
 effort: max
 ---
 
 # Code Review
+
+> **Invocation policy.** Start this command only when the user asks for it explicitly
+> (`/lt-dev:review`, "review das mal") **or** when an orchestrating lt-dev command invokes it
+> as a documented step — `/lt-dev:ticket-cycle` STEP 2 (Phase B), `/lt-dev:production-ready`
+> and `/lt-dev:refactor-frontend` are the canonical callers. Never start it off your own
+> initiative: it fans out a large parallel reviewer fleet and is correspondingly expensive.
+>
+> This rule replaces a former `disable-model-invocation: true`, which blocked every one of
+> those orchestrators from reaching their review phase.
 
 ## When to Use This Command
 

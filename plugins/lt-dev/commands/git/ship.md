@@ -2,10 +2,23 @@
 description: Ship the current feature branch into dev — pre-flight check, commit, rebase, test, check, MR/PR, Linear comment + "Dev Review" + unassign, wait for CI, merge (squash for feature branches, regular merge when promoting a base branch into a higher base branch), delete branch. Auto-retries on pipeline failure.
 argument-hint: "[--base=<branch>] [--max-pipeline-retries=<n>] [--no-squash] [--keep-branch]"
 allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__list_issue_statuses
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Ship Feature Branch to Dev
+
+> **Invocation policy.** Start this command only when the user asks for it explicitly
+> (`/lt-dev:git:ship`) **or** when an orchestrating lt-dev command invokes it as a documented
+> step — `/lt-dev:ticket-cycle` STEP 4b (auto-merge path) is the canonical caller, and it
+> passes `--auto-merge --skip-reanalysis` because the merge consent and the re-analysis
+> already happened upstream. Never start it off your own initiative: it force-pushes, opens an
+> MR/PR, merges into the base branch and deletes the feature branch.
+>
+> The merge itself keeps its own gate — without `--auto-merge` STEP 8 still asks before
+> merging, so opening this command to orchestrators does not open the merge.
+>
+> This rule replaces a former `disable-model-invocation: true`, which made the auto-merge path
+> of `ticket-cycle` unreachable.
 
 ## When to Use This Command
 

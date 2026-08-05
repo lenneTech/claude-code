@@ -2,10 +2,18 @@
 description: Create a bug report ticket for Linear
 argument-hint: "[bug-description]"
 allowed-tools: AskUserQuestion, Write, Read, Glob, mcp__plugin_lt-dev_linear__*, SlashCommand
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Bug-Report erstellen
+
+> **Invocation policy.** Start this command only when the user asks for it explicitly
+> (`/lt-dev:create-bug`) **or** when an orchestrating lt-dev command invokes it as a
+> documented step — `/lt-dev:create-ticket` routes here once it classifies the input as a
+> bug. Never start it off your own initiative: it writes a ticket into Linear.
+>
+> This rule replaces a former `disable-model-invocation: true`, which made the router's bug
+> branch unreachable.
 
 Guide the user through creating a well-structured bug report for Linear. Collects reproduction steps, expected vs. actual behavior, environment details, and severity to enable efficient debugging.
 

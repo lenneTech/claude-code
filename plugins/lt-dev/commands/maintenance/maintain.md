@@ -1,10 +1,19 @@
 ---
 description: Full maintenance — framework updates (npm + vendor core) followed by npm package maintenance
 allowed-tools: Agent, Bash, Read, Grep, Glob
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Full Project Maintenance
+
+> **Invocation policy.** Start this command only when the user asks for it explicitly
+> (`/lt-dev:maintenance:maintain`) **or** when an orchestrating lt-dev command invokes it as a
+> documented step — `/lt-dev:publish` runs it as its "maintain first" stage, and
+> `/lt-dev:maintenance:maintain-stack` runs it per repo. Never start it off your own
+> initiative: it rewrites dependency versions and lockfiles.
+>
+> This rule replaces a former `disable-model-invocation: true`, which blocked both callers
+> at their dependency stage.
 
 Brings a project up to date **completely**: the lenne.tech frameworks first, then the
 package ecosystem around them. Works for plain Node projects, fullstack monorepos

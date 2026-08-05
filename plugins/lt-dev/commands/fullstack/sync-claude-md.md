@@ -1,10 +1,18 @@
 ---
 description: Sync CLAUDE.md files from lenne.tech starter templates into an existing fullstack project
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(base64:*), WebFetch, AskUserQuestion
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Sync CLAUDE.md Files
+
+> **Invocation policy.** Start this command only when the user asks for it explicitly
+> (`/lt-dev:fullstack:sync-claude-md`) **or** when an orchestrating lt-dev command invokes it
+> as a documented step — `/lt-dev:fullstack:update-all` delegates its Phase-6 CLAUDE.md half
+> here. Never start it off your own initiative: it rewrites CLAUDE.md files in place.
+>
+> This rule replaces a former `disable-model-invocation: true`, which made that delegation
+> impossible.
 
 Fetches the latest CLAUDE.md files from lenne.tech starter repositories and integrates them into the current fullstack project.
 

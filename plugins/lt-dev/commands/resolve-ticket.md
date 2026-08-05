@@ -2,10 +2,19 @@
 description: Resolve a Linear ticket or story file with TDD-based implementation
 argument-hint: "[issue-id | story-file]"
 allowed-tools: Agent, Read, Grep, Glob, Bash(git:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, AskUserQuestion
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Resolve Ticket
+
+> **Invocation policy.** Start this command only when the user asks for it explicitly
+> (`/lt-dev:resolve-ticket`) **or** when an orchestrating lt-dev command invokes it as a
+> documented step — `/lt-dev:create-bug` and `/lt-dev:create-task` both offer it as the
+> follow-on once the ticket exists. Never start it off your own initiative: it claims the
+> ticket, branches and implements.
+>
+> This rule replaces a former `disable-model-invocation: true`, which broke the
+> create → resolve handoff at its last step.
 
 ## When to Use This Command
 

@@ -2,11 +2,20 @@
 description: 'Kompletter End-to-End-Smoke-Test des lt-Stacks: Fullstack-Projekt im Vendor-Mode erstellen, lokal vollständig validieren (Playwright-E2E + pnpm run check), GitLab-Repo + TurboOps-Deployment (Stages dev/production) vollautomatisch einrichten, Deployment-Pipeline via MRs (feature→dev→main) durchfahren, Online-Stände beider Stages verifizieren, gefundene Fehler direkt in den Grund-Repos fixen (uncommitted), und am Ende alles restlos aufräumen (TurboOps, GitLab, lokal, DBs, Registry).'
 argument-hint: '[--name=lt-smoke-test] [--domain=lt-smoke-test.lenne.tech] [--group=intern] [--server=Turbo-Dev] [--rounds=1] [--keep] [--skip-deploy] [--skip-cleanup]'
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, SlashCommand, TodoWrite, ToolSearch
-disable-model-invocation: true
+disable-model-invocation: false
 effort: max
 ---
 
 # Fullstack Smoke-Test
+
+> **Invocation policy.** Start this command only when the user asks for it explicitly
+> (`/lt-dev:fullstack:smoke-test`) **or** when an orchestrating lt-dev command invokes it as a
+> documented step — `/lt-dev:maintenance:maintain-stack` runs it as its Phase-4 release gate,
+> and `/lt-dev:publish` runs it on `--smoke-test`. Never start it off your own initiative: it
+> scaffolds a throwaway workspace and deploys it.
+>
+> This rule replaces a former `disable-model-invocation: true`, which left `maintain-stack`
+> without the release gate its own description promises.
 
 Fährt den kompletten Lebenszyklus eines lt-Fullstack-Projekts durch — von
 `lt fullstack init` bis zum produktiven TurboOps-Deployment und zurück — und

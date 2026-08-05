@@ -2,10 +2,18 @@
 description: Create a technical task ticket for Linear
 argument-hint: "[task-idea]"
 allowed-tools: AskUserQuestion, Write, Read, Glob, mcp__plugin_lt-dev_linear__*, SlashCommand
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Technischen Task erstellen
+
+> **Invocation policy.** Start this command only when the user asks for it explicitly
+> (`/lt-dev:create-task`) **or** when an orchestrating lt-dev command invokes it as a
+> documented step — `/lt-dev:create-ticket` routes here once it classifies the input as a
+> task. Never start it off your own initiative: it writes a ticket into Linear.
+>
+> This rule replaces a former `disable-model-invocation: true`, which made the router's task
+> branch unreachable.
 
 Guide the user through creating a well-structured technical task ticket for Linear. Tasks are work items without direct user-facing value — infrastructure, migrations, refactoring, performance improvements, etc.
 

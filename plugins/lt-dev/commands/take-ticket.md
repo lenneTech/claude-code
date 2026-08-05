@@ -2,10 +2,22 @@
 description: 'Auto-pick the next Linear ticket (default pool: Fix needed + Open states; ranked by priority DESC → fix-needed tie-break → assigned-to-me DESC → bug-flag DESC → createdAt ASC; tickets assigned to other users are excluded) — or take an explicit ID — then branch, TDD-implement, run all tests, run check, and report a review-ready summary'
 argument-hint: "[issue-id | --project=<name> --team=<name> --status=<list> --base=<branch> --figma=<url> --flows=<path>]"
 allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, Bash(git:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(wc:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run test:e2e:*), Bash(pnpm run e2e:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__list_teams, mcp__plugin_lt-dev_linear__list_projects, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__list_users, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_screenshot
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Take Ticket — End-to-End Ticket Resolution
+
+> **Invocation policy.** Start this command only when the user asks for it explicitly
+> (`/lt-dev:take-ticket`, "nimm das nächste Ticket") **or** when an orchestrating lt-dev
+> command invokes it as a documented step — `/lt-dev:ticket-cycle` STEP 1 (Phase A) is the
+> canonical caller. Never start it off your own initiative from a vague request: it claims a
+> Linear ticket, flips its status to "In Progress" and creates a branch, all of which are
+> visible to the team.
+>
+> This rule replaces a former `disable-model-invocation: true`. That flag also blocked
+> `ticket-cycle`, whose STEP 1 exists purely to call this command — so the orchestrator could
+> never get past Phase A. A behavioural rule keeps the intent (no spontaneous starts) while
+> letting the documented caller through.
 
 ## When to Use This Command
 
