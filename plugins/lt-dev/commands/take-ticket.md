@@ -236,7 +236,7 @@ Persist collected sources in a working note (in-context). Do **not** write a mar
 
 1. **Re-read the ticket's CURRENT status first — do not trust the value STEP 1 resolved.** Minutes can pass between picking and starting (context gathering, user questions), and the user runs several sessions in parallel. Re-fetch the issue and check:
    - Status still `Open` (or `Fix Needed` / whatever the pool admitted it under) **and** assignee still empty or the current user → proceed.
-   - Status already `In Progress` / `Dev Review` / `PO Review` / `Blocked`, **or** assigned to someone else → **stop and ask the user.** Another session is on it; taking it now produces two branches for one ticket. Do not "just continue because we already started".
+   - Status already `In Progress` / `Dev Review` / `QA Testing` / `Blocked`, **or** assigned to someone else → **stop and ask the user.** Another session is on it; taking it now produces two branches for one ticket. Do not "just continue because we already started".
    - Before asking, gather the facts the user needs to decide: `git worktree list` (every parallel checkout + its branch), `git ls-remote --heads origin | grep <ticket-number>` (pushed branches), and how many commits each branch carries. Present those, then let the user decide who continues — never decide it yourself.
 2. Resolve current Linear user via `mcp__plugin_lt-dev_linear__get_user` (the authenticated viewer — no ID needed).
 3. Find the team's "In Progress" state ID from `STATE_IDS`. Match case-insensitively against: `In Progress`, `Started`, `Doing`. If none match, ask the user which state to use.
