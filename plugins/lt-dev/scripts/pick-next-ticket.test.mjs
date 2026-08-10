@@ -26,7 +26,7 @@ const STATES = [
   { id: 's-fix', name: 'Fix Needed', type: 'started' },
   { id: 's-prog', name: 'In Progress', type: 'started' },
   { id: 's-devrev', name: 'Dev Review', type: 'started' },
-  { id: 's-porev', name: 'PO Review', type: 'started' },
+  { id: 's-qatest', name: 'QA Testing', type: 'started' },
   { id: 's-backlog', name: 'Backlog', type: 'backlog' },
   { id: 's-done', name: 'Done', type: 'completed' },
   { id: 's-triage', name: 'Triage', type: 'triage' },

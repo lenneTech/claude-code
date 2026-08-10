@@ -31,6 +31,7 @@ disable-model-invocation: false
 | `/lt-dev:ticket-cycle` | Full pick → implement → merge orchestrator (use this instead when no human reviewer is needed before merge) |
 | `/lt-dev:resolve-ticket` | Full ticket resolution (implementation + tests + review) |
 | `/lt-dev:review` | Code review before submitting |
+| [`writing-qa-test-instructions`](${CLAUDE_PLUGIN_ROOT}/skills/writing-qa-test-instructions/SKILL.md) skill | Testability classification + German QA test instructions for the Linear comment (STEP 3) |
 
 ---
 
@@ -121,24 +122,43 @@ Store the MR/PR URL as `REQUEST_URL`.
 
 1. **Retrieve Issue:** Fetch Linear issue **#ISSUE_ID** via MCP (title, description).
 2. **Analyze Changes:** Use the commit list and diff stat from Step 2.
-3. **Generate Comment** in **German** for non-developers:
+3. **Generate Comment** in **German** for non-developers, following [`writing-qa-test-instructions`](${CLAUDE_PLUGIN_ROOT}/skills/writing-qa-test-instructions/SKILL.md) — it owns the testability classification, the step format, the deployed-URL resolution, and the rule that the comment names **roles, never passwords**.
+
+Classify first (skill Part 1): can a non-developer exercise this change through the running application? The answer picks the shape.
+
+**Testable:**
 
 ```
 ## Umsetzung
 
-[1-3 sentences: What was implemented/fixed, described in user-facing terms. No technical jargon.]
+[1-3 Sätze in Nutzersprache: was war das Problem, was ist jetzt anders. Kein Jargon.]
 
 ## Testanleitung
 
-[Step-by-step testing instructions:]
-1. [First step - e.g., "Seite X aufrufen"]
-2. [Action to perform]
-3. [Expected result to verify]
+Umgebung: <Dev-URL>
+Rollen:   <benötigte Rollen>
+Zugang:   Zugangsdaten für die genannten Rollen bitte beim Team erfragen —
+          dieser Kommentar enthält bewusst keine Passwörter.
+
+1. Als <Rolle> anmelden → [<Seite>](<URL>) → <genaue Aktion>
+   → erwartet: <Ergebnis> → prüft: <warum>
+2. …
 
 ## Review
 
 MR/PR: REQUEST_URL
 ```
+
+**Not testable** — same block, with the Testanleitung section replaced by:
+
+```
+## Testanleitung
+
+Nicht manuell testbar: <Grund in einem Satz>.
+Abgesichert über: <Unit-/API-/E2E-Tests, grüne CI-Pipeline>.
+```
+
+The change is not merged yet on this path, so the instructions describe what the reviewer (and later the tester) verifies once it lands.
 
 4. **User Approval** via `AskUserQuestion`:
    - Show the generated comment

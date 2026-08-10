@@ -39,6 +39,7 @@ This command is the **closing bookend** to `/lt-dev:take-ticket`. It does **not*
 | `/lt-dev:git:create-request` | Standalone MR/PR creation (used internally by Phase 6) |
 | `/lt-dev:dev-submit` | MR/PR + Linear comment + Linear status → "Dev Review" (no merge, no pipeline wait) |
 | [`managing-agent-memory`](../../skills/managing-agent-memory/SKILL.md) skill | Agent-memory commit policy + pre-commit curation (STEP 2) |
+| [`writing-qa-test-instructions`](../../skills/writing-qa-test-instructions/SKILL.md) skill | Testability classification + German QA test instructions for the Linear comment (STEP 10c) |
 
 **Difference vs. `/lt-dev:dev-submit`:** `dev-submit` hands off to a human reviewer. `ship` lands the branch into dev autonomously after CI is green.
 
@@ -476,18 +477,27 @@ Store as `ISSUE_ID`.
 
 ### 10c. Generate & Post Comment
 
-Generate a **German** comment for non-developers, using commits + diff stat from STEP 6:
+Generate a **German** comment for non-developers, using commits + diff stat from STEP 6. Follow [`writing-qa-test-instructions`](${CLAUDE_PLUGIN_ROOT}/skills/writing-qa-test-instructions/SKILL.md) — it owns the testability classification, the step format, the deployed-URL resolution, and the rule that the comment names **roles, never passwords**.
+
+Classify first (skill Part 1): can a non-developer exercise this change through the running application on the dev deployment? The answer picks the shape.
+
+**Testable:**
 
 ```
 ## Umsetzung
 
-[1-3 sentences: What was implemented/fixed, in user-facing terms. No technical jargon.]
+[1-3 Sätze in Nutzersprache: was war das Problem, was ist jetzt anders. Kein Jargon.]
 
 ## Testanleitung
 
-1. [First step — e.g., "Seite X aufrufen"]
-2. [Action to perform]
-3. [Expected result to verify]
+Umgebung: <Dev-URL>
+Rollen:   <benötigte Rollen>
+Zugang:   Zugangsdaten für die genannten Rollen bitte beim Team erfragen —
+          dieser Kommentar enthält bewusst keine Passwörter.
+
+1. Als <Rolle> anmelden → [<Seite>](<URL>) → <genaue Aktion>
+   → erwartet: <Ergebnis> → prüft: <warum>
+2. …
 
 ## Status
 
@@ -495,6 +505,17 @@ In `<BASE_BRANCH>` gemerged (Squash). Wird beim nächsten Deployment auf dev ver
 
 MR/PR: <REQUEST_URL>
 ```
+
+**Not testable** — same block, with the Testanleitung section replaced by:
+
+```
+## Testanleitung
+
+Nicht manuell testbar: <Grund in einem Satz>.
+Abgesichert über: <Unit-/API-/E2E-Tests, grüne CI-Pipeline>.
+```
+
+This comment is what a later `/lt-dev:ticket-cycle` run reads back at its STEP 4b.3c before moving the ticket into "QA Testing" — so it is the QA handover, not a courtesy note.
 
 Then ask the user via `AskUserQuestion`:
 - Show the generated comment.
