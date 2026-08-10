@@ -1,6 +1,6 @@
 ---
 name: running-load-tests-with-k6
-description: 'Single source of truth for designing, running, and interpreting k6 load tests against lenne.tech fullstack APIs. Defines installation paths (brew, docker, npm), the three canonical scenarios (smoke / load / soak), endpoint discovery from the generated SDK, Better-Auth login flows, threshold defaults for ~10 concurrent users (p95 < 500ms, error rate < 1%), result interpretation, and the optimisation ladder when thresholds fail (DB indices, query rewrites, caching, connection pool sizing, rate-limit relaxation, payload trimming). Activates to validate API stability under ~10 concurrent users doing many actions in short time, or to detect performance regressions via k6. NOT for Lighthouse frontend performance (use a11y-reviewer). NOT for unit performance assertions (use the test runner directly).'
+description: 'Single source of truth for designing, running, and interpreting k6 load tests against lenne.tech fullstack APIs. Defines installation, the three canonical scenarios (smoke / load / soak), endpoint discovery from the generated SDK, Better-Auth login flows, threshold defaults for ~10 concurrent users (p95 < 500ms, error rate < 1%), result interpretation, and the optimisation ladder when thresholds fail. Activates to validate API stability under ~10 concurrent users doing many actions in short time, or to detect performance regressions via k6. NOT for Lighthouse frontend performance (use a11y-reviewer). NOT for unit performance assertions (use the test runner directly).'
 user-invocable: false
 ---
 

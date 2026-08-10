@@ -1,6 +1,6 @@
 ---
 name: nest-server-core-vendoring
-description: 'Knowledge base for projects that vendored the @lenne.tech/nest-server core into their source tree (projects/api/src/core/, no npm dependency). Covers the vendor model, the flatten-fix pattern, the upstream sync workflow, the upstream-PR workflow, typical conflicts, and cosmetic-vs-substantial classification. Activates for vendored nest-server core discussions, "sync core from upstream", "port local core change to upstream", or vendor-sync conflict resolution. Delegates to lt-dev:nest-server-core-updater (syncs) and lt-dev:nest-server-core-contributor (upstream PR prep). NOT for npm-based nest-server updates (use nest-server-updating). NOT for writing new NestJS code (use generating-nest-servers).'
+description: 'Knowledge base for projects that vendored the @lenne.tech/nest-server core into their source tree (projects/api/src/core/, no npm dependency). Covers the vendor model, the flatten-fix pattern, the upstream sync workflow, the upstream-PR workflow, typical conflicts, and cosmetic-vs-substantial classification. Activates for vendored nest-server core discussions, "sync core from upstream", "port local core change to upstream", or vendor-sync conflict resolution. NOT for npm-based nest-server updates (use nest-server-updating). NOT for writing new NestJS code (use generating-nest-servers).'
 ---
 
 # Vendored nest-server core Knowledge Base

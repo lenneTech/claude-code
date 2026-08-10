@@ -1,6 +1,6 @@
 ---
 name: nuxt-extensions-core-vendoring
-description: 'Knowledge base for projects that vendored the @lenne.tech/nuxt-extensions module into their source tree (app/core/, no npm dependency). Covers the vendor model, the upstream sync workflow, the upstream-PR workflow, typical conflicts, and cosmetic-vs-substantial classification. Activates for vendored nuxt-extensions discussions, "sync frontend core from upstream", "port local frontend core change to upstream", or frontend vendor-sync conflict resolution. Delegates to lt-dev:nuxt-extensions-core-updater (syncs) and lt-dev:nuxt-extensions-core-contributor (upstream PR prep). NOT for npm-based nuxt-extensions updates or new Nuxt code (use developing-lt-frontend).'
+description: 'Knowledge base for projects that vendored the @lenne.tech/nuxt-extensions module into their source tree (app/core/, no npm dependency). Covers the vendor model, the upstream sync workflow, the upstream-PR workflow, typical conflicts, and cosmetic-vs-substantial classification. Activates for vendored nuxt-extensions discussions, "sync frontend core from upstream", "port local frontend core change to upstream", or frontend vendor-sync conflict resolution. NOT for npm-based nuxt-extensions updates or new Nuxt code (use developing-lt-frontend).'
 ---
 
 # Vendored nuxt-extensions core Knowledge Base
