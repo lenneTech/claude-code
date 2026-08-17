@@ -316,6 +316,68 @@ lt server permissions --failOnWarnings
 | `UNRESTRICTED_FIELD` | MEDIUM |
 | `UNRESTRICTED_METHOD` | HIGH |
 
+### Phase 1b: File & Blob Storage Authorization (Backend/Fullstack)
+
+Files are the ONE resource whose authorization does not go through `CrudService.process()`, so
+everything Phase 1 checked says nothing about them. GridFS is reached through the native MongoDB
+driver and S3 through its own SDK, which means `mongooseTenantPlugin` never runs on a file store —
+and that is why `CoreFileController` / `CoreFileResolver` carry `@SkipTenantCheck()`.
+
+Two layers, and the first cannot express the second:
+
+| Layer | Answers | Where |
+|-------|---------|-------|
+| `file.downloadRoles` / `uploadRoles` / `deleteRoles` | "may this caller reach the route at all" | `config.env.ts`, applied onto the base-class members at boot |
+| `CoreFileService.checkRights()` or `file.access` | "…but only THIS file" | the project's `FileService`, or one config value |
+
+The role names resolve against `user.roles` — a GLOBAL attribute — never against `membership.role`.
+So no configuration can say "only their own tenant's files"; that sentence needs data, and the data
+lives in the file's `metadata`.
+
+**Why enumeration matters here.** File ids are not secrets: a MongoDB ObjectId is 4 bytes of
+timestamp + 5 bytes of randomness generated once PER PROCESS + a 3-byte incrementing counter. A caller
+who holds one valid id — their own upload is enough — knows the random part and a counter reference
+point, and files the same process created nearby in time sit on adjacent values. The file routes are
+also not rate-limited by the framework. So "the gate is widened but there is no per-file rule" is
+practically exploitable, not theoretically.
+
+```bash
+# Which project class is declared? Neither present with a widened gate = the finding below.
+grep -rn "downloadRoles\|uploadRoles\|deleteRoles\|access:" src/config.env.ts
+grep -rn "override.*checkRights" src/server/modules/file/
+
+# Presigned downloads — a session-less bearer capability
+grep -rn "presignedDownloads" src/config.env.ts
+
+# Anything reading files WITHOUT CoreFileService bypasses checkRights() entirely
+grep -rn "GridFSBucket\|openDownloadStream\|new S3Client\|GetObjectCommand" src/server/
+```
+
+#### The ten questions (nest-server 11.35.0+)
+
+| # | Question | Severity if unanswered |
+|---|----------|------------------------|
+| 1 | **Is the project class declared?** Either `file.access` names one (`'public'` / `'authenticated'` / `'owner'` / `'tenant'`) or `checkRights()` is overridden. Gate beyond `ADMIN` with NEITHER = every holder of that role reads every file, by enumeration | **CRITICAL** |
+| 2 | **Does a hand-written rule cover all four branches?** `'id'`, `'filename'`, `'filterArgs'`, and the writes. `'filename'` is not redundant (presigned authorizes on the by-name lookup alone; `deleteFileByName()` authorizes by name only) | **HIGH** |
+| 3 | **Is `'filterArgs'` REFUSED?** The hook is asked once for the whole query, so no answer can mean "…but only their own files". Returning `true` hands over a full inventory — `CoreFileInfo` carries `filename`, `length`, `uploadDate`, `id`, and for medical data the filename frequently IS the content | **HIGH** |
+| 4 | **Does the rule FAIL CLOSED on a missing `currentUser`?** `if (!options.currentUser) return true` reads as "system call" but is also exactly what an ANONYMOUS request looks like. Internal callers say `force: true` instead | **HIGH** |
+| 5 | **Does it require the owner field to be PRESENT?** Without `!!raw?.metadata?.ownerId`, an owner-less file compares `String(undefined)` with `String(undefined)` and matches | **HIGH** |
+| 6 | **Is a per-user LISTING forced server-side?** Build the filter from `currentUser` and pass `{ force: true }`. Never inspect the caller's own `filterArgs` to decide whether they are already narrowed — that is validating client input | **HIGH** |
+| 7 | **Multi-tenant: is `tenantId` in the metadata AND compared?** Nothing else can do this — the stores are outside Mongoose and a role name cannot express a tenant rule | **CRITICAL** (tenant projects) |
+| 8 | **Is `s3.presignedDownloads` off** (the default), or if on, is the expiry short and the audience genuinely "anyone who once held the link"? The URL works with no session, from any IP, and cannot be revoked | **MEDIUM** (HIGH for personal/medical data) |
+| 9 | **Are `/files/*` and `/tus/*` rate-limited in the reverse proxy?** The framework does not throttle them and ids are enumerable | **MEDIUM** |
+| 10 | **Does anything read files WITHOUT `CoreFileService`?** Direct GridFS or S3-SDK access bypasses `checkRights()` entirely | **HIGH** |
+
+Two more that are cheap to check and easy to miss:
+
+- **On `file.access: 'owner'` / `'tenant'`: was old data backfilled?** Files uploaded before the preset
+  was enabled carry no `ownerId` / `tenantId` and stay ADMIN-only. Fail-closed, but it looks like a bug.
+- **Prefer the ID route over the filename route.** Filenames are unique in no store and are chosen by
+  the uploader, so a name can be squatted; the by-name path resolves the MOST RECENT file of that name.
+
+Full model: `node_modules/@lenne.tech/nest-server/src/core/modules/file/README.md` § Access control and
+that module's `INTEGRATION-CHECKLIST.md`.
+
 ### Phase 2: Injection Prevention (Backend/Fullstack)
 
 #### NoSQL Injection
@@ -561,6 +623,17 @@ cd projects/app && pnpm audit 2>/dev/null || npm audit 2>/dev/null || yarn audit
 |--------|------------|-----------------|---------------|--------|
 | User   | ADMIN      | 5/5             | yes           | PASS   |
 | Product| MISSING    | 3/5             | no            | FAIL   |
+
+### File Storage Authorization (Backend/Fullstack)
+| Check | Value | Status |
+|-------|-------|--------|
+| Project class declared (`file.access` or `checkRights()` override) | `owner` | PASS |
+| Role gate | `downloadRoles: [S_USER]` | INFO |
+| `'filterArgs'` refused | yes | PASS |
+| Fails closed without `currentUser` | yes | PASS |
+| Tenant compared (tenant projects) | n/a | n/a |
+| `s3.presignedDownloads` | off | PASS |
+| File reads outside `CoreFileService` | none | PASS |
 
 ### Findings
 

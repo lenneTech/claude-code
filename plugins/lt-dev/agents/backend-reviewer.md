@@ -266,6 +266,66 @@ Flag: `NO_RESTRICTION`, `NO_ROLES`, `NO_SECURITY_CHECK`, `UNRESTRICTED_FIELD`, `
 | Missing `securityCheck()` declaration on new Model (default from CoreModel inherited is acceptable only if no restrictions apply) | 50-70% |
 | Missing @Restricted on controller | <50% |
 
+### Phase 1b: File & Blob Storage Authorization (conditional — skip when the project has no file module)
+
+Everything Phase 1 checked says nothing about files: they are the one resource whose authorization does
+not go through `CrudService.process()`. GridFS is reached through the native MongoDB driver and S3
+through its own SDK, so `mongooseTenantPlugin` never runs on a file store — which is why
+`CoreFileController` / `CoreFileResolver` carry `@SkipTenantCheck()` and why the role names in
+`file.*Roles` resolve against `user.roles`, a GLOBAL attribute, never `membership.role`.
+
+**The premise for every checkbox below:** file ids are NOT secrets, they are enumerable. An ObjectId is
+timestamp + 5 bytes of randomness generated once PER PROCESS + an incrementing counter, so one valid id
+(the caller's own upload) reveals the random part and a counter reference point. The file routes are not
+rate-limited by the framework either. "Gate widened, no per-file rule" is therefore exploitable in
+practice.
+
+```bash
+# Which project class is declared?
+grep -rn "downloadRoles\|uploadRoles\|deleteRoles\|access:" src/config.env.ts
+grep -rn "override.*checkRights" src/server/modules/file/
+grep -rn "presignedDownloads" src/config.env.ts
+# File reads that bypass CoreFileService — and therefore checkRights() — entirely
+grep -rn "GridFSBucket\|openDownloadStream\|new S3Client\|GetObjectCommand" src/server/
+```
+
+- [ ] **Project class declared** — `file.access` names one (`'public'` / `'authenticated'` / `'owner'` /
+      `'tenant'`) OR `checkRights()` is overridden. A gate beyond `ADMIN` with neither is the finding
+- [ ] **A hand-written rule covers all four branches** — `'id'`, `'filename'`, `'filterArgs'`, writes.
+      `'filename'` is not redundant: presigned downloads authorize on the by-name lookup alone, and
+      `deleteFileByName()` authorizes by name only
+- [ ] **`'filterArgs'` is REFUSED** — the hook is asked once for the whole query, so no answer means
+      "only their own files". Returning `true` hands over an inventory of every upload
+- [ ] **FAILS CLOSED on a missing `currentUser`** — `if (!options.currentUser) return true` is also what
+      an anonymous request looks like. Internal callers pass `force: true`
+- [ ] **Owner field required to be PRESENT** — `!!raw?.metadata?.ownerId && …`, else an owner-less file
+      matches `undefined === undefined`
+- [ ] **A per-user listing is forced server-side** — filter built from `currentUser` + `{ force: true }`,
+      never the caller's own `filterArgs` approved as "already narrowed"
+- [ ] **Tenant projects: `tenantId` written into the metadata AND compared** — nothing else can scope a
+      file store
+- [ ] **`s3.presignedDownloads` off** (the default) or justified with a short expiry — the URL works with
+      no session, from any IP, and cannot be revoked
+- [ ] **`/files/*` and `/tus/*` rate-limited at the reverse proxy**
+- [ ] **Nothing reads files without `CoreFileService`**
+- [ ] **`file.access: 'owner'` / `'tenant'`: old files backfilled** with `ownerId` / `tenantId` — those
+      uploaded before the preset stay ADMIN-only (fail-closed, but it reads as a bug)
+- [ ] **Downloads use the ID route**, not the filename route — filenames are unique in no store and are
+      chosen by the uploader, and the by-name path resolves the MOST RECENT file of that name
+
+Reference: `node_modules/@lenne.tech/nest-server/src/core/modules/file/README.md` § Access control plus
+that module's `INTEGRATION-CHECKLIST.md` (the four project classes as one table).
+
+**Scoring:**
+
+| Scenario | Score |
+|----------|-------|
+| No file module in the project | N/A — skip the dimension |
+| Class declared, all applicable boxes ticked | 100% |
+| Class declared, cosmetic gaps (no proxy rate limit, ID-route preference not followed) | 70-85% |
+| Rule exists but leaks a branch (`'filterArgs'` waved through, `'filename'` uncovered) | 50-70% |
+| Gate beyond ADMIN and NO per-file rule at all, or a tenant project not comparing `tenantId` | <50% |
+
 ### Phase 2: Model Rules
 
 - [ ] Properties in **alphabetical order** (Model, CreateInput, UpdateInput)
@@ -611,6 +671,7 @@ If any answer is yes → upgrade to **Medium** and annotate the specific control
 | Dimension | Fulfillment | Status |
 |-----------|-------------|--------|
 | Security & Permissions | X% | ✅/⚠️/❌ |
+| File Storage Authorization | X% or N/A | ✅/⚠️/❌/— |
 | Model Rules | X% | ✅/⚠️/❌ |
 | Controller & Service Patterns | X% | ✅/⚠️/❌ |
 | Type Strictness & Validation | X% | ✅/⚠️/❌ |
@@ -625,6 +686,10 @@ If any answer is yes → upgrade to **Medium** and annotate the specific control
 
 ### 1. Security & Permissions
 [Findings with @Restricted/@Roles status, permissions scanner output]
+
+### 1b. File Storage Authorization
+[Declared project class, the four `checkInputType` branches, fail-closed behaviour, tenant comparison,
+presigned downloads — or "N/A: no file module"]
 
 ### 2. Model Rules
 [Findings with property order, descriptions, securityCheck]
