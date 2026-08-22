@@ -1,6 +1,6 @@
 ---
 description: 'Kompletter End-to-End-Smoke-Test des lt-Stacks: Fullstack-Projekt im Vendor-Mode erstellen, lokal vollständig validieren (Playwright-E2E + pnpm run check), GitLab-Repo + TurboOps-Deployment (Stages dev/production) vollautomatisch einrichten, Deployment-Pipeline via MRs (feature→dev→main) durchfahren, Online-Stände beider Stages verifizieren, gefundene Fehler direkt in den Grund-Repos fixen (uncommitted), und am Ende alles restlos aufräumen (TurboOps, GitLab, lokal, DBs, Registry).'
-argument-hint: '[--name=lt-smoke-test] [--domain=lt-smoke-test.lenne.tech] [--group=intern] [--server=Turbo-Dev] [--rounds=1] [--keep] [--skip-deploy] [--skip-cleanup]'
+argument-hint: '[--name=<name>] [--domain=<smoke-domain>] [--group=<gitlab-group>] [--server=<turboops-server>] [--rounds=1] [--keep] [--skip-deploy] [--skip-cleanup]'
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, SlashCommand, TodoWrite, ToolSearch
 disable-model-invocation: false
 effort: max
@@ -49,6 +49,35 @@ Turbo-Dev-Traefik-Mismatch (siehe `deploying-to-turboops` Trap 5).
 | Caddy-Daemon (lt dev) | `curl -s http://localhost:2019/config/` |
 | DNS: Apex + Wildcard → Zielserver-IP | `dig +short <domain>` und `dig +short api.dev.<domain>` — ein Wildcard `*.<domain>` deckt per RFC 4592 auch `api.dev.<domain>` ab, solange kein expliziter Zwischeneintrag existiert |
 
+### Feste Zuordnung — nicht jedes Mal neu erfragen
+
+Ein Team fährt den Smoke-Test typischerweise immer gegen dieselbe Wildcard-Domain und
+denselben Zielserver. Diese Zuordnung einmal festhalten statt sie pro Lauf zu erfragen:
+
+```
+A   *.<smoke-domain>   <server-ip>
+```
+
+| | |
+|---|---|
+| Domain | `<smoke-domain>` |
+| Zielserver | Name + Provider + IP, und die TurboOps-Server-ID für die MCP-Aufrufe |
+| Workspace | TurboOps-Workspace-ID |
+| Stages | dev → `dev.<smoke-domain>` · production → `<smoke-domain>` |
+| API je Stage | `api.dev.<smoke-domain>` · `api.<smoke-domain>` |
+
+> **Wo die konkreten Werte stehen.** Serveradressen, TurboOps-Server- und Workspace-IDs
+> sowie die reale Domain sind Infrastruktur-Zuordnungen und gehören damit **nicht** in
+> diesen öffentlichen Marketplace, sondern in den internen
+> (`claude-code-internal`, Plugin `lt-ops` → `reference/lt-smoke-test-environment.md`).
+> Dieses Dokument beschreibt nur das Verfahren.
+
+**Den `dig`-Check trotzdem jedes Mal fahren.** Nicht aus Misstrauen gegen den Eintrag,
+sondern weil ein fehlender Name sonst erst beim Let's-Encrypt-Challenge auffällt — dann
+steht die Stage bereits, und der Online-Check ist wertlos statt rot. Trägt der Zielserver
+eine eigene Traefik-Instanz, gilt zusätzlich Trap 5 aus `deploying-to-turboops`, und zwar
+nach **jedem** Deploy.
+
 ## Ablauf
 
 ### Phase 1 — Scaffold (Vendor-Mode)
@@ -86,6 +115,10 @@ Alles per TurboOps-MCP + CLI-API (Details + Payloads: Skill
 1. `create_deployment_project` (Slug = `<name>`, Customer lenne.tech).
 2. Projekt-Token minten: `POST /cli/deployment/tokens` `{project: <id>, name: "gitlab-ci"}` → `plainToken`.
 3. GitLab-CI-Variablen: `TURBOOPS_PROJECT` (plain) + `TURBOOPS_TOKEN` (masked, **unprotected**) via `glab variable set`.
+   **`TURBOOPS_PROJECT` ist der SLUG, nicht die Projekt-ID.** `scripts/turboops-guard.sh` vergleicht ihn mit
+   `.turboops.json` (das den Slug trägt) und bricht `turboops-build` sonst ab — zu Recht: die Images gingen
+   in den einen Namespace, deployt würde das andere Projekt. Die ID aus `create_deployment_project` wird
+   hier NICHT gebraucht.
 4. `create_deployment_stage` ×2: `dev` (development, `dev.<domain>`, Branch `dev`) + `production` (production, `<domain>`, Branch `main`) auf dem Zielserver; Branch via `update_stage_settings`.
 5. Compose hochladen: `POST /cli/deployment/projects/<id>/compose` → registriert alle 3 Services an beiden Stages (entschärft die Single-Service-Falle VOR dem ersten Deploy).
 6. `update_service_domain` je Stage: `api` → `api.<stage-domain>` (App läuft über die Stage-Root-Primary).

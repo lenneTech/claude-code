@@ -105,8 +105,9 @@ valid TLS. Create + verify DNS first, then deploy.
 
 ### Trap 5 — a green `--wait` does NOT prove external reachability (foreign-Traefik servers)
 
-Empirically hit on the **Turbo-Dev** server (116.203.82.155) during the 2026-07
-lt-smoke-test run: the deploy job goes green (`3/3 containers healthy`), but
+Empirically hit during the 2026-07 smoke-test run, on a host that had been
+provisioned before TurboOps managed it (the concrete host is named in the internal
+marketplace, `lt-ops` → `reference/lt-smoke-test-environment.md`): the deploy job goes green (`3/3 containers healthy`), but
 every stage URL answers **404 with `CN=TRAEFIK DEFAULT CERT`**. `--wait` checks
 container health only — it never performs an external HTTP probe.
 

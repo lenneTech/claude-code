@@ -352,6 +352,37 @@ Update `VENDOR.md`:
    new version, it must be manually added to the project's `package.json`
    since there is no automatic dependency resolution for vendored code.
 
+5. **The `nuxt/schema` runtime-config augmentation must NOT come back.** Upstream's
+   `runtime/types/module.ts` ends with two blocks augmenting `PublicRuntimeConfig`
+   under `nuxt/schema` **and** `@nuxt/schema`. `lt` strips them during vendoring; a
+   sync that copies the file verbatim reinstates them, and that is a silent,
+   project-wide regression:
+
+   - `nuxt/schema` re-exports `@nuxt/schema`, so the two blocks decorate ONE
+     interface. Harmless in `node_modules` (never part of the consumer's program),
+     fatal as project source, which `include` picks up unconditionally.
+   - It closes a cycle with Nuxt's generated
+     `interface PublicRuntimeConfig extends UserPublicRuntimeConfig` →
+     `TS2310: Type 'PublicRuntimeConfig' recursively references itself as a base type`
+     → **every `config.public.*` read becomes `unknown`**.
+   - Nuxt sets `skipLibCheck: true`, which SUPPRESSES that TS2310. All anyone sees is
+     `Argument of type 'unknown' is not assignable to parameter of type 'string'` at
+     call sites that are correct — which is why this was previously misdiagnosed as a
+     missing schema block. The block is generated identically in both modes.
+
+   After any sync that touches `runtime/types/module.ts`, verify:
+
+   ```bash
+   grep -n "declare module '.*\/schema'" app/core/runtime/types/module.ts   # must find nothing
+   npx vue-tsc --noEmit -p .nuxt/tsconfig.json --skipLibCheck false | grep TS2310
+   ```
+
+   Removing them costs nothing — `ltExtensions` reaches the consumer through the
+   module's runtime-config defaults, which Nuxt writes into the generated types
+   regardless. Verified 2026-08-22 on a real conversion: with the blocks gone,
+   `config.public.siteUrl` is `string`, `ltExtensions.auth.enabled` is `boolean`, and
+   the type gate is clean.
+
 ## Report Output
 
 At end of run, produce a report:
