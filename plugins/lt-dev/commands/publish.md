@@ -14,6 +14,12 @@ likewise on the latest dependency state. All recipes, wait patterns and
 gates come from the skill **`maintaining-lt-stack`** (load it first); this
 command only narrows the orchestration to a single chain.
 
+**Why unrestricted `Bash`:** this command releases across up to eight base
+repos with different toolchains and recipes — `git`, `gh`, `npm`/`pnpm`/`yarn`
+scripts, `node`, and the secrets-scan hooks — and the exact commands depend on
+which repo Step 0 resolves to, so a fixed allowlist would not cover every
+target.
+
 ## When to use
 
 - You just changed something in a base repo (committed or not) and want it

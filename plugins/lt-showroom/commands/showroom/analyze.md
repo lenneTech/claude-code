@@ -1,7 +1,7 @@
 ---
 description: Analyze a software project and create a versioned SHOWCASE.md with features, architecture, and screenshot paths. If screenshots exist in docs/showcase/screenshots/, reference them. Otherwise, use placeholder paths that match the naming convention.
 argument-hint: "[project-path]"
-allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(ls:*), Bash(node:*), Bash(mkdir:*), Bash(find:*), Agent, WebFetch
+allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(ls:*), Bash(node:*), Bash(mkdir:*), Bash(find:*), Agent, WebFetch, mcp__plugin_lt-showroom_showroom-api__*
 disable-model-invocation: true
 ---
 

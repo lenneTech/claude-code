@@ -2,8 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "Central configuration for Claude Code documentation sources. All sources are cached locally and updated when Claude Code version changes.",
   "cache": {
-    "claudeCodeVersion": "2.1.220",
-    "lastUpdated": "2026-08-02T09:26:15.624Z",
+    "claudeCodeVersion": "2.1.239",
+    "lastUpdated": "2026-08-22T11:46:28.388Z",
     "updateBehavior": "auto"
   },
   "updateBehaviorOptions": {
@@ -80,10 +80,22 @@
       "description": "Settings reference"
     },
     {
+      "name": "settings-reference",
+      "url": "https://code.claude.com/docs/en/settings-reference",
+      "type": "spa",
+      "description": "Full settings key reference including crossSessionInbound, isolatePeerMachines, dialogExpiry and the sandbox unix-socket keys that govern cross-session messaging"
+    },
+    {
       "name": "cli-reference",
       "url": "https://code.claude.com/docs/en/cli-reference",
       "type": "spa",
       "description": "CLI options and flags"
+    },
+    {
+      "name": "env-vars",
+      "url": "https://code.claude.com/docs/en/env-vars",
+      "type": "spa",
+      "description": "Environment variables exported to hooks and Bash commands, including CLAUDE_CODE_MESSAGING_SOCKET and CLAUDE_CODE_MESSAGING_TOKEN"
     },
     {
       "name": "common-workflows",
@@ -120,6 +132,12 @@
       "url": "https://code.claude.com/docs/en/agent-teams",
       "type": "spa",
       "description": "Agent Teams coordination, messaging, hooks, and best practices"
+    },
+    {
+      "name": "cross-session-messaging",
+      "url": "https://code.claude.com/docs/en/cross-session-messaging",
+      "type": "spa",
+      "description": "Cross-session messaging between Claude Code sessions: ListAgents/SendMessage, session addressing, inbound policies, notify_when_idle, and the environment variables that expose the messaging socket (primary source)"
     },
     {
       "name": "platform-skills-best-practices",

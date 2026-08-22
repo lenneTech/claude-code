@@ -231,7 +231,7 @@ After the fix has been applied and tests are green, run the manual-style end-to-
 
 **Skip condition:** Step 7.5 is skipped when Step 7's option was `Weitere Untersuchung` or `Abbrechen` (no fix was implemented). It is mandatory when option `Fix implementieren` was chosen.
 
-Follow the [`validating-changes-in-browser`](${CLAUDE_PLUGIN_ROOT}/../skills/validating-changes-in-browser/SKILL.md) skill end-to-end. The skill receives:
+Follow the [`validating-changes-in-browser`](${CLAUDE_PLUGIN_ROOT}/skills/validating-changes-in-browser/SKILL.md) skill end-to-end. The skill receives:
 
 - `diff_base`: the resolved base branch (default `main`)
 - `ticket_id`: extracted from $ARGUMENTS if a Linear ID was provided

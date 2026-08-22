@@ -1,9 +1,9 @@
 ---
 name: ux-reviewer
-description: Autonomous UX pattern review agent for lenne.tech fullstack projects. Analyzes state handling (Loading/Empty/Error), user feedback (Toast consistency, German messages), navigation patterns (Breadcrumbs, Back-navigation, Dead Ends), form UX (live validation, disable during submit, success feedback), destructive action safety (confirm dialogs, red buttons), optimistic UI (loading indicators on all async actions), cross-page consistency (icon usage, button order, action patterns), error recovery (retry buttons, timeout handling), responsive behavior (table→card, touch targets, menu collapse), skeleton loading, keyboard navigation, pagination patterns, and onboarding empty states. Produces structured report with fulfillment grades per dimension.
+description: Autonomous UX pattern review agent for lenne.tech fullstack projects. Analyzes state handling (Loading/Empty/Error), user feedback (Toast consistency, UI language consistency), navigation patterns (Breadcrumbs, Back-navigation, Dead Ends), form UX (live validation, disable during submit, success feedback), destructive action safety (confirm dialogs, red buttons), optimistic UI (loading indicators on all async actions), cross-page consistency (icon usage, button order, action patterns), error recovery (retry buttons, timeout handling), responsive behavior (table→card, touch targets, menu collapse), skeleton loading, keyboard navigation, pagination patterns, and onboarding empty states. Produces structured report with fulfillment grades per dimension.
 model: inherit
 effort: medium
-tools: Bash, Read, Grep, Glob, TodoWrite
+tools: Bash, Read, Grep, Glob, TodoWrite, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__take_snapshot, mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__resize_page, mcp__plugin_lt-dev_chrome-devtools__click, mcp__plugin_lt-dev_chrome-devtools__fill, mcp__plugin_lt-dev_chrome-devtools__list_console_messages, mcp__plugin_lt-dev_chrome-devtools__list_network_requests
 skills: developing-lt-frontend
 memory: project
 ---
@@ -85,6 +85,8 @@ Initial TodoWrite:
    - Check for toast utility patterns in composables
    - Check for confirm dialog patterns
 
+6. **Detect the project's UI language** — check the project's `CLAUDE.md` / conventions / i18n config first; if none, match the language already used in existing `*.vue` pages/components; only fall back to German for a true greenfield project. Never flag an established UI's language as wrong (English included), and never suggest bulk-translating an established UI to another language — every language-specific check below (toasts, confirm dialogs, retry buttons, empty states) is evaluated against this detected language, not against German by default.
+
 ### Phase 1: State Handling (Loading / Empty / Error)
 
 Every data-driven component MUST handle all three states visually.
@@ -127,7 +129,7 @@ Consistent feedback after every user action.
 **Static analysis:**
 - [ ] `toast.add()` called after every successful Create/Update/Delete
 - [ ] Error toast on every failed API call
-- [ ] Toast titles in **German**
+- [ ] Toast titles in the project's UI language (detected in Phase 0, not assumed)
 - [ ] Consistent color usage: `success` (create/update), `error` (failure), `info` (neutral), `warning` (caution)
 - [ ] Error toasts include `description` with actionable text
 - [ ] No `alert()` or `window.confirm()` — use `useToast()` and modal dialogs
@@ -138,7 +140,7 @@ Consistent feedback after every user action.
 grep -rn "async.*submit\|async.*save\|async.*delete\|async.*create\|async.*update" <vue-files> | grep -v "toast"
 # alert/confirm usage
 grep -rn "alert(\|window\.confirm(" <vue-files>
-# English toast messages (should be German)
+# Toast text inconsistent with the project's detected UI language (adjust the word list below to the OTHER language)
 grep -rn "toast.add" <vue-files> | grep -i "success\|error\|created\|updated\|deleted\|saved\|failed"
 # Missing error color
 grep -rn "toast.add" <vue-files> | grep -v "color:"
@@ -234,9 +236,9 @@ Prevent accidental data loss.
 **Static analysis:**
 - [ ] Delete actions require confirmation dialog (modal or confirm component)
 - [ ] Destructive buttons use `color="error"` — visually distinct
-- [ ] Confirmation dialog text is clear and in German ("Möchtest du X wirklich löschen?")
-- [ ] Confirm button repeats the action ("Löschen", not "OK" or "Ja")
-- [ ] Bulk delete has extra warning about count ("3 Einträge löschen?")
+- [ ] Confirmation dialog text is clear and in the project's UI language (e.g. German "Möchtest du X wirklich löschen?", or the project's English equivalent)
+- [ ] Confirm button repeats the action in the project's UI language (e.g. German "Löschen", English "Delete" — never a generic "OK" or "Yes")
+- [ ] Bulk delete has extra warning about count (e.g. German "3 Einträge löschen?", or the project's English equivalent)
 - [ ] Irreversible actions are clearly labeled
 
 **Grep patterns:**
@@ -327,7 +329,7 @@ grep -rn "UModal\|useOverlay" <vue-files>
 Users must be able to recover from errors gracefully.
 
 **Static analysis:**
-- [ ] API error responses show "Erneut versuchen" (retry) button
+- [ ] API error responses show a retry button labeled in the project's UI language (e.g. German "Erneut versuchen", English "Try again")
 - [ ] Network timeout shows meaningful message (not raw error)
 - [ ] `NuxtErrorBoundary` wraps independent page sections
 - [ ] Global error page (`error.vue`) exists with navigation home
@@ -425,17 +427,17 @@ grep -rn "@keydown.escape\|@keyup.escape\|Escape" <vue-files>
 - [ ] Lists > 20 items use pagination or infinite scroll
 - [ ] Current page/position preserved after back-navigation
 - [ ] Page size selector available on paginated lists
-- [ ] Total count displayed ("23 Einträge")
+- [ ] Total count displayed in the project's UI language (e.g. German "23 Einträge", or the project's English equivalent)
 
 ```bash
 grep -rn "UPagination\|pagination\|page.*size\|offset\|limit" <vue-files>
 ```
 
 #### 10d: Onboarding & Empty States
-- [ ] Empty states have Call-to-Action ("Erstelle deine erste Season")
+- [ ] Empty states have Call-to-Action in the project's UI language (e.g. German "Erstelle deine erste Season", or the project's English equivalent)
 - [ ] Empty state icon and message match the context
 - [ ] First-time user sees guidance (tooltip, banner, or inline help)
-- [ ] No generic "Keine Daten" — message explains what to do next
+- [ ] No generic empty-state message (e.g. German "Keine Daten", English "No data") — message explains what to do next
 
 ```bash
 grep -rn "EmptyState\|empty\|Keine.*vorhanden\|Keine.*gefunden" <vue-files>
@@ -475,7 +477,7 @@ grep -rn "EmptyState\|empty\|Keine.*vorhanden\|Keine.*gefunden" <vue-files>
 [Findings: which components miss Loading/Empty/Error states]
 
 ### 2. User Feedback
-[Findings: missing toasts, inconsistent colors, English messages]
+[Findings: missing toasts, inconsistent colors, messages inconsistent with the project's detected UI language]
 
 ### 3. Navigation Patterns
 [Findings: dead ends, missing breadcrumbs, no back-nav]

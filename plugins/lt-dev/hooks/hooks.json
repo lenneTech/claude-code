@@ -1,5 +1,5 @@
 {
-  "description": "Project detection, safety guards, circuit breaker, file protection, and lt-plugin auto-update",
+  "description": "Project detection, safety guards, circuit breaker, file protection, peer-session coordination, and lt-plugin auto-update",
   "hooks": {
     "SessionStart": [
       {
@@ -16,6 +16,12 @@
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/cleanup-stale-chrome-mcp.sh\"",
             "timeout": 10,
             "statusMessage": "Reaping stale chrome-devtools-mcp processes"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/detect-peer-sessions.sh\"",
+            "timeout": 5,
+            "statusMessage": "Checking for parallel Claude Code sessions"
           }
         ]
       }

@@ -1,7 +1,7 @@
 ---
 description: Read SHOWCASE.md, fetch customer feedback and web research, then create and publish a detailed showcase on showroom.lenne.tech with modern interactive content blocks
 argument-hint: "[project-path]"
-allowed-tools: Read, Grep, Glob, Bash(curl:*), Bash(ls:*), Bash(git:*), Bash(node:*), Bash(mkdir:*), Agent, WebFetch, WebSearch
+allowed-tools: Read, Grep, Glob, Bash(curl:*), Bash(ls:*), Bash(git:*), Bash(node:*), Bash(mkdir:*), Agent, WebFetch, WebSearch, mcp__plugin_lt-showroom_showroom-api__*
 disable-model-invocation: true
 ---
 

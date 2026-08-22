@@ -9,6 +9,23 @@ disable-model-invocation: true
 
 **Purpose:** Extract design tokens from Figma and configure NuxtUI + Tailwind v4 theme. Run BEFORE implementing individual screens.
 
+## When to Use This Command
+
+- Extracting a design system (colors, spacing, radius, typography) from a Figma file
+- Configuring the NuxtUI + Tailwind v4 theme tokens before implementing any screen
+- Identifying and generating global layout components (Header, Sidebar, Footer, Modals) shared across screens
+- Running as the middle step of the Figma workflow, after `/lt-dev:frontend:figma-research` has generated the project config and before `/lt-dev:frontend:figma-to-code` implements individual screens
+
+## Related Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/lt-dev:frontend:figma-research` | Discover the Figma file structure and generate the project-local config (run first) |
+| `/lt-dev:frontend:figma-init` | Extract the design system and configure NuxtUI + Tailwind v4 theme (this command) |
+| `/lt-dev:frontend:figma-to-code` | Implement individual screens using the design system and project config (run after) |
+
+**Workflow:** `figma-research` → `figma-init` → `figma-to-code`
+
 ## Input
 
 You receive: `$ARGUMENTS`

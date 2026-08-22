@@ -280,3 +280,20 @@ Naechste Schritte:
 - Every data component needs Loading/Empty/Error states
 - Components must follow feature-based folder structure
 - When encountering duplicate frame names, use row counts and column structure to differentiate variants
+
+## When to Use This Command
+
+- A section discovered by `/lt-dev:frontend:figma-research` is ready to become real Nuxt pages
+- An implemented screen drifted from the design and should be regenerated against the current Figma node
+
+Requires the project-local config the two preceding commands produce. Without it, start at `/lt-dev:frontend:figma-research` instead of guessing node ids.
+
+## Related Commands
+
+| Command | Relationship |
+|---------|-------------|
+| `/lt-dev:frontend:figma-research` | Runs first: discovers file structure and writes the config this command reads |
+| `/lt-dev:frontend:figma-init` | Runs second: establishes the project's Figma setup |
+| `/lt-dev:review` | Runs after: reviews the generated components against frontend conventions |
+
+> **Companion plugin:** all three commands call `mcp__plugin_figma_figma__*`, served by the official `figma` plugin. lt-dev bundles no Figma server of its own, so that plugin must be installed.

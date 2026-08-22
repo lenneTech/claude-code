@@ -24,6 +24,10 @@ disable-model-invocation: true
 
 ---
 
+## Prerequisites
+
+> **MCP Dependency:** the `turboops` server must be configured in your Claude Code session before running this command. It is a **user-configured** server, not bundled with any lenne.tech plugin, so it is added once per machine via `claude mcp add` or `/mcp`; ask your TurboOps account owner for the connection details. Without it, the read-only verification calls (`get_deployment_status`, `get_deployment_logs`, `list_deployment_containers`, `get_container_status`) are unavailable and that verification falls back to the TurboOps web UI. Every other step (`lt`, `git`, `glab`, `curl`, `dig`) is unaffected.
+
 ## Instructions
 
 Follow the **`deploying-to-turboops` skill** end to end — it is the single source

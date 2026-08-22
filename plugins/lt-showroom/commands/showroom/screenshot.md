@@ -1,7 +1,7 @@
 ---
 description: Start the project (Docker or dev server), create demo data, and capture feature screenshots saved to docs/showcase/screenshots/
 argument-hint: "[project-path]"
-allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(mkdir:*), Bash(pnpm run:*), Bash(npm run:*), Bash(yarn run:*), Bash(docker:*), Bash(docker-compose:*), Bash(kill:*), Bash(pkill:*), Bash(pgrep:*), Bash(lsof:*), Bash(curl:*), Agent
+allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(mkdir:*), Bash(pnpm run:*), Bash(npm run:*), Bash(yarn run:*), Bash(docker:*), Bash(docker-compose:*), Bash(kill:*), Bash(pkill:*), Bash(pgrep:*), Bash(lsof:*), Bash(curl:*), Agent, mcp__plugin_lt-showroom_showroom-api__*
 disable-model-invocation: true
 ---
 

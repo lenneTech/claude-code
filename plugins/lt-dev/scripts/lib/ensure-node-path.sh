@@ -23,11 +23,15 @@
 #   . "$(dirname "$0")/../scripts/lib/ensure-node-path.sh"   # adjust depth
 #   ensure_node_on_path || true
 #
-# NOTE: the chrome-devtools MCP launcher INLINES an identical copy of this
-# function instead of sourcing it — Claude plugin isolation forbids sharing files
-# across plugins (lt-dev <-> lt-showroom), and the launcher must stay byte-
-# identical between the two (see .claude/scripts/sync-chrome-mcp-launcher.sh).
-# Keep the inlined copy and this canonical copy in sync.
+# NOTE: the chrome-devtools MCP launcher (plugins/lt-dev/scripts/
+# chrome-devtools-mcp-launcher.sh) INLINES an identical copy of this function
+# instead of sourcing it, since it can run before this file's directory is
+# known to be on the sourcing path. lt-showroom declares no chrome-devtools
+# server or launcher of its own — it relies on this single shared lt-dev
+# instance (see plugins/lt-showroom/README.md, "Browser automation via
+# lt-dev") — so there is no cross-plugin twin to keep in sync, only the
+# inlined copy in the launcher above and this canonical, sourceable copy.
+# Keep those two in sync.
 
 ensure_node_on_path() {
   # Already good — nothing to do.

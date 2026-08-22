@@ -2,7 +2,8 @@
 name: optimizer-marketplace
 description: General marketplace optimizer agent. Expert in plugin structure, cross-references between elements, plugin.json manifests, permissions.json, and latest Claude Code features from CHANGELOG.
 model: sonnet
-tools: Read, Grep, Glob, Edit, Write
+effort: high
+tools: Read, Grep, Glob, Edit, Write, Bash
 permissionMode: default
 ---
 
@@ -78,6 +79,26 @@ Verify consistency across the marketplace:
 - Description styles
 - Documentation format
 - File organization
+
+## Shell Checks You Must Run
+
+This repository ships its own validators. Run them instead of re-deriving their answers by hand:
+
+```bash
+bun .claude/scripts/check-cross-references.ts
+bun .claude/scripts/check-cache-integrity.ts
+bun .claude/scripts/check-cache-version.ts
+```
+
+`check-cross-references.ts` resolves markdown links and "Rule N" references across `plugins/`. Note what it does **not** cover: it leaves `${CLAUDE_PLUGIN_ROOT}` and `${CLAUDE_SKILL_DIR}` unexpanded, so a path that is one directory too high still reports clean. Check those forms yourself — `${CLAUDE_PLUGIN_ROOT}` resolves to the plugin root, so a skill link reads `${CLAUDE_PLUGIN_ROOT}/skills/<name>/SKILL.md` with no `/../` segment, and `${CLAUDE_SKILL_DIR}` is substituted only inside skill files, never in a command or agent.
+
+Confirm the manifests parse, and that plugin versions and the marketplace version agree:
+
+```bash
+claude plugin validate plugins/lt-dev
+claude plugin validate plugins/lt-offers
+claude plugin validate plugins/lt-showroom
+```
 
 ## Output Format
 

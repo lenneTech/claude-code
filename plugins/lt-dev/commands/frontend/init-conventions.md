@@ -8,6 +8,13 @@ disable-model-invocation: true
 
 Add a `## Code Conventions` section to the project's CLAUDE.md. If CLAUDE.md doesn't exist, create it.
 
+## Related Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/lt-dev:frontend:init-conventions` | Add a Code Conventions section to CLAUDE.md (this command) |
+| `/lt-dev:review` | Reviews code against the conventions, via the `frontend-reviewer` agent |
+
 ## Steps
 
 1. **Find CLAUDE.md**: Check for `CLAUDE.md` in the project root

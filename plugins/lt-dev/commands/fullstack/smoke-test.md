@@ -17,6 +17,12 @@ effort: max
 > This rule replaces a former `disable-model-invocation: true`, which left `maintain-stack`
 > without the release gate its own description promises.
 
+**Why unrestricted `Bash`:** this command drives a full project lifecycle —
+`lt` CLI, `docker`/`docker-compose`, `git`, `glab`, the TurboOps `turbo` CLI,
+`mongosh`, `dig`, `ssh` and `curl` — through scaffold, deploy and cleanup; the
+CLI surface is too broad and too dependent on what each phase discovers to
+enumerate as individual patterns.
+
 Fährt den kompletten Lebenszyklus eines lt-Fullstack-Projekts durch — von
 `lt fullstack init` bis zum produktiven TurboOps-Deployment und zurück — und
 behandelt jeden Fehler unterwegs als **Grund-Repo-Befund**: Der Fix gehört in

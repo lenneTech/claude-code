@@ -977,7 +977,14 @@
         "code-reviewer",
         "branch-rebaser",
         "running-check-script",
-        "check"
+        "check",
+        "peers",
+        "coordinating-peer-sessions",
+        "contributing-to-lt-framework",
+        "maintaining-lt-stack",
+        "npm-package-maintainer",
+        "take-ticket",
+        "ticket-cycle"
       ]
     },
     {

@@ -173,3 +173,20 @@ Naechste Schritte:
 - **Only use `get_metadata`** in this command. Never use `get_design_context` — that's for implementation and costs many tokens.
 - **`get_screenshot`** can be used sparingly if the user wants a visual preview of a section.
 - If `.claude/figma-project.json` already exists, ask the user if they want to overwrite or merge (add new sections, keep existing status).
+
+## When to Use This Command
+
+- First contact with a Figma file: nothing about its structure is known yet, and no project-local config exists
+- A designer restructured pages or renamed sections, so the stored config no longer matches the file
+- `/lt-dev:frontend:figma-to-code` cannot resolve a section name and the config needs regenerating
+
+Run it once per file, not per screen. It writes configuration and never touches application code.
+
+## Related Commands
+
+| Command | Relationship |
+|---------|-------------|
+| `/lt-dev:frontend:figma-init` | Runs next: turns the discovered config into the project's Figma setup |
+| `/lt-dev:frontend:figma-to-code` | Runs last: implements a section from the config as Nuxt pages |
+
+> **Companion plugin:** all three commands call `mcp__plugin_figma_figma__*`, served by the official `figma` plugin. lt-dev bundles no Figma server of its own, so that plugin must be installed.

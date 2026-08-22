@@ -1,6 +1,6 @@
 {
   "name": "lt-dev",
-  "version": "8.4.0",
+  "version": "8.5.0",
   "description": "lenne.tech Development Skills, Commands and Hooks for Claude Code - Frontend (Nuxt 4), Backend (NestJS), TDD and CLI Tools",
   "author": {
     "name": "lenne.tech GmbH",
@@ -36,6 +36,10 @@
     "figma",
     "a11y",
     "accessibility",
-    "review"
+    "review",
+    "writing",
+    "unslop",
+    "parallel-sessions",
+    "cross-session-messaging"
   ]
 }

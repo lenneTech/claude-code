@@ -2,7 +2,8 @@
 name: optimizer-agents
 description: Specialized agent for optimizing Claude Code sub-agents. Expert in agent frontmatter, tool restrictions, permission modes, and autonomous task design.
 model: sonnet
-tools: Read, Grep, Glob, Edit, Write
+effort: high
+tools: Read, Grep, Glob, Edit, Write, Bash
 permissionMode: default
 ---
 
@@ -52,6 +53,18 @@ For each agent, verify:
    - No history references ("new", "updated", "since vX.Y")
    - Timeless documentation style
    - Complete but concise
+
+## Shell Check You Must Run
+
+After any frontmatter edit, confirm the agent files still parse:
+
+```bash
+claude plugin validate plugins/lt-dev
+claude plugin validate plugins/lt-offers
+claude plugin validate plugins/lt-showroom
+```
+
+This is the check that distinguishes a real frontmatter defect from a misread, so run it before reporting one.
 
 ## Output Format
 

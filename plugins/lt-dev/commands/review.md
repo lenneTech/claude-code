@@ -932,7 +932,7 @@ After Phase 6's fixes have been applied (or the user picked "Nichts jetzt"), run
 
 **Skip condition:** Phase 7 is skipped only when (a) Phase 6 resulted in `⏭️ Nichts jetzt — Tracking-Tickets erstellen` AND (b) the user explicitly opts out of the walk via the closing AskUserQuestion below. Critical findings must NEVER ship without the walk — surface a warning if the user tries to skip it while Critical-severity findings remain unresolved.
 
-Follow the [`validating-changes-in-browser`](${CLAUDE_PLUGIN_ROOT}/../skills/validating-changes-in-browser/SKILL.md) skill end-to-end:
+Follow the [`validating-changes-in-browser`](${CLAUDE_PLUGIN_ROOT}/skills/validating-changes-in-browser/SKILL.md) skill end-to-end:
 
 1. Boot `lt dev up` (or the fallback per `managing-dev-servers`).
 2. Seed `@test.com` accounts that cover every role surfaced in the review (security-reviewer, backend-reviewer, frontend-reviewer permission matrices). Build the account registry — every credential will be exposed to the user in the final summary.

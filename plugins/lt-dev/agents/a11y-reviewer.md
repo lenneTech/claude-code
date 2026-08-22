@@ -3,7 +3,7 @@ name: a11y-reviewer
 description: Autonomous HTML quality review agent for lenne.tech fullstack projects. Audits accessibility (ARIA labels, roles, keyboard navigation, focus management, color contrast, screen reader support), form autocomplete attributes (email, password, name, tel, address, OTP), semantic HTML (heading hierarchy, landmark elements, interactive elements), SEO essentials (useHead, OG tags, lang attribute, structured headings), and crawlability (SSR content, robots.txt, sitemap). Combines static code analysis with Lighthouse audit via Chrome DevTools MCP. Produces structured report with fulfillment grades per dimension.
 model: inherit
 effort: medium
-tools: Bash, Read, Grep, Glob, TodoWrite
+tools: Bash, Read, Grep, Glob, TodoWrite, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__take_snapshot, mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__resize_page, mcp__plugin_lt-dev_chrome-devtools__click, mcp__plugin_lt-dev_chrome-devtools__fill, mcp__plugin_lt-dev_chrome-devtools__list_console_messages, mcp__plugin_lt-dev_chrome-devtools__list_network_requests, mcp__plugin_lt-dev_chrome-devtools__lighthouse_audit
 skills: developing-lt-frontend
 memory: project
 ---
@@ -79,6 +79,8 @@ Initial TodoWrite:
    - Check `nuxt.config.ts` for SEO config, head defaults, sitemap module
    - Check `app.vue` or `layouts/` for global landmarks (`<header>`, `<main>`, `<footer>`)
    - Check for `@nuxtjs/seo`, `@nuxtjs/sitemap`, `@nuxtjs/robots` modules
+
+5. **Detect the project's UI/content language** — check the project's `CLAUDE.md` / conventions / i18n config first; if none, match the language already used in existing `*.vue` pages/components; only fall back to German for a true greenfield project. The `<html lang>` attribute (Phase 8) and the generic-link-text check (Phase 8) are evaluated against this detected language, not against a fixed language. Never flag an established UI's language as wrong.
 
 ### Phase 1: ARIA & Roles
 
@@ -366,7 +368,7 @@ Validate on-page SEO for changed pages.
 - [ ] **Title format** — descriptive, includes page context: "Seasons | App Name"
 - [ ] **Meta description** — 150-160 chars, unique per page
 - [ ] **Open Graph tags** — `og:title`, `og:description`, `og:image` for shareable pages
-- [ ] **`<html lang="de">`** set in `nuxt.config.ts` (app.head.htmlAttrs.lang)
+- [ ] **`<html lang>`** set in `nuxt.config.ts` (app.head.htmlAttrs.lang) and matching the project's actual content language, detected in Phase 0 (e.g. `lang="de"` for a German UI, `lang="en"` for an English UI) — never assume `de`
 - [ ] **Canonical URL** — `useHead({ link: [{ rel: 'canonical', href: ... }] })` or via `@nuxtjs/seo`
 - [ ] **Structured headings** — `h1` → `h2` → `h3` follow content hierarchy
 - [ ] **`<NuxtLink>`** for internal navigation — never raw `<a href>`
@@ -385,7 +387,8 @@ grep -rn "useHead\|useSeoMeta" app/pages/**/*.vue | grep "title"
 grep -rn "htmlAttrs\|lang:" nuxt.config.ts
 # Raw anchor tags (should use NuxtLink)
 grep -rn "<a href=\"/" <vue-files> | grep -v "NuxtLink\|external\|http"
-# Generic link text
+# Generic link text — the German and English phrases below are examples; extend with
+# the equivalent generic phrases for the project's detected UI language if it differs
 grep -rn ">hier<\|>klick<\|>mehr<\|>click here<\|>read more<" <vue-files>
 # Missing OG tags
 grep -rn "og:title\|og:description\|og:image\|ogTitle\|ogDescription\|ogImage" app/pages/**/*.vue

@@ -105,6 +105,26 @@ A finding may only be classified as Accepted after **every** applicable step has
 
 **CI parity — the local audit MUST match the CI security gate.** A project's local `check` may run `pnpm audit` at a *lower* severity threshold (or narrower scope) than the CI gate — e.g. local `pnpm audit --prod --audit-level=critical` while a CI job runs `pnpm audit --prod --audit-level=high` (`allow_failure: false`). A green local `check` then **hides** findings that fail CI: the pipeline goes red on a "pre-existing" HIGH CVE the local loop never even surfaced. **Before trusting a green local `check`, confirm its `--audit-level` and `--prod`/scope match the strictest audit gate in `.gitlab-ci.yml` / `.github/workflows`.** If they diverge, raise the local `check` audit-level to match CI (so the local loop becomes the single source of truth that catches exactly what CI enforces), then run the ladder above on whatever new findings surface. An audit-level mismatch is a silent local↔CI parity bug — never an Accepted Residual.
 
+### Step 4a — Claim a cross-cutting finding before fixing it
+
+An audit finding is not this branch's problem. It is the repository's, so **every parallel session running `check` sees the same one** and, left alone, every one of them walks the ladder above. That is wasted work in the best case; in the normal case it is four sessions rewriting the same lockfile and four rebase conflicts nobody needed. The same holds for any other finding that belongs to the repo rather than to the diff: a broken CI config, a corrupted lockfile, a broken shared test setup, an audit-level mismatch with CI.
+
+So before starting the ladder on a finding of that kind:
+
+1. **Read the ledger.** `bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh read` costs nothing and disturbs nobody. It also answers what a message cannot: whether a session that is no longer running already claimed this, and whether somebody already recorded the cause.
+   - The finding shows as `[held]` → **do not fix it.** Record it as claimed in the report block and carry on with the rest of `check`.
+   - It shows as `[stale]` → the claiming session is gone. Take it over.
+   - A `note` already names the cause → start from it instead of diagnosing it again.
+2. **Claim it**: `peer-ledger.sh claim "audit:GHSA-xxxx" "<what it moves>"`. The command refuses a topic another live session holds and names that session, so the claim is decided rather than merely announced.
+3. **Then `ListAgents`.** A live peer in this repository that is about to run `check` gets one `CLAIM` message on top (format in [`coordinating-peer-sessions`](${CLAUDE_PLUGIN_ROOT}/skills/coordinating-peer-sessions/SKILL.md)). The ledger already covers everyone else, including sessions that start later.
+4. **Fix it, then `peer-ledger.sh release`** naming the ticket or commit that carries the fix, so the topic frees up for good rather than only until this session closes.
+
+If a `CLAIM` for the same finding arrives from a peer first, **do not fix it**. Classify it as claimed in the report block, name the peer, and carry on with the rest of `check`. Contest the claim only when you are already mid-ladder on it, and then one of the two backs off; two sessions on one lockfile is the outcome the claim exists to prevent. None of this reaches the user: who fixes a shared finding is coordination, and the ledger settles it.
+
+This does not soften Step 5. A claimed finding is not an Accepted Residual and not a reason to call `check` green: it is still open, it is just open in a different session. If it blocks this branch's gate, the session waits for the peer (one `ASK`, or `notify_when_idle`) rather than fixing it in parallel.
+
+**The other direction is worth more than the claim.** Most `check` failures are the repository's, not the diff's, so the diagnosis you just paid for is one a peer is about to pay for again. When you find the *cause* of something environmental or shared (a shared test database, a toolchain or SWC config, an audit-level mismatch with CI, a `check-server-start` port hazard), record it with `peer-ledger.sh note "<topic>" "cause: … fix: …"` and send one `SOLVED` to any peer live right now. The note is the part that lasts: it turns the next session's half hour into two lines, including a session that starts long after yours has closed. Record the cause, not the symptom.
+
 ### Step 5 — Residual classification
 
 Only after a project has STALLED (and, for audit findings, only after the escalation ladder is exhausted):
@@ -261,3 +281,4 @@ The agent then skips Steps 1–7 and pastes the block verbatim into its report.
 | **Agent**: `test-reviewer` | Honors skip semantics from Step 7 |
 | **Skill**: `maintaining-npm-packages` | Owns the broader package maintenance ladder; this skill borrows Step 4 from there |
 | **Skill**: `rebasing-branches` | Strategy for rebases; defers `check` execution to this skill |
+| **Skill**: `coordinating-peer-sessions` | Claim protocol for cross-cutting findings when parallel sessions share the repo (Step 4a) |

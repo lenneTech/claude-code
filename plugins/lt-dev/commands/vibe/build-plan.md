@@ -31,10 +31,11 @@ Plan + Build in one go (no interruption).
 
 ### Prerequisites
 
-1. **Check SPEC.md exists**
-   - If SPEC.md is missing, ask: "Keine SPEC.md gefunden. Soll ich helfen eine zu erstellen, oder einen anderen Dateinamen verwenden?"
+1. **Check for argument:** If the user provided a spec file path as argument (e.g., `/lt-dev:vibe:build-plan docs/SPEC-onboarding.md`), use that file as the spec throughout this command. Otherwise, default to `SPEC.md` in the project root.
+2. **Check the spec file exists**
+   - If the spec file is missing, ask: "Keine SPEC.md gefunden. Soll ich helfen eine zu erstellen, oder einen anderen Dateinamen verwenden?" (substitute the resolved filename if an argument was given)
 
-Complete implementation of SPEC.md from scratch.
+Complete implementation of the spec file (SPEC.md by default, or the file given as argument) from scratch.
 
 ### STEP 1: PLANNING
 

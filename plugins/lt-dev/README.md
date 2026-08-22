@@ -36,14 +36,16 @@ These plugins are **optional** but enhance the experience when working with this
 - **Framework Contribution**: Local `pnpm link` workflow for modifying `@lenne.tech/nest-server` / `@lenne.tech/nuxt-extensions` and validating changes from a starter
 - **Dev Server Lifecycle**: Enforced `run_in_background` / `pkill` contract to prevent orphaned processes across TDD, framework linking, and MCP-driven debugging
 - **Alignment before code**: A grilling loop that walks the open decisions one at a time, each with a recommendation, and looks facts up in the codebase rather than asking — wired into ticket creation, planning, and the implementation flow
+- **Parallel sessions**: Coordination rules for several sessions working one project or the base repos at once. Linear and Git stay the claim protocol, `ListAgents` gives the live picture for free, and a cross-session message is spent only where it changes what the other session does next: a warning, a claim, a diagnosis worth handing over, or a question the peer answers cheaply
+- **Writing quality**: An `unslop` pass that strips AI tells from tickets, commit bodies, MR descriptions, docs, and customer copy, with a German pattern set (Nominalstil, Floskeln, Füllwörter, Gedankenstrich) on top of the English one
 
 ## Included
 
-- **24 Skills** - Auto-detected contextual expertise (includes `grilling-decisions` for settling open decisions before implementation, `running-check-script` for runnability validation, `managing-dev-servers` for dev-server lifecycle rules, and `contributing-to-lt-framework` for pnpm link workflows)
+- **27 Skills** - Auto-detected contextual expertise (includes `grilling-decisions` for settling open decisions before implementation, `running-check-script` for runnability validation, `managing-dev-servers` for dev-server lifecycle rules, `contributing-to-lt-framework` for pnpm link workflows, `coordinating-peer-sessions` for parallel sessions on one project, and `unslop` for cutting AI tells out of every text that reaches a human)
 - **25 Agents** - Autonomous task execution
-- **63 Commands** - User-triggered actions via `/lt-dev:<name>`
-- **13 Hook Scripts** across 7 event types (SessionStart, PreToolUse, PostToolUse, PostToolUseFailure, UserPromptSubmit, StopFailure, PostCompact) - Automated project detection and validation
-- **Helper Scripts** - Plugin-local shell helpers under `plugins/lt-dev/scripts/` (e.g. `discover-check-scripts.sh` for monorepo-aware `check` discovery, `chrome-devtools-mcp-launcher.sh` as Chrome MCP wrapper)
+- **64 Commands** - User-triggered actions via `/lt-dev:<name>`
+- **18 Hook Scripts** across 8 event types (SessionStart, PreToolUse, PostToolUse, PostToolUseFailure, UserPromptSubmit, StopFailure, SessionEnd, PostCompact) - Automated project detection and validation
+- **Helper Scripts** - Plugin-local shell helpers under `plugins/lt-dev/scripts/` (e.g. `discover-check-scripts.sh` for monorepo-aware `check` discovery, `peer-ledger.sh` for cross-session claims and diagnoses, `chrome-devtools-mcp-launcher.sh` as Chrome MCP wrapper)
 - **3 MCP Servers** - Chrome DevTools, Linear, and Nuxt UI (Figma via the official `figma` plugin as a companion)
 
 ## Chrome DevTools MCP — Canary auto-detection
@@ -56,6 +58,24 @@ Override the auto-detection with the `CHROME_MCP_CHANNEL` environment variable:
 CHROME_MCP_CHANNEL=stable claude   # force stable even if Canary is installed
 CHROME_MCP_CHANNEL=canary claude   # force canary (only useful for testing the flag)
 ```
+
+## Parallel sessions on one project
+
+Claude Code sessions can list and message each other (v2.1.224+, on by default). The plugin uses that sparingly and in a fixed order.
+
+**Cheapest channel first.** Linear stays the claim protocol for tickets and Git for branches, because both are free to read and stay true after a session ends. `ListAgents` adds who is alive right now. Only what none of those carry goes over a message, since a delivered message costs the receiving session a full prompt in the middle of its work.
+
+**Six occasions justify one.** Three protect a peer from doing the wrong thing (`LANDED`, `CLAIM`, `CONFLICT`), two save it work (`SOLVED`, `READY`), and one asks it for something it answers cheaply (`ASK`). Progress reports, "I am finished", and anything readable in the repo are not on the list. The `coordinating-peer-sessions` skill holds the protocol; `take-ticket`, `ticket-cycle`, `git:ship`, `running-check-script`, `contributing-to-lt-framework`, `maintaining-lt-stack`, `rebasing-branches`, and `validating-changes-in-browser` each apply it at the point where parallel work actually collides or actually helps.
+
+**What has to outlive a session gets written down.** Messages are not history: a session starting later never learns what was sent before it existed, and a claim dies with the session that made it. `scripts/peer-ledger.sh` persists the two cases where that loss is expensive — open claims on cross-cutting work, and diagnoses worth keeping — per repository under `${CLAUDE_PLUGIN_DATA}`, never inside a project. A claim is bound to its session's process, so a crashed session's claim reads as stale and free to take instead of blocking the topic forever.
+
+**`/lt-dev:peers` answers it on demand.** Live sessions, open claims, recorded diagnoses, and any foreign uncommitted changes in one read-only report. It sends nothing.
+
+**A `SessionStart` hook says when it matters.** `detect-peer-sessions.sh` reports how many other sessions are live and how many of them sit in this repository, so coordination is a question only when there is something to coordinate with.
+
+**Coordination is settled between sessions; decisions go to you.** Who takes which ticket, who fixes a shared finding, and who waits for whom are resolved session-to-session without a prompt. Scope, priority, risk, anything destructive, anything a permission prompt would cover, and a contested claim that one exchange did not settle always reach the user.
+
+**One setup caveat.** With `crossSessionInbound` unset, Claude Code decides per message from both sessions' permission modes and delivers only when the two match (both bypassing prompts, or both prompting). Mixed in either direction means an approval dialog that expires after `dialogExpiry`, five minutes by default — which is exactly how coordination fails on unattended sessions. Setting `crossSessionInbound: "accept"` in user settings (or via `/config` → "Messages from your other sessions") removes the classification and is the fix; matching permission modes is the workaround when the default has to stay.
 
 ## Framework consumption modes (nest-server)
 

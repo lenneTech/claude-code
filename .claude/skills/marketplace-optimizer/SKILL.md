@@ -1,6 +1,6 @@
 ---
 name: marketplace-optimizer
-description: Optimizes this Claude Code marketplace using specialized sub-agents. Each agent is an expert for one element type (skills, commands, agents, hooks, mcp) and loads only relevant documentation. A marketplace agent validates cross-references and latest features. Triggers on "optimize marketplace", "sync with best practices", or when user wants to improve plugin quality.
+description: 'Optimizes this Claude Code marketplace using specialized sub-agents. Each agent is an expert for one element type (skills, commands, agents, hooks, mcp) and loads only relevant documentation. A marketplace agent validates cross-references and latest features. Triggers on "optimize marketplace", "sync with best practices", or when user wants to improve plugin quality.'
 ---
 
 # Marketplace Optimizer

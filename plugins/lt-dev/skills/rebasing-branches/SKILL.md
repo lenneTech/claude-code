@@ -10,6 +10,7 @@ This skill provides **knowledge and strategy** for rebasing feature branches ont
 ## Gotchas
 
 - **`--force` silently overwrites teammate pushes — always `--force-with-lease`** — If a teammate pushed to the same remote branch while you were rebasing locally, plain `--force` overwrites their commits without any warning. `--force-with-lease` refuses the push if the remote has moved. There is no valid reason to use `--force` on a shared branch.
+- **`--force-with-lease` does not see a parallel session's unpushed work** — The lease compares your remote-tracking ref against the remote. A peer Claude Code session that has rebased the same branch locally and not pushed yet is invisible to it: your push succeeds, and their next push is the one that fails, after they already did the work. The lease protects the remote, never the peer's working tree. Before rewriting a branch you did not create in this session, `ListAgents`; if a peer is live in this repository, one `CONFLICT` message settles who rewrites it (see `coordinating-peer-sessions`). This matters most in the batch workflow below, where a run touches branches nobody in this session has looked at.
 - **Lock-file conflicts: accepting "ours" without re-install breaks dependencies** — When `pnpm-lock.yaml` or `package-lock.json` conflicts, resolving in favor of the dev-branch version without running `pnpm install` afterwards leaves the lockfile describing packages that aren't actually in `node_modules`. Always: resolve → install → verify `pnpm run build` before continuing.
 - **Post-rebase optimization: never remove "redundant" feature code without asking** — The optimization pass sometimes flags code as dead because it's used by a feature not in the current branch. Check git log on the file before removing anything. When in doubt, ask the user or leave it.
 - **`git rebase --abort` works only if you haven't started a commit** — Once you `git add` the resolved conflict files, `--abort` still works. After `git rebase --continue` has moved past the conflict commit, you need `git reset --hard ORIG_HEAD` to recover, which DOES require the original ref. ORIG_HEAD is auto-set by rebase start — safe to rely on.
@@ -49,6 +50,7 @@ This skill provides **knowledge and strategy** for rebasing feature branches ont
 | **Skill**: `coordinating-agent-teams` | Parallel worktree execution for batch rebase (>2 branches) |
 
 ---
+- `coordinating-peer-sessions` — before rewriting a branch while another session is live in the repo
 
 ## Rebase Strategy
 

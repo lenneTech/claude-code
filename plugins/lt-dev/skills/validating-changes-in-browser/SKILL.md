@@ -1,6 +1,6 @@
 ---
 name: validating-changes-in-browser
-description: 'Final browser validation after implementation AND review have succeeded. Boots the app via `lt dev up`, seeds realistic `@test.com` data, derives a step-by-step test list from the diff (every affected page, role, flow, empty/error state, mobile pass, console + network sweep), then walks it autonomously via Chrome DevTools MCP. Fixes everything it finds, including pre-existing console errors, layout glitches and a11y findings, in the same loop. Closes with the walked list and a ship-or-optimize gate. Activates as the last step of any ship-oriented workflow: ticket resolution, review, debug fixes, production-ready sign-off, TDD final validation. NOT a substitute for implementation, code review, or automated E2E tests, which run before.'
+description: 'Final browser validation after implementation AND review have succeeded. Boots the app via `lt dev up`, seeds realistic `@test.com` data, derives a step-by-step test list from the diff (every affected page, role, flow, empty/error state, mobile pass, console + network sweep), then walks it autonomously via Chrome DevTools MCP. Fixes everything it finds, including pre-existing issues, in the same loop, and closes with the walked list plus a ship-or-optimize gate. Activates as the last step of any ship-oriented workflow: ticket resolution, review, TDD final validation. NOT a substitute for implementation, code review, or automated E2E tests, which run before.'
 user-invocable: false
 ---
 
@@ -72,6 +72,14 @@ Follow the [managing-dev-servers](${CLAUDE_PLUGIN_ROOT}/skills/managing-dev-serv
 **Never start `pnpm dev` / `pnpm start` directly when an lt-dev context block is present** — that bypasses Caddy and re-introduces cross-wiring risk.
 
 If the boot fails (port collision, missing CA trust, DB not running): run `lt dev doctor` and resolve before continuing. Do NOT walk the list against a half-broken stack.
+
+**The stack is scoped to the project, not to your session.** `lt dev up` serves one `<slug>` with one dev database (`<slug>-local`), so a parallel Claude Code session in the same project shares both. Three consequences:
+
+- **`session: yes` may mean a peer started it.** That is fine, use it. But it means `lt dev down` at the end of your walk stops a stack somebody else is mid-walk in. When a peer is live in this project (`ListAgents`), leave the stack up and say so instead.
+- **A reseed is destructive for the peer too.** Step 3 writes into the shared dev database. Wiping and reseeding pulls the ground out from under a peer's logged-in session. Add your data alongside theirs, or send one `CONFLICT` and agree who owns the database for the next few minutes.
+- **The isolated `lt dev test` stack has none of this problem.** It runs its own `<slug>-test` database and its own URLs, so an E2E suite never disturbs a peer's walk. Prefer it whenever the walk does not have to happen against the dev data.
+
+The Chrome DevTools MCP itself needs no coordination: each session spawns its own chain and its own Chrome, so tabs never cross. What does cross is `pkill` on `chrome` or `node`, and the `cleanup-stale-chrome-mcp` hook, which reaps any chain older than `CHROME_MCP_MAX_AGE_HOURS` (72 by default) that is not its own session's — including a peer's, mid-walk. See [coordinating-peer-sessions](${CLAUDE_PLUGIN_ROOT}/skills/coordinating-peer-sessions/SKILL.md).
 
 ### Step 3 — Seed realistic test data + cover every role
 

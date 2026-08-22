@@ -33,14 +33,14 @@ This skill enables Claude Code to create, optimize, and manage business offers o
 | User Intent | Correct Skill |
 |------------|---------------|
 | Create/edit offers via MCP | **THIS SKILL** |
-| Develop the offers codebase (API/Frontend) | `generating-nest-servers` / `developing-lt-frontend` |
+| Develop the offers codebase (API/Frontend) | `lt-dev:generating-nest-servers` / `lt-dev:developing-lt-frontend` |
 | Deploy offers infrastructure | `devops` |
 
 ## Related Skills
 
 **Works closely with:**
-- `generating-nest-servers` — For backend development on the offers API
-- `developing-lt-frontend` — For frontend development on the offers app
+- `lt-dev:generating-nest-servers` — For backend development on the offers API
+- `lt-dev:developing-lt-frontend` — For frontend development on the offers app
 
 ## MCP Connection
 
@@ -150,7 +150,7 @@ The offers platform repository is hosted at: `https://gitlab.lenne.tech/intern/o
 **Workflow:**
 1. Check if the repo is already cloned locally (search common paths: `~/code/lenneTech/offers`, `~/projects/offers`, or use `find` / `locate`)
 2. If not found, ask the user if they want to clone it: `git clone https://gitlab.lenne.tech/intern/offers`
-3. Use `generating-nest-servers` / `developing-lt-frontend` skills for codebase changes
+3. Use `lt-dev:generating-nest-servers` / `lt-dev:developing-lt-frontend` skills for codebase changes
 
 ### When to Suggest a Global Block
 

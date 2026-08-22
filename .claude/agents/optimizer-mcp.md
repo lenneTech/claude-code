@@ -2,7 +2,8 @@
 name: optimizer-mcp
 description: Specialized agent for optimizing Claude Code MCP server configurations. Expert in .mcp.json structure, server types (stdio, http, sse), and MCP tool integration.
 model: sonnet
-tools: Read, Grep, Glob, Edit, Write
+effort: high
+tools: Read, Grep, Glob, Edit, Write, Bash
 permissionMode: default
 ---
 
@@ -51,6 +52,29 @@ For each .mcp.json, verify:
    - No sensitive data in configuration
    - Appropriate access restrictions
    - Safe default configurations
+
+## Shell Checks You Must Run
+
+Two of the checklist items are unanswerable by reading files. Run them rather than reporting them as unverifiable.
+
+**Registry drift on pinned versions.** Pinning is correct and stays; the question is only how far behind each pin has fallen:
+
+```bash
+npm view chrome-devtools-mcp version
+npm view nuxt-ui-mcp version
+```
+
+Compare against the pins in `plugins/lt-dev/.mcp.json` and in the launcher's `CHROME_MCP_PINNED_VERSION`, and report the gap. Never propose `@latest` as the remedy: resolving "latest" costs an npm-registry roundtrip on every start, measured at 3-22s against a 30s MCP startup timeout, so a slow network turns into a server that never comes up.
+
+**Executable bits on launchers.** A launcher without `+x` fails at server start:
+
+```bash
+git ls-files -s plugins/*/scripts/ plugins/*/hooks/scripts/
+```
+
+Mode `100755` is required for anything *executed*. A file that is only *sourced* (`. lib/…`) or run through an interpreter (`node foo.mjs`) needs no executable bit, so do not report those as defects.
+
+**Frontmatter parses.** `claude plugin validate plugins/<name>` after any `allowed-tools` edit.
 
 ## Output Format
 

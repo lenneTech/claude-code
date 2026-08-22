@@ -3,7 +3,7 @@ name: frontend-dev
 description: Autonomous frontend development agent for Nuxt 4 / Vue applications with strict TypeScript enforcement. Builds components, pages, composables, forms (Valibot), layouts, and integrates APIs via generated types (types.gen.ts, sdk.gen.ts). Enforces zero implicit any, readonly state returns, semantic colors, programmatic modals, and SSR-safe patterns. Operates in projects/app/ or packages/app/ monorepo structures.
 model: inherit
 effort: high
-tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, WebSearch, TodoWrite
+tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, WebSearch, TodoWrite, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__take_snapshot, mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__resize_page, mcp__plugin_lt-dev_chrome-devtools__click, mcp__plugin_lt-dev_chrome-devtools__fill, mcp__plugin_lt-dev_chrome-devtools__list_console_messages, mcp__plugin_lt-dev_chrome-devtools__list_network_requests, mcp__plugin_lt-dev_nuxt-ui-remote__list-components, mcp__plugin_lt-dev_nuxt-ui-remote__get-component, mcp__plugin_lt-dev_nuxt-ui-remote__get-component-metadata
 skills: developing-lt-frontend
 memory: project
 maxTurns: 80
@@ -56,7 +56,7 @@ Before writing any code:
 
 Several Nuxt/Vue framework conventions have a **standard safe path** and an **opt-out for good reasons**. The opt-out is never implicit — it requires a documented justification and awareness of what it bypasses.
 
-**Frontend instances** (Composition API vs Options, readonly composable state, SSR guards, deprecated APIs, `v-html`, `useFetch` vs raw `fetch`): see `developing-lt-frontend` skill → [`reference/informed-trade-off-pattern.md`](${CLAUDE_SKILL_DIR}/reference/informed-trade-off-pattern.md). The reference lists each instance's standard path, legitimate opt-out reasons, what is bypassed, and required documentation.
+**Frontend instances** (Composition API vs Options, readonly composable state, SSR guards, deprecated APIs, `v-html`, `useFetch` vs raw `fetch`): see `developing-lt-frontend` skill → [`reference/informed-trade-off-pattern.md`](${CLAUDE_PLUGIN_ROOT}/skills/developing-lt-frontend/reference/informed-trade-off-pattern.md). The reference lists each instance's standard path, legitimate opt-out reasons, what is bypassed, and required documentation.
 
 **Meta-shape** (identical across backend and frontend): five-element pattern (standard path → opt-out legitimacy → mandatory analysis → code comment → review severity from actual bypass). Full definition in the backend skill: `generating-nest-servers/reference/informed-trade-off-pattern.md`.
 

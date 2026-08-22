@@ -21,13 +21,13 @@ This skill enables Claude Code to perform deep, evidence-based analysis of softw
 |------------|---------------|
 | Analyze project source code | **THIS SKILL** |
 | Create or update a showcase | `creating-showcases` |
-| Develop the showroom platform itself | `generating-nest-servers` / `developing-lt-frontend` |
+| Develop the showroom platform itself | `lt-dev:generating-nest-servers` / `lt-dev:developing-lt-frontend` |
 
 ## Related Skills
 
 **Works closely with:**
 - `creating-showcases` — Consumes analysis reports to build SHOWCASE.md and showcase content
-- `generating-nest-servers` — For backend development on the showroom API
+- `lt-dev:generating-nest-servers` — For backend development on the showroom API
 
 ## Analysis Dimensions
 

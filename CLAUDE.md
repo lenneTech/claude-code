@@ -27,15 +27,23 @@ All Claude Code best practices are cached locally in `.claude/docs-cache/*.md`. 
 | `mcp.md` | MCP server configuration |
 | `memory.md` | CLAUDE.md structure and usage |
 | `settings.md` | Settings reference |
+| `settings-reference.md` | Full settings key reference, including `crossSessionInbound`, `isolatePeerMachines`, `dialogExpiry` |
 | `cli-reference.md` | CLI options and flags |
+| `env-vars.md` | Environment variables exported to hooks and Bash, including `CLAUDE_CODE_MESSAGING_SOCKET` and `CLAUDE_CODE_MESSAGING_TOKEN` |
 | `common-workflows.md` | Worktrees, parallel sessions, Plan Mode, subagents, PR workflows |
 | `github-plugins-readme.md` | Plugin structure, examples (from GitHub) |
 | `github-official-plugins.md` | Official plugin standards, quality guidelines (from GitHub) |
 | `github-skills-readme.md` | Skill specifications, templates (from GitHub) |
 | `github-changelog.md` | Recent changes and updates |
 | `agent-teams.md` | Agent Teams coordination, messaging, hooks, and best practices |
+| `cross-session-messaging.md` | Messaging between independent sessions: `ListAgents`/`SendMessage`, inbound controls, `notify_when_idle`, the inbox socket **(primary source)** |
 | `platform-skills-best-practices.md` | Skill authoring best practices and patterns **(primary source)** |
 | `owasp-secure-coding-checklist.md` | OWASP Secure Coding Practices (security reference) |
+
+**`settings` and `settings-reference` are two pages, not a duplicate.** The key reference moved to its own page, so a
+settings key looked up only in `settings.md` can come back absent while being fully documented. `crossSessionInbound`,
+`isolatePeerMachines` and `dialogExpiry` are the concrete case: zero hits in `settings.md`, all three in
+`settings-reference.md`. A cache update that reports `settings` shrinking sharply is that split, not a fetch failure.
 
 ### Cache Management
 
@@ -171,8 +179,8 @@ Defines MCP (Model Context Protocol) servers required by the plugin.
 **Current servers:**
 | Server | Type | Used By |
 |--------|------|---------|
-| `chrome-devtools` | stdio | validating-changes-in-browser, developing-lt-frontend, building-stories-with-tdd, vibe commands, frontend-reviewer, ux-reviewer, a11y-reviewer (browser testing & debugging) |
-| `linear` | http | take-ticket, ticket-cycle, resolve-ticket, spec-to-tasks, create-story, create-ticket, create-task, create-bug, review, debug, linear-comment, dev-submit, git:ship, rebasing-branches, branch-rebaser, backend-reviewer, code-reviewer, frontend-reviewer (issue tracking & project management) |
+| `chrome-devtools` | stdio | validating-changes-in-browser, developing-lt-frontend, building-stories-with-tdd, managing-dev-servers, vibe commands, frontend-reviewer, ux-reviewer, a11y-reviewer, frontend-dev agent (browser testing & debugging) |
+| `linear` | http | take-ticket, ticket-cycle, resolve-ticket, spec-to-tasks, create-story, create-ticket, create-task, create-bug, review, debug, interview, linear-comment, dev-submit, git:ship, rebasing-branches, branch-rebaser, backend-reviewer, code-reviewer, frontend-reviewer (issue tracking & project management) |
 | `nuxt-ui-remote` | stdio | developing-lt-frontend, figma-to-code, frontend-dev agent (Nuxt UI component reference) |
 
 **Tool naming:** a plugin-bundled server's callable tool name is `mcp__plugin_<plugin>_<server>__<tool>` — e.g. `mcp__plugin_lt-dev_chrome-devtools__take_snapshot`. The unscoped form (`mcp__chrome-devtools__…`) never matches for a bundled server, so an `allowed-tools` entry written that way silently grants nothing.

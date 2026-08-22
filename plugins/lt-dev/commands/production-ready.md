@@ -247,7 +247,7 @@ Agent tool with subagent_type "lt-dev:production-readiness-orchestrator":
 
 After all seven previous phases reached their terminal verdicts (Phase 1 green, Phase 2 coverage complete, Phase 3 thresholds passed, Phase 4 READY, Phase 5 clean, Phase 6 GREEN, Phase 7 PASS), run the final manual-style browser pass. This is the single phase the user actually walks alongside — the others are automated gates.
 
-Follow the [`validating-changes-in-browser`](${CLAUDE_PLUGIN_ROOT}/../skills/validating-changes-in-browser/SKILL.md) skill end-to-end:
+Follow the [`validating-changes-in-browser`](${CLAUDE_PLUGIN_ROOT}/skills/validating-changes-in-browser/SKILL.md) skill end-to-end:
 
 1. The skill boots `lt dev up` (or fallback per `managing-dev-servers`).
 2. It seeds `@test.com` accounts covering every role surfaced across Phase 4 (production-readiness audit), Phase 5 (security/backend/frontend review) permission matrices. Builds the account registry — every credential will appear in the final report.

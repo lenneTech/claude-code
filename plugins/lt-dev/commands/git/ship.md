@@ -1,5 +1,5 @@
 ---
-description: Ship the current feature branch into dev — pre-flight check, commit, rebase, test, check, MR/PR, Linear comment + "Dev Review" + unassign, wait for CI, merge (squash for feature branches, regular merge when promoting a base branch into a higher base branch), delete branch. Auto-retries on pipeline failure.
+description: 'Ship the current feature branch into dev — pre-flight check, commit, rebase, test, check, MR/PR, Linear comment + "Dev Review" + unassign, wait for CI, merge (squash for feature branches, regular merge when promoting a base branch into a higher base branch), delete branch. Auto-retries on pipeline failure.'
 argument-hint: "[--base=<branch>] [--max-pipeline-retries=<n>] [--no-squash] [--keep-branch]"
 allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__list_issue_statuses
 disable-model-invocation: false
@@ -451,6 +451,18 @@ On Option 1 — perform the merge. The merge verb comes from `MERGE_MODE` (STEP 
    - `git branch -D "$FEATURE_BRANCH"` (local hard-delete; safe because it's already merged into base via squash).
    - The remote branch is already deleted by Phase 8.
    - `git fetch --prune` to clean up stale remote-tracking refs.
+
+## STEP 9a — Tell peer sessions, but only when the merge changes their next move
+
+The base branch just moved. Most of the time that is **not** worth a message: every session that ships rebases against a freshly fetched `origin/$BASE_BRANCH` anyway (STEP 3), so a routine feature merge changes nothing about what a peer does next, and a message about it costs that peer a full prompt for news it would have picked up on its own.
+
+Call `ListAgents`. With no live peer in this repository, skip the rest of this step. With one, send a single `LANDED` message only when one of these holds:
+
+- **The merge breaks work in flight**: a changed API signature or shared type, a database migration, a reworked test setup, a dependency bump that moves the lockfile. A peer rebasing onto this will hit it, and knowing beforehand is the difference between a diagnosis and a surprise.
+- **A peer asked to be told about exactly this merge** (`ASK`), or is waiting on it to continue. Answer the sender, nobody else.
+- **This merge carries a claimed cross-cutting fix** (`running-check-script` Step 4a). The claim has to be released, or the peers keep holding lockfile work for a claim that is already resolved.
+
+Format and the full occasion list live in the [`coordinating-peer-sessions`](${CLAUDE_PLUGIN_ROOT}/skills/coordinating-peer-sessions/SKILL.md) skill. One message per merge, addressed to the peers it concerns, never a round of broadcasts. Nothing here waits on a reply: the ship is complete either way, and STEP 10 continues immediately.
 
 ## STEP 10 — Linear: Comment + "Dev Review" + Unassign (post-merge)
 

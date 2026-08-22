@@ -1,6 +1,6 @@
 ---
 name: maintaining-npm-packages
-description: 'Analyzes and optimizes npm package dependencies across 5 maintenance modes: FULL (update all), DRY-RUN (analysis only), SECURITY-ONLY (urgent CVE fixes), PRE-RELEASE (conservative patch-only), POST-FEATURE (cleanup after development). Activates when user mentions "update packages", "pnpm audit", "npm audit", "check dependencies", "security fix", "outdated dependencies", "deprecated packages", "devDependencies", "pre-release cleanup", "post-feature housekeeping", "remove unused packages", or package.json optimization. NOT for @lenne.tech/nest-server version updates (use nest-server-updating).'
+description: 'Analyzes and optimizes npm package dependencies across 5 maintenance modes: FULL (update all), DRY-RUN (analysis only), SECURITY-ONLY (urgent CVE fixes), PRE-RELEASE (conservative patch-only), POST-FEATURE (cleanup after development). Activates when user mentions updating packages, running an audit, checking or removing dependencies, deprecated packages, or package.json optimization. NOT for @lenne.tech/nest-server version updates (use nest-server-updating).'
 paths:
   - "**/package.json"
   - "**/pnpm-lock.yaml"
@@ -63,6 +63,7 @@ Do not force it with an override.
 - `generating-nest-servers` - For NestJS development when dependencies affect the server
 - `using-lt-cli` - For Git operations after maintenance
 - `nest-server-updating` - For updating @lenne.tech/nest-server (uses this agent internally)
+- `coordinating-peer-sessions` - Lockfile and audit work is exclusive per repo; when another session is live in it, claim a cross-cutting finding before fixing it (see `running-check-script` Step 4a) so two sessions do not rewrite one lockfile
 
 ## Available Commands
 
@@ -160,6 +161,68 @@ can go" is circular reasoning, and it is precisely how a real maintenance run de
 Off-by-one pins are the most common real finding: in one audit, 8 of 36 overrides sat
 exactly one patch below their fix (e.g. `vite` pinned to `7.3.2` when the advisory was
 fixed in `7.3.5`) — exact, maintained-looking, and still vulnerable.
+
+## An Override Key Is a PIN, Not a Floor (Critical)
+
+**A pnpm override key is matched against the REQUESTED RANGE a parent declares, not against the version that would resolve.** So even a "safely floored" key like `'pkg@>=1.0.0 <1.5.0': '1.5.0'` fires whenever it intersects a parent's declared range — and then PINS the tree to the target. It does not mean "at least 1.5.0".
+
+Consequence: **an override stops being harmless the moment its target falls behind the newest release in its major.** It silently becomes a *downgrade lock*, holding the package back while presenting itself as a security measure.
+
+Proven, not assumed — probe key `'fast-xml-parser@<5.6.0': '5.9.0'`, a window the natural resolve (5.11.0) does not satisfy, still fired and installed 5.9.0, because the parent requests `^5.5.6`.
+
+Found in **three** lt repos in one session (2026-08-22):
+
+| Repo | Entry | Held at | Would resolve to |
+|---|---|---|---|
+| nest-server-starter | `@hono/node-server` | 2.0.11 | 2.1.1 |
+| nest-server-starter | `hono` | 4.12.34 | 4.13.3 |
+| nest-server-starter | `axios` | 1.18.1 | 1.19.0 |
+| lt-monorepo | `fast-xml-parser` | 5.10.1 | 5.11.0 |
+
+Worse shapes to look for specifically:
+
+- **A bare key pins EVERY version.** `'@hono/node-server': '1.19.14'` sat five lines above `'@hono/node-server@<2.0.10': '2.0.11'` in one file — the bare key claims the whole tree, *below* the patched line, while the comment above the ranged entry claimed the opposite. **One rule per package.**
+- **A bare key can drag a package across a MAJOR, in either direction.** `js-yaml: 4.3.1` force-*downgraded* `@nestjs/swagger`'s own `^5` dependency; `ajv: 8.20.0` dragged `ajv@6` consumers up across a major that changes the export shape.
+- **Lockstep violations.** When the framework declares a package as an ordinary dependency (`nodemailer`, `ws`), an override target BELOW it puts a second, older copy in the tree next to the declared one under `shamefullyHoist`.
+
+### The only non-circular test: two FRESH resolves
+
+This does **not** contradict the Override Retention Rule above — it sharpens it. "Audit is clean → KEEP" is right when the audit ran *with* the override, because the override is why it is clean. The honest question is what happens **without** it:
+
+```bash
+# A: with the overrides block          B: with the block stripped
+pnpm install --lockfile-only           pnpm install --lockfile-only
+# then diff the resolved versions, and run `pnpm audit` on BOTH
+```
+
+Read the diff:
+
+| Result | Verdict |
+|---|---|
+| B reintroduces a vulnerable version | **LOAD-BEARING** — keep, and raise the target to the newest in the major |
+| B resolves HIGHER and audit is clean in both | **DOWNGRADE LOCK** — remove, or re-point |
+| No difference at all | **INERT** — keep only if `pnpm why` still finds the package; document that it is latent |
+
+⚠️ **Diffing against the COMMITTED lockfile proves nothing** — it already carries the pinned versions, so every entry looks load-bearing. Both resolves must be fresh. A maintenance run in this stack got this wrong on its first attempt and had to redo the whole comparison.
+
+Check every target against `npm view <pkg> versions` on each run, and **raise the key and the target together**.
+
+## `auditConfig.ignoreGhsas` Is Hoisted and Never Expires (Critical)
+
+`pnpm`'s `auditConfig.ignoreGhsas` / `.ignoreCves` are not ordinary settings — and in this stack they are not local either. Since **lt CLI 1.42.0** `auditConfig` is in the hoist whitelist (`NESTED_ARRAY_FIELDS` in `cli/src/lib/hoist-workspace-pnpm-config.ts`), so a suppression written in a template applies **workspace-wide in every generated project**, across every major range of the suppressed package. pnpm's `auditConfig` has **no expiry**.
+
+**A stale suppression is therefore worse than no suppression** — it silently covers advisories nobody assessed.
+
+Most entries are written when GitHub's advisory range is momentarily too broad (a blanket `<= X` sweeping up patched backports). Those ranges get narrowed later, and the entry's justification evaporates without anything announcing it.
+
+**Every entry needs a written removal condition and a verification date**, and every maintenance run must re-check them:
+
+```bash
+# strip auditConfig, re-resolve, re-audit — does the advisory actually still fire?
+pnpm install --lockfile-only && pnpm audit
+```
+
+Found live in lt-monorepo (2026-08-22): `GHSA-mh99-v99m-4gvg` (HIGH) suppressed since 2026-07-30 on a range that had since been narrowed to per-major windows, so the installed version no longer matched. Its own removal condition was met verbatim and nothing had re-read it.
 
 ## Vulnerability Resolution Workflow
 

@@ -32,24 +32,25 @@ Create detailed implementation plan from SPEC.md.
 
 ### Prerequisites
 
-1. **Check SPEC.md exists**
-   - If SPEC.md is missing, ask: "Keine SPEC.md gefunden. Soll ich helfen eine zu erstellen, oder einen anderen Dateinamen verwenden?"
+1. **Check for argument:** If the user provided a spec file path as argument (e.g., `/lt-dev:vibe:plan docs/SPEC-onboarding.md`), use that file as the spec throughout this command. Otherwise, default to `SPEC.md` in the project root.
+2. **Check the spec file exists**
+   - If the spec file is missing, ask: "Keine SPEC.md gefunden. Soll ich helfen eine zu erstellen, oder einen anderen Dateinamen verwenden?" (substitute the resolved filename if an argument was given)
 
-Read SPEC.md and create a comprehensive implementation plan.
+Read the spec file (SPEC.md by default, or the file given as argument) and create a comprehensive implementation plan.
 
-2. **Settle the spec's open decisions before planning**
+3. **Settle the spec's open decisions before planning**
 
-   A spec that leaves a decision open does not remove it, it defers it into the plan, where it gets guessed and baked into eight phases of checkboxes. Read the spec, gather the facts it rests on from the codebase, and where a genuine decision is still open, run the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/../skills/grilling-decisions/SKILL.md) skill: one question at a time, each carrying your recommendation, facts looked up rather than asked.
+   A spec that leaves a decision open does not remove it, it defers it into the plan, where it gets guessed and baked into eight phases of checkboxes. Read the spec, gather the facts it rests on from the codebase, and where a genuine decision is still open, run the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md) skill: one question at a time, each carrying your recommendation, facts looked up rather than asked.
 
    Fold the answers into the plan's **Architecture & Tech Stack** rationale, so the next reader sees the decision and the reason together. When the spec is genuinely unambiguous, say so and continue.
 
-3. **Let the architect agent design the blueprint**
+4. **Let the architect agent design the blueprint**
 
-   Spawn `lt-dev:architect` via the `Agent` tool with the spec, the settled decisions from step 2, and the detected project layout. It returns exact file paths, the MongoDB data model, REST contracts, the `@Restricted` / `@Roles` / `securityCheck` permission hierarchy, frontend state design, and a phased build sequence, all in a form `backend-dev` and `frontend-dev` can execute directly.
+   Spawn `lt-dev:architect` via the `Agent` tool with the spec, the settled decisions from step 3, and the detected project layout. It returns exact file paths, the MongoDB data model, REST contracts, the `@Restricted` / `@Roles` / `securityCheck` permission hierarchy, frontend state design, and a phased build sequence, all in a form `backend-dev` and `frontend-dev` can execute directly.
 
    Two reasons it runs as an agent rather than inline: the codebase exploration it does is high-volume and would otherwise fill this conversation before the plan is even written, and its output is the same blueprint the build commands consume, so the plan and the build agree by construction.
 
-   Fold its blueprint into the plan below: its file paths feed the **File/folder structure** requirement, its build sequence feeds the phase list, and its data model and API contracts feed **Architecture & Tech Stack**. Where its proposal conflicts with something the user settled in step 2, the user's decision wins and the conflict is stated in the plan.
+   Fold its blueprint into the plan below: its file paths feed the **File/folder structure** requirement, its build sequence feeds the phase list, and its data model and API contracts feed **Architecture & Tech Stack**. Where its proposal conflicts with something the user settled in step 3, the user's decision wins and the conflict is stated in the plan.
 
 ### CRITICAL: Implementation Order
 

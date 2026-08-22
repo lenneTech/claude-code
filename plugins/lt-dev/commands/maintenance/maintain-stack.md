@@ -12,6 +12,11 @@ Orchestriert das Stack-weite Maintaining nach Skill **`maintaining-lt-stack`**
 (Single Source of Truth für Reihenfolge, Rezepte, Wartemuster, Fallstricke —
 zuerst laden!). Dieser Command beschreibt nur die Orchestrierung.
 
+**Why unrestricted `Bash`:** this command drives six repos through `git`, `gh`,
+`glab`, `npm`/`pnpm`/`yarn`, `node`, the `turbo` CLI and `mongosh` across two
+release waves plus the smoke-test gate — the CLI surface is too broad and too
+repo-dependent to enumerate as individual patterns.
+
 ## Wann verwenden
 
 - Regelmäßiger Stack-Release-Zyklus (alle Grund-Repos aktuell + published)

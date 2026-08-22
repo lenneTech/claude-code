@@ -1,6 +1,6 @@
 ---
 description: Guided workflow to create a new business offer on angebote.lenne.tech via MCP
-allowed-tools: Read, Grep, Glob, Bash(command -v:*), Bash(git config:*), Bash(git clone:*), Bash(git pull:*), Bash(git status:*), Agent, mcp__plugin_lt-offers_offers-api__get_offer_context, mcp__plugin_lt-offers_offers-api__list_offers, mcp__plugin_lt-offers_offers-api__get_offer, mcp__plugin_lt-offers_offers-api__create_offer, mcp__plugin_lt-offers_offers-api__update_offer, mcp__plugin_lt-offers_offers-api__list_templates, mcp__plugin_lt-offers_offers-api__create_from_template, mcp__plugin_lt-offers_offers-api__list_globals, mcp__plugin_lt-offers_offers-api__add_offer_source, mcp__plugin_lt-offers_offers-api__upload_offer_source_file, mcp__plugin_lt-offers_offers-api__mark_sent, mcp__plugin_lt-offers_offers-api__generate_snippet, mcp__plugin_lt-offers_offers-api-demo__get_offer_context, mcp__plugin_lt-offers_offers-api-demo__list_offers, mcp__plugin_lt-offers_offers-api-demo__get_offer, mcp__plugin_lt-offers_offers-api-demo__create_offer, mcp__plugin_lt-offers_offers-api-demo__update_offer, mcp__plugin_lt-offers_offers-api-demo__list_templates, mcp__plugin_lt-offers_offers-api-demo__create_from_template, mcp__plugin_lt-offers_offers-api-demo__list_globals, mcp__plugin_lt-offers_offers-api-demo__add_offer_source, mcp__plugin_lt-offers_offers-api-demo__upload_offer_source_file, mcp__plugin_lt-offers_offers-api-demo__mark_sent, mcp__plugin_lt-offers_offers-api-demo__generate_snippet
+allowed-tools: Read, Grep, Glob, Bash(command -v:*), Bash(git config:*), Bash(git clone:*), Bash(git pull:*), Bash(git status:*), mcp__plugin_lt-offers_offers-api__get_offer_context, mcp__plugin_lt-offers_offers-api__list_offers, mcp__plugin_lt-offers_offers-api__get_offer, mcp__plugin_lt-offers_offers-api__create_offer, mcp__plugin_lt-offers_offers-api__update_offer, mcp__plugin_lt-offers_offers-api__list_templates, mcp__plugin_lt-offers_offers-api__create_from_template, mcp__plugin_lt-offers_offers-api__list_globals, mcp__plugin_lt-offers_offers-api__add_offer_source, mcp__plugin_lt-offers_offers-api__upload_offer_source_file, mcp__plugin_lt-offers_offers-api__mark_sent, mcp__plugin_lt-offers_offers-api__generate_snippet, mcp__plugin_lt-offers_offers-api-demo__get_offer_context, mcp__plugin_lt-offers_offers-api-demo__list_offers, mcp__plugin_lt-offers_offers-api-demo__get_offer, mcp__plugin_lt-offers_offers-api-demo__create_offer, mcp__plugin_lt-offers_offers-api-demo__update_offer, mcp__plugin_lt-offers_offers-api-demo__list_templates, mcp__plugin_lt-offers_offers-api-demo__create_from_template, mcp__plugin_lt-offers_offers-api-demo__list_globals, mcp__plugin_lt-offers_offers-api-demo__add_offer_source, mcp__plugin_lt-offers_offers-api-demo__upload_offer_source_file, mcp__plugin_lt-offers_offers-api-demo__mark_sent, mcp__plugin_lt-offers_offers-api-demo__generate_snippet
 argument-hint: "[customer-name-or-description]"
 disable-model-invocation: true
 ---
@@ -38,6 +38,8 @@ disable-model-invocation: true
 
 ### Step 2: Gather Requirements
 
+**Check for argument:** If the user provided a customer name or description as argument (e.g., `/lt-offers:offers:create "Muster GmbH - Webseiten-Relaunch"`), use it as the customer name/company and initial description, and only ask for the remaining details below that are still missing.
+
 Ask the user for:
 - **Customer name** and **company** (required)
 - **Offer title** (or suggest one based on context)
@@ -59,7 +61,7 @@ If templates are available, ask:
 
 ### Step 4: Build Content Blocks
 
-Based on the requirements, create content blocks following the structure from `${CLAUDE_SKILL_DIR}/reference/best-practices.md`.
+Based on the requirements, create content blocks following the structure from `${CLAUDE_PLUGIN_ROOT}/skills/creating-offers/reference/best-practices.md`.
 
 Recommended minimum:
 1. `text` — Introduction/greeting

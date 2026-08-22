@@ -15,6 +15,11 @@ disable-model-invocation: false
 > This rule replaces a former `disable-model-invocation: true`, which blocked both callers
 > at their dependency stage.
 
+**Why unrestricted `Bash`:** this command drives npm, pnpm, yarn, git, and node
+introspection across whatever layout Phase 0 detects (npm-mode or vendor-mode,
+single project or fullstack monorepo) — the exact commands depend on that
+detection, so a fixed allowlist would not cover real runs.
+
 Brings a project up to date **completely**: the lenne.tech frameworks first, then the
 package ecosystem around them. Works for plain Node projects, fullstack monorepos
 (`projects/api` + `projects/app`), and vendor-mode projects that carry the framework

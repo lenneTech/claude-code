@@ -1,7 +1,7 @@
 # Skill authoring best practices - Claude Platform Docs
 
 > Source: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices
-> Generated: 2026-08-02T08:53:47.572Z
+> Generated: 2026-08-22T11:37:50.396Z
 
 ---
 
@@ -110,20 +110,6 @@ What works perfectly for Opus might need more detail for Haiku. If you plan to u
 
 Skill structure
 
-**YAML Frontmatter:** The SKILL.md frontmatter requires two fields:`name`:
-
--   Maximum 64 characters
--   Must contain only lowercase letters, numbers, and hyphens
--   Cannot contain XML tags
--   Cannot contain reserved words: "anthropic", "claude"`description`:
-
--   Must be non-empty
--   Maximum 1,024 characters
--   Cannot contain XML tags
--   Should describe what the Skill does and when to use it
-
-For complete Skill structure details, see the [Skills overview](/docs/en/agents-and-tools/agent-skills/overview#skill-structure).
-
 
 Naming conventions
 
@@ -150,12 +136,6 @@ Consistent naming makes it easier to:
 Writing effective descriptions
 
 The`description`field enables Skill discovery and should include both what the Skill does and when to use it.
-
-**Always write in third person**. The description is injected into the system prompt, and inconsistent point-of-view can cause discovery problems.
-
--   **Good:** "Processes Excel files and generates reports"
--   **Avoid:** "I can help you process Excel files"
--   **Avoid:** "You can use this to process Excel files"
 
 **Be specific and include key terms**. Include both what the Skill does and specific triggers/contexts for when to use it.
 
@@ -184,15 +164,18 @@ As your Skill grows, you can bundle additional content that Claude loads only wh
 
 ![Bundling additional reference files like reference.md and forms.md.](/docs/images/agent-skills-bundling-content.png)
 
-The complete Skill directory structure might look like this:```pdf/
-├── SKILL.md              # Main instructions (loaded when triggered)
-├── FORMS.md              # Form-filling guide (loaded as needed)
-├── reference.md          # API reference (loaded as needed)
-├── examples.md           # Usage examples (loaded as needed)
-└── scripts/
-    ├── analyze_form.py   # Utility script (executed, not loaded)
-    ├── fill_form.py      # Form filling script
-    └── validate.py       # Validation script```Pattern 1: High-level guide with references```---
+The complete Skill directory structure might look like this:
+
+-`pdf/`-`SKILL.md`: Main instructions (loaded when triggered)
+    -`FORMS.md`: Form-filling guide (loaded as needed)
+    -`reference.md`: API reference (loaded as needed)
+    -`examples.md`: Usage examples (loaded as needed)
+    -`scripts/`-`analyze_form.py`: Utility script (executed, not loaded)
+        -`fill_form.py`: Form filling script
+        -`validate.py`: Validation script
+
+
+Pattern 1: High-level guide with references```---
 name: pdf-processing
 description: Extracts text and tables from PDF files, fills forms, and merges documents. Use when working with PDF files or when the user mentions PDFs, forms, or document extraction.
 
@@ -212,13 +195,15 @@ with pdfplumber.open("file.pdf") as pdf:
 
 Pattern 2: Domain-specific organization
 
-For Skills with multiple domains, organize content by domain to avoid loading irrelevant context. When a user asks about sales metrics, Claude only needs to read sales-related schemas, not finance or marketing data. This keeps token usage low and context focused.```bigquery-skill/
-├── SKILL.md (overview and navigation)
-└── reference/
-    ├── finance.md (revenue, billing metrics)
-    ├── sales.md (opportunities, pipeline)
-    ├── product.md (API usage, features)
-    └── marketing.md (campaigns, attribution)```SKILL.md```# BigQuery Data Analysis
+For Skills with multiple domains, organize content by domain to avoid loading irrelevant context. When a user asks about sales metrics, Claude only needs to read sales-related schemas, not finance or marketing data. This keeps token usage low and context focused.
+
+-`bigquery-skill/`-`SKILL.md`(overview and navigation)
+    -`reference/`-`finance.md`(revenue, billing metrics)
+        -`sales.md`(opportunities, pipeline)
+        -`product.md`(API usage, features)
+        -`marketing.md`(campaigns, attribution)
+
+SKILL.md```# BigQuery Data Analysis
 
 ## Available datasets
 
@@ -493,10 +478,7 @@ Guide Claude through decision points:```## Document modification workflow
    - Unpack existing document
    - Modify XML directly
    - Validate after each change
-   - Repack when complete```If workflows become large or complicated with many steps, consider pushing them into separate files and tell Claude to read the appropriate file based on the task at hand.
-
-
-Evaluation and iteration
+   - Repack when complete```Evaluation and iteration
 
 
 Build evaluations first
@@ -522,10 +504,7 @@ This approach ensures you're solving actual problems rather than anticipating re
     "Extracts text content from all pages in the document without missing any pages",
     "Saves the extracted text to a file named output.txt in a clear, readable format"
   ]
-}```This example demonstrates a data-driven evaluation with a simple testing rubric. There is not currently a built-in way to run these evaluations. Users can create their own evaluation system. Evaluations are your source of truth for measuring Skill effectiveness.
-
-
-Develop Skills iteratively with Claude
+}```Develop Skills iteratively with Claude
 
 The most effective Skill development process involves Claude itself. Work with one instance of Claude ("Claude A") to create a Skill that is used by other instances ("Claude B"). Claude A helps you design and refine instructions, while Claude B tests them in real tasks. This works because Claude models understand both how to write effective agent instructions and what information agents need.
 
@@ -538,8 +517,6 @@ The most effective Skill development process involves Claude itself. Work with o
     **Example:** If you worked through a BigQuery analysis, you might have provided table names, field definitions, filtering rules (such as "always exclude test accounts"), and common query patterns.
 
 3.  **Ask Claude A to create a Skill:** "Create a Skill that captures this BigQuery analysis pattern we just used. Include the table schemas, naming conventions, and the rule about filtering test accounts."
-
-    Claude models understand the Skill format and structure natively. You don't need special system prompts or a "writing skills" skill to get Claude to help create Skills. Simply ask Claude to create a Skill and it generates properly structured SKILL.md content with appropriate frontmatter and body content.
 
 4.  **Review for conciseness:** Check that Claude A hasn't added unnecessary explanations. Ask: "Remove the explanation about what win rate means - Claude already knows that."
 
@@ -683,9 +660,7 @@ When inputs can be rendered as images, have Claude analyze them:```## Form layou
 
 1. Convert PDF to images:```bash
    python scripts/pdf_to_images.py form.pdf```2. Analyze each page image to identify form fields
-3. Claude can see field locations and types visually```In this example, you'd need to write the`pdf_to_images.py`script.
-
-Claude's vision capabilities help analyze layouts and structures.
+3. Claude can see field locations and types visually```Claude's vision capabilities help analyze layouts and structures.
 
 
 Create verifiable intermediate outputs
@@ -740,12 +715,14 @@ Skills run in a code execution environment with filesystem access, bash commands
     -   "See`analyze_form.py`for the extraction algorithm" (read as reference)
 -   **Test file access patterns:** Verify Claude can navigate your directory structure by testing with real requests
 
-**Example:**```bigquery-skill/
-├── SKILL.md (overview, points to reference files)
-└── reference/
-    ├── finance.md (revenue metrics)
-    ├── sales.md (pipeline data)
-    └── product.md (usage analytics)```When the user asks about revenue, Claude reads SKILL.md, sees the reference to`reference/finance.md`, and calls bash to read just that file. The sales.md and product.md files remain on the filesystem, consuming zero context tokens until needed. This filesystem-based model is what enables progressive disclosure. Claude can navigate and selectively load exactly what each task requires.
+**Example:**
+
+-`bigquery-skill/`-`SKILL.md`(overview, points to reference files)
+    -`reference/`-`finance.md`(revenue metrics)
+        -`sales.md`(pipeline data)
+        -`product.md`(usage analytics)
+
+When the user asks about revenue, Claude reads SKILL.md, sees the reference to`reference/finance.md`, and calls bash to read just that file. The sales.md and product.md files remain on the filesystem, consuming zero context tokens until needed. This filesystem-based model is what enables progressive disclosure. Claude can navigate and selectively load exactly what each task requires.
 
 For complete details on the technical architecture, see [How Skills work](/docs/en/agents-and-tools/agent-skills/overview#how-skills-work) in the Skills overview.
 
@@ -830,20 +807,16 @@ Testing
 
 Next steps
 
-[
+[Get started with Agent Skills](/docs/en/agents-and-tools/agent-skills/quickstart)
 
-Use Skills in Claude Code
+Create your first Skill
+
+[Use Skills in Claude Code](https://code.claude.com/docs/en/skills)
 
 Create and manage Skills in Claude Code
 
-
-](https://code.claude.com/docs/en/skills)[
-
-Use Skills with the API
+[Use Skills with the API](/docs/en/build-with-claude/skills-guide)
 
 Upload and use Skills programmatically
-
-
-](/docs/en/build-with-claude/skills-guide)
 
 Was this page helpful?

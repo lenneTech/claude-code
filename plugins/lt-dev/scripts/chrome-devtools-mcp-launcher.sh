@@ -19,24 +19,25 @@
 # if it exits abnormally, it is respawned while the stdio pipe to Claude Code
 # stays open, so the session never notices the crash (chrome-devtools-mcp
 # answers tool calls without requiring a fresh initialize handshake; verified
-# against v1.4.0). A clean exit (EOF on stdin = session closed) ends the
-# launcher, and rapid crash loops abort after 5 attempts.
+# against v1.4.0, not individually re-verified against every later pin —
+# reconfirm this assumption if the supervisor starts requiring a fresh
+# handshake after a version bump). A clean exit (EOF on stdin = session
+# closed) ends the launcher, and rapid crash loops abort after 5 attempts.
 #
 # Overrides:
 #   CHROME_MCP_CHANNEL=stable|canary   force browser channel
 #   CHROME_MCP_VERSION=<exact version> override the pinned npx fallback version
 #   CHROME_MCP_SUPERVISE=0             disable the respawn supervisor (debug)
 #
-# KEEP IN SYNC with the twin under the other plugin's scripts/ directory
-# (lt-dev <-> lt-showroom). Plugin isolation forbids sharing files between
-# plugins. The canonical copy lives in lt-dev; mirror via:
-#   .claude/scripts/sync-chrome-mcp-launcher.sh
-# CI check:
-#   .claude/scripts/sync-chrome-mcp-launcher.sh --check
+# lt-showroom does NOT declare its own chrome-devtools server or launcher —
+# it relies on this single shared lt-dev instance instead of starting a
+# second one (see plugins/lt-showroom/README.md, "Browser automation via
+# lt-dev"). There is therefore no twin file to keep in sync; this launcher
+# is the only copy, and bumping CHROME_MCP_PINNED_VERSION here is enough.
 
 set -eu
 
-CHROME_MCP_PINNED_VERSION="${CHROME_MCP_VERSION:-1.4.0}"
+CHROME_MCP_PINNED_VERSION="${CHROME_MCP_VERSION:-1.7.0}"
 
 # ensure_node_on_path — make `npx`/`node` resolvable before we exec npx.
 #
@@ -46,9 +47,10 @@ CHROME_MCP_PINNED_VERSION="${CHROME_MCP_VERSION:-1.4.0}"
 # would die with "npx: not found". This best-effort, idempotent resolver probes
 # the common version-manager locations and prepends the first one that has a real
 # `node`. NO-OP when npx already resolves. INLINED (not sourced) on purpose:
-# plugin isolation forbids cross-plugin file sharing and this script must stay
-# byte-identical to its lt-showroom twin. Canonical copy:
-#   plugins/lt-dev/scripts/lib/ensure-node-path.sh  (keep both in sync).
+# plugin isolation forbids this launcher from sourcing a file outside
+# plugins/lt-dev/. The canonical, sourceable copy other lt-dev scripts use is
+#   plugins/lt-dev/scripts/lib/ensure-node-path.sh  (keep this inlined copy in
+# sync with that one — both live inside lt-dev, no other plugin is involved).
 ensure_node_on_path() {
   if command -v npx >/dev/null 2>&1 && command -v node >/dev/null 2>&1; then
     return 0

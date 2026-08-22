@@ -28,7 +28,10 @@ Execute IMPLEMENTATION_PLAN.md completely.
 **ABORT HANDLING:** If the user wants to cancel at any point (e.g., "abbrechen", "stop", "cancel"), acknowledge: "Build abgebrochen." and stop the process.
 
 ## Prompt
-Read IMPLEMENTATION_PLAN.md and SPEC.md.
+
+**Check for argument:** If the user provided a plan file path as argument (e.g., `/lt-dev:vibe:build docs/PLAN-onboarding.md`), use that file as the implementation plan throughout this command. Otherwise, default to `IMPLEMENTATION_PLAN.md` in the project root.
+
+Read the implementation plan (IMPLEMENTATION_PLAN.md by default, or the file given as argument) and SPEC.md.
 
 ### CRITICAL: Execution Rules
 

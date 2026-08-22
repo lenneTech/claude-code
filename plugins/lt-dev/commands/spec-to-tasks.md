@@ -62,7 +62,7 @@ Analyze the extracted content and identify:
 
 ### Step 2b: Settle the open decisions before slicing
 
-Point 5 is where specs are thinnest, and a task list is the worst place to discover it: an unstated decision becomes a guessed acceptance criterion, which becomes a ticket someone implements against. Where the analysis surfaced a genuine open decision (which roles may do this, what happens to existing records, what an empty result returns), run the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/../skills/grilling-decisions/SKILL.md) skill: one question at a time, each carrying your recommendation, facts read from the codebase rather than asked.
+Point 5 is where specs are thinnest, and a task list is the worst place to discover it: an unstated decision becomes a guessed acceptance criterion, which becomes a ticket someone implements against. Where the analysis surfaced a genuine open decision (which roles may do this, what happens to existing records, what an empty result returns), run the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md) skill: one question at a time, each carrying your recommendation, facts read from the codebase rather than asked.
 
 Fold each answer into the acceptance criteria of the task it belongs to. When the spec answers everything, say so and continue.
 

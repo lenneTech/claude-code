@@ -25,7 +25,7 @@ This skill implements a **5-phase workflow** built around SHOWCASE.md as the sin
 ## Related Skills
 
 - `analyzing-projects` — Provides the evidence-based analysis report that populates SHOWCASE.md
-- `generating-nest-servers` / `developing-lt-frontend` — For platform development
+- `lt-dev:generating-nest-servers` / `lt-dev:developing-lt-frontend` — For platform development
 
 ## MCP Connection
 

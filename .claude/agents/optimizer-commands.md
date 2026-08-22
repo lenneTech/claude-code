@@ -2,7 +2,8 @@
 name: optimizer-commands
 description: Specialized agent for optimizing Claude Code slash commands. Expert in command frontmatter, argument-hint syntax, allowed-tools restrictions, and command organization.
 model: sonnet
-tools: Read, Grep, Glob, Edit, Write
+effort: high
+tools: Read, Grep, Glob, Edit, Write, Bash
 permissionMode: default
 ---
 
@@ -50,6 +51,18 @@ For each command, verify:
    - No history references ("new", "updated", "since vX.Y")
    - Timeless documentation style
    - Complete but concise
+
+## Shell Check You Must Run
+
+Run the validator against every plugin you touched, and report its output:
+
+```bash
+claude plugin validate plugins/lt-dev
+claude plugin validate plugins/lt-offers
+claude plugin validate plugins/lt-showroom
+```
+
+It catches the YAML traps a read-through misses: an `argument-hint` whose `[...]` value parses as a YAML array instead of a string, and a `description` whose embedded `"` or mid-sentence `:` ends the scalar early. A finding about frontmatter that the validator contradicts is a finding to drop.
 
 ## Output Format
 

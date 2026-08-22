@@ -1,6 +1,6 @@
 ---
 name: using-lt-cli
-description: 'Provides reference for the lenne.tech CLI tool (lt command). Covers lt fullstack init/update/convert-mode, lt git get/reset, lt server create/object/addProp, and lt dev (parallel project orchestration via Caddy: install/up/down/status/doctor/tunnel). Activates on any lt subcommand, "lenne.tech CLI", "fullstack workspace", "local templates", "--api-link", "--frontend-link", "--noConfirm", "convert-mode", "npm mode", "vendor mode", "Caddy tunnel", "trycloudflare". NOT for NestJS module/object/property creation (use generating-nest-servers). NOT for Vue/Nuxt frontend code (use developing-lt-frontend).'
+description: 'Provides reference for the lenne.tech CLI tool (lt command). Covers lt fullstack init/update/convert-mode, lt git get/reset, lt server create/object/addProp, and lt dev (parallel project orchestration via Caddy: install/up/down/status/doctor/tunnel). Activates on any lt subcommand, "lenne.tech CLI", "--noConfirm", "convert-mode", "npm mode" / "vendor mode", "Caddy tunnel". NOT for NestJS module/object/property creation (use generating-nest-servers). NOT for Vue/Nuxt frontend code (use developing-lt-frontend).'
 ---
 
 # LT CLI Reference

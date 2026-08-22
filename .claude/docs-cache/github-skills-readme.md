@@ -5,7 +5,7 @@
 # Skills
 
 > **Source:** https://raw.githubusercontent.com/anthropics/skills/main/README.md
-> **Generated:** 2026-08-02T08:53:43.194Z
+> **Generated:** 2026-08-22T11:37:46.101Z
 
 ---
 

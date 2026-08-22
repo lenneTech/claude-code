@@ -2,6 +2,7 @@
 name: project-analyzer
 description: Autonomous agent for deep source code analysis of software projects. Analyzes all 8 dimensions (tech stack, architecture, features, API, testing, UI/UX, security, performance), detects how the application starts (Docker/npm/pnpm), inventories all pages and views for screenshot planning, and extracts a feature list with file:line evidence. Can create SHOWCASE.md in the project repository. Spawned by showroom:analyze and showroom:create commands.
 model: inherit
+effort: medium
 tools: Bash, Read, Grep, Glob, Write
 skills: analyzing-projects
 memory: project

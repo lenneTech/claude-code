@@ -6,7 +6,6 @@ effort: high
 tools: Bash, Read, Grep, Glob, WebFetch, WebSearch, TodoWrite
 skills: generating-nest-servers, developing-lt-frontend, building-stories-with-tdd, using-lt-cli, general-frontend-security, maintaining-npm-packages
 memory: project
-maxTurns: 80
 ---
 
 # Architecture Planning Agent
@@ -215,7 +214,7 @@ For every architecture, address:
 ```
 Authentication:  Better Auth — which routes need middleware: 'auth'?
 Authorization:   Which roles access which endpoints/fields?
-Error Handling:  Toast notifications (German), error composable
+Error Handling:  Toast notifications (project's UI language — detect it, never assume German), error composable
 Loading States:  ref<boolean> per operation, :loading on buttons
 Pagination:      CrudService findAndCount + useFetch with reactive params
 Caching:         useAsyncData keys, cache invalidation strategy
@@ -298,7 +297,7 @@ Always backend-first, TDD approach:
 
 #### 3.3 Data Flow Diagram
 
-Map every feature from user action to database:
+Map every feature from user action to database. The UI text below is an illustrative example (German) — use the project's detected UI language when writing the actual blueprint:
 
 ```
 User clicks "Erstellen" → ModalCreateProduct opens (useOverlay)

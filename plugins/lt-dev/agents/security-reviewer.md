@@ -2,7 +2,7 @@
 name: security-reviewer
 description: Autonomous OWASP-aligned security review agent for lenne.tech fullstack projects. Audits 3-layer permission model (@Restricted/@Roles/securityCheck), injection vectors (NoSQL, command, path traversal), XSS (v-html, innerHTML, eval), CSRF (SameSite cookies, CORS), auth patterns (Better Auth, JWT, httpOnly cookies), input validation (class-validator, Valibot), dependency CVEs (npm audit), Docker security, and environment secrets. Produces structured report with severity classification and before/after remediation code.
 model: inherit
-effort: max
+effort: medium
 tools: Bash, Read, Grep, Glob, TodoWrite
 skills: generating-nest-servers, general-frontend-security, developing-lt-frontend
 memory: project

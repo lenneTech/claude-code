@@ -1,12 +1,26 @@
 ---
 name: coordinating-agent-teams
-description: 'Provides auto-detection heuristics, coordination patterns, and worktree isolation guidance for parallel Claude Code operations. Covers Agent Teams (independent sessions with messaging) and parallel subagent spawning (Agent tool with isolation worktree). Activates on "agent team", "parallel review", "team debug", "parallel worktrees", "batch rebase", "implement in parallel", when commands evaluate team suitability via CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS, or when spawning several file-modifying subagents concurrently. NOT for single sequential subagent invocations.'
+description: 'Provides auto-detection heuristics, coordination patterns, and worktree isolation guidance for parallel Claude Code operations. Covers Agent Teams (independent sessions with messaging) and parallel subagent spawning (Agent tool with isolation worktree). Activates on "agent team", "parallel review", "batch rebase", when commands evaluate team suitability via CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS, or when spawning several file-modifying subagents concurrently. NOT for single sequential subagent invocations. NOT for independent sessions the user started themselves (use coordinating-peer-sessions).'
 user-invocable: false
 ---
 
 # Coordinating Agent Teams
 
 Claude Code Agent Teams (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) coordinate multiple independent Claude Code sessions with inter-agent messaging and a shared task list. Unlike subagents (Agent tool), teammates communicate directly and challenge each other.
+
+## Not the same as peer sessions
+
+Two different things run several Claude Code sessions at once, and only one of them is this skill.
+
+| | Agent teams (this skill) | Peer sessions (`coordinating-peer-sessions`) |
+|---|---|---|
+| Who starts them | This session spawns them | The user opens each terminal |
+| Structure | A lead supervises, teammates share a task list | Nobody leads; each session owns its work |
+| Lifetime | Bound to the lead's session | Independent; any of them can outlive the others |
+| Coordination | Task list, plan approval, teammate messaging | Linear and Git first, `ListAgents` second, one message only for LANDED / CLAIM / CONFLICT / SOLVED / READY / ASK |
+| Gate | `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` | On by default from v2.1.224 |
+
+`SendMessage` serves both, which is what makes them easy to confuse. The test is who started the other session: if this session spawned it, the rules here apply; if the user did, the peer rules do. Never treat a peer as a teammate to assign work to. It has its own task and its own user, and a peer message is not an instruction it owes you compliance with.
 
 ## Gotchas
 
@@ -136,5 +150,7 @@ See [worktree-guide.md](${CLAUDE_SKILL_DIR}/worktree-guide.md) for setup, cleanu
 | `/lt-dev:review` | Auto-detects team for large/fullstack changes |
 | `/lt-dev:create-story` | Auto-detects team for fullstack TDD |
 | `/lt-dev:git:rebase-mrs` | Auto-detects team for batch operations |
+
+| `coordinating-peer-sessions` skill | The sibling model: independent sessions the user started, coordinated through Linear, Git, and sparing messages |
 
 **Note:** `/lt-dev:debug` REQUIRES Agent Teams (no single-agent fallback). All other commands auto-detect based on complexity heuristics and fall back to single-agent mode gracefully.

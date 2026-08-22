@@ -1,7 +1,7 @@
 ---
 description: Detect source code changes via tree hash comparison, re-analyze only affected areas, update SHOWCASE.md and refresh the showcase on showroom.lenne.tech
 argument-hint: "[project-path]"
-allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(ls:*), Bash(curl:*), Bash(node:*), Bash(grep:*), Agent, WebFetch
+allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(ls:*), Bash(curl:*), Bash(node:*), Bash(grep:*), Agent, WebFetch, mcp__plugin_lt-showroom_showroom-api__*
 disable-model-invocation: true
 ---
 
@@ -36,7 +36,13 @@ Detects what changed since the last analysis using git tree hashes, re-analyzes 
 
 ## Workflow
 
-### Step 1: Read Current State
+### Step 1: Determine Project Path
+
+If `$ARGUMENTS` is provided, use it as the project root. Otherwise, use the current working directory.
+
+Verify the path contains a `SHOWCASE.md` file (or `docs/showcase/SHOWCASE.md`). If not found, suggest running `/showroom:analyze` first.
+
+### Step 2: Read Current State
 
 ```bash
 # Read SHOWCASE.md frontmatter
@@ -50,7 +56,7 @@ new_hash=$(git rev-parse HEAD:projects 2>/dev/null || git rev-parse HEAD:src 2>/
 new_commit=$(git rev-parse --short HEAD)
 ```
 
-### Step 2: Compare and Report
+### Step 3: Compare and Report
 
 ```
 Change Detection:
@@ -64,7 +70,7 @@ Status: OUTDATED — source code has changed since last analysis
 
 If `old_hash == new_hash`: report "NO CHANGES" and exit (no update needed).
 
-### Step 3: Find Exactly What Changed
+### Step 4: Find Exactly What Changed
 
 ```bash
 # Find the commit that had the old tree hash
@@ -88,7 +94,7 @@ if [ -z "$old_commit" ]; then
 fi
 ```
 
-### Step 4: Classify Changes
+### Step 5: Classify Changes
 
 Map changed files to SHOWCASE.md sections:
 
@@ -102,7 +108,7 @@ Map changed files to SHOWCASE.md sections:
 | `*.controller.ts` or `*.resolver.ts` | API Surface |
 | `nuxt.config.ts` | Technologie-Stack, UI/UX |
 
-### Step 5: Targeted Re-Analysis
+### Step 6: Targeted Re-Analysis
 
 Spawn `project-analyzer` for changed areas ONLY:
 
@@ -120,7 +126,7 @@ For each changed file, determine:
 Do NOT re-analyze unchanged code.
 ```
 
-### Step 6: Update SHOWCASE.md
+### Step 7: Update SHOWCASE.md
 
 Update only affected sections:
 - Bump `version` to current `package.json` version
@@ -131,18 +137,18 @@ Update only affected sections:
 - Update tech stack if dependencies changed
 - Add changelog entry
 
-### Step 7: Screenshots for New/Changed Features
+### Step 8: Screenshots for New/Changed Features
 
 Only capture screenshots for features that were added or whose pages changed. Skip unchanged features entirely.
 
-### Step 8: Update Showcase via API
+### Step 9: Update Showcase via API
 
 ```bash
 curl -s -b /tmp/showroom-cookies.txt -X PATCH http://localhost:3000/showcases/{id} \
   -H 'Content-Type: application/json' -d '{"contentBlocks": [...]}'
 ```
 
-### Step 9: Report
+### Step 10: Report
 
 ```
 SHOWCASE.md updated: v1.0.0 → v1.3.0
