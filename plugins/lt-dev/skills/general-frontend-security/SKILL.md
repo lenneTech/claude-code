@@ -51,6 +51,7 @@ Framework-agnostic security practices for web applications based on OWASP guidel
 4. **Protect against CSRF** - Use CSRF tokens for state-changing requests + `SameSite` cookies
 5. **Configure CSP** - Restrict script/style sources, use nonces, block framing
 6. **Minimize dependencies** - Fewer deps = smaller attack surface; always run `pnpm audit`
+7. **Load nothing from a foreign host at runtime** - No CDN scripts, fonts, icons or worker files. A third party that serves an asset on every page load can serve different code tomorrow, sees every visitor, and takes the feature down with it when it is unreachable. Ship assets in the build (`import url from "pkg/file?url"`). See the `developing-lt-frontend` skill for the failure this rule comes from.
 
 **Complete OWASP reference with code examples: [owasp-reference.md](${CLAUDE_SKILL_DIR}/owasp-reference.md)**
 
@@ -73,6 +74,7 @@ Framework-agnostic security practices for web applications based on OWASP guidel
 
 ### Configuration
 
+- [ ] No third-party hosts in the built app (check the network tab; `grep -rnoE "https?://" app/`)
 - [ ] HTTPS enforced
 - [ ] CSP headers configured
 - [ ] Security headers set (X-Frame-Options, etc.)

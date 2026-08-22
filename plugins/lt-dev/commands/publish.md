@@ -1,5 +1,5 @@
 ---
-description: 'Publish the current lt base repo (or a named one) as a new version and immediately update its downstream base repos. Auto-detects which base repo the current working directory belongs to (nest-server, nuxt-extensions, lt-monorepo, cli, nuxt-base-starter, nest-server-starter, claude-code, claude-code-internal), analyzes its committed AND uncommitted changes, then ASKS whether to refresh dependencies (FULL maintenance) before publishing or publish the change directly, releases per the repo recipe, waits for npm propagation, then bumps + maintains + releases the dependent base repos (nest-server → nest-server-starter, nuxt-extensions → nuxt-base-starter). Marketplace repos release via their own bump-version.ts and have no downstream. No smoke test by default (opt-in via --smoke-test). Complements /lt-dev:maintenance:maintain-stack, which cycles ALL base repos with the full release gate.'
+description: 'Publish the current lt base repo (or a named one) as a new version and immediately update its downstream base repos. Auto-detects which base repo the current working directory belongs to (nest-server, nuxt-extensions, lt-monorepo, cli, nuxt-base-starter, nest-server-starter, claude-code, claude-code-internal), analyzes its committed AND uncommitted changes, then ASKS whether to refresh dependencies (FULL maintenance) before publishing or publish the change directly, releases per the repo recipe, waits for npm propagation, then bumps + releases the dependent base repos (nest-server → nest-server-starter, nuxt-extensions → nuxt-base-starter), maintaining them too when the gate was answered "Maintain first" — the answer applies to the whole chain. Marketplace repos release via their own bump-version.ts and have no downstream. No smoke test by default (opt-in via --smoke-test). Complements /lt-dev:maintenance:maintain-stack, which cycles ALL base repos with the full release gate.'
 argument-hint: '[nest-server|nuxt-extensions|lt-monorepo|cli|nuxt-base-starter|nest-server-starter|claude-code|claude-code-internal] [--release-as=patch|minor|major] [--skip-downstream] [--maintenance|--skip-maintenance] [--smoke-test] [--dry-run]'
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, SlashCommand, TodoWrite, ToolSearch
 disable-model-invocation: true
@@ -126,6 +126,21 @@ A restart of Claude Code is required — running sessions keep the old version.
      first, then packages via the maintainer agent; no commit) so the release
      ships on the latest dependency state, then release.
 
+   **The answer governs the ENTIRE chain, not just the source repo.** It is one
+   decision about how much dependency movement this release is allowed to carry,
+   and a release is only as focused as its least focused link — maintaining the
+   starter while declining to maintain nest-server would put exactly the
+   dependency churn the user just refused into the same release round, one repo
+   further down. So step 5 applies the same answer to every downstream repo:
+
+   | Answer | Source repo | Downstream repo(s) |
+   |---|---|---|
+   | Maintain first | maintain + release | bump + **maintain** + `check` + release |
+   | Publish directly | release as-is | bump + `check` + release (**no** dependency refresh) |
+
+   Say which repos the answer will cover when asking, so the scope is visible
+   before the choice (e.g. "applies to nest-server AND nest-server-starter").
+
    Recommend the option that fits the change (focused single-file fix →
    "Publish directly"; broad or long-untouched repo → "Maintain first"), but
    the user decides. Bypass the question ONLY when a flag makes the intent
@@ -148,8 +163,13 @@ A restart of Claude Code is required — running sessions keep the old version.
 4. **Wait for npm propagation** (`npm view <pkg> version`), npm packages only.
 5. **Update downstream** (unless `--skip-downstream`): bump to the new
    version per its recipe (lock-step + migration guides for
-   nest-server-starter), run `/lt-dev:maintenance:maintain` (latest frameworks
-   + packages), iterate `check` green, release.
+   nest-server-starter), then **apply the step-2 answer here too** — run
+   `/lt-dev:maintenance:maintain` (latest frameworks + packages) only when the
+   gate was answered "Maintain first" (or `--maintenance` was passed); on
+   "Publish directly" / `--skip-maintenance` do the lock-step bump WITHOUT the
+   dependency refresh. Either way: iterate `check` green, release. A downstream
+   `check` that fails on its own outdated dependencies is the one exception —
+   report it and ask, rather than silently upgrading past the user's answer.
 6. **Validate**: downstream `check` green is the default gate; for marketplace
    repos it is `claude plugin validate` per changed plugin. With
    `--smoke-test`, run `/lt-dev:fullstack:smoke-test` afterwards (recommended
@@ -165,11 +185,14 @@ A restart of Claude Code is required — running sessions keep the old version.
   derived from the diff).
 - `--skip-downstream` — publish the source repo only.
 - **Maintenance is interactive by default** — the command ASKS whether to
-  refresh dependencies before publishing (see Flow step 2). The two flags
-  below only pre-answer that question for non-interactive / scripted runs:
-  - `--skip-maintenance` — hotfix mode: publish directly, no ask (downstream
-    still gets its lock-step bump).
-  - `--maintenance` — force the FULL dependency refresh, no ask.
+  refresh dependencies before publishing (see Flow step 2), and the answer
+  applies to the WHOLE chain. The two flags below only pre-answer that question
+  for non-interactive / scripted runs:
+  - `--skip-maintenance` — hotfix mode: publish directly, no ask. Downstream
+    still gets its lock-step bump and its `check`, but NO dependency refresh —
+    same as answering "Publish directly".
+  - `--maintenance` — force the FULL dependency refresh on the source repo AND
+    on every downstream repo, no ask.
 - `--smoke-test` — run the full smoke-test gate after the chain.
 - `--dry-run` — analyze and print the plan (target repo, change summary,
   planned versions), no writes/releases.
