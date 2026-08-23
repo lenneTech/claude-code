@@ -128,9 +128,19 @@ Alles per TurboOps-MCP + CLI-API (Details + Payloads: Skill
 ### Phase 5 — Baseline-Deploys + Online-Check
 
 1. `git push -u origin dev` → Pipeline (test → turboops-build → deploy-dev) via `glab api` überwachen.
-2. `git branch main dev && git push -u origin main` → deploy-prod.
+2. **`main` VORHER als protected branch setzen**, sonst läuft `deploy-prod` nie:
+   ```bash
+   GITLAB_HOST=gitlab.lenne.tech glab api --method POST \
+     "projects/<group>%2F<name>/protected_branches?name=main&push_access_level=40&merge_access_level=40"
+   ```
+   Das Template gated die Production-Stage mit
+   `$CI_COMMIT_BRANCH == "main" && $CI_COMMIT_REF_PROTECTED == "true"` — absichtlich,
+   denn ein Branch-NAME ist keine Autorisierung. Ohne Schutz fällt die Regel **closed**:
+   die Pipeline läuft grün durch, der Deploy-Job fehlt aber komplett. Das sieht aus wie
+   ein defektes Template und ist das Gegenteil. Erst schützen, dann
+   `git branch main dev && git push -u origin main` → deploy-prod.
 3. **Nach JEDEM Deploy die echten URLs proben** — grüner `--wait` beweist keine Erreichbarkeit (Trap 5!): App 200/302, `api.<domain>/health-check` 200, `/meta`-Commit == CI-SHA, Cert-Issuer Let's Encrypt.
-3b. **Sign-up-Deep-Check mit LAUF-EINDEUTIGER E-Mail** (z. B. `smoke-test+<runid>@lenne.tech`): Verwaiste `<stack>_mongo_data`-Volumes aus früheren Läufen (Blocklist verhindert deren Löschung) werden vom neuen Stack wiederverwendet — eine feste Test-Mail liefert dann fälschlich `400 Email already registered`, obwohl die API gesund ist.
+3b. **Sign-up-Deep-Check mit LAUF-EINDEUTIGER E-Mail** (z. B. `smoke-test+<runid>@lenne.tech`): Verwaiste `<stack>_mongo_data`-Volumes aus früheren Läufen (siehe Phase 7, Schritt 5b — sie überleben die Stage-Löschung) werden vom neuen Stack wiederverwendet — eine feste Test-Mail liefert dann fälschlich `400 Email already registered`, obwohl die API gesund ist.
 4. 404 + `TRAEFIK DEFAULT CERT` ⇒ Fremd-Traefik-Server (z. B. Turbo-Dev): Label-Pass nach `deploying-to-turboops` Trap 5 ausführen — und nach **jedem** weiteren Deploy wiederholen.
 
 ### Phase 6 — MR-Durchläufe (× `--rounds`)
@@ -148,7 +158,7 @@ Pro Runde:
 3. GitLab: `glab repo delete <group>/<name> --yes`.
 4. Lokal: `lt dev down` im Projekt, `lt dev test down` (falls Reste), Projektordner löschen, Registry-Eintrag prüfen (`~/.lenneTech/projects.json` — `lt dev down` räumt Caddy-Block; verwaiste Einträge via `lt dev prune`/Registry-Check).
 5. Mongo lokal: `lt dev prune --noConfirm` räumt verwaiste Smoke-Test-DBs (reserviertes `lt-smoke-test`-Präfix) seit CLI 1.38.0 automatisch mit — derselbe Sweep läuft zusätzlich bei jedem `lt dev up` beliebiger Projekte. Direkte Drop-Kommandos können von einer Hook-Policy geblockt sein — dann NICHT umgehen; prune ist der kanonische Weg.
-5b. Server-Volumes: `docker volume ls --filter name=<name>` — verwaiste `<stack>_mongo_data`-Volumes bleiben nach Stage-Löschung zurück und werden vom NÄCHSTEN Lauf wiederverwendet (Daten-Leak zwischen Läufen!). `docker volume rm` ist über das exec-Tool geblockt (Blocklist). Wenn SSH-Zugang zum Stage-Server besteht (`ssh root@<server-ip>` — nach der Turbo-Dev-Migration DEV-2551 bzw. autorisiertem Key), die Volumes DIREKT löschen: `ssh root@<server-ip> "docker volume rm <name>-dev_mongo_data <name>-production_mongo_data"`; sonst als manuellen Einzeiler ausweisen.
+5b. Server-Volumes: verwaiste `<stack>_mongo_data`-Volumes bleiben nach Stage-Löschung zurück und werden vom NÄCHSTEN Lauf wiederverwendet — ein Daten-Leak zwischen Läufen, und der Grund, warum eine feste Test-Mail fälschlich `400 Email already registered` liefert. **Über den TurboOps-MCP löschbar, ohne SSH** (2026-08-23 verifiziert): `exec_in_container` im Container mit Docker-CLI + RW-Socket (auf Turbo-Dev `deploy-party_api`), mit `allowWrite: true` und `confirmHostname: <server-IP>` — **die IP, nicht der Servername**; ein Servername wird mit „confirmHostname mismatch" abgelehnt. Erst `volume ls --filter name=<name>` zum Auflisten, dann `volume rm` mit den beiden Stack-Volumes. Eine frühere Fassung behauptete, das sei per Blocklist geblockt und man brauche SSH — das trifft nicht (mehr) zu: das Kommando wird als `needs-write` eingestuft und mit `allowWrite` ausgeführt. SSH bleibt der Fallback, wenn der MCP nicht erreichbar ist.
 6. `turbo logout` NICHT nötig (User-Login bleibt); geminteter Projekt-Token stirbt mit dem Projekt.
 7. Schlussprüfung: alle vier Stage-URLs müssen wieder 404/Default-Cert liefern, `glab repo view` 404, TurboOps-Projektliste ohne `<name>`, keine `<name>`-DBs, kein `~/code/tmp/<name>`.
 

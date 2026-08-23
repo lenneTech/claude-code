@@ -168,8 +168,14 @@ A complete pipeline is not just lint + build. In addition to `lint`, `api:test`,
 `app:test` (Playwright E2E), and `build`, it must also run:
 
 - **Frontend unit tests** — `cd projects/app && pnpm run test:unit`.
-- **An `audit` job** — `pnpm audit`, **non-blocking**: GitLab `allow_failure: true`,
-  GitHub `continue-on-error: true`. It surfaces CVEs without gating the deploy.
+- **An `audit` job** — `pnpm audit`, and it must **BLOCK**. This page previously said
+  the opposite (`allow_failure: true` / `continue-on-error: true`), which directly
+  contradicts the templates: `lt-monorepo`'s own `scripts/check-ci-consistency.mjs`
+  carries a rule that FAILS a pipeline holding those flags, because they suppress
+  every advisory including ones nobody has assessed yet. Following the old advice
+  reddened the guard. Unresolvable advisories belong in `auditConfig.ignoreGhsas`
+  (pnpm-workspace.yaml), one entry each with its rationale — that is what keeps a red
+  audit meaningful.
 
 This mirrors what `pnpm run check` covers locally. The current lt-monorepo
 templates already include both; if an older project's pipeline is missing them,
