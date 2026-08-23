@@ -132,6 +132,7 @@ afterAll(async () => {
 
 **Works closely with:**
 - `grilling-decisions` skill - Settles the story's open decisions and confirms the seams before Step 2
+- `checking-upstream-first` skill - Gate before implementing any workaround around a dependency's behaviour
 - `generating-nest-servers` skill - For code implementation (modules, objects, properties)
 - `using-lt-cli` skill - For Git operations and project initialization
 - `developing-lt-frontend` skill - For frontend E2E tests and implementation
@@ -171,6 +172,7 @@ claude plugins install typescript-lsp --marketplace claude-plugins-official
 2. **Verify before assuming** — ALWAYS read Controllers/Services/Models before writing tests. Never assume endpoints, methods, or properties exist.
 3. **Failing tests are ALWAYS a problem** — Fix the root cause of every failing test, even if the failure predates the current changes or seems unrelated to the current task. A green test suite is a non-negotiable prerequisite. Never ignore, skip, or defer test failures.
 4. **Agree the seams before writing the first test** — see [Seams](#seams-agree-them-before-step-2) below. A test at an unconfirmed seam is written on a guess about where behaviour should be observable.
+5. **Check upstream before working around a dependency** — if the implementation would shim, wrap, guard, patch, or re-implement something a framework or library owns, run the `checking-upstream-first` check FIRST: what version is actually resolved, what is current, what does the dependency's own code do, and has an lt base repo already solved it. Record the answer either way. Writing tests for a workaround the current version makes unnecessary is the most expensive way to discover that.
 
 **Full details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md) -> Steps 1, 2, and 4**
 

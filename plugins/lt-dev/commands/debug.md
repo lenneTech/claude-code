@@ -103,6 +103,16 @@ Reading code to build a theory before this command exists is the exact failure t
 
 **When a loop genuinely cannot be built:** say so explicitly, list what you tried, and ask the user for either access to an environment that reproduces it, a captured artefact (HAR file, log dump, screen recording with timestamps), or permission to add temporary instrumentation on dev. Hypothesising without a loop produces a plausible story, not a fix.
 
+### Step 1.6: Upstream check — is this already fixed?
+
+Before any hypothesis that ends in "so we work around it": if the suspected cause sits in a
+dependency or framework, run the `checking-upstream-first` check. A bug that reproduces on the
+installed version and not on the current one is not a bug to debug — it is a version to bump,
+and every hypothesis built on top of it is wasted.
+
+Cheapest first: what version is actually resolved (`node -e "console.log(require('<pkg>/package.json').version)"`)
+versus `npm view <pkg> version`, then read the relevant lines in `node_modules` directly.
+
 ### Step 2: Generate Hypotheses
 
 With the loop red, analyze the bug and the code around it:

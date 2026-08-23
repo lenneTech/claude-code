@@ -1,6 +1,6 @@
 ---
 name: unslop
-description: 'Cuts AI tells from any text that reaches a human reader: Linear tickets and comments, commit messages, MR/PR descriptions, READMEs and migration guides, QA test instructions, offer and showcase copy, code comments, and the body of skills, commands, and agents. Carries the English pattern catalogue, a German one (Nominalstil, Floskeln, Füllwörter, Gedankenstrich), and the rules for putting voice back in. Activates whenever prose is written or edited for a human, and on "unslop", "entschwurbeln", "klingt nach KI", "KI-Sprech", "slop". NOT for code identifiers, generated files, or quoted third-party text.'
+description: 'Cuts AI tells from any text that reaches a human reader: Linear tickets and comments, commit messages, MR/PR descriptions, READMEs and migration guides, QA instructions, offer and showcase copy, and the body of skills, commands, and agents. Carries the English pattern catalogue, a German one (Nominalstil, Floskeln, Füllwörter, Gedankenstrich), and the rules for putting voice back in. Activates whenever prose is written or edited for a human, and on "unslop", "entschwurbeln", "klingt nach KI", "KI-Sprech", "slop". NOT for code identifiers, generated files, or quoted third-party text.'
 ---
 
 # Unslop

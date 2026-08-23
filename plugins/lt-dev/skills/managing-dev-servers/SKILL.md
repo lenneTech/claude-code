@@ -1,6 +1,6 @@
 ---
 name: managing-dev-servers
-description: 'Rules for starting, monitoring, and stopping local dev servers (nuxt dev, nest start, pnpm run dev, pnpm build --watch, Playwright) and for closing the Chrome DevTools MCP browser afterward. Prefers `lt dev up/down/status/tunnel` for lt CLI projects: stable HTTPS URLs, project-scoped env vars, parallel projects without port or auth cross-wiring, and Cloudflare Quick Tunnel exposure. Falls back to the run_in_background / pkill contract for non-lt projects, so no orphaned process blocks the session. Activates whenever a long-running process starts for manual validation, Chrome DevTools MCP debugging, TDD, framework linking, or E2E, or when browser tabs must be closed after a walk.'
+description: 'Rules for starting, monitoring, and stopping local dev servers (nuxt dev, nest start, pnpm run dev, pnpm build --watch, Playwright) and for closing the Chrome DevTools MCP browser afterward. Prefers `lt dev up/down/status/tunnel` for lt CLI projects: stable HTTPS URLs, project-scoped env vars, parallel projects without port or auth cross-wiring. Falls back to the run_in_background / pkill contract elsewhere, so no orphaned process blocks the session. Activates whenever a long-running process starts for manual validation, Chrome DevTools MCP debugging, TDD, framework linking, or E2E, or when browser tabs must be closed after a walk.'
 user-invocable: false
 ---
 

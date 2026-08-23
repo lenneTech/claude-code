@@ -77,6 +77,19 @@ Determine the ticket type from the Linear issue labels, title, or file path:
 | File path contains `bugs/` | **Bug** |
 | Everything else | **Feature/Task** |
 
+### MANDATORY: Upstream Check Before Any Workaround
+
+If the fix would work *around* a dependency's behaviour — a shim, wrapper, guard, patch,
+polyfill, or a re-implementation of something a framework owns — follow the
+`checking-upstream-first` skill BEFORE writing it.
+
+The check is short: what version is actually resolved, what is current, what does the
+dependency's own code do, and is it already solved in an lt base repo. Record the answer in the
+ticket either way. Building a workaround for a problem the current version already fixes costs
+a full design-and-review cycle and then has to be un-built.
+
+This gate does not apply to ordinary feature work the dependency was never meant to cover.
+
 ### Implementation Workflow
 
 Use the `building-stories-with-tdd` skill to execute the full implementation cycle:
