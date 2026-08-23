@@ -1,6 +1,6 @@
 ---
 name: managing-dev-servers
-description: 'Rules for starting, monitoring, and stopping local dev servers (nuxt dev, nest start, pnpm run dev, build --watch, Playwright, Mailpit) and for closing Chrome DevTools MCP tabs afterward. Prefers `lt dev up/down/status/tunnel` for lt projects: stable HTTPS URLs, project-scoped env, parallel projects without port or auth cross-wiring. Falls back to the run_in_background / pkill contract elsewhere, so no orphaned process blocks the session. Activates whenever a long-running process starts for manual validation, MCP debugging, TDD, framework linking, or E2E.'
+description: 'Rules for starting, monitoring, and stopping local dev servers (nuxt dev, nest start, pnpm run dev, build --watch, Playwright, Mailpit) and for closing Chrome DevTools MCP tabs afterward. Prefers `lt dev up/down/status/tunnel` for lt projects: stable HTTPS URLs, project-scoped env, parallel projects without port or auth cross-wiring. Falls back to the run_in_background / pkill contract elsewhere, so no orphaned process blocks the session. Also governs WAITING on anything that finishes by itself — CI pipelines, deployments, long test suites, builds: poll them in the background and carry on, never end a turn on "it is running, I will report back". Activates whenever a long-running process starts for manual validation, MCP debugging, TDD, framework linking, or E2E, and whenever a pipeline or deployment has to be watched to its end.'
 user-invocable: false
 ---
 
@@ -135,6 +135,42 @@ The Chrome DevTools MCP (`mcp__…_chrome-devtools__*`) drives a **real Chrome i
 3. **Stop the process after the test/validation** — use `pkill -f "<process-name>"` (e.g. `pkill -f "nuxt dev"`, `pkill -f "nest start"`, `pkill -f "build --watch"`).
 4. **Ask before leaving a server running** — if the user might want to continue interactive debugging, confirm explicitly rather than assuming.
 
+## Waiting is work — do not hand the turn back for it
+
+The same `run_in_background` contract covers everything that takes minutes and
+finishes on its own: **CI pipelines, deployments, long test suites, builds,
+image pushes.** Poll them in a background loop that exits on a terminal state,
+and carry on when it reports back.
+
+```bash
+# Wait for a GitLab MR pipeline, then act on the result
+for i in $(seq 1 60); do
+  ST=$(glab api "projects/<ns>%2F<repo>/merge_requests/$MR" \
+        | node -e "let s='';process.stdin.on('data',d=>s+=d)
+                   .on('end',()=>console.log(JSON.parse(s).head_pipeline?.status||'unknown'))")
+  case "$ST" in
+    success)          echo ">>> GREEN"; break ;;
+    failed|canceled)  echo ">>> RED"; break ;;
+  esac
+  sleep 30
+done
+```
+
+Better still, put the WHOLE chain in one script — commit, push, MR, wait, merge,
+promote, wait, deploy — so a multi-stage landing runs to its actual end instead
+of stopping at every quiet moment.
+
+**Stop and report only when there is something to decide:** a red pipeline, a
+failed deploy, a step that belongs to the user (a secret to remove, a
+confirmation in a third-party UI). A green intermediate state is not a reason to
+end the turn.
+
+Why this matters more than it looks: ending a turn on "pipeline is running"
+forces the user to poll a machine BY HAND, through you. It reads as progress
+while being pure latency — and if it happens at every stage of a landing, a
+ten-minute chain costs an hour of back-and-forth. The tools to avoid it are the
+same ones already used for dev servers.
+
 ## Incorrect Patterns (Do Not Use)
 
 - `npm run dev &` — backgrounded via shell without later cleanup
@@ -142,6 +178,7 @@ The Chrome DevTools MCP (`mcp__…_chrome-devtools__*`) drives a **real Chrome i
 - Leaving a dev server running and waiting for the next user prompt
 - Reporting a task as "done" while `pgrep` still shows the process
 - Starting `pnpm dev` directly when an "Active lt-dev project" context block is present — that bypasses Caddy and re-introduces cross-wiring risk
+- **Ending a turn with "the pipeline is running, I'll report back"** — that is not a report, it is a request for the user to ask again. Poll it.
 
 ## Why It Matters
 
