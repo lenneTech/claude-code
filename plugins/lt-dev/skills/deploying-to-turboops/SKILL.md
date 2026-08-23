@@ -1,6 +1,6 @@
 ---
 name: deploying-to-turboops
-description: 'Takes a lenne.tech fullstack monorepo live on TurboOps (turbo-ops.de) via GitLab CI/CD. Covers the deploy contract (.turboops.json, .gitlab-ci.yml, docker-compose.yml, image drift), `lt deployment create`, CI/CD variables, multi-service stages via `turbo deploy --compose`, DNS-before-Let''s-Encrypt, and the swarm MongoDB URI. Activates on "TurboOps", "turbo deploy", "not found in registry", "only app rolled out", or shipping an lt fullstack project through CI/CD. NOT for local dev orchestration (use using-lt-cli). NOT for reproducing CI locally (use validating-ci-pipelines-locally). NOT for writing Docker/CI configs from scratch (use the devops agent).'
+description: 'Takes a lenne.tech fullstack monorepo live on TurboOps (turbo-ops.de) via GitLab CI/CD. Covers the deploy contract (.turboops.json, .gitlab-ci.yml, docker-compose.yml, image drift), `lt deployment create`, CI/CD variables, multi-service stages via `turbo deploy --compose`, DNS-before-Let''s-Encrypt, and the swarm MongoDB URI. Activates on "TurboOps", "turbo deploy", "live gehen", "deployen", and on symptoms like "not found in registry" or "only app rolled out". NOT for local dev orchestration (use using-lt-cli). NOT for reproducing CI locally (use validating-ci-pipelines-locally). NOT for authoring Docker/CI configs from scratch (use the devops agent).'
 ---
 
 # Deploying an lt Fullstack Project to TurboOps

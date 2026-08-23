@@ -1,6 +1,6 @@
 ---
 name: writing-qa-test-instructions
-description: 'Single source of truth for deciding whether a ticket is manually testable by non-developers and for writing the German QA test instructions that go into the Linear comment. Defines the three-part testability test, the deployed-environment URL resolution order, and the role-instead-of-credentials rule for Linear comments. Activates whenever a command hands a merged or submitted ticket to QA (`ticket-cycle`, `git:ship`, `dev-submit`). NOT for the developer-facing local re-test manual with literal passwords (that is `ticket-cycle` STEP 3b). NOT for running the browser walk itself (use validating-changes-in-browser).'
+description: 'Decides whether a ticket is manually testable by non-developers and writes the German QA test instructions for the Linear comment. Defines the three-part testability test, the not-testable categories, the deployed-environment URL resolution order, the role-instead-of-credentials rule, and the comment format for both cases. Activates whenever a command hands a merged or submitted ticket to QA (ticket-cycle, git:ship, dev-submit). NOT for the developer-facing local re-test manual with literal passwords (that is ticket-cycle STEP 3b). NOT for the browser walk itself (use validating-changes-in-browser).'
 user-invocable: false
 ---
 

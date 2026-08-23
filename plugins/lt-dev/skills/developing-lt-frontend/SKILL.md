@@ -1,6 +1,6 @@
 ---
 name: developing-lt-frontend
-description: 'Handles ALL Nuxt 4 and Vue frontend work: components, composables, forms (Valibot), API integration (types.gen.ts, sdk.gen.ts), authentication (Better Auth), SSR, and Playwright E2E testing. Supports monorepos (projects/app/, packages/app/). Activates when working with .vue files, nuxt.config.ts, Nuxt UI, TailwindCSS, server components, or files under app/{components,composables,pages,interfaces,layouts}/, and on phrases like "generate types", "Valibot form", "useOverlay modal", "Playwright E2E". NOT for NestJS backend (use generating-nest-servers). NOT for framework-agnostic security theory (use general-frontend-security).'
+description: 'Handles ALL Nuxt 4 and Vue frontend work: components, composables, forms (Valibot), API integration (types.gen.ts, sdk.gen.ts), authentication (Better Auth), SSR, and Playwright E2E. Supports monorepos (projects/app/, packages/app/). Activates on .vue files, nuxt.config.ts, Nuxt UI, TailwindCSS, files under app/{components,composables,pages,interfaces,layouts}/, and on "generate types", "Valibot form", "useOverlay modal", "Playwright E2E", "Frontend bauen". NOT for NestJS backend (use generating-nest-servers). NOT for framework-agnostic security theory (use general-frontend-security).'
 paths:
   - "**/*.vue"
   - "**/nuxt.config.ts"

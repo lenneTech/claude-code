@@ -1,6 +1,6 @@
 ---
 name: grilling-decisions
-description: 'Relentless one-question-at-a-time interview that resolves every open decision before implementation starts. Walks the decision tree in dependency order, carries a recommended answer per question, and looks facts up in the codebase instead of asking for them. Activates when the user says "grill me", "interview me", "stress-test this", "frag mich aus", or when a command reaches open questions it must settle with a human before writing code. NOT for reviewing finished code (use /lt-dev:review). NOT for autonomous fact-finding without a human in the loop.'
+description: 'Relentless one-question-at-a-time interview that settles every open decision before implementation starts. Walks the decision tree in dependency order, carries a recommended answer per question, and looks facts up in the codebase instead of asking for them. Activates on "grill me", "interview me", "stress-test this", "frag mich aus", "löcher mich", or when a command reaches open questions it must settle with a human before writing code. NOT for reviewing finished code (use /lt-dev:review). NOT for autonomous fact-finding without a human in the loop.'
 user-invocable: false
 ---
 

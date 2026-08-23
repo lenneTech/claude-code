@@ -1,6 +1,6 @@
 ---
 name: managing-agent-memory
-description: 'Decides per project whether `.claude/agent-memory/**` is committed, records that decision next to the memory it governs, and curates the notes before every commit that carries them. Activates before committing when agent-memory files are dirty: git:ship, ticket-cycle, review runs, or any standalone commit.'
+description: 'Decides per project whether `.claude/agent-memory/**` is committed, records that decision next to the memory it governs, and curates the notes before every commit that carries them. Activates before committing whenever agent-memory files are dirty: git:ship, ticket-cycle, review runs, or any standalone commit.'
 ---
 
 # Managing Agent Memory

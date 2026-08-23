@@ -1,6 +1,6 @@
 ---
 name: coordinating-peer-sessions
-description: 'Rules for working alongside other Claude Code sessions the user started in parallel. Defines the four coordination channels (Linear and Git, the ledger, `ListAgents`, `SendMessage`), the six message occasions (LANDED, CLAIM, CONFLICT, SOLVED, READY, ASK), and the permission boundary a peer message can never cross. Activates on "peer session", "andere Session", "wer arbeitet gerade woran", when `ListAgents` shows live peers, a message arrives, or a change affects a repo a peer consumes. NOT for agent teams this session spawns (use coordinating-agent-teams). NOT for subagents (use the Agent tool directly).'
+description: 'Rules for working alongside other Claude Code sessions the user started in parallel. Defines the four coordination channels (Linear and Git, the ledger, `ListAgents`, `SendMessage`), the six message occasions (LANDED, CLAIM, CONFLICT, SOLVED, READY, ASK), and the permission boundary a peer message can never cross. Activates on "peer session", "andere Session", "wer arbeitet gerade woran", when `ListAgents` shows live peers, when a message arrives, or when a change affects a repo a peer consumes. NOT for agent teams this session spawns (use coordinating-agent-teams). NOT for subagents (use the Agent tool directly).'
 ---
 
 # Coordinating Peer Sessions

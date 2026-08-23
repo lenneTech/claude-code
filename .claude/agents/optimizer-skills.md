@@ -57,7 +57,16 @@ For each skill, verify:
 
 Measure, never estimate. Character counts decide whether skill auto-detection works at all, and a count derived by reading files is a guess.
 
-**Description budget.** The sum of every skill `description` in a plugin competes for `SLASH_COMMAND_TOOL_CHAR_BUDGET` (2% of the context window, falling back to 16000 characters). Over the limit, auto-detection degrades silently. Measure the total with the first `description:` of each file only, so example frontmatter inside a body never inflates the count:
+**Description budget.** Claude Code lists every skill's `description` (plus `when_to_use`) to the model each turn, and caps that listing at `skillListingBudgetFraction` of the context window — default `0.01`, i.e. **1%**, falling back to **8,000 characters**; the `SLASH_COMMAND_TOOL_CHAR_BUDGET` env var overrides it with a fixed count.
+
+Two properties decide how much this rule is worth:
+
+- **The budget is global, not per plugin.** It covers every skill from every source at once — all installed plugins, personal, project, and bundled skills. Shrinking one plugin's total does not buy that plugin any guarantee, because the other sources spend the same budget. A measurement scoped to `plugins/lt-dev/` describes a contribution, never a headroom.
+- **Overflow degrades gracefully and by usage.** Every skill *name* stays listed. Claude Code drops *descriptions*, starting with the skills invoked least, so frequently used skills keep their full text. It is not a cliff, and it is not silent: `/doctor` estimates the listing's cost and names the biggest contributors, and a `--debug` run logs the overflow.
+
+Observed 2026-08-23 on a machine with eight skill sources: the listing measured 26,935 characters against a ~8,000-character budget, and 13 of lt-dev's 27 skills were already listed name-only. Rounds of shortening under the belief that the limit was 16,000 per plugin had cost real trigger vocabulary and prevented none of that dropping. **So do not shorten a description to chase a total.** Raise `skillListingBudgetFraction` when the listing needs more room, and shorten only what is genuinely padded.
+
+Measure the total with the first `description:` of each file only, so example frontmatter inside a body never inflates the count:
 
 ```bash
 for f in plugins/lt-dev/skills/*/SKILL.md; do
@@ -74,7 +83,7 @@ for f in plugins/lt-dev/skills/*/SKILL.md; do
 done | sort -rn
 ```
 
-Report the before and after count for every rewrite you propose. When the total exceeds the budget, shortening is not optional and the first cuts are metadata tails ("Referenced by …", "Currently used by …") and repeated trigger clusters naming one branch several times. Genuine triggers and `NOT for X (use Y instead)` boundaries stay.
+Report the before and after count for every rewrite you propose. Cut what is padding regardless of the total: metadata tails ("Referenced by …", "Currently used by …"), repeated trigger clusters naming one branch several times, and capability lists that enumerate a skill's table of contents rather than saying when it applies. Genuine triggers and `NOT for X (use Y instead)` boundaries stay — they are what the listing exists for, and a description trimmed past them stops earning its place in the budget at all.
 
 **Frontmatter parses.** `claude plugin validate plugins/<name>` catches the YAML traps this repository hits most: an `argument-hint` whose `[...]` value parses as an array, and a `description` whose embedded `"` or mid-sentence `:` breaks the scalar.
 

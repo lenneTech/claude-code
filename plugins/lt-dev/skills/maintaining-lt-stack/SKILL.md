@@ -1,6 +1,6 @@
 ---
 name: maintaining-lt-stack
-description: 'Single source of truth for stack-wide maintenance of all lt base repos: the dependency graph (nuxt-extensions to nuxt-base-starter, nest-server to nest-server-starter), the release recipe per repo, npm propagation wait patterns, the HTTPS push fallback for a hanging SSH agent, and final validation via /lt-dev:fullstack:smoke-test. Activates on "maintain stack", "release all repos", "stack release". NOT for a single package (use maintaining-npm-packages). NOT for nest-server upgrades inside customer projects (use nest-server-updating).'
+description: 'Single source of truth for stack-wide maintenance and releases of the lt base repos ("Grund-Repos"): the dependency graph (nuxt-extensions to nuxt-base-starter, nest-server to nest-server-starter), the release recipe per repo including both marketplaces, npm propagation waits, the HTTPS push fallback for an empty SSH agent, and the smoke test as release gate. Activates on "maintain stack", "release all repos", "stack release", "Grund-Repos aktualisieren", and behind /lt-dev:publish. NOT for a single npm package (use maintaining-npm-packages). NOT for nest-server upgrades inside customer projects (use nest-server-updating).'
 ---
 
 # Maintaining the lt Stack (all base repos)

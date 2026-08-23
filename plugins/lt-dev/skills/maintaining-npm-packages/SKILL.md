@@ -1,6 +1,6 @@
 ---
 name: maintaining-npm-packages
-description: 'Analyzes and optimizes npm package dependencies across 5 maintenance modes: FULL (update all), DRY-RUN (analysis only), SECURITY-ONLY (urgent CVE fixes), PRE-RELEASE (conservative patch-only), POST-FEATURE (cleanup after development). Activates when user mentions updating packages, running an audit, checking or removing dependencies, deprecated packages, or package.json optimization. NOT for @lenne.tech/nest-server version updates (use nest-server-updating).'
+description: 'Analyzes and optimizes npm package dependencies across five maintenance modes: FULL (update all), DRY-RUN (analysis only), SECURITY-ONLY (urgent CVE fixes), PRE-RELEASE (conservative patch-only), POST-FEATURE (cleanup). Activates on updating packages, `npm audit` findings, deprecated or unused dependencies, "Pakete aktualisieren", "Abhängigkeiten prüfen", or package.json optimization. NOT for @lenne.tech/nest-server version updates (use nest-server-updating). NOT for stack-wide releases (use maintaining-lt-stack).'
 paths:
   - "**/package.json"
   - "**/pnpm-lock.yaml"

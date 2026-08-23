@@ -1,6 +1,6 @@
 ---
 name: coordinating-agent-teams
-description: 'Provides coordination patterns and worktree isolation guidance for parallel Claude Code operations: Agent Teams (independent sessions with messaging) and parallel subagent spawning (Agent tool with isolation worktree). Activates on "agent team", "parallel review", "batch rebase", when commands evaluate team suitability via CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS, or when spawning several file-modifying subagents concurrently. NOT for single sequential subagent invocations. NOT for independent sessions the user started themselves (use coordinating-peer-sessions).'
+description: 'Coordination patterns and worktree isolation for parallel operations this session starts: Agent Teams (independent sessions with messaging) and parallel subagent spawning (Agent tool with isolation worktree). Covers when teams beat single agents and what they cost in tokens. Activates on "agent team", "parallel review", "batch rebase", when a command evaluates team suitability via CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS, or when spawning several file-modifying subagents at once. NOT for single sequential subagents. NOT for sessions the user started themselves (use coordinating-peer-sessions).'
 user-invocable: false
 ---
 

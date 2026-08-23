@@ -1,6 +1,6 @@
 ---
 name: checking-upstream-first
-description: 'Before writing a custom fix for a framework- or library-level problem, verifies that the current version does not already solve it. Covers the version check (installed vs latest), reading the dependency''s own code, release notes and issue tracker, and the lt base-repo check. Activates whenever a workaround, shim, patch, wrapper, polyfill or guard is about to be built around a dependency''s behaviour, and on "wir bauen uns das selbst", "workaround", "patchen", "eigene Lösung". NOT for feature work the dependency was never meant to cover. NOT for routine version bumps (use maintaining-npm-packages).'
+description: 'Before writing a custom fix for a framework- or library-level problem, verifies that the current version does not already solve it. Covers the version actually resolved vs. the current one, reading the dependency''s own code in node_modules, release notes and issue tracker, and whether an lt base repo already solved it. Activates whenever a workaround, shim, patch, wrapper, polyfill or guard is about to be built around a dependency''s behaviour, and on "workaround", "patchen", "wir bauen uns das selbst", "eigene Lösung". NOT for feature work the dependency was never meant to cover. NOT for routine version bumps (use maintaining-npm-packages).'
 ---
 
 # Check Upstream Before Building It Yourself

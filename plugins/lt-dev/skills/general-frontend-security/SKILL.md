@@ -1,6 +1,6 @@
 ---
 name: general-frontend-security
-description: 'Framework-agnostic frontend security guide based on OWASP Secure Coding Practices. Covers XSS prevention, CSRF protection, Content Security Policy (CSP), secure cookie configuration, client-side authentication patterns, input validation, secure storage, and security headers. Activates for security audits, XSS, CSRF, CSP, injection, security headers, or browser security questions in any web application. NOT for backend/NestJS security (use generating-nest-servers). NOT for Nuxt-specific implementation (use developing-lt-frontend).'
+description: 'Framework-agnostic frontend security guide based on OWASP Secure Coding Practices: XSS prevention, CSRF protection, Content Security Policy, secure cookie configuration, client-side auth patterns, input validation, secure storage, and security headers. Applies to any web frontend, not only Nuxt. Activates on XSS, CSRF, CSP, clickjacking, security headers, "Sicherheitslücke", or a frontend security audit. NOT for backend/NestJS security (use generating-nest-servers). NOT for Nuxt-specific implementation (use developing-lt-frontend).'
 user-invocable: false
 ---
 
