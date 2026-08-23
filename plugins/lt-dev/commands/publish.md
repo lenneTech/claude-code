@@ -126,6 +126,32 @@ A restart of Claude Code is required — running sessions keep the old version.
    is being published; foreign-looking changes (files unrelated to the stated
    purpose, e.g. agent-memory files) ⇒ stop and list them instead of
    releasing blind.
+
+1b. **Check the previous release's non-blocking gates** (nest-server only, for
+   now). Some CI jobs run ALONGSIDE the publish instead of in front of it — the
+   regression-evidence gate is the first — so a red one does not stop a release
+   and will not stop the NEXT one either unless somebody looks. That somebody is
+   this step:
+
+   ```bash
+   gh run list --workflow=publish.yml --limit 5 \
+     --json databaseId,conclusion,displayTitle,createdAt \
+     -q '.[] | "\(.createdAt[0:10])  \(.conclusion)  \(.displayTitle[0:40])"'
+   gh issue list --label regression-evidence --state open
+   ```
+
+   A failed run or an open `regression-evidence` issue is **not** a hard stop —
+   the point of the arrangement is that releases keep flowing. It IS a reporting
+   duty: name it before you release, say which mutation went vacuous, and ask
+   whether to fix it first or carry it. Carrying it is a legitimate answer; not
+   mentioning it is not, because the arrangement's whole safety rests on this
+   check being the place where a red gate cannot be walked past silently.
+
+   The distinction that makes carrying it defensible: what failed is the
+   EVIDENCE behind the regression tests, not the product. The suite itself still
+   gates the release in full. A vacuous regression test does not make the
+   package wrong — it makes a future regression harder to catch, which is worth
+   fixing soon and rarely worth blocking on.
 2. **Maintenance gate — ALWAYS ASK FIRST (default).** This command never
    silently runs dependency maintenance. After the change summary, ask the
    user via `AskUserQuestion` how to proceed:

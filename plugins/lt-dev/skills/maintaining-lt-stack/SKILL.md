@@ -84,6 +84,69 @@ What does **not** go over messages: which repos exist and in which order they go
 
 ## Cross-cutting rules (all repos)
 
+- **Wire-critical packages move in BOTH framework repos, in one go.** Some
+  dependencies are not one repo's business — they are one protocol with two
+  ends, and nest-server and nuxt-extensions each own one end. `better-auth` is
+  the case that taught us; treat any package both frameworks import the same
+  way.
+
+  Both declare it as a **peer** with a range that is byte-identical in the two
+  manifests, and narrow: `>=<lowest known-good> <<next minor>`, never `^`.
+  better-auth breaks in MINOR releases, so a caret invites the same split one
+  release later. Read the current range out of the manifests rather than from
+  here — it moves, and a version written into this skill is a version that goes
+  stale:
+
+  ```bash
+  node -e 'for (const p of ["nest-server","nuxt-extensions"]) console.log(p, require(`${process.env.HOME}/code/lenneTech/${p}/package.json`).peerDependencies["better-auth"])'
+  ```
+
+  Bumping it means: raise the range in nest-server AND nuxt-extensions, pin the
+  new version in nest-server-starter AND nuxt-base-starter, release all four.
+  Never half of it, not even "just to unblock the frontend". Raising only the
+  LOWER bound is a bump too — it is what says which patch is known-good, and a
+  lower bound that disagrees between the two repos is the same defect as a
+  version split, one release earlier.
+
+  **The floor is not a matter of taste: it must satisfy the SIBLING peers too.**
+  A package like `better-auth` ships with companions (`@better-auth/passkey`,
+  `@better-auth/core`) that peer-require a version of it in turn. A floor below
+  what a companion demands blesses a pairing that cannot actually install —
+  `>=1.7.0` allowed better-auth 1.7.0 next to passkey 1.7.1, which passkey
+  itself rejects (`^1.7.1`). The range was not wrong in general; it admitted
+  exactly one invalid cross-combination, which is precisely the kind that no
+  install in either repo would ever hit. Derive the floor from the companion's
+  manifest, not from intuition:
+
+  ```bash
+  node -e 'console.log(require("./node_modules/@better-auth/passkey/package.json").peerDependencies)'
+  ```
+
+  nuxt-extensions asserts this mechanically in `test/peer-dependency-ranges.test.ts`
+  (floor vs. the companion's requirement, and every range against the devDependency
+  actually tested against). Worth copying wherever a peer range has companions.
+
+  What a split costs, measured: nest-server pinned better-auth 1.6.26 as a hard
+  dependency while nuxt-extensions declared a peer, so the app moved to 1.7.1
+  and the api could not follow. 1.7 gives `twoFactor.enable` a discriminated
+  result carrying `method`, which 1.6.26 never sends — every 2FA activation in
+  every fullstack project failed, with a generic client error and nothing
+  unusual in the server log. Both repos' `check` was green the whole time:
+  each was internally consistent, and only the assembled workspace has both
+  halves.
+
+  Two guards now catch it, and neither replaces this rule — they catch the
+  mistake, this rule prevents it:
+  - `lt-monorepo/scripts/check-workspace-consistency.mjs` fails the assembled
+    workspace when api and app resolve such a package differently, or when the
+    two frameworks promise different peer ranges.
+  - `lt fullstack init` reports it when two sub-projects hoist contradicting
+    `overrides` values instead of letting one win silently.
+
+  The smoke test is the end-to-end gate: it builds a real fullstack project, so
+  it is the one place a wire split shows up as a failing flow rather than as a
+  version diff.
+
 - **No change → no release.** The ONLY case that skips a release is a repo
   where truly NOTHING changed (working tree clean AND no commits since the
   last released version) — never mint a version that contains no changes at
@@ -129,6 +192,39 @@ What does **not** go over messages: which repos exist and in which order they go
   To inspect the keys SSH really has, aim `ssh-add` at the configured agent instead:
   `SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock" ssh-add -l`.
   But prefer the functional check above — it stays correct regardless of how the agent is wired.
+
+  **The same broken agent makes READ commands lie, not just pushes.** When the agent
+  cannot sign, `git ls-remote` exits 128 and prints its complaint on **stderr** while
+  stdout stays **empty**. A pipeline that only reads stdout — `git ls-remote --tags origin
+  | wc -l`, or a `grep` for one tag — therefore reports "the remote has no tags" and
+  "that tag does not exist", which reads exactly like a missing release rather than a
+  failed connection. Measured 2026-08-23: two sessions independently concluded a release
+  tag had not been pushed; over HTTPS the remote had all 132 tags including that one, and
+  `git fetch --quiet` had been failing silently the whole time, so the remote-tracking
+  refs were stale on top of it.
+
+  So for any remote read: **check the exit code, or use HTTPS from the start.**
+
+  ```bash
+  git -c credential.helper='!gh auth git-credential' ls-remote --tags https://github.com/lenneTech/<repo>.git
+  ```
+
+  Never conclude "not on the remote" from an empty result you did not prove was a
+  successful call. `git fetch` is the same trap wearing a quieter coat — with `--quiet`
+  it fails without a visible word, and every later `origin/<branch>` comparison silently
+  answers from stale local refs.
+
+  And once the call DOES succeed, do not count its lines. `ls-remote --tags` prints two
+  refs per annotated tag — `refs/tags/X` and the peeled `refs/tags/X^{}` — so `wc -l`
+  reported 249 where this repo has 132 tags. Compare names, not line counts:
+
+  ```bash
+  … ls-remote --tags <url> | sed 's|.*refs/tags/||; s|\^{}$||' | sort -u
+  ```
+
+  The two failure modes stack: a broken agent turns a real list into "nothing", and a
+  line count turns a matching list into a phantom difference. Both end as a confident
+  claim about a remote nobody actually read.
 - **Dependency maintenance:** per repo via the `/lt-dev:maintenance:maintain`
   command (FULL) — it raises the lenne.tech **frameworks first** (npm + vendor
   core), aligns their pinned ecosystem, and only then hands off to the
@@ -174,6 +270,20 @@ What does **not** go over messages: which repos exist and in which order they go
 
 ### nuxt-extensions (npm package `@lenne.tech/nuxt-extensions`)
 
+> **Picking the number: a breaking change is a MINOR here, never a major.**
+> Same rule as nest-server below, different anchor: the MAJOR digit tracks the **Nuxt**
+> major this module targets — `1.x` is Nuxt 4 — so it moves when, and only when, Nuxt
+> moves. Everything of our own ships in a minor, breaking changes included: a removed
+> composable, a changed option shape, a **narrowed peer range**.
+>
+> This half was unwritten until 1.15.0 narrowed `better-auth` from `>=1.0.0` to
+> `>=1.7.1 <1.8.0` — an install-breaking change for anyone below the floor, shipped as a
+> minor with nothing stating why the digit stayed. Strict semver would call that a major;
+> the anchor is what overrides it, and the anchor only holds if it is written down.
+>
+> The `### Breaking` CHANGELOG heading plus a `migration-guides/` entry carry the warning
+> instead. Say up front that the minor contains breaking changes and why the digit stays.
+
 1. Maintenance (`/lt-dev:maintenance:maintain`) → `pnpm i` → `pnpm run check` green.
 2. New version in `package.json`, `pnpm i`.
 3. `git add . && git commit -am 'NEW_VERSION: MESSAGE'` → push (main).
@@ -205,6 +315,32 @@ What does **not** go over messages: which repos exist and in which order they go
 5. PR develop→main: `gh pr create -B main -H develop` → wait for CI
    (`gh pr checks --watch`) → `gh pr merge --merge` (**no squash**).
 6. `gh release create` on main for NEW_VERSION → publish.yml → npm.
+
+> **`publish.yml` runs two jobs in parallel, and only one of them gates the release.**
+>
+> | Job | Blocks the release? | What it proves |
+> |---|---|---|
+> | `publish` | yes | the artifact: audit, full suite, TDZ guard, build, consumer gate, then npm |
+> | `regression-evidence` | **no** | that the ~57 registered regression tests still observe their defects |
+>
+> The evidence job cost ~13 of the former ~18 minutes and held every release behind it. What it
+> protects is the freshness of the safety net, not the correctness of the artifact: a regression
+> test that has gone vacuous does not make the package wrong, it makes a FUTURE regression harder
+> to catch. Worth fixing promptly, rarely worth blocking a release on. So it now runs alongside.
+>
+> **That trade is only honest because a red run cannot be missed**, and it takes all three of these:
+>
+> 1. the workflow run is marked failed (the publish has already happened by then),
+> 2. an issue labelled `regression-evidence` is opened automatically,
+> 3. `/lt-dev:publish` reads the last conclusion in its preflight (step 1b) and reports it before
+>    starting the next release.
+>
+> Remove any one and this becomes a job nobody reads — which is strictly worse than the old
+> blocking version, because it still looks like a safety net. If you ever make another gate
+> non-blocking, port all three or leave it blocking.
+>
+> Carrying a red evidence run into the next release is a legitimate decision; making it silently
+> is not. Name the failing mutation, then decide.
 
 ### lt-monorepo (template, not an npm package)
 
