@@ -155,7 +155,19 @@ Pro Runde:
 
 1. TurboOps: `delete_deployment_stage` ×2 (confirmName!), dann `delete_deployment_project` (kaskadiert Tokens/Deployments; Registry-Images hängen am Projekt).
 2. Prüfen, dass die Swarm-Stacks vom Server verschwunden sind (`list_server_containers`); Reste via `docker stack rm <stack>` (exec_in_container).
-3. GitLab: `glab repo delete <group>/<name> --yes`.
+3. GitLab: `glab repo delete <group>/<name> --yes` — **das löscht NICHT, es plant nur.**
+   GitLab benennt das Projekt in `<name>-deletion_scheduled-<id>` um und lässt es in der
+   Verzögerungsfrist stehen; `glab repo view <group>/<name>` liefert danach 404 und
+   suggeriert Erfolg. Der Lauf vom 2026-08-22 hinterließ so ein Projekt, das erst am
+   Folgetag beim Nachzählen auffiel. Deshalb IMMER endgültig entfernen und danach suchen:
+   ```bash
+   GITLAB_HOST=gitlab.lenne.tech glab api --method DELETE \
+     "projects/<id>?permanently_remove=true&full_path=<group>/<name>-deletion_scheduled-<id>"
+   # Kontrolle — muss 0 Treffer liefern, auch aus FRÜHEREN Läufen:
+   GITLAB_HOST=gitlab.lenne.tech glab api "projects?search=<name>"
+   ```
+   Die Suche gehört in jeden Lauf, nicht nur in den eigenen: ein vorgemerktes Projekt
+   eines früheren Laufs blockiert sonst den Namen und bleibt unbemerkt liegen.
 4. Lokal: `lt dev down` im Projekt, `lt dev test down` (falls Reste), Projektordner löschen, Registry-Eintrag prüfen (`~/.lenneTech/projects.json` — `lt dev down` räumt Caddy-Block; verwaiste Einträge via `lt dev prune`/Registry-Check).
 5. Mongo lokal: `lt dev prune --noConfirm` räumt verwaiste Smoke-Test-DBs (reserviertes `lt-smoke-test`-Präfix) seit CLI 1.38.0 automatisch mit — derselbe Sweep läuft zusätzlich bei jedem `lt dev up` beliebiger Projekte. Direkte Drop-Kommandos können von einer Hook-Policy geblockt sein — dann NICHT umgehen; prune ist der kanonische Weg.
 5b. Server-Volumes: verwaiste `<stack>_mongo_data`-Volumes bleiben nach Stage-Löschung zurück und werden vom NÄCHSTEN Lauf wiederverwendet — ein Daten-Leak zwischen Läufen, und der Grund, warum eine feste Test-Mail fälschlich `400 Email already registered` liefert. **Über den TurboOps-MCP löschbar, ohne SSH** (2026-08-23 verifiziert): `exec_in_container` im Container mit Docker-CLI + RW-Socket (auf Turbo-Dev `deploy-party_api`), mit `allowWrite: true` und `confirmHostname: <server-IP>` — **die IP, nicht der Servername**; ein Servername wird mit „confirmHostname mismatch" abgelehnt. Erst `volume ls --filter name=<name>` zum Auflisten, dann `volume rm` mit den beiden Stack-Volumes. Eine frühere Fassung behauptete, das sei per Blocklist geblockt und man brauche SSH — das trifft nicht (mehr) zu: das Kommando wird als `needs-write` eingestuft und mit `allowWrite` ausgeführt. SSH bleibt der Fallback, wenn der MCP nicht erreichbar ist.
