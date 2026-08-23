@@ -148,7 +148,7 @@ During offer creation or optimization, evaluate whether any content block could 
 The offers platform repository is hosted at: `https://gitlab.lenne.tech/intern/offers`
 
 **Workflow:**
-1. Check if the repo is already cloned locally (search common paths: `~/code/lenneTech/offers`, `~/projects/offers`, or use `find` / `locate`)
+1. Check whether the repo is already cloned on this machine. Checkout paths differ per developer, so search instead of assuming a workspace layout: `find "$HOME" -maxdepth 5 -type d -name offers -not -path '*/node_modules/*' 2>/dev/null`, then confirm the hit via its `git remote get-url origin`.
 2. If not found, ask the user if they want to clone it: `git clone https://gitlab.lenne.tech/intern/offers`
 3. Use `lt-dev:generating-nest-servers` / `lt-dev:developing-lt-frontend` skills for codebase changes
 

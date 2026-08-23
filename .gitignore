@@ -9,6 +9,8 @@ bun.lockb
 *.env
 !*.env.example
 .secrets-allow.local
+# Claude Code legt hier maschinenspezifische Pfade ab (/Users/<name>/...)
+.claude/settings.local.json
 # Lokale Zeiterfassungs-Daten (lt-time) gehören NIE ins Repo
 .lt-time/
 **/data/clockodo.json

@@ -31,6 +31,7 @@ If you only need part of the cycle, use the underlying commands directly:
 | `/lt-dev:git:ship` | Phase D (auto-merge path) — rebase/test/check/MR-PR/CI-wait/squash-merge/branch-delete/Linear-handoff |
 | `/lt-dev:dev-submit` | Phase D (reviewer-handoff path) — MR/PR + Linear comment + status → Dev Review |
 | `grilling-decisions` skill | Settles open ticket questions with the user inside Phase A, before any code is written |
+| `checking-upstream-first` skill | Base-repo gate in Phase A — anything that came from a base repo is checked there first (STEP 1) |
 | `building-stories-with-tdd` skill | Drives the TDD inside Phase A |
 | `running-check-script` skill | Drives the check loop (per-slice + final, both ship paths) |
 | `managing-dev-servers` skill | Rules for backgrounded servers during E2E |
@@ -111,6 +112,28 @@ Invoke via the `SlashCommand` tool:
 5. **createdAt ASC** (älter zuerst) — finaler Tie-Breaker.
 
 **Relevance gate (`take-ticket` STEP 5b).** Before implementing, `take-ticket` verifies the picked ticket is still current — ticket/comment timestamps against the base-branch history, a check for parallel work on it, and a substantive check that the described problem still reproduces. A ticket written weeks ago can have been solved in the meantime, from a different angle or by another session. Implementing it anyway does not just waste the run: it can re-introduce something that was deliberately removed, undo a newer fix, or add a second mechanism beside an existing one so nobody can tell which is authoritative. If that gate reports "already solved" or "premise no longer holds", `take-ticket` stops and asks — surface that to the user and do **not** push the cycle onward to Phase B/C/D.
+
+**Base-repo gate (`checking-upstream-first`).** Before touching anything that ORIGINALLY CAME FROM a base repo, look at what that repo carries today. Projects are born as a copy of a template and then stand still while the template moves on, so the file in front of you is the template as it was on project-creation day — not as it is now. This covers far more than workarounds, and it covers **both halves of the stack**: a bug in `Dockerfile`, `.gitlab-ci.yml`, `tsconfig*.json`, `scripts/**` or a `check:*` chain is a base-repo question first and a project question second — on the backend (`docker-entrypoint.sh`, `nest-cli.json`, `src/config.env.ts`, `migrations/**`, a vendored `src/core/`) exactly as on the frontend (`nuxt.config.ts`, `app/app.config.ts`, `openapi-ts.config.ts`, `playwright.config.ts`, `server/**`, a vendored `app/core/`).
+
+Read the base repo on GitHub, not a local checkout — not everyone has the repos cloned, clones sit in different places, and a clone is only as current as its last pull:
+
+```bash
+# backend — nest-server-starter (main); vendored src/core/ comes from nest-server (develop)
+curl -fsSL https://raw.githubusercontent.com/lenneTech/nest-server-starter/main/<file> | diff - projects/api/<file>
+
+# frontend — nuxt-base-starter (main), everything under nuxt-base-template/; vendored app/core/ comes from nuxt-extensions (main)
+curl -fsSL https://raw.githubusercontent.com/lenneTech/nuxt-base-starter/main/nuxt-base-template/<file> | diff - projects/app/<file>
+
+# list a directory instead of guessing filenames
+gh api repos/lenneTech/<repo>/contents/<dir> --jq '.[].name'
+```
+
+Then: **has it — adopt it** (copy the solution over WITH its explaining comment, and note any deliberate deviation in the project's own comment). **Has it not — fix it there, then adopt.** A re-derived fix that solves the same problem differently is worse than none: the next `lt fullstack update` overwrites it and the reasoning is gone, while what the base repo carries is already reviewed, released and running elsewhere.
+
+Two failure modes worth naming, both observed:
+
+- **Time pressure is when this gets skipped — and repairs happen under time pressure.** A failing production deploy got the "obvious" local fix; the starter had solved it properly months earlier, and the quick fix would have been silently overwritten by the next sync.
+- **A negative search result is not evidence of absence.** `find . -name "entrypoint*.sh"` found nothing and was read as "the base repo does not have it". The file is `docker-entrypoint.sh`. List the directory, search the content, read the `package.json` scripts. Two ways to hit the same wall on GitHub: a raw URL on the wrong branch (`nest-server` releases from `develop`, the others from `main`), and the frontend path offset — `nuxt-base-starter` keeps everything under `nuxt-base-template/`, so a URL against the repo root 404s for every file in the repo.
 
 Wait for `take-ticket` to print its STEP 10 review-ready summary. The user's STEP 9 confirmation inside `take-ticket` is the **first human gate** of the cycle:
 

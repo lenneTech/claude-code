@@ -119,7 +119,7 @@ lt fullstack init --name <Name> ...
 ```
 
 **Permission denied:**
-Use a writable directory (`cd ~/projects`).
+Change into a directory the current user can write to before running `lt`.
 
 **Git link invalid:**
 Use valid HTTPS or SSH URL: `https://github.com/user/repo.git`

@@ -83,7 +83,8 @@ nach **jedem** Deploy.
 ### Phase 1 — Scaffold (Vendor-Mode)
 
 ```bash
-mkdir -p ~/code/tmp && cd ~/code/tmp
+SMOKE_DIR="${LT_SMOKE_DIR:-$HOME/lt-smoke}"   # no fixed workspace path — differs per machine
+mkdir -p "$SMOKE_DIR" && cd "$SMOKE_DIR"
 lt fullstack init --name <name> --frontend nuxt --api-mode Rest \
   --framework-mode vendor --frontend-framework-mode vendor --noConfirm
 cd <name> && git add -A && git commit -m "chore: lt dev URL blocks"
@@ -94,7 +95,7 @@ cd <name> && git add -A && git commit -m "chore: lt dev URL blocks"
 1. `lt dev up` → beide URLs proben (`https://<slug>.localhost`, `https://api.<slug>.localhost/health-check`).
 2. `lt dev test` — **alle** Playwright-E2E müssen grün sein (25/25 im Starter-Stand 2026-07). Der Test-Stack fährt die App **gebaut** — genau hier zeigen sich Build-only-Fehler (z. B. SSR-500 durch doppelte unhead-Version), die der Dev-Mode verschluckt.
 3. `pnpm run check` — komplett grün inkl. audit (0 Vulns), Lint **clean** (0 Warnungen — Warnungsflut im vendored Core = oxlintrc-Lücke im Starter).
-4. Jeden Befund SOFORT im passenden Grund-Repo fixen (lokale Repos unter `~/code/lenneTech/`), in das Smoke-Projekt spiegeln, Schritt wiederholen bis grün. Grund-Repos: **nichts committen** — der User reviewt.
+4. Jeden Befund SOFORT im passenden Grund-Repo fixen (im lokalen Klon — der Pfad ist je Maschine anders, also suchen (`find "$HOME" -maxdepth 5 -type d -name nest-server-starter -not -path '*/node_modules/*'`) oder erfragen statt raten), in das Smoke-Projekt spiegeln, Schritt wiederholen bis grün. Grund-Repos: **nichts committen** — der User reviewt.
 
 ### Phase 3 — GitLab
 
@@ -172,7 +173,7 @@ Pro Runde:
 5. Mongo lokal: `lt dev prune --noConfirm` räumt verwaiste Smoke-Test-DBs (reserviertes `lt-smoke-test`-Präfix) seit CLI 1.38.0 automatisch mit — derselbe Sweep läuft zusätzlich bei jedem `lt dev up` beliebiger Projekte. Direkte Drop-Kommandos können von einer Hook-Policy geblockt sein — dann NICHT umgehen; prune ist der kanonische Weg.
 5b. Server-Volumes: verwaiste `<stack>_mongo_data`-Volumes bleiben nach Stage-Löschung zurück und werden vom NÄCHSTEN Lauf wiederverwendet — ein Daten-Leak zwischen Läufen, und der Grund, warum eine feste Test-Mail fälschlich `400 Email already registered` liefert. **Über den TurboOps-MCP löschbar, ohne SSH** (2026-08-23 verifiziert): `exec_in_container` im Container mit Docker-CLI + RW-Socket (auf Turbo-Dev `deploy-party_api`), mit `allowWrite: true` und `confirmHostname: <server-IP>` — **die IP, nicht der Servername**; ein Servername wird mit „confirmHostname mismatch" abgelehnt. Erst `volume ls --filter name=<name>` zum Auflisten, dann `volume rm` mit den beiden Stack-Volumes. Eine frühere Fassung behauptete, das sei per Blocklist geblockt und man brauche SSH — das trifft nicht (mehr) zu: das Kommando wird als `needs-write` eingestuft und mit `allowWrite` ausgeführt. SSH bleibt der Fallback, wenn der MCP nicht erreichbar ist.
 6. `turbo logout` NICHT nötig (User-Login bleibt); geminteter Projekt-Token stirbt mit dem Projekt.
-7. Schlussprüfung: alle vier Stage-URLs müssen wieder 404/Default-Cert liefern, `glab repo view` 404, TurboOps-Projektliste ohne `<name>`, keine `<name>`-DBs, kein `~/code/tmp/<name>`.
+7. Schlussprüfung: alle vier Stage-URLs müssen wieder 404/Default-Cert liefern, `glab repo view` 404, TurboOps-Projektliste ohne `<name>`, keine `<name>`-DBs, kein `$SMOKE_DIR/<name>`.
 
 ### Phase 8 — Report
 

@@ -5,9 +5,18 @@ description: 'Single source of truth for stack-wide maintenance and releases of 
 
 # Maintaining the lt Stack (all base repos)
 
-The seven base repos (locally under `~/code/lenneTech/`) are maintained and
-released in dependency order. Target end state: every repo current, `check`
-green everywhere, npm packages published, templates tagged — proven by a full
+The seven base repos are maintained and released in dependency order. Canonical
+source is [github.com/lenneTech](https://github.com/lenneTech); releasing needs a
+local clone of each, and that checkout path differs per machine — locate it instead
+of assuming one:
+
+```bash
+find "$HOME" -maxdepth 5 -type d -name nest-server-starter -not -path '*/node_modules/*' 2>/dev/null
+```
+
+If a repo is not checked out anywhere, clone it into the same workspace directory as
+its siblings. Target end state: every repo current, `check` green everywhere, npm
+packages published, templates tagged — proven by a full
 `/lt-dev:fullstack:smoke-test` run.
 
 ## Dependency graph (dictates the order)
@@ -171,6 +180,21 @@ What does **not** go over messages: which repos exist and in which order they go
 4. `gh release create` for NEW_VERSION → publish.yml publishes to npm.
 
 ### nest-server (npm package `@lenne.tech/nest-server`, branch `develop`)
+
+> **Picking the number: a breaking change is a MINOR here, never a major.**
+> The MAJOR digit tracks the NestJS major this package targets — 11.x is NestJS 11 — so it
+> moves when, and only when, NestJS moves. Everything of our own ships in a minor, breaking
+> changes included: removed APIs, changed signatures, a dependency turned into a required
+> peer. Do not "promote" a breaking change to a major because semver would elsewhere; that
+> would decouple the digit from NestJS and cost the meaning it carries.
+>
+> The consumer half of this rule is already in `nest-server-updating` ("Minor = Major, treat
+> it as such"). This is the producing half — and the one that is easy to get backwards while
+> writing the release, because the change genuinely IS breaking.
+>
+> The migration guide (step 3) is what carries the weight instead: say up front that the
+> minor contains breaking changes and why the digit stays, so nobody reads the version number
+> as a promise it does not make.
 
 1. Work on `develop`. Maintenance (`/lt-dev:maintenance:maintain`) → `pnpm i` → `pnpm run check` green.
 2. New version in `package.json`, `pnpm i`.
