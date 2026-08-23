@@ -105,7 +105,7 @@ What differs from the npm/template recipes:
 - **`claude-code` is PUBLIC.** The secrets guard (`scripts/scan-secrets.sh` via
   pre-commit/pre-push) blocks the release on customer data, tokens or
   `/Users/<name>/` paths. Never bypass it with `--no-verify` — fix the finding.
-- **Push channel:** `claude-code` goes to GitHub (SSH-agent check + HTTPS fallback
+- **Push channel:** `claude-code` goes to GitHub (`scripts/check-push-channel.sh` + HTTPS fallback
   per the skill), `claude-code-internal` to `gitlab.lenne.tech` — `gh` does not
   apply there, and there is no GitHub release to create.
 
@@ -118,7 +118,10 @@ lt claude plugins        # updates the marketplace cache, then every plugin
 A restart of Claude Code is required — running sessions keep the old version.
 
 1. **Preflight** (skill rules): correct branch (nest-server: `develop`),
-   `git pull` current, `gh auth` + SSH-agent check (HTTPS fallback).
+   `git pull` current, `gh auth`, and the push channel via
+   `bash "${CLAUDE_PLUGIN_ROOT}/scripts/check-push-channel.sh" <repo-root>` —
+   never `ssh-add -l`, which is a permanent false negative on 1Password
+   `IdentityAgent` setups (see the skill's Push-channel rule).
    Uncommitted changes in the SOURCE repo are allowed — they are exactly what
    is being published; foreign-looking changes (files unrelated to the stated
    purpose, e.g. agent-memory files) ⇒ stop and list them instead of

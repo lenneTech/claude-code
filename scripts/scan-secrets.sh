@@ -65,6 +65,29 @@ while IFS= read -r f; do
     report "$f" "Enthält einen privaten Schlüssel."
   fi
 
+  # 2b) Provider-Token an ihrem Präfix — GitLab, GitHub, npm, Slack, OpenAI/Anthropic.
+  #     Bewusst AUCH in Markdown: die .md-Ausnahme unten existiert, weil Tutorials legitim
+  #     `API_KEY = "dein-key-hier"` zeigen. Ein Wert mit echtem Provider-Präfix ist dagegen nie
+  #     ein Beispiel — diese Präfixe vergibt ausschließlich der Provider.
+  #
+  #     Der Mindest-Rumpf von 20 Zeichen ist load-bearing: er unterscheidet ein echtes Token von
+  #     einer Erwähnung des Präfixes. Ohne ihn schlüge der Guard auf jeder Doku an, die die
+  #     Präfixe AUFZÄHLT (z. B. .claude/docs-cache/github-changelog.md, das die GitLab-Familien
+  #     `glrt-`, `gloas-`, … listet) — ein Daueralarm, den man wegklickt, ist schlimmer als
+  #     kein Alarm.
+  #
+  #     Anlass: am 2026-08-23 gab ein `git credential fill` beim Debuggen ein echtes glpat- aus.
+  #     Es landete in keiner Datei, aber der Guard hätte es auch nicht bemerkt, wenn doch.
+  if grep -oE '(glpat|glrt|gloas|glptt|glagent|glimt|glsoat|glcbt|glft|gldt)-[A-Za-z0-9_.-]{20,}' "$f" | grep -q .; then
+    report "$f" "Enthält ein GitLab-Token (Provider-Präfix + Wert)."
+  fi
+  if grep -oE '(gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,})' "$f" | grep -q .; then
+    report "$f" "Enthält ein GitHub-Token (Provider-Präfix + Wert)."
+  fi
+  if grep -oE '(npm_[A-Za-z0-9]{30,}|xox[baprs]-[A-Za-z0-9-]{20,}|sk-(ant-)?[A-Za-z0-9_-]{30,})' "$f" | grep -q .; then
+    report "$f" "Enthält ein npm-, Slack- oder AI-Provider-Token (Provider-Präfix + Wert)."
+  fi
+
   # Token-/Secret-Checks NICHT in Markdown (Tutorials zeigen legitim Beispielwerte);
   # echte Secrets gehören in .env/Config/Daten, nicht in .md.
   if [[ "$f" != *.md ]]; then

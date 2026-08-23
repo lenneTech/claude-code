@@ -89,11 +89,37 @@ What does **not** go over messages: which repos exist and in which order they go
   ride along with the next real release. For templates the artifact is the
   repo itself, so every commit counts.
 
-- **Push channel:** the SSH agent is frequently empty (1Password requires an
-  interactive approval). ALWAYS check (`timeout 5 ssh-add -l`); on
-  "no identities" push via HTTPS:
+- **Push channel:** ask the script, which decides it functionally:
+
+  ```bash
+  bash "${CLAUDE_PLUGIN_ROOT}/scripts/check-push-channel.sh" <repo-root>
+  # -> ssh<TAB>github.com<TAB>authenticated as: Hi kaihaase! …
+  # -> https<TAB>github.com<TAB>no SSH authentication (…)
+  ```
+
+  On `https`, push via HTTPS:
   `git -c credential.helper='!gh auth git-credential' push https://github.com/lenneTech/<repo>.git <branch>`.
-  `gh release create` is unaffected.
+  `gh release create` is unaffected either way.
+
+  **Do NOT use `ssh-add -l` for this.** It is the obvious test and it is wrong here — measured
+  2026-08-23, where it reported "The agent has no identities" while `ssh -T git@github.com`
+  authenticated fine and had done all along. The reason: `~/.ssh/config` routes SSH to the
+  1Password agent via
+
+  ```
+  Host *
+      IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+  ```
+
+  but **`IdentityAgent` is an `ssh(1)` option and `ssh-add` does not read `~/.ssh/config` at
+  all** — it only ever talks to the agent in `$SSH_AUTH_SOCK`, which on macOS points at the
+  (empty) launchd agent. So `ssh-add -l` interrogates an agent SSH never uses. On any
+  1Password/IdentityAgent setup it is a permanent false negative, and every HTTPS fallback it
+  triggered was unnecessary.
+
+  To inspect the keys SSH really has, aim `ssh-add` at the configured agent instead:
+  `SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock" ssh-add -l`.
+  But prefer the functional check above — it stays correct regardless of how the agent is wired.
 - **Dependency maintenance:** per repo via the `/lt-dev:maintenance:maintain`
   command (FULL) — it raises the lenne.tech **frameworks first** (npm + vendor
   core), aligns their pinned ecosystem, and only then hands off to the

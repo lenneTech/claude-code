@@ -27,8 +27,12 @@ repo-dependent to enumerate as individual patterns.
 
 ### Phase 0 — Preflight (hart, kein Weiterlaufen bei Rot)
 
-- `gh auth status` (github.com, repo-Scope) und `timeout 5 ssh-add -l`
-  (bei leerem Agent: HTTPS-Push-Fallback aus dem Skill aktivieren).
+- `gh auth status` (github.com, repo-Scope) und den Push-Kanal pro Repo via
+  `bash "${CLAUDE_PLUGIN_ROOT}/scripts/check-push-channel.sh" <repo-root>`
+  (Feld 1: `ssh` → normal pushen, `https` → Fallback aus dem Skill).
+  **Nicht `ssh-add -l`** — das fragt den Agent aus `$SSH_AUTH_SOCK` und ignoriert
+  das `IdentityAgent` aus `~/.ssh/config`, ist also bei 1Password-Setups dauerhaft
+  falsch-negativ und erzwang bisher unnötige HTTPS-Pushes. Begründung im Skill.
 - Alle 6 Repos: korrekter Branch (nest-server: `develop`, sonst `main`),
   Arbeitsverzeichnis clean, `git pull` aktuell. Dirty Repo ⇒ STOPP mit
   Befundliste (niemals fremde Änderungen in Release-Commits einsammeln).

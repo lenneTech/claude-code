@@ -982,6 +982,8 @@
         "coordinating-peer-sessions",
         "contributing-to-lt-framework",
         "maintaining-lt-stack",
+        "maintain-stack",
+        "publish",
         "npm-package-maintainer",
         "take-ticket",
         "ticket-cycle"
