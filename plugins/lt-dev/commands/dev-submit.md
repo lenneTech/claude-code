@@ -1,7 +1,7 @@
 ---
 description: Submit current work for dev review — creates MR/PR, posts Linear comment, and moves ticket to Dev Review
 argument-hint: "[issue-id]"
-allowed-tools: Read, Bash(git:*), Bash(gh pr:*), Bash(glab mr:*), mcp__plugin_lt-dev_linear__*, AskUserQuestion
+allowed-tools: Read, Bash(git:*), Bash(gh pr:*), Bash(glab mr:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), mcp__plugin_lt-dev_linear__*, AskUserQuestion, ListAgents, SendMessage
 disable-model-invocation: false
 ---
 
@@ -55,11 +55,18 @@ Store the resolved issue ID as `ISSUE_ID` for subsequent steps.
 
 1. **Current branch:** Run `git branch --show-current`. Abort if on `main`, `master`, `dev`, or `develop`.
 2. **Uncommitted changes:** Run `git status --porcelain`.
-   - If there are uncommitted changes, ask the user via `AskUserQuestion`:
+   - If there are uncommitted changes, attribute them before offering to stage anything:
+     `bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh`.
+     "Stage all" stages another session's work in progress too, and that lands in this MR under this
+     ticket while the peer is still mid-slice. In base repos this is the normal case, not an edge one:
+     house rule keeps their work uncommitted on the checked-out branch. Details and the `ORIGIN`
+     message: [`coordinating-peer-sessions`](${CLAUDE_PLUGIN_ROOT}/skills/coordinating-peer-sessions/SKILL.md).
+   - Then ask the user via `AskUserQuestion`:
      - "Es gibt uncommittete Änderungen:"
-     - Show the list of changed files
-     - Option 1: "Automatisch committen & pushen" → Stage all, create commit with descriptive message, push
-     - Option 2: "Ich mache es selbst" → Pause and let the user handle it, then continue
+     - Show the list of changed files, each marked with its attribution (this session / `<peer>` / unattributed)
+     - Option 1: "Nur meine Änderungen committen & pushen" → Stage this session's paths explicitly, commit, push (default where anything is foreign)
+     - Option 2: "Alles committen & pushen" → Stage all, create commit with descriptive message, push
+     - Option 3: "Ich mache es selbst" → Pause and let the user handle it, then continue
 3. **Unpushed commits:** Run `git log @{upstream}..HEAD --oneline 2>/dev/null`.
    - If there are unpushed commits (or no upstream), ask the user:
      - "Es gibt unpushte Commits. Soll ich pushen?"

@@ -1,7 +1,7 @@
 ---
 description: Comprehensive code review with content validation, security, documentation, tests, backend, frontend, UX, a11y, and devops reviewers. Runs package.json check script with auto-fix. Small diffs use single-pass agent; larger diffs spawn parallel domain specialists with cross-domain challenge.
 argument-hint: '[issue-id] [--base=main] [--weights="Security:25,..."]'
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Bash(jq:*), Bash(cat:*), Bash(ls:*), Bash(test:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Agent, Skill, AskUserQuestion, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Bash(jq:*), Bash(cat:*), Bash(ls:*), Bash(test:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Agent, Skill, AskUserQuestion, ListAgents, SendMessage, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
 disable-model-invocation: false
 effort: max
 ---
@@ -39,6 +39,7 @@ effort: max
 | `/lt-dev:backend:sec-audit` | OWASP security audit for dependencies |
 | `/lt-dev:resolve-ticket` | Resolve a ticket (run review after) |
 | `/lt-dev:debug` | Adversarial debugging with competing hypotheses |
+| `/lt-dev:peers` | Who else is live in this repository, and what the working tree owes them |
 
 **Recommended workflow:** `resolve-ticket` → optional `/simplify` → `/lt-dev:review` → address findings → `code-cleanup` → create PR → `/review`
 
@@ -52,6 +53,8 @@ This command is the **direct orchestrator** — it spawns all reviewers in paral
 /lt-dev:review (this command = orchestrator)
 │
 │  Phase 1: Diff analysis & domain detection
+│  Phase 1b: Change provenance — who wrote this, and what were they solving?
+│          (attribution ladder → one ORIGIN per author-peer → provenance_block)
 │  Phase 2: Content validation (requirements, scope, edge cases)
 │          + Design Smell Baseline assembled (shared input, pasted into the code reviewers)
 │
@@ -140,6 +143,70 @@ Parse arguments from `$ARGUMENTS`:
    git diff <base-branch>...HEAD --name-only | wc -l
    ```
 
+### Phase 1b: Change Provenance & Author Consultation
+
+**Runs before Phase 1.5, before the small-diff branch, and before any reviewer is spawned.** Two reasons it sits this early: Phase 1.5 auto-fixes what it finds, and auto-fixing somebody else's half-finished refactor manufactures a conflict; and every reviewer prompt from Phase 3 onwards wants the answer this phase produces.
+
+The problem it solves: a diff is complete about *what* and silent about *why*. When the session reviewing the diff also wrote it, the gap is invisible. Three routine situations open it up: base-repo work stays uncommitted on the checked-out branch by house rule, so a peer's edit is in the tree with nothing on the record; `/clear` and summarization drop this session's own memory while its files live on; and two sessions occasionally share one checkout. Review intent you do not have and the outcome is predictable — a deliberate trade-off is written up as a defect, and a real defect passes as "probably intentional".
+
+Follow the [`coordinating-peer-sessions`](${CLAUDE_PLUGIN_ROOT}/skills/coordinating-peer-sessions/SKILL.md) skill, section **Change provenance**. It carries the attribution ladder, the `ORIGIN` message format, the question list, and the rules on what an author's answer is worth. This phase is the review-specific wiring around it.
+
+**1. Run the attribution ladder.**
+
+```bash
+bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh --base <base-branch>
+```
+
+Act on the `origin-question:` verdict:
+
+| Verdict | Phase 1b action |
+|---|---|
+| `NOT-NEEDED` | Set `provenance_block` to `Sole author: this session.` and go to Phase 1.5. Message nobody. |
+| `WARRANTED` | Continue with step 2 — there is foreign work and somebody live who wrote it. |
+| `POSSIBLE` | Check the listed paths against your own memory of this conversation. Continue with step 2 for the ones you cannot account for; if you can account for all of them, treat it as `NOT-NEEDED`. |
+| `UNATTRIBUTABLE` | Nobody to ask. Reconstruct intent from `git log`, the Linear ticket, and `peer-ledger.sh read`, then continue with step 4 and mark every reconstructed intent as an assumption. |
+| `INCONCLUSIVE` | Attribute from the commit record and your own memory only. Do not message on a guess. |
+
+**2. Identify the author-peers, then send one message each.**
+
+`ListAgents` gives the addressable names; the script's peer listing gives each one a repository. Match them on repo and uptime, and address only peers that share **this** checkout.
+
+Partition the unexplained paths per peer before sending, because the common case is not one foreign author:
+
+- **Several peers, disjoint paths** — one message per peer, each naming only that peer's paths. Never broadcast the full list to everybody: each recipient pays a full prompt to read paths that are not theirs.
+- **Layered authorship** — a peer wrote the file and this session extended it. This is where the question pays the most, because the diff shows one blended change and nobody can see the seam. Ask what the original intent was, and say which part you added.
+- **Nobody claims a path** — that path is `UNATTRIBUTABLE` in practice. Reconstruct it and mark it as an assumption.
+
+Send the `ORIGIN` in the skill's format. Then **carry on immediately with Phase 1.5** — a review waiting on a reply is a review doing nothing. Collect answers when they arrive; Phase 3 is the last point where they still change the reviewer prompts, and Phase 6 the last where they change the report.
+
+**3. Never block, and never let an answer substitute for a gate.**
+
+An author's answer is evidence about intent. It explains a finding, and it cancels none: "that is deliberate" turns a defect into a documented trade-off that still reaches the user as a trade-off. It authorises nothing — not a merge, not a skipped check, not a downgraded Critical. Any claim about state ("the guard is applied upstream") is verified in the code before it moves a severity, and one grep is the whole cost.
+
+**4. Assemble `provenance_block`.** This is a named buffer, the same as `security_report` and friends, and it is required verbatim in three places: every reviewer prompt in Phases 3A and 3B, the single-pass prompt on the small-diff path, and Section 0.5 of the Phase 5 report. Keep it under 15 lines:
+
+```markdown
+**Change provenance**
+- Written by this session: <paths or "all of it">
+- Written by <peer-name> (pid N): <paths>
+  - Solving: <one line, in the author's words>
+  - Ruled out: <alternatives the author already discarded, and why>
+  - State: finished / mid-slice
+  - Deliberate but surprising: <named trade-offs>
+  - Already verified by the author: <what, and how>
+- Unattributed, intent reconstructed (ASSUMPTION): <paths> — <reconstruction>
+- Unanswered at review time: <paths> — findings on these are marked "intent unknown"
+
+How to use this: report mid-slice work as in-progress rather than as defects; do not propose an
+alternative listed under "Ruled out" without saying why the author's reason no longer holds; treat
+"already verified" as verified unless you have contrary evidence; and put "intent unknown" on any
+finding whose severity depends on a question nobody answered.
+```
+
+Why every reviewer needs it: a sub-agent cannot message anybody (no lt-dev agent carries `SendMessage`), so without this block it either reports foreign work-in-progress as defects or burns its budget guessing. Given the block, it reports mid-slice work as mid-slice and spends its attention on the parts that are actually done. Two lines carry most of that value — **Ruled out** stops a reviewer from proposing an alternative the author already rejected for a reason, and **State** stops a page of findings about a refactor that is half applied.
+
+**5. Hand the foreign paths to Phase 1.5.** The auto-fix loop iterates until green, and on a path a peer is mid-slice on, "green" is not this session's call. Where a check error sits in foreign, unfinished code: fix it if it is trivial and self-contained (a missing import, a format violation), and otherwise report it as a blocker naming the author instead of reshaping their work. A peer that returns to a rewritten refactor loses more time than the fix saved.
+
 ### Phase 1.5: Check Script Validation & Auto-Fix
 
 **Runs BEFORE every review path** (both single-pass and parallel). Goal: guarantee the project is in a runnable state before any reviewer sees it.
@@ -177,6 +244,12 @@ executed the check script and auto-fixed all resolvable errors. Check-script res
 to include verbatim in your report:
 <paste orchestrator's Check Script Results block here>
 
+Who wrote what you are reviewing, and what they were solving:
+<paste provenance_block from Phase 1b here>
+
+Where a path is marked mid-slice or its intent is unknown, say so on the finding
+instead of reporting unfinished work as a defect.
+
 Cover all quality dimensions: content, security, code quality, tests, documentation, formatting.
 Produce your structured single-pass report.
 ```
@@ -197,8 +270,10 @@ Run directly in this command (not delegated to sub-agents):
    - Flag unaddressed criteria as ❌
 
 2. **Logical Coherence:** Verify changes form a coherent whole — no contradictory behavior, no incomplete implementations, no dead code paths introduced.
+   An incomplete implementation on a path `provenance_block` marks as **mid-slice** is a status, not a finding. Report it as "in progress by <author>", and judge coherence on the finished parts.
 
 3. **Scope Check:** Flag unrelated changes that don't serve the stated goal (scope creep).
+   **Check `provenance_block` first.** A hunk that looks like scope creep against this ticket is often another session's work sharing the checkout, and reporting it as creep is both wrong and useless — the author is not reading this report. Attribute it, exclude it from this review's scope, and name it in one line so the user knows why it is not covered.
 
 4. **Edge Cases:** Check for null/empty/boundary handling, off-by-one risks, and concurrency considerations in new code paths.
 
@@ -243,6 +318,8 @@ Each entry reads *what it is*, then *how to fix it*. Match against the diff, not
 **CRITICAL:** Send ALL Agent tool calls **and the built-in `/security-review` Skill call** in a **single message** so they execute in parallel. Do NOT send them one by one — that makes them sequential.
 
 These reviewers only analyze code — they do NOT use Chrome DevTools MCP and can safely run in parallel.
+
+**Provenance rule:** Every reviewer prompt below opens with the `provenance_block` from Phase 1b, verbatim, exactly as it opens with the Design Smell Baseline where that applies. Sub-agents cannot reach a peer session, so this block is their only access to intent — without it, foreign work-in-progress comes back as a list of defects. Where Phase 1b produced `Sole author: this session.`, paste that one line; it costs nothing and tells the reviewer the question was asked and settled.
 
 **Report retention rule:** Capture each reviewer's complete returned report into a named buffer (e.g. `security_report`, `docs_report`, `performance_report`, ...). These buffers are required verbatim in Phase 5, Section 8. Do NOT discard, summarize, or compress them after Phase 4 — Phase 4 only annotates the Consolidated Catalog; the per-reviewer reports themselves must reach the final output unchanged.
 
@@ -386,6 +463,8 @@ If no frontend/page files changed, skip this phase entirely.
 
 **Report retention rule:** Same as Phase 3A — capture `frontend_report`, `ux_report`, `a11y_report` verbatim. They are required in Phase 5, Section 8.
 
+**Provenance rule:** Same as Phase 3A — each prompt below opens with `provenance_block`.
+
 #### Frontend Reviewer (if frontend changes)
 ```
 Agent tool with subagent_type "lt-dev:frontend-reviewer":
@@ -477,6 +556,24 @@ For each challenged finding:
 - Evidence partially mitigates it → downgrade severity
 - Cross-domain insight adds context → annotate the finding
 
+**The author-peer as a challenge source.** Where `provenance_block` names a live author for the code a finding sits in, that session holds the one thing no amount of cross-reading produces: what it already tried. Use it for the small set of findings where the answer decides the finding, and nothing else:
+
+- Two reviewers disagree on severity and the code alone does not settle it.
+- The recommended fix is a design change, and the author may have discarded exactly that design for a reason.
+- The finding hinges on a claim about elsewhere ("no caller passes null") that would take a wide search to confirm and the author can confirm in one line.
+
+Batch them into **one** message per peer, as an `ASK` (the `ORIGIN` in Phase 1b already established authorship), numbered so the reply maps back:
+
+```
+[ASK] svl — three review findings hinge on what you already tried in invoice.service.ts.
+Betrifft: 1) H2 recommends moving the tax rounding into the model — did you rule that out?
+          2) M4 flags the missing null guard on `customer` — is a caller guaranteed to set it?
+          3) M7 wants the cache keyed per tenant — was the shared key deliberate?
+Nötig: one line each; a "no reason, just did it" is a useful answer too.
+```
+
+Bounds that keep this cheap: only findings that are still Critical, High, or contested after the challenge; at most one message per peer per review; never a question the code answers in two greps. **Never wait for the reply** — Phase 5 runs on what has arrived. A finding whose question went unanswered is reported at its pre-challenge severity with "intent unknown" attached, never quietly downgraded on the assumption that the author probably had a reason.
+
 **Error Handling:** If a reviewer fails or times out:
 - Mark the domain as "Could not evaluate — [reason]"
 - Continue with available reports
@@ -489,7 +586,7 @@ For each challenged finding:
 
 1. **Every numbered section below is MANDATORY** — do not skip, summarize, or omit any section, even if a domain is N/A.
 2. **Section 8 (Detailed Reviewer Reports) MUST contain the VERBATIM full output of every spawned reviewer agent.** Do NOT paraphrase, compress, or drop reports. If a reviewer returned 400 lines, all 400 lines appear in the final output.
-3. **Section order is fixed.** Top-to-bottom: **TL;DR (Section 0)** → Executive Summary → Reviewers Spawned → Overall Results → Action Roadmap → Consolidated Remediation Catalog → Informed Trade-offs → Cross-Domain Challenge Results → Detailed Reviewer Reports → Recommended Commands & Tools.
+3. **Section order is fixed.** Top-to-bottom: **TL;DR (Section 0)** → Change Provenance (Section 0.5) → Executive Summary → Reviewers Spawned → Overall Results → Action Roadmap → Consolidated Remediation Catalog → Informed Trade-offs → Cross-Domain Challenge Results → Detailed Reviewer Reports → Recommended Commands & Tools.
    **Section 0 is mandatory** — it is the single source the user reads when they need a fast picture. Everything below it (Sections 1–9) is the audit trail. Section 0 MUST: (a) state the verdict in one sentence in the user's language (German for lenne.tech projects unless the user wrote the request in English), (b) list every Critical/High/Medium finding grouped Must-Fix / Should-Fix / Nice-to-Have with `file:line` + 1-line action, (c) show a per-domain score table (1 row per spawned reviewer), (d) name 1–3 highest-leverage recommendations the user should act on first. Section 0 must fit in roughly one screen — if a domain has many findings, summarize the bucket ("12 weitere Low-Findings — siehe Section 5") rather than enumerating every entry.
 4. **Wrap each full reviewer report in a `<details><summary>` block** for scannability — but the FULL content stays inside. GitHub, VS Code, and the Claude Code terminal all render these natively.
 5. **If a reviewer failed or returned an error**, show the error verbatim in its `<details>` block. Do not silently drop it.
@@ -524,6 +621,21 @@ Lange Buckets (>8 Einträge) zusammenfassen: erste 5 zeigen, Rest als "+N weiter
 **Check-Pipeline-Baseline:** `pnpm audit X · format:check ✓/✗ · lint X/X · test X/X · build ✓/✗ · check ✓/✗`.
 
 **Top-3 Empfehlungen (höchster Hebel zuerst):** je eine konkrete Aktion mit Verweis auf Finding-#, geschätzter Kosten/Nutzen.
+
+### 0.5 Herkunft der Änderungen
+
+Der `provenance_block` aus Phase 1b, verbatim. Steht dort `Sole author: this session.`, ist das die
+ganze Sektion — genau diese Zeile, kein Absatz darüber. Sie sagt dem Leser, dass die Frage gestellt
+und beantwortet ist, und kostet ihn eine Zeile.
+
+Sonst kommen die drei Zeilen dazu, die der Mensch für seine Entscheidung braucht:
+
+- **Nicht reviewt (fremde Arbeit in Arbeit):** `<Pfade>` — Autor `<Session>`, mid-slice. Ein Satz, warum ausgeschlossen.
+- **Findings mit unbekannter Absicht:** `<Finding-IDs>` — Rückfrage gestellt, bis Report-Zeit keine Antwort. Severity ist die ungemilderte.
+- **Rekonstruierte Absicht (Annahme):** `<Pfade>` — `<Rekonstruktion>`. Kippt die Annahme, kippen diese Findings mit.
+
+Diese Sektion ist der einzige Ort, an dem sichtbar wird, was der Review **nicht** abdeckt. Ohne sie
+liest ein Bericht über einen halb fremden Baum wie ein vollständiger.
 
 ### 1. Executive Summary
 
@@ -837,7 +949,7 @@ containing **every** finding from every reviewer — deduplicated across reviewe
 | `#` | Stable ID (`C1`, `H3`, `M7`, `L12`) — reusable in the user's free-text answer |
 | Art | **Type of the planned change** — see the taxonomy below. Drives sequencing and reviewability. |
 | Ort | `file:line` as a clickable markdown link |
-| Was ist das Problem | 1–3 sentences in plain language: the mechanism AND the concrete consequence. Not a category label. State when something is pre-existing rather than introduced by the diff. |
+| Was ist das Problem | 1–3 sentences in plain language: the mechanism AND the concrete consequence. Not a category label. State when something is pre-existing rather than introduced by the diff, and when the code belongs to another session (`Autor: <session>, mid-slice`) — the user decides differently about a defect in somebody else's unfinished work than about one in their own. |
 | Empfehlung | The concrete fix, not a restatement of the problem |
 | Aufw. | Effort glyphs: `▪` ≈ 5 min · `▪▪` ≈ 15 min · `▪▪▪` ≈ 30 min · `▪▪▪▪` ≈ 60 min+ |
 | Quellen | Which reviewers found it (`SEC`·`BE`·`TST`·`PRF`·`OPS`·`DOC`·`ORCH`). **Multiple sources = higher confidence** — say so where it applies. |
@@ -876,6 +988,18 @@ Rules:
    This is the one place the user sees everything at once.
 5. Where reviewers disagreed, show the RESOLVED severity and note the disagreement in the
    problem column — the user is entitled to know a call was contested.
+6. **A finding the author explained is a trade-off, not a deletion.** Where Phase 1b or the Phase 4
+   `ASK` produced "that is deliberate, because …", the row moves to Section 6 (Informed Trade-offs)
+   with the author's reason quoted, and stays visible in the Action Roadmap under
+   "Trade-offs accepted". It never silently disappears: the user is the one who decides whether the
+   author's reason is good enough, and they cannot decide about a row they never see.
+7. **A finding in another session's unfinished code recommends handing it back, not fixing it.**
+   The `Empfehlung` reads "an <Autor> zurückgeben" plus the one-line diagnosis, because two sessions
+   editing one file is a merge conflict with extra steps. Exception: a trivial, self-contained fix
+   (missing import, format violation) that cannot collide.
+8. **A finding whose intent question went unanswered keeps its full severity** and carries
+   "Absicht unbekannt" in the problem column. Never downgrade on the assumption that the author
+   probably had a reason.
 
 Only after this table is on screen, ask the question.
 
@@ -914,6 +1038,13 @@ After the user picks an option:
 - ⏭️ **Nichts** — Create one tracking ticket per Critical/High finding via `mcp__plugin_lt-dev_linear__save_issue` (or print a markdown ticket-list if Linear MCP is unavailable). Confirm ticket IDs back to the user. Do NOT fix code. Create them in **`Open`** (never `Backlog`) unless the user asks otherwise — the auto-pick pool of `take-ticket` / `ticket-cycle` excludes `Backlog`, so a backlog ticket is never picked up again.
 - **Free-text IDs** — Iterate only the listed IDs.
 
+**Findings in another session's code are not fixed here.** Whatever option the user picks, a row
+marked `Autor: <session>, mid-slice` is reported, not edited — editing it turns one review into a
+merge conflict for somebody who never asked for the help. Send the author one `SOLVED` per real
+defect (the diagnosis, which is the expensive part and transfers perfectly), and list these rows in
+the closing block under "Zurückgegeben an <Autor>". If the user explicitly says to fix them anyway,
+that is their call: fix them, and say in the closing block that the author was told.
+
 After execution, print a short closing block:
 
 ```markdown
@@ -923,6 +1054,7 @@ After execution, print a short closing block:
 - **Findings addressed:** N (out of M total)
 - **Files modified:** N
 - **Remaining findings:** N (see Section 5 for IDs)
+- **Zurückgegeben an andere Sessions:** N (Finding-IDs + Autor; "keine" wenn dieser Review Alleinautor war)
 - **Suggested next step:** [`/lt-dev:check` to re-validate / Create PR / Re-run `/lt-dev:review` if many fixes / etc.]
 ```
 

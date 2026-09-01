@@ -1,7 +1,7 @@
 ---
 description: Adversarial debugging with competing hypotheses using Agent Teams - multiple investigators challenge each other to find root cause (requires CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1)
 argument-hint: "[bug-description or issue-id]"
-allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(echo:*), Agent, AskUserQuestion, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
+allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Agent, AskUserQuestion, ListAgents, SendMessage, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
 disable-model-invocation: true
 ---
 
@@ -70,6 +70,26 @@ Parse `$ARGUMENTS`:
   > - Wie laesst er sich reproduzieren?
   > - Welche Bereiche sind betroffen?
 
+### Step 1b: Who changed the suspect area, and what were they solving?
+
+A regression has an author, and the author knows what they were trying to do. That is the one input hypotheses cannot be derived from, and it is the cheapest input in the whole command. Get it moving now: the answer arrives while Step 1.5 builds the loop, and nothing here waits.
+
+Cheapest source first:
+
+1. **`git log --oneline -20 -- <paths>` and `git blame` on the suspect lines.** A committed change carries subject, author, date, and usually the ticket. Where that explains it, this step is finished and nobody is disturbed.
+2. **`bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh read`** — a `SOLVED` note from a session that has since closed is sometimes this exact diagnosis, already paid for by somebody else.
+3. **Uncommitted work leaves no record at all**, and in a base repo that is the normal state rather than the exception:
+
+   ```bash
+   bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh
+   ```
+
+   On `WARRANTED`, send the author-peer one `ORIGIN` in the format from the [`coordinating-peer-sessions`](${CLAUDE_PLUGIN_ROOT}/skills/coordinating-peer-sessions/SKILL.md) skill. Lead with the symptom, not with the change: "the invoice list 500s since this morning, and `invoice.service.ts` is uncommitted in the tree — what were you solving there, and what did you already rule out?" That phrasing gets a mechanism back. An accusation gets a defence back.
+
+**Why this beats guessing.** "I moved the tax rounding into the service because the model ran before validation" is a hypothesis with a mechanism already attached, and it usually names the two candidates the author discarded. Step 2 then generates hypotheses in the space that is left instead of rediscovering the author's own reasoning.
+
+**What the answer is not.** It is a lead, never evidence. Intent is what somebody meant to do; the bug is what the code does. Every hypothesis still faces the red loop from Step 1.5, including one that came straight from the author. And never wait: if no answer has arrived by Step 2, generate hypotheses without it and fold the answer in when it lands.
+
 ### Step 1.5: Build a tight feedback loop — the gate before any hypothesis
 
 **This is the step that decides whether the debugging works.** With a **tight** signal that goes red on *this* bug, the cause gets found: bisection, hypothesis-testing, and instrumentation all just consume that signal. Without one, the whole team of investigators argues about code they cannot run, and the "winning" hypothesis is the most convincing story rather than the true cause.
@@ -118,7 +138,7 @@ versus `npm view <pkg> version`, then read the relevant lines in `node_modules` 
 With the loop red, analyze the bug and the code around it:
 
 1. Read files mentioned in the bug report or likely affected
-2. Check recent git changes in affected areas: `git log --oneline -20 -- <paths>`
+2. Check recent git changes in affected areas: `git log --oneline -20 -- <paths>` — plus whatever Step 1b returned about uncommitted work and author intent
 3. Look for common patterns: error handling gaps, race conditions, state mutations, config issues
 
 **Minimise the repro first.** Shrink the failing scenario to the smallest one that still goes red: cut inputs, callers, config, data, and steps one at a time, re-running the loop after each cut. Done when every remaining element is load-bearing — removing any one of them makes it go green. This pays off twice: it shrinks the hypothesis space the teammates work in, and it becomes the regression test in Step 7.
@@ -267,6 +287,8 @@ If the skill returns `boot_failed` or `stall_guard_triggered`, surface the diagn
 - [ ] Throwaway harnesses and prototypes are deleted, or moved somewhere explicitly marked as debug scaffolding
 - [ ] The hypothesis that turned out correct is stated in the commit or MR/PR message, so the next person debugging this area inherits it
 - [ ] All teammates shut down, team session cleaned up
+- [ ] **The cause is recorded where it outlives this session:** `peer-ledger.sh note "<topic>" "cause: … fix: …"`. A diagnosis is the expensive part of debugging and it transfers perfectly, so it is worth the two seconds even when nobody is live to receive it
+- [ ] **If the bug sat in another session's code, that session was told** — one `SOLVED` naming the cause, not the symptom. It is about to hit the same thing, and it is the one that can fix its own work without a conflict
 
 **Then ask the question that pays the session forward: what would have prevented this bug?**
 

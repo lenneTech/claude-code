@@ -65,6 +65,8 @@ That produces the two failures worth naming:
 
 Run `ListAgents` and check whether a session is live in this framework repo or in a starter that links it. If one is, `git status` and `git diff` in the framework clone tell you what is already uncommitted there **before** you add your own change on top. Uncommitted work you did not write is a peer's, not a leftover to clean up: leave it, and say so.
 
+`bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh` does that separation for you and names the live sessions that share the clone. Where it says `WARRANTED`, one `ORIGIN` gets you the two things `git diff` cannot show: whether the foreign edit is finished, and what it was for. Both decide whether it is safe to build on top of it — a `pnpm build` over somebody's half-applied change ships that half into your linked consumer, and the failure surfaces in your tests, not theirs.
+
 This check also covers the session that starts *after* a peer's change landed. Messages are not history, so a later session is never told what happened before it existed. The working tree is.
 
 Read the ledger in the same breath — it is the half that survives a closed terminal:
@@ -85,7 +87,7 @@ Betrifft: this clone is linked into nest-server-starter; your dist is now rebuil
 Nötig: re-run your api once, and import from core/guards if you referenced the barrel.
 ```
 
-Do **not** send for a change nothing downstream can observe (a comment, a test, a local refactor behind the same API), and do not report progress. The six occasions and the format are in the `coordinating-peer-sessions` skill. The reverse direction matters just as much here: when a framework change breaks a starter in a way the next session will also hit, one `SOLVED` with the cause saves that diagnosis outright.
+Do **not** send for a change nothing downstream can observe (a comment, a test, a local refactor behind the same API), and do not report progress. The seven occasions and the format are in the `coordinating-peer-sessions` skill. The reverse direction matters just as much here: when a framework change breaks a starter in a way the next session will also hit, one `SOLVED` with the cause saves that diagnosis outright.
 
 ### The `pnpm build --watch` trap
 
@@ -204,7 +206,7 @@ pnpm install
 
 - **Stale linked build** — after a framework edit, nothing happens in the starter. Cause: `pnpm build` was not re-run or `--watch` is not active. Fix: verify the build output timestamp under `dist/`.
 - **Version mismatch** — starter expects a peer dependency range that does not match the linked framework version. Usually surfaces as a TS type mismatch. Fix: bump the framework's `package.json` version locally or adjust peer ranges for the test cycle (do NOT commit starter-side peer-range changes from this workflow).
-- **Foreign uncommitted changes in the clone** — `git status` shows edits nobody in this session made. Cause: a parallel session is working the same base repo, and the house rule keeps that work uncommitted. Fix: `ListAgents` to confirm, then leave it alone and report it. Never `git checkout --` or stash a peer's work.
+- **Foreign uncommitted changes in the clone** — `git status` shows edits nobody in this session made. Cause: a parallel session is working the same base repo, and the house rule keeps that work uncommitted. Fix: `change-provenance.sh` to attribute them and `ListAgents` to confirm, then leave them alone and report them. Where they sit in code your own change touches, one `ORIGIN` before you build on top. Never `git checkout --` or stash a peer's work.
 - **Forgotten unlink** — starter continues to resolve the linked framework on the next branch or project. Fix: always run the unlink step at the end; verify via `pnpm why @lenne.tech/nest-server`.
 - **Port collision** — a leftover dev server from a previous iteration is still bound. Fix: `lt dev status --all` to see which project owns it, then `lt dev down` in that project (or `pkill` the process for non-lt projects).
 

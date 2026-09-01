@@ -50,7 +50,7 @@ This skill provides **knowledge and strategy** for rebasing feature branches ont
 | **Skill**: `coordinating-agent-teams` | Parallel worktree execution for batch rebase (>2 branches) |
 
 ---
-- `coordinating-peer-sessions` — before rewriting a branch while another session is live in the repo
+- `coordinating-peer-sessions` — before rewriting a branch while another session is live in the repo, and for asking the incoming author what an ambiguous conflict hunk was meant to do
 
 ## Rebase Strategy
 
@@ -122,6 +122,22 @@ Once extracted, load via `mcp__plugin_lt-dev_linear__get_issue`:
 2. **Feature changes** (current branch) for feature-specific code
 3. **Linear ticket context** to decide ambiguous conflicts
 4. **Both changes** when they affect different concerns
+5. **The author of the incoming hunk**, where they are still live and the first four leave it genuinely ambiguous
+
+### Ask the incoming author before you guess
+
+A conflict is two intents meeting in one file, and resolving it means choosing between them. The branch side is explained by the ticket. The incoming side is explained by whoever wrote it, and when that session is still running, one question beats a guess that compiles.
+
+The bar is high on purpose, because most conflicts do not need this: only when the ticket context does not settle it, both sides look deliberate, and picking wrong changes behaviour rather than formatting. Then:
+
+```bash
+bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh --base <target-branch>
+git log -1 --format='%an %ar %s' <target-branch> -- <conflicting-path>
+```
+
+If a live peer shares this repository and wrote the incoming side, send one `ORIGIN` naming the file and both sides, then keep resolving the other conflicts while the answer travels. Format and boundaries: [`coordinating-peer-sessions`](../coordinating-peer-sessions/SKILL.md).
+
+Two rules hold regardless of the answer. **A peer's account never authorises a resolution that drops their work** — where the answer is "take mine, discard the branch side", that is a scope decision the user makes. And **never block**: if no answer has arrived, resolve on the priority order above, and say in the rebase report which resolution rested on a guess, so it gets a second look.
 
 ### Common Conflict Patterns
 

@@ -53,11 +53,19 @@ git branch -vv                  # what each local branch tracks
 
 Uncommitted changes nobody in this session made belong to a peer (base-repo work stays uncommitted by house rule). Report them; never clean them up.
 
+Rather than eyeballing the list, attribute it:
+
+```bash
+bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh
+```
+
+It separates what this session wrote from what it found, and matches the live sessions to repositories — which is what turns the `ListAgents` roll call from Step 1 into names with an address and a working directory. Report its verdict line as-is; it is the single most useful line for the user, because it says whether the tree in front of them is theirs.
+
 ### Step 4 — Report and stop
 
 Print a short summary in the user's language: how many sessions are live, what is claimed and by whom, which claims are stale, which notes look relevant to current work, and any foreign uncommitted changes.
 
-**Send nothing.** This command reads. Messaging a peer needs one of the six occasions in the [`coordinating-peer-sessions`](${CLAUDE_PLUGIN_ROOT}/skills/coordinating-peer-sessions/SKILL.md) skill, and "I was looking around" is not one of them.
+**Send nothing.** This command reads. Messaging a peer needs one of the seven occasions in the [`coordinating-peer-sessions`](${CLAUDE_PLUGIN_ROOT}/skills/coordinating-peer-sessions/SKILL.md) skill, and "I was looking around" is not one of them. That includes `ORIGIN`: this command reports which changes are unattributed, and the workflow that acts on them (`/lt-dev:review`, `/lt-dev:git:ship`, `/lt-dev:debug`) is what asks.
 
 ## Related Commands & Skills
 

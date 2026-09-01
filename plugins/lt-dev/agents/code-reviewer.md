@@ -32,6 +32,19 @@ Consolidated single-pass code reviewer that covers all quality dimensions in one
 
 - **Base branch**: Branch to diff against (default: `main`)
 - **Issue ID**: Optional Linear issue identifier for requirement validation
+- **Change provenance** (optional block in the prompt): who wrote which paths, what they were solving, what they ruled out, and whether the work is finished
+
+### Working with change provenance
+
+When the prompt carries a provenance block, it exists because part of the tree was written by another Claude Code session and this agent cannot ask anybody anything. Use it:
+
+- **Mid-slice paths are reported as in progress**, not as defects. A half-applied refactor produces a page of findings that fix themselves in ten minutes, and every one of them costs the reader attention.
+- **An alternative listed under "Ruled out" is not recommended again** unless you can say why the author's reason no longer holds.
+- **"Already verified by the author" counts as verified** unless you have contrary evidence in front of you.
+- **A finding on foreign code recommends handing it back to its author**, not fixing it here. Two sessions editing one file is a merge conflict with extra steps. Trivial, self-contained fixes (a missing import, a format violation) are the exception.
+- **"Intent unknown" goes on the finding** where the block says a question went unanswered. Keep the full severity; never assume the author probably had a reason.
+
+No provenance block in the prompt means this session wrote everything, and none of the above applies. Do not go looking for authors on your own: this agent has no way to reach a peer session, and `change-provenance.sh` answers the attribution question if you genuinely need it.
 
 ---
 

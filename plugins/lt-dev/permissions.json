@@ -997,7 +997,11 @@
         "publish",
         "npm-package-maintainer",
         "take-ticket",
-        "ticket-cycle"
+        "ticket-cycle",
+        "debug",
+        "git:ship",
+        "rebasing-branches",
+        "dev-submit"
       ]
     },
     {

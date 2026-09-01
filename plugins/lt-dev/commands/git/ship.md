@@ -1,7 +1,7 @@
 ---
 description: 'Ship the current feature branch into dev — pre-flight check, commit, rebase, test, check, MR/PR, Linear comment + "Dev Review" + unassign, wait for CI, merge (squash for feature branches, regular merge when promoting a base branch into a higher base branch), delete branch. Auto-retries on pipeline failure.'
 argument-hint: "[--base=<branch>] [--max-pipeline-retries=<n>] [--no-squash] [--keep-branch]"
-allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__list_issue_statuses
+allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, ListAgents, SendMessage, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__list_issue_statuses
 disable-model-invocation: false
 ---
 
@@ -178,6 +178,31 @@ If all ACs are satisfied, log `All acceptance criteria satisfied — proceeding`
 ## STEP 2 — Commit & Push Local Work
 
 1. Run `git status --porcelain`.
+1a. **If the tree is dirty, find out whose work it is before staging any of it.**
+
+   ```bash
+   bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh --base "$BASE_BRANCH"
+   ```
+
+   `git add -A` in step 2 stages everything in the tree, including work another session is
+   mid-slice on. That commit lands on this branch, in this MR, under this ticket, and the peer
+   discovers it when its own `git status` comes back empty. Base repos make this the normal case
+   rather than the exception: house rule keeps their work uncommitted on the checked-out branch,
+   so a peer's edit looks exactly like this session's.
+
+   Act on the `origin-question:` verdict:
+
+   - `NOT-NEEDED` or `INCONCLUSIVE` with nothing predating the session — continue to 1b.
+   - `WARRANTED` or `POSSIBLE` — the paths flagged `pre-session` are the ones to resolve. Ask the
+     user via `AskUserQuestion`, showing the paths and their attribution: stage only this session's
+     paths (`git add <paths>` instead of `git add -A`), stage everything, or abort. Default to
+     staging only this session's paths. Send the author-peer one `ORIGIN` naming the paths if it is
+     live, and do not wait for the answer — the user's choice is what unblocks the ship.
+   - `UNATTRIBUTABLE` — nobody live wrote them, so they are this session's from a cleared context or
+     a closed one. Show them to the user with that stated, and let them decide.
+
+   Format and occasions: [`coordinating-peer-sessions`](../../skills/coordinating-peer-sessions/SKILL.md).
+
 1b. **If anything under `.claude/agent-memory/` is dirty**, follow the
    [`managing-agent-memory`](../../skills/managing-agent-memory/SKILL.md) skill
    FIRST — it resolves the repo's commit policy (asking at most once, then
