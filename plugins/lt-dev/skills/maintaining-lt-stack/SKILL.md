@@ -135,13 +135,27 @@ What does **not** go over messages: which repos exist and in which order they go
   each was internally consistent, and only the assembled workspace has both
   halves.
 
-  Two guards now catch it, and neither replaces this rule — they catch the
-  mistake, this rule prevents it:
-  - `lt-monorepo/scripts/check-workspace-consistency.mjs` fails the assembled
-    workspace when api and app resolve such a package differently, or when the
-    two frameworks promise different peer ranges.
-  - `lt fullstack init` reports it when two sub-projects hoist contradicting
-    `overrides` values instead of letting one win silently.
+  Two guards catch it today, and neither replaces this rule — they catch the
+  mistake, the rule prevents it:
+
+  - **In the assembled workspace** (`lt-monorepo/scripts/check-workspace-consistency.mjs`,
+    since 3.10.0). Fails when api and app resolve a wire-critical package
+    differently, when the two frameworks promise different peer ranges, or when a
+    member has the package installed but pins it nowhere — `autoInstallPeers`
+    defaults to true, so an unpinned peer agrees today and is free to drift on
+    the next install.
+  - **In behaviour** (`nuxt-base-starter/.github/workflows/test.yml`, job
+    `e2e-auth`, green since 2.22.3). Boots MongoDB and nest-server-starter and
+    runs the auth suite against a real API. The only layer that sees a broken
+    contract rather than a version diff — the other one compares declarations,
+    and declarations were green throughout the split.
+
+    Two things it needs that are easy to miss, both found by its own first runs:
+    the template's dependencies must be installed separately (it has its own
+    lockfile, and its check chain starts with `cross-env` — one of its own
+    devDependencies), and an empty database routes every visitor to `/auth/setup`,
+    so the first admin has to be created via `POST /system-setup/init` before the
+    suite runs.
 
   The smoke test is the end-to-end gate: it builds a real fullstack project, so
   it is the one place a wire split shows up as a failing flow rather than as a
@@ -355,6 +369,13 @@ What does **not** go over messages: which repos exist and in which order they go
 1. Maintenance (`/lt-dev:maintenance:maintain`) → `npm run check` green (note: npm, not pnpm; the
    audit gate aborts on ANY finding — fix via `overrides` + the `//overrides`
    doc object, see cli/CLAUDE.md).
+
+   **`pnpm run check` here does not just fail, it leaves a mess.** This repo is
+   npm-based (`package-lock.json`). pnpm runs its own install first, dies on
+   `ERR_PNPM_IGNORED_BUILDS` (`@lenne.tech/npm-package-helper`, `bcrypt`,
+   `unrs-resolver`) — and by then has written a `pnpm-lock.yaml` and a stub
+   `pnpm-workspace.yaml` that have no business in this repo. Delete both if the
+   wrong command ran; the failure is loud, the two files are not.
 2. New version in `package.json`, `npm i`.
 3. Commit `NEW_VERSION: MESSAGE` → push main → `gh release create` → npm.
 4. `npm test` must report 0 skipped (repo policy).
