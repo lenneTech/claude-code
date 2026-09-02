@@ -148,7 +148,28 @@ Alles per TurboOps-MCP + CLI-API (Details + Payloads: Skill
 
 Pro Runde:
 1. Feature-Branch von `dev`, sichtbare Änderung (z. B. Badge `SMOKE-R<n>` mit `data-testid="smoke-marker"` auf der Landing-Page).
-2. `glab mr create --source-branch … --target-branch dev` → `glab mr merge --auto-merge --remove-source-branch` (Tests gaten den Merge).
+2. `glab mr create --source-branch … --target-branch dev` → `glab mr merge --auto-merge --remove-source-branch`.
+
+   **Erst warten, bis die Branch-Pipeline LÄUFT, dann `--auto-merge` setzen.** Das Flag
+   ist keine Zusicherung: Findet `glab` beim Absetzen keine laufende Pipeline, meldet es
+   `! No pipeline running on <branch>` und mergt **sofort und ungegated** durch — die
+   Tests haben den Merge dann nie geprüft, obwohl das Kommando so aussieht, als würde es
+   warten. Im Lauf vom 2026-09-01 passierte genau das; am 2026-09-02 quittierte GitLab
+   nach kurzem Warten mit `✓ Will auto-merge`, und der Merge hing tatsächlich an der
+   grünen Pipeline. Der Unterschied ist reines Timing zwischen Push und Kommando:
+
+   ```bash
+   for i in $(seq 1 30); do
+     n=$(glab api "projects/<id>/pipelines?ref=<branch>&per_page=1" | node -e "…length…")
+     [ "$n" = "1" ] && break; sleep 5
+   done
+   glab mr merge <iid> --auto-merge --remove-source-branch --yes
+   ```
+
+   Kontrollieren statt annehmen: `✓ Will auto-merge` in der Ausgabe, oder
+   `auto_merge_enabled: true` am MR. Ein direktes `merged` ohne vorherige Pipeline ist
+   der ungegatete Fall. (Ein 405 `Method Not Allowed` beim direkten Merge ist dagegen
+   ein GUTES Zeichen — es heißt, das Projekt erzwingt eine grüne Pipeline vor dem Merge.)
 3. dev-Pipeline abwarten → ggf. Label-Pass → Online-Check: Marker via `curl -s https://dev.<domain>/ | grep SMOKE-R<n>` + `/meta`-Commit == neuer SHA.
 4. MR `dev` → `main`, Auto-Merge, deploy-prod abwarten → ggf. Label-Pass → gleicher Online-Check auf `<domain>`.
 

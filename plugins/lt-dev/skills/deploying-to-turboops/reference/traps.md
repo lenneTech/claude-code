@@ -108,8 +108,18 @@ valid TLS. Create + verify DNS first, then deploy.
 Empirically hit during the 2026-07 smoke-test run, on a host that had been
 provisioned before TurboOps managed it (the concrete host is named in the internal
 marketplace, `lt-ops` → `reference/lt-smoke-test-environment.md`): the deploy job goes green (`3/3 containers healthy`), but
-every stage URL answers **404 with `CN=TRAEFIK DEFAULT CERT`**. `--wait` checks
-container health only — it never performs an external HTTP probe.
+every stage URL answers **404**. `--wait` checks container health only — it never
+performs an external HTTP probe.
+
+**The tell is the 404, NOT the certificate.** This page used to describe the
+symptom as "404 with `CN=TRAEFIK DEFAULT CERT`". That is one of two shapes, and
+the smoke-test runs of 2026-09-01 and 2026-09-02 both hit the other one: a
+**valid Let's Encrypt certificate for the exact host**, and a 404 behind it. The
+ACME TLS challenge is answered at the entrypoint and does not need a router, so
+the certificate can be issued while no route to the service exists. Reading the
+certificate as an all-clear rules the trap out and sends you looking for the
+fault in the project, where it is not. Probe the URL; treat any 404 on a stage
+whose containers are healthy as this trap until proven otherwise.
 
 **Root cause:** the server's Traefik was provisioned by **deploy.party**, not by
 TurboOps. TurboOps writes its per-stage routing config to

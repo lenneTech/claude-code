@@ -11,6 +11,11 @@
 #   2. /clear and summarization drop this session's own memory while the process
 #      and its files live on.
 #   3. Two sessions share one checkout.
+#   4. A session edits a repo it is NOT sitting in. This is not exotic here, it
+#      is the rule: the smoke test mandates that a finding be fixed in the
+#      matching base repo, so the runner is always in a different checkout than
+#      the fix. Such a peer is reported as `elsewhere`, and it is still worth
+#      asking — see the verdict section.
 #
 # This script separates what this process wrote from what it did not, and names
 # the live sessions that could hold the missing intent. It reads only: git,
@@ -303,9 +308,13 @@ elif [ "$unexplained" -gt 0 ] && [ "$askable" -gt 0 ]; then
   status="WARRANTED"
   reason="$unexplained uncommitted path(s) predate this session, and $askable peer session(s) could hold the intent."
   action="Send ONE ORIGIN message to the peer(s) that share this checkout, naming the paths. Carry on with work that does not depend on the answer; never block on it."
+elif [ "$unexplained" -gt 0 ] && [ "$peers_elsewhere" -gt 0 ]; then
+  status="WARRANTED-CROSS-REPO"
+  reason="$unexplained uncommitted path(s) predate this session. No live peer shares this checkout, but $peers_elsewhere session(s) are live in another one — and editing a repo you are not sitting in is the NORM in this stack, not an exception (the smoke test requires a finding to be fixed in its base repo, so the runner is never in the repo it fixes)."
+  action="Check the ledger FIRST (peer-ledger.sh read): a claim names the repository, which is what identifies a cross-repo author — the working directory cannot. If no claim covers these paths, send ONE ORIGIN message to the sessions listed as 'elsewhere', naming the paths. Carry on meanwhile; never block on the answer."
 elif [ "$unexplained" -gt 0 ]; then
   status="UNATTRIBUTABLE"
-  reason="$unexplained uncommitted path(s) predate this session, but no live peer shares this checkout."
+  reason="$unexplained uncommitted path(s) predate this session, and no live peer exists in any checkout."
   action="The author is gone (session closed) or it was this process before its context was cleared. Reconstruct intent from the diff, the ticket, and the ledger (peer-ledger.sh read); state the reconstruction as an assumption in your report. Nobody to ask."
 else
   status="POSSIBLE"

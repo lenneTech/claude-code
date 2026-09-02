@@ -5,8 +5,7 @@ lenne.tech projects use [Better Auth](https://www.better-auth.com/) for authenti
 ## Table of Contents
 
 - [Preferred Authentication Methods](#preferred-authentication-methods)
-- [Client Setup (nuxt-base-starter)](#client-setup-nuxt-base-starter)
-- [Crypto Utility](#crypto-utility)
+- [Password handling: never roll your own](#password-handling-never-roll-your-own)
 - [useBetterAuth Composable](#usebetterauth-composable)
 - [Auth Middleware](#auth-middleware)
 - [Basic Usage Examples](#basic-usage-examples)
@@ -24,133 +23,83 @@ lenne.tech projects use [Better Auth](https://www.better-auth.com/) for authenti
 | 1. | **Passkey** | WebAuthn-based, passwordless (recommended) |
 | 2. | **Email + Password + 2FA** | Traditional with TOTP second factor |
 
-## Client Setup (nuxt-base-starter)
+## Password handling: never roll your own
 
-The auth client is pre-configured in `app/lib/auth-client.ts`:
+**The client-side hashing lives in `@lenne.tech/nuxt-extensions`. Project code must not
+re-implement it, and must not call the auth endpoints past it.**
 
-```typescript
-// app/lib/auth-client.ts
-import { passkeyClient } from '@better-auth/passkey/client'
-import { adminClient, twoFactorClient } from 'better-auth/client/plugins'
-import { createAuthClient } from 'better-auth/vue'
+Every password-carrying method of the lt auth client SHA256-hashes the value before it
+leaves the browser (`ltSha256`). That is not a substitute for TLS — it keeps the plaintext
+out of proxies, logs and error reporters that record request bodies. The server accepts
+both shapes and normalizes them, so the hashing has to be either everywhere or nowhere for
+a given account.
 
-import { sha256 } from '~/utils/crypto'
-
-// =============================================================================
-// Type Definitions
-// =============================================================================
-
-export interface AuthResponse {
-  data?: null | {
-    redirect?: boolean
-    token?: null | string
-    url?: string
-    user?: {
-      createdAt?: Date
-      email?: string
-      emailVerified?: boolean
-      id?: string
-      image?: string
-      name?: string
-      updatedAt?: Date
-    }
-  }
-  error?: null | {
-    code?: string
-    message?: string
-    status?: number
-  }
-}
-
-// =============================================================================
-// Base Client Configuration
-// =============================================================================
-
-const baseClient = createAuthClient({
-  basePath: '/iam', // IMPORTANT: Must match nest-server betterAuth.basePath
-  baseURL: import.meta.env?.VITE_API_URL || process.env.API_URL || 'http://localhost:3000',
-  plugins: [
-    adminClient(),
-    twoFactorClient({
-      onTwoFactorRedirect() {
-        navigateTo('/auth/2fa')
-      },
-    }),
-    passkeyClient(),
-  ],
-})
-
-// =============================================================================
-// Auth Client with Password Hashing
-// =============================================================================
-
-/**
- * Extended auth client that hashes passwords before transmission.
- *
- * SECURITY: Passwords are hashed with SHA256 client-side to prevent
- * plain text password transmission over the network.
- */
-export const authClient = {
-  ...baseClient,
-
-  changePassword: async (params: { currentPassword: string; newPassword: string }, options?: any) => {
-    const [hashedCurrent, hashedNew] = await Promise.all([
-      sha256(params.currentPassword),
-      sha256(params.newPassword)
-    ])
-    return baseClient.changePassword?.({ currentPassword: hashedCurrent, newPassword: hashedNew }, options)
-  },
-
-  resetPassword: async (params: { newPassword: string; token: string }, options?: any) => {
-    const hashedPassword = await sha256(params.newPassword)
-    return baseClient.resetPassword?.({ newPassword: hashedPassword, token: params.token }, options)
-  },
-
-  signIn: {
-    ...baseClient.signIn,
-    email: async (params: { email: string; password: string; rememberMe?: boolean }, options?: any) => {
-      const hashedPassword = await sha256(params.password)
-      return baseClient.signIn.email({ ...params, password: hashedPassword }, options)
-    },
-  },
-
-  signOut: baseClient.signOut,
-
-  signUp: {
-    ...baseClient.signUp,
-    email: async (params: { email: string; name: string; password: string }, options?: any) => {
-      const hashedPassword = await sha256(params.password)
-      return baseClient.signUp.email({ ...params, password: hashedPassword }, options)
-    },
-  },
-
-  twoFactor: {
-    ...baseClient.twoFactor,
-    disable: async (params: { password: string }, options?: any) => {
-      const hashedPassword = await sha256(params.password)
-      return baseClient.twoFactor.disable({ password: hashedPassword }, options)
-    },
-    enable: async (params: { password: string }, options?: any) => {
-      const hashedPassword = await sha256(params.password)
-      return baseClient.twoFactor.enable({ password: hashedPassword }, options)
-    },
-  },
-}
-
-export type AuthClient = typeof authClient
-```
-
-## Crypto Utility
+Use the composable. It covers the whole flow:
 
 ```typescript
-// app/utils/crypto.ts
-export async function sha256(message: string): Promise<string> {
-  const msgBuffer = new TextEncoder().encode(message)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-}
+const {
+  signIn, signUp, signOut,
+  changePassword,
+  requestPasswordReset, resetPassword,   // since nuxt-extensions 1.16.0
+  twoFactor, passkey,
+} = useLtAuth();
+
+await signIn.email({ email, password });                  // hashed for you
+await changePassword({ currentPassword, newPassword });   // both hashed
+await resetPassword({ newPassword, token });              // hashed
 ```
+
+### Why this rule exists
+
+A project built its own reset page with a private `hashPassword()` helper and a bare
+`fetch`, because the composable exposed `changePassword` but not the reset pair. It worked
+— until it met a server-side guard that skipped the credential sync for an already-hashed
+password. The user was told the reset succeeded and could then only sign in with the OLD
+password. Fixed in nest-server 11.38.0; the gap in the composable is what created the
+workaround in the first place.
+
+**Anti-pattern:**
+
+```typescript
+// WRONG — a private hashing helper next to a raw fetch
+import { hashPassword } from '~/utils/hash-password';
+await fetch(`${apiBase}/users/password/reset`, {
+  body: JSON.stringify({ password: await hashPassword(pw), token }),
+  method: 'POST',
+});
+```
+
+### `redirectTo` must be an ABSOLUTE app URL
+
+`requestPasswordReset` is the one place where a missing value fails silently. Better Auth
+resolves `redirectTo` against its own base URL — the **API** origin — so in a split
+app/API deployment a relative value lands on the API host, where the route does not exist:
+**403, no mail sent, and nothing visible in the browser.**
+
+```typescript
+// CORRECT — appUrl() throws rather than return something relative
+await requestPasswordReset({
+  email,
+  redirectTo: appUrl('/auth/reset-password', config.public.siteUrl),
+});
+
+// WRONG — yields the literal "undefined/auth/reset-password" when siteUrl is unset
+redirectTo: `${config.public.siteUrl}/auth/reset-password`,
+```
+
+The library cannot compute this for you: the app origin is project knowledge
+(`NUXT_PUBLIC_SITE_URL`), and Nitro's `destr()` means the value is not even reliably a
+string at the boundary. The app origin must also appear in the backend's `trustedOrigins`
+**without a wildcard** — the redirect carries a live single-use token.
+
+### Reaching past the composable
+
+`useLtAuthClient()` is still there for surfaces the composable has not wrapped. When you
+use it, forward the caller's parameters whole — never rebuild the payload from named
+fields, or options like `redirectTo` and `revokeOtherSessions` disappear silently. The
+library's own wrappers are pinned to that rule by
+`test/auth-client-param-forwarding.test.ts`.
+
 
 ## useBetterAuth Composable
 

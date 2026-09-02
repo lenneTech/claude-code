@@ -135,9 +135,19 @@ What does **not** go over messages: which repos exist and in which order they go
   each was internally consistent, and only the assembled workspace has both
   halves.
 
-  Two guards catch it today, and neither replaces this rule — they catch the
-  mistake, the rule prevents it:
+  Three guards catch it today, and none of them replaces this rule — they catch
+  the mistake, the rule prevents it:
 
+  - **When the manifests are merged** (lt CLI `hoist-workspace-pnpm-config.ts`,
+    since 1.45.0). The hoist is last-writer-wins, which is right for root-vs-sub
+    and a trap between siblings. Reported: two sub-projects setting one key
+    differently in the same run; the incremental case (`add-api` then `add-app`,
+    where the earlier run already hoisted and emptied its source); and a repo
+    contradicting ITSELF across `package.json#pnpm` and its own
+    `pnpm-workspace.yaml`. `allowBuilds` is not merely reported but **merged
+    deny-wins** — a warning does not stop an install script that one project
+    explicitly refused, and `overrides` stays report-only because there is no
+    safe direction for a version.
   - **In the assembled workspace** (`lt-monorepo/scripts/check-workspace-consistency.mjs`,
     since 3.10.0). Fails when api and app resolve a wire-critical package
     differently, when the two frameworks promise different peer ranges, or when a
@@ -437,6 +447,37 @@ it as one argument; `npm run` forwards it without a `--` separator.
 - **Version bumps are mandatory.** Plugins run from the versioned cache
   `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`; without a bump the
   same folder is overwritten, which costs rollback and traceability.
+- **`bump-version.ts` stages the whole tree (`git add .`), so a peer's uncommitted
+  work rides along.** This repo is worked in parallel more than most, because
+  stack-wide findings are supposed to land here, so foreign changes in the tree are
+  the normal case rather than an edge one. `git:ship` and `dev-submit` gate against
+  this; the publish path cannot, because the npm script owns the commit. So the gate
+  is manual and belongs before the bump:
+
+  ```bash
+  bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh
+  git stash push -m "held out of <version>" -- <foreign paths>
+  npm run version:minor "<message>"
+  git stash pop
+  ```
+
+  Tell the affected sessions before the stash (`CONFLICT`) and after the pop
+  (`READY`) — the window is seconds, but a parallel writer turns it into a conflict.
+
+  Observed on 2026-09-01 during the 8.9.0 release: two foreign files were in the
+  tree, both finished, both describing versions that did not exist — nuxt-extensions
+  1.16.0 and nest-server 11.38.0 against npm's 1.15.1 and 11.37.0, plus lt CLI guards
+  absent from 1.44.0. Asking their authors (`ORIGIN`) is what surfaced it; the diffs
+  alone read as ready to ship.
+
+- **Check the versions a documentation change references, not just the change.**
+  Same release, one line further: the guard list already contained a claim about
+  `lt fullstack init` behaviour that shipped in 8.9.0 because only the foreign
+  addition had been verified, not the text it was added to. A skill that promises a
+  guard nobody can install sends its reader looking for something that is not there.
+  `npm view <pkg> version` for packages, `ls-remote --tags` for templates, and
+  `git show <tag>:<path>` to prove the tag actually contains what the text claims.
+
 - **Secrets guard:** `scripts/scan-secrets.sh` runs via pre-commit/pre-push and
   aborts the release on findings — critical for the PUBLIC `claude-code`. Fix
   findings, never bypass with `--no-verify`.
