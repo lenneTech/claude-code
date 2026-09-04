@@ -88,7 +88,7 @@ If a project's `check` exits non-zero:
 
 **One narrow exception, and it is about collision rather than scope.** Point 2 stands: a pre-existing error gets fixed, because a red `check` blocks the next person regardless of who wrote it. What point 2 does not cover is an error inside *uncommitted work another live session is mid-slice on* — reshaping that is not a scope question, it is two sessions editing one file, and the peer returns to a rewritten refactor having lost more time than the fix saved. Where the tree is dirty and `bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh` attributes the failing path to a live peer: fix it if it is trivial and self-contained (a missing import, a format violation, a stray `console.log`), and otherwise report it as a blocker naming the author, plus one `SOLVED` carrying the diagnosis so they can fix their own work in one step. Nobody live, or nothing attributable: point 2 applies unchanged.
 
-**STALLED is a signal to change approach, not permission to stop.** The count stops falling when the same fix is being retried, so the next iteration has to attack the error differently: read the failing file in full rather than patching around the reported line, check whether two errors share one cause, look at how a working sibling module solves the same thing, run the failing step alone to see output the aggregate run swallowed, check whether it is one of the known hazards in Steps 6.5 to 6.7. Only when a genuinely different approach has been tried and the count still holds does the residual classification in Step 5 apply — and in **Blocking** mode, everything except an exhausted-ladder dependency vulnerability still stops the workflow.
+**STALLED is a signal to change approach, not permission to stop.** The count stops falling when the same fix is being retried, so the next iteration has to attack the error differently: read the failing file in full rather than patching around the reported line, check whether two errors share one cause, look at how a working sibling module solves the same thing, run the failing step alone to see output the aggregate run swallowed, check whether it is one of the known hazards in Steps 6.5 to 6.8. Only when a genuinely different approach has been tried and the count still holds does the residual classification in Step 5 apply — and in **Blocking** mode, everything except an exhausted-ladder dependency vulnerability still stops the workflow.
 
 ### Step 4 — Audit findings: mandatory fix escalation ladder
 
@@ -196,6 +196,81 @@ Things to preserve when porting:
 ### Step 6.7 — `api · test` looks deadlocked (0% CPU, no output)? It is usually a retry grind
 
 A spec file whose app/socket state broke (historically: resource starvation from overlapping runs) grinds through `(1+retry)` attempts × `testTimeout` × tests-per-file — with `retry: 5` that was up to an hour at 0% CPU, which the watchdog kills as "workers idle". Base repos now ship `retry: 2` and the run governor removes the starvation trigger. If you still see it: check `pgrep -f vitest` for a single surviving fork at 0% CPU, read which spec file last logged, and re-run that file alone. Never raise `retry` to paper over it.
+
+### Step 6.8 — `check` fails on a fully green test run? Console-intercept teardown race
+
+**Symptom:** `check` fails at a `test` step while every single test passed:
+
+```
+EnvironmentTeardownError: [vitest-worker]: Closing rpc while "onUserConsoleLog" was pending
+ Test Files  108 passed (108)   Tests  2300 passed   Errors  1 error
+```
+
+It is sporadic — roughly one run in ten — and a rerun is usually green, which makes it read as flakiness.
+
+**Cause.** vitest replaces `globalThis.console` in every worker and ships each write to the main process as an `onUserConsoleLog` RPC call. On teardown, `execute()` does not await those calls, it rejects them. A console write from the last test in a file therefore races its own cleanup and loses. Structural, not load-dependent — which is why "rerun it" makes it disappear without fixing anything.
+
+**Only `console.*` can trigger this.** vitest replaces `globalThis.console` and nothing else. A Nest `Logger` (and anything else writing straight to `process.stdout`/`stderr`) never becomes an `onUserConsoleLog` and cannot cause the race — so in an API suite the loudest lines are usually the irrelevant ones, and silencing the logger is the obvious move that does nothing. Hunt for `console.*` instead; in `nest-server-starter` the entire problem was one line, `dist/core/common/helpers/config.helper.js:78`.
+
+**The switch is `disableConsoleIntercept: true`** in the vitest config: it skips `setupConsoleLogSpy()`, after which `rpc.onUserConsoleLog` has exactly one caller left — `sendLog()` in the very console that is no longer installed. Confirm it in the installed version rather than trusting the docs:
+
+```bash
+grep -rn "disableConsoleIntercept" node_modules/vitest/dist/chunks/base.*.js
+# vitest 4.x → if (!config.disableConsoleIntercept) await setupConsoleLogSpy();
+```
+
+**Never set it prophylactically. Measure first — and measure by diffing two runs, not by grepping one.**
+
+```bash
+vitest run > /tmp/int-off.log 2>&1     # flag off
+# flip disableConsoleIntercept in the CONFIG FILE — a CLI override does
+# not win against a value set there — then run again:
+vitest run > /tmp/int-on.log 2>&1      # flag on
+diff /tmp/int-off.log /tmp/int-on.log
+```
+
+**The difference between the two runs is the answer**, for exposure and cost alike: everything the flag adds or removes shows up there and nowhere else. A diff that is empty bar timestamps and durations means there are no console writes at all — the flag is inert and the race cannot occur in that suite.
+
+A grep is a quick pre-check, never the verdict:
+
+```bash
+vitest run 2>&1 | grep -cE '^(stdout|stderr) \| '     # lower bound only
+```
+
+It can only ever undercount, and it has already lied in two independent ways in this stack: the default reporter swallows passing tests' output in a piped run, and a content pattern tuned to one repo's wording (`Configured for|No local config`) reported 1 where 8 lines were waiting — seven of them phrased differently. Every repo words its logs its own way, so a pattern that catches everything in one catches a third of it in the next.
+
+**Check that the run executed tests at all before believing any number.** A run that dies on startup — an unresolvable plugin, a config pointing at the wrong root — prints no console lines either and reports a clean 0. Read the test-file and test counts, not just the tail.
+
+**At this measurement, "nothing found" looks identical whether nothing was there or the instrument was not looking.** Three variants of that have already cost time here: the reporter that swallows passing output, the crashed run that reports 0, and the pattern that was too narrow. All three say "nothing" where something is.
+
+| Exposure | Cost | What it means | Action |
+|---|---|---|---|
+| 0 | 0 | There are no console writes at all. | Flag is inert, the race cannot occur here. **The cause is something else — keep looking.** |
+| 0 | >0 | Writes exist; the default reporter swallows the output of *passing* tests in a piped run. | The exposure reading was a false negative. Decide on cost. |
+| >0 | either | Writes are visible. | The flag applies; cost decides. |
+
+**Exposure 0 on its own proves nothing** — the grep measures what the reporter *prints*, not what the workers *write*. Only cost 0 establishes that no writes happen, and only then may a report claim the race is structurally impossible.
+
+**Cost runs in both directions**, so it has to be measured per suite rather than reasoned about. Measured across the base repos:
+
+| Suite | Exposure | Cost (visible lines) | Decision |
+|---|---|---|---|
+| `nest-server` unit | real | 0 → 8–9 | flag set |
+| `nest-server-starter` unit | 114 writes/run | 0 → 114 | writes silenced at source |
+| `nest-server-starter` e2e | real | volume roughly halved (direction only) | flag kept |
+| `nuxt-base-template` unit | 0 | 9 → 9 (identical) | not set |
+
+In a unit config the flag tends to make output *appear* (without the intercept the reporter can no longer swallow the output of passing tests); in an e2e config it tends to make output *shorter* (the intercept prints an extra header line per write). Same flag, opposite balance. **Record a range wherever the count moves between runs** — three of `nest-server`'s lines are the same rate-limit warning, and how many appear depends on how many counters a run happens to create. A single number invites the next reader to treat ordinary variance as a regression and go hunting for it.
+
+The e2e row deliberately gives a direction instead of a count: its figures come from a file comment (`vitest-e2e.config.ts:96`) that nobody re-ran, and it is not even clear whether they covered the whole suite or a single spec. **Where a number has not been measured, state the direction and stop.** The direction is what carries that row anyway — an e2e config is where the balance inverts.
+
+The `nest-server-starter` unit row is the cautionary one, and it is worth reading twice. It was first recorded as "exposure 0" because the grep said so — and that reading was the artefact this step exists to prevent: 114 `console.info` writes per run had been going over the RPC the whole time, invisible because the reporter swallows passing tests' output in a piped run. What settled it in the end was neither the flag nor any config line, but a single `vi.spyOn(console, 'info')` beside the one spec that produced them. Exposure and cost both read 0 there today because the writes are gone, not because they never existed.
+
+**Where the flag belongs: in the project that shows the symptom, never one level up in a starter or template.** A config line in a starter travels into every generated project, where it costs attribution on day one — lines lose their `stdout | <file>` prefix and interleave under parallel runs — while paying off only in the few projects that actually have the symptom.
+
+**`silent: true` is not a middle ground.** Without the intercept vitest no longer owns the console and has nothing left to suppress.
+
+**If the lines turn out to be unwanted, clean up the logs instead of setting the flag.** A targeted `vi.spyOn(console, 'debug').mockImplementation(() => {})` in the test setup silences only the noisy channels and leaves every other file its attribution — that is exactly why `nuxt-base-template` measures 0 on both numbers. Keep the flag only where the lines are wanted diagnostics (an e2e suite that gets read on failure) and the cost balance is favourable.
 
 ### Step 7 — Test-duplication avoidance
 

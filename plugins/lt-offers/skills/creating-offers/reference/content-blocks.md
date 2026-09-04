@@ -158,6 +158,8 @@ Team member cards with photo, name, position, email.
 
 All fields optional except `projectName`. `imagePosition`: `left` or `right`.
 
+`imageFileId` is optional in the schema but required in practice: the renderer always reserves the image column, and without a file it draws an empty grey placeholder box next to the text. Give every `reference` a real image. Where no product screenshot exists, a purpose-built diagram works; another project's screenshot does not. The `""` in the example above is the *initial* value for a new block — on an update it means "keep the stored image", see "File fields on update" below.
+
 ---
 
 ## 13. `global-ref` — Global Block Reference
@@ -289,3 +291,36 @@ The field is named `fileId` on purpose: orphan-file cleanup and backup remapping
 - **File references**: Use existing `fileId` values from uploaded files. For Lottie files, use `add_lottie_animation`; for HTML embeds, use `add_html_embed` or an upload ticket; for offer-source files (briefing material, NOT content blocks) use `upload_offer_source_file`.
 - **Uploading new files via MCP**: `create_upload_ticket` (`purpose`: `"html-embed"` | `"image"` | `"file"`) returns a single-use upload URL valid for 15 minutes. `POST` the file as multipart form-data (field `file`) to that URL — no session required, the token IS the authorization. Purpose selects the server-side validation: `html-embed` (validated HTML, ≤ 5 MB), `image` (`image/*`, ≤ 10 MB), `file` (any type, ≤ 25 MB). Caveat: `curl` sends `application/octet-stream` for less-common extensions like `.webp` — set the MIME type explicitly (`-F "file=@shot.webp;type=image/webp"`), otherwise an `image` ticket rejects the upload with 400 and the single-use ticket is burned.
 - **Image tokens**: Inside `text`, `custom-html`, `rich-component` blocks, embed GridFS images via `{{fileUrl:<24-hex-id>}}` — the renderer expands these at view/PDF time and keeps the HTML portable across environments.
+
+---
+
+## File fields on update
+
+`update_offer` replaces the whole block array, but the API does not take file references at face value. `OfferService.update()` (`projects/api/src/server/modules/offer/offer.service.ts`) runs `mergeContentBlockFiles()` first: it pairs each stored block with the incoming block at the same `${order}-${type}`, then merges these fields from the stored block into the incoming one.
+
+| Field | Blocks |
+|---|---|
+| `fileId` | `image`, `html-embed` |
+| `imageFileId` | `reference` |
+| `animationFileId` | `lottie` |
+| `previewFileId` | `lottie`, `html-embed` |
+| `fileIds` | `gallery` |
+| `members[].imageFileId` | `team` (per index) |
+| `files[].fileId` | `download` (per index) |
+
+Three values, three meanings:
+
+| Sent | Result |
+|---|---|
+| field omitted | stored value is kept |
+| `""` (or `[]` for `fileIds`) | stored value is kept |
+| `null` | stored value is cleared |
+
+This exists so a caller can update a block's text without knowing its file ids. It bites in two situations:
+
+- **A block changes identity at a position that already held its type.** Insert a new `reference` at an order previously occupied by another `reference` and it silently inherits that block's `imageFileId` — the offer shows one project's screenshot under another project's name. The pairing is by position and type only; the content is never compared.
+- **Clearing an image looks like it worked.** Sending `imageFileId: ""` returns `200` and changes nothing. Read the block back after the write and check the id, or send `null`.
+
+When a block changes identity, always send an explicit value: a real file id, or `null`.
+
+Orphan cleanup runs off the same pass — a file id that disappears from the block array and is not referenced by any other offer is deleted from GridFS. So clearing a file field with `null` may permanently remove the file, not just the reference.

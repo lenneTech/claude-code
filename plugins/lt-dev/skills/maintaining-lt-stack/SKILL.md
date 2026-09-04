@@ -402,6 +402,14 @@ What does **not** go over messages: which repos exist and in which order they go
    `pnpm exec standard-version --release-as <patch|minor|major>` → push with
    tags (use the HTTPS fallback INSTEAD of `pnpm run release`, whose built-in
    push dies on the empty SSH agent).
+5. **Then stop — the GitHub release makes itself.** A workflow reacts to the tag
+   push and creates the release. A follow-up `gh release create vX.Y.Z` fails with
+   `HTTP 422: Release.tag_name already exists` — within seconds and reliably, so it
+   is the workflow having won, not a race and not an error. Verify with
+   `gh release view vX.Y.Z` plus both workflows (Release, Tests) green, **never**
+   from the exit code of your own `create` call: it reports failure on a release
+   that exists, and a session reading that as "the release did not happen" will
+   try to fix a release that is already live. Measured 2026-09-04 on v2.25.1.
 
 ### nest-server-starter (template; consumes nest-server)
 
