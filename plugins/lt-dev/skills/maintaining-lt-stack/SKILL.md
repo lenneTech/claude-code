@@ -35,8 +35,22 @@ Wave 3 (only on findings): patch fixes → re-release affected repos
 ```
 
 **Rule:** A starter is only updated once its npm package actually resolves on
-npm (`npm view <pkg> version` == new version), not when the GitHub release
-exists — the publish.yml action takes minutes.
+npm, not when the GitHub release exists — the publish.yml action takes minutes.
+
+**Ask the version-specific endpoint, not `npm view`.** `npm view` and
+`https://registry.npmjs.org/<pkg>` read the same CDN-cached packument, and it
+lags minutes behind a publish:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}' https://registry.npmjs.org/<pkg>/<version>
+# 200 = resolvable now. Alternative: cache-bust with -H 'Cache-Control: no-cache' plus a query param.
+```
+
+Measured 2026-09-04: a session polled `npm view` for ten minutes and read "not
+published yet" while `@lenne.tech/nest-server@11.41.0` had been up the whole
+time — the version-specific endpoint answered 200 immediately. From the
+caller's side "not there yet" and "the instrument is reading a cache" look
+identical, which is why the endpoint is the one to ask.
 
 ## Running the waves across parallel sessions
 
@@ -392,7 +406,8 @@ What does **not** go over messages: which repos exist and in which order they go
 
 ### nuxt-base-starter (template; consumes nuxt-extensions)
 
-0. **Wait** until `npm view @lenne.tech/nuxt-extensions version` shows the new version.
+0. **Wait** until `@lenne.tech/nuxt-extensions@<version>` resolves — version-specific
+   endpoint, see the propagation rule above (`npm view` reads a lagging cache).
 1. Bump the dependency in `nuxt-base-template/package.json`.
 2. Maintenance (`/lt-dev:maintenance:maintain`) → repo root: `pnpm i` + `pnpm run check`; additionally
    `cd nuxt-base-template && pnpm i && pnpm run check`.
@@ -429,9 +444,26 @@ What does **not** go over messages: which repos exist and in which order they go
 
 ### nest-server-starter (template; consumes nest-server)
 
-0. **Wait** until `npm view @lenne.tech/nest-server version` shows the new version.
+0. **Wait** until `@lenne.tech/nest-server@<version>` resolves — version-specific
+   endpoint, see the propagation rule above (`npm view` reads a lagging cache).
 1. Set `version` AND `@lenne.tech/nest-server` in `package.json` to the new
    nest-server version (starter version == nest-server version, lock-step).
+   `spectaql.yml` inherits `version` via the `spectaql:sync` step, so raising
+   only the dependency leaves the GraphQL docs advertising the previous
+   release — and nothing catches it: `check` passes with the two fields out of
+   sync. Verify by hand before committing the bump:
+
+   ```bash
+   node -e "const p=require('./package.json');process.exit(p.version===p.dependencies['@lenne.tech/nest-server']?0:1)" && echo "version matches" || echo "MISMATCH"
+   ```
+
+   **Lock-step is a rule of the starter REPOSITORY, never of projects generated
+   from it.** A generated project carries its own version and upgrades the
+   framework independently, so there the two fields are expected to differ.
+   That is also why this stays a manual check with no guard in
+   `scripts/check.mjs`: the check script ships with the template, so a guard
+   would travel into every generated project and fail there on a perfectly
+   correct state. Decided by Kai 2026-09-04 — do not "fix" the missing guard.
 2. `pnpm run update` → apply the relevant migration guides from
    `nest-server/migration-guides/` → `pnpm run check` green. **"Apply the
    migration guide" is NOT only about code changes.** A guide that says "no
