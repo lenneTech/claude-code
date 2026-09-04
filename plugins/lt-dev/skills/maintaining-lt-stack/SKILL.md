@@ -1,6 +1,6 @@
 ---
 name: maintaining-lt-stack
-description: 'Single source of truth for stack-wide maintenance and releases of the lt base repos ("Grund-Repos"): the dependency graph (nuxt-extensions to nuxt-base-starter, nest-server to nest-server-starter), the release recipe per repo including both marketplaces, npm propagation waits, the HTTPS push fallback for an empty SSH agent, and the smoke test as release gate. Activates on "maintain stack", "release all repos", "stack release", "Grund-Repos aktualisieren", and behind /lt-dev:publish. NOT for a single npm package (use maintaining-npm-packages). NOT for nest-server upgrades inside customer projects (use nest-server-updating).'
+description: 'Single source of truth for stack-wide maintenance and releases of the lt base repos ("Grund-Repos"): the dependency graph (nuxt-extensions to nuxt-base-starter, nest-server to nest-server-starter), the release recipe per repo including both marketplaces, npm propagation waits, the push-channel check and its HTTPS fallback, and the smoke test as release gate. Activates on "maintain stack", "release all repos", "stack release", "Grund-Repos aktualisieren", and behind /lt-dev:publish. NOT for a single npm package (use maintaining-npm-packages). NOT for nest-server upgrades inside customer projects (use nest-server-updating).'
 ---
 
 # Maintaining the lt Stack (all base repos)
@@ -70,12 +70,12 @@ Nötig: pnpm add @lenne.tech/nuxt-extensions@5.4.1 and continue.
 
 The Wave 2 session may also subscribe with `notify_when_idle` on the Wave 1 session instead of polling. Either way, nobody sits in a `sleep` loop against the registry.
 
-**3. Send `SOLVED` for anything environmental.** The empirical pitfalls in this skill are almost all machine-wide, not repo-specific: an empty SSH agent, a registry that has not propagated, a CI runner queue backing up, a toolchain version that broke. The first session to diagnose one has already paid for it, and the other five are walking into the same wall. One `SOLVED` and they do not.
+**3. Send `SOLVED` for anything environmental.** The empirical pitfalls in this skill are almost all machine-wide, not repo-specific: a remote read that silently returned nothing, a registry that has not propagated, a CI runner queue backing up, a toolchain version that broke. The first session to diagnose one has already paid for it, and the other five are walking into the same wall. One `SOLVED` and they do not.
 
 ```
-[SOLVED] SSH agent is empty (1Password needs interactive approval), so git push hangs.
-Betrifft: every repo in this release round; you will hit it on your push.
-Nötig: push via HTTPS with the gh credential helper, see the push-channel rule.
+[SOLVED] `git ls-remote` fails on stderr with empty stdout, so tag checks read as "no tags".
+Betrifft: every repo in this release round; your tag verification lies the same way.
+Nötig: check the exit code, or read over HTTPS — see the push-channel rule.
 ```
 
 **4. Report the finish with `LANDED`, so the smoke test starts once.** The validation gate runs after every repo is out. Whoever finishes last starts it; the others say so and stop.
@@ -399,9 +399,25 @@ What does **not** go over messages: which repos exist and in which order they go
 3. Optional but recommended before UI-lib bumps: `pnpm run test:e2e` in the
    template (Playwright is NOT part of `check`).
 4. `git add .` → commit (message from diff analysis) → version via
-   `pnpm exec standard-version --release-as <patch|minor|major>` → push with
-   tags (use the HTTPS fallback INSTEAD of `pnpm run release`, whose built-in
-   push dies on the empty SSH agent).
+   `pnpm exec standard-version --release-as <patch|minor|major>` → then push the
+   commit and the tag **in two steps**, NOT via `pnpm run release`:
+
+   ```bash
+   git push origin main
+   git push origin refs/tags/vX.Y.Z
+   ```
+
+   Pick the channel with the push-channel rule above — **do not assume HTTPS.**
+   `pnpm run release` (root `package.json`) appends `git push --follow-tags origin
+   main`, and that combined push was refused at v2.25.0 (2026-09-02).
+   **Why it was refused is unmeasured.** This skill used to blame an empty SSH
+   agent — but that is the exact false negative `ssh-add -l` produces here, and on
+   2026-09-04 the functional check reported `ssh … push normally` with two keys in
+   the 1Password agent. A force-push guard on `--follow-tags` is the other
+   candidate and is equally unproven: there is no deny rule and no push hook in
+   `~/.claude/settings.json`, so it would have to be the built-in harness
+   protection. The two-step push worked at v2.25.0 and v2.25.1 — use it, and leave
+   the cause open instead of repeating a guess.
 5. **Then stop — the GitHub release makes itself.** A workflow reacts to the tag
    push and creates the release. A follow-up `gh release create vX.Y.Z` fails with
    `HTTP 422: Release.tag_name already exists` — within seconds and reliably, so it
@@ -599,9 +615,10 @@ verdict is not an optimisation — it is a broken safety net that now fails fast
   skill — it resolves the repo's commit policy (asking at most once, then
   remembering the answer in `.claude/settings.local.json`) and curates the notes
   before they are staged. Never leave them in unstaged limbo.
-- **Release scripts that push themselves** (nuxt-base-starter `release`):
-  with an empty SSH agent their embedded `git push` hangs — run the version
-  tool directly and push via HTTPS yourself.
+- **Release scripts that push themselves** (nuxt-base-starter `release`): their
+  embedded `git push --follow-tags` was refused at v2.25.0 for a reason nobody has
+  measured — run the version tool directly and push commit and tag yourself, in
+  two steps, on the channel the push-channel rule picks.
 - **Husky/simple-git-hooks** run on every commit (lint) — a red hook is a
   real finding, never bypass with `-n`.
 
