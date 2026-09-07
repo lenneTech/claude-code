@@ -1,7 +1,7 @@
 ---
 description: 'Ship the current feature branch into dev — pre-flight check, commit, rebase, test, check, MR/PR, Linear comment + "Dev Review" + unassign, wait for CI, merge (squash for feature branches, regular merge when promoting a base branch into a higher base branch), delete branch. Auto-retries on pipeline failure.'
 argument-hint: "[--base=<branch>] [--max-pipeline-retries=<n>] [--no-squash] [--keep-branch]"
-allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, ListAgents, SendMessage, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__list_issue_statuses
+allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, ListAgents, SendMessage, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document
 disable-model-invocation: false
 ---
 
@@ -554,10 +554,23 @@ Abgesichert über: <Unit-/API-/E2E-Tests, grüne CI-Pipeline>.
 
 This comment is what a later `/lt-dev:ticket-cycle` run reads back at its STEP 4b.3c before moving the ticket into "QA Testing" — so it is the QA handover, not a courtesy note.
 
+**Keep it short, and move the technical detail into an attached document.** The reader is a product
+owner or a tester, and the comment is the thing they act on: what changed, and the steps to see it.
+Everything a developer would want — file references, decisions taken, alternatives dropped, known
+limitations — goes into a Linear document attached to the ticket, linked from a single `## Details`
+line at the end of the comment. [`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md)
+owns that split and the `save_document` mechanics; where the ticket already carries a
+`<ISSUE_ID> — Technische Details` document, update that one rather than attaching a second.
+No document when there is no detail worth keeping.
+
+Every test step names its concrete example data (`Suchfeld: Muster GmbH`, `Menge: 3`) and every
+route is a complete clickable link against the dev environment — a step the tester has to guess at
+costs a round-trip.
+
 Then ask the user via `AskUserQuestion`:
-- Show the generated comment.
+- Show the generated comment, and the document if one is being attached.
 - Options:
-  1. "Posten" → post via `mcp__plugin_lt-dev_linear__save_comment` on `ISSUE_ID`
+  1. "Posten" → attach the document first (so the comment can link to it), then post the comment via `mcp__plugin_lt-dev_linear__save_comment` on `ISSUE_ID`
   2. "Bearbeiten" → let the user provide a revised version, then post
   3. "Überspringen" → don't post
 

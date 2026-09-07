@@ -180,7 +180,7 @@ Defines MCP (Model Context Protocol) servers required by the plugin.
 | Server | Type | Used By |
 |--------|------|---------|
 | `chrome-devtools` | stdio | validating-changes-in-browser, developing-lt-frontend, building-stories-with-tdd, managing-dev-servers, vibe commands, frontend-reviewer, ux-reviewer, a11y-reviewer, frontend-dev agent (browser testing & debugging) |
-| `linear` | http | take-ticket, ticket-cycle, resolve-ticket, spec-to-tasks, create-story, create-ticket, create-task, create-bug, review, debug, interview, linear-comment, dev-submit, git:ship, rebasing-branches, branch-rebaser, backend-reviewer, code-reviewer, frontend-reviewer (issue tracking & project management) |
+| `linear` | http | take-ticket, ticket-cycle, resolve-ticket, spec-to-tasks, create-story, create-ticket, create-task, create-bug, review, debug, interview, linear-comment, dev-submit, git:ship, rebasing-branches, branch-rebaser, backend-reviewer, code-reviewer, frontend-reviewer, writing-linear-comments, filing-ai-proposed-tickets (issue tracking, project management, issue documents for long-form detail) |
 | `nuxt-ui-remote` | stdio | developing-lt-frontend, figma-to-code, frontend-dev agent (Nuxt UI component reference) |
 
 **Tool naming:** a plugin-bundled server's callable tool name is `mcp__plugin_<plugin>_<server>__<tool>` — e.g. `mcp__plugin_lt-dev_chrome-devtools__take_snapshot`. The unscoped form (`mcp__chrome-devtools__…`) never matches for a bundled server, so an `allowed-tools` entry written that way silently grants nothing.

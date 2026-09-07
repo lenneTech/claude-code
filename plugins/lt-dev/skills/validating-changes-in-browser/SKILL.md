@@ -194,7 +194,7 @@ For each finding:
 
 Stall guard: if the same finding fails to converge after 3 fix attempts, stop the loop, write a structured diagnosis (file, observation, attempted fixes, current hypothesis), and surface it as a blocker in the final summary. Don't ship a known-broken state silently.
 
-If a finding is truly out-of-scope and high-risk to fix in this branch (e.g. a multi-day refactor of a shared module), explicitly note it as "out of scope, separate ticket recommended" (translated to the user's session language) — the user gets to decide what to do with it.
+If a finding is truly out-of-scope and high-risk to fix in this branch (e.g. a multi-day refactor of a shared module), name it in the final summary in one line, translated to the user's session language, and leave it there. **Do not open a ticket for it as a matter of course** — a walk that leaves a trail of follow-up tickets behind every ticket is how one day's work becomes a backlog. A ticket is filed only where the finding clears Part 0 of [`filing-ai-proposed-tickets`](../filing-ai-proposed-tickets/SKILL.md): demonstrated, standalone, and genuinely worse left undone. Then it goes through that skill in full — duplicate search first, Triage state, AI label. Everything else is a line in the summary, and the user decides.
 
 ### Step 7 — Show the user the walked list
 
@@ -294,6 +294,7 @@ This skill is **invoked from** another workflow — never the entry point on its
 - [using-lt-cli](${CLAUDE_PLUGIN_ROOT}/skills/using-lt-cli/SKILL.md) — `lt dev` command reference
 - [developing-lt-frontend](${CLAUDE_PLUGIN_ROOT}/skills/developing-lt-frontend/SKILL.md) — frontend patterns the fixes may need to follow
 - [generating-nest-servers](${CLAUDE_PLUGIN_ROOT}/skills/generating-nest-servers/SKILL.md) — backend patterns for API-side fixes during the walk
+- [filing-ai-proposed-tickets](${CLAUDE_PLUGIN_ROOT}/skills/filing-ai-proposed-tickets/SKILL.md) — the only route by which an out-of-scope finding may become a ticket, and the bar it has to clear first
 - Chrome DevTools MCP — `mcp__plugin_lt-dev_chrome-devtools__*` tool family. **Do NOT** use the Playwright-based browser MCP for this skill.
 
 ## Final Reminders

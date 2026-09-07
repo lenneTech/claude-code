@@ -1,7 +1,7 @@
 ---
-description: Generate and post a testing comment on a Linear issue
+description: Generate and post a short, testable comment on a Linear issue — plain-language summary plus complete test steps, with the technical detail moved into an attached Linear document
 argument-hint: "[issue-id]"
-allowed-tools: Read, Bash(git:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__create_comment, AskUserQuestion
+allowed-tools: Read, Bash(git:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document, AskUserQuestion
 disable-model-invocation: true
 ---
 
@@ -21,6 +21,14 @@ disable-model-invocation: true
 | `/lt-dev:dev-submit` | Full submission workflow (includes this command) |
 | `/lt-dev:review` | Code review before merging |
 | `/lt-dev:git:mr-description` | Generate MR description |
+
+## Related Skills
+
+| Skill | Role |
+|-------|------|
+| [`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md) | Owns the comment's shape and length, and the attached-document mechanics for everything that does not fit |
+| [`writing-qa-test-instructions`](${CLAUDE_PLUGIN_ROOT}/skills/writing-qa-test-instructions/SKILL.md) | Owns the testability classification and the wording of the test steps |
+| [`unslop`](${CLAUDE_PLUGIN_ROOT}/skills/unslop/SKILL.md) | The prose pass before posting |
 
 ---
 
@@ -49,39 +57,51 @@ Store the resolved issue ID as `ISSUE_ID` for subsequent steps.
    Then run `git diff <target-branch>...HEAD --stat` and `git diff <target-branch>...HEAD` to understand what was changed. If there are no committed changes, fall back to `git diff HEAD` for uncommitted changes.
 3. **Read Key Files:** If the diff is large, read the most relevant changed files to understand the user-facing impact.
 
-### STEP 2: Generate Comment
+### STEP 2: Split the content
 
-Write a comment in **German** that a non-developer (e.g., project manager, QA tester) can understand. Follow this structure:
+The comment has one reader: somebody who did not write the code. Follow
+[`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md) — it owns
+the split. In short: the comment answers "what is different now?" and "what do I do to see it?",
+and everything else goes into a Linear document attached to the ticket.
 
-```
-## Umsetzung
+Sort the material you gathered in STEP 1 into two piles:
 
-[1-3 sentences: What was implemented/fixed, described in user-facing terms. No technical jargon.]
+| Into the comment | Into the attached document |
+|------------------|----------------------------|
+| What changed, in 1 to 3 plain sentences | file:line references, code, diffs |
+| The complete test steps, with full links and concrete example data | decisions taken and alternatives dropped |
+| Deliberate scope cuts the reader would otherwise expect | known limitations with a technical cause |
+| | anything else a developer would want and a product owner would scroll past |
 
-## Testanleitung
+Write no document when there is nothing in the right-hand column. A near-empty document trains
+people to stop opening them.
 
-[Step-by-step testing instructions:]
-1. [First step - e.g., "Seite X aufrufen"]
-2. [Action to perform]
-3. [Expected result to verify]
+### STEP 3: Write the comment
 
-[If applicable, add edge cases to check.]
-```
+Classify testability first, per
+[`writing-qa-test-instructions`](${CLAUDE_PLUGIN_ROOT}/skills/writing-qa-test-instructions/SKILL.md)
+Part 1: is the change verifiable through the frontend, directly or through a named reproducible
+symptom? The answer picks the comment shape (Part 4 of that skill has both).
 
-**Rules:**
-- No code references, file names, or technical implementation details
-- Focus on WHAT changed from a user perspective, not HOW it was implemented
-- Testing steps must be actionable and verifiable
-- Keep it concise - max 10-15 lines total
+German, no jargon, no file names, no severity words. Every step names its concrete example data
+(`Suchfeld: Muster GmbH`, `Menge: 3`) and every route is a full clickable link against the deployed
+environment, never `localhost`. Roles instead of passwords, always.
 
-### STEP 3: User Approval
+Run the result through [`unslop`](${CLAUDE_PLUGIN_ROOT}/skills/unslop/SKILL.md).
 
-Present the generated comment to the user using `AskUserQuestion`:
-- **Option 1:** "Post comment" - Post as-is to Linear
-- **Option 2:** "Edit first" - Let the user modify before posting
+### STEP 4: User Approval
 
-### STEP 4: Post to Linear
+Present the comment — and the document, if one is being attached — using `AskUserQuestion`:
+- **Option 1:** "Posten" — post as-is
+- **Option 2:** "Erst anpassen" — let the user modify before posting
 
-Post the approved comment to issue **#ISSUE_ID** via the Linear MCP `save_comment` tool.
+### STEP 5: Post to Linear
 
-Confirm to the user: "Comment posted to ISSUE_ID."
+1. **Attach the document first**, if there is one, so the comment can link to it:
+   `save_document` with `issue: ISSUE_ID`, `title: "<ISSUE_ID> — Technische Details"`. Where the
+   ticket already carries such a document (check `get_issue` → `documents`), **update that one**
+   via its `id` instead of attaching a second.
+2. **Post the comment** via `save_comment` with `issueId: ISSUE_ID`, including the `## Details`
+   link line when a document exists.
+
+Confirm in one line: which comment was posted, and which document it links to.

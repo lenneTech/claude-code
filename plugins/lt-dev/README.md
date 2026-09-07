@@ -25,7 +25,7 @@ These plugins are **optional** but enhance the experience when working with this
 - **Fullstack Updates**: Synchronize projects with latest starter templates
 - **CLI Tools**: lenne.tech CLI integration
 - **Git Workflows**: Commit messages, MR descriptions, branch rebasing
-- **Code Review**: Comprehensive review across 9 review domains
+- **Code Review**: Nine review domains in parallel, filtered to proven Critical/High defects in what the diff actually changed, then fixed automatically. Everything below that bar is dropped rather than deferred, so one finished ticket does not leave ten follow-ups behind it — and a review that finds nothing ends clean
 - **Runnability Gate**: `/lt-dev:check` runs the project's `check` script with iterate-until-green auto-fix and mandatory audit-finding fix escalation (also integrated into review + rebase workflows)
 - **Linear Integration**: Issue management and story creation
 - **Docker**: Development and production setup generation
@@ -37,11 +37,13 @@ These plugins are **optional** but enhance the experience when working with this
 - **Dev Server Lifecycle**: Enforced `run_in_background` / `pkill` contract to prevent orphaned processes across TDD, framework linking, and MCP-driven debugging
 - **Alignment before code**: A grilling loop that walks the open decisions one at a time, each with a recommendation, and looks facts up in the codebase rather than asking — wired into ticket creation, planning, and the implementation flow
 - **Parallel sessions**: Coordination rules for several sessions working one project or the base repos at once. Linear and Git stay the claim protocol, `ListAgents` gives the live picture for free, and a cross-session message is spent only where it changes what the other session does next: a warning, a claim, a diagnosis worth handing over, or a question the peer answers cheaply
+- **AI-proposed tickets stay distinguishable**: anything Claude suggests off its own initiative is searched against the existing backlog first, then filed into **Triage** with a `KI-Vorschlag` label and no assignee — so a human decides whether a machine's idea becomes work, and a near-duplicate extends the existing ticket instead of splitting the discussion
+- **Linear comments a product owner can actually read**: the comment carries the plain-language summary and the complete test steps with links and example data; the technical detail moves into a Linear document attached to the ticket, which a later session reads back via `get_document`
 - **Writing quality**: An `unslop` pass that strips AI tells from tickets, commit bodies, MR descriptions, docs, and customer copy, with a German pattern set (Nominalstil, Floskeln, Füllwörter, Gedankenstrich) on top of the English one
 
 ## Included
 
-- **27 Skills** - Auto-detected contextual expertise (includes `grilling-decisions` for settling open decisions before implementation, `running-check-script` for runnability validation, `managing-dev-servers` for dev-server lifecycle rules, `contributing-to-lt-framework` for pnpm link workflows, `coordinating-peer-sessions` for parallel sessions on one project, and `unslop` for cutting AI tells out of every text that reaches a human)
+- **29 Skills** - Auto-detected contextual expertise (includes `grilling-decisions` for settling open decisions before implementation, `running-check-script` for runnability validation, `managing-dev-servers` for dev-server lifecycle rules, `contributing-to-lt-framework` for pnpm link workflows, `coordinating-peer-sessions` for parallel sessions on one project, `writing-linear-comments` and `filing-ai-proposed-tickets` for what reaches a Linear ticket and in what shape, and `unslop` for cutting AI tells out of every text that reaches a human)
 - **25 Agents** - Autonomous task execution
 - **64 Commands** - User-triggered actions via `/lt-dev:<name>`
 - **18 Hook Scripts** across 8 event types (SessionStart, PreToolUse, PostToolUse, PostToolUseFailure, UserPromptSubmit, StopFailure, SessionEnd, PostCompact) - Automated project detection and validation
@@ -101,10 +103,16 @@ This applies everywhere a ticket is created — the guided `/lt-dev:create-*`
 commands, follow-ups spun off during `take-ticket` / `ticket-cycle` / `review`,
 and ad-hoc tickets created directly via the Linear MCP.
 
-The one deliberate exception: a follow-up that can only be worked **after the
-current change is merged** is not created at all until that merge has landed
-(see the dependency gate in `take-ticket` STEP 9a) — precisely because an `Open`
-ticket is immediately pickable by a parallel session.
+Two deliberate exceptions:
+
+- **A ticket Claude proposes on its own initiative goes to `Triage`, not `Open`,** with a
+  `KI-Vorschlag` label and no assignee. `Open` means somebody committed to the work; a machine's
+  suggestion has not been decided yet, and Triage is where that decision happens. Where the team
+  has no Triage state, such a ticket falls back to `Open` — still never `Backlog`. The rules,
+  including the duplicate search that runs first, live in the `filing-ai-proposed-tickets` skill.
+- **A follow-up that can only be worked after the current change is merged** is not created at all
+  until that merge has landed (see the dependency gate in `take-ticket` STEP 9a) — precisely
+  because an `Open` ticket is immediately pickable by a parallel session.
 
 ## Further Reading
 

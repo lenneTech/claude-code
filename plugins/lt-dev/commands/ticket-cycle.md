@@ -1,7 +1,7 @@
 ---
 description: Full ticket lifecycle in one command — auto-pick (or take ID), TDD-implement with per-slice check + commit, re-analyse, optional review, browser walk, manual re-test handoff (summary + credentials + test data + step-by-step), rebase + tests + check, MR/PR (auto-merge OR reviewer-handoff), CI, squash-merge, delete branch, Linear comment + status handoff
 argument-hint: "[issue-id | --project=<name> --team=<name> --status=<list> --base=<branch> --figma=<url> --flows=<path> --review --no-review --auto-merge --review-handoff[=<linear-user>] --post-merge-status=<dev-review|qa-testing[=<linear-user>]> --max-deploy-wait=<minutes> --max-pipeline-retries=<n> --no-squash --keep-branch]"
-allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, ListAgents, SendMessage, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(wc:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__list_teams, mcp__plugin_lt-dev_linear__list_projects, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__list_users, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_screenshot, SlashCommand
+allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, ListAgents, SendMessage, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(wc:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__list_teams, mcp__plugin_lt-dev_linear__list_projects, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__save_issue_label, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__list_users, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_screenshot, SlashCommand
 disable-model-invocation: false
 ---
 
@@ -27,7 +27,7 @@ If you only need part of the cycle, use the underlying commands directly:
 | `/lt-dev:take-ticket` | Phase A — pick/branch/TDD/test/check/re-analyse (this command invokes it) |
 | `/lt-dev:review` | Phase B (optional, opt-in) — 7-dimension review |
 | `validating-changes-in-browser` skill | Phase C — pre-ship browser-validation walk |
-| `writing-qa-test-instructions` skill | Owns the QA-testability classification and the German QA test instructions posted to Linear (STEP 4b.1a + 4b.3c) |
+| `writing-qa-test-instructions` skill | Owns the QA-testability classification and the German QA test instructions posted to Linear (STEP 4b.1 + 4b.3c) |
 | `/lt-dev:git:ship` | Phase D (auto-merge path) — rebase/test/check/MR-PR/CI-wait/squash-merge/branch-delete/Linear-handoff |
 | `/lt-dev:dev-submit` | Phase D (reviewer-handoff path) — MR/PR + Linear comment + status → Dev Review |
 | `grilling-decisions` skill | Settles open ticket questions with the user inside Phase A, before any code is written |
@@ -50,7 +50,7 @@ All flags are optional. The command splits arguments into groups and forwards ea
 | `--no-review` | this command | Skip the STEP 2 prompt and skip Phase B entirely |
 | `--auto-merge` | this command | Skip the STEP 4a prompt and take the auto-merge path |
 | `--review-handoff[=<linear-user>]` | this command | Skip the STEP 4a prompt and take the reviewer-handoff path. If a user identifier is supplied, skip the reviewer picker too |
-| `--post-merge-status=<dev-review\|qa-testing[=<linear-user>]>` | this command | Skip the STEP 4b prompt (auto-merge path only). `dev-review` = "Dev Review" + unassign (default). `qa-testing` = hand over to manual QA (only after the dev deploy is green, and only when STEP 4b.1a classifies the ticket as QA-testable). The assignee comes from the stored per-team default (STEP 4b.1b); `qa-testing=<linear-user>` overrides it for this run, `qa-testing=none` leaves the ticket unassigned |
+| `--post-merge-status=<dev-review\|qa-testing[=<linear-user>]>` | this command | Skip the STEP 4b prompt (auto-merge path only). `dev-review` = "Dev Review" + unassign (default). `qa-testing` = hand over to manual QA (only after the dev deploy is green, and only when STEP 4b.1 classifies the ticket as frontend-verifiable — otherwise the flag is ignored with a stated reason). The assignee comes from the stored per-team default (STEP 4b.2b); `qa-testing=<linear-user>` overrides it for this run, `qa-testing=none` leaves the ticket unassigned |
 | `--max-deploy-wait=<minutes>` | this command | Polling cap for the post-merge deploy **job** before asking the user how to proceed. Default 30 |
 | `--max-pipeline-retries=<n>` | `git:ship` | CI retry cap (default 3) |
 | `--no-squash` | `git:ship` | Regular merge instead of squash |
@@ -289,34 +289,51 @@ This phase decides **how** the branch lands: either auto-merged after CI is gree
 
 Triggered when `MERGE_STRATEGY = auto-merge`.
 
-**1. Post-Merge-Status wählen.** Decide which Linear state the ticket should land in after the merge:
+**1. QA-Testbarkeit klassifizieren — VOR der Frage.** This runs first, before anything is asked and
+before the ship, because it decides whether "QA Testing" is an available answer at all.
+
+"QA Testing" sits in front of "UA Testing" and is worked by people who have a browser and an
+account, and nothing else. A change they cannot reach through the running frontend has no manual
+test — offering the column anyway produces a ticket nobody can clear and costs the tester a
+round-trip to discover there was never anything to click.
+
+Follow [`writing-qa-test-instructions`](${CLAUDE_PLUGIN_ROOT}/skills/writing-qa-test-instructions/SKILL.md) **Part 1**. Its gate is frontend verifiability, directly or through a named reproducible symptom, and its strongest evidence is Phase C's `final_list` from the browser walk: that walk already tried to reach this change through the frontend. Where it found no user-reachable step, the question is settled. Never classify from the ticket title.
+
+Set `QA_TESTABLE = true|false` and capture `QA_CLASSIFICATION_REASON` (one sentence, non-developer language).
+
+**2. Post-Merge-Status wählen.** The option list depends on `QA_TESTABLE`:
 
 - If `--post-merge-status=dev-review` was passed → `POST_MERGE_STATUS = dev-review` (default semantics), skip the prompt.
-- If `--post-merge-status=qa-testing[=<user>]` was passed → `POST_MERGE_STATUS = qa-testing`, capture the optional assignee override, skip the prompt.
-- Otherwise → ask the user via `AskUserQuestion`:
+- If `--post-merge-status=qa-testing[=<user>]` was passed **and** `QA_TESTABLE = true` → `POST_MERGE_STATUS = qa-testing`, capture the optional assignee override, skip the prompt.
+- If `--post-merge-status=qa-testing` was passed **but** `QA_TESTABLE = false` → the flag asks for something that does not exist. Set `POST_MERGE_STATUS = awaiting-release`, and say so in one line:
+
+  ```
+  --post-merge-status=qa-testing ignoriert: <QA_CLASSIFICATION_REASON>
+  Ziel-Status nach dem Merge: "Awaiting Release".
+  ```
+
+- Otherwise → ask the user via `AskUserQuestion`, with the options that actually apply:
+
+  **`QA_TESTABLE = true`:**
   - Question: "Welcher Linear-Status nach dem Merge?"
   - Options:
     1. "Dev Review — Assignee entfernen (Default)" → `POST_MERGE_STATUS = dev-review`
     2. "QA Testing — an manuelles Testen übergeben" → `POST_MERGE_STATUS = qa-testing`
     3. "Abbrechen" → stop here, branch remains local
 
-**1a. QA-Testbarkeit klassifizieren.** Runs **only** when `POST_MERGE_STATUS = qa-testing`, and **before** the ship, so the routing decision is on screen before anything lands.
+  **`QA_TESTABLE = false` — "QA Testing" is NOT among the options:**
+  - Question: "Welcher Linear-Status nach dem Merge? (Kein QA-Testing möglich: `<QA_CLASSIFICATION_REASON>`)"
+  - Options:
+    1. "Dev Review — Assignee entfernen (Default)" → `POST_MERGE_STATUS = dev-review`
+    2. "Awaiting Release — direkt aufs Release warten" → `POST_MERGE_STATUS = awaiting-release`
+    3. "Abbrechen" → stop here, branch remains local
 
-"QA Testing" sits in front of "UA Testing" and is worked by people who do not read code. A ticket that cannot be exercised through the running application does not belong there: it occupies a testing column nobody can clear, and the tester spends their round-trip finding out that there was never anything to click. Such a ticket goes straight to **"Awaiting Release"** instead.
+  Offering an option the ticket cannot fulfil is worse than not offering it: the user picks it in
+  good faith, and the correction arrives later as a surprise. The reason is on screen instead, so
+  the user can disagree with the classification rather than with the missing option. Overriding it
+  means making the change observable and re-running, or moving the ticket by hand.
 
-Follow [`writing-qa-test-instructions`](${CLAUDE_PLUGIN_ROOT}/skills/writing-qa-test-instructions/SKILL.md) **Part 1** for the classification. Its evidence is Phase C's `final_list` plus the diff — never the ticket title. Set `QA_TESTABLE = true|false` and capture `QA_CLASSIFICATION_REASON` (one sentence, non-developer language).
-
-- `QA_TESTABLE = true` → keep `POST_MERGE_STATUS = qa-testing`.
-- `QA_TESTABLE = false` → set `POST_MERGE_STATUS = awaiting-release` and tell the user, before shipping:
-
-  ```
-  Kein QA-Testing möglich: <QA_CLASSIFICATION_REASON>
-  Ziel-Status nach dem Merge: "Awaiting Release" statt "QA Testing".
-  ```
-
-  This is a **statement, not a gate** — the cycle continues without a prompt. The user overrides it by re-running with `--post-merge-status=qa-testing` after adding whatever makes the change observable, or by moving the ticket by hand.
-
-**1b. QA-Assignee auflösen.** Runs **only** when STEP 4b.1a left `POST_MERGE_STATUS = qa-testing` — a ticket rerouted to "Awaiting Release" needs no QA assignee, and asking for one would be a prompt about a handover that is not happening.
+**2b. QA-Assignee auflösen.** Runs **only** when STEP 4b.2 left `POST_MERGE_STATUS = qa-testing` — a ticket rerouted to "Awaiting Release" needs no QA assignee, and asking for one would be a prompt about a handover that is not happening.
 
 Who tests is a property of the *team*, not of this plugin — so the default lives in the plugin's persistent data directory on this machine, never in the plugin itself. Resolve `QA_ASSIGNEE` in this order and stop at the first hit:
 
@@ -426,11 +443,11 @@ A GitLab job stays `created` while it waits on its `needs:` predecessors — tha
 
 | `POST_MERGE_STATUS` | Ziel-State | Match (case-insensitive, first hit wins) | Assignee |
 |---------------------|-----------|-------------------------------------------|----------|
-| `qa-testing` | QA Testing | `QA Testing`, `QA Test`, `QA`, `PO Review` | `QA_ASSIGNEE` from STEP 4b.1b (`null` → unassigned) |
+| `qa-testing` | QA Testing | `QA Testing`, `QA Test`, `QA`, `PO Review` | `QA_ASSIGNEE` from STEP 4b.2b (`null` → unassigned) |
 | `awaiting-release` | Awaiting Release | `Awaiting Release`, `Ready for Release`, `Release` | unassigned |
 
 1. Find the state via `mcp__plugin_lt-dev_linear__list_issue_statuses` on the ticket's team. If no name matches, surface the team's actual state list and ask the user via `AskUserQuestion` which one to use — the merge has already landed, so never guess and never silently skip.
-2. Call `mcp__plugin_lt-dev_linear__save_issue` with the resolved `stateId` and `assigneeId` (`QA_ASSIGNEE` was already resolved in STEP 4b.1b; `null` where the table says unassigned).
+2. Call `mcp__plugin_lt-dev_linear__save_issue` with the resolved `stateId` and `assigneeId` (`QA_ASSIGNEE` was already resolved in STEP 4b.2b; `null` where the table says unassigned).
 
 If `POST_MERGE_STATUS = dev-review`, no Linear override follows — `git:ship` already set "Dev Review" + unassigned. But the healthy-deploy verification (steps 3a → 3b → 3b-2) is **still mandatory**: the cycle is not complete until the new version runs healthy on dev, even though "Dev Review" is a developer/QA state. Do **not** skip the deploy wait + container-health check for `dev-review`.
 
@@ -588,12 +605,12 @@ If `--review` ran (or the user opted in at STEP 2), include a one-line summary o
 - **`take-ticket` STEP 9 gates everything after Phase A.** Its re-analysis user gate is the cycle's contract for completeness, so Phase B onward runs on one condition: STEP 9 completed cleanly and the user confirmed. Any other outcome ends the cycle with that diagnosis surfaced.
 - **Follow-up tickets follow `take-ticket` STEP 9a, which owns that rule in full** — when to absorb a finding rather than file it, the parallel-work test that decides it, the `Open` / `Blocked` / project-assigned states a filed one gets, and the carry-to-completion duty for a ticket whose content gets absorbed. Read it there; it is the single source of truth, so a change to the policy is a one-place edit.
 
-  **The cycle adds exactly one thing to it: the moment a `Blocked` follow-up becomes takeable.** A follow-up that needed this ticket merged moves from `Blocked` to `Open` once STEP 4b's healthy-dev-deploy verification confirms the merge is actually live — not at merge time, and not at the end of the cycle. Standalone `take-ticket` runs have no such verification, so they release after the merge lands; the cycle waits for the deploy, because a follow-up released against code that merged but never deployed is worked against a stale dev.
+  **The cycle adds exactly one thing to it: the moment a `Blocked` follow-up becomes takeable.** A follow-up that needed this ticket merged moves from `Blocked` to `Open` once STEP 4b's healthy-dev-deploy verification confirms the merge is actually live — not at merge time, and not at the end of the cycle. Standalone `take-ticket` runs have no such verification, so they release after the merge lands; the cycle waits for the deploy, because a follow-up released against code that merged but never deployed is worked against a stale dev. This release applies to `Blocked` tickets only: a follow-up Claude proposed sits in `Triage` and stays there, because what it is waiting for is a human decision, not a deploy.
 - **On a `READY-TO-SHIP` verdict, the path from Phase C to Phase D runs through the manual re-test handoff (STEP 3b).** The cycle emits the manual (Änderungs-Zusammenfassung + Credentials + Testdaten + Schritt-für-Schritt), passes its Freigabe-Gate, and enters STEP 4 on the explicit "Direkt zu Phase D" choice — that single choice is the whole entry condition. The manual is assembled from Phase C's returned outputs, so no second browser walk happens here.
 - **When the user picks "Ich teste selbst" (STEP 3b option 2 — incl. any free-text equivalent — or the Phase C `WAITING-FOR-USER` verdict), the cycle MUST first run the Manual-Test Preparation routine and hand over all five deliverables before pausing:** (1) passende Testdaten in der laufenden Dev-DB vorbereitet (nicht die `-test`-DB), (2) Upload-Testdateien erzeugt *falls* die Änderung ein Upload-Feld betrifft (sonst bewusst keine), (3) kurze, leicht verständliche Zusammenfassung von Ticket + Testziel, (4) Credentials aller benötigten Accounts mit literalen Passwörtern, (5) Schritt-für-Schritt-Anleitung mit vollständigen URLs (auf echte Datensätze zeigend) und genauem was/wie/warum je Schritt. Pausing on this path without these five is a contract violation.
 - **The merge strategy is always a stated decision (STEP 4a):** either the user passed `--auto-merge` / `--review-handoff`, or the gate asks and they answer. Those two are the only ways `MERGE_STRATEGY` gets a value.
-- **The post-merge Linear state is always a stated decision (STEP 4b.1)** on the auto-merge path: either `--post-merge-status=…` supplied it, or the gate asks. Two states are offered, so the cycle picks one only by way of an answer. The `qa-testing` answer can still be re-routed to `awaiting-release` by STEP 4b.1a, which is a classification, not a second choice.
-- **"QA Testing" is reached only by a ticket that a non-developer can actually test, and only together with its instructions.** The column sits in front of "UA Testing" and is worked by people who do not read code, so both conditions are checked before the transition: STEP 4b.1a classifies testability from the diff and Phase C's walked flows (never from the ticket title), and STEP 4b.3c confirms the German test instructions are on the ticket. A ticket that fails the classification goes to "Awaiting Release" with its one-sentence reason stated. A ticket whose instructions cannot be posted does **not** move at all — it rests on "Dev Review" (unassigned) and the summary reports the QA handover as pending. Both failure shapes cost a tester a round-trip: an untestable ticket in a testing column is one nobody can clear, and an instruction-less one is indistinguishable from a ticket nobody has looked at. The classification, the format, and the credentials rule live in [`writing-qa-test-instructions`](${CLAUDE_PLUGIN_ROOT}/skills/writing-qa-test-instructions/SKILL.md) — a change to the policy is a one-place edit there.
+- **The post-merge Linear state is always a stated decision (STEP 4b.2)** on the auto-merge path: either `--post-merge-status=…` supplied it, or the gate asks. What the gate may offer is decided first, by STEP 4b.1's classification — so the user is never shown a state the ticket cannot reach.
+- **"QA Testing" is reached only by a ticket that a non-developer can actually test, and only together with its instructions.** The column sits in front of "UA Testing" and is worked by people who do not read code, so both conditions are checked before the transition: STEP 4b.1 classifies frontend verifiability from the diff and Phase C's walked flows (never from the ticket title) **before the state question is asked**, so a ticket that fails it is never offered "QA Testing" at all; and STEP 4b.3c confirms the German test instructions are on the ticket. A ticket that fails the classification goes to "Awaiting Release" with its one-sentence reason stated. A ticket whose instructions cannot be posted does **not** move at all — it rests on "Dev Review" (unassigned) and the summary reports the QA handover as pending. Both failure shapes cost a tester a round-trip: an untestable ticket in a testing column is one nobody can clear, and an instruction-less one is indistinguishable from a ticket nobody has looked at. The classification, the format, and the credentials rule live in [`writing-qa-test-instructions`](${CLAUDE_PLUGIN_ROOT}/skills/writing-qa-test-instructions/SKILL.md) — a change to the policy is a one-place edit there.
 - **Who tests is team state, not plugin state.** The QA assignee default lives in `${CLAUDE_PLUGIN_DATA}/qa-handover.json` on the running machine, keyed by Linear team — never in the plugin, and never in a project repository. A person's name hard-coded into a published plugin is personal data shipped to every installation, and it is wrong for every team but one. The command therefore asks once per team and remembers the answer, so the automation is identical from the second run onward.
 - **The Linear test instructions name roles, never passwords** — a Linear comment is workspace-readable and archived indefinitely. This is the deliberate opposite of STEP 3b's local re-test manual, which does carry literal `@test.com` passwords because it stays in the developer's own session and points at their local dev DB. Never copy the credentials block from the one into the other.
 - **A ticket is DONE once a clean, healthy dev deploy is verified (STEP 4b.3) — for EVERY ticket, including pure dev-tooling / config-only / test-only changes.** The auto-merge path reports the cycle complete, and pushes the Linear status forward, on exactly two conditions: (a) the post-merge **deploy job** on `<BASE_BRANCH>` is green AND (b) the **new** containers/replicas of the merged commit are verifiably running and healthy. Until both hold, the ticket rests on "Dev Review" (unassigned) and the cycle stays open. Anchor on the deploy *job*, not the pipeline: a pipeline may carry unrelated long-running work (image builds for other consumers, publishing, notifications) whose outcome says nothing about whether the server is running the merged code — waiting for it either stalls a finished deployment or paints it red for a foreign failure (observed: an appliance image build ran >1 h next to a 6-minute rollout). A green merge or a green deploy *job* is not enough: the platform's aggregate "healthy" count can include old/superseded containers that keep serving while the new ones crash-loop (observed: a "3/3 healthy" deploy while the new API crash-looped and Swarm served the 22h-old build — dev stale for ~22h, unnoticed). Verify container health against the merged image tag (`get_deployment_status` + `list_deployment_containers` in this stack). If the new containers are unhealthy or the deploy failed/timed out, the ticket stays on "Dev Review" (unassigned), the crash logs are surfaced, and the **root cause is fixed** (in scope even when pre-existing/infra; grund-repo if stack-wide) before the ticket counts as done.

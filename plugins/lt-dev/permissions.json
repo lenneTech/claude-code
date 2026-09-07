@@ -1298,7 +1298,7 @@
     },
     {
       "pattern": "Bash(curl:*)",
-      "description": "Check dev server availability for browser-based reviews, health-check probes, k6 load tests, Swagger discovery, and backend smoke-pass requests during browser validation",
+      "description": "Check dev server availability for browser-based reviews, health-check probes, k6 load tests, Swagger discovery, and backend smoke-pass requests during browser validation, and the signed PUT that uploads a Linear issue attachment",
       "usedBy": [
         "ux-reviewer",
         "a11y-reviewer",
@@ -1310,7 +1310,8 @@
         "production-ready",
         "validating-changes-in-browser",
         "checking-upstream-first",
-        "ticket-cycle"
+        "ticket-cycle",
+        "writing-linear-comments"
       ]
     },
     {

@@ -156,6 +156,14 @@ Zugang:   Zugangsdaten für die genannten Rollen bitte beim Team erfragen —
 MR/PR: REQUEST_URL
 ```
 
+**Keep it short.** Technical detail — file references, decisions, alternatives dropped, known
+limitations — goes into a Linear document attached to the ticket, linked from one `## Details` line
+at the end of the comment, per
+[`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md). Every
+test step carries its concrete example data and full links. No document when there is no detail
+worth keeping; update the existing `<ISSUE_ID> — Technische Details` document rather than attaching
+a second one.
+
 **Not testable** — same block, with the Testanleitung section replaced by:
 
 ```

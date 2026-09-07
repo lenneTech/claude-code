@@ -1,7 +1,7 @@
 ---
-description: Comprehensive code review with content validation, security, documentation, tests, backend, frontend, UX, a11y, and devops reviewers. Runs package.json check script with auto-fix. Small diffs use single-pass agent; larger diffs spawn parallel domain specialists with cross-domain challenge.
-argument-hint: '[issue-id] [--base=main] [--weights="Security:25,..."]'
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Bash(jq:*), Bash(cat:*), Bash(ls:*), Bash(test:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Agent, Skill, AskUserQuestion, ListAgents, SendMessage, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
+description: Code review that reports only proven Critical and High defects in what this diff changed, then fixes them automatically. Security risks with a demonstrated attack path are always reported and always fixed. Everything below the bar is dropped, not deferred and not turned into tickets. A review that finds nothing ends clean. Runs package.json check script with auto-fix; small diffs use a single-pass agent, larger diffs spawn parallel domain specialists.
+argument-hint: "[issue-id] [--base=main]"
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Bash(jq:*), Bash(cat:*), Bash(ls:*), Bash(test:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Agent, Skill, AskUserQuestion, ListAgents, SendMessage, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__save_issue_label, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document
 disable-model-invocation: false
 effort: max
 ---
@@ -24,6 +24,101 @@ effort: max
 - As a final check after `resolve-ticket`
 - When you want a structured assessment across all quality dimensions
 
+---
+
+## The Bar
+
+**This is the most important section of the command. Every phase below serves it.**
+
+A review that hands back thirty observations has not reviewed anything — it has moved the reviewing
+work to the person who asked for it. They now have to decide, one entry at a time, which findings
+are real, which matter, and which are taste. That is the expensive part, and it is the part this
+command is supposed to do.
+
+Worse, a long finding list turns one ticket into ten. Each "should probably" becomes a follow-up,
+each follow-up gets its own review, and the backlog grows faster than the work does. One finished
+ticket must not leave a trail of new ones behind it.
+
+So a finding reaches the user only when it clears **all four** of these gates. A finding that fails
+any one of them is **dropped** — not listed, not deferred, not filed as a ticket, not mentioned as
+a nice-to-have.
+
+### Gate 1 — Proven
+
+You can state the concrete failure: the input, state, or sequence that triggers it, and what goes
+wrong as a result. "This could be a problem" is not a finding. "`findAll` has no tenant filter, so
+a user of tenant A receives tenant B's records — reproduced against `GET /orders` with two seeded
+tenants" is.
+
+Anything the reviewer would have to guess at fails this gate. So does anything already enforced by
+tooling: oxlint, oxfmt, `tsc`, and the `check` script all ran in Phase 1.5, and re-reporting what
+they catch spends the user's attention on work they never have to do.
+
+### Gate 2 — Critical or High
+
+Only two severities exist in the output.
+
+| Severity | Meaning |
+|----------|---------|
+| **Critical** | Data loss, data exposure, an exploitable security hole, a broken production path, or a failing test. Merging this ships a defect. |
+| **High** | A real defect a user or operator will hit, with a bounded fix. Not shipping-blocking in the way Critical is, but it will cost somebody a bug report. |
+
+Medium, Low, Info, "consider", "would be cleaner", "for consistency" — none of these reach the
+output. Reviewers may still think in finer severities internally; the orchestrator collapses
+everything below High into the dropped set.
+
+Style, naming, structure, and architecture opinions are out of scope entirely, however well argued.
+They are the single largest source of the pile this command exists to avoid, and the repo's own
+tooling and conventions already own that ground.
+
+### Gate 3 — In this diff
+
+The finding sits in code this diff **added or changed**. Untouched code is out of scope, however
+tempting.
+
+The one exception: a **Critical security finding** in adjacent code that this diff makes reachable
+or newly exploitable. That is not pre-existing in any useful sense; the diff is what put it in play.
+It is reported and fixed like any other Critical, with one line saying it predates the change.
+
+Everything else that is pre-existing gets dropped. It was there before, the ticket was not about
+it, and dragging it in is how a one-day ticket becomes a week.
+
+### Gate 4 — Fixable here
+
+There is a concrete change that resolves it, inside this branch, without redesigning something the
+ticket did not touch. A finding whose only remedy is "restructure the module" is not actionable
+inside a review; if it is genuinely important, it belongs to Part 0 of
+[`filing-ai-proposed-tickets`](${CLAUDE_PLUGIN_ROOT}/skills/filing-ai-proposed-tickets/SKILL.md),
+and the bar there is deliberately high too.
+
+### Security overrides the gates it does not need
+
+A security finding with a **demonstrated attack path** — a route, a payload, a permission gap you
+can name and trace — is always reported and always fixed, whatever else is going on. Gates 1 and 4
+still apply: a demonstrated path is what "demonstrated" means, and the fix must be real. Gate 2 is
+automatic (such a finding is Critical or High by definition) and Gate 3 bends as described above.
+
+A *theoretical* security concern with no reachable path is not this. It is a Gate 1 failure like
+any other, and it is dropped. "An attacker who already had the database could…" is not an attack
+path.
+
+### A clean review is a good review
+
+**Finding nothing is a valid, complete, successful outcome.** Say so plainly and stop:
+
+> Keine Critical- oder High-Findings. Der Branch ist aus Review-Sicht merge-fähig.
+
+Do not pad it with observations to look thorough. Do not add a "considerations" section. Do not
+list what you almost flagged. The verified non-findings table in Phase 5 already shows what was
+checked, which is the honest way to demonstrate depth.
+
+### What happens to the findings that survive
+
+They get **fixed, automatically**, in Phase 6. The user is not asked to choose which of four
+bundles they want; if a finding was worth reporting under these gates, it was worth fixing. The
+only question left for the user is the rare one Phase 6 actually asks: a fix that turns out to
+exceed the ticket's scope.
+
 ## Related Commands
 
 | Command | Purpose |
@@ -41,7 +136,17 @@ effort: max
 | `/lt-dev:debug` | Adversarial debugging with competing hypotheses |
 | `/lt-dev:peers` | Who else is live in this repository, and what the working tree owes them |
 
-**Recommended workflow:** `resolve-ticket` → optional `/simplify` → `/lt-dev:review` → address findings → `code-cleanup` → create PR → `/review`
+**Recommended workflow:** `resolve-ticket` → optional `/simplify` → `/lt-dev:review` (reports and fixes in one pass) → create PR
+
+## Related Skills
+
+| Skill | Role in this command |
+|-------|----------------------|
+| [`running-check-script`](${CLAUDE_PLUGIN_ROOT}/skills/running-check-script/SKILL.md) | Owns Phase 1.5: discovery, the iterate-until-green auto-fix loop, the audit escalation ladder |
+| [`coordinating-peer-sessions`](${CLAUDE_PLUGIN_ROOT}/skills/coordinating-peer-sessions/SKILL.md) | Owns Phase 1b: the attribution ladder, the ORIGIN/ASK/SOLVED formats, what an author's answer is worth |
+| [`filing-ai-proposed-tickets`](${CLAUDE_PLUGIN_ROOT}/skills/filing-ai-proposed-tickets/SKILL.md) | The only route by which this command may open a ticket, and the reason it almost never does |
+| [`validating-changes-in-browser`](${CLAUDE_PLUGIN_ROOT}/skills/validating-changes-in-browser/SKILL.md) | Owns Phase 7: the walk, the seeded accounts, the ship-or-optimize gate |
+| [`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md) | Applies when a finding is written back to a Linear ticket rather than only to the terminal |
 
 ---
 
@@ -55,8 +160,7 @@ This command is the **direct orchestrator** — it spawns all reviewers in paral
 │  Phase 1: Diff analysis & domain detection
 │  Phase 1b: Change provenance — who wrote this, and what were they solving?
 │          (attribution ladder → one ORIGIN per author-peer → provenance_block)
-│  Phase 2: Content validation (requirements, scope, edge cases)
-│          + Design Smell Baseline assembled (shared input, pasted into the code reviewers)
+│  Phase 2: Content validation (requirements the diff was supposed to meet, edge cases in new paths)
 │
 │  Phase 3A: Code-only reviewers — ALL spawned in parallel (single message):
 │  ├── security-reviewer      (always — OWASP, Permissions, Injection, XSS, Auth, Secrets, Dependencies)
@@ -72,15 +176,16 @@ This command is the **direct orchestrator** — it spawns all reviewers in paral
 │  ├── ux-reviewer          (if frontend changes — State Handling, Feedback, Navigation, Form UX, Responsive)
 │  └── a11y-reviewer        (if frontend changes — ARIA, Semantic HTML, Keyboard, Contrast, SEO, Lighthouse a11y+perf)
 │
-│  Phase 4: Cross-domain challenge (filter false positives, deduplicate, annotate)
+│  Phase 4: The Gate — every raw finding is run against the four gates of "The Bar";
+│           cross-domain evidence is used to disprove, confirm, or deduplicate.
+│           Survivors: proven Critical/High in this diff, fixable here. Everything else: dropped.
 │
-│  Phase 5: Unified report (Executive Summary → Decision Helper → Action Roadmap → Remediation Catalog → FULL verbatim reports per reviewer → Recommended Commands → Reconciliation)
+│  Phase 5: Report (verdict → surviving findings → what was checked and found correct →
+│           dropped-count by reason → optional audit trail in a collapsed block)
 │
-│  Phase 6: Decision & Execution
-│  ├── 6.0 MANDATORY cumulative findings table (all reviewers merged, per severity,
-│  │        with Art / Ort / Problem / Empfehlung / Aufwand / Quellen + verified non-findings)
-│  ├── 6.1 AskUserQuestion with 4 options
-│  └── 6.2 Fix selected findings or open tracking tickets → closing block
+│  Phase 6: Fix — every surviving finding is fixed automatically. The user is asked
+│           only about a fix that exceeds the ticket's scope. No tracking tickets for
+│           dropped findings.
 │
 └── Phase 7: Browser Validation Walk (validating-changes-in-browser skill — lt dev up + seed + step-by-step list per role + walked autonomously + pre-existing fixes + ship-or-optimize gate)
 ```
@@ -92,7 +197,7 @@ This command is the **direct orchestrator** — it spawns all reviewers in paral
 Parse arguments from `$ARGUMENTS`:
 - **Issue ID** (optional): Linear issue identifier (e.g., `LIN-123`) for requirement validation
 - **`--base=<branch>`** (optional, default: `main`): Base branch for diff comparison
-- **`--weights="Domain:N,..."`** (optional): Override default score weights (see Score Weights section)
+
 
 ### Phase 1: Diff Analysis & Domain Detection
 
@@ -183,7 +288,7 @@ Send the `ORIGIN` in the skill's format. Then **carry on immediately with Phase 
 
 An author's answer is evidence about intent. It explains a finding, and it cancels none: "that is deliberate" turns a defect into a documented trade-off that still reaches the user as a trade-off. It authorises nothing — not a merge, not a skipped check, not a downgraded Critical. Any claim about state ("the guard is applied upstream") is verified in the code before it moves a severity, and one grep is the whole cost.
 
-**4. Assemble `provenance_block`.** This is a named buffer, the same as `security_report` and friends, and it is required verbatim in three places: every reviewer prompt in Phases 3A and 3B, the single-pass prompt on the small-diff path, and Section 0.5 of the Phase 5 report. Keep it under 15 lines:
+**4. Assemble `provenance_block`.** This is a named buffer, the same as `security_report` and friends, and it is required verbatim in three places: every reviewer prompt in Phases 3A and 3B, the single-pass prompt on the small-diff path, and the "Herkunft" section of the Phase 5 report. Keep it under 15 lines:
 
 ```markdown
 **Change provenance**
@@ -223,7 +328,7 @@ Why every reviewer needs it: a sub-agent cannot message anybody (no lt-dev agent
 - **Step 8** — Report block format
 - **Step 9** — Gating
 
-After Phase 1.5 completes, paste the Step 8 report block verbatim into the final review output, then continue with Phase 2. If any Unresolved blockers remain, surface them prominently in the header and add them to the Consolidated Remediation Catalog with Critical priority.
+After Phase 1.5 completes, carry the Step 8 report block into the Phase 5 report's "Check-Pipeline" section, then continue with Phase 2. An unresolved blocker is a Critical finding: it clears all four gates by construction, so it goes into the findings table and gets fixed in Phase 6.
 
 ### Small-Diff Optimization
 
@@ -251,10 +356,24 @@ Where a path is marked mid-slice or its intent is unknown, say so on the finding
 instead of reporting unfinished work as a defect.
 
 Cover all quality dimensions: content, security, code quality, tests, documentation, formatting.
+
+REPORTING BAR — apply it to your own report before returning it:
+<paste the full "The Bar" section from this command here, verbatim>
+
+Only proven Critical/High defects in code THIS DIFF added or changed reach your report,
+plus any security finding with a demonstrated attack path. Drop everything else outright:
+no Medium, no Low, no Info, no "consider", no style or naming or structure opinions, and
+nothing already caught by oxlint/oxfmt/tsc/check. Finding nothing is a correct and complete
+result — say so in one line rather than padding the report.
+
+For each surviving finding give: file:line, the concrete trigger, the concrete consequence,
+and the concrete fix. Close with a short list of the risky-looking things you checked and
+found correct.
+
 Produce your structured single-pass report.
 ```
 
-After the single-pass agent completes, present its report as the final output **wrapped in the same Phase 5 envelope** (Sections 0, 1, 2, 4, 5, 8, 9 only — Sections 3, 6, 7 are N/A for the single-pass path). The TL;DR (Section 0), Executive Summary, Action Roadmap, and Recommended Commands are still mandatory; only the cross-domain analysis and per-domain breakdown are skipped. Section 8 contains the single-pass `code-reviewer` agent's full verbatim report.
+After the single-pass agent completes, run its findings through Phase 4's gate yourself — the agent's own filtering is a first pass, not the decision — and present the result in the Phase 5 report shape. Then continue with Phase 6 (auto-fix) exactly as on the parallel path.
 
 **Note:** The built-in `/security-review` cross-check is NOT invoked on the small-diff path — the single-pass `code-reviewer` agent already covers security for diffs this small, and the extra Skill call would only add latency.
 
@@ -262,12 +381,17 @@ After the single-pass agent completes, present its report as the final output **
 
 ### Phase 2: Content Validation
 
-Run directly in this command (not delegated to sub-agents):
+Run directly in this command (not delegated to sub-agents). This phase answers one question: **did
+the diff do what it was supposed to do, and does it hold together?** It is not a place to collect
+improvement ideas — everything it produces goes through the same four gates as every reviewer
+finding.
 
 1. **Requirement Fulfillment** (if Issue ID provided):
    - Compare diff against acceptance criteria from the Linear issue
    - List each criterion and whether the diff addresses it
-   - Flag unaddressed criteria as ❌
+   - An acceptance criterion the diff does not address is a **Critical** finding: the ticket is not
+     done. This is the one finding class that is about absence rather than about code, and it is
+     the most valuable thing this phase produces.
 
 2. **Logical Coherence:** Verify changes form a coherent whole — no contradictory behavior, no incomplete implementations, no dead code paths introduced.
    An incomplete implementation on a path `provenance_block` marks as **mid-slice** is a status, not a finding. Report it as "in progress by <author>", and judge coherence on the finished parts.
@@ -275,43 +399,23 @@ Run directly in this command (not delegated to sub-agents):
 3. **Scope Check:** Flag unrelated changes that don't serve the stated goal (scope creep).
    **Check `provenance_block` first.** A hunk that looks like scope creep against this ticket is often another session's work sharing the checkout, and reporting it as creep is both wrong and useless — the author is not reading this report. Attribute it, exclude it from this review's scope, and name it in one line so the user knows why it is not covered.
 
-4. **Edge Cases:** Check for null/empty/boundary handling, off-by-one risks, and concurrency considerations in new code paths.
+4. **Edge Cases:** Check null/empty/boundary handling, off-by-one risks, and concurrency in the code
+   paths this diff **introduced**. Report one only where you can name the input that breaks it —
+   a gap you cannot trigger is a Gate 1 failure.
 
-5. **Error Handling:** Verify try/catch where needed, appropriate error responses (4xx/5xx for API, user-facing messages for UI), null guards, and graceful degradation.
+5. **Error Handling:** Verify the new paths handle their failure modes: appropriate error responses
+   (4xx/5xx for API, user-facing messages for UI), null guards, graceful degradation. Same rule —
+   name the failure that reaches a user, or drop it.
 
 6. **Cleanup Check:**
    ```bash
    grep -rn "TODO\|FIXME\|HACK\|XXX\|console\.log\|debugger" $(git diff <base-branch>...HEAD --name-only) 2>/dev/null
    ```
+   A `console.log` or `debugger` **added by this diff** is a High finding (it ships noise or a
+   breakpoint to production). A pre-existing one, or a `TODO` that documents a known limitation,
+   is not a finding — it fails Gate 3.
 
 ---
-
-### Design Smell Baseline (shared input for the code reviewers)
-
-The domain reviewers each check their own rules — decorators, SSR safety, query patterns. None of them looks at the **shape** of the code, which is where a diff that passes every rule can still make the codebase harder to change. This baseline is that missing lens: a fixed set of Fowler smells (_Refactoring_, ch. 3) that applies even where nothing is documented.
-
-Two rules bind it:
-
-- **The repo overrides.** A documented project standard (`CLAUDE.md`, `CONTRIBUTING.md`, the conventions in the starters) always wins. Where the repo endorses something this list would flag, the finding is suppressed.
-- **Every entry is a judgement call**, reported as "possible Feature Envy", never as a violation. It informs the Code Quality dimension's grade; on its own it never blocks a merge.
-- **Skip what tooling already enforces.** oxlint, oxfmt, `tsc`, and the `check` script have already run in Phase 1.5. Re-reporting what they catch spends reviewer attention on findings the developer never has to think about.
-
-Each entry reads *what it is*, then *how to fix it*. Match against the diff, not the whole codebase:
-
-- **Mysterious Name** — a function, variable, or type whose name does not reveal what it does or holds. Rename it; when no honest name comes, the design underneath is murky.
-- **Duplicated Code** — the same logic shape in more than one hunk or file of this change. Extract it, call it from both.
-- **Feature Envy** — a method that reaches into another object's data more than its own. Move it onto the data it envies.
-- **Data Clumps** — the same few fields or parameters keep travelling together, a type waiting to be born. Bundle them into one type and pass that.
-- **Primitive Obsession** — a `string` or `number` standing in for a domain concept that deserves its own type (an id, a currency amount, a role).
-- **Repeated Switches** — the same `switch` or `if`-cascade over the same type recurring across the change. Replace with polymorphism, or one map both sites share.
-- **Shotgun Surgery** — one logical change forcing scattered edits across many files in this diff. Gather what changes together into one module.
-- **Divergent Change** — one file edited for several unrelated reasons. Split it so each module changes for one reason.
-- **Speculative Generality** — abstraction, parameters, or hooks added for needs the ticket does not have. Delete it; inline it back until a real need appears.
-- **Message Chains** — long `a.b().c().d()` navigation the caller should not depend on. Hide the walk behind one method on the first object.
-- **Middle Man** — a class or function that mostly just delegates onward. Cut it and call the real target.
-- **Refused Bequest** — a subclass or implementer that ignores or overrides most of what it inherits. Drop the inheritance, use composition.
-
-**Passing this to the reviewers:** the sub-agents have no other access to this list, so the Backend Reviewer and Frontend Reviewer prompts paste it in **full**, together with the two binding rules above.
 
 ### Phase 3A: Parallel Code Reviews (no browser)
 
@@ -319,9 +423,37 @@ Each entry reads *what it is*, then *how to fix it*. Match against the diff, not
 
 These reviewers only analyze code — they do NOT use Chrome DevTools MCP and can safely run in parallel.
 
-**Provenance rule:** Every reviewer prompt below opens with the `provenance_block` from Phase 1b, verbatim, exactly as it opens with the Design Smell Baseline where that applies. Sub-agents cannot reach a peer session, so this block is their only access to intent — without it, foreign work-in-progress comes back as a list of defects. Where Phase 1b produced `Sole author: this session.`, paste that one line; it costs nothing and tells the reviewer the question was asked and settled.
+**Bar rule — this comes first in every prompt.** Each reviewer prompt below opens with the full
+**The Bar** section, verbatim, followed by this instruction:
 
-**Report retention rule:** Capture each reviewer's complete returned report into a named buffer (e.g. `security_report`, `docs_report`, `performance_report`, ...). These buffers are required verbatim in Phase 5, Section 8. Do NOT discard, summarize, or compress them after Phase 4 — Phase 4 only annotates the Consolidated Catalog; the per-reviewer reports themselves must reach the final output unchanged.
+```
+REPORTING BAR — apply it to your own report before returning it.
+
+Report ONLY proven Critical/High defects in code THIS DIFF added or changed, plus any
+security finding with a demonstrated attack path. Drop everything else outright: no Medium,
+no Low, no Info, no "consider", no style/naming/structure opinions, nothing already caught
+by oxlint/oxfmt/tsc/check, nothing in untouched code.
+
+For each surviving finding state: file:line · the concrete trigger (input, state, sequence)
+· the concrete consequence · the concrete fix.
+
+Returning zero findings is a correct and complete result. Do not pad. Instead, close with
+"Verified correct" — a short list of the risky-looking things in this diff that you checked
+and found sound, with the evidence. That list is how depth is demonstrated here, not a
+longer finding list.
+
+Skip the fulfillment grades and percentage scores from your normal report format. They
+carry no information once only two severities exist.
+```
+
+Why the bar goes to the reviewers rather than being applied only at the end: a reviewer that
+generates forty findings and has thirty-six filtered away has spent most of its budget on output
+nobody reads, and the four survivors get correspondingly less thought. Filtering at the source buys
+depth on what matters.
+
+**Provenance rule:** Every reviewer prompt below also carries the `provenance_block` from Phase 1b, verbatim. Sub-agents cannot reach a peer session, so this block is their only access to intent — without it, foreign work-in-progress comes back as a list of defects. Where Phase 1b produced `Sole author: this session.`, paste that one line; it costs nothing and tells the reviewer the question was asked and settled.
+
+**Report retention rule:** Capture each reviewer's complete returned report into a named buffer (e.g. `security_report`, `docs_report`, `performance_report`, ...). Phase 4 works from these buffers, and Phase 5 puts them in the collapsed audit block. Do NOT discard them before Phase 5.
 
 #### Security Reviewer (always)
 ```
@@ -336,7 +468,18 @@ Changed files:
 
 Audit OWASP Top 10, permission model (@Restricted/@Roles/securityCheck), injection vectors,
 XSS patterns, auth/session security, secrets exposure, dependency CVEs, and infrastructure security.
-Produce your structured security report with severity classification.
+
+Security is the one domain where the bar bends: a finding with a DEMONSTRATED ATTACK PATH
+is always reported, even where the vulnerable code predates this diff, as long as this diff
+made it reachable or newly exploitable. Say so explicitly on such a finding.
+
+"Demonstrated" means you can name the route or entry point, the actor (unauthenticated,
+wrong tenant, wrong role), the payload or sequence, and what they get. A concern you cannot
+trace that far is theoretical and is dropped — including CVEs in dependencies that no code
+path in this project reaches, and hardening suggestions with no reachable gap behind them.
+
+Produce your report: surviving findings with their attack paths, then "Verified correct" —
+the attack paths you traced and found already blocked, with the guard that blocks them.
 ```
 
 #### Built-in `/security-review` Cross-Check (always)
@@ -348,7 +491,7 @@ Skill tool with skill "security-review":
 (no arguments — it auto-detects the current branch diff)
 ```
 
-Capture the built-in's output verbatim into a variable `builtin_security_findings` for Phase 4 cross-domain challenge. Do NOT treat it as a reviewer report (no fulfillment grade, no structured severity). Its role is to supply an independent second opinion that the lt-specific `security-reviewer` agent can be challenged against.
+Capture the built-in's output verbatim into a variable `builtin_security_findings` for Phase 4. Its role is a second, independent opinion the lt-specific `security-reviewer` can be checked against. Its findings go through the same four gates as everybody else's: the built-in does not know this stack's guards, so a finding it raises alone is verified against `@Restricted` / `securityCheck` / Better Auth / Valibot before it is kept.
 
 **If the built-in is unavailable** (older Claude Code versions, Skill tool denied): log "`/security-review` unavailable — skipping built-in cross-check" and continue. The agent's report stands on its own.
 
@@ -366,10 +509,18 @@ Changed files:
 Change summary:
 <change summary from Phase 1>
 
-Check module README completeness, interface JSDoc, migration guide existence for
-new features/config/breaking changes, inline comments for complex logic, and
-configuration documentation (.env.example, INTEGRATION-CHECKLIST).
-Produce your structured documentation review report with fulfillment grades.
+Under the bar above, documentation produces a finding only where its absence breaks
+something concrete. In practice that is a short list:
+- a new or changed environment variable missing from .env.example, so a deploy or a
+  colleague's fresh checkout fails (High)
+- a breaking change to a public API, config key, or database shape with no migration
+  guide, so an upgrade breaks silently (Critical or High depending on blast radius)
+- documentation that now states the opposite of what the code does, so a reader is
+  actively misled (High)
+
+A missing JSDoc comment, a README that could say more, a module without a doc block:
+these are not findings. Drop them.
+Produce your report: surviving findings, then "Verified correct".
 ```
 
 #### Performance Reviewer (always)
@@ -386,9 +537,16 @@ API URL: http://localhost:3000
 
 Analyze bundle impact, database query patterns, memory management, async efficiency,
 API payload optimization, and caching strategy. Run k6 load tests with baseline
-comparison if k6 is installed and backend is running. Scaffold k6 infrastructure
-if not present. Lighthouse performance is handled by a11y-reviewer.
-Produce your structured performance review report with fulfillment grades.
+comparison if k6 is installed and backend is running. Lighthouse performance is
+handled by a11y-reviewer.
+
+Under the bar above, a performance finding needs a **measured or structurally certain**
+regression caused by this diff — an N+1 you can point at in the query path, an unbounded
+result set, a synchronous call added to a hot path, a k6 threshold this diff pushed over.
+"Could be optimised", "consider caching", and micro-optimisations without a measurement
+are dropped. Do NOT scaffold k6 infrastructure that does not exist; that is a change to
+the project, not a review finding.
+Produce your report: surviving findings, then "Verified correct".
 ```
 
 #### Backend Reviewer (if backend changes)
@@ -404,14 +562,21 @@ Changed files:
 <list of backend files>
 
 Check security decorators & permission model, model rules, controller & service patterns,
-type strictness & input validation, code quality, test coverage, and formatting.
+type strictness & input validation.
 
-Design Smell Baseline — apply to the Code Quality dimension, in addition to the rules above.
-A documented repo standard overrides it; skip anything oxlint/oxfmt/tsc/check already enforces;
-report every entry as a judgement call ("possible Feature Envy"), never as a hard violation:
-<paste the full Design Smell Baseline block from Phase 2 here, including its two binding rules>
+Under the bar above, the backend findings that survive are almost always one of these:
+- a missing or wrong @Restricted / @Roles / securityCheck that leaves data reachable by
+  someone who should not reach it (Critical)
+- a CrudService *Force / *Raw result or a .lean() / plain-object path reaching a user-facing
+  response with secrets or role-restricted fields still on it (Critical)
+- unvalidated input reaching a query, a file path, or a shell (Critical)
+- a data-mutating path with no error handling, so a partial write survives a failure (High)
 
-Produce your structured backend review report with fulfillment grades.
+Convention adherence with no defect behind it is dropped: property ordering, naming, DTO
+style, bilingual descriptions, "should extend CrudService", code-quality opinions, formatting.
+Those belong to the check script and the repo conventions, not to a review report.
+
+Produce your report: surviving findings, then "Verified correct".
 ```
 
 #### Test Reviewer (if source files changed)
@@ -432,12 +597,19 @@ has already happened. Focus on static analysis: coverage gaps, test quality, iso
 API-first patterns, naming. Only execute tests yourself if check did not cover them, or
 if files have been modified after Phase 1.5.
 
-Check test coverage gaps (40% regression + 60% coverage weighting), test quality & assertions,
-test isolation & data safety, API-first testing patterns, permission & security testing,
-test naming & structure, and flaky test detection (re-run failures 2-3x for classification).
-CRITICAL: Failing tests are ALWAYS a problem — flag every failure as must-fix regardless of
-whether it predates the current changes or seems unrelated.
-Produce your structured test review report with fulfillment grades.
+Check test isolation & data safety, API-first testing patterns, permission & security
+testing, and flaky test detection (re-run failures 2-3x for classification).
+
+CRITICAL, and it overrides the bar's Gate 3: a FAILING or FLAKY test is ALWAYS a Critical
+finding — every failure, regardless of whether it predates this diff or looks unrelated. A
+red suite is not a style opinion; it is the safety net being down.
+
+A MISSING test is a finding only where the untested path is one this diff added AND its
+failure would be Critical or High by the bar's own definitions — a permission boundary, a
+data-mutating path, the bug this ticket was written to fix. "Coverage could be higher",
+"add a test for the happy path", assertion-style preferences and naming conventions: dropped.
+
+Produce your report: surviving findings, then "Verified correct".
 ```
 
 #### DevOps Reviewer (if infrastructure changes)
@@ -452,7 +624,15 @@ Changed files:
 
 Check Dockerfiles, docker-compose configurations, CI/CD pipelines, environment management,
 permissions gates, Nuxt 4 SSR build patterns, and .dockerignore completeness.
-Produce your structured DevOps review report with fulfillment grades.
+
+Under the bar above, an infrastructure finding needs a broken or unsafe deploy behind it:
+a secret baked into an image or committed to the repo, a container running as root where
+it handles untrusted input, a pipeline stage that lets an unvalidated build reach a
+deployed environment, a compose or Dockerfile change that will not start. Hardening
+suggestions, image-size optimisations, caching improvements and stage-ordering preferences
+with no failure behind them are dropped.
+
+Produce your report: surviving findings, then "Verified correct".
 ```
 
 ### Phase 3B: Sequential Browser Reviews (Chrome DevTools MCP)
@@ -461,7 +641,7 @@ Produce your structured DevOps review report with fulfillment grades.
 
 If no frontend/page files changed, skip this phase entirely.
 
-**Report retention rule:** Same as Phase 3A — capture `frontend_report`, `ux_report`, `a11y_report` verbatim. They are required in Phase 5, Section 8.
+**Report retention rule:** Same as Phase 3A — capture `frontend_report`, `ux_report`, `a11y_report` verbatim. They belong in the Phase 5 audit block.
 
 **Provenance rule:** Same as Phase 3A — each prompt below opens with `provenance_block`.
 
@@ -478,17 +658,23 @@ Issue ID: <issue-id or "none">
 Changed files:
 <list of frontend files>
 
-Check TypeScript strictness, component structure & decomposition, code quality (DRY,
-complexity, naming), composable patterns, accessibility (a11y), SSR safety, performance,
-styling conventions, Tailwind/CSS quality, and tests/formatting.
-Use Chrome DevTools MCP to navigate to affected pages and verify rendering.
+Check TypeScript strictness, composable patterns, SSR safety, and API integration.
+Use Chrome DevTools MCP to navigate to affected pages and verify they actually render.
 
-Design Smell Baseline — apply to the Code Quality dimension, in addition to the rules above.
-A documented repo standard overrides it; skip anything oxlint/oxfmt/tsc/check already enforces;
-report every entry as a judgement call ("possible Feature Envy"), never as a hard violation:
-<paste the full Design Smell Baseline block from Phase 2 here, including its two binding rules>
+Under the bar above, the frontend findings that survive are almost always one of these:
+- the page or component throws, fails to render, or logs an error in the console (Critical)
+- an SSR/hydration mismatch or a client-only API touched during SSR, so the page breaks on
+  first load (Critical or High)
+- unescaped user content in v-html or an equivalent, i.e. a real XSS path (Critical)
+- a type escape (any, non-null assertion, wrong generated type) that lets wrong data through
+  to a rendered value or an API call (High)
+- an async action with no error path, so a failure leaves the user on a silent dead screen (High)
 
-Produce your structured frontend review report with fulfillment grades.
+Component decomposition, DRY, naming, styling conventions, Tailwind class ordering and
+"could be a composable" are dropped. Verify rendering in the browser rather than reasoning
+about it: a page that renders is evidence, and a page that throws is a finding.
+
+Produce your report: surviving findings, then "Verified correct".
 ```
 
 #### UX Reviewer (after Frontend Reviewer completes, if frontend/page changes)
@@ -502,11 +688,23 @@ App URL: http://localhost:3001
 Changed files:
 <list of frontend files>
 
-Check state handling (Loading/Empty/Error), user feedback (Toast consistency),
-navigation patterns, form UX, destructive action safety, optimistic UI,
-cross-page consistency, error recovery, and responsive behavior.
-Use Chrome DevTools MCP to navigate to affected pages and verify behavior.
-Produce your structured UX review report with fulfillment grades.
+Walk the pages this diff touches via Chrome DevTools MCP and verify the flows actually work.
+
+Under the bar above, a UX finding needs a user who gets stuck or misled — not a pattern
+that could be nicer:
+- a destructive action with no confirmation, so one click loses data (Critical)
+- a flow with no way out: a dead end, a state the user cannot leave, a form that fails
+  silently and loses what they typed (High)
+- an async action with no feedback at all, so the user cannot tell whether it worked and
+  triggers it again (High)
+- an error state that shows nothing, or shows a raw technical message (High)
+- a page unusable at mobile width: content cut off, controls unreachable (High)
+
+Toast wording consistency, icon choices, button order, spacing, empty-state copy,
+skeleton-vs-spinner preferences and cross-page consistency are dropped.
+
+Produce your report: surviving findings, then "Verified correct" — the flows you walked
+end to end and found sound.
 ```
 
 #### A11y & SEO Reviewer (after UX Reviewer completes, if frontend/page changes)
@@ -521,548 +719,254 @@ Changed files:
 <list of frontend files>
 
 Check ARIA labels & roles, semantic HTML, keyboard navigation, color & contrast,
-images & media, forms & autocomplete attributes, dynamic content accessibility,
-SEO essentials (useHead, OG tags), and crawlability (SSR, sitemap, robots.txt).
-Run Lighthouse audit via Chrome DevTools MCP on affected pages.
-Produce your structured a11y & SEO review report with fulfillment grades.
+forms & autocomplete attributes, and SEO essentials on the pages this diff touches.
+Run a Lighthouse audit via Chrome DevTools MCP on the affected pages.
+
+Under the bar above, an accessibility finding needs a user who is actually locked out:
+- an interactive element unreachable or unusable by keyboard, so the flow cannot be
+  completed without a mouse (Critical)
+- a control with no accessible name, so a screen-reader user cannot tell what it does (High)
+- a form field with no associated label (High)
+- text or a control below the WCAG AA contrast threshold, measured by Lighthouse, not
+  estimated (High)
+
+Missing OG tags, heading-level preferences, sitemap and robots.txt suggestions, Lighthouse
+score deltas without a concrete failing audit behind them, and autocomplete attributes on
+fields nobody fills repeatedly: dropped.
+
+Produce your report: surviving findings with their Lighthouse audit ids where applicable,
+then "Verified correct".
 ```
 
-### Phase 4: Cross-Domain Challenge (skip if <= 2 reviewers spawned)
+### Phase 4: The Gate
 
-After ALL agents (from both Phase 3A and 3B) return their reports, perform cross-domain analysis.
+Every raw finding from every reviewer, plus the built-in security cross-check, plus Phase 2's
+content findings, arrives here. This phase decides what the user ever sees. It is the phase that
+makes the difference between a review and a list.
 
-**Skip condition:** If only 1-2 **agent reviewers** were spawned (the built-in `/security-review` cross-check does NOT count toward this threshold, since it only supports the Security challenge), skip this phase — cross-domain analysis adds minimal value with few data points. Proceed directly to Phase 5.
+Work through it in order.
 
-**Partial-skip exception:** When Phase 4 is skipped but both the `security-reviewer` agent AND the built-in produced output, still run the `Security-Reviewer ↔ /security-review built-in` row alone — it's cheap, self-contained, and the Cross-Source column in Phase 5 depends on it. All other challenge rows remain skipped.
+**1. Merge and deduplicate.** Two reviewers reporting the same defect become one finding naming
+both sources. Agreement between sources raises confidence in the finding; it does not raise its
+severity, and it never turns two weak observations into one strong one.
 
-**Parallel challenge groups:** These challenge pairs are independent — evaluate them as **parallel analysis tasks** (multiple Grep/Read calls in a single message where evidence lookups are needed):
+**2. Run the four gates from "The Bar" on each finding**, in order, stopping at the first failure.
+Record which gate it failed on — the counts feed the report, and a gate that keeps firing tells you
+a reviewer prompt needs sharpening.
 
-| Group | Challenge | What to check |
-|-------|-----------|---------------|
-| A | **Security ↔ Tests** | Does a security finding have test coverage that mitigates it? |
-| A | **Security ↔ DevOps** | Overlapping Docker/env findings → deduplicate |
-| A | **Security-Reviewer ↔ `/security-review` built-in** | Compare lt-specific agent findings against the built-in's generic output (stored in `builtin_security_findings`). Confidence matrix: both sources flag it → high confidence, keep; only agent flags it → lt-specific pattern, keep at normal priority; only built-in flags it → possible blind spot of the lt-agent, keep at built-in's severity UNLESS already demonstrably mitigated (`@Restricted` / `securityCheck` / Better Auth / Valibot) — only then downgrade or drop. If the built-in returned zero findings, this row is trivially satisfied (no matches to evaluate). Skip entirely if the built-in was unavailable. |
-| B | **Backend ↔ Frontend** | Are backend API changes reflected in frontend API client usage? |
-| B | **Performance ↔ Tests** | Does a performance concern have load test coverage? |
-| B | **Performance ↔ Backend** | Overlapping N+1/query findings → deduplicate, keep deeper analysis |
-| B | **Performance ↔ Frontend** | Overlapping rendering/lazy findings → deduplicate, keep deeper analysis |
-| C | **Performance ↔ A11y** | Merge Lighthouse performance scores from a11y-reviewer into performance report (only if a11y-reviewer was spawned) |
-| C | **Content ↔ Documentation** | Are new features documented? |
+| Gate | Question | Fails when |
+|------|----------|-----------|
+| 1 Proven | Can you state the trigger and the consequence? | Speculative, stylistic, or already enforced by oxlint/oxfmt/tsc/check |
+| 2 Severity | Critical or High by the definitions in "The Bar"? | Anything Medium and below, and every "consider" |
+| 3 Scope | In code this diff added or changed? | Pre-existing, except a Critical security finding this diff made reachable |
+| 4 Fixable | Is there a concrete change inside this branch? | Only remedy is a redesign the ticket did not touch |
 
-Groups A, B, and C are independent and can be evaluated simultaneously. Within each group, challenges share context and should be evaluated together.
+**3. Use the cross-domain evidence to decide, not to decorate.** These pairs exist to settle
+findings, so read them as "what would disprove this?":
 
-For each challenged finding:
-- Evidence disproves it → remove from final report
-- Evidence partially mitigates it → downgrade severity
-- Cross-domain insight adds context → annotate the finding
+| Pair | What it settles |
+|------|-----------------|
+| Security ↔ Tests | A test that already covers the vector disproves the finding, or proves it. Read the test, do not assume from its name. |
+| Security-Reviewer ↔ `/security-review` built-in | Both flag it → high confidence. Only one → verify in code before keeping. The built-in is generic and does not know `@Restricted` / `securityCheck` / Better Auth / Valibot; check whether one of those already blocks the path. |
+| Security ↔ DevOps | Same Docker/env defect from two angles → one finding. |
+| Backend ↔ Frontend | A backend contract change with no frontend counterpart is a real defect (or the reverse). Both halves present → not a finding. |
+| Performance ↔ Backend/Frontend | Same query or render path → one finding, keep the analysis with the actual measurement. |
+| Content ↔ everything | An acceptance criterion nothing implements is a Critical finding regardless of what the domain reviewers said. |
 
-**The author-peer as a challenge source.** Where `provenance_block` names a live author for the code a finding sits in, that session holds the one thing no amount of cross-reading produces: what it already tried. Use it for the small set of findings where the answer decides the finding, and nothing else:
+Evidence disproves it → drop it, and count it as a Gate 1 failure. Evidence confirms it → keep it,
+with the confirming source named.
 
-- Two reviewers disagree on severity and the code alone does not settle it.
-- The recommended fix is a design change, and the author may have discarded exactly that design for a reason.
-- The finding hinges on a claim about elsewhere ("no caller passes null") that would take a wide search to confirm and the author can confirm in one line.
-
-Batch them into **one** message per peer, as an `ASK` (the `ORIGIN` in Phase 1b already established authorship), numbered so the reply maps back:
+**4. Ask the author-peer about the small set of survivors it would settle.** Where
+`provenance_block` names a live author for the code a surviving finding sits in, that session knows
+what it already tried. Batch these into **one** `ASK` message per peer, numbered, and only for
+findings that are still Critical or High after step 3 and where the answer would actually change
+the outcome:
 
 ```
-[ASK] svl — three review findings hinge on what you already tried in invoice.service.ts.
-Betrifft: 1) H2 recommends moving the tax rounding into the model — did you rule that out?
-          2) M4 flags the missing null guard on `customer` — is a caller guaranteed to set it?
-          3) M7 wants the cache keyed per tenant — was the shared key deliberate?
-Nötig: one line each; a "no reason, just did it" is a useful answer too.
+[ASK] <peer> — two review findings hinge on what you already tried in invoice.service.ts.
+Betrifft: 1) Die Tax-Rundung im Service statt im Model — bewusst so?
+          2) `customer` ohne Null-Guard — ist ein Caller garantiert gesetzt?
+Nötig: je eine Zeile; "kein Grund, einfach so" ist auch eine brauchbare Antwort.
 ```
 
-Bounds that keep this cheap: only findings that are still Critical, High, or contested after the challenge; at most one message per peer per review; never a question the code answers in two greps. **Never wait for the reply** — Phase 5 runs on what has arrived. A finding whose question went unanswered is reported at its pre-challenge severity with "intent unknown" attached, never quietly downgraded on the assumption that the author probably had a reason.
+**Never wait for the reply.** A finding whose question went unanswered keeps its full severity and
+carries "Absicht unbekannt" in the report. Never downgrade on the assumption that the author
+probably had a reason. An answer of "das ist Absicht, weil …" does not delete the finding either —
+it moves it into the report's "Bewusste Abwägungen" section with the author's reason quoted, where
+the user decides whether the reason holds. It never disappears silently: the user is the one who
+judges whether the reason is good enough, and they cannot judge a row they never see.
 
-**Error Handling:** If a reviewer fails or times out:
-- Mark the domain as "Could not evaluate — [reason]"
-- Continue with available reports
-- 3+ reviewers fail → flag "Degraded Review" in header
-- Built-in `/security-review` unavailability is NOT a reviewer failure and never counts toward the "Degraded Review" threshold — it simply means the cross-check is skipped.
+**5. Verify every survivor yourself before it is reported.** This is what "proven" means at the
+orchestrator level rather than at the reviewer's. For each surviving finding, open the file at the
+stated line and confirm three things: the code is as described, the trigger is reachable, and the
+proposed fix addresses it. A survivor you could not confirm is dropped — a false positive that
+reaches the user costs more trust than a missed Medium ever cost quality.
 
-### Phase 5: Unified Report
+Where a finding claims something about elsewhere ("no caller passes null", "this route has no
+guard"), one grep settles it. Do the grep.
 
-**CRITICAL OUTPUT REQUIREMENTS (read before generating):**
+**6. Collect the verified non-findings.** As the reviewers' "Verified correct" lists arrive, and as
+step 5 disproves candidates, keep the ones that were genuinely risky-looking: the permission path
+that turned out to be guarded, the query that turned out to be bounded, the flow that turned out to
+handle its error. This is the honest way to show the review had depth, and it is what a reader needs
+in order to trust a short finding list.
 
-1. **Every numbered section below is MANDATORY** — do not skip, summarize, or omit any section, even if a domain is N/A.
-2. **Section 8 (Detailed Reviewer Reports) MUST contain the VERBATIM full output of every spawned reviewer agent.** Do NOT paraphrase, compress, or drop reports. If a reviewer returned 400 lines, all 400 lines appear in the final output.
-3. **Section order is fixed.** Top-to-bottom: **TL;DR (Section 0)** → Change Provenance (Section 0.5) → Executive Summary → Reviewers Spawned → Overall Results → Action Roadmap → Consolidated Remediation Catalog → Informed Trade-offs → Cross-Domain Challenge Results → Detailed Reviewer Reports → Recommended Commands & Tools.
-   **Section 0 is mandatory** — it is the single source the user reads when they need a fast picture. Everything below it (Sections 1–9) is the audit trail. Section 0 MUST: (a) state the verdict in one sentence in the user's language (German for lenne.tech projects unless the user wrote the request in English), (b) list every Critical/High/Medium finding grouped Must-Fix / Should-Fix / Nice-to-Have with `file:line` + 1-line action, (c) show a per-domain score table (1 row per spawned reviewer), (d) name 1–3 highest-leverage recommendations the user should act on first. Section 0 must fit in roughly one screen — if a domain has many findings, summarize the bucket ("12 weitere Low-Findings — siehe Section 5") rather than enumerating every entry.
-4. **Wrap each full reviewer report in a `<details><summary>` block** for scannability — but the FULL content stays inside. GitHub, VS Code, and the Claude Code terminal all render these natively.
-5. **If a reviewer failed or returned an error**, show the error verbatim in its `<details>` block. Do not silently drop it.
-6. **No-Loss Guarantee:** EVERY individual finding present in any verbatim report (Section 8) MUST also appear (a) as a row in the Consolidated Remediation Catalog (Section 5) AND (b) as a numbered item under the matching priority bucket in the Action Roadmap (Section 4). Apply across ALL severities including Low and Info — no long-tail dropping.
-7. **Reconciliation:** End Section 8 with a counts table proving conservation: `Findings in verbatim reports: N | Catalog rows: N | Roadmap items: N`. If counts differ, list the missing finding IDs and explicitly add them before finalizing the report.
-8. **Trade-off Visibility:** Findings that stay in Section 6 (informed trade-offs that did NOT escalate) MUST also appear in Section 4 under a dedicated "🔄 Trade-offs accepted (no fix required, listed for transparency)" sub-bucket — so the user sees them when scanning the roadmap. They do NOT enter Section 5 (catalog is for actionable items only).
-9. **No Placeholders in Final Output:** All `N`, `X%`, `X min`, and `[...]` placeholders in the template MUST be replaced with concrete values before output. Empty buckets must say "None". Missing data must say "Not measured" with reason. Never ship a literal `N findings, ≈ X min` to the user.
+**7. Assemble the dropped ledger — counts, never a list.** One line per gate:
 
-Generate a single unified report merging all reviewer results:
+```
+Nicht berichtet: 14 (Gate 1 nicht belegt: 6 · Gate 2 unter High: 5 · Gate 3 nicht in diesem Diff: 3)
+```
+
+**Never enumerate the dropped findings**, not in the report, not in a collapsed block, not as
+"for completeness". A list of dropped findings is the pile this command exists to prevent; it just
+arrives with a disclaimer. The reviewers' full reports stay available in the audit block for anyone
+who wants to go looking, which is a deliberate step the reader has to choose to take.
+
+**Error Handling:** If a reviewer fails or times out, note the domain as not evaluated with the
+reason, and continue. Three or more failures → say the review is degraded and name what was not
+covered. The built-in `/security-review` being unavailable is not a reviewer failure.
+
+### Phase 5: Report
+
+Write it in the user's language (German for lenne.tech projects, unless the request came in
+English). **No emoji, no icons, no scores, no percentages, no fulfillment grades.** Severity is a
+word; a picture of a severity adds nothing, and a percentage invites arguing with the number
+instead of with the finding.
+
+The whole report fits on roughly one screen when there are no findings, and grows only with the
+findings that survived.
 
 ```markdown
-## Code Review Report
+## Review: <Branch> gegen <Base>
 
-### 0. TL;DR (kompakte Zusammenfassung — die eine Sektion für den Menschen)
+**Ergebnis:** <one sentence. Either "Keine Critical- oder High-Findings — aus Review-Sicht
+merge-fähig." or "N Findings behoben (X Critical, Y High).">
 
-In der Sprache des Users (DE für lenne.tech-Projekte, sonst EN). Alle Sections darunter sind der Audit-Trail.
+### Findings
 
-**Verdict:** ✅ Ready to merge / ⚠️ Fixes empfohlen vor Merge / ❌ BLOCKIERT — ein Satz Begründung.
+<Omit this whole section when there are none. Otherwise one table:>
 
-**Findings nach Priorität — Tabellen mit `# | Domain | file:line | Problem | Fix`:**
+| # | Schwere | Ort | Was passiert | Fix |
+|---|---------|-----|--------------|-----|
+| C1 | Critical | [service.ts:42](projects/api/src/…/service.ts#L42) | Der Trigger und die konkrete Folge, in zwei Sätzen. Bei vorbestehendem Code: "bestand vorher, durch diese Änderung erreichbar". Bei fremder Session: "Autor: <Session>, mid-slice". | Was geändert wurde |
 
-🔴 **Must-Fix (vor Merge)** — Critical-/High-Findings die wirklich blockieren. Leer ⇒ "Keine Must-Fix-Findings — Branch ist merge-ready."
+### Bewusste Abwägungen
 
-🟠 **Should-Fix (gleicher Sprint)** — High-/Medium-Findings die Qualität messbar verbessern.
+<Omit unless Phase 4 step 4 produced one. Otherwise one line per entry: the finding, the author's
+reason verbatim, and who gave it. These are the only entries in the report that are reported and
+not fixed — the user decides whether the reason holds.>
 
-🟡 **Nice-to-Have** — Low-/Info-Findings als knappe Liste.
+### Geprüft und in Ordnung
 
-Lange Buckets (>8 Einträge) zusammenfassen: erste 5 zeigen, Rest als "+N weitere — siehe Section 5".
+<The verified non-findings from Phase 4 step 6. Three to eight lines, each naming what was checked
+and what makes it sound. This section is not optional when findings exist and not optional when
+they do not — it is how a short list stays credible.>
 
-**Per-Domain-Scores** — eine Zeile pro tatsächlich gespawntem Reviewer (N/A-Domains weglassen): `Domain | Score | ✅/⚠️/❌ | Kurzfazit in einem Satz`.
+- Rechteprüfung auf `GET /orders`: `@Restricted` greift, mit Fremd-Tenant verifiziert (SEC)
+- …
 
-**Check-Pipeline-Baseline:** `pnpm audit X · format:check ✓/✗ · lint X/X · test X/X · build ✓/✗ · check ✓/✗`.
+### Nicht berichtet
 
-**Top-3 Empfehlungen (höchster Hebel zuerst):** je eine konkrete Aktion mit Verweis auf Finding-#, geschätzter Kosten/Nutzen.
+<The one-line count from Phase 4 step 7. Never a list.>
 
-### 0.5 Herkunft der Änderungen
+### Check-Pipeline
 
-Der `provenance_block` aus Phase 1b, verbatim. Steht dort `Sole author: this session.`, ist das die
-ganze Sektion — genau diese Zeile, kein Absatz darüber. Sie sagt dem Leser, dass die Frage gestellt
-und beantwortet ist, und kostet ihn eine Zeile.
+`audit N · format N · lint N · test N/N · build ok · check ok` — plus any unresolved blocker,
+verbatim from Phase 1.5.
 
-Sonst kommen die drei Zeilen dazu, die der Mensch für seine Entscheidung braucht:
+### Herkunft
 
-- **Nicht reviewt (fremde Arbeit in Arbeit):** `<Pfade>` — Autor `<Session>`, mid-slice. Ein Satz, warum ausgeschlossen.
-- **Findings mit unbekannter Absicht:** `<Finding-IDs>` — Rückfrage gestellt, bis Report-Zeit keine Antwort. Severity ist die ungemilderte.
-- **Rekonstruierte Absicht (Annahme):** `<Pfade>` — `<Rekonstruktion>`. Kippt die Annahme, kippen diese Findings mit.
+<Only when provenance_block says anything other than "Sole author: this session." Then the three
+lines that matter: what was excluded as another session's work-in-progress, which findings carry
+"Absicht unbekannt", and which intent was reconstructed as an assumption. When this session wrote
+everything, omit the section entirely — a heading saying "nothing to report" is still a heading.>
 
-Diese Sektion ist der einzige Ort, an dem sichtbar wird, was der Review **nicht** abdeckt. Ohne sie
-liest ein Bericht über einen halb fremden Baum wie ein vollständiger.
+<details>
+<summary>Audit-Trail: vollständige Reviewer-Reports</summary>
 
-### 1. Executive Summary
+<Every spawned reviewer's complete returned report, verbatim, one per sub-block, plus the built-in
+`/security-review` output. This is the audit trail: nothing is lost, and nothing is in the reader's
+way. A reviewer that failed shows its error here verbatim rather than being dropped silently.>
 
-**Overall Status:** ✅ Ready to merge / ⚠️ Fixes required / ❌ BLOCKED (do not merge)
-**Overall Score:** X% (weighted — see Section 3)
-**Change Summary:** [2-4 sentences from Phase 1]
-
-**Findings at a Glance** (counts MUST be filled — never leave as placeholders):
-- 🔴 Critical: N | 🟠 High: N | 🟡 Medium: N | 🟢 Low: N | ℹ️ Info: N | **Total: N**
-- 🔄 Informed Trade-offs: N (separate, see Section 6) — of which N are silent-bypass escalations already mirrored into the catalog
-- ⏱️ Estimated total fix effort (Komplett option): ≈ X min (using heuristic: Critical ≈ 60min, High ≈ 30min, Medium ≈ 15min, Low/Info ≈ 5min)
-
-**Top 3 Critical Findings** (pulled from Section 5, Critical/High only):
-1. 🔴 [Domain] — path:line — one-line description
-2. 🔴 [Domain] — path:line — one-line description
-3. 🟡 [Domain] — path:line — one-line description
-
-**Top 3 Immediate Actions:**
-1. [command or manual step] — addresses finding #X
-2. [command or manual step] — addresses finding #Y
-3. [command or manual step] — addresses finding #Z
-
-> If no Critical/High findings exist: state "No blockers — see Section 5 for optional improvements."
-
-**My Recommendation:** **Standard** (Critical + High) — [one-sentence reasoning, e.g. "Critical findings are real merge blockers; High findings are quick wins that prevent follow-up reviews. Medium/Low can be deferred as tech-debt tickets."]
-
-> Pick exactly one of: **Minimal** / **Standard** / **Komplett** / **Nichts** (defined in Section 1.5). Always justify the choice in one sentence — risk profile, time pressure, sprint context.
-
-### 1.5 Decision Helper
-
-Concrete options the user can pick from. Counts come from Section 5; effort estimates are heuristic (≈ 5 min per Low/Info, ≈ 15 min per Medium, ≈ 30 min per High, ≈ 60 min per Critical — adjust based on remediation complexity visible in the catalog).
-
-- 🚀 **Minimal (Merge-Ready)** — Critical only, N findings, ≈ X min — for hot-fixes, time pressure, high confidence in non-blocking findings
-- 🎯 **Standard (Recommended)** — Critical + High, N findings, ≈ X min — default for feature branches before merge
-- 💎 **Komplett** — All severities (Critical → Info), N findings, ≈ X min — for pre-release polish, codebase quality push, ample time
-- ⏭️ **Nichts (Defer)** — None fixed, N tracked as tickets, ≈ X min ticket creation — when all findings are non-urgent, scope locked, work belongs to next sprint
-
-**Notes:**
-- "Nichts" still requires creating tracking tickets (e.g., Linear) for every Critical/High finding — never silently merge with known blockers.
-- The user MAY override: pick individual findings by ID instead of a bucket. Phase 6 question accepts free-text selection.
-
-### 2. Reviewers Spawned
-| Reviewer | Domain | Status |
-|----------|--------|--------|
-| orchestrator | Check Script (auto-fix) | ✅ / ⚠️ / ❌ / — N/A |
-| orchestrator | Content Validation | ✅ / ⚠️ / ❌ |
-| security-reviewer | Security (OWASP) | ✅ / ⚠️ / ❌ / — N/A |
-| `/security-review` built-in | Security (generic cross-check) | ✓ findings / — none / ✗ unavailable |
-| docs-reviewer | Documentation | ✅ / ⚠️ / ❌ / — |
-| performance-reviewer | Performance (Bundle, Queries, k6) | ✅ / ⚠️ / ❌ / — |
-| backend-reviewer | Backend (NestJS) | ✅ / ⚠️ / ❌ / — |
-| frontend-reviewer | Frontend (Nuxt/Vue) | ✅ / ⚠️ / ❌ / — |
-| test-reviewer | Tests (Quality/Coverage) | ✅ / ⚠️ / ❌ / — |
-| ux-reviewer | UX Patterns | ✅ / ⚠️ / ❌ / — |
-| a11y-reviewer | A11y & SEO | ✅ / ⚠️ / ❌ / — |
-| devops-reviewer | DevOps (Docker/CI) | ✅ / ⚠️ / ❌ / — |
-
-### 3. Overall Results
-| Domain | Fulfillment | Status |
-|--------|-------------|--------|
-| Content | X% | ✅/⚠️/❌ |
-| Security | X% | ✅/⚠️/❌ |
-| Documentation | X% | ✅/⚠️/❌ |
-| Performance | X% | ✅/⚠️/❌ |
-| Backend | X% | ✅/⚠️/❌ |
-| Frontend | X% | ✅/⚠️/❌ |
-| Tests | X% | ✅/⚠️/❌ |
-| UX Patterns | X% | ✅/⚠️/❌ |
-| A11y & SEO | X% | ✅/⚠️/❌ |
-| DevOps | X% | ✅/⚠️/❌ |
-
-**Overall: X%** (weighted average of active domains)
-
-### Score Weights
-
-Default weights (override via `--weights` or project CLAUDE.md):
-
-| Domain | Default Weight | Condition |
-|--------|---------------|-----------|
-| Security | 20% | Always |
-| Content | 10% | Always |
-| Documentation | 5% | Always |
-| Performance | 10% | Always |
-| Backend | 15% | If backend changes |
-| Frontend | 15% | If frontend changes |
-| Tests | 10% | If source files changed |
-| UX Patterns | 5% | If frontend changes |
-| A11y & SEO | 5% | If frontend changes |
-| DevOps | 5% | If infra changes |
-
-Only active domains count. Weights redistribute proportionally for N/A domains.
-
-#### Weight Override
-
-**Via argument** (comma-separated `Domain:Weight` pairs):
-```
-/lt-dev:review --weights="Security:30,Backend:25,Tests:15,DevOps:20"
+</details>
 ```
 
-**Via project CLAUDE.md** (persistent per project):
-```markdown
-## Review Weights
-Security: 30%
-Backend: 25%
-Tests: 15%
-DevOps: 20%
-```
-
-Override rules:
-- Only listed domains are overridden; unlisted domains keep defaults
-- Weights are normalized to 100% across active domains after N/A exclusion
-- If neither `--weights` nor CLAUDE.md weights exist, use defaults above
-
-### 4. Action Roadmap (prioritized Next Steps)
-
-Single, directly-actionable list derived from ALL reviewer findings, grouped by urgency. Each item references the finding number from Section 5.
-
-#### 🔴 Must Fix (Critical) — Blocks Merge
-1. **[Finding #X]** `path:line` — Fix description. Command: `...` or manual step.
-2. ...
-
-#### 🟠 Must Fix (High) — Before Merge
-1. **[Finding #X]** `path:line` — Fix description. Command: `...` or manual step.
-2. ...
-
-#### 🟡 Should Fix (Medium) — This Sprint
-1. **[Finding #X]** `path:line` — Fix description.
-2. ...
-
-#### 🟢 Nice to Have (Low / Info) — Track for Later
-1. **[Finding #X]** `path:line` — Improvement description.
-2. ...
-
-#### 🔄 Trade-offs accepted (no fix required, listed for transparency)
-Mirrors Section 6 entries that did NOT escalate. They are visible here so the user can override the "accepted" decision per item if desired.
-1. **[TO-#X]** `path:line` — Category — Reason accepted: "..."
-2. ...
-
-> If a priority level has no entries, write "None" under that heading. Do NOT remove the heading.
-
-### 5. Consolidated Remediation Catalog
-| # | Domain | Priority | File | Cross-Source | Action |
-|---|--------|----------|------|--------|
-| 1 | Security | Critical | path:line | ✓ | ... |
-
-Priority ordering: Critical → High → Medium → Low
-
-**Cross-Source column** (Security findings only — leave blank for non-Security rows):
-- ✓ = flagged by both security-reviewer AND `/security-review` built-in (high confidence, keep as-is)
-- ○ = only security-reviewer (lt-specific finding — keep at normal priority)
-- △ = only `/security-review` built-in (generic pattern — could be a **blind spot of the lt-agent**; verify lt-context before deciding. Downgrade ONLY if already demonstrably mitigated by `@Restricted` / `securityCheck` / Better Auth / Valibot. Otherwise keep at the built-in's original severity.)
-- — = built-in was unavailable (no cross-check possible; rely solely on security-reviewer)
-
-### 6. Informed Trade-offs (consolidated, non-blocking by default)
-
-Consolidates all "informed trade-off" findings from individual reviewers. These share the meta-pattern defined in `generating-nest-servers` skill → `reference/informed-trade-off-pattern.md`: a standard framework path exists; an opt-out is allowed with (a) a documented reason and (b) an analysis that nothing necessary is silently bypassed. The category is presented separately because it does NOT block the review — but silently bypassing a process or security measure always escalates the individual finding into the regular catalog at the appropriate severity.
-
-Seven trade-off categories are aggregated:
-
-1. **Deprecations (source code)** — deprecated APIs, config keys, packages (from `code-reviewer`, `backend-reviewer`, `frontend-reviewer`, `devops-reviewer`). Default Low; Medium when the deprecation removed a security/process control the caller now lacks.
-2. **Deprecations (test APIs)** — deprecated Jest/Vitest/Playwright/supertest/testing-library/lt-framework test helpers (from `test-reviewer`). Default Low; Medium when the deprecation removed assertion-strictness or test-reliability guarantees.
-3. **Foreign `@InjectModel`** — injection of a Model that does not belong to the injecting Service (from `backend-reviewer`, `security-reviewer`). Default Low with justification; Medium without justification/Service analysis; escalates to High/Critical in the main catalog if a Service security measure is silently bypassed.
-4. **Plain-object response paths** — `.lean()` / `toObject()` / spreads / raw `aggregate()` / native-driver results returned to users (from `backend-reviewer`, `security-reviewer`). Default Low when Model has only default `securityCheck`; Medium when Model has overridden `securityCheck` and no justification/hydration/manual replication; High in the main catalog when Model-specific authorization is silently bypassed.
-5. **Direct own-Model access** — `this.mainDbModel.xxx` / `this.<modelName>Model.xxx` calls inside the owning Service instead of CrudService methods (from `backend-reviewer` Layer 5b, `security-reviewer` Layer 7, `code-reviewer` Phase 4). Default Low when `securityCheck()` still runs via the interceptor and no role-restricted fields are affected; Medium for missing side-effects or undocumented access on Models with role-restricted fields; High in the main catalog when field-level `@Restricted` is silently bypassed on a user-facing response. Preferred alternatives: `this.processResult(result, serviceOptions)` wrapper (runs `prepareOutput`), or follow-up `super.update(id, {}, serviceOptions)` to rerun the full pipeline.
-6. **CrudService `*Force`/`*Raw` variants** — `getForce`/`createForce`/`findRaw`/etc. disable `checkRights`, RoleGuard, and `removeSecrets` (Force) or additionally `prepareInput`/`prepareOutput` entirely (Raw). From `backend-reviewer` (Services-section audit), `security-reviewer` Layer 8, `code-reviewer` Phase 3. Default Medium without justification; **Critical in the main catalog when a `*Force`/`*Raw` result (possibly containing password hashes or tokens) reaches a user-facing response without explicit field stripping**; High when upstream authorization check is missing. Allowed in documented system-internal flows (credential verification, migrations, admin tooling).
-7. **Frontend trade-offs** — Options API in new code, mutable composable state, `import.meta.client` escape hatches, `v-html`, raw `fetch()` (from `frontend-reviewer`, `code-reviewer`). Default Low; Medium for SSR-safety gaps; High in the main catalog for unjustified `v-html` (XSS class).
-
-| # | Category | Origin Reviewer | File:Line | Opt-out Used | Documented Reason | Analysis Performed | Default-Path Logic Bypassed | Severity | Action |
-|---|----------|-----------------|-----------|--------------|-------------------|--------------------|----------------------------|----------|--------|
-| 1 | Deprecation | backend-reviewer | path:line | `OldAPI` (`@deprecated since vX`) | — | `@deprecated` msg read | ⚠ Migration required | Low | Migrate to `NewAPI` (see changelog) |
-| 2 | Foreign @InjectModel | security-reviewer | path:line | `@InjectModel(User.name)` in `OrderService` | — | not performed | ⚠ UserService.securityCheck skipped | Medium | Inject `UserService` OR document + replicate auth |
-| 3 | Plain Object | backend-reviewer | path:line | `.lean()` | "large list perf" | ✓ UserModel securityCheck reviewed | ⚠ ownership field-clearing skipped | Medium | Hydrate via `UserModel.map(raw)` OR replicate filter |
-
-**Behavior rules:**
-- If no reviewer reported trade-off findings: "No informed trade-offs detected across changed files."
-- Findings in this section do NOT count toward domain Fulfillment percentages.
-- Findings where the analysis reveals an actual silent bypass of a security measure are ALSO added to the regular Consolidated Remediation Catalog with appropriate severity (Critical/High) — they must not be hidden in the trade-off section alone.
-- Use the "Analysis Performed" column as a reviewer accountability check: missing analysis ≠ safe; it means the trade-off was accepted without verification and is itself a review gap.
-
-### 7. Cross-Domain Challenge Results
-
-[Findings removed, downgraded, or annotated after Phase 4 cross-domain analysis. Format each entry as: `[Domain] finding-id — RESOLUTION (removed / downgraded to X / annotated with Y) — reason`. If no findings were challenged: "No cross-domain conflicts found — all reviewer findings stand."]
-
-### 8. Detailed Reviewer Reports
-
-**MANDATORY:** Paste each spawned reviewer's COMPLETE report verbatim below. No summarization, no truncation, no omission. Wrap each in a `<details>` block for scannability. The order matches the rows in Section 2 (Reviewers Spawned). For reviewers marked "— N/A", write a single line "Not spawned — no relevant changes" inside the `<details>` block instead of omitting the section.
-
-<details>
-<summary>🔒 Security Reviewer — full report</summary>
-
-[Paste the COMPLETE output of the `lt-dev:security-reviewer` agent here, verbatim.]
-
-</details>
-
-<details>
-<summary>🛡️ /security-review Built-in Cross-Check — full output</summary>
-
-[Paste the COMPLETE output of the built-in `/security-review` skill here, verbatim. If unavailable: "Skipped — built-in `/security-review` unavailable in this Claude Code version."]
-
-</details>
-
-<details>
-<summary>📝 Documentation Reviewer — full report</summary>
-
-[Paste the COMPLETE output of the `lt-dev:docs-reviewer` agent here, verbatim.]
-
-</details>
-
-<details>
-<summary>⚡ Performance Reviewer — full report</summary>
-
-[Paste the COMPLETE output of the `lt-dev:performance-reviewer` agent here, verbatim.]
-
-</details>
-
-<details>
-<summary>🏗️ Backend Reviewer — full report</summary>
-
-[Paste the COMPLETE output of the `lt-dev:backend-reviewer` agent here, verbatim, OR "Not spawned — no backend changes."]
-
-</details>
-
-<details>
-<summary>🎨 Frontend Reviewer — full report</summary>
-
-[Paste the COMPLETE output of the `lt-dev:frontend-reviewer` agent here, verbatim, OR "Not spawned — no frontend changes."]
-
-</details>
-
-<details>
-<summary>🧪 Test Reviewer — full report</summary>
-
-[Paste the COMPLETE output of the `lt-dev:test-reviewer` agent here, verbatim, OR "Not spawned — no source files changed."]
-
-</details>
-
-<details>
-<summary>👥 UX Reviewer — full report</summary>
-
-[Paste the COMPLETE output of the `lt-dev:ux-reviewer` agent here, verbatim, OR "Not spawned — no frontend changes."]
-
-</details>
-
-<details>
-<summary>♿ A11y &amp; SEO Reviewer — full report</summary>
-
-[Paste the COMPLETE output of the `lt-dev:a11y-reviewer` agent here, verbatim, OR "Not spawned — no frontend changes."]
-
-</details>
-
-<details>
-<summary>🐳 DevOps Reviewer — full report</summary>
-
-[Paste the COMPLETE output of the `lt-dev:devops-reviewer` agent here, verbatim, OR "Not spawned — no infrastructure changes."]
-
-</details>
-
-#### 8.1 Reconciliation (No-Loss Check)
-
-Counts must match. If any column is lower than the highest, add the missing finding IDs explicitly.
-
-Source per severity (Critical / High / Medium / Low / Info / Total):
-- Verbatim reports (Section 8): N / N / N / N / N / N
-- Catalog rows (Section 5):     N / N / N / N / N / N
-- Roadmap items (Section 4):    N / N / N / N / N / N
-
-**Status:** ✅ All counts match — every finding tracked / ❌ Mismatch — see missing IDs below
-
-**Missing finding IDs** (only fill if mismatch):
-- `[REVIEWER-NNN]` from Section 8 — added to Catalog #X and Roadmap bucket Y
-
-### 9. Recommended Commands & Tools
-
-**Backend findings:**
-- Security ⚠️/❌ → `/lt-dev:backend:sec-review`
-- Tests ⚠️/❌ → `/lt-dev:backend:test-generate`
-- Code Quality ⚠️/❌ → `/lt-dev:backend:code-cleanup`
-- Dependencies → `/lt-dev:backend:sec-audit`
-
-**Performance findings:**
-- k6 ⚠️/❌ → Run `k6 run` with higher load to confirm regression
-- Database queries → Review with `explain()` in MongoDB shell
-- Lighthouse Performance ⚠️/❌ (from a11y-reviewer) → Run `lighthouse` manually on affected pages
-
-**Frontend findings:**
-- Code Quality ⚠️/❌ → `/lt-dev:refactor-frontend --dry-run`
-
-**Claude Code Built-in Cross-Reviews (optional, outside this command):**
-- After PR is created → `/review <PR#>` for a generic PR-context review (uses `gh` CLI)
-- CI fails on the PR → `/autofix-pr` spawns a cloud session that pushes fixes automatically
-- Quick pre-review code cleanup on recently changed files → `/simplify` (auto-applies fixes — run BEFORE `/lt-dev:review`, never inside it)
-
-**All ✅** → Create PR, then run `/review <PR#>` for a generic PR-context cross-check
-```
-
-### Phase 6: Decision & Execution
-
-#### Phase 6.0: Cumulative Findings Table — MANDATORY, ALWAYS BEFORE THE QUESTION
-
-**Never call `AskUserQuestion` without rendering this table first.** The user cannot make an informed
-choice from bucket counts alone ("10 Findings, ~4 h") — they need to see *what* is in each bucket.
-This is not optional, not skippable for small reviews, and not satisfied by Section 0's TL;DR
-(which deliberately abbreviates long buckets) or by Section 5's catalog (which is an audit-trail
-format, not a decision aid).
-
-Render **one table per severity bucket**, in the user's language (German for lenne.tech projects),
-containing **every** finding from every reviewer — deduplicated across reviewers, but never dropped:
-
-| Column | Content |
-|--------|---------|
-| `#` | Stable ID (`C1`, `H3`, `M7`, `L12`) — reusable in the user's free-text answer |
-| Art | **Type of the planned change** — see the taxonomy below. Drives sequencing and reviewability. |
-| Ort | `file:line` as a clickable markdown link |
-| Was ist das Problem | 1–3 sentences in plain language: the mechanism AND the concrete consequence. Not a category label. State when something is pre-existing rather than introduced by the diff, and when the code belongs to another session (`Autor: <session>, mid-slice`) — the user decides differently about a defect in somebody else's unfinished work than about one in their own. |
-| Empfehlung | The concrete fix, not a restatement of the problem |
-| Aufw. | Effort glyphs: `▪` ≈ 5 min · `▪▪` ≈ 15 min · `▪▪▪` ≈ 30 min · `▪▪▪▪` ≈ 60 min+ |
-| Quellen | Which reviewers found it (`SEC`·`BE`·`TST`·`PRF`·`OPS`·`DOC`·`ORCH`). **Multiple sources = higher confidence** — say so where it applies. |
-
-**`Art` taxonomy** — exactly one per finding, the one that describes the *artifact being changed*:
-
-| Art | Meaning | Risk profile |
-|-----|---------|--------------|
-| Code | Application/framework source behaviour changes | Needs tests + review; can regress |
-| Test | Test files only — no shipped behaviour changes | Safe to land eagerly; raises the safety net |
-| Doku | Markdown, JSDoc, comments, `.env.example` | Zero runtime risk; batchable |
-| Config | `package.json`, `nodemon.json`, `tsconfig`, lint/format configs | No app logic, but can change how everything runs |
-| Deps | Dependency versions, `overrides:`, lockfile | Blast radius is the whole tree; verify with `audit` + lockfile diff |
-| Infra | Dockerfile, compose, entrypoint, CI workflows | Only provable in a real deploy; often untestable locally |
-| Release | Version bump, migration guide, changelog | Gated on everything else landing first |
-
-Why this column earns its width: it tells the user what they can land *without* a full re-verify.
-Doku/Test findings are near-zero-risk and can be batched into one commit; Code/Deps/Infra each need
-their own verification. A bucket that looks like "18 Findings, ~4 h" often decomposes into "3 code
-fixes plus 15 doc lines" — which is a completely different decision. Where a bucket is dominated by
-one Art, say so in one sentence under the table.
-
-**Output style: no emoji, no icons.** Severity is carried by the bucket heading and the `Art` column
-by its word, not by pictographs. This applies to the whole review output, not just this table.
-
-Rules:
-
-1. **Deduplicate across reviewers, never drop.** Two reviewers reporting the same defect become ONE
-   row listing both sources. A finding that appears in no row is a review failure.
-2. **Add a "Bewusst *kein* Finding" table** listing what was investigated and verified CORRECT
-   (with the verifying sources). Reviewers spend real effort dismissing candidates; hiding that
-   makes the review look like it only knows how to complain, and the user loses the reassurance
-   that the risky-looking parts were actually checked.
-3. **Close with the finding total** broken down per severity, plus the count of verified non-findings.
-4. **Long buckets are NOT truncated here.** Section 0 may summarize ("+12 weitere"); Phase 6.0 may not.
-   This is the one place the user sees everything at once.
-5. Where reviewers disagreed, show the RESOLVED severity and note the disagreement in the
-   problem column — the user is entitled to know a call was contested.
-6. **A finding the author explained is a trade-off, not a deletion.** Where Phase 1b or the Phase 4
-   `ASK` produced "that is deliberate, because …", the row moves to Section 6 (Informed Trade-offs)
-   with the author's reason quoted, and stays visible in the Action Roadmap under
-   "Trade-offs accepted". It never silently disappears: the user is the one who decides whether the
-   author's reason is good enough, and they cannot decide about a row they never see.
-7. **A finding in another session's unfinished code recommends handing it back, not fixing it.**
-   The `Empfehlung` reads "an <Autor> zurückgeben" plus the one-line diagnosis, because two sessions
-   editing one file is a merge conflict with extra steps. Exception: a trivial, self-contained fix
-   (missing import, format violation) that cannot collide.
-8. **A finding whose intent question went unanswered keeps its full severity** and carries
-   "Absicht unbekannt" in the problem column. Never downgrade on the assumption that the author
-   probably had a reason.
-
-Only after this table is on screen, ask the question.
-
-#### Phase 6.1: The Question
-
-Ask the user how to proceed via the `AskUserQuestion` tool. Always present FOUR options derived from Section 1.5:
-
-```
-AskUserQuestion tool:
-- question: "Welche Findings möchtest du jetzt beheben? (Reviewer-Empfehlung: <Variante aus Section 1>)"
-- multiSelect: false
-- options:
-  - label: "🚀 Minimal — nur Critical (N Findings, ~X min)"
-    description: "Hot-fix-Modus: nur Merge-Blocker beheben."
-  - label: "🎯 Standard — Critical + High (N Findings, ~X min)"
-    description: "Empfohlene Variante für Feature-Branches."
-  - label: "💎 Komplett — alle Severities (N Findings, ~X min)"
-    description: "Pre-Release-Politur, alle Findings inkl. Low/Info."
-  - label: "⏭️ Nichts jetzt — Tracking-Tickets erstellen (~X min)"
-    description: "Findings dokumentieren, Fixes auf später verschieben."
-```
-
-**Skip the question if and only if:**
-- Section 5 contains zero findings (all reviewers ✅) → state "All clean — nothing to decide. Suggest creating PR." and stop.
-- The user passed an explicit non-interactive flag (none defined yet — placeholder for future `--no-prompt` support).
-
-**Free-text override:** If the user replies outside the four options (e.g. "nur Finding #3 und #7"), parse the IDs and treat them as the explicit fix set.
-
-#### Phase 6 Execution
-
-After the user picks an option:
-
-- 🚀 **Minimal** — Iterate findings filtered by severity = Critical. For each, propose the diff and apply after confirmation (or auto-apply if user said "alles fixen, nicht fragen").
-- 🎯 **Standard** — Same iteration on Critical + High.
-- 💎 **Komplett** — Same iteration on all severities, in priority order.
-- ⏭️ **Nichts** — Create one tracking ticket per Critical/High finding via `mcp__plugin_lt-dev_linear__save_issue` (or print a markdown ticket-list if Linear MCP is unavailable). Confirm ticket IDs back to the user. Do NOT fix code. Create them in **`Open`** (never `Backlog`) unless the user asks otherwise — the auto-pick pool of `take-ticket` / `ticket-cycle` excludes `Backlog`, so a backlog ticket is never picked up again.
-- **Free-text IDs** — Iterate only the listed IDs.
-
-**Findings in another session's code are not fixed here.** Whatever option the user picks, a row
-marked `Autor: <session>, mid-slice` is reported, not edited — editing it turns one review into a
-merge conflict for somebody who never asked for the help. Send the author one `SOLVED` per real
-defect (the diagnosis, which is the expensive part and transfers perfectly), and list these rows in
-the closing block under "Zurückgegeben an <Autor>". If the user explicitly says to fix them anyway,
-that is their call: fix them, and say in the closing block that the author was told.
-
-After execution, print a short closing block:
+Rules for the report:
+
+- **No Action Roadmap, no Decision Helper, no Remediation Catalog, no reconciliation table.** Those
+  formats exist to hand a long finding list to a human for triage. Under the bar there is no triage
+  left to hand over: what survived gets fixed in Phase 6.
+- **No "Empfehlungen", "Nice-to-have", "für die Zukunft", "könnte man noch".** If it were worth
+  doing it would have cleared the gates.
+- **The clean report is four short sections**: the verdict line, "Geprüft und in Ordnung", "Nicht
+  berichtet", and the check pipeline — plus the collapsed audit block. No "Findings" heading, since
+  there are none, and no "Bewusste Abwägungen" or "Herkunft" unless those actually have content.
+  That is a complete review, and it should read as one rather than as an apology for being short.
+
+### Phase 6: Fix
+
+Everything that survived Phase 4 gets fixed here, without asking. A finding that cleared four gates
+and an orchestrator-level verification does not need a second opinion about whether it is worth
+doing — that decision was the gates.
+
+**1. Fix each surviving finding**, Critical first, then High. For each one:
+
+- Make the change.
+- **Add a regression test where the finding is a defect a test can pin** — a wrong permission, a
+  wrong result, a crash on an input. The test fails before the fix and passes after; that is what
+  makes the fix checkable later. A finding that no test can express (a Dockerfile secret, a missing
+  env var) is fixed without one, and the report says so.
+- Note the file:line touched, for the report's Fix column.
+
+**2. Re-run the check script** after all fixes, per the `running-check-script` skill. Fixes that
+break the build are worse than the findings they addressed. Iterate until green.
+
+**3. Ask the user only in these three cases.** They are the only ones where the answer changes what
+you do:
+
+- **A fix exceeds the ticket's scope** — it turns out to need a change to a shared module, a schema
+  migration, or a public contract. Name the finding, the minimal fix, the wider fix, and ask which.
+- **A fix and the author's stated intent conflict** — Phase 4 step 4 came back with "deliberate,
+  because …" and you still consider it a defect. Show both and let the user decide.
+- **The fix is in another session's unfinished code.** Do not edit it. Send that author one
+  `SOLVED` message with the diagnosis (the expensive part, and it transfers perfectly), and report
+  the finding as handed back. Exception: a trivial self-contained fix that cannot collide — a
+  missing import, a format violation.
+
+Anything else: fix it and report it as fixed.
+
+**4. Do not create tickets for what was dropped.** This is the rule that keeps one ticket from
+becoming ten. Dropped means judged not worth acting on, and a tracking ticket reverses that
+judgement by the back door while looking diligent.
+
+A ticket is filed only where something cleared Part 0 of
+[`filing-ai-proposed-tickets`](${CLAUDE_PLUGIN_ROOT}/skills/filing-ai-proposed-tickets/SKILL.md) —
+demonstrated, standalone, and genuinely worse left undone. In a review that almost only ever means
+a Gate 4 failure: a real Critical or High whose only remedy is a redesign. Follow that skill in
+full, including the duplicate search, the Triage state, and the AI label. Its cap of three per run
+applies, and in practice a review should file zero.
+
+**5. Close with a short block:**
 
 ```markdown
-## Phase 6 Result
+## Ergebnis
 
-- **Chosen option:** <option>
-- **Findings addressed:** N (out of M total)
-- **Files modified:** N
-- **Remaining findings:** N (see Section 5 for IDs)
-- **Zurückgegeben an andere Sessions:** N (Finding-IDs + Autor; "keine" wenn dieser Review Alleinautor war)
-- **Suggested next step:** [`/lt-dev:check` to re-validate / Create PR / Re-run `/lt-dev:review` if many fixes / etc.]
+- Behoben: N Findings (C1, C2, H1 …), M Dateien geändert
+- Regressionstests ergänzt: N
+- Check nach den Fixes: gruen / <blocker>
+- Zurückgegeben an andere Sessions: <Finding-IDs + Autor, oder "keine">
+- Tickets angelegt: <Ticket-IDs, oder "keine">
+- Nächster Schritt: <Browser-Walk / MR erstellen / `/lt-dev:check`>
 ```
 
 ### Phase 7: Browser Validation Walk
 
-After Phase 6's fixes have been applied (or the user picked "Nichts jetzt"), run a manual-style end-to-end browser pass. This is the last chance to catch what tests + check + the multi-dimensional review could not see: broken empty states, console errors, mobile glitches, regressed flows on roles, latent bugs in adjacent pages the change accidentally exposed.
+After Phase 6's fixes have been applied, run a manual-style end-to-end browser pass. This is the last chance to catch what tests + check + the code reviewers could not see: broken empty states, console errors, mobile glitches, regressed flows on roles, latent bugs in adjacent pages the change accidentally exposed.
 
-**Skip condition:** Phase 7 is skipped only when (a) Phase 6 resulted in `⏭️ Nichts jetzt — Tracking-Tickets erstellen` AND (b) the user explicitly opts out of the walk via the closing AskUserQuestion below. Critical findings must NEVER ship without the walk — surface a warning if the user tries to skip it while Critical-severity findings remain unresolved.
+It runs even on a clean review — in fact especially then. A review that found nothing has proved
+something about the code, not about the running application, and the walk is where that gap closes.
+
+**Skip condition:** only when the user explicitly opts out. A Critical finding must never ship without the walk — say so if the user tries to skip it while one is unresolved.
 
 Follow the [`validating-changes-in-browser`](${CLAUDE_PLUGIN_ROOT}/skills/validating-changes-in-browser/SKILL.md) skill end-to-end:
 
@@ -1075,15 +979,21 @@ Follow the [`validating-changes-in-browser`](${CLAUDE_PLUGIN_ROOT}/skills/valida
 After the skill returns, print a short final block:
 
 ```markdown
-## Phase 7 Result
+## Browser-Walk
 
-- **Verdict:** READY-TO-SHIP / OPTIMIZE / WAITING-FOR-USER / CANCELLED
-- **Walked steps:** N (all green)
-- **Mitgefixt during walk:** N findings (file:line list)
-- **Out-of-scope findings:** N (file:line list — recommend separate tickets)
-- **Test accounts surfaced to user:** N (account registry rendered for re-walk)
-- **Stack state:** running on https://<slug>.localhost / torn down
+- Ergebnis: READY-TO-SHIP / OPTIMIZE / WAITING-FOR-USER / CANCELLED
+- Durchgespielte Schritte: N (alle gruen)
+- Dabei mitgefixt: N (file:line)
+- Testaccounts: N (Registry für den Nach-Test ausgegeben)
+- Stack: läuft auf https://<slug>.localhost / abgebaut
 ```
+
+Findings the walk turns up are fixed in the walk, exactly as the skill says — including
+pre-existing ones, because a bug the user can see does not care when it was introduced. The one
+thing that does **not** happen here is a list of follow-up ideas: anything the walk found and did
+not fix goes through Part 0 of
+[`filing-ai-proposed-tickets`](${CLAUDE_PLUGIN_ROOT}/skills/filing-ai-proposed-tickets/SKILL.md)
+or is dropped. Same bar, same reason.
 
 If the verdict is `OPTIMIZE`, the user's notes feed back into a new review iteration — re-run from Phase 1 with the user's scope. If `WAITING-FOR-USER`, stop; the user will return with a verdict. If `CANCELLED`, stop without recommending the PR / ship step. If `READY-TO-SHIP`, the review is complete and the user can proceed to `/lt-dev:dev-submit` or create the PR directly.
 

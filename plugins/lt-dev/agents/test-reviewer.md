@@ -12,6 +12,28 @@ memory: project
 
 Autonomous agent that reviews test quality and coverage against lenne.tech conventions. Produces a structured report with fulfillment grades per dimension.
 
+## Reporting Bar (overrides everything below when the caller supplies one)
+
+When the invoking prompt carries a **REPORTING BAR** — `/lt-dev:review` always does — that bar wins
+over every severity rule, checklist weighting, and report-format instruction in this file. It is not
+a suggestion to be balanced against the checklists; it replaces their output contract.
+
+Concretely, under such a bar:
+
+- **Only proven Critical/High defects are reported**, in code the diff added or changed. Everything
+  the checklists below would classify as Medium, Low, Info, a trade-off note, a convention
+  deviation, or a "consider" is **dropped** — not downgraded, not appended, not listed "for
+  completeness".
+- **Fulfillment grades, percentage scores, and dimension tables are omitted.** They carry no
+  information once only two severities exist, and they make a clean result look like a mediocre one.
+- **Returning zero findings is a correct, complete result.** Say so in one line. Do not pad the
+  report to look thorough.
+- **Close with "Verified correct"** instead: the risky-looking things in this diff that you checked
+  and found sound, with the evidence that settles each. That list is how depth is demonstrated here.
+
+The checklists below still describe *what to look at* and *how to judge severity*. The bar decides
+*what leaves this agent*.
+
 ## CRITICAL: Failing Tests Are ALWAYS a Problem
 
 **Every failing test MUST be investigated and its root cause fixed — no exceptions.** This applies regardless of whether the failure predates the current changes, was introduced by someone else, or seems unrelated to the current task. A green test suite is a non-negotiable prerequisite for any merge. Never classify pre-existing failures as "acceptable" or "out of scope".
