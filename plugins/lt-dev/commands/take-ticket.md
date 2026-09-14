@@ -1,7 +1,7 @@
 ---
 description: 'Auto-pick the next Linear ticket (default pool: Fix needed + Open states; ranked by priority DESC → fix-needed tie-break → assigned-to-me DESC → bug-flag DESC → createdAt ASC; tickets assigned to other users are excluded) — or take an explicit ID — then branch, TDD-implement, run all tests, run check, and report a review-ready summary'
 argument-hint: "[issue-id | --project=<name> --team=<name> --status=<list> --base=<branch> --figma=<url> --flows=<path>]"
-allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, ListAgents, SendMessage, Bash(git:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(wc:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run test:e2e:*), Bash(pnpm run e2e:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__list_teams, mcp__plugin_lt-dev_linear__list_projects, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__save_issue_label, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__list_users, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_screenshot
+allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, ListAgents, SendMessage, Bash(git:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(wc:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run test:e2e:*), Bash(pnpm run e2e:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__list_teams, mcp__plugin_lt-dev_linear__list_projects, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__save_issue_label, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__list_users, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_screenshot
 disable-model-invocation: false
 ---
 
@@ -97,7 +97,7 @@ whole-team, all-fields dumps routinely exceed the model's token budget and have
 to be spilled to a file and re-parsed):
 
 ```
-node ${CLAUDE_PLUGIN_ROOT}/scripts/pick-next-ticket.mjs --team <TEAM> [--project "<PROJECT>"] [--status "<list>"] [--assignee me+null]
+node "${CLAUDE_PLUGIN_ROOT}/scripts/pick-next-ticket.mjs" --team <TEAM> [--project "<PROJECT>"] [--status "<list>"] [--assignee me+null]
 ```
 
 It reproduces this section's Phase-1 hard filter and Phase-2 five-key sort
@@ -266,7 +266,7 @@ If the call fails (permissions, archived issue, etc.), surface the error and ask
 3. **Set the title:**
 
    ```
-   bash ${CLAUDE_PLUGIN_ROOT}/scripts/vs-tab-title.sh "<PROJECT_CODE>: <ISSUE_IDENTIFIER> <SHORT_DESC>"
+   bash "${CLAUDE_PLUGIN_ROOT}/scripts/vs-tab-title.sh" "<PROJECT_CODE>: <ISSUE_IDENTIFIER> <SHORT_DESC>"
    ```
 
 This is a **non-blocking convenience step**: the script is a silent no-op when the VStab extension is not installed, and any failure here must never stall the ticket flow — log one line and continue. The title clears automatically when the Claude Code session ends; `/lt-dev:ticket-cycle` additionally clears it after a successful hand-off/merge.

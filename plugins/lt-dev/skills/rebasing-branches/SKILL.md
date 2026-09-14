@@ -131,7 +131,7 @@ A conflict is two intents meeting in one file, and resolving it means choosing b
 The bar is high on purpose, because most conflicts do not need this: only when the ticket context does not settle it, both sides look deliberate, and picking wrong changes behaviour rather than formatting. Then:
 
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh --base <target-branch>
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh" --base <target-branch>
 git log -1 --format='%an %ar %s' <target-branch> -- <conflicting-path>
 ```
 

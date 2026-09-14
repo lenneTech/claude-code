@@ -1005,6 +1005,30 @@
       ]
     },
     {
+      "pattern": "Bash(bash \"${CLAUDE_PLUGIN_ROOT}/scripts/*)",
+      "description": "Run the same plugin helper scripts with the placeholder quoted (bash \"${CLAUDE_PLUGIN_ROOT}/scripts/x.sh\"), the form the plugin instructs so a home path with spaces survives. Bash rules match the literal command text, so the unquoted pattern does not cover it",
+      "usedBy": [
+        "review",
+        "code-reviewer",
+        "branch-rebaser",
+        "running-check-script",
+        "check",
+        "peers",
+        "coordinating-peer-sessions",
+        "contributing-to-lt-framework",
+        "maintaining-lt-stack",
+        "maintain-stack",
+        "publish",
+        "npm-package-maintainer",
+        "take-ticket",
+        "ticket-cycle",
+        "debug",
+        "git:ship",
+        "rebasing-branches",
+        "dev-submit"
+      ]
+    },
+    {
       "pattern": "Bash(node:*)",
       "description": "Run node for JSON parsing fallback and small helper computations",
       "usedBy": [

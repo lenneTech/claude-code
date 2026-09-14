@@ -65,14 +65,14 @@ That produces the two failures worth naming:
 
 Run `ListAgents` and check whether a session is live in this framework repo or in a starter that links it. If one is, `git status` and `git diff` in the framework clone tell you what is already uncommitted there **before** you add your own change on top. Uncommitted work you did not write is a peer's, not a leftover to clean up: leave it, and say so.
 
-`bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh` does that separation for you and names the live sessions that share the clone. Where it says `WARRANTED`, one `ORIGIN` gets you the two things `git diff` cannot show: whether the foreign edit is finished, and what it was for. Both decide whether it is safe to build on top of it — a `pnpm build` over somebody's half-applied change ships that half into your linked consumer, and the failure surfaces in your tests, not theirs.
+`bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh"` does that separation for you and names the live sessions that share the clone. Where it says `WARRANTED`, one `ORIGIN` gets you the two things `git diff` cannot show: whether the foreign edit is finished, and what it was for. Both decide whether it is safe to build on top of it — a `pnpm build` over somebody's half-applied change ships that half into your linked consumer, and the failure surfaces in your tests, not theirs.
 
 This check also covers the session that starts *after* a peer's change landed. Messages are not history, so a later session is never told what happened before it existed. The working tree is.
 
 Read the ledger in the same breath — it is the half that survives a closed terminal:
 
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh read
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh" read
 ```
 
 `[held] repo:nest-server` means another session owns this clone right now. `[stale]` means the session that claimed it is gone and you may take over. Claim it yourself before a longer round of framework work (`peer-ledger.sh claim "repo:nest-server" "linking into the starter"`), and release it when you stop. And when a framework change breaks a starter in a way the next session will also hit, record the cause: `peer-ledger.sh note "<topic>" "cause: … fix: …"`. That note reaches sessions a message never can, because they do not exist yet.
