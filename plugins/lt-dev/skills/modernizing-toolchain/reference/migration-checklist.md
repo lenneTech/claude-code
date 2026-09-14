@@ -11,7 +11,8 @@ The eleven phases of the toolchain migration, in order. Run them in sequence: ea
    - eslint? → `eslint.config.*` or `.eslintrc.*` exists
    - prettier? → `.prettierrc*` exists
    - vitest? → `vitest.config.ts` or `vitest-e2e.config.ts` exists
-   - oxlint? → `oxlint.json` exists
+   - oxlint? → `.oxlintrc.json` exists. An `oxlint.json` counts too, but report it as misnamed:
+     oxlint only discovers `.oxlintrc.json`, so the rules in `oxlint.json` never apply
 4. Detect deployment shape: GitLab CI? Docker Compose? both?
 
 The migration is identical regardless of mode (monorepo / single, npm / pnpm) — only the invocation
@@ -265,8 +266,8 @@ The same migration, with Nuxt-specific deltas:
    `navigateTo`, `useRoute`, `useRouter`, `useState`, `useFetch`, `$fetch`. See nuxt-base-starter
    for the canonical shapes.
 
-4. **`oxlint.json`** uses `["typescript", "vue", "unicorn", "import"]` plugins (vue is the addition
-   over the API config).
+4. **`.oxlintrc.json`** uses `["typescript", "vue", "unicorn", "import"]` plugins (vue is the addition
+   over the API config). Name it exactly that: oxlint does not load a file called `oxlint.json`.
 
 5. **Sync the full dep set to the upstream starter** — both `dependencies` and
    `devDependencies`. The starter's `package.json` is the single source of truth; do not

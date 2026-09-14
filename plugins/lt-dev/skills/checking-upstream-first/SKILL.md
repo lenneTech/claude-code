@@ -40,7 +40,7 @@ Both halves of the stack are affected the same way — the frontend is not the e
 
 - `Dockerfile`, `.dockerignore`, `.gitlab-ci.yml`
 - `nuxt.config.ts`, `app/app.config.ts`, `app/app.vue`, `app/error.vue`, `openapi-ts.config.ts`
-- `tsconfig*.json`, `oxlint.json`, `.oxfmtrc.jsonc`, `vitest.config.ts`, `playwright.config.ts`
+- `tsconfig*.json`, `.oxlintrc.json`, `.oxfmtrc.jsonc`, `vitest.config.ts`, `playwright.config.ts`
 - `scripts/**` (`check.mjs`, `check-server-start.sh`, `generate-types.mjs`,
   `resolve-api-url.mjs`), the `check:*` chain in `package.json`
 - `.env.example`, `server/**` (Nitro routes and plugins), `app/middleware/**`, `app/layouts/**`
