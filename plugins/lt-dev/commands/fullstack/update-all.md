@@ -199,6 +199,10 @@ After the version update, also sync with nest-server-starter:
 - Sync scripts/check.mjs (and the other scripts/ helpers) verbatim from the
   starter — compare against the starter's CURRENT state, not just the tag
   delta, so projects that missed earlier syncs converge too
+- Drop --fix-suggestions and --fix-dangerously wherever oxlint is called
+  (lint:fix, scripts/check.mjs, lint-staged config): oxlint marks those fixes
+  as possibly behaviour-changing, and the no-console suggestion deletes every
+  console.log it flags
 - Sync .env.example
 Validate: build, lint, test -- fix issues until all pass.
 ```
@@ -224,6 +228,10 @@ package.json against the latest nest-server-starter and adopt upstream changes,
 preserving project-specific steps (e.g. check:vendor-freshness, check:swc-tdz).
 The check wrapper drifts silently otherwise — an outdated copy loses upstream
 fixes like the wedged-test watchdog and multi-vitest test counting.
+Drop --fix-suggestions and --fix-dangerously wherever oxlint is called
+(lint:fix, scripts/check.mjs, lint-staged config): oxlint marks those fixes as
+possibly behaviour-changing, and the no-console suggestion deletes every console.log it
+flags.
 
 Work fully autonomously.
 ```
@@ -254,6 +262,10 @@ Execute frontend update:
    preserving project-specific steps. Compare against the template's CURRENT
    state, not just the tag delta. Convert a direct `check` chain to the
    wrapper + `check:raw` pattern if the project still has the old shape.
+   Drop --fix-suggestions and --fix-dangerously wherever oxlint is called
+   (lint:fix, scripts/check.mjs): oxlint marks those fixes as
+   possibly behaviour-changing, and the no-console suggestion deletes every
+   console.log it flags.
 3. Detect whether the frontend imports the generated api-client:
      grep -REq "from ['\"](~|\.|app)/api-client" app/
    If matches: run `pnpm run generate-types` (needs backend on port 3000).
@@ -285,6 +297,9 @@ adopt upstream changes, preserving project-specific steps (e.g.
 check:vendor-freshness). Older projects may still carry a direct `check` chain
 without the scripts/check.mjs wrapper — convert them to the wrapper +
 `check:raw` pattern the template ships.
+Drop --fix-suggestions and --fix-dangerously wherever oxlint is called
+(lint:fix, scripts/check.mjs): oxlint marks those fixes as possibly behaviour-changing,
+and the no-console suggestion deletes every console.log it flags.
 
 Work fully autonomously.
 ```

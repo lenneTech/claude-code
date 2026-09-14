@@ -74,6 +74,8 @@ cd "$(dirname <package.json path>)"
 
 Capture stdout, stderr, and exit code. Track an iteration counter starting at 1.
 
+**Suggestion fixes delete code, so `check` must not apply them.** The lt `scripts/check.mjs` auto-fixes format and lint findings unless it gets `--no-fix`. Before the first run, look for the flags: `grep -nE -- '--fix-(suggestions|dangerously)' scripts/check.mjs`. On a match, run `<package manager> run check -- --no-fix` here and in every Step 3 iteration, fix the format and lint findings by hand, and name the flag in the report block so it gets removed from the project. oxlint marks suggestion fixes as possibly behaviour-changing: the `no-console` suggestion deletes every `console.log` it flags, and the run still ends green. Observed 2026-09-14 in nest-server, where a commit hook running `oxlint --fix --fix-suggestions` turned a `console.log(…)` into an empty function body and reported "passed".
+
 ### Step 3 — Auto-fix loop (iterate until truly green)
 
 If a project's `check` exits non-zero:

@@ -210,11 +210,15 @@ substitute as appropriate.
    ```jsonc
    {
      "lint": "oxlint --ignore-path .oxlintignore src/ tests/",
-     "lint:fix": "oxlint --fix --fix-suggestions --ignore-path .oxlintignore src/ tests/",
+     "lint:fix": "oxlint --fix --ignore-path .oxlintignore src/ tests/",
      "format": "oxfmt --write src/ tests/",
      "format:check": "oxfmt --check src/ tests/"
    }
    ```
+   `lint:fix` applies safe fixes only. Never add `--fix-suggestions` or `--fix-dangerously`:
+   oxlint marks those fixes as possibly behaviour-changing, and the `no-console` suggestion
+   deletes every `console.log` it flags. If an existing `lint:fix` or `scripts/check.mjs`
+   passes either flag, remove it.
 
 5. **Remove eslint/prettier**: `eslint`, `@typescript-eslint/*`, `eslint-config-prettier`,
    `eslint-plugin-unused-imports`, `prettier`, `pretty-quick`, plus the configs
