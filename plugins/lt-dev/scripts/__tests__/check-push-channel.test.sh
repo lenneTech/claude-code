@@ -156,6 +156,18 @@ assert_field "$(bash "$SCRIPT" "$GL_REPO")" 1 'https' 'stored credentials -> htt
 assert_field "$(bash "$SCRIPT" "$GL_REPO")" 4 '(credentials already available — plain https push works)' 'stored credentials need no extra helper flag'
 git -C "$GL_REPO" config --unset-all credential.helper; git -C "$GL_REPO" config credential.helper ''
 
+echo "no timeout binary on PATH (stock macOS)"
+# Only what the script needs, minus `timeout` and `gtimeout`. The passthrough stub above
+# hid exactly this case: on a stock Mac both probes died with "command not found".
+BARE_BIN="$TMP_ROOT/bare-bin"; mkdir -p "$BARE_BIN"
+for t in git grep cut head cat perl; do
+  printf '#!/bin/sh\nexec "%s" "$@"\n' "$(command -v "$t")" > "$BARE_BIN/$t"
+done
+cp "$STUB_BIN/ssh" "$STUB_BIN/gh" "$STUB_BIN/glab" "$BARE_BIN/"
+chmod +x "$BARE_BIN"/*
+export FAKE_SSH_OUTPUT="Hi kaihaase! You've successfully authenticated, but GitHub does not provide shell access."
+assert_field "$(PATH="$BARE_BIN" "$BASH" "$SCRIPT" "$SCP_REPO")" 1 'ssh' 'ssh verdict without timeout or gtimeout (perl fallback)'
+
 echo "error exits"
 assert_exit 2 'not a git repository -> exit 2' bash "$SCRIPT" "$TMP_ROOT"
 assert_exit 2 'missing remote -> exit 2' bash "$SCRIPT" "$SCP_REPO" nope

@@ -57,6 +57,23 @@
 #   remote-name defaults to "origin"
 set -euo pipefail
 
+# `timeout` is GNU coreutils and missing on a stock Mac (Homebrew installs it only as
+# `gtimeout`). Called bare, both probes below died with "command not found", so the ssh
+# verdict could never come back there. perl ships with macOS and Git for Windows, and an
+# alarm set before exec survives into the command it runs.
+with_timeout() {
+  local secs="$1"; shift
+  if command -v timeout >/dev/null 2>&1; then
+    timeout "$secs" "$@"
+  elif command -v gtimeout >/dev/null 2>&1; then
+    gtimeout "$secs" "$@"
+  elif command -v perl >/dev/null 2>&1; then
+    perl -e 'alarm shift; exec @ARGV' "$secs" "$@"
+  else
+    "$@"
+  fi
+}
+
 repo_root="${1:-$(pwd)}"
 remote="${2:-origin}"
 
@@ -88,7 +105,7 @@ fallback_hint=""
 #    `git push https://…` works and needs no extra flag. GIT_TERMINAL_PROMPT=0 makes a missing
 #    entry fail instead of blocking on a hidden prompt — which, unattended, is a hung release.
 if printf 'protocol=https\nhost=%s\n\n' "$host" |
-   GIT_TERMINAL_PROMPT=0 timeout 8 git credential fill 2>/dev/null | grep -q '^password='; then
+   GIT_TERMINAL_PROMPT=0 with_timeout 8 git credential fill 2>/dev/null | grep -q '^password='; then
   fallback_arg="(credentials already available — plain https push works)"
 
 # 2. Otherwise a CLI may be able to vend them. `gh` for GitHub, `glab` for a GitLab host, and
@@ -107,7 +124,7 @@ fi
 # The functional check. `ssh -T` against a git host exits non-zero even on SUCCESS (the host
 # refuses shell access by design), so the exit code is useless here — the message is the signal.
 # Both GitHub and GitLab say "successfully authenticated"; `Welcome to GitLab` is accepted too.
-ssh_output="$(timeout 10 ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -T "git@${host}" 2>&1 || true)"
+ssh_output="$(with_timeout 10 ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -T "git@${host}" 2>&1 || true)"
 
 case "$ssh_output" in
   *"successfully authenticated"*|*"Welcome to GitLab"*)
