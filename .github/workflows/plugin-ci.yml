@@ -1,0 +1,52 @@
+name: Plugin CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    # Windows reports what is red there without blocking until the plugin runs natively.
+    continue-on-error: ${{ matrix.os == 'windows-latest' }}
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # Git for Windows defaults to autocrlf=true. Setting it on every OS before the
+      # checkout proves .gitattributes keeps scripts LF whatever the client's git config.
+      - run: git config --global core.autocrlf true
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Line endings (no CRLF in scripts)
+        run: |
+          crlf=$({ find plugins scripts -type f \( -name '*.sh' -o -name '*.mjs' \); find .githooks -type f; } \
+            | xargs grep -l $'\r' || true)
+          if [ -n "$crlf" ]; then
+            echo "::error::CRLF line endings in:"
+            echo "$crlf"
+            exit 1
+          fi
+      - name: Bash tests
+        run: |
+          fail=0
+          while IFS= read -r t; do
+            echo "::group::$t"
+            bash "$t" || { echo "::error file=$t::test failed"; fail=1; }
+            echo "::endgroup::"
+          done < <(find plugins -path '*/__tests__/*.test.sh' | sort)
+          exit "$fail"
+      - name: Node tests
+        run: node --test $(find plugins -name '*.test.mjs' -not -path '*/node_modules/*' | sort)
+      - name: Validate plugin manifests
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          for p in plugins/*/; do claude plugin validate "$p"; done
