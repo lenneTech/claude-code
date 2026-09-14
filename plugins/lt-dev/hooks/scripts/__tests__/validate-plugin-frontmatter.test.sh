@@ -302,6 +302,26 @@ out=$(run_hook "$payload")
 assert_deny "$out" "file must start with ---" "replace_all=true that kills frontmatter is denied"
 cleanup
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Case 12: new_string containing $& is applied literally
+# String.replace with a string argument expands $& to the matched text, so an
+# edit replacing the frontmatter with "$&" looked like a no-op and was allowed.
+# Applied literally, the file starts with "$&" and has no frontmatter.
+# ─────────────────────────────────────────────────────────────────────────────
+echo "Case 12: new_string with a \$& pattern is applied literally"
+setup_tmp
+mkdir -p "$TMP/skills/example"
+f="$TMP/skills/example/SKILL.md"
+write_skill_md "$f"
+payload=$(edit_payload "$f" "---
+name: example-skill
+description: A short, valid description for testing purposes.
+---
+" '$&')
+out=$(run_hook "$payload")
+assert_deny "$out" "file must start with ---" "\$& in new_string does not re-insert the matched frontmatter"
+cleanup
+
 echo ""
 echo "─────────────────────────────────────────"
 echo "Total: $((PASS + FAIL)) | Passed: $PASS | Failed: $FAIL"

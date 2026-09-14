@@ -89,9 +89,11 @@ if [ "$TOOL" = "Edit" ]; then
     let content;
     try { content = fs.readFileSync(path, "utf8"); }
     catch { process.exit(0); }
+    // The replacer function inserts newStr verbatim. Passed as a plain string,
+    // String.replace would expand replacement patterns such as $& inside it.
     const out = replaceAll === "true"
       ? content.split(oldStr).join(newStr)
-      : content.replace(oldStr, newStr);
+      : content.replace(oldStr, () => newStr);
     process.stdout.write(out);
   ' "$FILE_PATH" "$OLD_STRING" "$NEW_STRING" "$REPLACE_ALL" 2>/dev/null) || exit 0
 else
