@@ -142,8 +142,8 @@ success=1
 
 # Pre-warm the npx cache for this plugin's npx-based MCP servers so they connect
 # within Claude Code's 30s MCP connection timeout on the NEXT session start. The
-# first-run `npx -y <pkg>@latest` downloads the package (chrome-devtools-mcp also
-# launches Chrome), which routinely exceeds 30s on a cold cache → "connection
+# first-run `npx -y <pkg>@<version>` downloads the package (chrome-devtools-mcp
+# also launches Chrome), which routinely exceeds 30s on a cold cache → "connection
 # timed out". This runs detached (the whole script is), best-effort, and is
 # throttled to once per ~20h. node/npm are already on PATH via ensure_node_on_path
 # above. Portable per-package watchdog (no GNU `timeout` dependency on macOS).
@@ -157,12 +157,16 @@ success=1
   fi
   if [ "$prewarm_due" -eq 1 ] && command -v npx >/dev/null 2>&1; then
     echo "=== pre-warm npx MCP packages: $(date) ==="
-    # Keep this list in sync with the servers declared in .mcp.json — pre-warming a
-    # package no server launches costs a download for nothing.
-    for pkg in \
-      chrome-devtools-mcp@latest \
-      nuxt-ui-mcp@latest \
-      @anthropic-ai/claude-code-figma-mcp@latest; do
+    # Warm exactly what the servers launch, read from where each version is pinned:
+    # the npx args in .mcp.json and CHROME_MCP_PINNED_VERSION in the chrome-devtools
+    # launcher. A version bump there needs no edit here, and a package no server
+    # starts is never downloaded.
+    plugin_root="$SCRIPT_DIR/../.."
+    prewarm_pkgs=$(grep -oE '"[a-z0-9@/._-]+@[0-9][^"]*"' "$plugin_root/.mcp.json" 2>/dev/null | tr -d '"')
+    chrome_ver=$(sed -n 's/^CHROME_MCP_PINNED_VERSION="\${CHROME_MCP_VERSION:-\([^}]*\)}"$/\1/p' \
+      "$plugin_root/scripts/chrome-devtools-mcp-launcher.sh" 2>/dev/null)
+    [ -n "$chrome_ver" ] && prewarm_pkgs="chrome-devtools-mcp@$chrome_ver $prewarm_pkgs"
+    for pkg in $prewarm_pkgs; do
       ( npx -y "$pkg" --version >/dev/null 2>&1 ) &
       pw_pid=$!
       ( sleep 120; kill -TERM "$pw_pid" 2>/dev/null; sleep 2; kill -KILL "$pw_pid" 2>/dev/null ) &
