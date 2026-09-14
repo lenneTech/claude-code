@@ -1,15 +1,17 @@
 #!/bin/bash
 # Skip in non-interactive headless mode (claude -p)
 . "${0%/*}/_headless-skip.sh"
+# Sets PROMPT from the hook payload on stdin
+. "${0%/*}/_read-prompt.sh"
 
 # Detect lenne.tech CLI and suggest using-lt-cli skill
 
 # Only inject context when prompt mentions lt CLI topics
-[ -z "$CLAUDE_USER_PROMPT" ] && exit 0
+[ -z "$PROMPT" ] && exit 0
 # Skip slash commands — they have their own skill associations
-[[ "$CLAUDE_USER_PROMPT" == /* ]] && exit 0
+[[ "$PROMPT" == /* ]] && exit 0
 
-if echo "$CLAUDE_USER_PROMPT" | grep -iqE '(^lt |[^a-z]lt |lt fullstack|lt server|lt git|lenne.?tech.?cli|fullstack init)'; then
+if echo "$PROMPT" | grep -iqE '(^lt |[^a-z]lt |lt fullstack|lt server|lt git|lenne.?tech.?cli|fullstack init)'; then
   if command -v lt &>/dev/null; then
     echo '{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"lenne.tech CLI detected. Use the using-lt-cli skill for lt commands (lt fullstack init, lt git get/reset, lt server create). NOT for NestJS code - use generating-nest-servers skill instead. When running lt commands, prefer explicit parameters (--name, --frontend, --api-mode, --noConfirm) over interactive prompts where possible. See docs/commands.md for all flags."}}'
     exit 0

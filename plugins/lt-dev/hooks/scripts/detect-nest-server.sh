@@ -1,12 +1,14 @@
 #!/bin/bash
 # Skip in non-interactive headless mode (claude -p)
 . "${0%/*}/_headless-skip.sh"
+# Sets PROMPT from the hook payload on stdin
+. "${0%/*}/_read-prompt.sh"
 
 # Detect @lenne.tech/nest-server and suggest appropriate skill
 # Priority: update keywords > TDD keywords > default backend
 
 # Skip slash commands — they have their own skill associations
-[[ "$CLAUDE_USER_PROMPT" == /* ]] && exit 0
+[[ "$PROMPT" == /* ]] && exit 0
 
 # Resolve the project root once. CLAUDE_PROJECT_DIR is normally set by Claude Code,
 # but an unset value would turn every "$PROJECT_DIR/..." check below into an absolute
@@ -42,7 +44,7 @@ find_nest_server_vendor_path() {
 
 # Check if user prompt contains update/migration keywords
 check_update_keywords() {
-  local prompt="$CLAUDE_USER_PROMPT"
+  local prompt="$PROMPT"
   if echo "$prompt" | grep -iqE '(update.*nest.server|upgrade.*nest.server|nest.server.*update|nest.server.*upgrade|nest.server.*migrat|migrat.*nest.server|breaking.changes.*nest|nest.*version)'; then
     return 0
   fi
@@ -51,7 +53,7 @@ check_update_keywords() {
 
 # Check if user prompt contains TDD keywords
 check_tdd_keywords() {
-  local prompt="$CLAUDE_USER_PROMPT"
+  local prompt="$PROMPT"
   if echo "$prompt" | grep -iqE '(tdd|test.driven|test.first|story.test|tests?.*(zuerst|first|before)|schreib.*tests?.*(dann|before))'; then
     return 0
   fi
@@ -72,6 +74,12 @@ find_nest_server_path() {
   return 1
 }
 
+# Paths are written into a hand-built JSON string. A Windows path such as C:\Users\…
+# would put `\U` into it, an invalid JSON escape, so backslashes and quotes are escaped.
+json_escape() {
+  printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+}
+
 emit_context() {
   local location="$1"  # "" or " in monorepo"
   local mode="${2:-npm}" # "npm" or "vendored"
@@ -80,7 +88,7 @@ emit_context() {
   local framework_hint=""
   if [ "$mode" = "vendored" ]; then
     local vendor_path
-    vendor_path=$(find_nest_server_vendor_path)
+    vendor_path=$(json_escape "$(find_nest_server_vendor_path)")
     if [ -n "$vendor_path" ]; then
       framework_hint=" Framework core is VENDORED at: ${vendor_path}/. This is normal project code (not node_modules), edit directly. Key files: ${vendor_path}/VENDOR.md (baseline version + patch log), ${vendor_path}/index.ts (re-export hub), ${vendor_path}/core.module.ts, ${vendor_path}/common/interfaces/server-options.interface.ts, ${vendor_path}/common/services/crud.service.ts. ALWAYS read the real source here before guessing."
     fi
@@ -112,8 +120,8 @@ emit_context() {
     echo "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"${detection_prefix} with TDD intent.${framework_hint} Use the building-stories-with-tdd skill for test-first development. It coordinates with generating-nest-servers for implementation.\"}}"
   else
     # Default: only inject context when prompt contains backend-related terms
-    if [ -n "$CLAUDE_USER_PROMPT" ]; then
-      echo "$CLAUDE_USER_PROMPT" | grep -iqE '(module|service|controller|resolver|guard|decorator|dto|model|graphql|rest|api|endpoint|migration|database|backend|server|nestjs|nest)' || return 0
+    if [ -n "$PROMPT" ]; then
+      echo "$PROMPT" | grep -iqE '(module|service|controller|resolver|guard|decorator|dto|model|graphql|rest|api|endpoint|migration|database|backend|server|nestjs|nest)' || return 0
     fi
     echo "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"${detection_prefix}.${framework_hint} Use the generating-nest-servers skill for backend tasks (modules, services, controllers, resolvers). For version updates, use nest-server-updating or nest-server-core-vendoring skill instead.\"}}"
   fi
