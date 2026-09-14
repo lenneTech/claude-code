@@ -140,7 +140,7 @@ Work down it. Every rung costs less than the one below it, and the question at t
 **1. `change-provenance.sh`** separates what this process wrote from what it found, and names the live sessions that share the checkout:
 
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh --base <base-branch>
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh" --base <base-branch>
 ```
 
 It reads git, file mtimes, and the socket registry. It sends nothing, writes nothing, and touches no file in the repository. Its verdict line is the decision:
@@ -239,10 +239,10 @@ Messages are not history. A session that starts later never learns what was sent
 The ledger is `scripts/peer-ledger.sh`. It stores state per repository under `${CLAUDE_PLUGIN_DATA}`, never inside a project, so no customer repo gains a file and nothing shows up in a diff.
 
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh read
-bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh claim   "audit:GHSA-xxxx" "lockfile will move"
-bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh release "audit:GHSA-xxxx" "fixed in SVL-123"
-bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh note    "api-tests-parallel" "cause: … fix: …"
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh" read
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh" claim   "audit:GHSA-xxxx" "lockfile will move"
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh" release "audit:GHSA-xxxx" "fixed in SVL-123"
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh" note    "api-tests-parallel" "cause: … fix: …"
 ```
 
 **A claim is bound to the claiming session's process.** When that session is gone the claim reads `[stale] … free to take`, so a crashed or closed session never leaves a topic blocked forever. `claim` refuses a topic another **live** session holds and names it, which is what makes the claim worth honouring.
@@ -256,9 +256,9 @@ No lt-dev agent lists `SendMessage` or `ListAgents` in its `tools`, so a subagen
 What a subagent **can** do is run the coordination scripts, because those are ordinary script calls:
 
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh read
-bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh claim "audit:GHSA-xxxx" "…"
-bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh --base dev
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh" read
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh" claim "audit:GHSA-xxxx" "…"
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh" --base dev
 ```
 
 So the division is: **agents coordinate through the scripts, the orchestrator does the messaging.** An agent that finds something a live peer needs to hear right now puts it in its report; the session that spawned it decides whether that clears the sending bar and sends it. An agent that finds a cause worth keeping writes the `note` itself, and it is there whether or not anyone sends anything.

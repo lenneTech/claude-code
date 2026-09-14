@@ -1,7 +1,7 @@
 ---
 description: Adversarial debugging with competing hypotheses using Agent Teams - multiple investigators challenge each other to find root cause (requires CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1)
 argument-hint: "[bug-description or issue-id]"
-allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Agent, AskUserQuestion, ListAgents, SendMessage, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
+allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), Agent, AskUserQuestion, ListAgents, SendMessage, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
 disable-model-invocation: true
 ---
 
@@ -77,11 +77,11 @@ A regression has an author, and the author knows what they were trying to do. Th
 Cheapest source first:
 
 1. **`git log --oneline -20 -- <paths>` and `git blame` on the suspect lines.** A committed change carries subject, author, date, and usually the ticket. Where that explains it, this step is finished and nobody is disturbed.
-2. **`bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh read`** — a `SOLVED` note from a session that has since closed is sometimes this exact diagnosis, already paid for by somebody else.
+2. **`bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh" read`** — a `SOLVED` note from a session that has since closed is sometimes this exact diagnosis, already paid for by somebody else.
 3. **Uncommitted work leaves no record at all**, and in a base repo that is the normal state rather than the exception:
 
    ```bash
-   bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh
+   bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh"
    ```
 
    On `WARRANTED`, send the author-peer one `ORIGIN` in the format from the [`coordinating-peer-sessions`](${CLAUDE_PLUGIN_ROOT}/skills/coordinating-peer-sessions/SKILL.md) skill. Lead with the symptom, not with the change: "the invoice list 500s since this morning, and `invoice.service.ts` is uncommitted in the tree — what were you solving there, and what did you already rule out?" That phrasing gets a mechanism back. An accusation gets a defence back.

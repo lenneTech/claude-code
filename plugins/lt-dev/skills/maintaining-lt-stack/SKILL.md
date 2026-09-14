@@ -61,8 +61,8 @@ That only works if the sessions coordinate on four things. All of it runs on the
 **1. Claim a repo before starting it.** Record it in the ledger first, then announce it:
 
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh read                          # who already owns what
-bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh claim "repo:nest-server" "Wave 1 release"
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh" read                          # who already owns what
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh" claim "repo:nest-server" "Wave 1 release"
 ```
 
 The ledger part matters more here than anywhere else: a release round runs for hours, sessions come and go, and a claim that lives only in a message is lost the moment its terminal closes. `claim` refuses a repo another **live** session holds and names it; a claim whose session died reads `[stale]` and is free to take, so a crash never strands a repo. Release with `peer-ledger.sh release "repo:nest-server" "<version>"` when the repo is out. Without any of this, two sessions release `nest-server` and the second mints a version over the first.
@@ -511,7 +511,7 @@ it as one argument; `npm run` forwards it without a `--` separator.
   is manual and belongs before the bump:
 
   ```bash
-  bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh
+  bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh"
   git stash push -m "held out of <version>" -- <foreign paths>
   npm run version:minor "<message>"
   git stash pop

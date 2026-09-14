@@ -1,6 +1,6 @@
 ---
 description: Show what other Claude Code sessions are doing on this machine, plus the open claims and recorded diagnoses for this repository
-allowed-tools: ListAgents, Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git status:*), Bash(git branch:*), Bash(git worktree:*)
+allowed-tools: ListAgents, Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git status:*), Bash(git branch:*), Bash(git worktree:*)
 disable-model-invocation: false
 ---
 
@@ -33,7 +33,7 @@ A peer beyond this machine (labelled `cloud` or `Remote Control`) appears only w
 ### Step 2 — Persistent state for this repository
 
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh read
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh" read
 ```
 
 This costs nothing and disturbs no peer. Report it in two parts:
@@ -56,7 +56,7 @@ Uncommitted changes nobody in this session made belong to a peer (base-repo work
 Rather than eyeballing the list, attribute it:
 
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh"
 ```
 
 It separates what this session wrote from what it found, and matches the live sessions to repositories — which is what turns the `ListAgents` roll call from Step 1 into names with an address and a working directory. Report its verdict line as-is; it is the single most useful line for the user, because it says whether the tree in front of them is theirs.
