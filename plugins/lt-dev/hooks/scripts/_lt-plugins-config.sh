@@ -12,8 +12,17 @@ LT_PLUGINS_THROTTLE_SECONDS=3600           # 1 hour between successful runs
 LT_PLUGINS_RETRY_AFTER_FAILURE_SECONDS=300 # 5 min retry after a failed run
 LT_PLUGINS_STALE_LOCK_SECONDS=600          # 10 min before a stale lock is reclaimed
 
+# GNU `stat -f` means --file-system: it prints file-system data instead of the
+# mtime, so a `stat -f … || stat -c …` chain hands garbage to the age arithmetic
+# in lt_plugins_lock_held on Linux and Git Bash. The format is chosen by platform
+# instead, as scripts/change-provenance.sh does.
 lt_plugins_file_mtime() {
-  stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null || echo 0
+  local v
+  case "$(uname -s 2>/dev/null)" in
+    Darwin|*BSD) v=$(stat -f %m "$1" 2>/dev/null) ;;
+    *)           v=$(stat -c %Y "$1" 2>/dev/null) ;;
+  esac
+  case "$v" in ''|*[!0-9]*) echo 0 ;; *) echo "$v" ;; esac
 }
 
 # Read-only check: is a fresh lock currently held by a live process?
