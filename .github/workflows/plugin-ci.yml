@@ -26,16 +26,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      # Asks git what it wrote to the working tree (w/crlf) instead of grepping for \r:
+      # grep in Git for Windows reported every script as CRLF in the first run.
       - name: Line endings (no CRLF in scripts)
         run: |
-          crlf=$({ find plugins scripts -type f \( -name '*.sh' -o -name '*.mjs' \); find .githooks -type f; } \
-            | xargs grep -l $'\r' || true)
+          crlf=$(git ls-files --eol -- 'plugins/*.sh' 'plugins/*.mjs' 'scripts/*.sh' '.githooks/*' \
+            | grep -E 'w/(crlf|mixed)' || true)
           if [ -n "$crlf" ]; then
             echo "::error::CRLF line endings in:"
             echo "$crlf"
             exit 1
           fi
+      # The remaining steps run even when an earlier one fails, so the windows leg shows
+      # everything that is red there in one run.
       - name: Bash tests
+        if: ${{ !cancelled() }}
         run: |
           fail=0
           while IFS= read -r t; do
@@ -45,8 +50,10 @@ jobs:
           done < <(find plugins -path '*/__tests__/*.test.sh' | sort)
           exit "$fail"
       - name: Node tests
+        if: ${{ !cancelled() }}
         run: node --test $(find plugins -name '*.test.mjs' -not -path '*/node_modules/*' | sort)
       - name: Validate plugin manifests
+        if: ${{ !cancelled() }}
         run: |
           npm install -g @anthropic-ai/claude-code
           for p in plugins/*/; do claude plugin validate "$p"; done
