@@ -1,14 +1,16 @@
 #!/bin/bash
 # Skip in non-interactive headless mode (claude -p)
 . "${0%/*}/_headless-skip.sh"
+# Sets PROMPT from the hook payload on stdin
+. "${0%/*}/_read-prompt.sh"
 
 # Detect security-related prompts regardless of framework
 # Suggests general-frontend-security skill for any web project
 
 # Skip if no user prompt
-[ -z "$CLAUDE_USER_PROMPT" ] && exit 0
+[ -z "$PROMPT" ] && exit 0
 # Skip slash commands — they have their own skill associations
-[[ "$CLAUDE_USER_PROMPT" == /* ]] && exit 0
+[[ "$PROMPT" == /* ]] && exit 0
 
 # Resolve the project root once. CLAUDE_PROJECT_DIR is normally set by Claude Code,
 # but an unset value would turn every "$PROJECT_DIR/..." check below into an absolute
@@ -16,7 +18,7 @@
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
 
 # Check for security keywords in prompt
-if echo "$CLAUDE_USER_PROMPT" | grep -iqE '(security.audit|xss|csrf|csp|owasp|vulnerabilit|sicherheit|injection|sanitize|security.review|security.header|cookie.*(secure|httponly|samesite)|content.security.policy)'; then
+if echo "$PROMPT" | grep -iqE '(security.audit|xss|csrf|csp|owasp|vulnerabilit|sicherheit|injection|sanitize|security.review|security.header|cookie.*(secure|httponly|samesite)|content.security.policy)'; then
   # Check if this is a web project (has package.json with any web framework)
   has_web_project=false
   for pkg in "$PROJECT_DIR/package.json" "$PROJECT_DIR"/projects/*/package.json "$PROJECT_DIR"/packages/*/package.json; do

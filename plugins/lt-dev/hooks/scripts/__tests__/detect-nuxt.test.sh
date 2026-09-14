@@ -48,9 +48,10 @@ assert_silent() {
 }
 
 run_hook() {
-  # $1 = project dir, $2 = user prompt
-  CLAUDE_CODE_ENTRYPOINT="" LT_PLUGIN_HOOKS_SKIP="" \
-    CLAUDE_PROJECT_DIR="$1" CLAUDE_USER_PROMPT="$2" bash "$HOOK" 2>/dev/null
+  # $1 = project dir, $2 = user prompt (plain text; delivered on stdin like Claude Code does)
+  printf '{"hook_event_name":"UserPromptSubmit","prompt":"%s"}' "$2" |
+    CLAUDE_CODE_ENTRYPOINT="" LT_PLUGIN_HOOKS_SKIP="" \
+    CLAUDE_PROJECT_DIR="$1" bash "$HOOK" 2>/dev/null
 }
 
 setup_tmp() {

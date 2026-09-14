@@ -1,6 +1,8 @@
 #!/bin/bash
 # Skip in non-interactive headless mode (claude -p)
 . "${0%/*}/_headless-skip.sh"
+# Sets PROMPT from the hook payload on stdin
+. "${0%/*}/_read-prompt.sh"
 
 # Detect Nuxt 4 frontend projects and suggest appropriate skill.
 # Priority: vendored core update keywords > TDD keywords > default frontend
@@ -12,7 +14,7 @@
 # a plain pnpm update).
 
 # Skip slash commands — they have their own skill associations
-[[ "$CLAUDE_USER_PROMPT" == /* ]] && exit 0
+[[ "$PROMPT" == /* ]] && exit 0
 
 # Resolve the project root once. CLAUDE_PROJECT_DIR is normally set by Claude Code,
 # but an unset value would turn every "$PROJECT_DIR/..." check below into an absolute
@@ -52,7 +54,7 @@ find_nuxt_extensions_vendor_path() {
 
 # Check if user prompt contains update/sync keywords for the vendored core
 check_update_keywords() {
-  local prompt="$CLAUDE_USER_PROMPT"
+  local prompt="$PROMPT"
   if echo "$prompt" | grep -iqE '(update.*nuxt.extensions|upgrade.*nuxt.extensions|nuxt.extensions.*(update|upgrade|migrat)|migrat.*nuxt.extensions|sync.*(frontend|nuxt).*core|update.*(frontend|nuxt).*core|(frontend|nuxt).*core.*(update|sync|upgrade))'; then
     return 0
   fi
@@ -61,7 +63,7 @@ check_update_keywords() {
 
 # Check if user prompt contains TDD keywords
 check_tdd_keywords() {
-  local prompt="$CLAUDE_USER_PROMPT"
+  local prompt="$PROMPT"
   if echo "$prompt" | grep -iqE '(tdd|test.driven|test.first|story.test|tests?.*(zuerst|first|before)|schreib.*tests?.*(dann|before)|e2e.test|playwright)'; then
     return 0
   fi
@@ -82,6 +84,12 @@ find_nuxt_extensions_path() {
   return 1
 }
 
+# Paths are written into a hand-built JSON string. A Windows path such as C:\Users\…
+# would put `\U` into it, an invalid JSON escape, so backslashes and quotes are escaped.
+json_escape() {
+  printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+}
+
 emit_context() {
   local location="$1"  # "" or " in monorepo"
   local mode="${2:-npm}" # "npm" or "vendored"
@@ -90,7 +98,7 @@ emit_context() {
   local framework_hint=""
   if [ "$mode" = "vendored" ]; then
     local vendor_path
-    vendor_path=$(find_nuxt_extensions_vendor_path)
+    vendor_path=$(json_escape "$(find_nuxt_extensions_vendor_path)")
     if [ -n "$vendor_path" ]; then
       framework_hint=" Framework module is VENDORED at: ${vendor_path}/. This is normal project code (not node_modules), edit directly. Key files: ${vendor_path}/VENDOR.md (baseline version + patch log), ${vendor_path}/module.ts, ${vendor_path}/runtime/. ALWAYS read the real source here before guessing."
     fi
@@ -121,8 +129,8 @@ emit_context() {
     echo "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"${detection_prefix} with TDD intent.${framework_hint} Use the building-stories-with-tdd skill for test-first development. It coordinates with developing-lt-frontend for implementation.\"}}"
   else
     # Default: only inject context when prompt contains frontend-related terms
-    if [ -n "$CLAUDE_USER_PROMPT" ]; then
-      echo "$CLAUDE_USER_PROMPT" | grep -iqE '(vue|component|composable|page|nuxt|frontend|layout|plugin|middleware|css|tailwind|style|template|ui)' || return 0
+    if [ -n "$PROMPT" ]; then
+      echo "$PROMPT" | grep -iqE '(vue|component|composable|page|nuxt|frontend|layout|plugin|middleware|css|tailwind|style|template|ui)' || return 0
     fi
     echo "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"${detection_prefix}.${framework_hint} Use the developing-lt-frontend skill for frontend tasks (.vue files, components, composables, pages).${vendor_workflow_hint}\"}}"
   fi
