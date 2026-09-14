@@ -1,6 +1,11 @@
 #!/bin/bash
-# PreToolUse hook: Block dangerous Bash commands in lenne.tech projects
+# PreToolUse hook: Block dangerous shell commands in lenne.tech projects
 # Uses permissionDecision to deny destructive operations
+#
+# Registered for the Bash AND the PowerShell tool. Both send the command in
+# tool_input.command, so every rule below applies to either. On Windows, Claude
+# routes shell commands through PowerShell wherever that tool is enabled; a
+# Bash-only matcher let them pass every rule unchecked.
 #
 # Opt-out: CLAUDE_SKIP_DANGEROUS_BASH_CHECK=1
 
@@ -32,6 +37,17 @@ deny() {
 # ── Filesystem destruction ──
 echo "$COMMAND" | grep -qE 'rm\s+(-[rfR]+\s+)?(/\s|/\*|/\s*$|~/\s|~/\*|~/?\s*$|\$HOME)' \
   && deny "Blocked: rm -rf on root or home directory is too dangerous."
+
+# PowerShell spells recursive deletion differently: `Remove-Item -Recurse -Force $HOME`
+# or `rm -r -fo C:\` never matches the rule above. Checked per statement, so a harmless
+# -Recurse in one statement cannot combine with a root path in another. PowerShell is
+# case-insensitive, hence the lowercasing; quotes are dropped so 'C:\' matches like C:\.
+while IFS= read -r stmt; do
+  echo "$stmt" | grep -qE '(^|[^a-z0-9-])(remove-item|ri|rm|rmdir|rd|del|erase)[[:space:]]' || continue
+  echo "$stmt" | grep -qE '[[:space:]]-r[a-z]*([[:space:]:]|$)' || continue
+  echo "$stmt" | grep -qE '(^|[[:space:]=,])(([a-z]:|~|\$home|\$env:(userprofile|homedrive|systemdrive))[\/]?\*?|[\/]\*?)([[:space:],)]|$)' \
+    && deny "Blocked: recursive delete of a drive root or home directory is too dangerous."
+done <<< "$(printf '%s\n' "$COMMAND" | tr -d "\"'" | tr '[:upper:]' '[:lower:]' | tr ';|&' '\n\n\n')"
 
 # ── Git destruction ──
 echo "$COMMAND" | grep -qE 'git\s+push\s+.*(--force|-f).*\s+(main|master)\b|git\s+push\s+.*\s+(main|master)\s+.*(--force|-f)' \
