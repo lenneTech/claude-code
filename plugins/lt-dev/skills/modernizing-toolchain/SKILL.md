@@ -1,6 +1,6 @@
 ---
 name: modernizing-toolchain
-description: 'Migrates lenne.tech projects from the legacy jest+eslint+prettier toolchain to the current vitest+oxlint+oxfmt baseline used by nest-server-starter and nuxt-base-starter. Covers swc decoratorMetadata config, the @Prop union-type fix, supertest default-import correction, the Nitro PORT-vs-NITRO_PORT bug, and the config.env.ts + check-envs.sh patterns. Activates when aligning a project with current starter conventions, and on Mongoose union-type errors or ERR_SOCKET_BAD_PORT crashes. NOT for dependency version bumps (use maintaining-npm-packages). NOT for nest-server major upgrades (use nest-server-updating).'
+description: 'Migrates lenne.tech projects from the legacy jest+eslint+prettier toolchain to the current vitest+oxlint+oxfmt baseline used by nest-server-starter and nuxt-base-starter. Covers swc decoratorMetadata config, the @Prop union-type fix, supertest default-import correction, the Nitro PORT-vs-NITRO_PORT bug, and the config.env.ts fail-fast pattern with its contract test. Activates when aligning a project with current starter conventions, and on Mongoose union-type errors or ERR_SOCKET_BAD_PORT crashes. NOT for dependency version bumps (use maintaining-npm-packages). NOT for nest-server major upgrades (use nest-server-updating).'
 ---
 
 # Modernizing the lenne.tech Toolchain
@@ -8,7 +8,7 @@ description: 'Migrates lenne.tech projects from the legacy jest+eslint+prettier 
 ## When This Skill Activates
 
 - Migrating an existing API/App from jest → vitest, eslint → oxlint, prettier → oxfmt
-- Adopting the `check` / `check:fix` / `check:envs` pipeline used by the starters
+- Adopting the `check` / `check:fix` pipeline used by the starters
 - Debugging Mongoose `"Cannot determine a type for the X field (union/intersection/ambiguous type was used)"` after switching to vitest+SWC
 - Debugging `ERR_SOCKET_BAD_PORT` from `node .output/server/index.mjs` in any check pipeline
 - Debugging missing or stale `types.gen.ts` after a Nuxt update
@@ -39,7 +39,7 @@ Eleven phases in fixed order, each assuming the previous one landed. Every phase
 | 5 | `check` pipeline |
 | 6 | `scripts/check-server-start.sh` (port-robust, ANSI-safe) |
 | 7 | `config.env.ts` |
-| 8 | `scripts/check-envs.sh` + `tests/fixtures/.env.deployed-test` |
+| 8 | Env contract test (`src/config.env.spec.ts`) |
 | 9 | `main.ts` |
 | 10 | GitLab CI |
 | 11 | `docker-compose.yml` |
@@ -48,7 +48,7 @@ Full commands, file contents and per-phase traps: [`reference/migration-checklis
 
 ## Done Signals
 
-After all phases, both must be true:
+After all phases, all three must be true:
 
 1. `<pm> run check` from the monorepo root prints
    ```
@@ -56,7 +56,9 @@ After all phases, both must be true:
    ```
    with both api and app green (audit + format:check + lint + test + build + check-server-start).
 
-2. `<pm> run check:envs` (api) prints `All env configurations OK.` (six envs across two phases).
+2. `src/config.env.spec.ts` (api) passes as part of `<pm> test` and covers every unconditional
+   entry of `REQUIRED_DEPLOYED_ENV_VARS` (deployed envs fail-fast without it, local/e2e/ci start
+   without any `.env`).
 
 3. **No tests skipped, no warnings tolerated**: pre-existing failures in either subproject must be
    fixed as part of the migration, not silenced. The `check` pipeline is intentionally strict —
