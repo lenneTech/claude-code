@@ -425,10 +425,10 @@ end-to-end:
 
 - API: Phases 2 (jest→vitest) and 3 (eslint→oxlint, prettier→oxfmt) of the skill.
 - App: Phase 4 of the skill (vitest+happy-dom, oxlint with vue plugin, oxfmt).
-- BOTH: Phase 5 (`check` / `check:fix` / `check:envs` scripts), Phase 6
+- BOTH: Phase 5 (`check` / `check:fix` scripts), Phase 6
   (`scripts/check-server-start.sh` with the ANSI-strip + `NITRO_PORT` guards),
-  Phase 7 (`config.env.ts` offers pattern), Phase 8 (`scripts/check-envs.sh` +
-  fixture), Phase 9 (`main.ts` log levels + CORS + `QuietHttpExceptionFilter`),
+  Phase 7 (`config.env.ts` offers pattern), Phase 8 (env contract test in
+  `src/config.env.spec.ts`), Phase 9 (`main.ts` log levels + CORS + `QuietHttpExceptionFilter`),
   Phase 10 (GitLab CI), Phase 11 (docker-compose healthchecks).
 
 **Critical gotchas to surface in TodoWrite progress** (these consumed days in
@@ -638,7 +638,7 @@ If blocked at any phase:
 | All linting passes (oxlint 0/0 in both subprojects) | ✅ |
 | All tests pass (no skips, no `it.skip`, no `--passWithNoTests`) | ✅ |
 | `<pm> run check` from monorepo root prints "Successfully ran target check for 2 projects" | ✅ |
-| `<pm> run check:envs` (api) prints "All env configurations OK." | ✅ |
+| `src/config.env.spec.ts` (api) covers every entry of `REQUIRED_DEPLOYED_ENV_VARS` and passes in `<pm> test` | ✅ |
 | Pre-existing failures fixed, not silenced | ✅ |
 | Types regenerated (only when api-client is actually imported) | ✅ |
 | Report generated | ✅ |

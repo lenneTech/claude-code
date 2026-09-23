@@ -30,7 +30,7 @@ Both halves of the stack are affected the same way — the frontend is not the e
 
 - `Dockerfile`, `docker-entrypoint.sh`, `.dockerignore`, `.gitlab-ci.yml`
 - `tsconfig*.json`, `nest-cli.json`, `.oxlintrc.json`, `vitest*.config.ts`
-- `scripts/**` (`check.mjs`, `check-envs.sh`, `check-server-start.sh`), the `check:*` /
+- `scripts/**` (`check.mjs`, `check-server-start.sh`), the `check:*` /
   `copy:*` / `migrate:*` chains in `package.json`
 - `src/config.env.ts`, `.env.example`, `src/main.ts`, `src/server/server.module.ts`,
   `migrations/**`

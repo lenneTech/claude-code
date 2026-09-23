@@ -287,9 +287,7 @@ Adopt these scripts in EACH subproject (api + app). The shape mirrors `nest-serv
   "audit": "<pm> audit --omit=dev || echo '\\n[check] audit reported issues; continuing.'",
   "check":     "<pm> run audit && <pm> run format:check && <pm> run lint && <pm> run test && <pm> run build && bash scripts/check-server-start.sh",
   "check:fix": "<pm> install && <pm> run format && <pm> run lint:fix && <pm> run test && <pm> run build && bash scripts/check-server-start.sh",
-  "check:naf": "<pm> install && <pm> run format && <pm> run lint:fix && <pm> run test && <pm> run build && bash scripts/check-server-start.sh",
-  "check:envs":        "bash scripts/check-envs.sh",
-  "check:envs:docker": "bash scripts/check-envs.sh --docker"
+  "check:naf": "<pm> install && <pm> run format && <pm> run lint:fix && <pm> run test && <pm> run build && bash scripts/check-server-start.sh"
 }
 ```
 
@@ -297,9 +295,7 @@ For monorepos, add a root `package.json` aggregator:
 ```jsonc
 {
   "check":     "lerna run --concurrency 1 check",
-  "check:fix": "lerna run --concurrency 1 check:fix",
-  "check:envs":        "cd projects/api && <pm> run check:envs",
-  "check:envs:docker": "cd projects/api && <pm> run check:envs:docker"
+  "check:fix": "lerna run --concurrency 1 check:fix"
 }
 ```
 `--concurrency 1` is **mandatory** so api and app don't fight over MongoDB or ports.
@@ -354,8 +350,8 @@ The canonical shape:
 - `REQUIRED_DEPLOYED_ENV_VARS` array — single source of truth for both the runtime fail-fast
   guard and the `.env.example` documentation.
 - Auto-derive `appUrl` from `baseUrl` (strip leading `api.`) — operators only set `NSC__BASE_URL`.
-- `ci.mongoose.uri` defaults to `127.0.0.1` (NOT `mongo:27017`) so `check:envs` Phase 1 works
-  outside Docker. CI pipelines override via `NSC__MONGOOSE__URI`.
+- `ci.mongoose.uri` defaults to `127.0.0.1` (NOT `mongo:27017`) so the `ci` env boots outside
+  Docker. CI pipelines override via `NSC__MONGOOSE__URI`.
 
 The fail-fast guard at the bottom of `config.env.ts`:
 ```ts
@@ -379,14 +375,27 @@ if (DEPLOYED.has(resolved.env)) {
 export default resolved;
 ```
 
-## Phase 8 — `scripts/check-envs.sh` + `tests/fixtures/.env.deployed-test`
+## Phase 8 — Env contract test (`src/config.env.spec.ts`)
 
-The check-envs script verifies all six NODE_ENVs. Phase 1 runs without a `.env` (local/e2e/ci must
-start, develop/test/production must fail-fast). Phase 2 with a fixture `.env` (all six must
-start). Phase 3 (optional, `--docker`) repeats inside the production image.
+The fail-fast guard from Phase 7 is verified by a unit test, so every `<pm> test` and every
+`check` run covers it. No separate script, no fixture `.env`, no server boot. The test asserts:
 
-Fixture `tests/fixtures/.env.deployed-test` carries public dummy values for every required
-NSC__* var. Generate fresh dummies — never reuse real secrets.
+- `develop`, `test` and `production` throw while a required `NSC__*` var is missing, and the
+  error names every missing var.
+- The same envs resolve once all required vars carry a value.
+- `local`, `e2e` and `ci` resolve without any `NSC__*` var.
+- A `COMPLETE` map of public dummy values covers every unconditional entry of
+  `REQUIRED_DEPLOYED_ENV_VARS`; a test fails when an entry is added without a dummy. Entries
+  with a `condition` get their own opt-in case. Generate fresh dummies, never real secrets.
+
+Copy the spec from nest-server-starter and adapt `COMPLETE` to the project's required vars.
+
+Do not adopt a legacy `scripts/check-envs.sh` / `check:envs` script. Observed 2026-09 in
+nest-server-starter: it matched the log line "Server startet at" while the app logs "Server
+started at", so all nine boot cases hit the 60s timeout, and its Phase 2 copied
+`tests/fixtures/.env.deployed-test`, which `.gitignore` (`.env.*`) kept out of every clone. The
+script could not pass on any machine; a project still carrying it should delete it along with
+the fixture and the `check:envs*` package.json entries.
 
 ## Phase 9 — `main.ts` (offers pattern)
 
@@ -411,7 +420,6 @@ Two stages (`test`, `build`). Cache root + per-subproject `node_modules`. Jobs:
 - `audit`: `allow_failure: true`, prints findings only
 - `api:test`: vitest e2e against MongoDB service alias
 - `app:test`: Playwright with full api+app server bring-up (mirrors offers)
-- `check:envs`: six-env smoke matrix in CI with MongoDB service
 - `build`: api + app build
 
 ## Phase 11 — `docker-compose.yml`
