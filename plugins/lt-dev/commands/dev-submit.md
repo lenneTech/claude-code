@@ -121,6 +121,7 @@ If an MR/PR already exists, skip creation and use the existing URL.
 **Generate description** from branch commits:
 1. Run `git log <target-branch>..HEAD --oneline` for commit list
 2. Run `git diff <target-branch>..HEAD --stat` for changed files
+3. List the take-alongs apart from the core: every commit carrying a `Taken-Along:` trailer (`git log --grep='^Taken-Along:' --format='%s%n%(trailers:key=Taken-Along,valueonly)' <target-branch>..HEAD`) goes under its own `Mitgenommen` heading with its reason, and the description names the two commands that show core and take-alongs separately (`git log -p --invert-grep --grep='^Taken-Along:'` and `--grep='^Taken-Along:'`). A reviewer should know what the ticket asked for and what came on top before opening the first file.
 
 **Create MR/PR:**
 - GitHub: `gh pr create --base <target-branch> --title "<title>" --body "<description>"`

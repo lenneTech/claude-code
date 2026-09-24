@@ -20,7 +20,7 @@ The orchestrator runs the test list **itself** via Chrome DevTools MCP. Whatever
 Activates at the end of these workflows (invoked from each):
 
 - `/lt-dev:resolve-ticket` — after the review-pipeline guidance, before `/lt-dev:dev-submit`
-- `/lt-dev:take-ticket` — inside STEP 10 (Review-Ready Summary), before handoff
+- `/lt-dev:take-ticket` — as its STEP 9.5, before the summary (with `owns_release_gate: true`; the command's own closing question follows the walk)
 - `/lt-dev:ticket-cycle` — as its Phase C, after the optional review and before the release gate (with `owns_release_gate: true`)
 - `/lt-dev:review` — as the final Phase 7, after Phase 6 decision & fix-execution
 - `/lt-dev:debug` — after Step 7 (fix implementation) succeeded
@@ -197,7 +197,9 @@ For each finding:
 
 Stall guard: if the same finding fails to converge after 3 fix attempts, stop the loop, write a structured diagnosis (file, observation, attempted fixes, current hypothesis), and surface it as a blocker in the final summary. Don't ship a known-broken state silently.
 
-If a finding is truly out-of-scope and high-risk to fix in this branch (e.g. a multi-day refactor of a shared module), name it in the final summary in one line, translated to the user's session language, and leave it there. **Do not open a ticket for it as a matter of course** — a walk that leaves a trail of follow-up tickets behind every ticket is how one day's work becomes a backlog. A ticket is filed only where the finding clears Part 0 of [`filing-ai-proposed-tickets`](../filing-ai-proposed-tickets/SKILL.md): demonstrated, standalone, and genuinely worse left undone. Then it goes through that skill in full — duplicate search first, Triage state, AI label. Everything else is a line in the summary, and the user decides.
+**A defect is never out of scope.** Whatever the walk finds broken is fixed in this branch, pre-existing or not, and never turned into a ticket: it surfaced here, and the context to fix it is loaded here. Before touching files outside the originating ticket, coordinate with parallel sessions through the ledger (`peer-ledger.sh read`, then `claim`), as [`coordinating-peer-sessions`](../coordinating-peer-sessions/SKILL.md) describes; a defect a live peer already holds is named in the summary instead of being fixed twice. A fix that changes a contract or a data model is still made, and flagged to the originating workflow as an assumption the developer should check. The only thing that stops a fix is the stall guard above.
+
+What may stay unfixed is an **idea**, not a defect: an improvement the walk noticed that no user would call broken. Name it in the final summary in one line, translated to the user's session language. **Do not open a ticket for it as a matter of course** — a walk that leaves a trail of follow-up tickets behind every ticket is how one day's work becomes a backlog. A ticket is filed only where the idea clears Part 0 of [`filing-ai-proposed-tickets`](../filing-ai-proposed-tickets/SKILL.md): demonstrated, standalone, and genuinely worse left undone. Then it goes through that skill in full — duplicate search first, Triage state, AI label. Everything else is a line in the summary, and the user decides.
 
 ### Step 7 — Show the user the walked list
 
@@ -234,9 +236,9 @@ Also fixed during the walk
 - ...
 - (Mark pre-existing issues clearly as "pre-existing" vs. "from current implementation")
 
-Deliberately not fixed (out of scope)
-- <file:line> — <reason, recommendation: separate ticket>
-- (Empty if everything was covered)
+Ideas outside this ticket (never defects — those are fixed above)
+- <file:line> — <the idea, why it is not part of this ticket>
+- (Empty if there are none)
 
 Screenshots / Lighthouse
 - <path or inline reference to relevant take_screenshot / lighthouse_audit results>
@@ -286,7 +288,7 @@ This skill is **invoked from** another workflow — never the entry point on its
 - **Outputs** the skill returns to the originating workflow:
   - `verdict`: `READY-TO-SHIP` | `OPTIMIZE` | `WAITING-FOR-USER` | `CANCELLED`
   - `also_fixed`: list of files fixed inside this skill's loop (so they can be folded into the originating workflow's summary)
-  - `out_of_scope_findings`: list of issues deliberately deferred (for the originating workflow to convert into follow-up tickets)
+  - `out_of_scope_findings`: improvement ideas deliberately left out of this branch — never defects, which are always fixed in the walk. The originating workflow decides whether any of them clears the bar for a proposal ticket
   - `accounts_registry`: list of all accounts used (existing + newly-created) with credentials — the originating workflow includes this in its own summary block so the user has the credentials in one place.
   - `final_list`: the rendered list (so the originating workflow can include it in its own summary block)
 

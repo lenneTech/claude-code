@@ -360,7 +360,7 @@ Delegate to the `/lt-dev:git:create-request` command's own STEP 1-4 logic (provi
 
 **Title:** derive from branch name + Linear ID + ticket title (fetch via `mcp__plugin_lt-dev_linear__get_issue` if the branch carries a Linear identifier).
 
-**Body:** generate from `git log $BASE_BRANCH..$FEATURE_BRANCH --oneline` + `git diff $BASE_BRANCH..$FEATURE_BRANCH --stat`. Keep it concise — this is the landing PR, not a human review (use `/lt-dev:dev-submit` for that).
+**Body:** generate from `git log $BASE_BRANCH..$FEATURE_BRANCH --oneline` + `git diff $BASE_BRANCH..$FEATURE_BRANCH --stat`. Keep it concise — this is the landing PR, not a human review (use `/lt-dev:dev-submit` for that). List the take-alongs apart from the core: every commit carrying a `Taken-Along:` trailer (`git log --grep='^Taken-Along:' --format='%s%n%(trailers:key=Taken-Along,valueonly)' $BASE_BRANCH..$FEATURE_BRANCH`) goes under its own `Mitgenommen` heading with its reason, and the description names the two commands that show core and take-alongs separately (`git log -p --invert-grep --grep='^Taken-Along:'` and `--grep='^Taken-Along:'`). A reviewer should know what the ticket asked for and what came on top before opening the first file.
 
 ---
 
@@ -469,7 +469,7 @@ On Option 1 — perform the merge. The merge verb comes from `MERGE_MODE` (STEP 
 
 `--no-squash` sets `MERGE_MODE = regular` for a feature source too; promotion mode is always `regular` regardless of flags.
 
-**Commit message for the squash:** derive from MR/PR title + body. Prefix with the Linear ID if present.
+**Commit message for the squash:** derive from MR/PR title + body. Prefix with the Linear ID if present. Carry the `Mitgenommen` list into the squash body, one line per take-along with its reason: the squash folds the separate commits into one, and on the base branch that body is the only remaining record of what came on top of the ticket.
 
 ---
 
@@ -559,6 +559,8 @@ Abgesichert über: <Unit-/API-/E2E-Tests, grüne CI-Pipeline>.
 ```
 
 This comment is what a later `/lt-dev:ticket-cycle` run reads back at its STEP 4b.3c before moving the ticket into "QA Testing" — so it is the QA handover, not a courtesy note.
+
+**A take-along the tester will notice gets one line in the comment** (a pre-existing defect fixed along the way, a visible improvement), so the tester does not report it as an unexpected change. Take-alongs with no visible effect belong in the attached document.
 
 **Keep it short, and move the technical detail into an attached document.** The reader is a product
 owner or a tester, and the comment is the thing they act on: what changed, and the steps to see it.

@@ -17,9 +17,11 @@ filed differently: it lands in **Triage**, it is **labelled** as an AI proposal,
 Any ticket whose origin is Claude rather than the user:
 
 - an improvement, refactor, or feature idea noticed while doing something else
-- a finding from `/lt-dev:review` or the browser walk that is real but outside the current ticket
-- a root cause discovered while fixing a symptom, where the cause belongs elsewhere
+- an improvement idea from `/lt-dev:review` or the browser walk that is real but outside the current ticket
+- a root cause in code this work cannot change (a third-party dependency, another team's service)
 - a follow-up that a deliberate scope cut left behind
+
+**A defect found while working a ticket is never filed.** It is fixed in that ticket, pre-existing or not, coordinated with parallel sessions through the ledger (`take-ticket` STEP 6c). It surfaced there, the context to fix it is loaded there, and a ticket for it would be picked up by someone who has to rebuild that context first. A cause that lives in a base repo is fixed in the base repo, not filed.
 
 It does **not** apply to tickets the user asked for. Those go through `/lt-dev:create-story`,
 `/lt-dev:create-task`, or `/lt-dev:create-bug` and land in the normal workflow with no AI marking:

@@ -174,6 +174,8 @@ Run it when STEP 1a (or `--review`) chose it; on `--no-review` continue to STEP 
 /lt-dev:review
 ```
 
+Fixes the review makes to this ticket's own code are core commits. A fix outside it follows `take-ticket` STEP 6c: its own commit with a `Taken-Along:` trailer.
+
 Continue to STEP 3 without asking. `review` reports only proven Critical and High defects and fixes them itself, so there is nothing left for a "fix the findings?" question to decide. Its outcome travels into the STEP 3b gate. Stop only when `review` reports a finding it could not fix: surface its diagnosis, because an unfixed Critical must not reach the merge.
 
 ### STEP 3 — Phase C: Browser-Validation-Walk
@@ -193,11 +195,13 @@ The walk is not optional and is never asked about: whenever the change is verifi
 Skill verdict drives the cycle. With `owns_release_gate: true` the walk itself returns `READY-TO-SHIP` or a failure; `OPTIMIZE`, `WAITING-FOR-USER`, and `CANCELLED` then come from the developer's answer at STEP 3b and are handled as below:
 
 - `READY-TO-SHIP` → continue to STEP 3b (test package and release gate), then Phase D.
-- `OPTIMIZE` → loop back to Phase A's implementation steps with the user's notes (cap iterations at **3** total across all phases). Re-run STEP 2 (review) afterwards before re-entering STEP 3.
+- `OPTIMIZE` → loop back to Phase A's implementation steps with the user's notes: `take-ticket` STEP 6 to 9c, so the new work is tested, checked, re-analysed, and audited like the first round (cap iterations at **3** total across all phases). Re-run STEP 2 (review) afterwards before re-entering STEP 3.
 - `WAITING-FOR-USER` → the user wants to re-test by hand: run STEP 3b steps 1 to 3 (prepare the stack, write and print the test package), leave `lt dev up` running (the skill still closes its automation browser), stop and wait for the user's next message. Do NOT enter Phase D.
 - `CANCELLED` → tear the stack down, surface the closing block, stop without entering Phase D. The feature branch is intentionally left intact for manual recovery.
 
 If the skill returns `boot_failed` or `stall_guard_triggered`, surface the diagnosis verbatim and stop. Do NOT proceed to Phase D.
+
+**Commit the walk's fixes before STEP 3b.** Every defect the walk fixed is fixed in this ticket, pre-existing or not, and is committed now, one commit per fix, following `take-ticket` STEP 6c: a fix to this ticket's own code is core, anything else carries `Taken-Along: pre-existing defect, found in the browser walk (step <n>)`. Coordinate through the ledger before touching files outside the ticket, exactly as STEP 6c describes. Run the STEP 9c audit over the new hunks, then re-run the affected test pillar and the `check`. Committing here is what makes the test package's scope line and its two review commands accurate, and it leaves `git:ship` nothing to commit.
 
 ### STEP 3b — Test-Paket für den Entwickler + Freigabe-Gate
 
@@ -215,7 +219,9 @@ Before anything is deployed, the developer gets the chance to test everything th
 *Kurzfassung — plain language, no file names, no code terms:*
 
 - **Worum es geht:** one or two sentences, from the user's point of view: what was wrong or missing, what should be possible now.
-- **Anforderungen und Änderungen:** one line per acceptance criterion: the requirement in plain words, what changed as a user experiences it, and the step that shows it. Work taken along (`Mitgenommen`, `also_fixed`) gets its own marked lines, flagged **vorbestehend** or **aus dieser Umsetzung**.
+- **Anforderungen und Änderungen:** one line per acceptance criterion: the requirement in plain words, what changed as a user experiences it, and the step that shows it.
+- **Mitgenommen:** every take-along from the `take-ticket` STEP 9c audit and every walk fix, one line each: what changed as a user experiences it, why it came along, whether it was a **vorbestehender Fehler** or a **Verbesserung**, and the step that shows it. Kept apart from the requirements, so the developer sees at a glance what the ticket asked for and what came on top.
+- **Umfang:** one line: core files and `+/-` lines, the number of take-alongs, and what the audit removed. A developer who sees "Kern: 4 Dateien, +90/−12" and a 900-line diff knows where to look.
 - **Bitte besonders prüfen:** every `Annahme` (a decision taken without the developer) and everything deliberately not implemented, each with its step. This is where the developer's judgement matters most, so it is never buried further down.
 - **Qualitätsstand:** one line: tests, check, review, walk. It tells the developer what is already proven, so they can spend their attention on what is not.
 
@@ -228,7 +234,7 @@ Before anything is deployed, the developer gets the chance to test everything th
 - **Every step can be started on its own:** it opens with its own complete link. Where a step really depends on an earlier one, it says so: `Voraussetzung: Schritt 3`.
 - **No browser path** (API-only or background change): the step carries the complete equivalent, never "check the API": the full `curl` command with URL, method, and body, how to get the token for the named account, and the expected status and response; or the exact command that shows the effect.
 - **After a loop-back** ("Anpassen" below), the package is rebuilt from the new diff, and every step whose content changed is marked `(neu)` or `(geändert)`, so the developer re-tests what changed instead of everything.
-- **Technische Details** close the package in one short list: the most relevant `file:line` references, for a developer who wants to read the code. They stay out of the Kurzfassung.
+- **Technische Details** close the package in one short list: the most relevant `file:line` references, for a developer who wants to read the code, and the two commands that show the core and the take-alongs separately. They stay out of the Kurzfassung.
 
 **3. Print the package as one block** (render in the user's session language; German template shown):
 
@@ -248,7 +254,13 @@ Anforderungen und Änderungen
    Jetzt: <was sich für den Nutzer sichtbar geändert hat>  (Schritt 1–3)
 2. <Anforderung>
    Jetzt: <Änderung>  (Schritt 4)
-+  Mitgenommen: <Änderung>, <vorbestehend | aus dieser Umsetzung>  (Schritt 6)
+
+Mitgenommen
+- <Änderung aus Nutzersicht>. Warum: <Grund>. <vorbestehender Fehler | Verbesserung>  (Schritt 6)
+- <oder "nichts">
+
+Umfang
+Kern: <n> Dateien, +<x>/−<y> · Mitgenommen: <m> · Im Audit entfernt: <kurz | "nichts">
 
 Bitte besonders prüfen
 - Annahme: <was Claude ohne dich entschieden hat>  (Schritt 5)
@@ -278,11 +290,13 @@ Anforderung 1: <Kurztitel>
 Anforderung 2: <Kurztitel>
 4. ...
 
-Offen, separat empfohlen
+Ideen außerhalb des Tickets (keine Fehler, die sind oben behoben)
 - <out_of_scope_findings | "nichts">
 
 Technische Details
 - <datei:zeile> — <einzeiler>
+- Nur Kern lesen:        git log -p --invert-grep --grep='^Taken-Along:' origin/<BASE>..HEAD
+- Nur Mitgenommenes:     git log -p --grep='^Taken-Along:' origin/<BASE>..HEAD
 ```
 
 **4. Freigabe-Gate.** Only once the stack is prepared and the package is on screen, ask once via `AskUserQuestion`:
@@ -290,7 +304,7 @@ Technische Details
 - Question: "Alles ist vorbereitet, das Test-Paket steht oben. Bereitstellen?"
 - Options:
   1. "Getestet, bereitstellen (Recommended)" → continue to STEP 4, which runs unattended to the end.
-  2. "Anpassen" → free text; step numbers are enough ("Schritt 5: Fehlermeldung fehlt"). Loop back to Phase A's implementation steps (cap **3** in total), then re-run STEP 2 → 3 → 3b with a rebuilt, marked package.
+  2. "Anpassen" → free text; step numbers are enough ("Schritt 5: Fehlermeldung fehlt"). Loop back to Phase A's implementation steps (`take-ticket` STEP 6 to 9c: implement, test, check, re-analyse, audit; cap **3** in total), then re-run STEP 2 → 3 → 3b with a rebuilt, marked package.
   3. "Abbrechen" → stop here, branch remains local, nothing merged.
 
 The question waits as long as the developer needs. A free-text answer meaning "not yet" ("teste noch", "schaue erst drauf", "warte") is a pause: acknowledge it in one line, keep the stack running, and wait for the next message. A go continues with option 1, a reported problem is option 2.
@@ -649,7 +663,8 @@ If `--review` ran (or the user opted in at STEP 2), include a one-line summary o
 - **All questions are asked up front; the developer judges the result once.** The cycle asks while the developer is at the screen: the STEP 5c decision round and the STEP 1a process round. From there it runs unattended, and the developer's quality verdict is collected once, at STEP 3b, on a fully prepared stack. A process question asked in the middle of the run, or a second completeness question after `take-ticket` STEP 9, stops a run the developer believes is unattended and is a defect. The only mid-run stops are blocking ones: a contradiction with the decision record, a review finding that could not be fixed, a failed boot, CI or deploy, and the questions a failure path in Phase D already defines.
 - **`take-ticket` STEP 9 completing cleanly gates everything after Phase A.** With `--in-cycle` its completeness verdict is not asked but carried: the AC verdicts go into the STEP 3b test package, where each one maps to the steps that show it.
 - **The browser is walked once per iteration, in Phase C, after the review.** `take-ticket --in-cycle` skips its own STEP 9.5 walk; walking before the review and again after it doubles the longest step for no additional evidence.
-- **Follow-up tickets follow `take-ticket` STEP 9a, which owns that rule in full** — when to absorb a finding rather than file it, the parallel-work test that decides it, the `Open` / `Blocked` / project-assigned states a filed one gets, and the carry-to-completion duty for a ticket whose content gets absorbed. Read it there; it is the single source of truth, so a change to the policy is a one-place edit.
+- **Defects found anywhere in the cycle are fixed in this ticket, never filed** — in Phase A, by the review, in the browser walk, pre-existing ones included, coordinated through the ledger per `take-ticket` STEP 6c. They surfaced here, and the context to fix them is loaded here. Each sits in its own `Taken-Along:` commit unless it fixes this ticket's own code, so the developer reads the core and the extras apart (STEP 3b).
+- **Follow-up tickets (improvements and features only) follow `take-ticket` STEP 9a, which owns that rule in full** — when to absorb a finding rather than file it, the parallel-work test that decides it, the `Open` / `Blocked` / project-assigned states a filed one gets, and the carry-to-completion duty for a ticket whose content gets absorbed. Read it there; it is the single source of truth, so a change to the policy is a one-place edit.
 
   **The cycle adds exactly one thing to it: the moment a `Blocked` follow-up becomes takeable.** A follow-up that needed this ticket merged moves from `Blocked` to `Open` once STEP 4b's healthy-dev-deploy verification confirms the merge is actually live — not at merge time, and not at the end of the cycle. Standalone `take-ticket` runs have no such verification, so they release after the merge lands; the cycle waits for the deploy, because a follow-up released against code that merged but never deployed is worked against a stale dev. This release applies to `Blocked` tickets only: a follow-up Claude proposed sits in `Triage` and stays there, because what it is waiting for is a human decision, not a deploy.
 - **Nothing is deployed before the developer could test it (STEP 3b).** Every `READY-TO-SHIP` verdict leads to the test package and the release gate, and STEP 4 is entered only on the developer's explicit "Getestet, bereitstellen". No flag and no earlier answer skips this: the unattended run before it is only acceptable because the developer checks its result here. The package is assembled from what the cycle already produced, so no second browser walk happens.
