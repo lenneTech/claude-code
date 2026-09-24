@@ -1,6 +1,6 @@
 ---
-description: Full ticket lifecycle in one command — auto-pick (or take ID), TDD-implement with per-slice check + commit, re-analyse, optional review, browser walk, manual re-test handoff (summary + credentials + test data + step-by-step), rebase + tests + check, MR/PR (auto-merge OR reviewer-handoff), CI, squash-merge, delete branch, Linear comment + status handoff
-argument-hint: "[issue-id | --project=<name> --team=<name> --status=<list> --base=<branch> --figma=<url> --flows=<path> --review --no-review --auto-merge --review-handoff[=<linear-user>] --post-merge-status=<dev-review|qa-testing[=<linear-user>]> --max-deploy-wait=<minutes> --max-pipeline-retries=<n> --no-squash --keep-branch]"
+description: Full ticket lifecycle in one command — auto-pick (or take ID), decision round up front, TDD-implement with per-slice check + commit, re-analyse, optional review, browser walk, developer test package + approval before deploy (requirements summary + prepared test data + step-by-step with full links), rebase + tests + check, MR/PR (auto-merge OR reviewer-handoff), CI, squash-merge, delete branch, Linear comment + status handoff
+argument-hint: "[issue-id | --project=<name> --team=<name> --status=<list> --base=<branch> --figma=<url> --flows=<path> --grill --no-grill --review --no-review --auto-merge --review-handoff[=<linear-user>] --post-merge-status=<dev-review|qa-testing[=<linear-user>]> --max-deploy-wait=<minutes> --max-pipeline-retries=<n> --no-squash --keep-branch]"
 allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, ListAgents, SendMessage, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(wc:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__list_teams, mcp__plugin_lt-dev_linear__list_projects, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__save_issue_label, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__list_users, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_screenshot, SlashCommand
 disable-model-invocation: false
 ---
@@ -25,12 +25,12 @@ If you only need part of the cycle, use the underlying commands directly:
 | Element | Purpose |
 |---------|---------|
 | `/lt-dev:take-ticket` | Phase A — pick/branch/TDD/test/check/re-analyse (this command invokes it) |
-| `/lt-dev:review` | Phase B (optional, opt-in) — 7-dimension review |
+| `/lt-dev:review` | Phase B (optional) — reports only proven Critical/High defects in the diff and fixes them itself |
 | `validating-changes-in-browser` skill | Phase C — pre-ship browser-validation walk |
 | `writing-qa-test-instructions` skill | Owns the QA-testability classification and the German QA test instructions posted to Linear (STEP 4b.1 + 4b.3c) |
 | `/lt-dev:git:ship` | Phase D (auto-merge path) — rebase/test/check/MR-PR/CI-wait/squash-merge/branch-delete/Linear-handoff |
 | `/lt-dev:dev-submit` | Phase D (reviewer-handoff path) — MR/PR + Linear comment + status → Dev Review |
-| `grilling-decisions` skill | Settles open ticket questions with the user inside Phase A, before any code is written |
+| `grilling-decisions` skill | Decision round inside Phase A (`take-ticket` STEP 5c), before any code is written; full round on larger tickets |
 | `checking-upstream-first` skill | Base-repo gate in Phase A — anything that came from a base repo is checked there first (STEP 1) |
 | `building-stories-with-tdd` skill | Drives the TDD inside Phase A |
 | `running-check-script` skill | Drives the check loop (per-slice + final, both ship paths) |
@@ -45,6 +45,7 @@ All flags are optional. The command splits arguments into groups and forwards ea
 | Flag | Forwarded to | Effect |
 |------|--------------|--------|
 | `<ID>` / `--project=` / `--team=` / `--status=` / `--figma=` / `--flows=` / `--no-pick` | `take-ticket` | Same semantics as that command |
+| `--grill` / `--no-grill` | `take-ticket` | Force the full or the light STEP 5c decision round instead of sizing the ticket |
 | `--base=<branch>` | both | Base branch override (default: auto-detect dev→develop→main→master) |
 | `--review` | this command | Skip the STEP 2 prompt and force Phase B (run `/lt-dev:review`) |
 | `--no-review` | this command | Skip the STEP 2 prompt and skip Phase B entirely |
@@ -67,11 +68,11 @@ All flags are optional. The command splits arguments into groups and forwards ea
 Create a TodoWrite plan with these items:
 
 0. Pre-Flight — Stale-Leftover-Branch-Cleanup + Basis aktualisieren (STEP 0.5)
-1. Phase A — `/lt-dev:take-ticket` (pick, branch, TDD, tests, check, re-analyse)
+1. Phase A — `/lt-dev:take-ticket --in-cycle` (pick, branch, decision round + process round, TDD, tests, check, re-analyse)
 2. Phase B (optional) — `/lt-dev:review`
 3. Phase C — Browser-Validation-Walk via `validating-changes-in-browser` skill
-4. Manuelle Nachtest-Anleitung + Freigabe-Gate (Änderungs-Zusammenfassung, Credentials, Testdaten, Schritt-für-Schritt) — bei der Wahl "Ich teste selbst" ist es PFLICHT, VOR dem Pausieren alle 5 Deliverables zu liefern: (a) Testdaten in der laufenden Dev-DB vorbereiten, (b) Upload-Testdateien erzeugen falls eine Upload-Fläche betroffen ist, (c) kurze verständliche Zusammenfassung, (d) Credentials mit literalen Passwörtern, (e) Schritt-für-Schritt mit klickbaren Deep-Links (was/wie/warum)
-5. Phase D — Merge-Strategie wählen + Auto-Merge (`/lt-dev:git:ship`) ODER Reviewer-Handoff (`/lt-dev:dev-submit` + Linear-/MR-Assign)
+4. Test-Paket + Freigabe-Gate (STEP 3b) — IMMER vor der Bereitstellung: Stack laufen lassen, Testdaten in der Dev-DB und ggf. Upload-Dateien vorbereiten, dann das Test-Paket ausgeben (Kurzfassung: Anforderungen und Änderungen, Annahmen, Qualitätsstand; Schritt-für-Schritt mit vollständigen klickbaren Links, Zugängen und erwarteten Ergebnissen) und einmal auf die Freigabe des Entwicklers warten
+5. Phase D — Auto-Merge (`/lt-dev:git:ship`) ODER Reviewer-Handoff (`/lt-dev:dev-submit` + Linear-/MR-Assign), wie in STEP 1a festgelegt
 6. Final consolidated summary
 
 ### STEP 0.5 — Pre-Flight: Stale-Leftover-Branch-Cleanup + Basis aktualisieren
@@ -95,8 +96,10 @@ Scope guard: this **only ever** touches the just-shipped leftover of the **curre
 Invoke via the `SlashCommand` tool:
 
 ```
-/lt-dev:take-ticket <forwarded take-ticket flags>
+/lt-dev:take-ticket --in-cycle <forwarded take-ticket flags>
 ```
+
+`--in-cycle` makes `take-ticket` ask the STEP 1a process round inside its decision round, resolve its STEP 9b delta without a closing question, and skip its own browser walk (STEP 9.5). The cycle walks the browser once, in Phase C after the review, and collects the developer's verdict once, at STEP 3b.
 
 **Auto-Pick** (wenn keine `<ID>` übergeben wurde — `take-ticket` STEP 1b ist die kanonische Quelle, hier nur zur Übersicht). Zwei klar getrennte Phasen:
 
@@ -114,6 +117,8 @@ Invoke via the `SlashCommand` tool:
 5. **createdAt ASC** (älter zuerst) — finaler Tie-Breaker.
 
 **Relevance gate (`take-ticket` STEP 5b).** Before implementing, `take-ticket` verifies the picked ticket is still current — ticket/comment timestamps against the base-branch history, a check for parallel work on it, and a substantive check that the described problem still reproduces. A ticket written weeks ago can have been solved in the meantime, from a different angle or by another session. Implementing it anyway does not just waste the run: it can re-introduce something that was deliberately removed, undo a newer fix, or add a second mechanism beside an existing one so nobody can tell which is authoritative. If that gate reports "already solved" or "premise no longer holds", `take-ticket` stops and asks — surface that to the user and do **not** push the cycle onward to Phase B/C/D.
+
+**Decision round (`take-ticket` STEP 5c).** After the optional extra sources (`take-ticket` STEP 2) are collected and the relevance gate has passed, every open decision is settled with the user before the first line of code, via the `grilling-decisions` skill. Larger tickets (a data model, API contract, or permission change, missing acceptance criteria, or two soft signals such as backend plus frontend) get a full round that walks the planned implementation dimension by dimension; small tickets only get the questions the analysis produced. The round closes with a decision record the user confirms. From there to the STEP 9 gate the implementation runs without questions: recorded decisions are not asked again, non-blocking gaps become logged `Annahmen`, and only a blocking contradiction stops the run. This is what lets the user leave the cycle alone during implementation, so front-load the questions here instead of spreading them over the run. `--grill` / `--no-grill` override the sizing.
 
 **Base-repo gate (`checking-upstream-first`).** Before touching anything that ORIGINALLY CAME FROM a base repo, look at what that repo carries today. Projects are born as a copy of a template and then stand still while the template moves on, so the file in front of you is the template as it was on project-creation day — not as it is now. This covers far more than workarounds, and it covers **both halves of the stack**: a bug in `Dockerfile`, `.gitlab-ci.yml`, `tsconfig*.json`, `scripts/**` or a `check:*` chain is a base-repo question first and a project question second — on the backend (`docker-entrypoint.sh`, `nest-cli.json`, `src/config.env.ts`, `migrations/**`, a vendored `src/core/`) exactly as on the frontend (`nuxt.config.ts`, `app/app.config.ts`, `openapi-ts.config.ts`, `playwright.config.ts`, `server/**`, a vendored `app/core/`).
 
@@ -137,40 +142,39 @@ Two failure modes worth naming, both observed:
 - **Time pressure is when this gets skipped — and repairs happen under time pressure.** A failing production deploy got the "obvious" local fix; the starter had solved it properly months earlier, and the quick fix would have been silently overwritten by the next sync.
 - **A negative search result is not evidence of absence.** `find . -name "entrypoint*.sh"` found nothing and was read as "the base repo does not have it". The file is `docker-entrypoint.sh`. List the directory, search the content, read the `package.json` scripts. Two ways to hit the same wall on GitHub: a raw URL on the wrong branch (`nest-server` releases from `develop`, the others from `main`), and the frontend path offset — `nuxt-base-starter` keeps everything under `nuxt-base-template/`, so a URL against the repo root 404s for every file in the repo.
 
-Wait for `take-ticket` to print its STEP 10 review-ready summary. The user's STEP 9 confirmation inside `take-ticket` is the **first human gate** of the cycle:
+Wait for `take-ticket` to print its STEP 10 review-ready summary, then continue to STEP 2 without asking. The developer's two gates in this cycle are the STEP 5c decision record (input) and STEP 3b (result); nothing in between waits for them unless a blocking question comes up.
 
-- If the user picked option 1 ("Ja, fertig"), continue to STEP 2.
-- If the user looped (option 2 or 3), `take-ticket` handles iteration internally. It only returns when the user opts out of the loop with "fertig" or the 3-iteration cap is hit.
-- If `take-ticket` aborted (failed Linear assignment, blocking question unanswered, etc.), surface its diagnosis and stop — do **not** continue to Phase B, C or D.
+- If `take-ticket` aborted (failed Linear assignment, blocking question unanswered, stale ticket, etc.), surface its diagnosis and stop — do **not** continue to Phase B, C or D.
 
 Capture the feature branch name from `take-ticket`'s output (typically `feature/<id>-<slug>`).
 
+### STEP 1a — Process Round (asked inside Phase A)
+
+`take-ticket --in-cycle` asks this round directly after the STEP 5c decision record is confirmed, while the developer is still at the screen. Every later gate then takes its flag path, so the cycle runs unattended from the first line of code to the merge, with one planned stop: the developer's own test and approval before anything is deployed (STEP 3b).
+
+Ask one `AskUserQuestion` call with the questions whose flag was not passed (all three flags set, skip the round):
+
+| Question | Options (recommendation first) | Stored as |
+|---|---|---|
+| "Code-Review vor dem Browser-Walk?" | Larger ticket (STEP 5c sizing): "Ja, Review durchführen (Recommended)" / "Nein". Small ticket: the reverse | `--review` / `--no-review` |
+| "Wie soll gemergt werden?" | "Auto-Merge nach grüner CI (Recommended)" / "Reviewer-Handoff: jemand anderes reviewt und mergt" | `--auto-merge` / `--review-handoff` |
+| "Linear-Status nach dem Merge? (nur bei Auto-Merge)" | "Dev Review, Assignee entfernen (Recommended)" / "QA Testing, an manuelles Testen übergeben" / "Awaiting Release" | `--post-merge-status=...` |
+
+Right after it, and only when needed, one follow-up call for what depends on these answers: the reviewer on `reviewer-handoff` (STEP 4c.1 picker), the QA assignee on `qa-testing` when no team default is stored (STEP 4b.2b).
+
+The answers are provisional where the result can overrule them, and the overrule is always announced in one line: "QA Testing" still needs STEP 4b.1's frontend-verifiability check after the walk (otherwise "Awaiting Release", as with the flag).
+
+Skipping this round is only right when every answer arrived as a flag. Asking a process question later, in the phase that needs it, stops a run the developer believes is unattended.
+
 ### STEP 2 — Phase B (optional): review
 
-Decide whether to run the 7-dimension review:
-
-- If `--review` was passed → run review (skip the prompt).
-- If `--no-review` was passed → skip review entirely, continue to STEP 3.
-- Otherwise → ask the user via `AskUserQuestion`:
-  - Question: "Phase B: Code-Review jetzt durchführen?"
-  - Options:
-    1. "Nein, direkt zur Browser-Validation" (default) → skip to STEP 3
-    2. "Ja, Code-Review starten" → continue with the review below
-    3. "Abbrechen" → stop here, branch remains local
-
-If the user opted in (or `--review` forced it), invoke:
+Run it when STEP 1a (or `--review`) chose it; on `--no-review` continue to STEP 3. When neither is set because the round could not be asked, ask the one question now: "Code-Review vor dem Browser-Walk?".
 
 ```
 /lt-dev:review
 ```
 
-After `review` completes, ask the user via `AskUserQuestion`:
-
-- Question: "Review abgeschlossen. Findings vor dem Ship adressieren?"
-- Options:
-  1. "Ja — Findings jetzt fixen, dann weiter" → pause; the user (or a follow-up `take-ticket` invocation) addresses findings, then user confirms continuation
-  2. "Nein, direkt weiter" → continue to STEP 3
-  3. "Abbrechen" → stop here, branch remains local
+Continue to STEP 3 without asking. `review` reports only proven Critical and High defects and fixes them itself, so there is nothing left for a "fix the findings?" question to decide. Its outcome travels into the STEP 3b gate. Stop only when `review` reports a finding it could not fix: surface its diagnosis, because an unfixed Critical must not reach the merge.
 
 ### STEP 3 — Phase C: Browser-Validation-Walk
 
@@ -182,93 +186,116 @@ Follow the [`validating-changes-in-browser`](${CLAUDE_PLUGIN_ROOT}/skills/valida
 - `ticket_id`: the issue identifier from Phase A
 - `permission_matrix`: the matrix produced in `take-ticket` STEP 5
 - `mitgefixt_carryover`: anything already mitgefixt during Phase A/B
+- `owns_release_gate: true`: the skill returns its verdict without its own ship-or-optimize question, because STEP 3b asks the developer once, on a prepared stack
 
-Skill verdict drives the cycle:
+The walk is not optional and is never asked about: whenever the change is verifiable through the frontend, directly or through a symptom, it runs like every other test suite. The skill's Step 1 decides the scope (full walk, API smoke pass, or no runtime impact) and states it in the list.
 
-- `READY-TO-SHIP` → continue to STEP 3b (manual re-test handoff), then Phase D.
+Skill verdict drives the cycle. With `owns_release_gate: true` the walk itself returns `READY-TO-SHIP` or a failure; `OPTIMIZE`, `WAITING-FOR-USER`, and `CANCELLED` then come from the developer's answer at STEP 3b and are handled as below:
+
+- `READY-TO-SHIP` → continue to STEP 3b (test package and release gate), then Phase D.
 - `OPTIMIZE` → loop back to Phase A's implementation steps with the user's notes (cap iterations at **3** total across all phases). Re-run STEP 2 (review) afterwards before re-entering STEP 3.
-- `WAITING-FOR-USER` → the user wants to re-test by hand: run STEP 3b's **Manual-Test Preparation routine** (prepare DB test data · generate upload files when sensible · plain-language summary · credentials · precise was/wie/warum steps), leave `lt dev up` running (the skill still closes its automation browser), emit that enriched manual, stop and wait for the user's next message. Do NOT enter Phase D.
+- `WAITING-FOR-USER` → the user wants to re-test by hand: run STEP 3b steps 1 to 3 (prepare the stack, write and print the test package), leave `lt dev up` running (the skill still closes its automation browser), stop and wait for the user's next message. Do NOT enter Phase D.
 - `CANCELLED` → tear the stack down, surface the closing block, stop without entering Phase D. The feature branch is intentionally left intact for manual recovery.
 
 If the skill returns `boot_failed` or `stall_guard_triggered`, surface the diagnosis verbatim and stop. Do NOT proceed to Phase D.
 
-### STEP 3b — Manuelle Nachtest-Anleitung + Freigabe-Gate
+### STEP 3b — Test-Paket für den Entwickler + Freigabe-Gate
 
-Phase C walked the browser flows **autonomously** and fixed what it found. This step turns that walk into a **human-reproducible test manual** so the developer (or a QA colleague) can re-verify the change by hand **before** it merges. It runs **only** on a `READY-TO-SHIP` verdict from STEP 3 — the other verdicts already stop the cycle (`WAITING-FOR-USER`, `CANCELLED`) or loop back (`OPTIMIZE`).
+Before anything is deployed, the developer gets the chance to test everything themselves. This step runs on **every** `READY-TO-SHIP` verdict; no flag and no answer skips it. Claude does all the setup, so the developer spends their time on the check itself: the stack is running, the test data exists, and the package tells them in one screen what was asked for and what changed, then walks them through every check with complete links.
 
-**No new browser work here.** The manual is assembled purely from the outputs Phase C already returned (`final_list`, `accounts_registry`, `also_fixed`, `out_of_scope_findings`) plus Phase A's `task_summary` / `implementation_summary`.
+**No new browser walk here.** The package is assembled from what the cycle already produced: Phase C's `final_list`, `accounts_registry`, `also_fixed`, `out_of_scope_findings`; Phase A's `task_summary`, `implementation_summary`, AC verdicts (`take-ticket` STEP 9a), the STEP 5c decision record and every `Annahme`; the review outcome from Phase B.
 
-**1. Consolidate the sections:**
+**1. Prepare the stack.** Keep `lt dev up` running; the automation browser is already closed.
 
-- **Änderungs-Zusammenfassung (kurz & leicht verständlich)** ← Phase A's `task_summary` + `implementation_summary`, written so a non-author (a QA colleague) grasps *what the ticket was* and *what to verify now* in a few plain sentences — no jargon, no internal shorthand. Still carry the most-relevant `file:line` refs and every `also_fixed` entry (each flagged **vorbestehend** or **aus dieser Umsetzung**).
-- **Credentials** ← `accounts_registry` verbatim: email / password / role / *existing-seed-or-new-for-this-walk*. Every login-bound step must be reproducible without a follow-up question. Public routes are listed explicitly as `kein Login`.
-- **Testdaten** ← the concrete records each manual step acts on (`@test.com` accounts, the seeded entities) plus the active Stack URLs (App, API, DB slug) from `lt dev status`. On the "Ich teste selbst" path these are **actively prepared in the DB** and their real IDs baked into the deep-links — see step 4.
-- **Testdateien für Upload** ← only when the diff touches a file-upload surface (CSV/XLSX import, document/image/avatar upload, TUS, …): the concrete sample file(s) to upload, with their absolute on-disk path. Generated in step 4 on the manual-test path. When no upload surface is affected, this section states "keine Upload-Felder betroffen — keine Testdateien nötig".
-- **Schritt-für-Schritt-Testanleitung (was / wie / warum)** ← `final_list`, **rewritten from "what I walked" into imperative "do this → expect that" steps.** Each step carries: the account to log in with, the fully-qualified URL **rendered as a clickable markdown link** — `[<Seite / Route>](<URL>)`, so the tester clicks straight through (the session renders GitHub-flavored markdown; deep-links keep their exact query/route/hash params), the **exact action** (which control, what value / which file), the **expected** result the human should observe, and a one-clause **warum** (what the step proves) so the tester understands the point, not just the mechanics. Include the `out_of_scope_findings` as a separate "offen / separat empfohlen" list.
+- **Testdaten in der laufenden Dev-DB.** Seed or ensure the concrete records each step acts on in the **running dev DB** (from `lt dev status` — never the `-test` DB), with `@test.com` and obviously fake data. Use the project's seed script (e.g. `pnpm run seed:demo` / `pnpm run seed:test-data`, pointed at the active dev DB and an `@test.com` admin) or, for a small targeted fixture, direct API calls or `mongosh` inserts against the active DB. Cover every role in the permission matrix and every entity state the steps touch (populated, empty, edge). Re-use what Phase C already seeded; add only what is missing. Capture the record IDs, so every link in the steps lands on a real record.
+- **Upload-Testdateien, nur falls eine Upload-Fläche betroffen ist** (CSV/XLSX import, document/image/avatar upload, TUS): small, **valid** sample files in the scratchpad dir, matching what the feature expects (a real header row for a CSV import, a tiny valid PNG/PDF for a document field). Otherwise generate nothing.
 
-**2. Print one structured block** (render in the user's session language; German template shown, consistent with this command's other output blocks):
+**2. Write the test package.** Two parts with two jobs: the **Kurzfassung** lets the developer grasp the ticket in under a minute, the **Schritt-für-Schritt** lets them check it without a single question.
+
+*Kurzfassung — plain language, no file names, no code terms:*
+
+- **Worum es geht:** one or two sentences, from the user's point of view: what was wrong or missing, what should be possible now.
+- **Anforderungen und Änderungen:** one line per acceptance criterion: the requirement in plain words, what changed as a user experiences it, and the step that shows it. Work taken along (`Mitgenommen`, `also_fixed`) gets its own marked lines, flagged **vorbestehend** or **aus dieser Umsetzung**.
+- **Bitte besonders prüfen:** every `Annahme` (a decision taken without the developer) and everything deliberately not implemented, each with its step. This is where the developer's judgement matters most, so it is never buried further down.
+- **Qualitätsstand:** one line: tests, check, review, walk. It tells the developer what is already proven, so they can spend their attention on what is not.
+
+*Schritt-für-Schritt — detailed:*
+
+- **Stack und Zugänge:** App and API as clickable links, every account with its literal password and role, upload file paths.
+- **Order:** grouped by requirement, in the order of the Kurzfassung. Within a group: the main path first, then other roles, error and empty states, mobile.
+- **Coverage:** every acceptance criterion and every `Annahme` is covered by at least one step. A requirement without a step is a gap in the package, not a detail.
+- **Every step carries:** a continuous number (so the developer can answer "Schritt 5 passt nicht"), the account, the complete URL as a clickable markdown link `[Seite](https://…)` with the deep link to the prepared record, the exact action with concrete values, the expected result, and in one clause why the step exists.
+- **Every step can be started on its own:** it opens with its own complete link. Where a step really depends on an earlier one, it says so: `Voraussetzung: Schritt 3`.
+- **No browser path** (API-only or background change): the step carries the complete equivalent, never "check the API": the full `curl` command with URL, method, and body, how to get the token for the named account, and the expected status and response; or the exact command that shows the effect.
+- **After a loop-back** ("Anpassen" below), the package is rebuilt from the new diff, and every step whose content changed is marked `(neu)` or `(geändert)`, so the developer re-tests what changed instead of everything.
+- **Technische Details** close the package in one short list: the most relevant `file:line` references, for a developer who wants to read the code. They stay out of the Kurzfassung.
+
+**3. Print the package as one block** (render in the user's session language; German template shown):
 
 ```
 ╔══════════════════════════════════════════════════════════╗
-║ Manuelle Nachtest-Anleitung: <ISSUE_IDENTIFIER>         ║
+║ Bitte selbst testen: <ISSUE_IDENTIFIER> — <Titel>       ║
 ╚══════════════════════════════════════════════════════════╝
+Ticket: [<ISSUE_IDENTIFIER>](<Linear-URL>)
 
-Was wurde geändert (kurz & verständlich)
-- Ticket:    <ISSUE_IDENTIFIER> — <Titel>  (<Linear-/Issue-URL>)
-- Aufgabe:   <1–3 einfache Sätze: was war das Problem / die Aufgabe>
-- Zu testen: <1–2 Sätze: was soll jetzt konkret verifiziert werden>
-- Umsetzung: <1–2 Sätze: wie umgesetzt, wichtigste file:line-Referenzen>
-- Mitgefixt: <also_fixed — je "vorbestehend" / "aus dieser Umsetzung"; oder "keine">
+KURZFASSUNG
 
-Stack & Testdaten
-- App:      <URL>
-- API:      <URL>
-- DB:       <slug>-local   (Seed: @test.com)
-- Testdaten: <in der DB vorbereitete Datensätze mit ihren IDs — oder "keine">
+Worum es geht
+<1–2 einfache Sätze aus Nutzersicht>
 
-Testdateien für Upload
-- <absoluter Pfad zur Sample-Datei + wofür> — oder "keine Upload-Felder betroffen — keine Testdateien nötig"
+Anforderungen und Änderungen
+1. <Anforderung in einfachen Worten>
+   Jetzt: <was sich für den Nutzer sichtbar geändert hat>  (Schritt 1–3)
+2. <Anforderung>
+   Jetzt: <Änderung>  (Schritt 4)
++  Mitgenommen: <Änderung>, <vorbestehend | aus dieser Umsetzung>  (Schritt 6)
 
-Zugangsdaten (zum Einloggen beim Nachtesten)
-- admin@test.com / TestPass123! / Admin / Seed
-- user1@test.com / TestPass123! / User  / neu für diesen Walk
-- (kein Login)   / —            / —     / öffentliche Routen
+Bitte besonders prüfen
+- Annahme: <was Claude ohne dich entschieden hat>  (Schritt 5)
+- Nicht umgesetzt: <was und warum>  | oder "nichts"
 
-Schritt-für-Schritt (so testest du es selbst nach — was / wie / warum)
-   (URLs als klickbare Links: [Seite/Route](vollständige URL) — inkl. Deep-Link-Query auf konkrete Datensätze)
-1. Login als <email> → [<Seite / Route>](<vollständige URL>) → <genaue Aktion: welches Control, welcher Wert/welche Datei> → erwartet: <Ergebnis> → prüft: <warum / was der Schritt beweist>
-2. Account: kein Login → [<Seite / Route>](<vollständige URL>) → <Aktion> → erwartet: <Ergebnis> → prüft: <warum>
-3. …
+Qualitätsstand
+Tests grün (Unit <n>, API <n>, E2E <n>) · check grün · Review: <n Findings behoben | nicht gelaufen> · Browser-Walk: <n> Schritte, <n> mitgefixt
 
-Offen / separat empfohlen
-- <out_of_scope_findings — oder "keine">
+SCHRITT FÜR SCHRITT
+
+Stack und Zugänge
+- App: [<URL>](<URL>)   API: [<URL>](<URL>)
+- admin@test.com / TestPass123! / Admin
+- user1@test.com / TestPass123! / User
+- Upload-Dateien: <absoluter Pfad + wofür>  | oder "keine Upload-Felder betroffen"
+
+Anforderung 1: <Kurztitel>
+1. Account: admin@test.com
+   Öffnen: [<Seite>](<vollständige URL mit Datensatz-ID>)
+   Tun: <genaue Aktion mit konkreten Werten>
+   Erwartet: <sichtbares Ergebnis>
+   Warum: <was der Schritt beweist>
+2. Account: kein Login
+   Öffnen: [<Seite>](<vollständige URL>)
+   ...
+
+Anforderung 2: <Kurztitel>
+4. ...
+
+Offen, separat empfohlen
+- <out_of_scope_findings | "nichts">
+
+Technische Details
+- <datei:zeile> — <einzeiler>
 ```
 
-The block must be **scannable and self-contained** — the user re-walks from this single screen without scrolling back to the Phase C walked list.
+**4. Freigabe-Gate.** Only once the stack is prepared and the package is on screen, ask once via `AskUserQuestion`:
 
-**3. Freigabe-Gate.** Ask the user via `AskUserQuestion`:
-
-- Question: "Manuelle Nachtest-Anleitung erstellt. Wie weiter?"
+- Question: "Alles ist vorbereitet, das Test-Paket steht oben. Bereitstellen?"
 - Options:
-  1. "Direkt zu Phase D — Claude hat bereits getestet, jetzt mergen" (default) → continue to STEP 4.
-  2. "Ich teste selbst — Testdaten + Anleitung vorbereiten" → **run the Manual-Test Preparation routine (step 4 below) FIRST**, then keep `lt dev up` running, leave the enriched manual on screen, stop and wait for the user's next message. Do **NOT** enter Phase D. When the user returns with a go, resume at STEP 4; if they report a problem, re-enter Phase A's implementation loop (counts against the **3**-iteration cap) and re-run STEP 2 → 3 → 3b.
-     - **Never label this option merely "pausieren".** The label is what the model reads back when the answer arrives — by that point, in a long cycle, this command text may already have been compressed out of context. The work must therefore live *in the label itself*, not only in the prose here.
-     - **The option's `description` MUST spell out the obligation**, e.g.: "Claude bereitet zuerst passende Testdaten in der Dev-DB vor, erzeugt ggf. Upload-Dateien und liefert Zusammenfassung + Credentials + klickbare Schritt-für-Schritt-Anleitung — und pausiert ERST danach."
-     - **Free-text fallback:** any "Other" answer that means the user wants to test first ("teste selbst", "ich schaue erst drauf", "pausieren", "warte") routes to this option — with the identical five-deliverable obligation. Never treat such an answer as a bare pause.
-  3. "Doch noch optimieren" → free-text scope; loop back to Phase A's implementation steps (cap **3** total), then re-run STEP 2 → 3 → 3b.
-  4. "Abbrechen" → stop here, branch remains local, nothing merged.
+  1. "Getestet, bereitstellen (Recommended)" → continue to STEP 4, which runs unattended to the end.
+  2. "Anpassen" → free text; step numbers are enough ("Schritt 5: Fehlermeldung fehlt"). Loop back to Phase A's implementation steps (cap **3** in total), then re-run STEP 2 → 3 → 3b with a rebuilt, marked package.
+  3. "Abbrechen" → stop here, branch remains local, nothing merged.
 
-Only option 1 proceeds to Phase D. The manual is printed on **every** path so the user always has the reproduction steps in hand.
+The question waits as long as the developer needs. A free-text answer meaning "not yet" ("teste noch", "schaue erst drauf", "warte") is a pause: acknowledge it in one line, keep the stack running, and wait for the next message. A go continues with option 1, a reported problem is option 2.
 
-**4. Manual-Test Preparation — run ONLY when the user chose "Ich teste selbst" (option 2, incl. any free-text equivalent).** The point of that choice is that the user re-tests by hand; make the stack genuinely ready so they can walk every step without any setup work of their own. Prepare and (re-)output all five deliverables:
-
-- **a. Passende Testdaten in der DB vorbereiten.** Seed / ensure the concrete records each manual step acts on exist in the **running dev DB** (from `lt dev status` — never the `-test` DB) with `@test.com` / obviously-fake data. Use the project's seed script (e.g. `pnpm run seed:demo` / `pnpm run seed:test-data`, pointed at the active dev DB + an `@test.com` admin) or, for a small targeted fixture, direct API calls / `mongosh` inserts against the active DB. Cover every role in the permission matrix and every entity state the steps touch (populated + empty + edge). Re-use what Phase C already seeded; only add what is missing. Capture the concrete record IDs and bake them into the deep-link URLs in the step list so each link lands on a real record.
-- **b. Testdateien zum Upload erzeugen — nur falls sinnvoll.** When a step involves a file upload (CSV/XLSX import, document/image/avatar upload, TUS), generate small, **valid** sample file(s) in the scratchpad dir and reference their absolute path in the "Testdateien für Upload" section and in the relevant step. Match the format/columns/size the feature expects (a real header row for a CSV import, a tiny valid PNG/PDF for a document field). When no upload surface is touched, generate nothing and keep the "keine Upload-Felder betroffen" line.
-- **c. Kurze, leicht verständliche Zusammenfassung** of what the ticket was and what to test now (the "Was wurde geändert" block) — plain language, no jargon.
-- **d. Credentials** for every account the manual needs (the "Zugangsdaten" block), with literal passwords.
-- **e. Schritt-für-Schritt-Anleitung (was / wie / warum)** with fully-qualified URLs **rendered as clickable markdown links** `[Seite/Route](URL)` (now pointing at the real seeded records — deep-links carry the concrete record IDs / query params) and, per step, the exact action, the expected result, and the reason the step exists.
-
-Then **re-emit the enriched manual block** (reflecting the prepared data, the generated upload-file paths, and the precise steps) and pause with `lt dev up` running and the automation browser closed. Never pause on this path without these five deliverables in hand — that is the contract of the "Ich teste selbst" choice.
+Never ask for approval before step 1 and step 3 are done: an approval on a stack the developer could not test is not a quality check.
 
 ### STEP 4 — Phase D: Merge-Strategie + Ship
 
@@ -278,7 +305,7 @@ This phase decides **how** the branch lands: either auto-merged after CI is gree
 
 - If `--auto-merge` was passed → set `MERGE_STRATEGY = auto-merge`, skip the prompt.
 - If `--review-handoff[=<user>]` was passed → set `MERGE_STRATEGY = reviewer-handoff`, capture the optional reviewer identifier, skip the prompt.
-- Otherwise → ask the user via `AskUserQuestion`:
+- STEP 1a normally set one of the two. Otherwise → ask the user via `AskUserQuestion`:
   - Question: "Wie soll der MR/PR gemergt werden?"
   - Options:
     1. "Auto-Merge (Default) — direkt nach grünem CI mergen" → `MERGE_STRATEGY = auto-merge`
@@ -312,7 +339,7 @@ Set `QA_TESTABLE = true|false` and capture `QA_CLASSIFICATION_REASON` (one sente
   Ziel-Status nach dem Merge: "Awaiting Release".
   ```
 
-- Otherwise → ask the user via `AskUserQuestion`, with the options that actually apply:
+- STEP 1a normally set the flag. Otherwise → ask the user via `AskUserQuestion`, with the options that actually apply:
 
   **`QA_TESTABLE = true`:**
   - Question: "Welcher Linear-Status nach dem Merge?"
@@ -359,10 +386,10 @@ The file is per-machine and outside every repository, so a team member's name ne
 **2. Ship invoken.** Call `git:ship` with `--auto-merge --skip-reanalysis` plus any forwarded ship flags:
 
 ```
-/lt-dev:git:ship --auto-merge --skip-reanalysis <forwarded ship flags>
+/lt-dev:git:ship --auto-merge --skip-reanalysis --unattended <forwarded ship flags>
 ```
 
-The `--skip-reanalysis` flag tells `git:ship` to bypass its STEP 1.5 because `take-ticket` STEP 9 already did the equivalent re-analysis. **Do not** pass `--skip-reanalysis` when invoking `git:ship` directly.
+The `--skip-reanalysis` flag tells `git:ship` to bypass its STEP 1.5 because `take-ticket` STEP 9 already did the equivalent re-analysis. `--unattended` removes its routine questions (commit, infra-flake re-run, Linear comment preview), because the developer approved the result at STEP 3b and expects the rest to run on its own. **Do not** pass either flag when invoking `git:ship` directly.
 
 If `git:ship` reports failure (rebase conflicts unresolved, CI retry cap hit, merge rejected, …), surface its diagnosis and stop. The feature branch is intentionally **not** deleted on failure — manual recovery is always possible.
 
@@ -386,7 +413,10 @@ Then resolve `DEPLOY_JOB` — the single job inside that pipeline that performs 
 
 If no deploy **job** can be identified inside the pipeline, fall back to polling the **pipeline object** as before (the pre-existing behaviour) and note in the summary that the verification was pipeline-scoped, not job-scoped.
 
-If no deploy pipeline is found within 60 seconds (some providers take a moment to register the run), ask the user via `AskUserQuestion`:
+If no deploy pipeline is found within 60 seconds, **read the CI config before asking anyone.** Look in `.gitlab-ci.yml` (including its `include:` files) or `.github/workflows/*.yml` for a job that deploys (`deploy`, `rollout`, `release` in its name or stage) and runs on `<BASE_BRANCH>` (its `rules:` / `only:` / `on.push.branches`):
+
+- **No such job** → the project has no dev deployment. Conclude that without asking, say so in one line, and continue to step 3c. The summary reports "kein Deployment konfiguriert" instead of a verified deploy.
+- **Such a job exists** → keep polling up to 3 minutes in total (a busy runner registers pipelines late). Only then ask the user via `AskUserQuestion`:
 
 - Question: "Keine Post-Merge-Deploy-Pipeline für `<merge-sha>` auf `<BASE_BRANCH>` gefunden. Wie weiter?"
 - Options:
@@ -458,7 +488,7 @@ Triggered when `MERGE_STRATEGY = reviewer-handoff`. The branch is **not** auto-m
 **1. Reviewer wählen.**
 
 - If `--review-handoff=<user>` provided an identifier → resolve it via `mcp__plugin_lt-dev_linear__get_user` or `list_users`. If resolution fails, fall through to the picker below.
-- Otherwise → fetch the workspace members via `mcp__plugin_lt-dev_linear__list_users` and ask the user via `AskUserQuestion`:
+- Otherwise (STEP 1a's follow-up normally resolved it) → fetch the workspace members via `mcp__plugin_lt-dev_linear__list_users` and ask the user via `AskUserQuestion`:
   - Question: "Wer soll vor dem Merge reviewen?"
   - Options: up to 3 most-likely candidates from the team (e.g. recent assignees on this team's tickets); the user can always pick "Other" and enter a name/email.
   - Resolve the chosen identifier to a Linear user object (`id`, `displayName`, `email`).
@@ -468,7 +498,7 @@ Capture `REVIEWER` = `{linearUserId, displayName, email}`.
 **2. MR/PR + Linear handoff via `dev-submit`.** Invoke:
 
 ```
-/lt-dev:dev-submit
+/lt-dev:dev-submit --unattended
 ```
 
 `dev-submit` creates the MR/PR, posts the German Linear comment, and moves the ticket to "Dev Review". Capture `REQUEST_URL` from its output.
@@ -514,13 +544,20 @@ QA-Übergabe
 - Manuell testbar: <ja | nein — QA_CLASSIFICATION_REASON>
 - Testanleitung:   <als Linear-Comment gepostet | fehlt — Transition ausgesetzt>
 
+Ablauf
+- Entscheidungen (STEP 5c): <E1..En | "leichte Runde, keine offenen Fragen">
+- Annahmen: <liste inkl. der während der Umsetzung ergänzten | "keine">
+- Freigabe: durch Entwickler nach eigenem Test
+- Ungeplante Rückfragen: <anzahl + Anlass | "keine">
+- Nicht committet (fremde Änderungen): <pfade | "keine">
+
 Branch
 - Feature: <FEATURE_BRANCH>  (lokal gelöscht / behalten)
 - Basis:   <BASE_BRANCH>     (auf neuestem Stand)
 
 Umsetzung
 - ACs umgesetzt: <n>/<total>
-- Iter-Loops in take-ticket STEP 9: <n>
+- Nachbesserungsrunden (STEP 3b): <n>
 - Rollen-/Permission-Tests: <n>
 - Mitgenommene Änderungen: <liste oder "keine">
 
@@ -545,7 +582,7 @@ Post-Merge-Deploy  (immer — auch bei POST_MERGE_STATUS = dev-review)
 - Restpipeline: abgeschlossen / läuft weiter (<offene jobs>) — separat vom Deployment
 
 Linear-Comment
-- Gepostet / Bearbeitet / Übersprungen
+- Gepostet (ohne Vorschau, siehe unten) / Bearbeitet / Übersprungen
 
 Nächste Schritte (manuell):
 - Deployment auf dev beobachten (falls nicht schon gewartet)
@@ -565,13 +602,20 @@ Ticket
 - Status:   "Dev Review"     (vorher: "In Progress")
 - Assignee: <REVIEWER.displayName>
 
+Ablauf
+- Entscheidungen (STEP 5c): <E1..En | "leichte Runde, keine offenen Fragen">
+- Annahmen: <liste inkl. der während der Umsetzung ergänzten | "keine">
+- Freigabe: durch Entwickler nach eigenem Test
+- Ungeplante Rückfragen: <anzahl + Anlass | "keine">
+- Nicht committet (fremde Änderungen): <pfade | "keine">
+
 Branch
 - Feature: <FEATURE_BRANCH>  (lokal noch vorhanden, nicht gemergt)
 - Basis:   <BASE_BRANCH>
 
 Umsetzung
 - ACs umgesetzt: <n>/<total>
-- Iter-Loops in take-ticket STEP 9: <n>
+- Nachbesserungsrunden (STEP 3b): <n>
 - Rollen-/Permission-Tests: <n>
 - Mitgenommene Änderungen: <liste oder "keine">
 
@@ -585,7 +629,7 @@ MR/PR
 - Reviewer:  <REVIEWER.displayName>  (auf MR eingetragen: ja/nein)
 
 Linear-Comment
-- Gepostet / Bearbeitet / Übersprungen
+- Gepostet (ohne Vorschau, siehe unten) / Bearbeitet / Übersprungen
 
 Nächste Schritte (manuell):
 - <REVIEWER.displayName> reviewt + merged
@@ -598,25 +642,27 @@ If `--review` ran (or the user opted in at STEP 2), include a one-line summary o
 
 - **STEP 0.5 pre-flight cleanup deletes a leftover branch only against proof that its content already lives in the base** — a true ancestor, or squash/patch-equivalent verified by empty per-file diffs. A squash-merge rewrites patch-ids, so `git branch -d` refusing says nothing about whether the work is merged; verify the content, then `-D`. Everything short of that proof — a dirty tree, another worktree's branch, a `backup/*` branch, or plain doubt — is surfaced as a finding and left in place for manual recovery. Its scope is the current worktree's just-shipped leftover, one branch, not a purge of local history.
 - **Limit local Playwright runs to new + affected specs to keep TDD loops fast.** Both Phase A (`take-ticket`) and Phase D (`git:ship` auto-merge path) default to `lt dev test -- <spec>` (non-lt projects: `pnpm exec playwright test <spec>`); the full Playwright suite is slow and runs in **CI**. Only run the full local suite when the user explicitly asks.
-- **Phase C releases its own browser — no idle Chrome survives the cycle.** The `validating-changes-in-browser` skill drives Chrome via the Chrome DevTools MCP; it reuses a single tab wherever possible (`navigate_page`, not a fresh tab per step) and `close_page`s every tab it opened once the walk concludes — on every skill verdict. This is independent of the dev-server decision: even when `lt dev up` is left running (e.g. `WAITING-FOR-USER`, or the STEP 3b "pausieren" choice) so the user can re-test, the automation browser is still closed to save resources.
+- **Phase C releases its own browser — no idle Chrome survives the cycle.** The `validating-changes-in-browser` skill drives Chrome via the Chrome DevTools MCP; it reuses a single tab wherever possible (`navigate_page`, not a fresh tab per step) and `close_page`s every tab it opened once the walk concludes — on every skill verdict. This is independent of the dev-server decision: even when `lt dev up` is left running (e.g. `WAITING-FOR-USER`, or while the STEP 3b release gate waits) so the user can re-test, the automation browser is still closed to save resources.
 - **A green `check` is the precondition for every MR/PR and every merge in this cycle.** The `check` script runs in the [`running-check-script`](${CLAUDE_PLUGIN_ROOT}/skills/running-check-script/SKILL.md) skill's **Blocking** mode at three points: `take-ticket` STEP 8 (Phase A), and `git:ship` STEP 1 and STEP 4b (Phase D). At each one, **every** error is fixed at its root, across **every** discovered project — pre-existing errors included, because whether an error came from this ticket makes no difference to whether the project runs, and it blocks the next person just as hard either way. The deciding question is only ever "can this be fixed?", and while the answer is yes, it gets fixed; `STALLED` means attack it differently, not give up.
 
   The single Accepted residual is a dependency CVE whose full six-step escalation ladder is exhausted and documented. Everything else that stays red stops the cycle: no push, no MR/PR, no merge, branch left local and intact. A red `check` landing on `dev` turns CI red for the whole team, and the next auto-pick then branches off that broken state — which is why this gate sits before the MR and not after it.
-- **`take-ticket` STEP 9 gates everything after Phase A.** Its re-analysis user gate is the cycle's contract for completeness, so Phase B onward runs on one condition: STEP 9 completed cleanly and the user confirmed. Any other outcome ends the cycle with that diagnosis surfaced.
+- **All questions are asked up front; the developer judges the result once.** The cycle asks while the developer is at the screen: the STEP 5c decision round and the STEP 1a process round. From there it runs unattended, and the developer's quality verdict is collected once, at STEP 3b, on a fully prepared stack. A process question asked in the middle of the run, or a second completeness question after `take-ticket` STEP 9, stops a run the developer believes is unattended and is a defect. The only mid-run stops are blocking ones: a contradiction with the decision record, a review finding that could not be fixed, a failed boot, CI or deploy, and the questions a failure path in Phase D already defines.
+- **`take-ticket` STEP 9 completing cleanly gates everything after Phase A.** With `--in-cycle` its completeness verdict is not asked but carried: the AC verdicts go into the STEP 3b test package, where each one maps to the steps that show it.
+- **The browser is walked once per iteration, in Phase C, after the review.** `take-ticket --in-cycle` skips its own STEP 9.5 walk; walking before the review and again after it doubles the longest step for no additional evidence.
 - **Follow-up tickets follow `take-ticket` STEP 9a, which owns that rule in full** — when to absorb a finding rather than file it, the parallel-work test that decides it, the `Open` / `Blocked` / project-assigned states a filed one gets, and the carry-to-completion duty for a ticket whose content gets absorbed. Read it there; it is the single source of truth, so a change to the policy is a one-place edit.
 
   **The cycle adds exactly one thing to it: the moment a `Blocked` follow-up becomes takeable.** A follow-up that needed this ticket merged moves from `Blocked` to `Open` once STEP 4b's healthy-dev-deploy verification confirms the merge is actually live — not at merge time, and not at the end of the cycle. Standalone `take-ticket` runs have no such verification, so they release after the merge lands; the cycle waits for the deploy, because a follow-up released against code that merged but never deployed is worked against a stale dev. This release applies to `Blocked` tickets only: a follow-up Claude proposed sits in `Triage` and stays there, because what it is waiting for is a human decision, not a deploy.
-- **On a `READY-TO-SHIP` verdict, the path from Phase C to Phase D runs through the manual re-test handoff (STEP 3b).** The cycle emits the manual (Änderungs-Zusammenfassung + Credentials + Testdaten + Schritt-für-Schritt), passes its Freigabe-Gate, and enters STEP 4 on the explicit "Direkt zu Phase D" choice — that single choice is the whole entry condition. The manual is assembled from Phase C's returned outputs, so no second browser walk happens here.
-- **When the user picks "Ich teste selbst" (STEP 3b option 2 — incl. any free-text equivalent — or the Phase C `WAITING-FOR-USER` verdict), the cycle MUST first run the Manual-Test Preparation routine and hand over all five deliverables before pausing:** (1) passende Testdaten in der laufenden Dev-DB vorbereitet (nicht die `-test`-DB), (2) Upload-Testdateien erzeugt *falls* die Änderung ein Upload-Feld betrifft (sonst bewusst keine), (3) kurze, leicht verständliche Zusammenfassung von Ticket + Testziel, (4) Credentials aller benötigten Accounts mit literalen Passwörtern, (5) Schritt-für-Schritt-Anleitung mit vollständigen URLs (auf echte Datensätze zeigend) und genauem was/wie/warum je Schritt. Pausing on this path without these five is a contract violation.
-- **The merge strategy is always a stated decision (STEP 4a):** either the user passed `--auto-merge` / `--review-handoff`, or the gate asks and they answer. Those two are the only ways `MERGE_STRATEGY` gets a value.
-- **The post-merge Linear state is always a stated decision (STEP 4b.2)** on the auto-merge path: either `--post-merge-status=…` supplied it, or the gate asks. What the gate may offer is decided first, by STEP 4b.1's classification — so the user is never shown a state the ticket cannot reach.
+- **Nothing is deployed before the developer could test it (STEP 3b).** Every `READY-TO-SHIP` verdict leads to the test package and the release gate, and STEP 4 is entered only on the developer's explicit "Getestet, bereitstellen". No flag and no earlier answer skips this: the unattended run before it is only acceptable because the developer checks its result here. The package is assembled from what the cycle already produced, so no second browser walk happens.
+- **The developer is asked for approval only on a prepared stack with the full test package on screen (STEP 3b, and likewise on the Phase C `WAITING-FOR-USER` verdict):** (1) test data prepared in the running dev DB (never the `-test` DB), (2) upload sample files generated *if* an upload surface is affected, (3) the Kurzfassung: every requirement in plain words with what changed and the step that shows it, every `Annahme` and every deliberate omission under "Bitte besonders prüfen", one quality line, (4) every account with its literal password, (5) numbered steps grouped by requirement, each with its complete clickable link to a real record, exact action, expected result, and reason, covering every requirement and every `Annahme`. Asking without these five is a contract violation.
+- **The merge strategy is always a stated decision:** a flag, the STEP 1a answer, or (only if neither exists) the STEP 4a question. Those are the only ways `MERGE_STRATEGY` gets a value.
+- **The post-merge Linear state is always a stated decision** on the auto-merge path: `--post-merge-status=…`, the STEP 1a answer, or (only if neither exists) the STEP 4b.2 question. What the gate may offer is decided first, by STEP 4b.1's classification — so the user is never shown a state the ticket cannot reach.
 - **"QA Testing" is reached only by a ticket that a non-developer can actually test, and only together with its instructions.** The column sits in front of "UA Testing" and is worked by people who do not read code, so both conditions are checked before the transition: STEP 4b.1 classifies frontend verifiability from the diff and Phase C's walked flows (never from the ticket title) **before the state question is asked**, so a ticket that fails it is never offered "QA Testing" at all; and STEP 4b.3c confirms the German test instructions are on the ticket. A ticket that fails the classification goes to "Awaiting Release" with its one-sentence reason stated. A ticket whose instructions cannot be posted does **not** move at all — it rests on "Dev Review" (unassigned) and the summary reports the QA handover as pending. Both failure shapes cost a tester a round-trip: an untestable ticket in a testing column is one nobody can clear, and an instruction-less one is indistinguishable from a ticket nobody has looked at. The classification, the format, and the credentials rule live in [`writing-qa-test-instructions`](${CLAUDE_PLUGIN_ROOT}/skills/writing-qa-test-instructions/SKILL.md) — a change to the policy is a one-place edit there.
 - **Who tests is team state, not plugin state.** The QA assignee default lives in `${CLAUDE_PLUGIN_DATA}/qa-handover.json` on the running machine, keyed by Linear team — never in the plugin, and never in a project repository. A person's name hard-coded into a published plugin is personal data shipped to every installation, and it is wrong for every team but one. The command therefore asks once per team and remembers the answer, so the automation is identical from the second run onward.
-- **The Linear test instructions name roles, never passwords** — a Linear comment is workspace-readable and archived indefinitely. This is the deliberate opposite of STEP 3b's local re-test manual, which does carry literal `@test.com` passwords because it stays in the developer's own session and points at their local dev DB. Never copy the credentials block from the one into the other.
+- **The Linear test instructions name roles, never passwords** — a Linear comment is workspace-readable and archived indefinitely. This is the deliberate opposite of STEP 3b's local test package, which does carry literal `@test.com` passwords because it stays in the developer's own session and points at their local dev DB. Never copy the credentials block from the one into the other.
 - **A ticket is DONE once a clean, healthy dev deploy is verified (STEP 4b.3) — for EVERY ticket, including pure dev-tooling / config-only / test-only changes.** The auto-merge path reports the cycle complete, and pushes the Linear status forward, on exactly two conditions: (a) the post-merge **deploy job** on `<BASE_BRANCH>` is green AND (b) the **new** containers/replicas of the merged commit are verifiably running and healthy. Until both hold, the ticket rests on "Dev Review" (unassigned) and the cycle stays open. Anchor on the deploy *job*, not the pipeline: a pipeline may carry unrelated long-running work (image builds for other consumers, publishing, notifications) whose outcome says nothing about whether the server is running the merged code — waiting for it either stalls a finished deployment or paints it red for a foreign failure (observed: an appliance image build ran >1 h next to a 6-minute rollout). A green merge or a green deploy *job* is not enough: the platform's aggregate "healthy" count can include old/superseded containers that keep serving while the new ones crash-loop (observed: a "3/3 healthy" deploy while the new API crash-looped and Swarm served the 22h-old build — dev stale for ~22h, unnoticed). Verify container health against the merged image tag (`get_deployment_status` + `list_deployment_containers` in this stack). If the new containers are unhealthy or the deploy failed/timed out, the ticket stays on "Dev Review" (unassigned), the crash logs are surfaced, and the **root cause is fixed** (in scope even when pre-existing/infra; grund-repo if stack-wide) before the ticket counts as done.
 - **The forward transition (STEP 4b.3) waits for that same healthy dev deploy.** When `POST_MERGE_STATUS` is `qa-testing` or `awaiting-release`, the cycle moves the ticket once the verification above passes, and only then — a tester opening a stale build burns a QA cycle and erodes trust in the handoff. On a failed or timed-out deploy the ticket rests on "Dev Review" (unassigned), and the user is told to redo the transition by hand after fixing the deploy.
 - **Reviewer-Handoff ends at the handoff.** Phase D's reviewer-handoff path closes after MR/PR creation, Linear assignment, and MR reviewer assignment. The merge belongs to the human reviewer.
-- **Auto-merge path always runs `git:ship --auto-merge --skip-reanalysis`** because Phase A already did the equivalent re-analysis and STEP 4a already captured the merge consent. Running them twice would re-prompt the user pointlessly.
+- **Phase D runs unattended after the developer's approval.** The auto-merge path always runs `git:ship --auto-merge --skip-reanalysis --unattended` and the handoff path `dev-submit --unattended`: Phase A already did the equivalent re-analysis, STEP 1a (or STEP 4a) captured the merge consent, and STEP 3b the approval. Asking any of it again would stop a run the developer has left. What still stops Phase D is what a human must decide: a retry cap hit, a second infra flake in a row, a deploy that failed or overran its wait, a Linear state with no match.
 - **Auto-merge path (GitLab): the merge happens after `git:ship` STEP 7 polled the pipeline to `success`, via a plain `glab mr merge --squash` in STEP 8.** `git:ship --auto-merge` skips the STEP 8 *confirmation*, nothing else — the green-pipeline wait stays. (Squash is correct here **only because this cycle always ships a feature branch**: Phase A creates `feature/<ticket>`, so the source is never a base branch. See the base-branch rule below.)
 
   **glab's native merge-when-pipeline-succeeds (`glab mr merge --auto-merge`) is armable only while the pipeline is already `running`.** On a freshly created, still-`pending` pipeline it prints `! No pipeline running` and merges **immediately**: the MR lands before CI, and the full validation (`api:test` / `app:test`) then runs post-merge on `dev` instead of gating the merge. Observed live on DEV-2574 — CI and the STEP 4b.3 deploy verification caught it, but the merge should have waited. So the poll-then-merge path above is the one this cycle takes; where native auto-merge is used at all, it is armed only once the pipeline reads `running`. Either way, STEP 4b.3's healthy-dev-deploy verification still follows.

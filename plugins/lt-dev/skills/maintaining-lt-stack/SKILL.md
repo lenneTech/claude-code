@@ -211,6 +211,16 @@ What does **not** go over messages: which repos exist and in which order they go
   `git -c credential.helper='!gh auth git-credential' push https://github.com/lenneTech/<repo>.git <branch>`.
   `gh release create` is unaffected either way.
 
+  **Run the check when a push fails on what reads like a rights problem.** Measured
+  2026-09-08 on nest-server-starter: `git push origin main` failed with `Please make sure you
+  have the correct access rights and the repository exists`, while a push to nest-server over
+  SSH worked in the same minutes. Nothing was wrong with the account, the collaborator status
+  or the remote URL — SSH to github.com was dead for that path only, the check said
+  `https<TAB>github.com<TAB>no response from github.com (timeout or unreachable)`, and the HTTPS
+  fallback went through immediately. The message names the last thing git could think of, not
+  the cause, and it is per-repo: a working push elsewhere proves nothing. Ask the script before
+  investigating permissions.
+
   **Do NOT use `ssh-add -l` for this.** It is the obvious test and it is wrong here — measured
   2026-08-23, where it reported "The agent has no identities" while `ssh -T git@github.com`
   authenticated fine and had done all along. The reason: `~/.ssh/config` routes SSH to the
@@ -480,6 +490,15 @@ What does **not** go over messages: which repos exist and in which order they go
 4. Commit: on a nest-server version change exactly
    `Updated to nest-server version <X.Y.Z>`, otherwise a normal message →
    push main.
+5. **Then stop — the tag makes itself.** `.github/workflows/tag.yml` fires on a push
+   to main that touched `package.json`, reads the version out of the manifest and
+   pushes an annotated `vX.Y.Z` onto the bump commit. So do not reach for `git tag`
+   because the tag series looks incomplete: the push comes back `already exists`, and
+   a lightweight tag set locally before the workflow lands diverges from the annotated
+   one on the remote (delete it, then `git fetch --tags`). Skip `pnpm run release`
+   (standard-version) too: besides tagging, which the workflow already does, it bumps
+   the version, and step 1 already set that by hand, so the version would rise a
+   second time (11.41.1 → 11.41.2).
 
 ### Marketplace repos (`claude-code` public, `claude-code-internal` private)
 

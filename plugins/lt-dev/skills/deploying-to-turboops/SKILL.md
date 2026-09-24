@@ -1,6 +1,6 @@
 ---
 name: deploying-to-turboops
-description: 'Takes a lenne.tech fullstack monorepo live on TurboOps (turbo-ops.de) via GitLab CI/CD. Covers the deploy contract (.turboops.json, .gitlab-ci.yml, docker-compose.yml, image drift), `lt deployment create`, CI/CD variables, multi-service stages via `turbo deploy --compose`, DNS-before-Let''s-Encrypt, and the swarm MongoDB URI. Activates on "TurboOps", "turbo deploy", "live gehen", "deployen", and on symptoms like "not found in registry" or "only app rolled out". NOT for local dev orchestration (use using-lt-cli). NOT for reproducing CI locally (use validating-ci-pipelines-locally). NOT for authoring Docker/CI configs from scratch (use the devops agent).'
+description: 'Takes a lenne.tech fullstack monorepo live on TurboOps (turbo-ops.de) via GitLab CI/CD. Covers the deploy contract (.turboops.json, .gitlab-ci.yml, docker-compose.yml, image drift), `lt deployment create`, CI/CD variables, multi-service stages via `turbo deploy --compose`, DNS-before-Let''s-Encrypt, the swarm MongoDB URI, and promotion stages (why a promotion branch decides WHEN a deploy happens but not WHAT is deployed, and how a hotfix gets an image of its own). Activates on "TurboOps", "turbo deploy", "live gehen", "deployen", "Hotfix nach test", "Promotion-Stage", and on symptoms like "not found in registry", "only app rolled out", or a stage serving content its branch does not contain. NOT for local dev orchestration (use using-lt-cli). NOT for reproducing CI locally (use validating-ci-pipelines-locally). NOT for authoring Docker/CI configs from scratch (use the devops agent).'
 ---
 
 # Deploying an lt Fullstack Project to TurboOps
@@ -367,6 +367,66 @@ bug and not this one: it is an unhandled error on a streamed response (e.g.
 mid-response. The proxy reports a gateway error, so it reads as "server down"
 while the server is fine. Look for a missing stream error handler, not at
 infrastructure.
+
+## Promotion stages — the branch says WHEN, not WHAT
+
+A TurboOps stage runs in one of two modes, and the difference only shows up when
+something goes wrong.
+
+- **BUILD stage** (typically `dev`): the CI pipeline on its branch builds and
+  pushes an image tagged with the commit SHA, and the stage deploys that image.
+- **PROMOTE stage** (typically `test` / `staging`): it deploys the image the
+  **previous stage currently holds**. Its own branch triggers the deploy, but
+  contributes nothing to what is deployed.
+
+You can read the mode straight out of the deploy job's log:
+
+```
+ℹ Stage "Staging" uses promotion - using image from previous stage
+```
+
+and out of the stage itself: a PROMOTE stage's `currentImageTag` is a commit
+from the **source** branch, not from its own.
+
+On a regular `dev → test` promotion this is invisible, because the promoted
+commit and the dev image are the same content by construction. It stops being
+invisible the moment the promotion branch carries something the source branch
+does not — and it fails **silently**: the deploy is green, the containers are
+healthy, and the branch simply does not describe what is running.
+
+Observed (SVL, DEV-3239): an urgent fix was cherry-picked onto `test` alone, to
+keep five unrelated in-review tickets off the customer stage. Git was correct —
+`test` held only the fix, verified byte-identical to the dev commit. The deploy
+promoted dev's image anyway, so the customer stage ran the full dev build. The
+git side had been checked thoroughly; the deployment side had not.
+
+**The standard path stays `dev → test → main`.** Promote whole states forward;
+that is what keeps branch and deployment in agreement and what the no-squash
+promotion guards exist to protect.
+
+**For a genuine hotfix**, give the commit an image of its own:
+
+1. Merge the fix into the promotion branch (no squash — promotion branches keep
+   their full history).
+2. Build an image **for that commit** — a `when: manual` + `allow_failure: true`
+   build job on that branch, using `docker compose build` / `push` (never
+   `buildx --push`, whose OCI media types TurboOps fails to resolve). Manual,
+   because a job that runs on every promotion costs a full image build nobody
+   pins; `allow_failure`, because the deploy job usually sits in a later stage
+   with no `needs:` and a blocking manual job would gate every promotion behind
+   a click.
+3. Deploy it as a **second, explicit step**: redeploy the stage pinned to that
+   tag (`redeploy_stack` with `imageTag`). The stage's own deploy job keeps
+   promoting the source stage's image, so without this step nothing changes.
+
+Step 3 is the one that is easy to forget: building the image does not deploy it,
+and the pipeline will look entirely green without it.
+
+Note what a rollback does and does not undo. The image goes back; **data does
+not**. Before rolling a stage back, check whether the deployed build ran a
+migration — in the lt stack `docker-entrypoint.sh` applies migrations on boot,
+and `ls /app/dist/migrations` inside the running container tells you whether the
+image carried any at all.
 
 ## Gotchas / Traps
 

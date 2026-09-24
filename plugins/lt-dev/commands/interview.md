@@ -36,7 +36,7 @@ Read the plan file in full. Then establish the facts it rests on: the modules it
 
 ### 2. Grill
 
-Follow the `grilling-decisions` skill end-to-end: decision tree in dependency order, one question at a time via `AskUserQuestion`, a recommended answer on every question, no action until the user confirms the understanding is shared.
+Follow the `grilling-decisions` skill end-to-end: decision tree in dependency order, the frontier asked in rounds via `AskUserQuestion`, a recommended answer on every question, a decision record at the end, no action until the user confirms the understanding is shared.
 
 Coverage worth walking for a plan of this kind, as branches of the tree rather than a checklist to march through:
 

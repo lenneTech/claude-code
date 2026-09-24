@@ -21,7 +21,7 @@ Activates at the end of these workflows (invoked from each):
 
 - `/lt-dev:resolve-ticket` — after the review-pipeline guidance, before `/lt-dev:dev-submit`
 - `/lt-dev:take-ticket` — inside STEP 10 (Review-Ready Summary), before handoff
-- `/lt-dev:ticket-cycle` — between Phase B (review) and Phase C (ship)
+- `/lt-dev:ticket-cycle` — as its Phase C, after the optional review and before the release gate (with `owns_release_gate: true`)
 - `/lt-dev:review` — as the final Phase 7, after Phase 6 decision & fix-execution
 - `/lt-dev:debug` — after Step 7 (fix implementation) succeeded
 - `/lt-dev:production-ready` — as the final phase, after CI validation
@@ -45,20 +45,23 @@ Activates at the end of these workflows (invoked from each):
 6. **Account visibility is mandatory.** Every step that requires a login MUST explicitly name the account (email, password, role). The developer reads the list as their own re-walk manual — they must be able to log into the stack without follow-up questions. This applies to both reused seed accounts AND newly-created accounts. For public/unauthenticated steps, mark them explicitly as `Account: no login (public / incognito)` (translated to the user's session language) instead of omitting the field.
 7. **Ticket context block is mandatory.** Every walked list begins with a short context block stating (a) what the task / bug was in 1–3 sentences ("task summary"), (b) how it was implemented or fixed in 1–3 sentences plus the most-relevant `file:line` references ("implementation summary"), and (c) the ticket link when the originating workflow knows one (Linear URL, GitHub issue URL, file path of a `*.md` story). The user uses this block to orient themselves before re-walking — they should not need to switch context to remember what the branch is about.
 8. **URL-per-step is mandatory for UI steps — as a clickable markdown link.** Every step that touches a browser route MUST carry the fully-qualified URL the user navigates to, **rendered as a clickable markdown link** so the user clicks straight from the list (e.g. `URL: [users/new](https://<slug>.localhost/users/new)`). The session renders GitHub-flavored markdown, so `[label](url)` is clickable in the terminal / VS Code. Deep links (with query params, route params, or hash fragments) keep the exact form you used during the walk inside the link target. For non-UI steps (backend smoke pass, CLI flow), record the equivalent locator (`curl` URL + method, command line). Omit only when the step is genuinely location-less.
-9. **The user's final answer is binary in spirit:** ship or optimize further. The `AskUserQuestion` at the end always offers both — never end the workflow without that gate.
+9. **The user's final answer is binary in spirit:** ship or optimize further. The `AskUserQuestion` at the end always offers both, unless the originating workflow owns the release gate itself (`owns_release_gate`, see Step 8): then this skill returns its verdict without asking, and the workflow asks once, after its own preparation.
 10. **Keep the browser lean and close it when the walk ends.** Reuse a single Chrome DevTools MCP page across steps (`navigate_page`, not a fresh `new_page` per step); open a second tab only when a step truly needs two contexts at once, and `close_page` it immediately after. When the walk concludes — on **every** `AskUserQuestion` outcome — close every page you opened via `close_page` so the MCP releases the Chrome instance, even when you leave `lt dev up` running for the user's own re-test (they use their own browser). Browser-close is independent of the dev-server keep/stop decision. See [managing-dev-servers](${CLAUDE_PLUGIN_ROOT}/skills/managing-dev-servers/SKILL.md).
 
 ## Workflow
 
 ### Step 1 — Decide whether this step applies at all
 
-Skim the diff (`git diff <base>...HEAD --name-only`):
+The browser walk is a test run like the unit, API, and E2E suites: **whenever the change can be verified through the frontend, directly or indirectly, it runs automatically.** Never ask whether to walk, and never leave it to a flag. The criterion is the one [`writing-qa-test-instructions`](${CLAUDE_PLUGIN_ROOT}/skills/writing-qa-test-instructions/SKILL.md) Part 1 applies to QA, so "walked by Claude" and "testable by QA" never disagree.
 
-- **At least one file under `projects/app/`, `packages/app/`, `app/`, `**/*.vue`, `**/*.svelte`, `**/*.tsx`, or any frontend route directory** → full browser pass mandatory.
-- **Backend-only diff (`projects/api/`, `src/server/`, etc.)** that exposes a new/changed endpoint:
-  - If a frontend consumer exists in the same repo → still do a browser pass (the new endpoint will manifest in the UI somewhere).
-  - If no consumer exists yet → reduce to an API smoke pass: hit each new/changed endpoint with `curl` against `https://api.<slug>.localhost` (or the active API URL from `lt dev status`) at three role levels (Admin, regular User, unauthenticated) and assert the response matches the documented contract. Skip the UI portion explicitly in the list.
-- **Pure tooling / config / CI diff** (no runtime impact): log "No browser test required — diff has no runtime impact" (translated to the user's session language) and exit cleanly. Do NOT skip the user gate, even here — they still get the closing question to confirm "ship".
+Skim the diff (`git diff <base>...HEAD --name-only`) and ask where its effect shows up:
+
+- **Directly:** at least one file under `projects/app/`, `packages/app/`, `app/`, `**/*.vue`, `**/*.svelte`, `**/*.tsx`, or any frontend route directory → full browser pass.
+- **Indirectly:** a backend, config, or data change whose effect reaches the UI through a reproducible symptom → full browser pass that produces and checks that symptom. Typical shapes: a validation rule that changes the error a form shows, a permission change that shows, hides, or rejects an action for a role, a query or filter change that alters which records a list shows, a new field that a page renders, an e-mail the app sends (check it in Mailpit), a migration whose result is visible on a page, a runtime config change (`nuxt.config.ts`, env defaults) that changes behaviour. Name the symptom per step, so the walked list says what it proves.
+- **No frontend path at all** (a new endpoint no UI consumes yet, an internal job with no visible trace): API smoke pass instead. Hit each new or changed endpoint with `curl` against `https://api.<slug>.localhost` (or the active API URL from `lt dev status`) at three role levels (Admin, regular User, unauthenticated) and assert the response matches the documented contract. State the skipped UI portion and its reason in the list.
+- **No runtime impact** (pure tooling, CI, docs, tests only): log "No browser test required — diff has no runtime impact" (translated to the user's session language) and exit cleanly with `READY-TO-SHIP`.
+
+When in doubt between "indirectly" and "no frontend path", walk. A walk that finds nothing costs minutes; a symptom nobody looked at reaches QA or production.
 
 ### Step 2 — Boot the application
 
@@ -245,7 +248,9 @@ If `lt dev up` was started by this skill, leave it running for the user's re-wal
 
 ### Step 8 — Ship-or-Optimize gate
 
-Always close with `AskUserQuestion`. **Translate the question text and the four option labels to the language the user has been speaking** — the English version below is illustrative:
+**When the originating workflow passed `owns_release_gate: true`** (`/lt-dev:ticket-cycle` does, because it asks the developer once, after preparing test data and a re-test manual), do not ask here. Close the automation browser, leave `lt dev up` running for that preparation, and return the verdict you derived: `READY-TO-SHIP` when every step of the walked list passed, after your own fixes; `stall_guard_triggered` when a finding did not converge. A second question at this point would stop a run the developer expects to continue on its own.
+
+Otherwise, always close with `AskUserQuestion`. **Translate the question text and the four option labels to the language the user has been speaking** — the English version below is illustrative:
 
 - **Question:** "Browser walk complete. Ready to ship, or should we optimize further?"
 - **Options:**
@@ -276,6 +281,7 @@ This skill is **invoked from** another workflow — never the entry point on its
   - `implementation_summary` — 1–3 sentences describing how it was implemented or fixed, plus the most-relevant `file:line` references. Used in the ticket-context block.
   - `permission_matrix` (if Step 5 of the originating workflow produced one) — the skill uses it directly for role coverage.
   - `also_fixed_carryover` (any pre-existing issues already noted by earlier steps) — the skill will avoid double-fixing them.
+  - `owns_release_gate` (optional, default `false`) — `true` when the originating workflow asks the developer for approval itself after this skill returns. The skill then returns its verdict without its own Step 8 question (see Step 8).
 
 - **Outputs** the skill returns to the originating workflow:
   - `verdict`: `READY-TO-SHIP` | `OPTIMIZE` | `WAITING-FOR-USER` | `CANCELLED`
@@ -304,6 +310,7 @@ This skill is **invoked from** another workflow — never the entry point on its
 - Every step in the list names the account it uses — no implicit logins. New accounts created during this walk are listed with their literal credentials.
 - Every UI step in the list carries the fully-qualified URL the user navigates to as a clickable markdown link `[route](url)` (deep links included), so the user can click straight to the page.
 - The walked list opens with a ticket-context block (link + task summary + implementation summary) so the user knows what the branch is about without leaving the list.
-- The `AskUserQuestion` at the end is mandatory — there is no path that returns to the originating workflow without it.
+- The `AskUserQuestion` at the end is mandatory, except when the originating workflow owns the release gate (`owns_release_gate: true`) and asks the developer itself.
+- The walk runs automatically whenever the change is verifiable through the frontend, directly or through a symptom — nobody is asked whether to walk.
 - Keep tabs to a minimum during the walk (one page, `navigate_page`) and `close_page` every automation tab once the walk ends — the browser is never left idle, regardless of whether the dev server stays up.
 - All user-facing artefacts (test plan, walked list, status labels, AskUserQuestion text + options) are translated to the language the user has been speaking in this session — never hardcode the output language.

@@ -33,8 +33,8 @@ Used by `/lt-dev:review` for large or fullstack changes.
 
 **Phase 3 - Synthesis:**
 - Lead collects all findings and challenges
-- Produces unified report with 7-dimension grades
-- Includes remediation catalog ordered by priority
+- Keeps only findings that survived the challenge and meet `/lt-dev:review`'s bar: proven Critical or High defects in what the diff changed
+- Fixes them; everything below the bar is dropped, not listed and not turned into tickets
 
 ### Team Creation Template
 

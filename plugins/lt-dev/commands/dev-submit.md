@@ -1,6 +1,6 @@
 ---
 description: Submit current work for dev review — creates MR/PR, posts Linear comment, and moves ticket to Dev Review
-argument-hint: "[issue-id]"
+argument-hint: "[issue-id] [--unattended]"
 allowed-tools: Read, Bash(git:*), Bash(gh pr:*), Bash(glab mr:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), mcp__plugin_lt-dev_linear__*, AskUserQuestion, ListAgents, SendMessage
 disable-model-invocation: false
 ---
@@ -41,6 +41,8 @@ disable-model-invocation: false
 
 Determine the target issue ID:
 
+**`--unattended`** (set by `/lt-dev:ticket-cycle` after the developer approved the result) removes the routine questions: STEP 1 commits only this session's paths and pushes, STEP 3 posts without the approval preview. Foreign or unattributable paths are held out and named in the summary, never staged. Strip the flag before resolving the issue ID.
+
 1. **If `$ARGUMENTS` is provided and non-empty:** Use it directly as the issue ID.
 2. **If no argument:** Auto-detect from the current git branch name:
    - Run `git branch --show-current`
@@ -61,14 +63,15 @@ Store the resolved issue ID as `ISSUE_ID` for subsequent steps.
      ticket while the peer is still mid-slice. In base repos this is the normal case, not an edge one:
      house rule keeps their work uncommitted on the checked-out branch. Details and the `ORIGIN`
      message: [`coordinating-peer-sessions`](${CLAUDE_PLUGIN_ROOT}/skills/coordinating-peer-sessions/SKILL.md).
-   - Then ask the user via `AskUserQuestion`:
+   - With `--unattended`: take Option 1 without asking and list any held-out path in STEP 5.
+   - Otherwise ask the user via `AskUserQuestion`:
      - "Es gibt uncommittete Änderungen:"
      - Show the list of changed files, each marked with its attribution (this session / `<peer>` / unattributed)
      - Option 1: "Nur meine Änderungen committen & pushen" → Stage this session's paths explicitly, commit, push (default where anything is foreign)
      - Option 2: "Alles committen & pushen" → Stage all, create commit with descriptive message, push
      - Option 3: "Ich mache es selbst" → Pause and let the user handle it, then continue
 3. **Unpushed commits:** Run `git log @{upstream}..HEAD --oneline 2>/dev/null`.
-   - If there are unpushed commits (or no upstream), ask the user:
+   - If there are unpushed commits (or no upstream), push directly with `--unattended`; otherwise ask the user:
      - "Es gibt unpushte Commits. Soll ich pushen?"
      - Option 1: "Ja, pushen" → Run `git push -u origin $(git branch --show-current)`
      - Option 2: "Nein, abbrechen" → Abort
@@ -175,7 +178,7 @@ Abgesichert über: <Unit-/API-/E2E-Tests, grüne CI-Pipeline>.
 
 The change is not merged yet on this path, so the instructions describe what the reviewer (and later the tester) verifies once it lands.
 
-4. **User Approval** via `AskUserQuestion`:
+4. **User Approval** via `AskUserQuestion` (with `--unattended`: post directly and print the posted comment in STEP 5):
    - Show the generated comment
    - Option 1: "Posten" → Post as-is
    - Option 2: "Bearbeiten" → Let the user modify before posting

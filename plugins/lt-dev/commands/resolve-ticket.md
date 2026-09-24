@@ -32,7 +32,7 @@ disable-model-invocation: false
 | `/lt-dev:create-story` | Create a user story |
 | `/lt-dev:create-task` | Create a technical task |
 | `/lt-dev:create-bug` | Create a bug report |
-| `/lt-dev:review` | Comprehensive 7-dimension code review after implementation |
+| `/lt-dev:review` | Code review after implementation: proven Critical/High defects, fixed automatically |
 | `/review` | Claude Code built-in: PR-level review after PR creation |
 | `/lt-dev:linear-comment` | Generate testing comment for the issue |
 | `/lt-dev:dev-submit` | Submit work for review (MR/PR + comment + status update) |
@@ -128,7 +128,7 @@ Use the `building-stories-with-tdd` skill to execute the full implementation cyc
 
 **Then guide the user through the quality pipeline:**
 
-1. `/lt-dev:review $ARGUMENTS` — Comprehensive 7-dimension quality check
+1. `/lt-dev:review $ARGUMENTS` — Code review: proven Critical/High defects, fixed automatically
 2. Address any findings from the review
 3. **Browser validation** — Follow the [`validating-changes-in-browser`](${CLAUDE_PLUGIN_ROOT}/skills/validating-changes-in-browser/SKILL.md) skill end-to-end. After review is clean, boot `lt dev up`, seed `@test.com` data, derive the step-by-step test list from the diff (every step naming its account + role + credentials, including newly-created accounts), walk the list yourself via Chrome DevTools MCP, fix every finding you encounter (including pre-existing ones), then render the walked list for the user and close with the AskUserQuestion ship-or-optimize gate. Only proceed to step 4 when the verdict is `READY-TO-SHIP`. If `OPTIMIZE`, loop back to Implementation Workflow → Validate with the user's notes. If `WAITING-FOR-USER` or `CANCELLED`, stop and surface the state.
 4. `/lt-dev:dev-submit $ARGUMENTS` — Create MR/PR, post testing comment, and move ticket to "Dev Review"

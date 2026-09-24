@@ -40,7 +40,7 @@ Read the spec file (SPEC.md by default, or the file given as argument) and creat
 
 3. **Settle the spec's open decisions before planning**
 
-   A spec that leaves a decision open does not remove it, it defers it into the plan, where it gets guessed and baked into eight phases of checkboxes. Read the spec, gather the facts it rests on from the codebase, and where a genuine decision is still open, run the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md) skill: one question at a time, each carrying your recommendation, facts looked up rather than asked.
+   A spec that leaves a decision open does not remove it, it defers it into the plan, where it gets guessed and baked into eight phases of checkboxes. Read the spec, gather the facts it rests on from the codebase, and where a genuine decision is still open, run the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md) skill: the frontier asked in rounds, each question carrying your recommendation, facts looked up rather than asked.
 
    Fold the answers into the plan's **Architecture & Tech Stack** rationale, so the next reader sees the decision and the reason together. When the spec is genuinely unambiguous, say so and continue.
 

@@ -1,6 +1,6 @@
 ---
 description: 'Ship the current feature branch into dev — pre-flight check, commit, rebase, test, check, MR/PR, Linear comment + "Dev Review" + unassign, wait for CI, merge (squash for feature branches, regular merge when promoting a base branch into a higher base branch), delete branch. Auto-retries on pipeline failure.'
-argument-hint: "[--base=<branch>] [--max-pipeline-retries=<n>] [--no-squash] [--keep-branch]"
+argument-hint: "[--base=<branch>] [--max-pipeline-retries=<n>] [--no-squash] [--keep-branch] [--auto-merge] [--skip-reanalysis] [--unattended]"
 allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, ListAgents, SendMessage, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document
 disable-model-invocation: false
 ---
@@ -10,8 +10,8 @@ disable-model-invocation: false
 > **Invocation policy.** Start this command only when the user asks for it explicitly
 > (`/lt-dev:git:ship`) **or** when an orchestrating lt-dev command invokes it as a documented
 > step — `/lt-dev:ticket-cycle` STEP 4b (auto-merge path) is the canonical caller, and it
-> passes `--auto-merge --skip-reanalysis` because the merge consent and the re-analysis
-> already happened upstream. Never start it off your own initiative: it force-pushes, opens an
+> passes `--auto-merge --skip-reanalysis --unattended` because the merge consent, the re-analysis,
+> and the developer's approval of the result already happened upstream. Never start it off your own initiative: it force-pushes, opens an
 > MR/PR, merges into the base branch and deletes the feature branch.
 >
 > The merge itself keeps its own gate — without `--auto-merge` STEP 8 still asks before
@@ -57,6 +57,7 @@ Parse `$ARGUMENTS` for these optional flags:
 | `--keep-branch` | Don't delete feature branch after merge | delete enabled |
 | `--auto-merge` | Skip the STEP 8 confirmation prompt — squash-merge as soon as CI is green | off (always asks) |
 | `--skip-reanalysis` | Skip STEP 1.5 ticket re-analysis (use when called from an orchestrator that already did it) | off |
+| `--unattended` | Set by `/lt-dev:ticket-cycle` after the developer approved the result: no routine question from here to the end. Commits and pushes this session's own changes (foreign or unattributable paths are held out, never staged), retries one infra flake per attempt within the retry cap, and posts the STEP 10c Linear comment without the preview gate. Genuine blockers still ask: a Linear state with no match, a second infra flake in a row, a retry cap hit | off |
 
 ---
 
@@ -200,6 +201,9 @@ If all ACs are satisfied, log `All acceptance criteria satisfied — proceeding`
      live, and do not wait for the answer — the user's choice is what unblocks the ship.
    - `UNATTRIBUTABLE` — nobody live wrote them, so they are this session's from a cleared context or
      a closed one. Show them to the user with that stated, and let them decide.
+   - **With `--unattended`:** do not ask. Stage only this session's paths, leave every flagged or
+     unattributable path untouched in the working tree, and list those paths in the STEP 11
+     summary. Committing somebody else's work under this ticket is never the unattended default.
 
    Format and occasions: [`coordinating-peer-sessions`](../../skills/coordinating-peer-sessions/SKILL.md).
 
@@ -209,7 +213,9 @@ If all ACs are satisfied, log `All acceptance criteria satisfied — proceeding`
    remembering the answer locally) and curates the notes so no note that a
    rename or a fix has invalidated gets committed. Only then continue below.
 2. **If there are uncommitted changes:**
-   - Ask via `AskUserQuestion`:
+   - With `--unattended`: take Option 1 without asking, staging only the paths 1a attributed to this
+     session (`git add <paths>`, not `git add -A`). Typical source: fixes made during the browser walk.
+   - Otherwise ask via `AskUserQuestion`:
      - Show the list of changed files.
      - Option 1: "Automatisch committen & pushen" — proceed below
      - Option 2: "Ich committe selbst" — pause, then re-check
@@ -405,7 +411,7 @@ Counter: `PIPELINE_ATTEMPT = 1`. Cap: `MAX = --max-pipeline-retries` (default 3)
    - GitHub: `gh run view <run-id> --log-failed` for each failed check run.
    - GitLab: `glab ci trace <job-id>` for each failed job.
 2. Diagnose: is it a real code failure or an infra flake (runner unavailable, cache miss, network)?
-3. **Infra flake** (user confirmation required): ask the user via `AskUserQuestion` whether to re-run the pipeline without code changes.
+3. **Infra flake** (user confirmation required): ask the user via `AskUserQuestion` whether to re-run the pipeline without code changes. With `--unattended`, re-run once without asking and say so in one line; ask only when the re-run fails on an infra flake again, because a second flake in a row is no longer a flake to wait out.
    - On approve: GitHub `gh run rerun <run-id> --failed`; GitLab `glab ci retry`.
    - Wait again (step 7a).
 4. **Real failure:** loop back to **STEP 3** (re-rebase to pick up any new dev commits, then re-run tests + check + push). Increment `PIPELINE_ATTEMPT`.
@@ -573,6 +579,8 @@ Then ask the user via `AskUserQuestion`:
   1. "Posten" → attach the document first (so the comment can link to it), then post the comment via `mcp__plugin_lt-dev_linear__save_comment` on `ISSUE_ID`
   2. "Bearbeiten" → let the user provide a revised version, then post
   3. "Überspringen" → don't post
+
+With `--unattended`, post without the preview: the developer already approved the result, and the comment follows the skills named above. Print the posted comment in the STEP 11 summary so it can still be corrected on the ticket.
 
 ### 10d. Status → "Dev Review" + Remove Assignee
 
