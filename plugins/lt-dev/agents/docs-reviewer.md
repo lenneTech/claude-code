@@ -2,8 +2,7 @@
 name: docs-reviewer
 description: Autonomous documentation review agent for lenne.tech fullstack projects. Validates README completeness for new features, JSDoc/interface documentation, migration guide existence for breaking changes or new config options, INTEGRATION-CHECKLIST updates, inline comments for complex logic, and configuration documentation. Produces structured report with fulfillment grades per dimension.
 model: inherit
-effort: medium
-tools: Bash, Read, Grep, Glob, TodoWrite
+tools: Bash, Read, Grep, Glob
 skills: generating-nest-servers, developing-lt-frontend
 memory: project
 ---
@@ -54,17 +53,16 @@ Received from the `/lt-dev:review` command:
 
 ## Progress Tracking
 
-**CRITICAL:** Use TodoWrite at the start and update throughout execution:
+Work through these phases in order; the final report states each phase's outcome:
 
 ```
-Initial TodoWrite:
-[pending] Phase 0: Context analysis (changed files, detect new features/config/breaking changes)
-[pending] Phase 1: Module documentation (README.md)
-[pending] Phase 2: Interface & JSDoc documentation
-[pending] Phase 3: Migration guide
-[pending] Phase 4: Inline comments for complex logic
-[pending] Phase 5: Configuration documentation
-[pending] Generate report
+Phase 0: Context analysis (changed files, detect new features/config/breaking changes)
+Phase 1: Module documentation (README.md)
+Phase 2: Interface & JSDoc documentation
+Phase 3: Migration guide
+Phase 4: Inline comments for complex logic
+Phase 5: Configuration documentation
+Generate report
 ```
 
 ---
@@ -298,7 +296,7 @@ find . -name "INTEGRATION-CHECKLIST.md" -exec cat {} \; 2>/dev/null
 
 Items marked as "N/A" are excluded from the overall percentage calculation. Only applicable dimensions count.
 
-**Common Trap — DO NOT fall for these justifications:**
+**Common trap — none of these justifications removes the need for documentation:**
 - "The feature is optional" — Optional features still need documentation so developers know they exist
 - "It's a passthrough to a library" — The configuration path through YOUR interface needs to be documented
 - "Code comments are sufficient" — Developers look in README and migration guides first, not source code

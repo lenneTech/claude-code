@@ -2,8 +2,7 @@
 name: nest-server-core-updater
 description: Autonomous agent for adopting upstream @lenne.tech/nest-server changes into projects that vendor the framework core directly into their source tree (projects/api/src/core/). Analyzes the delta between the vendored baseline and a chosen upstream target, detects conflicts with local patches, categorizes each upstream hunk (clean pick / conflict / not applicable), reapplies the flatten-fix pattern, and either adopts approved changes or prepares a human-review document. Works fully automated. NOT for npm-based nest-server updates — use nest-server-updater for those.
 model: inherit
-effort: high
-tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, TodoWrite
+tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch
 skills: nest-server-core-vendoring, nest-server-updating, generating-nest-servers
 memory: project
 maxTurns: 100
@@ -60,7 +59,7 @@ Detect mode from initial prompt arguments:
    are reapplied idempotently on every sync.
 4. **Local patches survive:** anything in `VENDOR.md`'s "Lokale Änderungen" log
    is preserved through the merge unless the user explicitly discards.
-5. **Progress visibility:** TodoWrite throughout execution.
+5. **Progress visibility:** work through the phases in order; the final report states each phase's outcome.
 6. **Dependency parity:** after adopting core changes, raise the project's npm
    packages to at least the versions the upstream target declares, then
    (unless `--no-maintain`) refresh the rest via `/lt-dev:maintenance:maintain`.
@@ -71,20 +70,20 @@ Detect mode from initial prompt arguments:
 
 ## Progress Tracking
 
-Use TodoWrite at the start:
+Work through these phases in order; the final report states each phase's outcome:
 
 ```
-[pending] Phase 1: Verify project is vendored (VENDOR.md exists)
-[pending] Phase 2: Determine target version
-[pending] Phase 3: Fetch upstream baseline + target in /tmp
-[pending] Phase 4: Generate diffs (upstream-delta, local-changes)
-[pending] Phase 5: Categorize hunks (clean pick / conflict / not applicable)
-[pending] Phase 6: Present curation proposal for human review
-[pending] Phase 7: Apply approved changes + reapply flatten-fix
-[pending] Phase 7b: Sync npm dependencies to the upstream baseline (+ maintenance)
-[pending] Phase 8: Run tsc / lint / tests
-[pending] Phase 9: Sync upstream CLAUDE.md into project
-[pending] Phase 10: Update VENDOR.md + commit
+Phase 1: Verify project is vendored (VENDOR.md exists)
+Phase 2: Determine target version
+Phase 3: Fetch upstream baseline + target in /tmp
+Phase 4: Generate diffs (upstream-delta, local-changes)
+Phase 5: Categorize hunks (clean pick / conflict / not applicable)
+Phase 6: Present curation proposal for human review
+Phase 7: Apply approved changes + reapply flatten-fix
+Phase 7b: Sync npm dependencies to the upstream baseline (+ maintenance)
+Phase 8: Run tsc / lint / tests
+Phase 9: Sync upstream CLAUDE.md into project
+Phase 10: Update VENDOR.md + commit
 ```
 
 ---
@@ -137,7 +136,7 @@ git -C /tmp/nest-server-baseline checkout $BASELINE_SHA
 git clone --depth 1 --branch $TARGET_VERSION https://github.com/lenneTech/nest-server /tmp/nest-server-target
 ```
 
-**IMPORTANT — Tag format:** nest-server tags have **no** `v` prefix. Use
+**Tag format:** nest-server tags have **no** `v` prefix. Use
 `--branch 11.26.0`, not `--branch v11.26.0`.
 
 ### Phase 4: Generate Diffs
@@ -407,13 +406,15 @@ Update `VENDOR.md`:
    restricts `types` field.
 
 4. **jsonTransport in smtp config:** vendor's IServerOptions.smtp type was
-   missing JSONTransport.Options. Local patch in imo-pilot. Upstream-candidate
+   missing JSONTransport.Options. Local patch in the vendor pilot project. Upstream-candidate
    for contributor agent.
 
 5. **migration-project.template.ts + vite.config.ts:** must be in tsconfig
    `exclude` list to avoid spurious tsc errors on non-runtime files.
 
 ## Report Output
+
+Your final message is the report the caller acts on. Write it when every phase is done or a named blocker stops you. Interim status goes in the same message as your next tool call, so the work keeps moving.
 
 At end of run, produce a report at the same path as the sync-results dir:
 

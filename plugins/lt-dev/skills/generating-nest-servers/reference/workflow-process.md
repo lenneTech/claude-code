@@ -9,7 +9,7 @@ description: Complete 7-phase workflow for NestJS module/object generation - fro
 > - **npm mode**: `@lenne.tech/nest-server` is an npm dependency. Imports use `from '@lenne.tech/nest-server'`. Framework source in `node_modules/@lenne.tech/nest-server/src/core/...`.
 > - **vendored mode** (`VENDOR.md` exists): framework source at `<api-root>/src/core/**`. Imports use relative paths (`from '../../../core'`, depth depends on location). No npm dependency.
 >
-> Generated code MUST match the project mode — the scaffolded imports, test helpers, and any `node_modules/...` path references below all need to be translated in vendored mode.
+> Generated code matches the project mode, because mixing the two fails at build time — the scaffolded imports, test helpers, and any `node_modules/...` path references below all need to be translated in vendored mode.
 
 ## Table of Contents
 - [Phase 1: Analysis & Planning](#phase-1-analysis--planning)
@@ -29,7 +29,7 @@ description: Complete 7-phase workflow for NestJS module/object generation - fro
    - List all Modules
    - Identify inheritance relationships
    - Identify enum types needed
-3. **Create comprehensive todo list** with:
+3. **Derive the ordered work plan**, covering:
    - Create each SubObject
    - Create each Object
    - Create each Module
@@ -43,7 +43,7 @@ description: Complete 7-phase workflow for NestJS module/object generation - fro
 - [ ] All components identified (SubObjects, Objects, Modules)
 - [ ] Inheritance relationships documented
 - [ ] Enum types listed
-- [ ] Comprehensive todo list created
+- [ ] Work plan derived (the final report states each phase's outcome)
 - [ ] Ready for Phase 2
 
 ### Phase 2: SubObject Creation
@@ -142,15 +142,13 @@ export class BuyerProfile extends Profile { ... }
 
 ### Phase 5: Description Management
 
-**CRITICAL PHASE - Refer to "CRITICAL: DESCRIPTION MANAGEMENT" section at the top of this document!**
-
-This phase is often done incorrectly. Follow these steps EXACTLY:
+Full rules and their reasons: [description-management.md](description-management.md). Work through the steps below in order; each one feeds the next.
 
 #### Step 5.1: Extract Descriptions from User Input
 
-**BEFORE applying any descriptions, review the original specification:**
+**Before applying any descriptions, review the original specification:**
 
-Go back to the user's original specification and extract ALL comments that appear after `//`:
+Go back to the user's original specification and extract all comments that appear after `//`:
 
 ```
 Module: Product
@@ -214,11 +212,11 @@ Apply formatting rules:
 3. **If no comment provided**:
    -> Create meaningful English description: `description: 'User email address'`
 
-**CRITICAL - Preserve Original Wording**:
+**Preserve the original wording**, because terms may be predefined or referenced by external systems:
 
--  **DO:** Fix spelling/typos only
--  **DON'T:** Rephrase, expand, or improve wording
--  **DON'T:** Change terms (they may be predefined/referenced by external systems)
+- **Do:** Fix spelling/typos only
+- **Don't:** Rephrase, expand, or improve wording
+- **Don't:** Change terms
 
 **Examples**:
 ```
@@ -235,7 +233,7 @@ Apply formatting rules:
 
 #### Step 5.3: Apply Descriptions EVERYWHERE
 
-**MOST IMPORTANT: Apply SAME description to ALL files!**
+**Apply the same description to every file that declares the property**; a description that differs between model and inputs is the inconsistency Step 5.5 checks for.
 
 For **EVERY property in EVERY Module**:
 
@@ -287,7 +285,7 @@ Also add descriptions to the `@ObjectType()` and `@InputType()` decorators:
 
 ```typescript
 @ObjectType({ description: 'Product entity (Produkt-Entität)' })
-export class Product extends CoreModel { ... }
+export class Product extends PersistenceModel { ... }
 
 @InputType({ description: 'Product creation data (Produkt-Erstellungsdaten)' })
 export class ProductCreateInput { ... }
@@ -312,7 +310,7 @@ After applying all descriptions, verify:
 - [ ] Class-level decorators have descriptions
 - [ ] NO inconsistencies (same property, different descriptions)
 
-**If ANY checkbox is unchecked, STOP and fix before continuing to Phase 6!**
+**If a checkbox is unchecked, fix it before continuing to Phase 6.**
 
 **Phase 5 Checklist:**
 - [ ] All user-provided comments extracted and processed
@@ -354,9 +352,9 @@ export enum StatusEnum {
 
 ### Phase 7: API Test Creation
 
-**CRITICAL: Detect Test Framework BEFORE Writing or Running Tests**
+**Detect the test framework first**
 
-**BEFORE writing or running ANY test**, determine which framework and import style the project uses:
+**Before writing or running any test**, determine which framework and import style the project uses:
 
 1. Check `package.json` for `vitest` or `jest` in dependencies/devDependencies
 2. For Vitest: inspect `vitest.config.ts` / `vitest-e2e.config.ts` for `globals: true` — this flips whether imports are needed
@@ -376,30 +374,30 @@ export enum StatusEnum {
 
 Always read the nearest existing test file and mirror its imports — do **not** assume one pattern per project.
 
-**Do NOT assume a framework. Do NOT mix Vitest and Jest syntax in a single test file. Match the existing project exactly.**
+**Take the framework from the project rather than assuming one, and keep each test file to a single framework's syntax.**
 
-**Running tests:** Always use the project's npm scripts from `package.json` (e.g., `pnpm run test:e2e`, `pnpm test`, `npm test`). Do NOT run `npx vitest`, `npx jest`, or other direct runner commands — the project scripts may include required flags, config paths, or environment setup.
+**Running tests:** Use the project's npm scripts from `package.json` (e.g., `pnpm run test:e2e`, `pnpm test`, `npm test`) rather than `npx vitest`, `npx jest`, or other direct runner commands, because the project scripts may include required flags, config paths, or environment setup.
 
 ---
 
-**CRITICAL: Test Type Requirement**
+**Test Type Requirement**
 
-**ONLY create API tests using TestHelper - NEVER create direct Service tests!**
+**Create API tests through TestHelper, not direct Service tests**; the reasons follow below.
 
--  **DO:** Create tests that call REST endpoints or GraphQL queries/mutations using `TestHelper`
--  **DO:** Test through the API layer (Controller/Resolver -> Service -> Database)
--  **DON'T:** Create tests that directly instantiate or call Service methods
--  **DON'T:** Create unit tests for Services (e.g., `user.service.spec.ts`)
--  **DON'T:** Mock dependencies or bypass the API layer
+- **Do:** Create tests that call REST endpoints or GraphQL queries/mutations using `TestHelper`
+- **Do:** Test through the API layer (Controller/Resolver -> Service -> Database)
+- **Don't:** Create tests that directly instantiate or call Service methods
+- **Don't:** Create unit tests for Services (e.g., `user.service.spec.ts`)
+- **Don't:** Mock dependencies or bypass the API layer
 
 **Why API tests only?**
 - API tests validate the complete security model (decorators, guards, permissions)
 - Direct Service tests bypass authentication and authorization checks
 - TestHelper provides all necessary tools for comprehensive API testing
 
-**Exception: Direct database/service access for test setup/cleanup ONLY**
+**Exception: Direct database/service access for test setup/cleanup only**
 
-Direct database or service access is ONLY allowed for:
+Direct database or service access is allowed only for:
 
 -  **Test Setup (beforeAll/beforeEach)**:
   - Setting user roles in database: `await db.collection('users').updateOne({ _id: userId }, { $set: { roles: ['admin'] } })`
@@ -410,7 +408,7 @@ Direct database or service access is ONLY allowed for:
   - Deleting test objects: `await db.collection('products').deleteMany({ createdBy: testUserId })`
   - Cleaning up test data: `await db.collection('users').deleteOne({ email: 'test@example.com' })`
 
--  **NEVER for testing functionality**:
+-  **Not for testing functionality**:
   - Don't call `userService.create()` to test user creation - use API endpoint!
   - Don't call `productService.update()` to test updates - use API endpoint!
   - Don't access database to verify results - query via API instead!
@@ -475,15 +473,15 @@ describe('Product Tests', () => {
 
 ---
 
-**CRITICAL: Test Creation Process**
+**Test Creation Process**
 
-Creating API tests is NOT just about testing functionality - it's about **validating the security model**. You MUST follow this exact process:
+API tests validate the **security model** as well as the functionality. Follow the steps in order, because the permission analysis in Step 1 decides which user each later test runs as:
 
 ---
 
-#### Step 1:  MANDATORY Permission Analysis (BEFORE writing ANY test)
+#### Step 1: Permission Analysis (before writing any test)
 
-**YOU MUST analyze these THREE layers BEFORE writing a single test:**
+**Analyze these three layers before writing a single test:**
 
 1. **Controller/Resolver Layer** - Check `@Roles()` decorator:
    ```typescript
@@ -504,7 +502,7 @@ Creating API tests is NOT just about testing functionality - it's about **valida
 2. **Model Layer** - Check `@Restricted()` and `securityCheck()`:
    ```typescript
    // In product.model.ts
-   export class Product extends CoreModel {
+   export class Product extends PersistenceModel {
      securityCheck(user: User, force?: boolean) {
        if (force || user?.hasRole(RoleEnum.ADMIN)) {
          return this; // Admin sees all
@@ -548,7 +546,7 @@ Creating API tests is NOT just about testing functionality - it's about **valida
 
 #### Step 2:  Apply Principle of Least Privilege
 
-**GOLDEN RULE**: Always test with the **LEAST privileged user** who is still authorized.
+Test with the **least privileged user** who is still authorized, so a pass cannot come from an over-privileged account.
 
 **Decision Tree:**
 
@@ -780,9 +778,9 @@ describe('Update Product', () => {
 
 ---
 
-#### Step 5: MANDATORY: Test Permission Failures
+#### Step 5: Test Permission Failures
 
-**CRITICAL**: You MUST test that unauthorized users are BLOCKED. This validates the security model.
+Test that unauthorized users are blocked; these tests are what validate the security model.
 
 ```typescript
 describe('Security Validation', () => {
@@ -1090,5 +1088,5 @@ Before finalizing tests, verify:
 - [ ]  All tests follow the security model
 - [ ]  Tests validate protection mechanisms work
 
-**NEVER use admin token when a less privileged user would work!**
+**Use the admin token only where no less privileged user is authorized.**
 

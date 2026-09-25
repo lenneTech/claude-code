@@ -109,7 +109,7 @@ Add these only in the override:
 - Adminer (lightweight, multi-DB) or pgAdmin (PostgreSQL-specific)
 - Pre-configured connection to local DB
 
-### 5. SSR Awareness (CRITICAL!)
+### 5. SSR Awareness
 
 For SSR frameworks (Nuxt, Next.js, SvelteKit, Analog, etc.):
 
@@ -185,7 +185,7 @@ export default defineNuxtConfig({
 })
 ```
 
-**NEVER use a single API_URL pointing to a Docker service!**
+Never use a single API_URL pointing to a Docker service: the browser cannot reach Docker-internal hostnames (see the table above).
 
 ### 6. Environment Handling
 
@@ -544,5 +544,5 @@ Fixed Issues:
 
 1. **Test Hot Reload**: After setup, make a small change and verify it's picked up live
 2. **node_modules Sync**: On package.json changes, always run `docker compose up -d --build`
-3. **Volumes on Problems**: When in doubt, `docker compose down -v` and restart fresh
-4. **SSR Debug**: For API issues, always check BOTH browser console AND server logs
+3. **Volumes on Problems**: If problems persist, `docker compose down -v` (removes the volumes, including local DB data) and restart fresh
+4. **SSR Debug**: For API issues, check both the browser console and the server logs

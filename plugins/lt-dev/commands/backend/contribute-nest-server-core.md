@@ -24,7 +24,7 @@ Vendor Modification Policy (documented in `src/core/VENDOR.md`,
 `projects/api/CLAUDE.md`, and the `nest-server-core-vendoring` skill),
 `src/core/` may only be edited for changes that are generally useful to
 every @lenne.tech/nest-server consumer (bugfixes, broad enhancements,
-security fixes, build-compat). **Generally-useful changes MUST flow back
+security fixes, build-compat). **Generally-useful changes go back
 upstream** so every consumer benefits and the local patch disappears on
 the next sync — that is exactly what this command prepares.
 
@@ -145,8 +145,9 @@ ALWAYS `gh pr create --draft`. A ready PR can be merged by anyone who walks past
 it; a draft cannot. Never run `gh pr ready` — taking a PR out of draft is the
 maintainer's way of saying they have decided, and that signal is theirs to give.
 
-Project-specific signals to reject: Volksbank, imo, customer-specific enums,
-business-rule hardcoded values, API endpoints with customer domains.
+Project-specific signals to reject: a customer's company name, product name or
+abbreviation, customer-specific enums, business-rule hardcoded values, API
+endpoints with customer domains.
 
 Work fully autonomously otherwise.
 ```

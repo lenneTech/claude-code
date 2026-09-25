@@ -1,7 +1,7 @@
 ---
 description: Create a Linear ticket (Story, Task, or Bug) with guided workflow
 argument-hint: "[ticket-idea]"
-allowed-tools: AskUserQuestion, Read, Glob, SlashCommand
+allowed-tools: AskUserQuestion, Read, Glob, Skill
 disable-model-invocation: true
 ---
 
@@ -26,9 +26,9 @@ Smart-Router für die geführte Erstellung von Linear Tickets. Erkennt automatis
 
 **Workflow:** Create ticket → `/lt-dev:resolve-ticket` to implement
 
-**IMPORTANT: All user-facing communication must ALWAYS be in German. Exceptions: Properties (camelCase), code snippets, and technical terms remain in English.**
+All user-facing communication is in German. Exceptions: Properties (camelCase), code snippets, and technical terms stay in English.
 
-**ABORT HANDLING: If the user wants to cancel at any point (e.g., "abbrechen", "stop", "cancel"), acknowledge it (in German): "Okay, Ticket-Erstellung abgebrochen." and stop the process.**
+**Abort handling:** If the user wants to cancel at any point (e.g., "abbrechen", "stop", "cancel"), acknowledge it in German ("Okay, Ticket-Erstellung abgebrochen.") and stop the process.
 
 ---
 
@@ -87,28 +87,28 @@ Use AskUserQuestion with options:
 
 ## Step 3: Delegate to Specialized Command
 
-Once the ticket type is determined, delegate via the `SlashCommand` tool (these targets are commands, not skills):
+Once the ticket type is determined, delegate via the `Skill` tool, which invokes a command by its `lt-dev:<name>` form:
 
 ### Story
 Invoke `/lt-dev:create-story` with the user's input as context.
 
 Tell the user (in German): "Das klingt nach einer **User Story**. Starte den Story-Erstellungsprozess..."
 
-Then invoke via the `SlashCommand` tool: `/lt-dev:create-story "<user's input>"`
+Then invoke the `lt-dev:create-story` skill via the `Skill` tool, passing `"<user's input>"` as arguments.
 
 ### Task
 Invoke `/lt-dev:create-task` with the user's input as context.
 
 Tell the user (in German): "Das klingt nach einem **technischen Task**. Starte den Task-Erstellungsprozess..."
 
-Then invoke via the `SlashCommand` tool: `/lt-dev:create-task "<user's input>"`
+Then invoke the `lt-dev:create-task` skill via the `Skill` tool, passing `"<user's input>"` as arguments.
 
 ### Bug
 Invoke `/lt-dev:create-bug` with the user's input as context.
 
 Tell the user (in German): "Das klingt nach einem **Bug-Report**. Starte den Bug-Erstellungsprozess..."
 
-Then invoke via the `SlashCommand` tool: `/lt-dev:create-bug "<user's input>"`
+Then invoke the `lt-dev:create-bug` skill via the `Skill` tool, passing `"<user's input>"` as arguments.
 
 ---
 
@@ -120,6 +120,6 @@ Then invoke via the `SlashCommand` tool: `/lt-dev:create-bug "<user's input>"`
 
 **Key behaviors:**
 - Prefer automatic detection over asking
-- When in doubt, ask the user
+- Ask the user when the type is ambiguous
 - User can abort at any point
 - Always communicate in German

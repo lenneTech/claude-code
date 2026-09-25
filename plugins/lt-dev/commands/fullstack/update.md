@@ -1,7 +1,7 @@
 ---
 description: Sync fullstack project with latest nest-server-starter and nuxt-base-starter
 argument-hint: "[--dry-run] [--skip-backend] [--skip-frontend]"
-allowed-tools: Read, Grep, Glob, Bash(npm run:*), Bash(pnpm run:*), Bash(yarn run:*), Bash(pnpm list:*), Bash(npm list:*), Bash(yarn list:*), Bash(pnpm view:*), Bash(npm view:*), Bash(yarn info:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(npx ncu:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(rm:*), Write, Edit, Agent, AskUserQuestion, WebFetch, TodoWrite
+allowed-tools: Read, Grep, Glob, Bash(npm run:*), Bash(pnpm run:*), Bash(yarn run:*), Bash(pnpm list:*), Bash(npm list:*), Bash(yarn list:*), Bash(pnpm view:*), Bash(npm view:*), Bash(yarn info:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(npx ncu:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(rm:*), Write, Edit, Agent, AskUserQuestion, WebFetch, SendMessage
 disable-model-invocation: true
 ---
 
@@ -42,7 +42,7 @@ Coordinated update of backend (nest-server) and frontend (nuxt-extensions) with 
 
 ## Architecture
 
-This command is the **direct orchestrator**. Sub-agents cannot spawn sub-sub-agents, so the command coordinates the agents directly.
+This command is the **direct orchestrator**. The lt-dev agents carry no `Agent` tool and do not spawn further agents, so the command coordinates the agents directly.
 
 ```
 /lt-dev:fullstack:update (this command = orchestrator)
@@ -69,6 +69,10 @@ Parse `$ARGUMENTS` for flags:
 - `--dry-run`: Analysis only, no modifications
 - `--skip-backend`: Skip backend (API) update
 - `--skip-frontend`: Skip frontend (App) update
+
+### Turn endings
+
+After the plan approval, this command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; a finished phase is the cue to start the next one. The run stops only at the handoff points this command defines (the Phase 3 plan approval, the `--dry-run` stop, the closing option question after the report), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation.
 
 ### Phase 1: Project Analysis
 
@@ -172,6 +176,8 @@ Validate: build, lint, test — fix issues until all pass.
 
 **Wait for backend to complete** before proceeding to frontend.
 
+Each updater agent's final message, here and in the phases below, is its report, not proof that the task is done. Compare it against the task given; when items are still open and no blocker is named, resume the same agent via `SendMessage` to its agent id, naming the open items. After two or three continuations on the same task, stop and report the gap instead.
+
 ### Phase 5: Frontend Update (unless --skip-frontend)
 
 **If frontend is in vendor mode** (detected in Phase 1), spawn `lt-dev:nuxt-extensions-core-updater` instead:
@@ -234,12 +240,12 @@ Execute frontend update:
 
 ## Report Format
 
-**OUTPUT REQUIREMENTS:**
+**Output requirements:**
 
-1. All sections below are MANDATORY.
-2. Section "Detailed Updater Reports" MUST contain the verbatim full output of every spawned updater agent. Do NOT summarize. Wrap each in a details block.
+1. All sections below are required.
+2. Section "Detailed Updater Reports" contains the verbatim full output of every spawned updater agent, unsummarized, each wrapped in a details block.
 3. Action Roadmap — derive from updater warnings, build errors, test failures, and migration steps still required.
-4. No-Loss Guarantee — every manual step / warning / error in any verbatim updater report MUST appear in the Action Roadmap below.
+4. No-Loss Guarantee — every manual step / warning / error in any verbatim updater report appears in the Action Roadmap below.
 5. No Placeholders — replace every N, X.Y.Z, X min with concrete values.
 
 ```markdown

@@ -140,7 +140,7 @@ For each pillar, in order:
 
 ## Remediation Loop (when called from production-ready command)
 
-When called from `/lt-dev:production-ready`, the orchestrator MUST attempt remediation for each Critical / Major finding:
+When called from `/lt-dev:production-ready`, the orchestrator attempts remediation for each Critical / Major finding:
 
 | Finding type | Default fix |
 |--------------|-------------|
@@ -182,10 +182,13 @@ Blocking issues:
 - <pillar/severity/file:line> — short description
 ```
 
-## Cross-Skill References
+## Related Skills
 
 - **Code-level security:** `general-frontend-security` (frontend XSS/CSRF) and `lt-dev:security-reviewer` agent (OWASP-aligned diff review)
 - **DevOps configuration:** `lt-dev:devops-reviewer` agent (Docker / Compose / CI/CD specifics)
 - **Load resilience evidence:** `running-load-tests-with-k6` (k6 results feed Pillar 6)
 - **Runnability gate:** `running-check-script` (must already be GREEN before this skill runs)
 - **Server lifecycle for health checks:** `managing-dev-servers`
+- **Dependency audits:** `maintaining-npm-packages` (npm vulnerability and update work, which this checklist only gates on)
+- **CI evidence:** `validating-ci-pipelines-locally` (a green local pipeline run is one of the entry criteria)
+- **Going live:** `deploying-to-turboops` (the deploy contract this checklist gates)

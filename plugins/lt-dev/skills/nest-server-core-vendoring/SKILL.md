@@ -93,7 +93,7 @@ fork. The policy:
    via modification, inheritance, extension, or `ICoreModuleOverrides`.
    Project-specific business rules, customer enums, or proprietary
    integration adapters must never live in the vendored core.
-4. **Generally-useful changes MUST be submitted as an upstream PR** to
+4. **Generally-useful changes go upstream as a PR** to
    `github.com/lenneTech/nest-server`. Use
    `/lt-dev:backend:contribute-nest-server-core` to prepare the PR. Do not
    let useful fixes rot in a single project's vendor tree — they belong
@@ -371,7 +371,7 @@ commit with a clear `chore: format` prefix so the filter recognizes it.
 If the vendor pilot fails or needs to be reverted:
 
 ```bash
-# In the consumer project (e.g. imo):
+# In the consumer project:
 cd projects/api
 git log --oneline | grep -E "vendor|framework" | head -20
 # Identify the vendor commit range

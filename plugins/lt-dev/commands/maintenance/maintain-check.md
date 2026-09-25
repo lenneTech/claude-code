@@ -37,7 +37,7 @@ Analyze and report WITHOUT making changes:
 - Check security vulnerabilities
 - Estimate risk levels for all potential changes
 
-**CRITICAL**: Do NOT modify package.json, do NOT run pnpm install/remove, do NOT make any changes.
+This check is read-only: do not modify package.json, do not run pnpm install/remove, and make no other changes.
 
 Generate comprehensive report including:
 - Packages that could be removed (with usage analysis)

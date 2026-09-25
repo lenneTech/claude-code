@@ -47,6 +47,6 @@ to the classic npm mode (`@lenne.tech/nuxt-extensions` as dependency).
 ## Important
 
 - This command requires the `lt` CLI to be installed globally or available in PATH.
-- **Local patches in `app/core/` will be lost!** The vendored source is deleted during conversion. Make sure any valuable changes have been committed upstream first.
+- **Local patches in `app/core/` will be lost.** The vendored source is deleted during conversion. Make sure any valuable changes have been committed upstream first.
 - After conversion, `@lenne.tech/nuxt-extensions` is restored as an npm dependency.
 - Use `/lt-dev:frontend:convert-to-vendor` to reverse the conversion.

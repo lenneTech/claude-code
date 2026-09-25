@@ -5,11 +5,11 @@ description: Rules for using and extending the @lenne.tech/nest-server ErrorCode
 
 # Error Handling with @lenne.tech/nest-server ErrorCode
 
-The framework ships a structured, i18n-ready error-code registry. All server-side exceptions in lenne.tech projects MUST use it — raw string messages are forbidden in production code.
+The framework ships a structured, i18n-ready error-code registry. All server-side exceptions in lenne.tech projects use it — raw string messages are forbidden in production code.
 
 ## Core Rule
 
-**NEVER throw NestJS exceptions with a raw string message.**
+**Never throw NestJS exceptions with a raw string message**, because it carries no machine-parseable code and cannot be translated.
 
 ```typescript
 // WRONG — raw string, no code, not translatable, untyped
@@ -208,7 +208,7 @@ Enforce during code review:
 3. **Every `throw` uses an existing key** — TypeScript enforces this because `ErrorCode` is a strongly-typed object.
 4. **Translations present for every configured locale.** `satisfies IErrorRegistry` catches missing `de`/`en` at compile time.
 5. **No duplicate codes across `LtnsErrors` + `ProjectErrors`.** A post-build assertion or test should verify uniqueness.
-6. **Error codes are NEVER renamed or recycled.** Once shipped, a code is a public API contract (frontend translations, logs, analytics). Deprecate instead — add a new code and mark the old one as deprecated in a comment.
+6. **Error codes are never renamed or recycled.** Once shipped, a code is a public API contract (frontend translations, logs, analytics). Deprecate instead — add a new code and mark the old one as deprecated in a comment.
 
 ## Migration Pattern (Adopting ErrorCode in an Existing Project)
 

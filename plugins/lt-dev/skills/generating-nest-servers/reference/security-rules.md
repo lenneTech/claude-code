@@ -3,15 +3,15 @@ name: nest-server-generator-security-rules
 description: Critical security and test coverage rules for NestJS development
 ---
 
-#  CRITICAL SECURITY RULES
+#  Security Rules
 
 ## Table of Contents
 - [Informed-Trade-off Pattern (Meta-Rule)](#informed-trade-off-pattern-meta-rule)
 - [ErrorCode Contract (Meta-Rule)](#errorcode-contract-meta-rule)
-- [NEVER Do This](#-never-do-this)
-- [ALWAYS Do This](#-always-do-this)
+- [Never Do This](#never-do-this)
+- [Always Do This](#always-do-this)
 - [Permission Hierarchy (Specific Overrides General)](#-permission-hierarchy-specific-overrides-general)
-- [Rule 1: NEVER Weaken Security for Test Convenience](#rule-1-never-weaken-security-for-test-convenience)
+- [Rule 1: Never Weaken Security for Test Convenience](#rule-1-never-weaken-security-for-test-convenience)
 - [Rule 2: Understanding Permission Hierarchy](#rule-2-understanding-permission-hierarchy)
 - [Rule 3: Adapt Tests to Security, Not Vice Versa](#rule-3-adapt-tests-to-security-not-vice-versa)
 - [Rule 4: Test with Least Privileged User](#rule-4-test-with-least-privileged-user)
@@ -20,7 +20,7 @@ description: Critical security and test coverage rules for NestJS development
 - [Quick Security Checklist](#quick-security-checklist)
 - [Security Decision Protocol](#security-decision-protocol)
 
-**Before you start ANY work, understand these NON-NEGOTIABLE rules.**
+**Read these rules before starting any work.** They guard access control and data exposure, so none of them bends for test convenience or speed.
 
 ---
 
@@ -36,29 +36,31 @@ A framework-wide meta-rule defines the common shape for **standard safe path + d
 
 ## ErrorCode Contract (Meta-Rule)
 
-All NestJS exceptions MUST use typed `ErrorCode` values from the project's error registry. This is **NON-NEGOTIABLE** — raw-string messages break the i18n contract (`GET /i18n/errors/:locale`), bypass the `#PREFIX_XXXX:` machine-parseable marker consumed by the frontend `useLtErrorTranslation` composable, and are a common OWASP A09 Information Disclosure vector (interpolated SQL, stacktraces, file paths).
+All NestJS exceptions use typed `ErrorCode` values from the project's error registry, without exception, because raw-string messages break the i18n contract (`GET /i18n/errors/:locale`), bypass the `#PREFIX_XXXX:` machine-parseable marker consumed by the frontend `useLtErrorTranslation` composable, and are a common OWASP A09 Information Disclosure vector (interpolated SQL, stacktraces, file paths).
 
 **Full definition:** [`error-handling.md`](error-handling.md)
 
-**Short form:** `throw new NotFoundException(ErrorCode.RESOURCE_NOT_FOUND)` — NEVER `throw new NotFoundException('User not found')`. Reuse `LTNS_*` core codes when generic; define `PROJ_*` codes for domain-specific semantics; wire `additionalErrorRegistry: ProjectErrors` in every env config. See Rule 16 below for the complete rule.
+**Short form:** `throw new NotFoundException(ErrorCode.RESOURCE_NOT_FOUND)` — not `throw new NotFoundException('User not found')`. Reuse `LTNS_*` core codes when generic; define `PROJ_*` codes for domain-specific semantics; wire `additionalErrorRegistry: ProjectErrors` in every env config. See Rule 16 below for the complete rule.
 
 ---
 
-##  NEVER Do This
+## Never Do This
 
-1. **NEVER remove or weaken `@Restricted()` decorators** to make tests pass
-2. **NEVER change `@Roles()` decorators** to more permissive roles for test convenience
-3. **NEVER modify `securityCheck()` logic** to bypass security in tests
-4. **NEVER remove class-level `@Restricted(RoleEnum.ADMIN)`** - it's a security fallback
-5. **NEVER use `model.collection.*` or `model.db.*` methods** — these bypass ALL Mongoose security plugins (Tenant, Audit, RoleGuard, Password).
+Each item below opens an access-control or data-exposure hole; the reason is given with it.
+
+1. **Never remove or weaken `@Restricted()` decorators** to make tests pass — they are the access control the test is supposed to prove
+2. **Never change `@Roles()` decorators** to more permissive roles for test convenience — the wider role ships to production with the test
+3. **Never modify `securityCheck()` logic** to bypass security in tests — it is the per-object filter every response passes through
+4. **Never remove class-level `@Restricted(RoleEnum.ADMIN)`** - it's a security fallback
+5. **Never use `model.collection.*` or `model.db.*` methods** — these bypass all Mongoose security plugins (Tenant, Audit, RoleGuard, Password).
    - Use `Model.create(doc)` instead of `collection.insertOne(doc)` — fastest for single docs (3x faster than `save()`, 9x less memory). For batch inserts: `Model.insertMany(docs)`
    - Use `Model.bulkWrite(ops)` instead of `collection.bulkWrite(ops)`
    - Use `Model.findByIdAndUpdate()` instead of `collection.updateOne()`
    - Only exception: `this.getNativeCollection(reason)` or `this.getNativeDb(reason)` from CrudService with documented reason
-6. **NEVER use `connection.db.collection()` for write operations on tenant-scoped collections** — Tenant-Plugin is bypassed, causing data leaks between tenants. Use the Mongoose Model instead. Read-only access on schema-less collections (OAuth, BetterAuth, MCP) is allowed.
-7. **Bypassing `process()` is ONLY allowed in system-internal code** (processors, crons, service-to-service) — never in user-facing controllers. `CrudService.create/update/get()` provides authorization (`checkRights`, `@Restricted`, `S_CREATOR`) and output filtering (secret removal, field-level permissions). Direct Mongoose methods (`Model.create()`, `findByIdAndUpdate().lean()`, `findById().lean()`) keep all Mongoose plugins active (Tenant, Audit, RoleGuard) but skip authorization. Use them when no user context exists and no response goes to a user.
+6. **Never use `connection.db.collection()` for write operations on tenant-scoped collections** — Tenant-Plugin is bypassed, causing data leaks between tenants. Use the Mongoose Model instead. Read-only access on schema-less collections (OAuth, BetterAuth, MCP) is allowed.
+7. **Bypassing `process()` is only allowed in system-internal code** (processors, crons, service-to-service) — never in user-facing controllers. `CrudService.create/update/get()` provides authorization (`checkRights`, `@Restricted`, `S_CREATOR`) and output filtering (secret removal, field-level permissions). Direct Mongoose methods (`Model.create()`, `findByIdAndUpdate().lean()`, `findById().lean()`) keep all Mongoose plugins active (Tenant, Audit, RoleGuard) but skip authorization. Use them when no user context exists and no response goes to a user.
 8. **High-frequency paths** (monitoring, metrics, queue processors): these are always system-internal — no user context. Defer complex logic (incidents, notifications, escalation) to cron/queue. Avoid service cascades (A.create → B.create → C.create) in hot paths. Use lean queries for WebSocket data. Each `getForce()` or `process()` call in a hot path multiplies memory pressure by the number of concurrent operations.
-9. **NEVER pass Mongoose SubDocument Arrays through `CrudService.update()`** — applies in ALL contexts, including controllers.
+9. **Never pass Mongoose SubDocument Arrays through `CrudService.update()`** — applies in all contexts, including controllers.
    - **Affected fields:** subdocument arrays like `entity.logs`, `entity.comments`, `entity.history`
    - **Why:** subdocument arrays are Proxy-wrapped. `process()` → `clone()` (rfdc) + `processDeep()` triggers Proxy getters/setters per property, then `mergePlain()` re-clones the array → OOM on long-lived documents
    - **Use instead (preferred):** `CrudService.pushToArray(id, field, items)` / `pullFromArray(id, field, condition)` — bypass `process()` while Mongoose `pre('findOneAndUpdate')` hooks still fire
@@ -80,7 +82,7 @@ All NestJS exceptions MUST use typed `ErrorCode` values from the project's error
     - **Mandatory pre-use analysis:** read the Model's `securityCheck` implementation. What ownership, role, field-clearing, or record-hiding logic does it contain? Determine whether skipping that logic is safe in this call site OR must be manually replicated OR whether the result should be hydrated back to Model instances (`Model.map(raw)` / `new Model(raw)`).
     - **Documentation in code:** comment naming the reason AND stating that Model-specific `securityCheck` does not run (or that hydration/manual replication compensates).
     - **Review treatment:** unjustified plain-object response path on a Model with non-trivial overridden `securityCheck` = High. Unjustified path on a Model with default pass-through AND no role-restricted fields = Low/Info (framework `removeSecrets` still runs). Silently bypassing documented restrictions = High/Critical.
-    - **`securityCheck()` itself:** `CoreModel` default `return this` is the intentional "no per-Model restrictions" state. A trivial/default `securityCheck` is **legitimate when the Model genuinely has nothing to filter**. BEFORE accepting a trivial implementation, actively evaluate whether `securityCheck` is the only place where required authorization logic can live — it covers scenarios `@Roles`/`@Restricted`/controller guards cannot: ownership-based field visibility, relationship-based visibility, state-dependent exposure, conditional record hiding via `return undefined`, cross-field visibility rules. If any such rule applies, overriding is mandatory. Partial grants MUST clear restricted fields (`this.secretField = undefined`) before returning `this`.
+    - **`securityCheck()` itself:** `CoreModel` default `return this` is the intentional "no per-Model restrictions" state. A trivial/default `securityCheck` is **legitimate when the Model genuinely has nothing to filter**. Before accepting a trivial implementation, actively evaluate whether `securityCheck` is the only place where required authorization logic can live — it covers scenarios `@Roles`/`@Restricted`/controller guards cannot: ownership-based field visibility, relationship-based visibility, state-dependent exposure, conditional record hiding via `return undefined`, cross-field visibility rules. If any such rule applies, overriding is mandatory. Partial grants clear restricted fields (`this.secretField = undefined`) before returning `this`; otherwise the field reaches every caller the object is returned to.
 14. **Direct access to the Service's OWN Model is an informed trade-off** — instantiates the [Informed-Trade-off Pattern](informed-trade-off-pattern.md). See also Rule 12 (foreign `@InjectModel`), Rule 13 (plain-object returns), Rule 7 (`process()` bypass in system-internal code), and Rule 15 below (`Force`/`Raw` CrudService variants).
     - **Scope:** applies to calls on `this.mainDbModel.xxx` / `this.<modelName>Model.xxx` inside the Service that **owns** the Model. Using your own Service's CrudService methods is the standard path. `this.processResult(result, serviceOptions)` is the framework-provided helper for safely returning direct-query results.
     - **Standard path:** CrudService methods (`this.create` / `this.find` / `this.findOne` / `this.findAndCount` / `this.update` / `this.delete` / `this.aggregate`). They run `process()` which orchestrates `prepareInput`, `checkRights` (input + output), population via `processFieldSelection`, `prepareOutput` (including secret removal), and nested-call coordination.
@@ -119,12 +121,12 @@ All NestJS exceptions MUST use typed `ErrorCode` values from the project's error
       - Migrations, backfills, seed scripts
       - Explicit admin tooling where the caller has already verified ADMIN role and needs unfiltered data (rare)
     - **Mandatory pre-use analysis:** for every `Force`/`Raw` call, confirm:
-      1. **No user-facing response?** The result MUST NOT travel to a user response without explicit field stripping. `removeSecrets` (which clears configured `secretFields`: `password`, `verificationToken`, `passwordResetToken`, `refreshTokens`, `tempTokens`) is disabled.
+      1. **No user-facing response?** The result must not travel to a user response without explicit field stripping, because `removeSecrets` (which clears configured `secretFields`: `password`, `verificationToken`, `passwordResetToken`, `refreshTokens`, `tempTokens`) is disabled.
       2. **Authorization handled upstream?** The caller has verified the current user's authorization to access this data via explicit `hasRole`/`equalIds` checks BEFORE the call.
       3. **`Raw` only when necessary:** prefer `Force` if translations and type mapping are still desired. Use `Raw` only when you explicitly need the untouched DB shape (e.g. comparing hashes).
     - **Documentation in code:** comment naming why the standard variant cannot be used. Typical: `// getForce — need to read password hash for credential verification`. Raw variants warrant a stronger comment explaining why `prepareOutput` cannot run.
     - **Review treatment:** `Force`/`Raw` result leaking to a user-facing response = **Critical** (credential exposure). `Force`/`Raw` in system-internal context with documented reason = allowed. `Force`/`Raw` without justification comment = Medium. `Raw` used where `Force` would suffice = Low (over-bypassing). A comment alone is insufficient if the result path reaches a user — reviewers must trace the return value.
-16. **ALL NestJS exceptions MUST use typed `ErrorCode` from the project registry — raw-string messages are NON-NEGOTIABLE forbidden** outside `*.spec.ts` / `*.test.ts` files. Rule enforcement by `backend-reviewer` (Phase 4), `code-reviewer` (Phase 4), `security-reviewer` (Phase 5 Layer 5b — OWASP A09 Information Disclosure). Full rule: [`error-handling.md`](error-handling.md).
+16. **All NestJS exceptions use typed `ErrorCode` from the project registry; raw-string messages are forbidden** outside `*.spec.ts` / `*.test.ts` files. Rule enforcement by `backend-reviewer` (Phase 4), `code-reviewer` (Phase 4), `security-reviewer` (Phase 5 Layer 5b — OWASP A09 Information Disclosure). Full rule: [`error-handling.md`](error-handling.md).
     - **Scope:** every `throw new (BadRequest|Unauthorized|Forbidden|NotFound|Conflict|UnprocessableEntity|InternalServerError)Exception(...)` in `src/server/**` outside test files.
     - **Standard path:** `throw new NotFoundException(ErrorCode.RESOURCE_NOT_FOUND)` — typed, i18n-ready, machine-parseable via `#PREFIX_XXXX:` marker.
     - **Forbidden:** `throw new NotFoundException('User not found')` — raw string. Breaks the `/i18n/errors/:locale` translation contract, often leaks internal state via interpolation (`` `Query failed: ${error.message}` ``), violates OWASP A09.
@@ -138,7 +140,7 @@ All NestJS exceptions MUST use typed `ErrorCode` values from the project's error
     - **Review treatment:**
       - Raw-string with interpolated internal state (SQL, stacktrace, file path) = **Critical** (disclosure).
       - Auth-flow differential messages (`'User not found'` vs `'Invalid password'`) = **High** (user enumeration).
-      - Raw static string (e.g. `'Invalid request'`) = **High** — NON-NEGOTIABLE rule breach, breaks i18n contract.
+      - Raw static string (e.g. `'Invalid request'`) = **High** — rule breach, breaks i18n contract.
       - `ErrorCode` imported from framework instead of project = **Medium** — project codes invisible.
       - Missing `additionalErrorRegistry` wiring in one env config = **Medium** — silent translation drop.
       - Duplicate code numbers across `LtnsErrors` + `ProjectErrors` = **High** — merge collision.
@@ -147,14 +149,16 @@ All NestJS exceptions MUST use typed `ErrorCode` values from the project's error
 
 ---
 
-##  ALWAYS Do This
+## Always Do This
 
-1. **ALWAYS analyze permissions BEFORE writing tests** (Controller, Model, Service layers)
-2. **ALWAYS test with the LEAST privileged user** who is authorized
-3. **ALWAYS create appropriate test users** for each permission level
-4. **ALWAYS adapt tests to security requirements**, never the other way around
-5. **ALWAYS ask developer for approval** before changing ANY security decorator
-6. **ALWAYS aim for maximum test coverage** (80-100% depending on criticality)
+These make a test prove the security instead of routing around it.
+
+1. **Analyze permissions before writing tests** (Controller, Model, Service layers)
+2. **Test with the least privileged user** who is authorized, so a pass cannot come from an over-privileged account
+3. **Create appropriate test users** for each permission level
+4. **Adapt tests to security requirements**, never the other way around
+5. **Ask the developer for approval** before changing any security decorator, because it changes who can reach the data
+6. **Aim for maximum test coverage** (80-100% depending on criticality)
 
 ---
 
@@ -170,20 +174,20 @@ export class ProductController {
 }
 ```
 
-**Why class-level `@Restricted(ADMIN)` MUST stay:**
+**Why class-level `@Restricted(ADMIN)` stays:**
 - If someone forgets `@Roles()` on a new method -> it's secure by default
 - Shows the class is security-sensitive
 - Fail-safe protection
 
 **⚠️ A controller with NO class-level guard is a public-endpoint trap.** The roles guard (e.g. `BetterAuthRolesGuard.canActivate`) reads `@Roles` metadata from handler AND class (class **cascades** to methods without their own `@Roles`). But if there is **no** `@Roles` (and no class `@Restricted`) on **either** level, the guard returns `true` → the endpoint is reachable **without authentication**. Therefore:
-- **Every controller MUST carry a class-level guard** — either `@Roles(RoleEnum.ADMIN)` or `@Restricted(RoleEnum.ADMIN)` (or an explicit `@Roles(RoleEnum.S_EVERYONE)` when public is intended). A new controller whose class AND methods both lack any role/restriction decorator is a silent auth bypass.
+- **Give every controller a class-level guard** — either `@Roles(RoleEnum.ADMIN)` or `@Restricted(RoleEnum.ADMIN)` (or an explicit `@Roles(RoleEnum.S_EVERYONE)` when public is intended). A new controller whose class AND methods both lack any role/restriction decorator is a silent auth bypass.
 - **Do not duplicate the class role on every method.** A method-level `@Roles(ADMIN)` identical to the class `@Roles(ADMIN)` is dead code; rely on the cascade and add a method-level `@Roles` ONLY when it differs from the class. Likewise `@Roles` already triggers the global guard incl. JWT auth — a redundant `@UseGuards(AuthGuard(...))` adds nothing (keep only *additional* guards like `RateLimitGuard`).
 
 ---
 
-## Rule 1: NEVER Weaken Security for Test Convenience
+## Rule 1: Never Weaken Security for Test Convenience
 
-###  ABSOLUTELY FORBIDDEN
+### Forbidden
 
 ```typescript
 // BEFORE (secure):
@@ -201,11 +205,13 @@ export class ProductController {
 }
 ```
 
-###  CRITICAL RULE
+### The rule
 
-- **NEVER remove or weaken `@Restricted()` decorators** on Controllers, Resolvers, Models, or Objects
-- **NEVER change `@Roles()` decorators** to more permissive roles just to make tests pass
-- **NEVER modify `securityCheck()` logic** to bypass security for testing
+A test made green by weakening security ships the weakened security to production.
+
+- **Never remove or weaken `@Restricted()` decorators** on Controllers, Resolvers, Models, or Objects
+- **Never change `@Roles()` decorators** to more permissive roles just to make tests pass
+- **Never modify `securityCheck()` logic** to bypass security for testing
 
 ### If tests fail due to permissions
 
@@ -213,9 +219,9 @@ export class ProductController {
 2.  **CORRECT**: Create test users with the required roles
 3.  **WRONG**: Weaken security to make tests pass
 
-### Any security changes MUST
+### Any security change must
 
-- Be discussed with the developer FIRST
+- Be discussed with the developer first
 - Have a solid business justification
 - Be explicitly approved by the developer
 - Be documented with the reason
@@ -269,7 +275,7 @@ export class Product {
 
 ## Rule 3: Adapt Tests to Security, Not Vice Versa
 
-###  WRONG Approach
+### WRONG Approach
 
 ```typescript
 // Test fails because user isn't admin
@@ -286,7 +292,7 @@ it('should create product', async () => {
 // @Restricted(RoleEnum.ADMIN)  ← NEVER DO THIS!
 ```
 
-###  CORRECT Approach
+### CORRECT Approach
 
 ```typescript
 // Analyze first: Who is allowed to create products?
@@ -325,7 +331,7 @@ it('should reject product creation for regular user', async () => {
 
 **Always test with the LEAST privileged user who is authorized to perform the action.**
 
-###  WRONG
+### WRONG
 
 ```typescript
 // Method allows S_USER, but testing with ADMIN
@@ -339,7 +345,7 @@ it('should get products', async () => {
 });
 ```
 
-###  CORRECT
+### CORRECT
 
 ```typescript
 @Roles(RoleEnum.S_USER)
@@ -459,7 +465,7 @@ describe('createProduct', () => {
 
 ## Rule 7: Input Sanitization & XSS Prevention
 
-###  Always Sanitize User Input
+### Always Sanitize User Input
 
 ```typescript
 //  WRONG: Direct HTML rendering without sanitization
@@ -529,7 +535,7 @@ async findAll(@Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: num
 
 ## Rule 8: File Upload Security
 
-###  Validate File Types (Magic Bytes, not just extension)
+### Validate File Types (Magic Bytes, not just extension)
 
 ```typescript
 import * as fileType from 'file-type';

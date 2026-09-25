@@ -22,7 +22,7 @@ code. This is a **comprehension aid**, not a fork. After the conversion, edit
 @lenne.tech/nest-server consumer (bugfixes, broad enhancements, security
 fixes, build/TS-compat). All project-specific behavior stays outside
 `src/core/` via inheritance, extension, or `ICoreModuleOverrides`. Generally
-useful changes MUST flow back upstream via
+useful changes go back upstream via
 `/lt-dev:backend:contribute-nest-server-core` — otherwise they rot in one
 project's vendor tree and re-conflict on every sync.
 

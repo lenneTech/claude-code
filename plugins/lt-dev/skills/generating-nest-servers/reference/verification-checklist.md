@@ -59,7 +59,7 @@ After generation, verify all items in this comprehensive checklist:
 
 ## API Tests - Security First
 
-** CRITICAL: Security analysis MUST be completed BEFORE writing ANY test!**
+**Complete the security analysis before writing any test**, because it decides which user each test runs as.
 
 ### Permission Analysis (BEFORE Writing Tests)
 - [ ] **Permission analysis completed BEFORE writing tests**
@@ -73,7 +73,7 @@ After generation, verify all items in this comprehensive checklist:
 - [ ] **S_USER endpoints tested with REGULAR user (not admin)**
 - [ ] **UPDATE/DELETE tested with CREATOR token (not admin)**
 
-### Security Validation Tests (MANDATORY)
+### Security Validation Tests (required)
 - [ ] **Tests verify unauthorized access FAILS (401/403)**
 - [ ] **Tests verify non-creators CANNOT update/delete**
 - [ ] **Tests verify required fields**
@@ -90,7 +90,7 @@ After generation, verify all items in this comprehensive checklist:
 
 ## Test Coverage - Comprehensive Testing
 
-** GOAL: Achieve the HIGHEST possible test coverage**
+**Goal: the highest achievable test coverage**
 
 ### Functional Coverage
 - [ ] **Every endpoint has at least one successful test**
@@ -117,7 +117,7 @@ After generation, verify all items in this comprehensive checklist:
 
 ## Security Rules Compliance
 
-** CRITICAL: These MUST be checked before completing**
+**Check these before completing:**
 
 ### Security Decorator Rules
 - [ ] **NO `@Restricted()` decorators removed from Controllers/Resolvers/Models/Objects**

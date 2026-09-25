@@ -394,7 +394,7 @@ invisible the moment the promotion branch carries something the source branch
 does not — and it fails **silently**: the deploy is green, the containers are
 healthy, and the branch simply does not describe what is running.
 
-Observed (SVL, DEV-3239): an urgent fix was cherry-picked onto `test` alone, to
+Observed (DEV-3239): an urgent fix was cherry-picked onto `test` alone, to
 keep five unrelated in-review tickets off the customer stage. Git was correct —
 `test` held only the fix, verified byte-identical to the dev commit. The deploy
 promoted dev's image anyway, so the customer stage ran the full dev build. The
@@ -430,7 +430,7 @@ image carried any at all.
 
 ## Gotchas / Traps
 
-Five traps account for nearly every failed go-live on this stack: a stage that stays single-service, an image the registry never received, a certificate issued before DNS pointed anywhere, a MongoDB URI that works locally but not in the swarm, and a rollout that reports healthy while serving the previous build.
+Seven traps account for nearly every failed go-live or redeploy on this stack: a stage that stays single-service, an image the registry never received, a certificate issued before DNS pointed anywhere, a MongoDB URI that works locally but not in the swarm, a rollout that reports healthy while no route reaches it, a hand-edited Traefik config that still names services a redeploy renamed, and an `env_file` or port in the compose that only works on a developer machine.
 
 Each one, with its symptom, its cause, and its fix: [reference/traps.md](${CLAUDE_SKILL_DIR}/reference/traps.md). Read it before the first deploy of a project, and again whenever a deploy behaves in a way the steps above do not explain.
 

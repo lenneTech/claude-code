@@ -1,7 +1,7 @@
 ---
 description: Refactor entire frontend app to match frontend-dev agent guidelines using parallel agent teams
 argument-hint: "[--scope=all|pages|components|composables] [--dry-run]"
-allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(wc:*), Bash(find:*), Bash(git:*), Bash(echo:*), Bash(pnpm run format:*), Bash(npm run format:*), Bash(yarn run format:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Agent, AskUserQuestion, TodoWrite, SlashCommand
+allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(wc:*), Bash(find:*), Bash(git:*), Bash(echo:*), Bash(pnpm run format:*), Bash(npm run format:*), Bash(yarn run format:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Agent, AskUserQuestion, Skill, SendMessage
 disable-model-invocation: true
 ---
 
@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 Refactors all pages, components, and composables in the frontend app to comply with the `frontend-dev` agent and `developing-lt-frontend` skill guidelines.
 
-**Goal:** Code quality, structure, and conventions — NOT functionality or UI changes. Everything must work exactly as before, just cleaner.
+**Goal:** Code quality, structure, and conventions, not functionality or UI changes. Everything must work exactly as before, just cleaner.
 
 ## When to Use This Command
 
@@ -45,7 +45,7 @@ Refactors all pages, components, and composables in the frontend app to comply w
 | Inline modals | Convert to programmatic `useOverlay()` |
 | Performance | Lazy components, `shallowRef`, `v-memo`, `v-once`, debounced inputs |
 
-## What MUST NOT Change
+## What Stays Unchanged
 
 - **Functionality** — every feature works identically after refactor
 - **UI/UX** — visual output stays the same
@@ -56,6 +56,10 @@ Refactors all pages, components, and composables in the frontend app to comply w
 ---
 
 ## Execution
+
+### Turn endings
+
+After the batch selection in step 5, this command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on. The run stops only at the handoff points this command defines (the `--dry-run` report, the batch selection in step 5, a check still failing after three fix attempts, Critical/High findings persisting after two review cycles, the closing option question after the Final Report), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation.
 
 ### 1. Parse Arguments
 
@@ -69,7 +73,7 @@ From `$ARGUMENTS`:
 ls -d projects/app packages/app 2>/dev/null
 ```
 
-If no frontend project found → STOP, inform user.
+If no frontend project found → stop and inform the user.
 
 ### 3. Inventory Analysis
 
@@ -126,7 +130,7 @@ Show a summary table:
 | TOTAL | 28 | 47 | ... |
 ```
 
-**If `--dry-run`:** Present report and STOP here. Do not modify any files.
+**If `--dry-run`:** Present the report and stop here. Do not modify any files.
 
 **Ask user:** "Soll ich alle Batches refactoren oder nur bestimmte? (alle / batch-namen kommagetrennt)"
 
@@ -141,26 +145,54 @@ Create an **Agent Team** with all batches as parallel teammates. Max 5 teammates
 
 **Create ALL teammates in a single Agent Team:**
 
-**Teammate "shared-foundation"** (subagent_type: `lt-dev:frontend-dev`):
+**The frontend-dev role travels in the spawn prompt.** Teammates apply agent types only from the project, user or managed scope, so a plugin type such as `lt-dev:frontend-dev` would be ignored for a teammate, together with its `skills:` preload. Every teammate prompt therefore opens with this role block:
+
 ```
+## Role
+You are the frontend engineer for this refactor (Nuxt 4 / Vue 3, strict TypeScript).
+Start by invoking the `lt-dev:developing-lt-frontend` skill through the `Skill` tool;
+it is the reference for every convention below. The complete frontend-dev rule set is
+in ${CLAUDE_PLUGIN_ROOT}/agents/frontend-dev.md; read it for any case not covered here.
+
+Rules this refactor depends on:
+- Existing patterns first: read app/components/ and app/composables/ and match the
+  established pattern; introduce a new one only where none covers the case.
+- Backend DTOs and API calls come from ~/api-client/types.gen.ts and sdk.gen.ts;
+  a manual DTO interface is never a workaround.
+- Zero implicit any: explicit types on every variable, ref<T>(), computed<T>(),
+  parameter and return; props via interface + withDefaults; emits via typed tuple
+  syntax; an options object for optional parameters.
+- Forms validate with Valibot only.
+- UI text stays in the project's existing UI language (translating it would change
+  the UI); code, names and comments are English.
+- Naming: components PascalCase, pages kebab-case, modals with `Modal` prefix,
+  composables with `use` prefix, frontend-only types in `*.interface.ts`.
+- A failing test is fixed at its root cause, pre-existing failures included; the
+  assertions stay as they are, because they pin the behaviour this refactor keeps.
+```
+
+**Teammate "shared-foundation"**:
+```
+<role block>
+
 Create or refactor shared components in components/shared/:
 - LoadingState.vue, EmptyState.vue, ErrorState.vue
 
-Follow ALL frontend-dev agent guidelines.
+Follow the role rules above.
 When done, share a message listing all created/modified shared components so other teammates can use them.
 ```
 
-**Teammate "refactor-\<batch-name\>"** (subagent_type: `lt-dev:frontend-dev`, one per feature batch, max 4):
+**Teammate "refactor-\<batch-name\>"** (one per feature batch, max 4):
 ```
+<role block>
+
 Refactor files in the <batch-name> feature domain.
 Wait for the "shared-foundation" teammate's message before referencing shared components.
 If shared components are not yet available, create local placeholders and note them for later integration.
 
-## CRITICAL RULES
-- Do NOT change any functionality — everything must work identically
-- Do NOT change any UI — visual output stays the same
-- Do NOT change any API contracts or routes
-- ONLY refactor code structure, types, patterns, and conventions
+## Rules
+Refactor code structure, types, patterns and conventions only. Functionality, the visual UI, API contracts and routes
+stay identical, because this refactor is verified by comparing behaviour before and after.
 
 ## Refactor Checklist
 
@@ -188,7 +220,7 @@ If shared components are not yet available, create local placeholders and note t
 - [ ] Replace console.log/warn/error with consola.withTag()
 - [ ] Add Loading/Empty/Error state handling where missing
 - [ ] Convert inline modals to programmatic useOverlay()
-- [ ] Use useToast() with German messages and color codes
+- [ ] Use useToast() with messages in the project's UI language and color codes
 - [ ] Typed route params (no implicit any from useRoute())
 
 ### Performance
@@ -236,9 +268,11 @@ Work exclusively in these files. Do NOT modify files outside your batch.
 
 ---
 
-### Verification (MANDATORY — Blocks Completion)
+### Verification (Blocks Completion)
 
-**The refactoring is NOT complete until ALL checks pass.**
+The refactoring is complete only when all checks pass.
+
+A teammate's final message is its report, not proof that the batch is done. Compare it against the batch's file list and checklist; when items are still open and no blocker is named, resume the same teammate via `SendMessage`, naming the open items. After two or three continuations on the same batch, stop and report the gap instead.
 
 Run all checks sequentially in the app root:
 
@@ -267,41 +301,41 @@ pnpm test 2>/dev/null || pnpm run test 2>/dev/null
 
 **Failure Protocol:**
 1. Read the error output carefully
-2. Fix the root cause in the refactored code (NOT by changing test expectations)
+2. Fix the root cause in the refactored code (not by changing test expectations)
 3. Re-run the failed check
-4. Max 3 fix attempts per check — if still failing, STOP and report errors to user
+4. Max 3 fix attempts per check — if still failing, stop and report the errors to the user
 
-**CRITICAL:** If tests fail, the refactoring introduced a regression. Fix must restore original behavior, NOT adjust tests.
+If tests fail, the refactoring introduced a regression: the fix restores the original behavior instead of adjusting the tests.
 
 ---
 
 ### Code Review (MANDATORY — After Verification)
 
-After verification passes, run `/lt-dev:review` to validate the refactored code.
+After verification passes, invoke the `lt-dev:review` skill via the `Skill` tool to validate the refactored code:
 
 ```
-Run: /lt-dev:review --base=<current-branch-base or main>
+Skill: lt-dev:review   arguments: --base=<current-branch-base or main>
 ```
+
+`lt-dev:review` reports only proven Critical and High defects and fixes them itself; everything below that bar is dropped, not reported.
 
 | Severity | Action |
 |----------|--------|
-| Critical / High findings | MUST be fixed — re-run verification after fixes |
-| Medium findings | Fix if possible, otherwise document as "Known Issues" |
-| Low / Info findings | Document in Final Report |
+| Critical / High findings | Fixed before the refactor counts as done — re-run verification after fixes |
 
-Max 2 review-fix cycles. If Critical/High persist, STOP and report to user.
+Max 2 review-fix cycles. If Critical/High persist, stop and report to the user.
 
 ---
 
 ### Final Report
 
-**OUTPUT REQUIREMENTS (read before generating):**
+**Output requirements:**
 
-1. **Every section below is MANDATORY** — Executive Summary, Batch Summary, Verification, Code Review, File Lists, Detailed Reports, Next Steps.
-2. **Section "Detailed Teammate Reports" MUST contain the verbatim full output of every batch teammate** (`shared-foundation` + each `refactor-<batch>`). Do NOT summarize — wrap each in a `<details>` block.
-3. **Section "Code Review Output" MUST embed the FULL `/lt-dev:review` output** (Executive Summary + Action Roadmap + Catalog + per-reviewer reports), not just the dimension table. Wrap in `<details>` if very long.
+1. **Every section below is required** — Executive Summary, Batch Summary, Verification, Code Review, File Lists, Detailed Reports, Next Steps.
+2. **Section "Detailed Teammate Reports" contains the verbatim full output of every batch teammate** (`shared-foundation` + each `refactor-<batch>`), unsummarized, each wrapped in a `<details>` block.
+3. **Section "Code Review Output" embeds the full `/lt-dev:review` output** (Executive Summary + Action Roadmap + Catalog + per-reviewer reports), not just the dimension table. Wrap in `<details>` if very long.
 4. **Action Roadmap** — derive from review findings + verification failures, prioritized: 🔴 Critical → 🟠 High → 🟡 Medium → 🟢 Low.
-5. **No-Loss Guarantee:** Every finding in the embedded `/lt-dev:review` output MUST appear in the Action Roadmap below. Cross-check counts before finalizing.
+5. **No-Loss Guarantee:** Every finding in the embedded `/lt-dev:review` output appears in the Action Roadmap below. Cross-check counts before finalizing.
 6. **No Placeholders:** Replace every `N`, `X min`, and `[...]` in the template with concrete values. Empty buckets say "None".
 
 ```

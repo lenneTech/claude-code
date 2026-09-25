@@ -2,8 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "Central configuration for Claude Code documentation sources. All sources are cached locally and updated when Claude Code version changes.",
   "cache": {
-    "claudeCodeVersion": "2.1.239",
-    "lastUpdated": "2026-08-22T11:46:28.388Z",
+    "claudeCodeVersion": "2.1.282",
+    "lastUpdated": "2026-09-25T11:44:24.820Z",
     "updateBehavior": "auto"
   },
   "updateBehaviorOptions": {
@@ -14,9 +14,97 @@
     "askAlways": "Always ask user (even if cache is current)"
   },
   "sourceTypes": {
-    "md": "Direct Markdown file - download as-is without conversion",
+    "md": "Markdown served directly (GitHub raw files, and the .md form of code.claude.com / platform.claude.com pages) - downloaded as-is, relative links made absolute",
     "html": "HTML page - download and convert to Markdown via Turndown",
-    "spa": "Single Page Application - render with Playwright, then convert to Markdown (default)"
+    "spa": "Single Page Application - render with Playwright, then convert to Markdown (fallback when no .md form exists)",
+    "pdf": "PDF converted to Markdown by hand - listed for provenance, never fetched by the script"
+  },
+  "coverage": {
+    "ignore": [
+      "agent-sdk/",
+      "whats-new/",
+      "claude-apps-gateway",
+      "self-hosted-environments",
+      "llm-gateway",
+      "gateways",
+      "amazon-bedrock",
+      "google-vertex-ai",
+      "microsoft-foundry",
+      "claude-platform-on-aws",
+      "third-party-integrations",
+      "platforms",
+      "admin-setup",
+      "champion-kit",
+      "communications-kit",
+      "corporate-launcher",
+      "legal-and-compliance",
+      "data-usage",
+      "zero-data-retention",
+      "analytics",
+      "monitoring-usage",
+      "network-config",
+      "devcontainer",
+      "sandbox-environments",
+      "cloud-environments",
+      "desktop",
+      "jetbrains",
+      "vs-code",
+      "mobile",
+      "voice-dictation",
+      "accessibility",
+      "keybindings",
+      "statusline",
+      "terminal-config",
+      "fullscreen",
+      "slack",
+      "claude-tag",
+      "troubleshoot-install",
+      "quickstart",
+      "setup",
+      "web-quickstart",
+      "overview",
+      "glossary",
+      "changelog",
+      "deep-links",
+      "claude-projects",
+      "prompt-library",
+      "feature-availability",
+      "authentication",
+      "costs",
+      "github-enterprise-server",
+      "claude-security",
+      "remote-control",
+      "claude-code-on-the-web",
+      "computer-use",
+      "chrome",
+      "how-claude-code-works",
+      "sessions",
+      "routines",
+      "ultrareview",
+      "security-guidance",
+      "code-review",
+      "github-actions",
+      "gitlab-ci-cd",
+      "agent-view",
+      "mcp-quickstart",
+      "artifacts",
+      "channels",
+      "scheduled-tasks",
+      "troubleshooting",
+      "managed-settings",
+      "server-managed-settings",
+      "managed-mcp",
+      "auto-mode-config",
+      "security",
+      "settings-example",
+      "fast-mode",
+      "advisor",
+      "interactive-mode",
+      "checkpointing",
+      "plugins/org",
+      "plugins/anthropic-marketplaces",
+      "plugins/code-intelligence"
+    ]
   },
   "sources": [
     {
@@ -27,81 +115,81 @@
     },
     {
       "name": "plugins",
-      "url": "https://code.claude.com/docs/en/plugins",
-      "type": "spa",
-      "description": "Plugin structure and manifest"
+      "url": "https://code.claude.com/docs/en/plugins/overview.md",
+      "type": "md",
+      "description": "Plugins overview: what a plugin is, when to build one instead of a standalone skill or MCP server, and the reading map for the plugin pages"
     },
     {
       "name": "plugins-reference",
-      "url": "https://code.claude.com/docs/en/plugins-reference",
-      "type": "spa",
-      "description": "Plugin JSON schemas and reference"
+      "url": "https://code.claude.com/docs/en/plugins/manifest-reference.md",
+      "type": "md",
+      "description": "plugin.json manifest reference: every field with type and default, accepted path forms, userConfig and environment variables"
     },
     {
       "name": "skills",
-      "url": "https://code.claude.com/docs/en/skills",
-      "type": "spa",
+      "url": "https://code.claude.com/docs/en/skills.md",
+      "type": "md",
       "description": "Skill YAML frontmatter and configuration"
     },
     {
-      "name": "slash-commands",
-      "url": "https://code.claude.com/docs/en/slash-commands",
-      "type": "spa",
-      "description": "Command frontmatter and usage"
-    },
-    {
       "name": "sub-agents",
-      "url": "https://code.claude.com/docs/en/sub-agents",
-      "type": "spa",
+      "url": "https://code.claude.com/docs/en/sub-agents.md",
+      "type": "md",
       "description": "Agent configuration and tools"
     },
     {
       "name": "hooks",
-      "url": "https://code.claude.com/docs/en/hooks",
-      "type": "spa",
+      "url": "https://code.claude.com/docs/en/hooks.md",
+      "type": "md",
       "description": "Hook event types and JSON structure"
     },
     {
       "name": "mcp",
-      "url": "https://code.claude.com/docs/en/mcp",
-      "type": "spa",
+      "url": "https://code.claude.com/docs/en/mcp.md",
+      "type": "md",
       "description": "MCP server configuration"
     },
     {
       "name": "memory",
-      "url": "https://code.claude.com/docs/en/memory",
-      "type": "spa",
+      "url": "https://code.claude.com/docs/en/memory.md",
+      "type": "md",
       "description": "CLAUDE.md structure and usage"
     },
     {
       "name": "settings",
-      "url": "https://code.claude.com/docs/en/settings",
-      "type": "spa",
-      "description": "Settings reference"
+      "url": "https://code.claude.com/docs/en/settings.md",
+      "type": "md",
+      "description": "Settings files, scopes and precedence; individual keys live in the settings-reference source"
     },
     {
       "name": "settings-reference",
-      "url": "https://code.claude.com/docs/en/settings-reference",
-      "type": "spa",
+      "url": "https://code.claude.com/docs/en/settings-reference.md",
+      "type": "md",
       "description": "Full settings key reference including crossSessionInbound, isolatePeerMachines, dialogExpiry and the sandbox unix-socket keys that govern cross-session messaging"
     },
     {
       "name": "cli-reference",
-      "url": "https://code.claude.com/docs/en/cli-reference",
-      "type": "spa",
+      "url": "https://code.claude.com/docs/en/cli-reference.md",
+      "type": "md",
       "description": "CLI options and flags"
     },
     {
       "name": "env-vars",
-      "url": "https://code.claude.com/docs/en/env-vars",
-      "type": "spa",
+      "url": "https://code.claude.com/docs/en/env-vars.md",
+      "type": "md",
       "description": "Environment variables exported to hooks and Bash commands, including CLAUDE_CODE_MESSAGING_SOCKET and CLAUDE_CODE_MESSAGING_TOKEN"
     },
     {
       "name": "common-workflows",
-      "url": "https://code.claude.com/docs/en/common-workflows",
-      "type": "spa",
-      "description": "Step-by-step guides for worktrees, parallel sessions, Plan Mode, subagents, testing, PRs, and unix-style usage"
+      "url": "https://code.claude.com/docs/en/common-workflows.md",
+      "type": "md",
+      "description": "Prompt recipes, resuming sessions, Plan Mode, delegating to subagents, and piping Claude into scripts; worktree details live in the worktrees source"
+    },
+    {
+      "name": "worktrees",
+      "url": "https://code.claude.com/docs/en/worktrees.md",
+      "type": "md",
+      "description": "Git worktree isolation for parallel sessions and subagents: --worktree, isolation: worktree, WorktreeCreate/WorktreeRemove hooks, cleanup"
     },
     {
       "name": "github-plugins-readme",
@@ -129,20 +217,20 @@
     },
     {
       "name": "agent-teams",
-      "url": "https://code.claude.com/docs/en/agent-teams",
-      "type": "spa",
+      "url": "https://code.claude.com/docs/en/agent-teams.md",
+      "type": "md",
       "description": "Agent Teams coordination, messaging, hooks, and best practices"
     },
     {
       "name": "cross-session-messaging",
-      "url": "https://code.claude.com/docs/en/cross-session-messaging",
-      "type": "spa",
+      "url": "https://code.claude.com/docs/en/cross-session-messaging.md",
+      "type": "md",
       "description": "Cross-session messaging between Claude Code sessions: ListAgents/SendMessage, session addressing, inbound policies, notify_when_idle, and the environment variables that expose the messaging socket (primary source)"
     },
     {
       "name": "platform-skills-best-practices",
-      "url": "https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices",
-      "type": "spa",
+      "url": "https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices.md",
+      "type": "md",
       "description": "Skill authoring best practices and patterns (primary source)"
     },
     {
@@ -156,6 +244,246 @@
       "url": "https://raw.githubusercontent.com/lenneTech/cli/main/LT-CLI-Reference.md",
       "type": "md",
       "description": "LT CLI command reference (server module, object, addProp, permissions, fullstack init)"
+    },
+    {
+      "name": "tools-reference",
+      "url": "https://code.claude.com/docs/en/tools-reference.md",
+      "type": "md",
+      "description": "Authoritative built-in tool names and per-tool behaviour (Skill, LSP, Task*/TodoWrite availability per model, Workflow, ToolSearch) and the permission-rule format shared by allowed-tools, permissions and hook `if`"
+    },
+    {
+      "name": "model-config",
+      "url": "https://code.claude.com/docs/en/model-config.md",
+      "type": "md",
+      "description": "Model aliases and what they resolve to, effort levels and their resolution order (per-model defaults, frontmatter effort), ultrathink, extended thinking, context window"
+    },
+    {
+      "name": "permissions",
+      "url": "https://code.claude.com/docs/en/permissions.md",
+      "type": "md",
+      "description": "Permission rule syntax, modes and managed policies - the rule grammar behind allowed-tools and permissions.json patterns"
+    },
+    {
+      "name": "plugin-marketplaces",
+      "url": "https://code.claude.com/docs/en/plugins/create-marketplace.md",
+      "type": "md",
+      "description": "Creating a marketplace from marketplace.json and testing it locally"
+    },
+    {
+      "name": "plugin-dependencies",
+      "url": "https://code.claude.com/docs/en/plugins/dependencies.md",
+      "type": "md",
+      "description": "Plugin dependencies with version ranges, and how Claude Code installs, resolves and prunes them"
+    },
+    {
+      "name": "plugin-relevance",
+      "url": "https://code.claude.com/docs/en/plugins/relevance.md",
+      "type": "md",
+      "description": "Relevance blocks on marketplace plugin entries so Claude Code suggests a plugin when the user's work matches"
+    },
+    {
+      "name": "plugin-evals",
+      "url": "https://code.claude.com/docs/en/plugin-evals.md",
+      "type": "md",
+      "description": "Plugin eval suites with `claude plugin eval`: cases, grading, no-plugin baseline, CI gating - the way to test skill triggering and behaviour"
+    },
+    {
+      "name": "features-overview",
+      "url": "https://code.claude.com/docs/en/features-overview.md",
+      "type": "md",
+      "description": "When to use CLAUDE.md, skills, subagents, hooks, MCP and plugins - the element-choice reference"
+    },
+    {
+      "name": "workflows",
+      "url": "https://code.claude.com/docs/en/workflows.md",
+      "type": "md",
+      "description": "Dynamic workflows: scripts that orchestrate many subagents (audits, migrations, cross-checked research)"
+    },
+    {
+      "name": "best-practices",
+      "url": "https://code.claude.com/docs/en/best-practices.md",
+      "type": "md",
+      "description": "Claude Code best practices from environment setup to parallel sessions"
+    },
+    {
+      "name": "commands",
+      "url": "https://code.claude.com/docs/en/commands.md",
+      "type": "md",
+      "description": "Built-in commands and bundled skills - the names a plugin command must not shadow"
+    },
+    {
+      "name": "prompting-claude-opus-5-5",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-opus-5-5.md",
+      "type": "md",
+      "description": "Model-specific prompting for Claude Opus 5.5 (the default model): effort calibration, early stops in unattended runs, progress updates, frontend defaults, visual inputs"
+    },
+    {
+      "name": "claude-prompting-best-practices",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices.md",
+      "type": "md",
+      "description": "Prompting techniques that apply across current Claude models - baseline for writing skill, command and agent prompts"
+    },
+    {
+      "name": "effort",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/effort.md",
+      "type": "md",
+      "description": "Effort parameter: levels, per-model recommendations and defaults, per-message effort"
+    },
+    {
+      "name": "hooks-guide",
+      "url": "https://code.claude.com/docs/en/hooks-guide.md",
+      "type": "md",
+      "description": "Hook recipes: formatting, notifications, command validation, the `if` field in practice"
+    },
+    {
+      "name": "debug-your-config",
+      "url": "https://code.claude.com/docs/en/debug-your-config.md",
+      "type": "md",
+      "description": "Diagnosing why CLAUDE.md, settings, hooks, MCP servers or skills do not take effect: /context, /doctor, /hooks, /mcp"
+    },
+    {
+      "name": "claude-directory",
+      "url": "https://code.claude.com/docs/en/claude-directory.md",
+      "type": "md",
+      "description": "Where Claude Code reads CLAUDE.md, settings, hooks, skills, commands, subagents, workflows and rules in .claude/ and ~/.claude/"
+    },
+    {
+      "name": "plugin-hints",
+      "url": "https://code.claude.com/docs/en/plugins/cli-hints.md",
+      "type": "md",
+      "description": "The claude-code-hint marker a CLI emits so Claude Code suggests installing its plugin - relevant for the lt CLI and lt-dev"
+    },
+    {
+      "name": "discover-plugins",
+      "url": "https://code.claude.com/docs/en/plugins/install.md",
+      "type": "md",
+      "description": "Installing and managing plugins from a marketplace: scopes, updates, removal - the flow README instructions describe"
+    },
+    {
+      "name": "headless",
+      "url": "https://code.claude.com/docs/en/headless.md",
+      "type": "md",
+      "description": "Running Claude Code programmatically (claude -p): the harness for testing hooks and skills empirically and in CI"
+    },
+    {
+      "name": "permission-modes",
+      "url": "https://code.claude.com/docs/en/permission-modes.md",
+      "type": "md",
+      "description": "Permission modes and how commands and agents behave under each"
+    },
+    {
+      "name": "sandboxing",
+      "url": "https://code.claude.com/docs/en/sandboxing.md",
+      "type": "md",
+      "description": "The sandboxed Bash tool: filesystem and network isolation hooks, launchers and MCP servers run under"
+    },
+    {
+      "name": "goal",
+      "url": "https://code.claude.com/docs/en/goal.md",
+      "type": "md",
+      "description": "/goal completion conditions that keep a long-running task going until it is met"
+    },
+    {
+      "name": "agents",
+      "url": "https://code.claude.com/docs/en/agents.md",
+      "type": "md",
+      "description": "Comparison of subagents, agent view, agent teams, dynamic workflows and projects for parallel work"
+    },
+    {
+      "name": "large-codebases",
+      "url": "https://code.claude.com/docs/en/large-codebases.md",
+      "type": "md",
+      "description": "Monorepos and large codebases: nested CLAUDE.md, sparse worktrees, code intelligence"
+    },
+    {
+      "name": "output-styles",
+      "url": "https://code.claude.com/docs/en/output-styles.md",
+      "type": "md",
+      "description": "Output styles, including custom styles a plugin can ship"
+    },
+    {
+      "name": "channels-reference",
+      "url": "https://code.claude.com/docs/en/channels-reference.md",
+      "type": "md",
+      "description": "Channel contract for MCP servers that push events into a session"
+    },
+    {
+      "name": "context-window",
+      "url": "https://code.claude.com/docs/en/context-window.md",
+      "type": "md",
+      "description": "What loads into the context window automatically and what each element costs"
+    },
+    {
+      "name": "prompt-caching",
+      "url": "https://code.claude.com/docs/en/prompt-caching.md",
+      "type": "md",
+      "description": "How Claude Code uses prompt caching: what invalidates it, effort changes, CLAUDE.md edits"
+    },
+    {
+      "name": "errors",
+      "url": "https://code.claude.com/docs/en/errors.md",
+      "type": "md",
+      "description": "Runtime error reference with meaning and fix per message"
+    },
+    {
+      "name": "plugins-components",
+      "url": "https://code.claude.com/docs/en/plugins/components.md",
+      "type": "md",
+      "description": "Adding skills, hooks, MCP servers, agents and other components to a plugin, including which agent frontmatter fields plugin agents honor"
+    },
+    {
+      "name": "plugins-marketplace-reference",
+      "url": "https://code.claude.com/docs/en/plugins/marketplace-reference.md",
+      "type": "md",
+      "description": "marketplace.json reference: every field, plugin entries, plugin and marketplace source objects"
+    },
+    {
+      "name": "plugins-host-marketplace",
+      "url": "https://code.claude.com/docs/en/plugins/host-marketplace.md",
+      "type": "md",
+      "description": "Hosting and maintaining a marketplace: access to private ones, releasing updates and renames without breaking installs"
+    },
+    {
+      "name": "plugins-loading",
+      "url": "https://code.claude.com/docs/en/plugins/loading.md",
+      "type": "md",
+      "description": "Where Claude Code loads each plugin from, which settings decide whether it loads, and why an update changed nothing"
+    },
+    {
+      "name": "plugins-create",
+      "url": "https://code.claude.com/docs/en/plugins/create.md",
+      "type": "md",
+      "description": "Building a plugin from an empty directory, testing it without a marketplace, converting a .claude/ setup"
+    },
+    {
+      "name": "plugins-publish",
+      "url": "https://code.claude.com/docs/en/plugins/publish.md",
+      "type": "md",
+      "description": "Publishing a plugin through an own or the community marketplace, with a pre-release checklist"
+    },
+    {
+      "name": "plugins-measure",
+      "url": "https://code.claude.com/docs/en/plugins/measure.md",
+      "type": "md",
+      "description": "Measuring a plugin's token cost and usage, and the telemetry events for organization-wide tracking"
+    },
+    {
+      "name": "plugins-troubleshooting",
+      "url": "https://code.claude.com/docs/en/plugins/troubleshooting.md",
+      "type": "md",
+      "description": "Plugin error messages by stage, from /plugin through install and org policy"
+    },
+    {
+      "name": "plugins-cli-reference",
+      "url": "https://code.claude.com/docs/en/plugins/cli-reference.md",
+      "type": "md",
+      "description": "claude plugin shell commands (validate, eval, install …), /plugin and /reload-plugins, flags that load a plugin for one session"
+    },
+    {
+      "name": "plugins-security",
+      "url": "https://code.claude.com/docs/en/plugins/security.md",
+      "type": "md",
+      "description": "What a plugin can do on a user's machine, and how users review and trust one"
     }
   ]
 }

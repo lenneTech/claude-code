@@ -37,7 +37,7 @@
 
 set -eu
 
-CHROME_MCP_PINNED_VERSION="${CHROME_MCP_VERSION:-1.7.0}"
+CHROME_MCP_PINNED_VERSION="${CHROME_MCP_VERSION:-1.10.1}"
 
 # ensure_node_on_path — make `npx`/`node` resolvable before we exec npx.
 #

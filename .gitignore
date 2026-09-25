@@ -17,3 +17,6 @@ bun.lockb
 **/data/calendar.json
 **/token.json
 **/credentials.json
+
+# claude plugin eval run output (reports, per-run transcripts)
+plugins/*/evals/results/

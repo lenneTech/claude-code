@@ -1,6 +1,6 @@
 ---
 name: nest-server-updating
-description: 'Migration guides, release notes, and error solutions for updating @lenne.tech/nest-server in npm mode. Covers version-specific breaking changes, stepwise major upgrades, and starter comparisons; delegates execution to the lt-dev:nest-server-updater agent. Activates on nest-server version upgrades, "pnpm run update", TypeScript errors after an upgrade, or stepwise migration planning. NOT for vendored cores (use nest-server-core-vendoring). NOT for writing NestJS code (use generating-nest-servers). NOT for general npm updates (use maintaining-npm-packages).'
+description: 'Migration guides, release notes, and error solutions for updating @lenne.tech/nest-server in npm mode. Covers version-specific breaking changes, stepwise major upgrades, and starter comparisons; delegates execution to the lt-dev:nest-server-updater agent. Activates on nest-server version upgrades ("update nest-server", "nest-server aktualisieren", "auf die neueste nest-server-Version heben"), "pnpm run update", TypeScript errors after an upgrade, or stepwise migration planning. NOT for vendored cores (use nest-server-core-vendoring). NOT for writing NestJS code (use generating-nest-servers). NOT for general npm updates (use maintaining-npm-packages).'
 ---
 
 # @lenne.tech/nest-server Update Knowledge Base
@@ -12,7 +12,7 @@ This skill provides **knowledge and resources** for updating @lenne.tech/nest-se
 ## Gotchas
 
 - **Crossing the jest→vitest boundary** — At some point on the upstream `nest-server-starter` timeline the test runner migrated from jest+ts-jest to vitest+unplugin-swc (check the starter's `package.json` for the current truth — if `vitest-e2e.config.ts` exists, the boundary is behind you). Updating an existing project across that boundary needs more than a `pnpm install`: every `@Prop` whose property is a TypeScript union (`'a' | 'b'`, `null | string`, an alias for either) must add `type: String` (or `type: Object` for record-likes), every `import * as supertest` must become a default import, every `jest.*` call must become `vi.*`, and `jest-e2e.json` + `babel.config.js` must be removed. Without these, vitest fails with "Cannot determine a type for the X field" from Mongoose, or "is not a function" from supertest. The full recipe lives in the `modernizing-toolchain` skill — apply Phases 2 and 3 before running `pnpm test`.
-- **`useDefineForClassFields` mismatch** — When migrating to vitest, both the `tsconfig.json` `compilerOptions.useDefineForClassFields` AND the swc plugin in `vitest-e2e.config.ts` MUST be set to `true`. Mixing them (e.g. swc=false, ts=true) silently breaks NestJS DI: `securityCheck` gets the wrong `currentUser`, so user `signUp` returns `createdBy: null` even though the override service set it. There is no error, only test failures that look like business logic regressions.
+- **`useDefineForClassFields` mismatch** — When migrating to vitest, both the `tsconfig.json` `compilerOptions.useDefineForClassFields` and the swc plugin in `vitest-e2e.config.ts` must be set to `true`. Mixing them (e.g. swc=false, ts=true) silently breaks NestJS DI: `securityCheck` gets the wrong `currentUser`, so user `signUp` returns `createdBy: null` even though the override service set it. There is no error, only test failures that look like business logic regressions.
 - **Minor version bumps are treated as MAJOR** — `@lenne.tech/nest-server` follows a "stepwise update" policy even on minor versions. Jumping from `7.5.x` directly to `7.9.x` in one step is likely to miss breaking changes that were introduced sub-minor. Always run the update step-by-step via `pnpm run update`, even if the version gap looks small.
 - **`pnpm run update` requires the target version in `package.json` FIRST** — The update script reads the current/target from `package.json`. Running it before bumping the version does nothing or produces confusing errors. Order: (1) bump `package.json` → (2) `pnpm install` → (3) `pnpm run update`.
 - **`nuxt-extensions` alignment breaks silently** — `@lenne.tech/nuxt-extensions` is version-aligned with `@lenne.tech/nest-server`. Updating nest-server to `7.19.0` without also updating nuxt-extensions to `7.19.x` leaves the frontend consuming an outdated API contract. Types generated via `generate-types` may still pass locally but break at runtime on production.
@@ -101,7 +101,7 @@ pnpm view @lenne.tech/nest-server versions --json
 
 ## Version Update Strategies
 
-**IMPORTANT:** In @lenne.tech/nest-server, **Major versions are reserved for NestJS Major versions**.
+In @lenne.tech/nest-server, **Major versions are reserved for NestJS Major versions**.
 Therefore, **Minor versions are treated like Major versions** and may contain breaking changes.
 
 ### Patch Updates (X.Y.Z → X.Y.W)
@@ -111,7 +111,7 @@ Therefore, **Minor versions are treated like Major versions** and may contain br
 - Run tests to verify
 - **Example:** `11.6.0 → 11.6.5` - direct update OK
 
-### Minor Updates (X.Y.Z → X.W.0) ⚠️ Treat as Major!
+### Minor Updates (X.Y.Z → X.W.0): Treat as Major
 
 - **May contain breaking changes** (Minor = Major in this package)
 - **Always stepwise**: Update through each minor version
@@ -179,7 +179,7 @@ gh api repos/lenneTech/nest-server/contents/migration-guides --jq '.[].name'
 
 ### Update Workflow
 
-**IMPORTANT:** The `pnpm run update` script requires a specific workflow:
+The `pnpm run update` script requires this order:
 
 1. **First:** Update the version in `package.json` to the desired target version
    ```

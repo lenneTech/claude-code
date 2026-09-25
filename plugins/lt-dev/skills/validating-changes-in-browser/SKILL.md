@@ -42,9 +42,9 @@ Activates at the end of these workflows (invoked from each):
 3. **No silent skips.** If a step cannot be tested (e.g. the project has no app, the change is backend-only and no UI consumes it yet), declare that explicitly in the list — don't omit the step.
 4. **Never reuse production data.** Seeds use `@test.com` emails and clearly fake names so they're filterable / wipeable.
 5. **Never leave dev servers orphaned.** Follow [managing-dev-servers](${CLAUDE_PLUGIN_ROOT}/skills/managing-dev-servers/SKILL.md) for start + stop semantics. If you used `lt dev up`, leave it up only if the user wants to continue testing manually.
-6. **Account visibility is mandatory.** Every step that requires a login MUST explicitly name the account (email, password, role). The developer reads the list as their own re-walk manual — they must be able to log into the stack without follow-up questions. This applies to both reused seed accounts AND newly-created accounts. For public/unauthenticated steps, mark them explicitly as `Account: no login (public / incognito)` (translated to the user's session language) instead of omitting the field.
+6. **Account visibility is mandatory.** Every step that requires a login names the account explicitly (email, password, role). The developer reads the list as their own re-walk manual — they must be able to log into the stack without follow-up questions. This applies to both reused seed accounts AND newly-created accounts. For public/unauthenticated steps, mark them explicitly as `Account: no login (public / incognito)` (translated to the user's session language) instead of omitting the field.
 7. **Ticket context block is mandatory.** Every walked list begins with a short context block stating (a) what the task / bug was in 1–3 sentences ("task summary"), (b) how it was implemented or fixed in 1–3 sentences plus the most-relevant `file:line` references ("implementation summary"), and (c) the ticket link when the originating workflow knows one (Linear URL, GitHub issue URL, file path of a `*.md` story). The user uses this block to orient themselves before re-walking — they should not need to switch context to remember what the branch is about.
-8. **URL-per-step is mandatory for UI steps — as a clickable markdown link.** Every step that touches a browser route MUST carry the fully-qualified URL the user navigates to, **rendered as a clickable markdown link** so the user clicks straight from the list (e.g. `URL: [users/new](https://<slug>.localhost/users/new)`). The session renders GitHub-flavored markdown, so `[label](url)` is clickable in the terminal / VS Code. Deep links (with query params, route params, or hash fragments) keep the exact form you used during the walk inside the link target. For non-UI steps (backend smoke pass, CLI flow), record the equivalent locator (`curl` URL + method, command line). Omit only when the step is genuinely location-less.
+8. **URL-per-step is mandatory for UI steps — as a clickable markdown link.** Every step that touches a browser route carries the fully-qualified URL the user navigates to, **rendered as a clickable markdown link** so the user clicks straight from the list (e.g. `URL: [users/new](https://<slug>.localhost/users/new)`). The session renders GitHub-flavored markdown, so `[label](url)` is clickable in the terminal / VS Code. Deep links (with query params, route params, or hash fragments) keep the exact form you used during the walk inside the link target. For non-UI steps (backend smoke pass, CLI flow), record the equivalent locator (`curl` URL + method, command line). Omit only when the step is genuinely location-less.
 9. **The user's final answer is binary in spirit:** ship or optimize further. The `AskUserQuestion` at the end always offers both, unless the originating workflow owns the release gate itself (`owns_release_gate`, see Step 8): then this skill returns its verdict without asking, and the workflow asks once, after its own preparation.
 10. **Keep the browser lean and close it when the walk ends.** Reuse a single Chrome DevTools MCP page across steps (`navigate_page`, not a fresh `new_page` per step); open a second tab only when a step truly needs two contexts at once, and `close_page` it immediately after. When the walk concludes — on **every** `AskUserQuestion` outcome — close every page you opened via `close_page` so the MCP releases the Chrome instance, even when you leave `lt dev up` running for the user's own re-test (they use their own browser). Browser-close is independent of the dev-server keep/stop decision. See [managing-dev-servers](${CLAUDE_PLUGIN_ROOT}/skills/managing-dev-servers/SKILL.md).
 
@@ -90,7 +90,7 @@ The seed data is for **you** — Chrome DevTools MCP will log in as it, navigate
 
 Choose the cheapest seed path that produces the required data:
 
-1. **Project provides a seed script** (`pnpm run seed`, `pnpm db:seed`, `scripts/seed.ts`, etc.) → run it. Read it first to know which accounts it produces and what their credentials are — you MUST surface those credentials to the user later.
+1. **Project provides a seed script** (`pnpm run seed`, `pnpm db:seed`, `scripts/seed.ts`, etc.) → run it. Read it first to know which accounts it produces and what their credentials are, because the walked list has to name them later.
 2. **`tests/fixtures/` contains a seed fixture** → adapt it inline or pipe it via the API. Same rule: read the fixture to know the credentials.
 3. **No seed infrastructure exists** → create accounts + entities yourself via Chrome DevTools MCP (sign-up flow) OR via direct API calls (`testHelper`-style, but ad-hoc — `curl https://api.<slug>.localhost/auth/signin -d '{...}'`). You pick the passwords; record them.
 
@@ -167,7 +167,7 @@ Typical tool calls per step intent:
 - **Sign in as a role** → `fill_form` on the login form using the credentials from the registry built in Step 3.
 - **Navigate** → `navigate_page` (prefer over a new tab).
 - **Click / interact** → `click` (with `take_snapshot` first to get stable selectors), `fill`, `press_key`, `hover`, `drag`.
-- **Verify state** → `take_snapshot` (DOM tree) + `take_screenshot` (visual confirmation).
+- **Verify state** → `take_snapshot` (DOM tree) + `take_screenshot` (visual confirmation). For a detail (alignment, a small label, an icon, a value in a chart or table), screenshot the element itself (`take_screenshot` with its `uid`) rather than judging it from a full-page image; when a Figma design exists, compare against its screenshot at the same viewport width.
 - **Inspect console** → `list_console_messages` after the action.
 - **Inspect network** → `list_network_requests` after the action.
 - **Force an error** → `evaluate_script` to throw / mutate a request / mock a 500.
@@ -275,7 +275,7 @@ On option 4: close the browser (above), then tear down the stack the same way as
 
 This skill is **invoked from** another workflow — never the entry point on its own. The contract:
 
-- **Inputs** the originating workflow MUST pass:
+- **Inputs** the originating workflow passes:
   - `diff_base` (e.g. `origin/dev`) so the skill can compute the diff.
   - `ticket_id` (if any) for the list header.
   - `ticket_url` (if any) — full URL to the originating ticket (e.g. `https://linear.app/<workspace>/issue/DEV-123`, GitHub issue URL, or the absolute repo-relative path to the story file). The skill renders this verbatim in the ticket-context block; if the originating workflow only knows the identifier, it should derive the URL from the workspace conventions before invoking the skill.

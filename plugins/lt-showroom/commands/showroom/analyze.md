@@ -24,7 +24,6 @@ This command runs Phase 1 (analysis) and Phase 3 (SHOWCASE.md creation) of the s
 | `/lt-showroom:showroom:screenshot` | Capture feature screenshots from the running app |
 | `/lt-showroom:showroom:create` | Publish the showcase to showroom.lenne.tech |
 | `/lt-showroom:showroom:update` | Re-analyze after source changes and update the showcase |
-| `/lt-showroom:showroom:sync-schema` | Refresh content-block schemas from the platform |
 
 **Related Skills:**
 
@@ -76,7 +75,7 @@ source_hash=$(git rev-parse HEAD:projects 2>/dev/null || git rev-parse HEAD:src 
 last_commit=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 ```
 
-The file MUST contain:
+The file contains:
 - Frontmatter with `version`, `source_hash`, `last_commit`, `analyzed_at` (today), `project`, `technologies`, `category`, `customer`
 - All sections: Überblick, Technologie-Stack, Features (minimum 6), Architektur, Technische Highlights, Ergebnis, Changelog
 - Each feature section with description, `file:line` evidence, and screenshot placeholder paths

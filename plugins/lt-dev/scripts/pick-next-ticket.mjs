@@ -51,8 +51,8 @@
 //   --team <k|n>        Linear team key (e.g. DEV) or name (required)
 //   --project <name>    Restrict to one Linear project. Matched TOLERANTLY against
 //                       the team's projects: exact name → unique prefix → unique
-//                       substring (case-insensitive), so a short alias like "SVL"
-//                       resolves "SVL - Kontingent". An unknown or ambiguous name
+//                       substring (case-insensitive), so a short alias like "ACME"
+//                       resolves "ACME - Kontingent". An unknown or ambiguous name
 //                       is a hard error (exit 6) — never a silent empty pool.
 //                       STRONGLY recommended — the single biggest token saver.
 //   --status <list>     Comma-separated state-name allow-list (absolute filter).
@@ -129,7 +129,7 @@ export function computeEligibleStates(states, statusAllow = null) {
  * Resolve a `--project` needle to exactly one of the team's projects. Mirrors the
  * tolerant team resolution in run(): an exact (trimmed, case-insensitive) name
  * match wins; otherwise a UNIQUE case-insensitive prefix match; otherwise a
- * UNIQUE case-insensitive substring match (so "SVL" resolves "SVL - Kontingent").
+ * UNIQUE case-insensitive substring match (so "ACME" resolves "ACME - Kontingent").
  * Anything unmatched or ambiguous returns `{ project: null, error }` so the caller
  * can fail loudly (exit 6) instead of silently filtering the whole pool to empty —
  * a bare server-side `name: { eq }` matches nothing on a short alias, which is
@@ -386,8 +386,8 @@ async function run(args, token) {
   }
 
   // Resolve --project tolerantly against the team's projects and scope by its ID.
-  // A bare `name: { eq }` matches nothing on a short alias ("SVL" vs the real
-  // "SVL - Kontingent"), which then reads exactly like an empty pool — so fail
+  // A bare `name: { eq }` matches nothing on a short alias ("ACME" vs the real
+  // "ACME - Kontingent"), which then reads exactly like an empty pool — so fail
   // loudly (exit 6) on an unknown/ambiguous name instead.
   let resolvedProject = null;
   if (args.project) {
@@ -419,7 +419,7 @@ async function run(args, token) {
     team: { id: team.id, key: team.key, name: team.name },
     project: resolvedProject ? resolvedProject.name : null,
     // Raw --project alias, surfaced only when it differs from the resolved name,
-    // so the caller/user can see "SVL" actually resolved "SVL - Kontingent".
+    // so the caller/user can see "ACME" actually resolved "ACME - Kontingent".
     projectInput: resolvedProject && resolvedProject.name !== args.project ? args.project : undefined,
     viewer: { id: meId, name: A.viewer.name, email: A.viewer.email },
     eligibleStates: eligibleStates.map((s) => ({ name: s.name, type: s.type, fixNeeded: fixNeededIds.has(s.id) })),

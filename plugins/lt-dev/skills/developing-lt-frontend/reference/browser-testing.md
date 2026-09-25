@@ -1,8 +1,8 @@
 # Browser Testing (Chrome DevTools MCP)
 
-**CRITICAL: For direct browser testing and debugging, always use the Chrome DevTools MCP (`mcp__plugin_lt-dev_chrome-devtools__*`) unless the user explicitly requests otherwise.** This applies to snapshots, navigation, interaction, network analysis, and performance traces. The Playwright-based Browser MCP (`mcp__MCP_DOCKER__browser_*`) is used for creating and running Playwright E2E tests.
+**For direct browser testing and debugging, use the Chrome DevTools MCP (`mcp__plugin_lt-dev_chrome-devtools__*`) unless the user asks for another tool.** This applies to snapshots, navigation, interaction, network analysis, and performance traces. The Playwright-based Browser MCP (`mcp__MCP_DOCKER__browser_*`) is used for creating and running Playwright E2E tests.
 
-**After implementing each feature, verify it works in the browser!**
+**After implementing each feature, verify it works in the browser.**
 
 ## Available Tools
 
@@ -61,11 +61,14 @@ The Chrome DevTools MCP drives a **real Chrome instance** — every `new_page` i
 
 | Tool | Use Case |
 |------|----------|
-| `mcp__plugin_lt-dev_nuxt-ui-remote__list-components` | List all available components |
-| `mcp__plugin_lt-dev_nuxt-ui-remote__get-component` | Get component documentation |
+| `mcp__plugin_lt-dev_nuxt-ui-remote__search-components` | Find components by `search` term or `category`; no parameters lists them all |
+| `mcp__plugin_lt-dev_nuxt-ui-remote__get-component` | Get component documentation (`sections` narrows the response) |
 | `mcp__plugin_lt-dev_nuxt-ui-remote__get-component-metadata` | Get props, slots, events |
-| `mcp__plugin_lt-dev_nuxt-ui-remote__search-components-by-category` | Find components by category |
-| `mcp__plugin_lt-dev_nuxt-ui-remote__list-composables` | List available composables |
+| `mcp__plugin_lt-dev_nuxt-ui-remote__search-composables` | Find composables by name or description |
+| `mcp__plugin_lt-dev_nuxt-ui-remote__list-examples` / `get-example` | Find an example by name, then read its source |
+| `mcp__plugin_lt-dev_nuxt-ui-remote__search-icons` | Find icon names in the `i-{prefix}-{name}` format |
+
+The server is the official Nuxt UI endpoint (`https://ui.nuxt.com/mcp`, HTTP, no authentication), so it documents the current Nuxt UI release.
 
 **When to use:**
 - Before using a Nuxt UI component you haven't used before

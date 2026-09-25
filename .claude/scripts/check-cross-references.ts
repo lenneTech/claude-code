@@ -64,12 +64,14 @@ function walkDir(dir: string, out: string[] = []): string[] {
 }
 
 function slugify(heading: string): string {
-  // Match GitHub-style anchor generation used by most Markdown renderers.
+  // GitHub's anchor generation: lowercase, drop everything but letters (any script),
+  // digits, underscores, hyphens and spaces, then turn EACH space into a hyphen.
+  // No trimming and no collapsing: "Root Cause + Fix" becomes "root-cause--fix", and
+  // "🔑 Permission" becomes "-permission" (the emoji goes, its trailing space stays).
   return heading
     .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-");
+    .replace(/[^\p{L}\p{N}_\s-]/gu, "")
+    .replace(/ /g, "-");
 }
 
 function extractAnchors(filePath: string): Set<string> {

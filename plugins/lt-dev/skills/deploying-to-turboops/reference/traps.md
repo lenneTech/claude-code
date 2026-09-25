@@ -59,7 +59,7 @@ read the repo compose) fall back to `generateFallback` and construct an image
 reference like `registry.turbo-ops.de/<slug>-<sha>:<sha>` — **hyphen-joined,
 without the `/api` or `/app` suffix**. That image does not exist, so the deploy
 fails at the image-fetch step with `not found in registry`. This is the exact
-signature described in [Root Cause + Fix](#root-cause--fix-uploading-the-compose-is-what-makes-a-stage-multi-service).
+signature described in [Root Cause + Fix](../SKILL.md#root-cause--fix-uploading-the-compose-is-what-makes-a-stage-multi-service).
 
 **Fix:** roll the stage via the **CI deploy job with `--compose
 docker-compose.yml`** (push the gating branch / re-run the pipeline job). The
@@ -171,6 +171,61 @@ TurboOps pipeline deploy to such a server as "needs the label pass afterwards".
 **Verify-checklist addition:** after ANY deploy, curl the real stage URLs
 (expect the app 200/302 and `GET api.<root>/health-check` 200 with a Let's
 Encrypt issuer) — never trust the green deploy job alone.
+
+### Trap 6 — a redeploy renames the services, a hand-edited Traefik config keeps the old names
+
+Observed 2026-09-25 on a production stage whose Traefik config had been edited by
+hand (an extra error-pages middleware on the app router): `redeploy_stack` with
+`redeployCurrentImage` recreated the services under hash-prefixed names
+(`<stack>_<hash>-api`, `<stack>_<hash>-app` instead of `<stack>_api`,
+`<stack>_app`). The saved config still pointed at `http://<stack>_api:3000`,
+Traefik could not resolve that name any more, and both domains answered 502 for
+about five minutes while the stage reported every container healthy.
+
+**Why it happens:** the stage's Traefik tab keeps a *saved* config next to the
+auto-generated one. As soon as the two differ (any hand edit), the saved one is
+what reaches the server, so the generator's new service names never arrive.
+`reload_traefik_config` does not repair it either: it refuses to overwrite a
+hand-edited config and only returns the diff. Whether a CI deploy renames
+services the same way is unverified; the check below costs a minute either way,
+so run it whatever path rolled the stage.
+
+**Before and after every redeploy of a stage with a custom config:** open the
+Traefik tab, "Vergleich anzeigen", and compare the
+`services.*.loadBalancer.servers[].url` entries of the saved and the
+auto-generated version. When the generated names changed, edit the saved config
+(only those URLs, keep the custom middlewares) and "Speichern & Anwenden", then
+curl both domains.
+
+**When the stage is already down:** the file `/opt/traefik/dynamic/<stack>.yml`
+is mounted read-only into the Traefik container, so it cannot be edited from
+there. Rewrite it on the host from a throwaway container that mounts the
+directory, e.g. from any container with Docker access on that host:
+
+```bash
+docker run --rm --entrypoint sed -v /opt/traefik/dynamic:/d nginx:alpine -i \
+  -e 's#http://<stack>_api:3000#http://<stack>_<hash>-api:3000#' \
+  -e 's#http://<stack>_app:3000#http://<stack>_<hash>-app:3000#' /d/<stack>.yml
+```
+
+Traefik picks the change up within seconds. Fix the saved config in the UI right
+after; otherwise the next deploy writes the stale version back.
+
+### Trap 7 — `env_file: .env` in the compose the pipeline uses
+
+TurboOps injects every service's environment itself (Env-Variablen tab, one scope
+per service). A `.env` exists neither in the CI job nor on the host, and Compose
+treats a missing `env_file` as an error while loading the file (`env file …/.env
+not found`), so `docker compose build` in the image job fails before anything is
+deployed. Keep `env_file` out of the deployed compose; for local runs use
+`docker compose --env-file .env up` or a separate override file.
+
+The same review catches the sibling mistake: Nuxt's Nitro server listens on
+`PORT` / `NITRO_PORT`, default **3000**. `devServer.port: 3001` in
+`nuxt.config.ts` applies to `nuxt dev` only, so a compose health check or
+`expose` on 3001 marks a healthy app container unhealthy and points Traefik at a
+closed port. Change the port in compose only together with a `PORT` env var on
+the `app` service and the Traefik service URL.
 
 ### CI completeness (mirrors `pnpm run check`)
 

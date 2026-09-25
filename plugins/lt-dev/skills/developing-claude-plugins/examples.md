@@ -150,7 +150,7 @@ An autonomous agent that generates documentation from code analysis.
 ---
 name: documentation-generator
 description: Generates comprehensive documentation from code. Use when creating or updating API docs, README files, or code documentation.
-model: sonnet
+model: inherit
 tools: Read, Grep, Glob, Write
 permissionMode: default
 ---
@@ -213,27 +213,30 @@ Automatic formatting hook that runs after file writes.
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": {
-          "tool": "Write",
-          "file_path": "**/*.ts"
-        },
+        "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",
-            "command": "pnpm dlx prettier --write $CLAUDE_FILE_PATH",
+            "command": "jq -r '.tool_input.file_path' | xargs pnpm dlx prettier --write",
+            "if": "Write(**/*.ts)",
             "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": {
-          "tool": "Write",
-          "file_path": "src/**/*.ts"
-        },
-        "hooks": [
+          },
           {
             "type": "command",
-            "command": "pnpm dlx eslint $CLAUDE_FILE_PATH --fix",
+            "command": "jq -r '.tool_input.file_path' | xargs pnpm dlx prettier --write",
+            "if": "Edit(**/*.ts)",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path' | xargs pnpm dlx eslint --fix",
+            "if": "Write(src/**/*.ts)",
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path' | xargs pnpm dlx eslint --fix",
+            "if": "Edit(src/**/*.ts)",
             "timeout": 15
           }
         ]
@@ -254,6 +257,11 @@ Automatic formatting hook that runs after file writes.
 }
 ```
 
+**How it works:**
+- `matcher` is a string tested against the tool name, so `"Edit|Write"` selects both file-writing tools.
+- `if` sits on each hook object and filters by path in permission-rule syntax. It holds exactly one rule, so each tool gets its own handler (`Write(...)` and `Edit(...)`). `src/**` matches only the `src` directory at the working-directory root; use `**/src/**` for any depth.
+- The command reads the event JSON from stdin and extracts `tool_input.file_path` with `jq`. Claude Code exports no file-path environment variable to hooks.
+
 ---
 
 ## Hook Script Example: Frontmatter Validation
@@ -268,7 +276,7 @@ TypeScript validation script for PreToolUse hooks.
 import * as fs from 'fs';
 
 interface HookInput {
-  tool: string;
+  tool_name: string;
   tool_input: {
     file_path?: string;
     content?: string;
@@ -333,7 +341,9 @@ function validate(input: HookInput): ValidationResult {
   }
 
   if (filePath.includes('/agents/') && !filePath.includes('/skills/')) {
-    const required = ['name', 'description', 'model', 'tools'];
+    // Only name and description are required; tools and model are optional
+    // (tools inherits all tools, model falls back to the default subagent model)
+    const required = ['name', 'description'];
     const missing = required.filter(f => !frontmatter[f]);
     if (missing.length > 0) {
       return {
@@ -405,7 +415,7 @@ description: What this command does
 ---
 name: my-agent
 description: What this agent does autonomously
-model: sonnet
+model: inherit
 tools: Read, Write, Grep, Glob
 ---
 

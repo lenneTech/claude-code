@@ -17,6 +17,15 @@
 #                  → emit "needs migration" hint so Claude proactively
 #                    runs `lt dev init`
 #   4. NON-LT    — not an lt project → silent exit (untouched)
+#
+# Deliberately runs on EVERY turn: no prompt keyword guard, no slash-command skip, and
+# no _skip-task-notification.sh guard (the other detect-* hooks use all three). The
+# injected context is project identity, not a topical skill hint, so it cannot be a
+# false positive. Background task / subagent notification turns are included on
+# purpose: Claude often resumes work on such a turn (acting on the subagent's result),
+# and when compaction has summarized earlier turns away, this block is what keeps it
+# on the lt-dev URLs instead of localhost:3000/3001. Re-injecting it on a notification
+# turn is redundant at worst.
 
 set -u
 

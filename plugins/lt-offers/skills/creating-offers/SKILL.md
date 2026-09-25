@@ -1,23 +1,22 @@
 ---
 name: creating-offers
-description: 'Creates and edits business offers on the lenne.tech Offers platform (angebote.lenne.tech) and its demo deployment (demo-angebote.lenne.tech). Knows all 18 content block types, offer lifecycle (draft/sent/viewed/template), custom HTML with Tailwind CSS and NuxtUI components (via rich-component block), HTML embeds for click-dummies, per-offer themes and color mode, and file uploads via single-use upload tickets. Activates when working with offers, content blocks, or the Offers API. Uses MCP tools (offers-api for production, offers-api-demo for demo) for all CRUD operations.'
+description: 'Creates and edits business offers on the Offers platform (angebote.lenne.tech) and its demo instance (demo-angebote.lenne.tech), using the account''s own knowledge base for company profile, services and references. Knows all 18 content block types, offer lifecycle (draft/sent/viewed/template), custom HTML with Tailwind CSS and NuxtUI components (via rich-component block), HTML embeds for click-dummies, per-offer themes and color mode, and file uploads via single-use upload tickets. Activates when working with offers, content blocks, or the Offers API. Uses MCP tools (offers-api for production, offers-api-demo for demo) for all CRUD operations.'
 ---
 
 # Creating Offers on angebote.lenne.tech
 
-This skill enables Claude Code to create, optimize, and manage business offers on the lenne.tech Offers platform via MCP tools.
+This skill enables Claude Code to create, optimize, and manage business offers on the Offers platform via MCP tools, for whichever company the signed-in account belongs to.
 
 ## Gotchas
 
 - **Content block `order` values must be ascending without gaps** — Gaps in the sequence (e.g., `1, 3, 5`) cause rendering glitches on the offers frontend. When deleting a block, re-normalize remaining orders; when inserting, pick the next consecutive integer. The API does not validate this — the bug only surfaces client-side.
-- **`global-ref` block type is NOT listed in the standard MCP tool catalog** — It's created automatically by the `/offers:create` workflow when a block is promoted to the offers repository. Users attempting to use it directly via `create_offer` will get a schema error. The workflow guards this via the `@lenne.tech` git email check.
+- **`global-ref` blocks point at blocks the platform provides** — `list_globals` shows which reusable blocks exist and `get_global` shows their versions. The MCP catalog has no tool to create one, so reuse your own recurring content through the knowledge base or a template offer instead (see "Reusing content across offers").
 - **OAuth session expires silently across sessions** — The `offers-api` and `offers-api-demo` MCP OAuth cookies are tied to the current Claude session and tracked per-server. Resuming an earlier offers session (via `--resume`) often hits a 401 on the first MCP call without a clear error. Re-authenticate by running a trivial MCP tool first. The first call against `offers-api-demo` triggers its own OAuth flow even if `offers-api` is already authenticated.
-- **`git config user.email` detection is fragile** — The reusable-block detection uses this to gate the lenne.tech-only flow. It fails for developers with a non-`@lenne.tech` email configured locally (CI machines, temporary clones, rebased-from-fork setups). The step silently skips in those cases, which is the intended fail-safe.
 - **Template offers cannot be published — only duplicated** — Offers with `isTemplate: true` cannot be `mark_sent`. Attempting to publish a template silently returns the unchanged offer. To publish, first `create_from_template` to produce a regular offer, then send that one.
-- **Hardcoded colors in `custom-html` break in the other color mode** — A block styled with inline colors for a light page turns unreadable when the viewer flips the theme toggle: dark headings and dark body text end up on the dark page background. `colorMode: 'light'` does NOT prevent this — it only sets the initial preference, the toggle stays available. Every `custom-html` block must paint its own background on the outermost element whenever it sets text colors. See [`custom-html-guide.md`](./reference/custom-html-guide.md) → "Readability in both color modes".
+- **Hardcoded colors in `custom-html` break in the other color mode** — A block styled with inline colors for a light page turns unreadable when the viewer flips the theme toggle: dark headings and dark body text end up on the dark page background. `colorMode: 'light'` does not prevent this — it only sets the initial preference, the toggle stays available. Every `custom-html` block must paint its own background on the outermost element whenever it sets text colors. See [`custom-html-guide.md`](./reference/custom-html-guide.md) → "Readability in both color modes".
 - **`cta.text` is rendered as plain text, not HTML** — Passing `"<p>…</p>"` prints the literal tags on the offer page. The block docs list it next to HTML-bearing fields, which invites the mistake. Pass a bare sentence. `text` blocks, `custom-html` and `faq` answers are unaffected.
 - **Embedded credentials in links (`https://user:pass@host`) are blocked by Chrome** — The navigation fails with `ERR_FAILED`, so a "one-click" demo link built that way is dead on arrival for most recipients. Link the plain URL and list the basic-auth credentials next to it so the browser prompt can be answered.
-- **Customer quotes must be verbatim and complete** — Shortening a `testimonial` or `reference.quote` to its "relevant" part, or silently fixing a typo in it, misrepresents a real person. Copying a quote out of an older offer is not safe either: it may already be truncated there. Pull the canonical wording from https://lenne.tech/kundenerfolge and diff it character by character — see [`best-practices.md`](./reference/best-practices.md) → "Customer quotes are verbatim, always".
+- **Customer quotes must be verbatim and complete** — Shortening a `testimonial` or `reference.quote` to its "relevant" part, or silently fixing a typo in it, misrepresents a real person. Copying a quote out of an older offer is not safe either: it may already be truncated there. Pull the canonical wording from the company's own published source (the knowledge base, or the references page it links to) and diff it character by character — see [`best-practices.md`](./reference/best-practices.md) → "Customer quotes are verbatim, always".
 - **File fields survive an update that omits them, so a new block inherits the old block at the same position** — `update_offer` replaces the block array, but `OfferService.update()` first runs `mergeContentBlockFiles()`, which pairs stored and incoming blocks by `${order}-${type}` and then protects every file field: `imageFileId`, `fileId`, `animationFileId`, `previewFileId`, `fileIds`, `members[].imageFileId`, `files[].fileId`. Omitting the field or sending `""` means *keep what is stored* — only an explicit `null` clears it. Because the pairing is positional, a brand-new `reference` inserted where another `reference` used to sit silently adopts that block's `imageFileId`, and the offer then shows the wrong screenshot under the new project name. Whenever a block changes identity, send a real file id or `null`, never `""`. See [`content-blocks.md`](./reference/content-blocks.md) → "File fields on update".
 - **A `reference` block without an image renders an empty placeholder box** — The renderer always reserves the image column and falls back to a grey box with an image icon, which reads as broken on a customer-facing page. Every `reference` needs a real `imageFileId`. When no product screenshot exists, a purpose-built diagram is a legitimate substitute; a screenshot of a *different* project is not.
 
@@ -26,7 +25,6 @@ This skill enables Claude Code to create, optimize, and manage business offers o
 - User asks to create, edit, or optimize an offer/Angebot
 - User references content blocks, pricing tables, or offer templates
 - User mentions angebote.lenne.tech, demo-angebote.lenne.tech, or the offers platform
-- Working inside the offers project repository
 - User wants to generate sharing snippets or manage offer status
 - User asks about offer analytics, views, downloads, or statistics
 
@@ -35,29 +33,27 @@ This skill enables Claude Code to create, optimize, and manage business offers o
 | User Intent | Correct Skill |
 |------------|---------------|
 | Create/edit offers via MCP | **THIS SKILL** |
-| Develop the offers codebase (API/Frontend) | `lt-dev:generating-nest-servers` / `lt-dev:developing-lt-frontend` |
-| Deploy offers infrastructure | `devops` |
+| Company profile, services, team, references for offers | **THIS SKILL** (the account's knowledge base) |
 
 ## Related Skills
 
 **Works closely with:**
-- `lt-dev:generating-nest-servers` — For backend development on the offers API
-- `lt-dev:developing-lt-frontend` — For frontend development on the offers app
+- `/lt-offers:offers:create` and `/lt-offers:offers:optimize` — the guided workflows built on this skill
 
 ## MCP Connection
 
-All offer operations go through one of two MCP servers — the platform ships a production and a demo deployment:
+All offer operations go through one of two MCP servers, the platform's production and demo instance:
 
 | MCP Server | URL | When to use |
 |---|---|---|
 | `offers-api` | `https://api.angebote.lenne.tech/mcp` | **Default.** Production — real customer-facing offers. |
-| `offers-api-demo` | `https://api.demo-angebote.lenne.tech/mcp` | Demo stage — sandbox for prospect demos. Use when the user mentions "demo", "Demo-Angebot", "demo-angebote", "Demo-Stage", or "Demo-Umgebung". |
+| `offers-api-demo` | `https://api.demo-angebote.lenne.tech/mcp` | Demo instance — for demonstrations and trials, separate from real offers. Use when the user mentions "demo", "Demo-Angebot", "demo-angebote", "Demo-Stage", or "Demo-Umgebung". |
 
-**Routing rule.** If the user prompt mentions "demo" in an offers context, route ALL tool calls in that prompt to `offers-api-demo`. Otherwise — including for ambiguous prompts — default to `offers-api` (production). The `UserPromptSubmit` hook emits a one-line stage hint that names the correct server; honor that hint.
+**Routing rule.** If the user prompt mentions "demo" in an offers context, route every tool call in that prompt to `offers-api-demo`, so demo work never lands among the real customer-facing offers on production. Otherwise — including for ambiguous prompts — default to `offers-api` (production). The `UserPromptSubmit` hook emits a one-line stage hint that names the correct server; honor that hint.
 
-Both connections use OAuth 2.1 with automatic browser-based login. The OAuth session is per-MCP-server, so the first call against `offers-api-demo` triggers its own browser-auth flow even if `offers-api` is already authenticated.
+Both connections use OAuth 2.1 with automatic browser-based login, and each instance has its own accounts. The OAuth session is per-MCP-server, so the first call against `offers-api-demo` triggers its own browser-auth flow even if `offers-api` is already authenticated.
 
-When working inside the offers project repository (local development), the project-level `.mcp.json` overrides `offers-api` to `http://localhost:3000/mcp` so production-flavored tool calls hit your local API. `offers-api-demo` is unaffected — still points at the deployed demo stage — which is useful for testing demo-only flows from a local dev environment.
+**Everything company-specific comes from the account, not from this plugin.** Company profile, services, team, process, legal notes and past projects live in the account's knowledge base, and `get_offer_context` delivers them. Build offers from that context; when it lacks something the offer needs, ask the user rather than filling the gap with assumptions. An organization can add its own conventions on top (a skill from its internal plugin, or its CLAUDE.md); where those name a source or a rule for this company, follow them.
 
 **Available MCP Tools (identical on both servers):**
 - `add_html_embed` — Upload a self-contained HTML file (base64) and create an `html-embed` content block in one atomic call (validates the HTML, ≤ 5 MB). For larger files prefer `create_upload_ticket` + HTTP upload
@@ -122,44 +118,19 @@ When working inside the offers project repository (local development), the proje
 3. **Suggest improvements** — Better block order, missing sections, text quality
 4. **Apply changes** — `update_offer` with improved content blocks
 
-## Reusable Global Blocks (lenne.tech Developers Only)
+## Reusing Content Across Offers
 
-This feature is **exclusively for lenne.tech developers**. Before evaluating reusable blocks, silently run `git config user.email` and check if the result contains `@lenne.tech`. If not, **skip this entire section without any mention** — the user must not see any hint of this feature.
+Content that is **not customer-specific** belongs where every future offer can pick it up, instead of being retyped per offer. The account offers three places for it:
 
-### Detection Logic
+| Content | Where it goes | How later offers use it |
+|---|---|---|
+| Facts to write from: company profile, services, team, process, legal notes, past projects | Knowledge base entry (`create_knowledge`, category per [`knowledge-base.md`](./reference/knowledge-base.md)) | `get_offer_context` delivers it as context for every new offer |
+| A whole offer structure for a recurring kind of project | Template offer (`isTemplate: true`) | `create_from_template` with customer overrides |
+| A block the platform already provides | Existing global block (`list_globals`) | A `global-ref` block pointing at it |
 
-```bash
-command -v git >/dev/null 2>&1 && git config user.email 2>/dev/null | grep -q '@lenne.tech'
-```
+During creation or optimization, watch for blocks that qualify: company introduction, standard team section, "Unser Prozess", recurring FAQ items, legal notes, blocks the user has duplicated by hand. Suggest the fitting place and create the knowledge entry or template only after the user agrees:
 
-- git not installed → skip silently
-- git installed but no `@lenne.tech` email → skip silently
-- git installed and `@lenne.tech` email → proceed with reusable block evaluation
-
-### When Detected as lenne.tech Developer
-
-During offer creation or optimization, evaluate whether any content block could be useful across multiple offers (e.g., company introduction, standard team section, recurring FAQ, legal disclaimers, standard CTA). If so:
-
-1. **Ask the user**: "Dieser Inhaltsblock könnte auch in zukünftigen Angeboten wiederverwendet werden. Soll er als wiederverwendbarer Block im Repository angelegt werden?"
-2. **If yes**, locate or clone the offers repository and create the global block there
-3. Verify availability via `list_globals` MCP tool
-4. **Automatically replace** the original inline block in the current offer with a `global-ref` block pointing to the new global ID via `update_offer`
-
-### Repository Access
-
-The offers platform repository is hosted at: `https://gitlab.lenne.tech/intern/offers`
-
-**Workflow:**
-1. Check whether the repo is already cloned on this machine. Checkout paths differ per developer, so search instead of assuming a workspace layout: `find "$HOME" -maxdepth 5 -type d -name offers -not -path '*/node_modules/*' 2>/dev/null`, then confirm the hit via its `git remote get-url origin`.
-2. If not found, ask the user if they want to clone it: `git clone https://gitlab.lenne.tech/intern/offers`
-3. Use `lt-dev:generating-nest-servers` / `lt-dev:developing-lt-frontend` skills for codebase changes
-
-### When to Suggest a Global Block
-
-- Content that is **not customer-specific** (company info, team, legal, processes)
-- Blocks that have been **manually duplicated** across offers
-- Standardized sections like "Über uns", "Unser Prozess", "AGB-Hinweis"
-- Recurring FAQ items that apply to most offers
+> Dieser Inhalt ist nicht kundenspezifisch und könnte in künftigen Angeboten wiederverwendet werden. Soll ich ihn als Wissensbasis-Eintrag (oder als Vorlage) speichern?
 
 ## Analyzing Offer Performance
 
@@ -185,7 +156,7 @@ Use `get_offer_analytics` to check how an offer performs. In Claude Desktop, an 
 
 ## Content Guidelines
 
-- **Language**: Always German. Ask the user whether to use "du" (informal) or "Sie" (formal) for addressing the customer. Default is **siezen** (formal). Avoid direct address where possible.
+- **Language**: German, unless the user or the knowledge base asks for another language. Ask the user whether to use "du" (informal) or "Sie" (formal) for addressing the customer. Default is **siezen** (formal). Avoid direct address where possible.
 - **Structure**: Start with greeting/intro, then main content, end with CTA
 - **Block order**: text → image/video → pricing-table → testimonial/reference → cta
 - **Pricing**: Always use `pricing-table` block for prices, not inline text

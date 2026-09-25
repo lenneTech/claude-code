@@ -46,6 +46,20 @@ report() { printf '  ✗ %s\n     → %s\n' "$1" "$2"; violations=$((violations+
 
 PLACEHOLDER='HIER_|CHANGE_?ME|EXAMPLE|BEISPIEL|MUSTER|<[^>]*>|xxxx|deine?[-_]|dein[-_]|your[-_]|placeholder|\.\.\.|000000'
 
+# ---- Interne Namens-Sperrliste (liegt bewusst NICHT in diesem öffentlichen Repo) ------
+# Echte Kunden-/Projektnamen OHNE Rechtsform (Projekt-Kürzel, Ticket-Präfixe) erkennt
+# Check 6 nicht. Die Liste liegt im privaten Repo claude-code-internal
+# (public-denylist.txt): eine Liste hier würde genau die Namen veröffentlichen, die sie
+# schützen soll. Pfad per LT_PUBLIC_DENYLIST überschreibbar. Fehlt die Datei (z. B. in
+# CI ohne Zugriff auf das private Repo), wird Check 7 übersprungen und das gemeldet.
+# Vorfall 2026-09-25: Kunden- und Projektnamen standen seit v7.6.0 in lt-showroom und
+# lt-dev, unbemerkt, weil keiner davon eine Rechtsform trug.
+DENYLIST="${LT_PUBLIC_DENYLIST:-$ROOT/../claude-code-internal/public-denylist.txt}"
+DENY_RE=""
+if [[ -r "$DENYLIST" ]]; then
+  DENY_RE=$(grep -vE '^[[:space:]]*(#|$)' "$DENYLIST" | paste -sd'|' -)
+fi
+
 while IFS= read -r f; do
   [[ -z "$f" || ! -f "$f" ]] && continue
   is_excluded "$f" && continue
@@ -118,6 +132,14 @@ while IFS= read -r f; do
       report "$f" "Sieht aus wie echte Kundendaten ($hits Firmennamen mit Rechtsform). Nur anonymisierte Beispiele (ohne Rechtsform) committen."
     fi
   fi
+
+  # 7) Interne Namens-Sperrliste: echte Kunden-/Projektnamen, auch ohne Rechtsform.
+  if [[ -n "$DENY_RE" ]]; then
+    hit=$(grep -niwE "$DENY_RE" "$f" 2>/dev/null | head -1 | cut -d: -f1)
+    if [[ -n "$hit" ]]; then
+      report "$f:$hit" "Enthält einen Namen aus der internen Sperrliste (echter Kunde/Projekt). Anonymisieren (z. B. Beispielkunde, ABC-123, shop)."
+    fi
+  fi
 done < <(list_files "$@")
 
 if [[ "$violations" -gt 0 ]]; then
@@ -128,4 +150,5 @@ if [[ "$violations" -gt 0 ]]; then
   exit 1
 fi
 echo "✓ scan-secrets: keine sensiblen Daten gefunden."
+[[ -z "$DENY_RE" ]] && echo "  (Check 7 übersprungen: interne Namens-Sperrliste nicht gefunden unter $DENYLIST)" >&2
 exit 0

@@ -92,7 +92,7 @@ If a project's `check` exits non-zero:
 
 ### Step 4 — Audit findings: mandatory fix escalation ladder
 
-When `pnpm audit` / `npm audit` / `yarn audit` (invoked by `check`) reports a vulnerability, you MUST exhaust this ladder **before** classifying the finding as Accepted. Re-run `check` after every step.
+When `pnpm audit` / `npm audit` / `yarn audit` (invoked by `check`) reports a vulnerability, exhaust this ladder **before** classifying the finding as Accepted. Re-run `check` after every step.
 
 | # | Step | Command (pnpm / npm / yarn) |
 |---|------|------------------------------|
@@ -105,7 +105,7 @@ When `pnpm audit` / `npm audit` / `yarn audit` (invoked by `check`) reports a vu
 
 A finding may only be classified as Accepted after **every** applicable step has been tried and verified, with documented evidence that no patched version exists anywhere in the ecosystem.
 
-**CI parity — the local audit MUST match the CI security gate.** A project's local `check` may run `pnpm audit` at a *lower* severity threshold (or narrower scope) than the CI gate — e.g. local `pnpm audit --prod --audit-level=critical` while a CI job runs `pnpm audit --prod --audit-level=high` (`allow_failure: false`). A green local `check` then **hides** findings that fail CI: the pipeline goes red on a "pre-existing" HIGH CVE the local loop never even surfaced. **Before trusting a green local `check`, confirm its `--audit-level` and `--prod`/scope match the strictest audit gate in `.gitlab-ci.yml` / `.github/workflows`.** If they diverge, raise the local `check` audit-level to match CI (so the local loop becomes the single source of truth that catches exactly what CI enforces), then run the ladder above on whatever new findings surface. An audit-level mismatch is a silent local↔CI parity bug — never an Accepted Residual.
+**CI parity — the local audit must match the CI security gate.** A project's local `check` may run `pnpm audit` at a *lower* severity threshold (or narrower scope) than the CI gate — e.g. local `pnpm audit --prod --audit-level=critical` while a CI job runs `pnpm audit --prod --audit-level=high` (`allow_failure: false`). A green local `check` then **hides** findings that fail CI: the pipeline goes red on a "pre-existing" HIGH CVE the local loop never even surfaced. **Before trusting a green local `check`, confirm its `--audit-level` and `--prod`/scope match the strictest audit gate in `.gitlab-ci.yml` / `.github/workflows`.** If they diverge, raise the local `check` audit-level to match CI (so the local loop becomes the single source of truth that catches exactly what CI enforces), then run the ladder above on whatever new findings surface. An audit-level mismatch is a silent local↔CI parity bug — never an Accepted Residual.
 
 ### Step 4a — Claim a cross-cutting finding before fixing it
 
@@ -347,7 +347,7 @@ When `/lt-dev:review` delegates a small diff to `lt-dev:code-reviewer`, the orch
 
 The agent then skips Steps 1–7 and pastes the block verbatim into its report.
 
-## Related Elements
+## Related Skills
 
 | Element | Relationship |
 |---------|--------------|
@@ -359,3 +359,7 @@ The agent then skips Steps 1–7 and pastes the block verbatim into its report.
 | **Skill**: `maintaining-npm-packages` | Owns the broader package maintenance ladder; this skill borrows Step 4 from there |
 | **Skill**: `rebasing-branches` | Strategy for rebases; defers `check` execution to this skill |
 | **Skill**: `coordinating-peer-sessions` | Claim protocol for cross-cutting findings when parallel sessions share the repo (Step 4a) |
+| **Skill**: `validating-ci-pipelines-locally` | Reproduces the CI pipeline itself; reach for it when `check` is green locally but CI fails |
+| **Skill**: `validating-production-readiness` | Release gate that requires a green `check` before it runs |
+| **Skill**: `maintaining-lt-stack` | Stack release; every base repo's recipe needs `check` green before tagging |
+| **Skill**: `modernizing-toolchain` | Toolchain migrations whose `ERR_SOCKET_BAD_PORT` / ANSI-strip hazards surface in `check` |

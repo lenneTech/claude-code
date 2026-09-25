@@ -11,10 +11,10 @@ You are an expert in Test-Driven Development (TDD) for NestJS applications using
 ## Gotchas
 
 - **Detect the test framework BEFORE writing the first test** — Projects use either Vitest or Jest. Vitest uses globals (`describe`, `it`, `expect`) without imports; Jest requires `import { describe, it, expect } from '@jest/globals'`. Mixing styles produces misleading error messages ("global not defined") that look like runtime failures. Check `vitest.config.ts` vs `jest.config.ts` first.
-- **Test data emails MUST use `@test.com`** — The cleanup regex in `TestHelper` uses `@test.com` as its deletion filter. Using `@example.com` or `@user.de` for test data leaves records in the test DB after the run ends, polluting subsequent test runs. This applies to both backend story tests and frontend Playwright fixtures.
+- **Test data emails use `@test.com`** — The cleanup regex in `TestHelper` uses `@test.com` as its deletion filter. Using `@example.com` or `@user.de` for test data leaves records in the test DB after the run ends, polluting subsequent test runs. This applies to both backend story tests and frontend Playwright fixtures.
 - **Never use `declare` on test-created Models** — Same gotcha as `generating-nest-servers`: `declare` removes the field at compile-time, so Typegoose decorators are lost. Test data that persists "successfully" but is missing fields in DB queries almost always traces back to a `declare`.
 - **Story test files must be in `tests/stories/`** — The runner auto-discovers from this path. Placing them in `tests/` or `src/__tests__/` means they silently don't run. Backend: `projects/api/tests/stories/<feature>.e2e-spec.ts`. Frontend E2E: `projects/app/tests/<feature>.spec.ts`.
-- **Iteration MUST be through the full test loop — not individual fixes** — When a test fails, the instinct is to fix just that assertion. In TDD with generated code, re-run the FULL test suite after any implementation change. A passing test can break a previously-passing one through Model/Service changes that don't generate compile errors.
+- **Iterate through the full test loop, not individual fixes** — When a test fails, the instinct is to fix just that assertion. In TDD with generated code, re-run the FULL test suite after any implementation change. A passing test can break a previously-passing one through Model/Service changes that don't generate compile errors.
 - **Limit local Playwright runs to new + affected specs to keep TDD loops fast** — The full Playwright suite is slow and runs in **CI**. Inside the TDD loop, default to running only the **new + affected** specs via `lt dev test -- <spec>` (lt-projects) or `pnpm exec playwright test <spec>` (non-lt). Backend Unit + API are fast and stay in the loop unrestricted. Only run the full local Playwright suite when the user explicitly asks.
 
 ## Ecosystem Context
@@ -25,7 +25,7 @@ TDD works in the **Lerna fullstack monorepo** created via `lt fullstack init`:
 
 ## When to Use This Skill
 
-**ALWAYS use this skill for:**
+**Use this skill for:**
 - Implementing new API features using Test-Driven Development
 - Creating story tests for user stories or requirements
 - Developing new functionality in a test-first approach
@@ -79,9 +79,9 @@ Phase 3: SEQUENTIAL IMPLEMENTATION (standard TDD)
 
 **Key:** Only test *writing* is parallelized. Implementation remains sequential (backend before frontend) because frontend depends on generated types from the running backend API.
 
-### Test Isolation & Cleanup (CRITICAL)
+### Test Isolation & Cleanup
 
-**Tests MUST be repeatable without side effects:**
+**Tests are repeatable without side effects:**
 
 1. **Unique test data** - Use `${Date.now()}-${random}` patterns
 2. **Complete cleanup in `afterAll`** - Delete all created entities
@@ -99,9 +99,9 @@ afterAll(async () => {
 
 **Why this matters:** Enables unlimited test runs without manual database cleanup.
 
-### Detect Test Framework FIRST (CRITICAL)
+### Detect Test Framework First
 
-**BEFORE writing or running ANY test**, mirror the project's existing framework and import style:
+**Before writing or running any test**, mirror the project's existing framework and import style:
 
 1. Check `package.json` for `vitest` or `jest` in dependencies/devDependencies
 2. For Vitest: inspect `vitest.config.ts` / `vitest-e2e.config.ts` for `globals: true` — this flips whether `describe`/`it`/`expect` must be imported
@@ -168,11 +168,11 @@ claude plugins install typescript-lsp --marketplace claude-plugins-official
 
 ## GOLDEN RULES
 
-1. **Test through API only** — Use `testHelper.rest()` / `testHelper.graphQl()`. NEVER call Services directly or query DB in test logic. Exception: DB access only for setup/cleanup (roles, verified status).
-2. **Verify before assuming** — ALWAYS read Controllers/Services/Models before writing tests. Never assume endpoints, methods, or properties exist.
-3. **Failing tests are ALWAYS a problem** — Fix the root cause of every failing test, even if the failure predates the current changes or seems unrelated to the current task. A green test suite is a non-negotiable prerequisite. Never ignore, skip, or defer test failures.
+1. **Test through API only** — Use `testHelper.rest()` / `testHelper.graphQl()`, not direct Service calls or DB queries in test logic, so the test exercises the guards, interceptors and `securityCheck()` a real client passes through. Exception: DB access only for setup/cleanup (roles, verified status).
+2. **Verify before assuming** — Read Controllers/Services/Models before writing tests. Never assume endpoints, methods, or properties exist.
+3. **Every failing test is a problem** — Fix the root cause of every failing test, even if the failure predates the current changes or seems unrelated to the current task. A green test suite is a non-negotiable prerequisite. Never ignore, skip, or defer test failures.
 4. **Agree the seams before writing the first test** — see [Seams](#seams-agree-them-before-step-2) below. A test at an unconfirmed seam is written on a guess about where behaviour should be observable.
-5. **Check upstream before working around a dependency** — if the implementation would shim, wrap, guard, patch, or re-implement something a framework or library owns, run the `checking-upstream-first` check FIRST: what version is actually resolved, what is current, what does the dependency's own code do, and has an lt base repo already solved it. Record the answer either way. Writing tests for a workaround the current version makes unnecessary is the most expensive way to discover that.
+5. **Check upstream before working around a dependency** — if the implementation would shim, wrap, guard, patch, or re-implement something a framework or library owns, run the `checking-upstream-first` check first: what version is actually resolved, what is current, what does the dependency's own code do, and has an lt base repo already solved it. Record the answer either way. Writing tests for a workaround the current version makes unnecessary is the most expensive way to discover that.
 
 **Full details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md) -> Steps 1, 2, and 4**
 
@@ -221,16 +221,16 @@ When a behaviour is only observable through a seam that does not exist yet, that
 ### Step 2: Create Story Test
 **Details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md) -> Step 2**
 
-**CRITICAL: Test through API only - NEVER direct Service/DB access!**
+**Test through the API only, without direct Service or DB access** (see GOLDEN RULES above).
 
 Tests go at the seams confirmed in Step 1, and only there. **One slice at a time**: one test, one implementation, repeat — never a batch of tests up front (that is horizontal slicing, see [test-anti-patterns.md](${CLAUDE_SKILL_DIR}/test-anti-patterns.md)). Each test is a tracer bullet that responds to what the previous cycle taught you.
 
 - Use `testHelper.rest()` or `testHelper.graphQl()`
-- NEVER call Services directly or query DB in test logic
-- Exception: Direct DB access ONLY for setup/cleanup (roles, verified status)
+- No direct Service calls or DB queries in test logic
+- Exception: direct DB access only for setup/cleanup (roles, verified status)
 
 **Test Data Rules (parallel execution):**
-1. Emails MUST end with `@test.com` (use: `user-${Date.now()}-${Math.random().toString(36).substring(2, 8)}@test.com`)
+1. Emails end with `@test.com`, the cleanup filter (use: `user-${Date.now()}-${Math.random().toString(36).substring(2, 8)}@test.com`)
 2. Never reuse data across test files
 3. Only delete entities created in same test file
 4. Implement complete cleanup in `afterAll`
@@ -250,7 +250,7 @@ pnpm test  # Or: pnpm test -- tests/stories/your-story.story.test.ts
 ### Step 3a: Fix Test Errors
 **Details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md) -> Step 3a**
 
-Fix test logic/errors. NEVER "fix" by removing security. Return to Step 3 after fixing.
+Fix test logic/errors. Never "fix" a test by removing security: the test exists to prove the security holds. Return to Step 3 after fixing.
 
 ### Step 4: Implement/Extend API Code
 **Details: [workflow.md](${CLAUDE_SKILL_DIR}/workflow.md) -> Step 4**
@@ -315,35 +315,37 @@ If the skill returns `boot_failed` or `stall_guard_triggered`, do NOT report DON
 
 ---
 
-## CRITICAL: GIT COMMITS
+## Git Commits
 
-**NEVER create git commits unless explicitly requested by the developer.**
+**Create git commits only when the developer explicitly asks**, because the developer reviews and commits the result.
 
 Your responsibility:
 - Create/modify files, run tests, provide comprehensive report
-- **NEVER commit to git without explicit request**
+- Leave committing to the developer unless they request it
 
 You may remind in final report: "Implementation complete - review and commit when ready."
 
 ---
 
-## CRITICAL SECURITY RULES
+## Security Rules
+
+These hold without exception: the decorators are the access control, and a test made green by weakening them ships the hole.
 
 **Complete details: [security-review.md](${CLAUDE_SKILL_DIR}/security-review.md)**
 **Extended with OWASP practices: Error Handling & Logging, Cryptographic Practices, Session & Token Management**
 
-### NEVER:
+### Never:
 - Remove/weaken `@Restricted()` or `@Roles()` decorators
 - Modify `securityCheck()` to bypass security
 - Add `@UseGuards(AuthGuard(...))` manually (automatically activated by `@Roles()`)
 
-### ALWAYS:
+### Always:
 - Analyze existing security before writing tests
 - Create appropriate test users with correct roles
 - Test with least-privileged users
 - Ask before changing ANY security decorator
 
-**When tests fail due to security:** Create proper test users with appropriate roles, NEVER remove security decorators.
+**When tests fail due to security:** Create proper test users with appropriate roles; never remove security decorators.
 
 ## Code Quality Standards
 
@@ -357,7 +359,7 @@ You may remind in final report: "Implementation complete - review and commit whe
 **Test quality:**
 - 80-100% coverage, self-documenting, independent, repeatable, fast
 
-**NEVER use `declare` keyword** - it prevents decorators from working!
+**Do not use the `declare` keyword** — it removes the field at compile time, so its decorators never run.
 
 ## Autonomous Execution
 
@@ -381,7 +383,7 @@ When all tests pass, provide comprehensive report including:
 
 **Complete patterns and examples: [examples.md](${CLAUDE_SKILL_DIR}/examples.md) and [reference.md](${CLAUDE_SKILL_DIR}/reference.md)**
 
-**Study existing tests first!** Common patterns:
+**Study existing tests first.** Common patterns:
 - Create test users via `/auth/signin`, set roles/verified via DB
 - REST requests: `testHelper.rest('/api/...', { method, payload, token, statusCode })`
 - GraphQL queries: `testHelper.graphQl({ name, type, arguments, fields }, { token })`

@@ -1,6 +1,6 @@
 ---
 description: Guided workflow to create a new business offer on angebote.lenne.tech via MCP
-allowed-tools: Read, Grep, Glob, Bash(command -v:*), Bash(git config:*), Bash(git clone:*), Bash(git pull:*), Bash(git status:*), mcp__plugin_lt-offers_offers-api__get_offer_context, mcp__plugin_lt-offers_offers-api__list_offers, mcp__plugin_lt-offers_offers-api__get_offer, mcp__plugin_lt-offers_offers-api__create_offer, mcp__plugin_lt-offers_offers-api__update_offer, mcp__plugin_lt-offers_offers-api__list_templates, mcp__plugin_lt-offers_offers-api__create_from_template, mcp__plugin_lt-offers_offers-api__list_globals, mcp__plugin_lt-offers_offers-api__add_offer_source, mcp__plugin_lt-offers_offers-api__upload_offer_source_file, mcp__plugin_lt-offers_offers-api__mark_sent, mcp__plugin_lt-offers_offers-api__generate_snippet, mcp__plugin_lt-offers_offers-api-demo__get_offer_context, mcp__plugin_lt-offers_offers-api-demo__list_offers, mcp__plugin_lt-offers_offers-api-demo__get_offer, mcp__plugin_lt-offers_offers-api-demo__create_offer, mcp__plugin_lt-offers_offers-api-demo__update_offer, mcp__plugin_lt-offers_offers-api-demo__list_templates, mcp__plugin_lt-offers_offers-api-demo__create_from_template, mcp__plugin_lt-offers_offers-api-demo__list_globals, mcp__plugin_lt-offers_offers-api-demo__add_offer_source, mcp__plugin_lt-offers_offers-api-demo__upload_offer_source_file, mcp__plugin_lt-offers_offers-api-demo__mark_sent, mcp__plugin_lt-offers_offers-api-demo__generate_snippet
+allowed-tools: Read, Grep, Glob, mcp__plugin_lt-offers_offers-api__get_offer_context, mcp__plugin_lt-offers_offers-api__list_offers, mcp__plugin_lt-offers_offers-api__get_offer, mcp__plugin_lt-offers_offers-api__create_offer, mcp__plugin_lt-offers_offers-api__update_offer, mcp__plugin_lt-offers_offers-api__list_templates, mcp__plugin_lt-offers_offers-api__create_from_template, mcp__plugin_lt-offers_offers-api__list_globals, mcp__plugin_lt-offers_offers-api__list_knowledge, mcp__plugin_lt-offers_offers-api__create_knowledge, mcp__plugin_lt-offers_offers-api__add_offer_source, mcp__plugin_lt-offers_offers-api__upload_offer_source_file, mcp__plugin_lt-offers_offers-api__mark_sent, mcp__plugin_lt-offers_offers-api__generate_snippet, mcp__plugin_lt-offers_offers-api-demo__get_offer_context, mcp__plugin_lt-offers_offers-api-demo__list_offers, mcp__plugin_lt-offers_offers-api-demo__get_offer, mcp__plugin_lt-offers_offers-api-demo__create_offer, mcp__plugin_lt-offers_offers-api-demo__update_offer, mcp__plugin_lt-offers_offers-api-demo__list_templates, mcp__plugin_lt-offers_offers-api-demo__create_from_template, mcp__plugin_lt-offers_offers-api-demo__list_globals, mcp__plugin_lt-offers_offers-api-demo__list_knowledge, mcp__plugin_lt-offers_offers-api-demo__create_knowledge, mcp__plugin_lt-offers_offers-api-demo__add_offer_source, mcp__plugin_lt-offers_offers-api-demo__upload_offer_source_file, mcp__plugin_lt-offers_offers-api-demo__mark_sent, mcp__plugin_lt-offers_offers-api-demo__generate_snippet
 argument-hint: "[customer-name-or-description]"
 disable-model-invocation: true
 ---
@@ -18,7 +18,6 @@ disable-model-invocation: true
 |---------|---------|
 | `/lt-offers:offers:create` | Create a new offer from a guided interview |
 | `/lt-offers:offers:optimize` | Improve an existing offer's text, structure, and completeness |
-| `/lt-offers:offers:sync-schema` | Refresh content-block schemas and the NuxtUI whitelist from the API |
 
 **Related Skills:**
 
@@ -57,7 +56,7 @@ If templates are available, ask:
 > Soll das Angebot auf einer Vorlage basieren oder von Grund auf erstellt werden?
 
 - **From template**: Use `create_from_template` with customer overrides
-- **From scratch**: Continue to Step 3
+- **From scratch**: Continue to Step 4
 
 ### Step 4: Build Content Blocks
 
@@ -78,19 +77,13 @@ Show the user:
 - Access code (for sharing with customer)
 - Offer URL (slug-based)
 
-### Step 6: Detect Reusable Blocks (lenne.tech Developers Only)
+### Step 6: Keep Reusable Content
 
-**Guard:** Silently run `command -v git >/dev/null 2>&1 && git config user.email 2>/dev/null | grep -q '@lenne.tech'`. If this fails (git not installed or no `@lenne.tech` email), skip this step entirely without mentioning it.
+Review the created content blocks. If a block holds content that is **not customer-specific** and future offers would need again (company introduction, team section, standard FAQ, legal text, process description), and the knowledge base from Step 1 does not already cover it, ask:
 
-Review the created content blocks. If any block contains content that is **not customer-specific** and could be reused in future offers (e.g., company introduction, team section, standard FAQ, legal text, process description), ask:
+> Dieser Inhalt ist nicht kundenspezifisch und könnte in künftigen Angeboten wiederverwendet werden. Soll ich ihn als Wissensbasis-Eintrag speichern?
 
-> Dieser Inhaltsblock könnte auch in zukünftigen Angeboten wiederverwendet werden. Soll er als wiederverwendbarer Block im Repository angelegt werden?
-
-If yes:
-1. Locate the offers repository locally or clone from `https://gitlab.lenne.tech/intern/offers`
-2. Create the global block in the codebase
-3. Verify availability via `list_globals` MCP tool
-4. Automatically replace the original inline block in the current offer with a `global-ref` block via `update_offer` — the user should not have to do this manually
+If yes, store it with `create_knowledge` in the matching category (see the `creating-offers` skill, "Reusing Content Across Offers"). When the whole offer is a recurring kind of project, suggest keeping a copy as a template offer instead.
 
 ### Step 7: Review
 
@@ -107,6 +100,6 @@ After creation, display:
 Angebot erstellt:
 - Titel: [title]
 - ID: [id]
-- Link: https://angebote.lenne.tech/angebot/[slug]
+- Link: https://angebote.lenne.tech/angebot/[slug]   (demo instance: https://demo-angebote.lenne.tech/angebot/[slug])
 - Zugangscode: [accessCode]
 ```

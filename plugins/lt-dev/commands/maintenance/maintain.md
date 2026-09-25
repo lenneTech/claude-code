@@ -1,6 +1,6 @@
 ---
 description: Full maintenance — framework updates (npm + vendor core) followed by npm package maintenance
-allowed-tools: Agent, Bash, Read, Grep, Glob
+allowed-tools: Agent, Bash, Read, Grep, Glob, SendMessage
 disable-model-invocation: false
 ---
 
@@ -41,6 +41,10 @@ Real incident (offers, 2026-07): a critical `better-auth` advisory was "fixed" b
 overriding `better-auth` past the version nest-server pinned. Audit went green, and
 an API test went red. The actual fix was nest-server `11.25.2 → 11.27.6`, which
 pins the patched `better-auth` itself. Order matters.
+
+## Turn endings
+
+This command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; a finished phase is the cue to start the next one. The run stops only at the handoff points this command defines (the Phase 4 report, and a Rollback when a phase cannot be repaired; when an orchestrating command invoked this one, the report returns to that caller, which carries on), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation.
 
 ## Phase 0 — Detect topology (before spawning anything)
 
@@ -116,6 +120,8 @@ explicitly:
 - the framework versions that are now in place (it must not fight them),
 - that overrides are **raised, never deleted** (see the agent's Priority 4),
 - that it must not touch `src/core/` or `app/core/` in vendor projects.
+
+Every agent's final message, here and in Phase 1, is its report, not proof that the task is done. Compare it against the task given; when items are still open and no blocker is named, resume the same agent via `SendMessage` to its agent id, naming the open items. After two or three continuations on the same task, stop and report the gap instead.
 
 ## Phase 4 — Verify
 

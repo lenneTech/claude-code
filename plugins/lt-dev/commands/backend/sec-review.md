@@ -84,4 +84,4 @@ Create a list of all findings:
 - **Info**: Improvement suggestions
 - **OK**: Everything secure
 
-**On Critical/Warning findings: STOP and inform the developer!**
+**On Critical/Warning findings, stop and inform the developer.**

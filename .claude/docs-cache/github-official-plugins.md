@@ -1,7 +1,7 @@
 # Claude Code Plugins Directory
 
 > **Source:** https://raw.githubusercontent.com/anthropics/claude-plugins-official/main/README.md
-> **Generated:** 2026-08-22T11:37:45.484Z
+> **Generated:** 2026-09-25T11:44:16.739Z
 
 ---
 

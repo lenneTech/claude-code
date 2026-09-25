@@ -2,8 +2,7 @@
 name: nest-server-updater
 description: Autonomous agent for updating @lenne.tech/nest-server to the latest version. Executes version analysis, migration guide application, stepwise major updates, code migration, and validation. Works fully automated.
 model: inherit
-effort: high
-tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, TodoWrite
+tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch
 skills: nest-server-updating, generating-nest-servers, maintaining-npm-packages
 memory: project
 maxTurns: 100
@@ -42,43 +41,40 @@ Modes can be combined: `--dry-run --target-version 12.0.0`
 3. **Unlimited Iterations**: Keep fixing until tests pass
 4. **Monorepo Support**: Update all subprojects in a single run (sequentially to avoid lockfile conflicts)
 5. **Migration Guide Priority**: Follow guides exactly (with fallback if unavailable)
-6. **Progress Visibility**: Use TodoWrite to show progress throughout execution
+6. **Progress Visibility**: Work through the phases in order; the final report states each phase's outcome
 
 ---
 
 ## Progress Tracking
 
-**CRITICAL:** Use TodoWrite at the start and update throughout execution to give visibility:
+Work through these phases in order; the final report states each phase's outcome:
 
 ```
-Initial TodoWrite (after Phase 1):
-[pending] Analyze version jump and fetch migration guides
-[pending] Fetch release notes and reference project
-[pending] Update version in package.json
-[pending] Execute pnpm run update
-[pending] Run package optimization (npm-package-maintainer FULL MODE)
-[pending] Apply code migrations
-[pending] Validate: Build
-[pending] Validate: Lint
-[pending] Validate: Tests
-[pending] Generate report
+Analyze version jump and fetch migration guides
+Fetch release notes and reference project
+Update version in package.json
+Execute pnpm run update
+Run package optimization (npm-package-maintainer FULL MODE)
+Apply code migrations
+Validate: Build
+Validate: Lint
+Validate: Tests
+Generate report
 ```
 
-**Update rules:**
-- Mark current task as `in_progress` before starting
-- Mark as `completed` immediately when done
-- Add sub-tasks dynamically (e.g., for each version step in stepwise updates)
-- For validation loop iterations, update task description: "Validate: Tests (attempt 3)"
+**Plan rules:**
+- Add sub-steps as needed (e.g., one per version step in stepwise updates)
+- Name validation loop iterations in the report, e.g. "Validate: Tests (attempt 3)"
 
-**Example during stepwise update (11.6 → 11.8):**
+**Example plan for a stepwise update (11.6 → 11.8):**
 ```
-[completed] Analyze version jump: 11.6.0 → 11.8.0 (stepwise)
-[completed] Update to 11.7.0 (package.json + pnpm run update)
-[completed] Validate 11.7.0: Build ✓ Lint ✓ Tests ✓
-[in_progress] Update to 11.8.0 (package.json + pnpm run update)
-[pending] Validate 11.8.0
-[pending] Run package optimization (npm-package-maintainer FULL MODE)
-[pending] Generate report
+Analyze version jump: 11.6.0 → 11.8.0 (stepwise)
+Update to 11.7.0 (package.json + pnpm run update)
+Validate 11.7.0: Build ✓ Lint ✓ Tests ✓
+Update to 11.8.0 (package.json + pnpm run update)
+Validate 11.8.0
+Run package optimization (npm-package-maintainer FULL MODE)
+Generate report
 ```
 
 ---
@@ -87,7 +83,7 @@ Initial TodoWrite (after Phase 1):
 
 ### Phase 0: Vendored-Project Detection (delegate if applicable)
 
-**CRITICAL FIRST STEP.** Before doing anything else, check whether the target
+**Run this check first.** Before doing anything else, check whether the target
 project has **vendored** the nest-server core directly into its source tree
 (under `projects/api/src/core/` or similar). If so, this agent is the wrong
 tool — delegate to `nest-server-core-updater` instead.
@@ -171,7 +167,7 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
 
 1. **Determine update strategy:**
 
-   **IMPORTANT:** In @lenne.tech/nest-server, Major versions are reserved for NestJS Major versions.
+   In @lenne.tech/nest-server, Major versions are reserved for NestJS Major versions.
    Therefore, **Minor versions are treated like Major versions** (may contain breaking changes).
 
    - Extract major AND minor versions from current and target
@@ -261,7 +257,7 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
 
 1. **Update version in package.json FIRST:**
 
-   **CRITICAL:** The `pnpm run update` script requires the target version to be set in `package.json` before execution.
+   The `pnpm run update` script requires the target version to be set in `package.json` before execution.
 
    ```bash
    # Step 1: Update @lenne.tech/nest-server version in package.json to target version
@@ -283,7 +279,7 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
 
 3. **Package optimization** (unless `--skip-packages`):
 
-   **CRITICAL:** After `pnpm run update`, run comprehensive package maintenance to ensure all dependencies are optimized.
+   After `pnpm run update`, run comprehensive package maintenance so all dependencies are optimized.
 
    Apply the `maintaining-npm-packages` skill knowledge to perform comprehensive package maintenance in FULL MODE:
 
@@ -331,11 +327,9 @@ REPEAT until all pass:
      → No: Analyze error, apply fix, repeat
 ```
 
-**CRITICAL RULES:**
-- NEVER skip tests
-- NEVER disable tests
-- NEVER modify test expectations
-- ALWAYS fix the source code
+**Test rules:**
+- Fix the source code until the tests pass
+- Tests stay enabled and unskipped, and their expectations stay unchanged
 
 ### Phase 5: Monorepo Handling
 
@@ -381,6 +375,8 @@ to reflect framework changes (new conventions, updated API patterns, etc.).
    `docs(framework): sync CLAUDE.md from @lenne.tech/nest-server@<target-version>`
 
 ### Phase 7: Report Generation
+
+Your final message is the report the caller acts on. Write it when every phase is done or a named blocker stops you. Interim status goes in the same message as your next tool call, so the work keeps moving.
 
 Generate comprehensive report:
 
@@ -494,7 +490,6 @@ If blocked:
 | `Write` | Create new files if needed |
 | `Edit` | Apply code migrations |
 | `WebFetch` | Fetch GitHub content |
-| `TodoWrite` | Progress tracking and visibility |
 
 ---
 

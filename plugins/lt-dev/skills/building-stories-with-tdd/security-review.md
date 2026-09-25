@@ -13,9 +13,7 @@ description: Security review checklist for Test-Driven Development - ensures no 
 - [Remember](#remember)
 - [Quick Security Checklist](#quick-security-checklist)
 
-**CRITICAL: Perform security review before final testing!**
-
-**ALWAYS review all code changes for security vulnerabilities before marking complete.**
+**Review all code changes for security vulnerabilities before final testing and before marking the work complete.**
 
 Security issues can be introduced during implementation without realizing it. A systematic review prevents:
 - Unauthorized access to data

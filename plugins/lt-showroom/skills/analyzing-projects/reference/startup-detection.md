@@ -2,7 +2,7 @@
 
 Detailed recipes for detecting how a project starts, what it needs to run, and how to seed demo data. Consumed by the `analyzing-projects` skill to produce a complete `startupInfo` block.
 
-The analysis MUST produce a complete, actionable recipe to start the project from scratch. Without it, screenshots cannot be taken and features cannot be verified.
+The analysis produces a complete, actionable recipe to start the project from scratch. Without it, screenshots cannot be taken and features cannot be verified.
 
 ## 1. Project Structure & Package Manager
 
@@ -82,7 +82,7 @@ Determine the exact command to start the project:
 | Backend-only | no frontend directory | `npm run start` (screenshot Swagger/GraphQL) |
 | Single Nuxt app | `nuxt.config.ts` at root | `npx nuxt dev` |
 
-**Port conflicts:** Most lenne.tech projects hardcode port 3000 (API) and 3001 (App) in `config.env.ts`. Only one project can run at a time.
+**Port conflicts:** Many lenne.tech stack projects hardcode port 3000 (API) and 3001 (App) in `config.env.ts`. Only one project can run at a time.
 
 ## 6. First User / Authentication Setup
 
@@ -109,7 +109,7 @@ Check for seed mechanisms:
 ## 8. Auth Routes & Login Pages
 
 Find the actual login route (varies per project):
-- `/auth/login` (lenne.tech standard with Better Auth)
+- `/auth/login` (lenne.tech stack standard with Better Auth)
 - `/auth/signin` (legacy auth)
 - Login embedded in landing page (no separate route)
 - Registration at `/auth/register` or `/auth/registrierung`
@@ -139,7 +139,7 @@ startupInfo:
       required: true
       setup: "external — URL in .env.example"
   seedCommand: "npm run seed" | "auto (migration)"
-  seedCredentials: { email: "admin@lenne.tech", password: "Test1234!" }
+  seedCredentials: { email: "admin@example.com", password: "<from the seed script>" }
   authMethod: "system-setup" | "better-auth-signup" | "legacy-signup" | "seed-migration" | "none"
   authRoute: "/auth/login" | "/auth/signin" | "embedded in landing page"
   authNotes: "Terms acceptance required" | "Admin auto-created by migration"

@@ -122,7 +122,9 @@ Output a `startupInfo` block with: method, command, port, requiresDatabase, data
 
 Produce a structured report following the `analyzing-projects` skill `report-schema.md`.
 
-The report MUST include:
+Your final message is the report the caller acts on. Write it when every phase is done or a named blocker stops you. Interim status goes in the same message as your next tool call, so the work keeps moving.
+
+The report includes:
 - All 8 analysis dimensions with file:line evidence
 - Feature list with name, description, evidence, icon (Lucide icon name for feature-grid display), and screenshot candidate page
 - `startupInfo` block

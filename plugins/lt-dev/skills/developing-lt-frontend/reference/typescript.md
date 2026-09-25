@@ -14,7 +14,7 @@
 
 ## Rule: No Implicit `any`
 
-Every variable, parameter, and return value MUST have an explicit type.
+Every variable, parameter, and return value has an explicit type.
 
 ## Variables
 
@@ -85,7 +85,7 @@ const emit = defineEmits<{
 
 ## Generated Types (REQUIRED)
 
-**NEVER create custom interfaces for backend DTOs!**
+**Backend DTO types come from the generated files, not from custom interfaces.**
 
 ```typescript
 //  ALWAYS use generated types for backend data
@@ -107,7 +107,7 @@ interface FilterState {
 
 ### If Generated Types Are Missing
 
-**Prerequisites:** Backend API must be running!
+**Prerequisites:** the backend API is running.
 
 ```bash
 # 1. Start API
@@ -117,7 +117,7 @@ cd projects/api && pnpm run start:dev
 pnpm run generate-types
 ```
 
-**NEVER create manual DTOs as a workaround!**
+**Regenerate the types instead of writing manual DTOs as a workaround.**
 
 ## Anti-Patterns
 

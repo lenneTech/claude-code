@@ -44,7 +44,7 @@ Order applied at render time (browser, PDF, share-preview):
 
 1. **Per-offer override**, if `offer.theme.enabled === true` and both `light` and `dark` palettes are present.
 2. **App-wide default** (`settings.defaultTheme`), otherwise.
-3. **Platform fallback** (the lenne.tech orange palette baked into the frontend), if no settings default has been configured yet.
+3. **Platform fallback** (the platform's built-in palette), if no settings default has been configured yet.
 
 The API merges the resolved theme into the offer payload before sending it down — `get_offer` and `findBySlug` both apply this. Consumers (browser, PDF service) never need to read settings directly; they always see a fully resolved `theme.light` / `theme.dark`.
 
@@ -52,7 +52,7 @@ The API merges the resolved theme into the offer payload before sending it down 
 
 Orthogonal to the palette: `offer.colorMode` (`'system' | 'light' | 'dark'`, default `'system'`) decides **which** of the two palettes the customer-facing page uses.
 
-- `'system'` — follows the visitor's browser/OS preference (the pre-existing behavior).
+- `'system'` — follows the visitor's browser/OS preference.
 - `'light'` / `'dark'` — the offer page sets the Nuxt color-mode preference on load, overriding the visitor's preference.
 
 Use a forced mode when the offer design is tuned for one appearance (e.g. a brand-heavy light design for a corporate customer). Configure it via `create_offer` / `update_offer` (`colorMode` field) or in the offer editor's color card (radio group: Browser-Default / Hell / Dunkel). PDFs are unaffected — they always render the light palette.
@@ -122,7 +122,7 @@ Use a forced mode when the offer design is tuned for one appearance (e.g. a bran
 - A toggle "Eigene Farben verwenden" controls `theme.enabled`. When off, the picker grid collapses to keep the editor compact, but the color values **are preserved** so toggling back on does not lose work.
 - Two reset buttons:
   - "Auf Standard zurücksetzen" — restores the **app-wide default** (or platform fallback if none configured).
-  - "Auf Plattform zurücksetzen" — restores the lenne.tech baseline regardless of the settings default.
+  - "Auf Plattform zurücksetzen" — restores the platform's built-in palette regardless of the settings default.
 - Light and dark are edited in parallel side-by-side; previewing the offer respects the OS color-scheme.
 
 ### Settings page (admins)
@@ -132,7 +132,7 @@ Use a forced mode when the offer design is tuned for one appearance (e.g. a bran
 
 ## PDF Rendering
 
-The PDF service (`pdf.service.ts`) injects `SettingsService` and applies the same default-merge logic before laying out the document. Hardcoded brand hex codes (`#FF611E`, etc.) have been replaced with theme lookups, so a customer-specific PDF matches the on-screen experience.
+The PDF service (`pdf.service.ts`) injects `SettingsService` and applies the same default-merge logic before laying out the document. Brand colors come from theme lookups rather than hardcoded hex codes (such as `#FF611E`), so a customer-specific PDF matches the on-screen experience.
 
 **Light palette only.** PDFs render in light mode regardless of the customer's OS preference. The dark palette is preserved on the document (for the browser view) but not consulted during PDF generation.
 
@@ -165,4 +165,4 @@ Because the CSS scope is data-attribute-driven, the offer page can opt in/out at
 - **Forgetting `enabled: true`** — colors land in the document but the renderer ignores them and falls back to the default. This is by design (so users can stash a palette without applying it).
 - **Calling `set_default_theme` as non-admin** — the request returns 403. The MCP tool does not pre-check the role; rely on the API response.
 - **Expecting `get_offer` to return the raw override** — it returns the effective theme. Read the offer document directly only if the distinction matters (rare).
-- **Old MCP sessions** — adding the theme schemas requires reconnecting the MCP server; cached tool definitions in long-lived sessions will not include `theme` until the client re-handshakes.
+- **Stale MCP tool definitions** — a long-lived session keeps the tool schemas from its handshake. If `create_offer` / `update_offer` do not accept `theme`, reconnect the MCP server so the client re-handshakes.

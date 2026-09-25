@@ -26,7 +26,14 @@ disable-model-invocation: false
 ## Description
 Create detailed implementation plan from SPEC.md.
 
-**ABORT HANDLING:** If the user wants to cancel at any point (e.g., "abbrechen", "stop", "cancel"), acknowledge: "Planning abgebrochen." and stop the process.
+> **Effort policy.** No `effort` in the frontmatter: the command runs at the session's level, so a developer who
+> raises effort for a hard plan gets it here too. Measured on planning an appointments module from an unambiguous spec
+> (Opus 5.5, `plugins/lt-dev/evals`, 2026-09-25): `medium` met every judge criterion in 4 of 4 runs (ownership,
+> concurrent overlaps, transitions, idempotent reminders, UTC) in 7 to 8 minutes; under `xhigh`, 3 of 4 runs passed 25
+> minutes without finishing, and the one that finished scored the same with a plan twice as long. Pin a level only
+> when a measurement shows it adds quality.
+
+**Abort handling:** If the user wants to cancel at any point (e.g., "abbrechen", "stop", "cancel"), acknowledge: "Planning abgebrochen." and stop the process.
 
 ## Prompt
 
@@ -52,15 +59,15 @@ Read the spec file (SPEC.md by default, or the file given as argument) and creat
 
    Fold its blueprint into the plan below: its file paths feed the **File/folder structure** requirement, its build sequence feeds the phase list, and its data model and API contracts feed **Architecture & Tech Stack**. Where its proposal conflicts with something the user settled in step 3, the user's decision wins and the conflict is stated in the plan.
 
-### CRITICAL: Implementation Order
+### Implementation Order
 
-**ALWAYS follow this sequence for each feature:**
+**Follow this sequence for each feature:**
 1. **Backend first** - Models, Services, Controllers
 2. **Start Docker** - `docker compose up -d` (API + DB)
 3. **Generate types** - `pnpm run generate-types`
-4. **Frontend last** - Using generated types, NO mock data
+4. **Frontend last** - Using generated types, no mock data
 
-**All development runs in Docker!**
+All development runs in Docker.
 
 ### Docker Check
 
@@ -172,8 +179,6 @@ After all features are implemented:
 7. **No mock data** - Frontend always connects to real backend
 8. **Browser testing** - Test with Chrome MCP after implementation
 9. **Verification** - Lint and build must pass
-
-Ultrathink. Be thorough - this planning will guide the entire build.
 
 Save as **IMPLEMENTATION_PLAN.md**
 

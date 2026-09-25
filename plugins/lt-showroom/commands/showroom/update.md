@@ -23,7 +23,6 @@ Detects what changed since the last analysis using git tree hashes, re-analyzes 
 | `/lt-showroom:showroom:screenshot` | Capture feature screenshots from the running app |
 | `/lt-showroom:showroom:create` | Publish the showcase to showroom.lenne.tech |
 | `/lt-showroom:showroom:update` | Re-analyze after source changes and update the showcase |
-| `/lt-showroom:showroom:sync-schema` | Refresh content-block schemas from the platform |
 
 **Related Skills:**
 
@@ -110,7 +109,7 @@ Map changed files to SHOWCASE.md sections:
 
 ### Step 6: Targeted Re-Analysis
 
-Spawn `project-analyzer` for changed areas ONLY:
+Spawn `project-analyzer` for the changed areas only:
 
 ```
 Perform a TARGETED analysis of <project-path>.
@@ -143,8 +142,14 @@ Only capture screenshots for features that were added or whose pages changed. Sk
 
 ### Step 9: Update Showcase via API
 
+Prefer the `showroom-api` MCP tools. Without them, sign in to the production API first, since the session cookie is
+bound to that host:
+
 ```bash
-curl -s -b /tmp/showroom-cookies.txt -X PATCH http://localhost:3000/showcases/{id} \
+curl -s -c /tmp/showroom-cookies.txt -X POST https://api.showroom.lenne.tech/iam/sign-in/email \
+  -H 'Content-Type: application/json' -d '{"email":"...","password":"..."}'
+
+curl -s -b /tmp/showroom-cookies.txt -X PATCH https://api.showroom.lenne.tech/showcases/{id} \
   -H 'Content-Type: application/json' -d '{"contentBlocks": [...]}'
 ```
 

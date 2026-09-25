@@ -1,7 +1,7 @@
 ---
 description: Create a bug report ticket for Linear
 argument-hint: "[bug-description]"
-allowed-tools: AskUserQuestion, Write, Read, Glob, mcp__plugin_lt-dev_linear__*, SlashCommand
+allowed-tools: AskUserQuestion, Write, Read, Glob, mcp__plugin_lt-dev_linear__*, Skill
 disable-model-invocation: false
 ---
 
@@ -42,9 +42,9 @@ Guide the user through creating a well-structured bug report for Linear. Collect
 
 **Workflow:** Create bug report → `/lt-dev:resolve-ticket` to fix
 
-**IMPORTANT: All user-facing communication must ALWAYS be in German. Exceptions: Properties (camelCase), code snippets, and technical terms remain in English.**
+All user-facing communication is in German. Exceptions: Properties (camelCase), code snippets, and technical terms stay in English.
 
-**ABORT HANDLING: If the user wants to cancel at any point (e.g., "abbrechen", "stop", "cancel"), acknowledge it (in German): "Okay, Bug-Report abgebrochen." and stop the process.**
+**Abort handling:** If the user wants to cancel at any point (e.g., "abbrechen", "stop", "cancel"), acknowledge it in German ("Okay, Bug-Report abgebrochen.") and stop the process.
 
 ---
 
@@ -248,7 +248,7 @@ Once the user approves the bug report, use AskUserQuestion with these options:
 
 - **Option 1 (Neues Linear Ticket):** Proceed to Step 6, Option 1
 - **Option 2 (Bestehendes Ticket erweitern):**
-  - **MUST ask for Ticket-ID first:** "Bitte gib die Ticket-ID des bestehenden Linear Tickets an (z.B. `DEV-123` oder nur `123`):"
+  - **Ask for the Ticket-ID first:** "Bitte gib die Ticket-ID des bestehenden Linear Tickets an (z.B. `DEV-123` oder nur `123`):"
   - Wait for user response with the ID
   - Then proceed to Step 6, Option 2 with the provided ID
 - **Option 3 (Markdown-Datei):** Proceed to Step 6, Option 3
@@ -335,8 +335,8 @@ When the user chooses to fix immediately:
 
 1. Confirm: "Starte Bug-Fix..."
 2. Invoke `/lt-dev:resolve-ticket` based on whether a Linear ticket exists:
-   - **Ticket exists:** Invoke via the `SlashCommand` tool: `/lt-dev:resolve-ticket <ticket-id>`
-   - **No ticket:** Invoke via the `SlashCommand` tool: `/lt-dev:resolve-ticket`, passing the bug report as context
+   - **Ticket exists:** Invoke the `lt-dev:resolve-ticket` skill via the `Skill` tool with arguments `<ticket-id>`
+   - **No ticket:** Invoke the `lt-dev:resolve-ticket` skill via the `Skill` tool, passing the bug report as context
 
 ---
 

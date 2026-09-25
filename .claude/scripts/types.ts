@@ -7,8 +7,8 @@
  * - check-cache-integrity.ts
  */
 
-// Source types for different fetching strategies
-export type SourceType = "md" | "html" | "spa";
+// Source types for different fetching strategies ("pdf" is converted by hand and never fetched)
+export type SourceType = "md" | "html" | "spa" | "pdf";
 
 // Update behavior options for cache management
 export type UpdateBehavior = "never" | "always" | "auto" | "ask" | "askAlways";
@@ -35,6 +35,8 @@ export interface SourcesConfig {
   cache: CacheInfo;
   updateBehaviorOptions?: Record<string, string>;
   sourceTypes?: Record<string, string>;
+  // Page-path prefixes check-docs-coverage.ts leaves out (areas irrelevant to plugin authoring)
+  coverage?: { ignore: string[] };
   sources: Source[];
 }
 

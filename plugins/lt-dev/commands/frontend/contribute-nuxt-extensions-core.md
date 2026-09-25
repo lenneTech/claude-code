@@ -25,7 +25,7 @@ frontend `CLAUDE.md`, and the `nuxt-extensions-core-vendoring` skill),
 `app/core/` may only be edited for changes that are generally useful to
 every @lenne.tech/nuxt-extensions consumer (bugfixes, broad enhancements
 like new composables/SSR fixes, security fixes, type-compat). **Generally
-useful changes MUST flow back upstream** so every consumer benefits and
+useful changes go back upstream** so every consumer benefits and
 the local patch disappears on the next sync — that is exactly what this
 command prepares.
 

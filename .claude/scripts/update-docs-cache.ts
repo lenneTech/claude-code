@@ -62,10 +62,10 @@ async function writeCacheFile(outputPath: string, content: string): Promise<void
 
   if (existsSync(outputPath)) {
     const oldBytes = statSync(outputPath).size;
-    if (oldBytes > 0 && newBytes < oldBytes * MIN_CACHE_RATIO) {
+    if (oldBytes > 0 && newBytes < oldBytes * MIN_CACHE_RATIO && !acceptShrink) {
       const pct = Math.round((newBytes / oldBytes) * 100);
       throw new CacheRegressionError(
-        `extraction returned ${newBytes} bytes vs. ${oldBytes} cached (${pct}%) — page likely moved or restructured; check its URL in sources.json`
+        `extraction returned ${newBytes} bytes vs. ${oldBytes} cached (${pct}%) — page likely moved or restructured; check its URL in sources.json, and once the live page is confirmed as the intended content, rerun with --source=<name> --accept-shrink`
       );
     }
   } else if (newBytes < MIN_CACHE_BYTES) {
@@ -82,6 +82,9 @@ const args = process.argv.slice(2);
 const verbose = args.includes("--verbose") || args.includes("-v");
 const sequential = args.includes("--sequential") || args.includes("-s");
 const specificSource = args.find((a) => a.startsWith("--source="))?.split("=")[1];
+// Accept a sharply smaller page after a human confirmed the upstream restructure
+// (e.g. content moved to its own page). Pair it with --source=<name>.
+const acceptShrink = args.includes("--accept-shrink");
 
 function log(message: string, force = false) {
   if (verbose || force) {
@@ -353,8 +356,20 @@ function convertRelativeLinks(content: string, sourceUrl: string): string {
   );
 
   if (!rawMatch) {
-    // Not a GitHub raw URL, return content unchanged
-    return content;
+    // Docs sites serving raw Markdown (code.claude.com, platform.claude.com) link
+    // root-relative (`/docs/en/hooks`). Resolve those against the source URL so
+    // links in the cache stay clickable.
+    // Link text may itself contain one level of brackets, e.g. [`_meta["key"]`](/docs/en/mcp#…).
+    return content.replace(
+      /\[((?:[^\[\]]|\[[^\]]*\])+)\]\((?!https?:\/\/)(?!#)(?!mailto:)([^)\s]+)\)/g,
+      (match, text, relativePath) => {
+        try {
+          return `[${text}](${new URL(relativePath, sourceUrl).href})`;
+        } catch {
+          return match;
+        }
+      }
+    );
   }
 
   const [, org, repo, branch, filePath] = rawMatch;
@@ -383,6 +398,39 @@ function convertRelativeLinks(content: string, sourceUrl: string): string {
 }
 
 /**
+ * Normalize raw Markdown served by the docs sites so every cache file starts with
+ * one `# Title` heading:
+ * - code.claude.com prepends a blockquote pointing at llms.txt; drop it.
+ * - platform.claude.com starts with YAML frontmatter (title, url, description);
+ *   turn it into a heading plus the description line.
+ * GitHub-hosted Markdown passes through unchanged.
+ */
+function normalizeDocsMarkdown(content: string): string {
+  let text = content.replace(/^﻿/, "");
+
+  if (/^> ## Documentation Index/.test(text)) {
+    text = text.replace(/^(?:>.*\n)+\s*/, "");
+  }
+
+  const frontmatter = text.match(/^---\n([\s\S]*?)\n---\n/);
+  if (frontmatter) {
+    const field = (key: string) =>
+      frontmatter[1]
+        .match(new RegExp(`^${key}:\\s*(.+)$`, "m"))?.[1]
+        ?.trim()
+        .replace(/^["']|["']$/g, "");
+    const title = field("title");
+    if (title) {
+      const description = field("description");
+      const body = text.slice(frontmatter[0].length).replace(/^\s+/, "");
+      text = `# ${title}\n\n${description ? `${description}\n\n` : ""}${body}`;
+    }
+  }
+
+  return text;
+}
+
+/**
  * Fetch a direct Markdown file (type: "md")
  */
 async function fetchMarkdownDirect(source: Source): Promise<FetchResult> {
@@ -395,9 +443,9 @@ async function fetchMarkdownDirect(source: Source): Promise<FetchResult> {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    let content = await response.text();
+    let content = normalizeDocsMarkdown(await response.text());
 
-    // Convert relative links to absolute GitHub URLs
+    // Convert relative links to absolute URLs
     content = convertRelativeLinks(content, source.url);
 
     // Add source info after first heading (preserves original structure)
@@ -527,6 +575,10 @@ async function fetchAndConvert(
   turndown: TurndownService
 ): Promise<FetchResult> {
   switch (source.type) {
+    case "pdf":
+      // PDFs are converted to Markdown by hand; the script never downloads them.
+      log(`- ${source.name} (pdf, maintained manually, skipped)`, true);
+      return { name: source.name, success: true, duration: 0 };
     case "md":
       return fetchMarkdownDirect(source);
     case "html":
@@ -668,10 +720,11 @@ async function main() {
   const mdCount = sourcesToFetch.filter((s) => s.type === "md").length;
   const htmlCount = sourcesToFetch.filter((s) => s.type === "html").length;
   const spaCount = sourcesToFetch.filter((s) => s.type === "spa").length;
+  const pdfCount = sourcesToFetch.filter((s) => s.type === "pdf").length;
 
   const mode = sequential ? "sequential" : `parallel (${sourcesToFetch.length} concurrent)`;
   log(`Fetching ${sourcesToFetch.length} page(s) in ${mode} mode...`, true);
-  log(`  Types: ${mdCount} md, ${htmlCount} html, ${spaCount} spa`, true);
+  log(`  Types: ${mdCount} md, ${htmlCount} html, ${spaCount} spa, ${pdfCount} pdf (manual)`, true);
 
   const turndown = createTurndownService();
 

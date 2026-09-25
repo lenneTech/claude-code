@@ -56,7 +56,7 @@ in `config.env.ts`.
 > A project may instead derive the DB name in `config.env.ts` from `VITEST_POOL_ID` directly — same
 > effect. What matters is that concurrent forks get distinct DBs.
 
-## The cleanup MUST be pid-guarded (or you delete a live run's data)
+## The cleanup must be pid-guarded (or you delete a live run's data)
 
 `tests/db-lifecycle.reporter.ts` runs at the **end** of a run and drops that run's databases. The
 trap: it also collects *other* runs' leftover DBs. It may drop a foreign DB **only** if its creating
@@ -93,7 +93,7 @@ reporter.
 
 ## Startup sweep — cleanup that survives SIGKILL and `--reporter` overrides
 
-The end-of-run reporter can NEVER run when the process is SIGKILLed (check-script watchdog
+The end-of-run reporter cannot run when the process is SIGKILLed (check-script watchdog
 escalation, closed terminal) or when vitest was started with an explicit `--reporter` CLI flag
 (which **replaces** the config reporters). Relying on "the next successful run collects leftovers"
 means leaks persist exactly when runs keep failing. The fix: `global-setup.ts` sweeps **before** the
@@ -135,10 +135,10 @@ sweep, dead pid) — inspect them before re-running.
 - [ ] `fileParallelism: true`? Then per-worker DB isolation is required if any spec mutates a shared collection.
 - [ ] Any `deleteMany({})` / `dropDatabase()` / `.drop()` on a collection another file reads (`jwks`, `users`, `session`, `ratelimitstates`, …)? → isolate per worker, or scope the delete by a per-test filter.
 - [ ] `tests/setup.ts` appends `-w<poolId>` to the **correct** env var (`MONGODB_URI` / `NSC__MONGOOSE__URI`) and is registered in `setupFiles`.
-- [ ] `db-lifecycle.reporter.ts` cleanup of other runs' DBs is `isPidAlive` + age guarded (NEVER an unconditional pattern-drop).
+- [ ] `db-lifecycle.reporter.ts` cleanup of other runs' DBs is `isPidAlive` + age guarded (never an unconditional pattern-drop, which wipes a concurrent run's live DBs).
 - [ ] Per-fork DB names are per-run-unique (carry `-run-<ts>-p<pid>`), not fixed.
 - [ ] Failure-path message points at the `-w<N>` fork DBs.
-- [ ] Extra per-spec DBs go through `deriveTestDbUri('<suffix>')` — NEVER `\`<base>-something-${Date.now()}\`` (escapes the per-run cleanup scheme; leaked 2 DBs per run in nest-server until 11.29.0).
+- [ ] Extra per-spec DBs go through `deriveTestDbUri('<suffix>')` — never `\`<base>-something-${Date.now()}\`` (escapes the per-run cleanup scheme; leaked 2 DBs per run in nest-server until 11.29.0).
 - [ ] Spec-level teardown drops its DB **after** `app.close()` — dropping while the app is alive races async module init (AI module collection creation) re-creating the database.
 - [ ] `global-setup.ts` runs the startup sweep and acquires an e2e-governor slot; `retry` is ≤ 2.
 

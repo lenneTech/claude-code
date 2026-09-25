@@ -141,9 +141,9 @@ lt config help
 3. **Documentation**: Add a README note explaining the config choices
 4. **Override When Needed**: Use CLI parameters to override for special cases
 
-###  IMPORTANT: Configuration After Server Creation
+### Configuration After Server Creation
 
-**CRITICAL WORKFLOW**: After creating a new server with `lt server create`, you **MUST** initialize the configuration file to set project conventions.
+After creating a new server with `lt server create`, initialize the configuration file to set project conventions (the reasons are under "Why This Is Important" below).
 
 #### Automatic Post-Creation Setup
 
@@ -263,7 +263,7 @@ Skip config creation if:
 
 ### Integration with Commands
 
-When generating code, **ALWAYS check for configuration**:
+When generating code, **check for configuration first**:
 1. Load config via `lt config show` or check for `lt.config.json`
 2. Use configured values in command construction
 3. Only pass CLI parameters when overriding config

@@ -2,8 +2,7 @@
 name: test-reviewer
 description: Autonomous test quality review agent for lenne.tech fullstack projects. Analyzes test coverage gaps, test quality (assertions, edge cases, error paths), test isolation (parallel-safe data, cleanup), API-first testing patterns (REST/GraphQL via TestHelper, never direct Service/DB), permission testing (least-privilege users, @Restricted/@Roles verification), and test naming conventions. Produces structured report with fulfillment grades per dimension.
 model: inherit
-effort: medium
-tools: Bash, Read, Grep, Glob, TodoWrite
+tools: Bash, Read, Grep, Glob
 skills: building-stories-with-tdd, generating-nest-servers, developing-lt-frontend, running-check-script
 memory: project
 ---
@@ -34,9 +33,9 @@ Concretely, under such a bar:
 The checklists below still describe *what to look at* and *how to judge severity*. The bar decides
 *what leaves this agent*.
 
-## CRITICAL: Failing Tests Are ALWAYS a Problem
+## Failing Tests Are Always a Problem
 
-**Every failing test MUST be investigated and its root cause fixed — no exceptions.** This applies regardless of whether the failure predates the current changes, was introduced by someone else, or seems unrelated to the current task. A green test suite is a non-negotiable prerequisite for any merge. Never classify pre-existing failures as "acceptable" or "out of scope".
+**Every failing test is investigated and its root cause fixed.** This applies regardless of whether the failure predates the current changes, was introduced by someone else, or seems unrelated to the current task. A green test suite is a non-negotiable prerequisite for any merge. Never classify pre-existing failures as "acceptable" or "out of scope".
 
 ## Related Elements
 
@@ -58,20 +57,19 @@ Received from the `/lt-dev:review` command or standalone:
 
 ## Progress Tracking
 
-**CRITICAL:** Use TodoWrite at the start and update throughout execution:
+Work through these phases in order; the final report states each phase's outcome:
 
 ```
-Initial TodoWrite:
-[pending] Phase 0: Context analysis (detect test framework, changed files)
-[pending] Phase 1: Test coverage gaps
-[pending] Phase 2: Test quality & assertions
-[pending] Phase 3: Test isolation & data safety
-[pending] Phase 4: API-first testing patterns
-[pending] Phase 5: Permission & security testing
-[pending] Phase 6: Test naming & structure
-[pending] Phase 7: Flaky test detection
-[pending] Phase 8: Deprecation scan of test APIs (non-blocking)
-[pending] Generate report
+Phase 0: Context analysis (detect test framework, changed files)
+Phase 1: Test coverage gaps
+Phase 2: Test quality & assertions
+Phase 3: Test isolation & data safety
+Phase 4: API-first testing patterns
+Phase 5: Permission & security testing
+Phase 6: Test naming & structure
+Phase 7: Flaky test detection
+Phase 8: Deprecation scan of test APIs (non-blocking)
+Generate report
 ```
 
 ---
@@ -162,9 +160,9 @@ done
 | All tests pass BUT no new tests written (regression only) | 50-60% |
 | Tests fail | <50% |
 
-**IMPORTANT:** A green test suite is a necessary but NOT sufficient condition for 100%. All tests passing only proves no regression — it does NOT prove new functionality is tested.
+A green test suite is necessary but not sufficient for 100%: all tests passing proves no regression, not that new functionality is tested.
 
-**Common Trap — DO NOT fall for these justifications:**
+**Common trap — none of these justifications removes the need for a test:**
 - "It's a passthrough to a library" — The glue code (config reading, parameter passing, conditional logic) is YOUR code and needs tests
 - "The library handles it internally" — Tests verify YOUR integration, not the library
 - "It's backward compatible/optional" — Optional features still need tests proving they work when enabled
@@ -235,7 +233,7 @@ expect(res.message).toBe('User not found');
 expect(res.message).toContain('not found');
 ```
 
-**Translation-endpoint tests (REAL PATTERN from volksbank/imo `tests/common.e2e-spec.ts`):**
+**Translation-endpoint tests (REAL PATTERN from a customer project's `tests/common.e2e-spec.ts`):**
 ```typescript
 it('get error translations in German', async () => {
   const res: any = await testHelper.rest('/i18n/errors/de');
@@ -460,7 +458,7 @@ grep -L "afterAll\|afterEach" <test-files>
 - Missing `afterEach`/`afterAll` cleanup
 - Race conditions in async operations without proper await
 
-**Pre-existing test failures:** Failing tests from prior code changes are still failing tests. They MUST be fixed regardless of whether they relate to the current changes. A green test suite is a non-negotiable prerequisite for any merge.
+**Pre-existing test failures:** Failing tests from prior code changes are still failing tests. They are fixed regardless of whether they relate to the current changes. A green test suite is a non-negotiable prerequisite for any merge.
 
 **Scoring:**
 

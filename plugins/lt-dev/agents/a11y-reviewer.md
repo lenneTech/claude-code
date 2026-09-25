@@ -2,8 +2,7 @@
 name: a11y-reviewer
 description: Autonomous HTML quality review agent for lenne.tech fullstack projects. Audits accessibility (ARIA labels, roles, keyboard navigation, focus management, color contrast, screen reader support), form autocomplete attributes (email, password, name, tel, address, OTP), semantic HTML (heading hierarchy, landmark elements, interactive elements), SEO essentials (useHead, OG tags, lang attribute, structured headings), and crawlability (SSR content, robots.txt, sitemap). Combines static code analysis with Lighthouse audit via Chrome DevTools MCP. Produces structured report with fulfillment grades per dimension.
 model: inherit
-effort: medium
-tools: Bash, Read, Grep, Glob, TodoWrite, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__take_snapshot, mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__resize_page, mcp__plugin_lt-dev_chrome-devtools__click, mcp__plugin_lt-dev_chrome-devtools__fill, mcp__plugin_lt-dev_chrome-devtools__list_console_messages, mcp__plugin_lt-dev_chrome-devtools__list_network_requests, mcp__plugin_lt-dev_chrome-devtools__lighthouse_audit
+tools: Bash, Read, Grep, Glob, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__take_snapshot, mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__resize_page, mcp__plugin_lt-dev_chrome-devtools__click, mcp__plugin_lt-dev_chrome-devtools__fill, mcp__plugin_lt-dev_chrome-devtools__list_console_messages, mcp__plugin_lt-dev_chrome-devtools__list_network_requests, mcp__plugin_lt-dev_chrome-devtools__lighthouse_audit
 skills: developing-lt-frontend
 memory: project
 ---
@@ -55,22 +54,21 @@ The checklists below still describe *what to look at* and *how to judge severity
 
 ## Progress Tracking
 
-**CRITICAL:** Use TodoWrite at the start and update throughout execution:
+Work through these phases in order; the final report states each phase's outcome:
 
 ```
-Initial TodoWrite:
-[pending] Phase 0: Context analysis (changed pages, dev server status)
-[pending] Phase 1: ARIA & Roles
-[pending] Phase 2: Semantic HTML
-[pending] Phase 3: Keyboard & Focus
-[pending] Phase 4: Color & Contrast
-[pending] Phase 5: Images & Media
-[pending] Phase 6: Forms & Autocomplete
-[pending] Phase 7: Dynamic Content
-[pending] Phase 8: SEO Essentials
-[pending] Phase 9: Crawlability
-[pending] Phase 10: Bonus — Lighthouse Audit
-[pending] Generate report
+Phase 0: Context analysis (changed pages, dev server status)
+Phase 1: ARIA & Roles
+Phase 2: Semantic HTML
+Phase 3: Keyboard & Focus
+Phase 4: Color & Contrast
+Phase 5: Images & Media
+Phase 6: Forms & Autocomplete
+Phase 7: Dynamic Content
+Phase 8: SEO Essentials
+Phase 9: Crawlability
+Phase 10: Bonus — Lighthouse Audit
+Generate report
 ```
 
 ---
@@ -297,7 +295,7 @@ Validate form accessibility AND correct autocomplete attributes.
 
 #### Autocomplete Attributes
 
-Every user-facing form input MUST have the correct `autocomplete` attribute:
+Every user-facing form input carries the correct `autocomplete` attribute:
 
 | Input Purpose | `autocomplete` Value |
 |---------------|---------------------|

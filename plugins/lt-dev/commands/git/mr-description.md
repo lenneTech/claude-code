@@ -35,7 +35,7 @@ Please structure the description as follows:
 
 Keep it short and concise - focus on what's essential for code reviewers.
 
-**IMPORTANT OUTPUT FORMAT:**
+**Output format:**
 Present the final MR description in a clearly marked code block that is easy to copy:
 
 ```markdown

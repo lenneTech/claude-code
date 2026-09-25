@@ -10,13 +10,13 @@ description: Database index guidelines for @UnifiedField decorator - keep indexe
 - [Example Patterns](#example-patterns)
 - [Framework-Managed Indexes — Do Not Set Manually](#framework-managed-indexes--do-not-set-manually)
 - [Compound Indexes — Use `Schema.index()`](#compound-indexes--use-schemaindex)
-- [DON'T Create Indexes Separately!](#-dont-create-indexes-separately)
+- [Don't Create Indexes Separately](#dont-create-indexes-separately)
 - [Benefits of Decorator-Based Indexes](#benefits-of-decorator-based-indexes)
 - [Index Verification Checklist](#index-verification-checklist)
 - [Red Flags - Missing Indexes](#red-flags---missing-indexes)
 - [Quick Index Checklist](#quick-index-checklist)
 
-**IMPORTANT: Always define single-field indexes directly in the @UnifiedField / @Prop decorator!**
+**Define single-field indexes directly in the @UnifiedField / @Prop decorator.**
 
 This keeps indexes visible right where properties are defined, making them easy to spot during code reviews. Schema-level `Schema.index()` is reserved for **compound (multi-field) indexes only**.
 
@@ -170,7 +170,7 @@ Why compound indexes stay in `Schema.index()`:
 
 ---
 
-##  DON'T Create Indexes Separately!
+## Don't Create Indexes Separately
 
 ```typescript
 //  WRONG: Separate schema index definition

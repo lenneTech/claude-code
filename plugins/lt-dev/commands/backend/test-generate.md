@@ -63,7 +63,7 @@ Analyze recent changes and create appropriate tests:
    - Remove all console.log statements
    - Verify tests still pass
 
-**Important:**
-- NEVER weaken @Restricted/@Roles to fix tests
-- ALWAYS test with least privileged user
-- ALWAYS follow existing test patterns
+**Rules:**
+- Never weaken `@Restricted`/`@Roles` to make a test pass; fix the test or the code instead
+- Test with the least privileged user
+- Follow the existing test patterns

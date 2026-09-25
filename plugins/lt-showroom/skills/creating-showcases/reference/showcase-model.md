@@ -13,7 +13,7 @@
 | `customerName` | string | Customer name (optional) |
 | `customerCompany` | string | Customer company name (optional) |
 | `teaserImageFileId` | string | GridFS file ID for teaser image shown on showcase cards and hero section (optional) |
-| `meetingUrl` | string | Meeting URL for appointment booking (default: `https://meet.brevo.com/kai-haase`) |
+| `meetingUrl` | string | Meeting URL for appointment booking (optional; omit it and the showcase uses the meeting URL from the company settings, see `get_showroom_context`) |
 | `category` | string | Showcase category, e.g. Web App, Mobile, IoT, Backend (optional) |
 | `contentBlocks` | ContentBlock[] | Content blocks (see content-blocks.md) |
 | `features` | FeatureEntry[] | Extracted features |
@@ -68,7 +68,7 @@
     └──── archive ───→ archived
 ```
 
-- **draft**: Work in progress. Not publicly visible on showroom.lenne.tech.
+- **draft**: Work in progress. Not publicly visible on the platform.
 - **published**: Visible on the public showroom. Included in listings and search.
 - **archived**: Retired. Removed from public listing but data preserved.
 - **template**: Showcase template that can be duplicated.
@@ -87,6 +87,6 @@ Public URL: `https://showroom.lenne.tech/showcase/{slug}`
 
 ## Access Model
 
-- **Authenticated users** (showroom staff): Full CRUD access; all fields visible
+- **Authenticated users** (the account's team): Full CRUD access; all fields visible
 - **Public visitors (prospects)**: Read-only access to published showcases; tracking fields (`firstViewedAt`, `lastViewedAt`, `viewCount`, `pdfDownloadCount`, `statusLog`, `sourceCodeAnalysis`, `showcasePdfFileId`) are stripped
 - No per-user showcase ownership — all authenticated users can manage all showcases

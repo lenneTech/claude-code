@@ -3,7 +3,7 @@
 ## Table of Contents
 
 - [Generated Files (REQUIRED)](#generated-files-required)
-- [MANDATORY: Missing Types Workflow](#-mandatory-missing-types-workflow)
+- [Missing Types Workflow](#missing-types-workflow)
 - [Basic Usage](#basic-usage)
 - [Composable Pattern](#composable-pattern)
 - [Error Handling](#error-handling)
@@ -13,16 +13,16 @@
 
 ## Generated Files (REQUIRED)
 
-**NEVER create custom interfaces for backend DTOs!**
+**Backend DTO types come from the generated files, not from custom interfaces**, so the frontend cannot drift from the API contract.
 
 | File | Purpose |
 |------|---------|
 | `~/api-client/types.gen.ts` | All backend DTOs (REQUIRED) |
 | `~/api-client/sdk.gen.ts` | All API functions (REQUIRED) |
 
-## ⚠️ MANDATORY: Missing Types Workflow
+## Missing Types Workflow
 
-**If generated files are missing, you MUST ask the user - NEVER create manual interfaces!**
+**If the generated files are missing, ask the user instead of writing manual interfaces.**
 
 ```
 ┌────────────────────────────────────────────────────────────────┐

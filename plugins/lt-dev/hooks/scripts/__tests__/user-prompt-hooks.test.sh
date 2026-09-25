@@ -86,6 +86,41 @@ echo "without jq"
 assert_contains "$(HOOK_PATH="$NOJQ_BIN" run_hook detect-plugin-dev.sh "$MARKET" 'add a "release" skill')" "developing-claude-plugins" "prompt with escaped quotes is read"
 assert_silent   "$(HOOK_PATH="$NOJQ_BIN" run_hook detect-plugin-dev.sh "$MARKET" '/lt-dev:plugin:check')" "slash command is still recognised"
 
+NUXT="$TMP_ROOT/nuxt"
+mkdir -p "$NUXT/app/components"
+touch "$NUXT/nuxt.config.ts"
+
+# Background task / subagent completions arrive as UserPromptSubmit turns carrying a
+# <task-notification> block. Its result text below holds a trigger for every detector.
+NOTE_RESULT='add a new skill, fixed the XSS in the login form, ran npm audit, lt fullstack init, add a service, tweak the dashboard component'
+NOTE="<task-notification><task-id>a1b2</task-id><status>completed</status><result>${NOTE_RESULT}</result></task-notification>"
+
+echo "system-generated turns (<task-notification>)"
+# Controls: the same text as a human prompt fires, so silence below is the guard's doing.
+assert_contains "$(run_hook detect-plugin-dev.sh "$MARKET" "$NOTE_RESULT")" "developing-claude-plugins" "control: plugin-dev fires on the bare result text"
+assert_contains "$(run_hook detect-nuxt.sh "$NUXT" "$NOTE_RESULT")" "developing-lt-frontend" "control: nuxt fires on the bare result text"
+assert_silent "$(run_hook detect-plugin-dev.sh "$MARKET" "$NOTE")" "plugin-dev ignores a notification turn"
+assert_silent "$(run_hook detect-security-context.sh "$WEB" "$NOTE")" "security-context ignores a notification turn"
+assert_silent "$(run_hook detect-npm-maintenance.sh "$WEB" "$NOTE")" "npm-maintenance ignores a notification turn"
+assert_silent "$(HOOK_PATH="$LT_BIN:$PATH" run_hook detect-lt-cli.sh "$WEB" "$NOTE")" "lt-cli ignores a notification turn"
+assert_silent "$(run_hook detect-nest-server.sh "$NEST" "$NOTE")" "nest-server ignores a notification turn"
+assert_silent "$(run_hook detect-nuxt.sh "$NUXT" "$NOTE")" "nuxt ignores a notification turn"
+assert_silent "$(HOOK_PATH="$NOJQ_BIN" run_hook detect-plugin-dev.sh "$MARKET" "$NOTE")" "notification turn is ignored without jq"
+
+echo "plugin-dev: genuine plugin-dev prompts fire"
+for p in 'add a new skill' 'fix the hook' 'SKILL.md frontmatter' 'plugin.json' 'create a command' \
+         'Erstelle einen neuen Hook' 'Passe den Agent an' 'den Hook anpassen' 'the hook does not fire' \
+         'review the code-reviewer agent definition' 'improve the lt-dev plugin'; do
+  assert_contains "$(run_hook detect-plugin-dev.sh "$MARKET" "$p")" "developing-claude-plugins" "fires: $p"
+done
+
+echo "plugin-dev: passing mentions of plugin/hook/agent/command stay silent"
+for p in 'the vite plugin crashes on startup' 'the useAuth hook returns undefined' \
+         'the agent said the tests pass' 'run the command pnpm test' 'Der Agent schreibt die Tests' \
+         'address the command output'; do
+  assert_silent "$(run_hook detect-plugin-dev.sh "$MARKET" "$p")" "silent: $p"
+done
+
 echo "paths in the JSON output"
 case "$(uname -s 2>/dev/null)" in
   MINGW*|MSYS*|CYGWIN*)

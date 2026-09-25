@@ -4,7 +4,7 @@ This document describes End-to-End (E2E) testing for Nuxt/Vue frontend applicati
 
 ## TDD Approach for Frontend
 
-**CRITICAL: Write E2E tests BEFORE implementing frontend features!**
+**Write E2E tests before implementing frontend features.**
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
@@ -114,7 +114,7 @@ the cross-subdomain cookie rule below matters: the same-origin `/api` proxy is o
 CI artifact, never how `lt dev test` (or prod) runs.
 
 **Cookie injection gotcha** — when a test injects a captured `Set-Cookie`
-header into the browser context, it MUST:
+header into the browser context, it has to:
 
 - preserve the `Secure` attribute — under `lt dev` (HTTPS) Better-Auth issues
   `Secure` (often `__Secure-`-prefixed) cookies; a `__Secure-`-prefixed cookie
@@ -452,7 +452,7 @@ test('should complete 2FA verification', async ({ page }) => {
 
 ## Debugging with Chrome DevTools MCP
 
-**CRITICAL: For direct browser testing and debugging, always use the Chrome DevTools MCP (`mcp__plugin_lt-dev_chrome-devtools__*`) unless the user explicitly requests otherwise.** The Playwright-based Browser MCP (`mcp__MCP_DOCKER__browser_*`) is used for creating and running Playwright E2E tests.
+**For direct browser testing and debugging, use the Chrome DevTools MCP (`mcp__plugin_lt-dev_chrome-devtools__*`) unless the user asks for another tool.** The Playwright-based Browser MCP (`mcp__MCP_DOCKER__browser_*`) is used for creating and running Playwright E2E tests.
 
 ### During Test Development
 
@@ -658,7 +658,7 @@ jobs:
 `lt dev test --shard N` runs the suite split across **N fully-isolated stacks**
 in parallel (each its own URLs/ports/Caddy block AND its own DB
 `<db>-test-<i>`), the local equivalent of the CI `parallel: N` + `--shard=i/N`
-matrix. NEVER use in-process `workers > 1` against one stack — the suite's global
+matrix. Never run in-process `workers > 1` against one stack — the suite's global
 cleanup / "pick any active season" helpers collide and produce false results.
 
 **Choosing N — local shards share ONE machine (unlike CI's per-shard containers).**
@@ -702,7 +702,7 @@ export const SHARD_NAV_TIMEOUT = SHARDED ? 60_000 : 15_000; // tight in CI, gene
   from the next bullet from the start — the canonical regex already accepts any
   future ticket id / shard, so it never needs a per-feature update.)
 - **Existing projects — to enable `--shard`:**
-  1. **`lt dev init`** — now auto-applies (idempotently) everything in the
+  1. **`lt dev init`** — auto-applies (idempotently) everything in the
      `playwright.config`: env-aware URLs, the webServer `LT_DEV_ACTIVE` guard,
      **`ignoreHTTPSErrors`** (Caddy cert), the shard-aware `LT_DEV_TEST_SHARDS`
      timeout block, and `slowMo: 0` + registration. One command, no manual edits.
@@ -713,7 +713,7 @@ export const SHARD_NAV_TIMEOUT = SHARDED ? 60_000 : 15_000; // tight in CI, gene
      - per-ticket: `<base>-<id>-test[-<n>]`   (`lt ticket`)
 
      Canonical, ticket+shard-safe predicate — matches ONLY names ending in
-     `test`, so it can NEVER wipe a dev `…-local` DB nor a ticket's DEV DB
+     `test`, so it can never wipe a dev `…-local` DB nor a ticket's DEV DB
      (`<base>-<id>`):
 
      ```ts
@@ -726,7 +726,8 @@ export const SHARD_NAV_TIMEOUT = SHARDED ? 60_000 : 15_000; // tight in CI, gene
      Also widen any `assertLocalMongoUri`-style guard to allow the `-test` suffix
      (`/-(local|ci|e2e|test)(-\d+)?$/`). This is **deliberately NOT auto-patched**
      by `lt dev init` (bespoke global-setups vary too much to edit safely) — add
-     it once by hand. `svl`'s `tests/global-setup.ts#isAllowedDb` is the reference.
+     it once by hand, in an allow-list function such as `isAllowedDb` in the
+     project's `tests/global-setup.ts`.
   3. **(Optional, for explicit per-call `waitForURL` timeouts)** gate them via a
      `SHARD_NAV_TIMEOUT` constant (tight in CI / generous under shard) — the
      config-level `navigationTimeout` from step 1 already covers waits without an

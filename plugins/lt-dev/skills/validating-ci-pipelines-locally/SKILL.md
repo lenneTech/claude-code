@@ -102,7 +102,7 @@ hostname, and `cd x && cmd &` backgrounding the whole compound so the subsequent
 
 ## Step 4 — Resolve the runner image per job
 
-Each job declares an image. The local execution MUST use the **same** image so dependency versions match:
+Each job declares an image. The local execution uses the **same** image so dependency versions match:
 
 ```yaml
 # Example .gitlab-ci.yml job
@@ -200,7 +200,7 @@ CI jobs reference secrets via `$CI_TOKEN`, `$DEPLOY_KEY`, etc. For local reprodu
 3. **Generate placeholders for non-sensitive vars only** — `CI_COMMIT_REF_NAME`, `CI_PIPELINE_ID`, etc.
 4. **Skip jobs that require unavailable secrets** — classify as `SKIPPED — secret unavailable: <NAME>` rather than fabricating values.
 
-The consumer NEVER writes a real secret into a tracked file or into the prompt.
+The consumer never writes a real secret into a tracked file or into the prompt: a tracked file gets pushed, and the prompt ends up in the session transcript.
 
 ## Step 7 — Cache & Artifact handling
 
@@ -273,9 +273,11 @@ Failing jobs: <comma-separated or "none">
 Skipped jobs: <comma-separated or "none">
 ```
 
-## Cross-Skill References
+## Related Skills
 
 - **Runnability:** `running-check-script` (called from inside any `pnpm run check` job)
 - **DevOps configuration baseline:** `lt-dev:devops-reviewer` agent (architectural review of CI configs)
 - **Server lifecycle (when a job needs an API up):** `managing-dev-servers`
 - **Production gate (parent):** `validating-production-readiness` (CI PASS is one of the entry criteria)
+- **Deployment:** `deploying-to-turboops` (run this skill before a push that triggers a TurboOps deploy, so a red deploy is never a CI surprise)
+- **Authoring CI configs:** `lt-dev:devops` agent (writes and changes `.gitlab-ci.yml`; this skill only runs it)

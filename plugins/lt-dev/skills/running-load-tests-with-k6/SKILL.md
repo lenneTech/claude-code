@@ -239,7 +239,7 @@ Override via CLI: `k6 run -e P95_MAX=300 ...` and read in the script with `__ENV
 
 ## Step 8 — Optimisation ladder (when thresholds fail)
 
-The consumer (command/agent) MUST iterate this ladder, re-running the load scenario after each step, until thresholds pass or all steps are exhausted.
+The consumer (command/agent) iterates this ladder, re-running the load scenario after each step, until thresholds pass or all steps are exhausted.
 
 | # | Investigation | Typical Fix |
 |---|---------------|-------------|
@@ -292,9 +292,10 @@ Every consumer ends Phase 3 with this block in its report so downstream tooling 
 - Summary file: tests/load/summary-<scenario>.json
 ```
 
-## Cross-Skill References
+## Related Skills
 
 - **Server lifecycle:** `managing-dev-servers` (always start the API before k6, stop it after)
 - **Backend optimisation patterns:** `generating-nest-servers` (CrudService cache hooks, query patterns)
 - **Production gates:** `validating-production-readiness` (k6 PASS is one of the entry criteria there)
 - **Performance review baseline:** `lt-dev:performance-reviewer` (consumes the baseline JSON for regression detection)
+- **Frontend performance:** `lt-dev:a11y-reviewer` agent (Lighthouse audits, which this skill does not cover)

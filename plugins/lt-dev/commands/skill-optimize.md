@@ -27,7 +27,7 @@ Analyze and optimize skill files for better Claude Code performance and complian
 
 ##  Step 1: Fetch Latest Best Practices
 
-** MANDATORY: Execute this step FIRST at every invocation!**
+Run this step first at every invocation.
 
 Use WebFetch to download current official requirements:
 
@@ -144,7 +144,7 @@ done
 **Size targets:**
 -  **Optimal:** < 500 lines (Claude official recommendation)
 -  **Acceptable:** 500-800 lines (borderline)
--  **Too Large:** > 800 lines (MUST optimize)
+-  **Too Large:** > 800 lines (optimize)
 
 ### C. Progressive Disclosure Check
 
@@ -483,7 +483,7 @@ Official documentation:
 ##  Tips for Command Execution
 
 **For autonomous execution:**
-1. Start with WebFetch in Step 1 (MANDATORY)
+1. Start with WebFetch in Step 1
 2. Run all validation scripts sequentially
 3. Generate full report in Step 5
 4. List specific action items for each skill

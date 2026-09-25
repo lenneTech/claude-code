@@ -7,7 +7,7 @@ All showcase content originates from `SHOWCASE.md` in the project repository. Th
 - The single source of truth for all showcase text, features, and screenshot paths
 - Updated whenever the project version changes
 
-Never create showcase content on showroom.lenne.tech directly without first writing or updating SHOWCASE.md. The showcase on the platform is a *publication* of the SHOWCASE.md content, not a substitute for it.
+Never create showcase content on the platform directly without first writing or updating SHOWCASE.md. The showcase on the platform is a *publication* of the SHOWCASE.md content, not a substitute for it.
 
 ## Language and Tone
 
@@ -15,7 +15,7 @@ Never create showcase content on showroom.lenne.tech directly without first writ
 - **Factual and specific** — Describe what the project does, backed by evidence from code analysis
 - **Developer-friendly** — Use proper framework/library names; assume a semi-technical audience
 - **No marketing fluff** — Avoid "cutting-edge", "revolutionary" — describe actual capabilities
-- **Du-Form or neutral** — No "Sie"-Ansprache; prefer neutral formulations or "du" where direct address is needed
+- **"Du" or neutral** — No formal "Sie" address; prefer neutral formulations or "du" where direct address is needed
 
 ## Content Depth Requirements
 
@@ -28,7 +28,7 @@ Never create showcase content on showroom.lenne.tech directly without first writ
 
 ### Feature-Grid (Minimum 6 Items)
 
-Each feature MUST be:
+Each feature is:
 - Derived from actual code analysis (not assumed)
 - Present in SHOWCASE.md with a `file:line` evidence reference
 - Title: 3-5 words, action-oriented ("Echtzeit-Matching" not "Matching-Funktion")
@@ -37,7 +37,7 @@ Each feature MUST be:
 
 ### Tech-Stack Block
 
-- Include ALL significant technologies from `package.json` / manifest files
+- Include all significant technologies from `package.json` / manifest files
 - Group by category: Frontend, Backend, Datenbank, Infrastruktur, Testing
 - Include version-defining technologies (e.g., "NestJS 11" not just "NestJS")
 - Only list technologies present in the SHOWCASE.md `technologies` frontmatter
@@ -52,12 +52,21 @@ Each feature MUST be:
 
 ## Customer Testimonials
 
-**Always check** `https://lenne.tech/kundenerfolge` for matching customer feedback via WebFetch.
+Customer quotes come from wherever the company publishes its testimonials, found in this order:
 
-Known testimonials (verify by fetching the page — this list may be outdated):
-- **DES WAHNSINNS FETTE BEUTE GmbH** — Simon Florath (Head of Digital): Development infrastructure optimization
-- **Achenbach Buschhütten GmbH** — Roger Feist (Director OPTILINK): Android TV app
-- **Tracto-Technik GmbH** — Ferdinand Funke (Lead Software Developer): Frontend digital platform
+1. **The organization's own conventions** — a skill from its internal plugin or its CLAUDE.md naming the references
+   page.
+2. **The knowledge base** — an entry in category `portfolio` that holds the quotes or links to the page publishing
+   them (`get_showroom_context`, `list_knowledge`).
+3. **The user** — when neither names a source, ask for it, and offer to store its link as a `portfolio` entry so later
+   showcases find it.
+
+Read a references page as raw HTML with `curl`, as `/showroom:create` Step 3 shows. A summarizing fetch paraphrases
+quotes, and many references pages reveal only a few testimonials until a "show more" button is clicked; on pages built
+with Nuxt, Next or similar frameworks the embedded payload in the raw HTML usually holds all of them verbatim.
+
+That source is the only source for names, roles and quotes; this file keeps no copy of them, so nothing here can go
+stale or misquote a customer. A quote whose published original cannot be found is not used.
 
 Match using the `customer` field from SHOWCASE.md frontmatter.
 
@@ -118,7 +127,7 @@ The `feature-grid` gives visitors a quick scannable overview of all capabilities
   "visible": true,
   "showInToc": true,
   "content": {
-    "html": "<h3>Was ist RegioKonneX?</h3><p>RegioKonneX ist ein KI-gestütztes Vernetzungs-Netzwerk für die Region Südwestfalen. Die Plattform bringt Unternehmen, Institutionen und Fachkräfte zusammen — basierend auf semantischem Matching statt einfacher Keyword-Suche.</p><h3>Das Problem</h3><p>Regionale Vernetzung scheitert oft daran, dass die richtigen Partner sich nicht finden. Klassische Plattformen verlassen sich auf manuelle Kategorisierung oder einfache Textsuche, die relevante Verbindungen übersieht.</p><h3>Die Lösung</h3><p>RegioKonneX nutzt eine Vektor-Datenbank (Qdrant) und einen Python-NLP-Microservice, um Nutzerprofile semantisch zu analysieren. Deutsche Komposita werden zerlegt, Fachbegriffe extrahiert und in hochdimensionale Vektoren umgewandelt. Das Ergebnis: Matches basieren auf inhaltlicher Ähnlichkeit, nicht auf identischen Schlagwörtern.</p>"
+    "html": "<h3>Was ist Musterportal?</h3><p>Musterportal ist ein KI-gestütztes Vernetzungs-Netzwerk für eine Beispielregion. Die Plattform bringt Unternehmen, Institutionen und Fachkräfte zusammen — basierend auf semantischem Matching statt einfacher Keyword-Suche.</p><h3>Das Problem</h3><p>Regionale Vernetzung scheitert oft daran, dass die richtigen Partner sich nicht finden. Klassische Plattformen verlassen sich auf manuelle Kategorisierung oder einfache Textsuche, die relevante Verbindungen übersieht.</p><h3>Die Lösung</h3><p>Musterportal nutzt eine Vektor-Datenbank (Qdrant) und einen Python-NLP-Microservice, um Nutzerprofile semantisch zu analysieren. Deutsche Komposita werden zerlegt, Fachbegriffe extrahiert und in hochdimensionale Vektoren umgewandelt. Das Ergebnis: Matches basieren auf inhaltlicher Ähnlichkeit, nicht auf identischen Schlagwörtern.</p>"
   }
 }
 ```
@@ -153,9 +162,9 @@ The `feature-grid` gives visitors a quick scannable overview of all capabilities
   "visible": true,
   "showInToc": false,
   "content": {
-    "quote": "In lenne.Tech haben wir für das Frontend unserer digitalen Plattform den idealen Partner gefunden. Neben dem modernen Technologiestack haben uns besonders die Flexibilität, Professionalität und das Engagement von lenne.Tech beeindruckt.",
-    "author": "Ferdinand Funke",
-    "company": "Tracto-Technik GmbH & Co. KG"
+    "quote": "<the quote, copied character for character from the raw HTML of the company's references page>",
+    "author": "Max Mustermann",
+    "company": "Beispielkunde"
   }
 }
 ```
@@ -190,20 +199,20 @@ The most effective way to present features is a **2-column layout with screensho
 
 **Mobile fallback:** Add `@media(max-width:768px){grid-template-columns:1fr}` or use `style='display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))'` for responsive behavior.
 
-**Image URLs:** ALWAYS use `/api/files/id/{fileId}` with the `/api/` prefix. Without it, the Vite dev proxy won't forward the request to the API server and images will be broken.
+**Image URLs:** Use `/api/files/id/{fileId}` with the `/api/` prefix. Without it, the Vite dev proxy won't forward the request to the API server and images will be broken.
 
-**Showcase description:** MUST be plain text, never HTML. The description is rendered via `{{ showcase.description }}` (text interpolation), not `v-html`. If you accidentally save HTML in the description, strip it before saving.
+**Showcase description:** Plain text, not HTML. The description is rendered via `{{ showcase.description }}` (text interpolation), not `v-html`. If you accidentally save HTML in the description, strip it before saving.
 
 **DOMPurify:** The `custom-html` block type uses a permissive sanitizer (`sanitizeRich`) that allows `img`, `div`, `style`, and layout tags. Other block types (like `text`) use a strict sanitizer that strips everything except basic formatting. Never put images in `text` blocks — use `custom-html` for any content with images or complex layouts.
 
 Use `custom-html` blocks for detailed feature presentations (one per feature with screenshot). The `feature-grid` block complements this as a compact overview at the top, and the `screenshot-gallery` collects additional screenshots not tied to a specific feature.
 
-## Anti-Patterns (What NOT to Do)
+## Anti-Patterns
 
-- **Skipping SHOWCASE.md** — Never publish to showroom.lenne.tech without first creating/updating the SHOWCASE.md file in the project
-- **One-sentence descriptions** — A showcase is NOT a tweet. Every project deserves detailed content.
-- **Generic features** — "Benutzerfreundlich" or "Modern" without specifics are worthless.
-- **Missing testimonials** — Always check lenne.tech/kundenerfolge before publishing.
+- **Skipping SHOWCASE.md** — Never publish to the platform without first creating/updating the SHOWCASE.md file in the project
+- **One-sentence descriptions** — Every block meets the depth set in "Content Depth Requirements" above.
+- **Generic features** — "Benutzerfreundlich" or "Modern" without specifics tell a prospect nothing; name the concrete capability.
+- **Missing testimonials** — Always check the company's testimonial source before publishing.
 - **No screenshots** — A showcase without visuals is incomplete. All screenshots go in `docs/showcase/screenshots/`.
 - **Copy-paste from README** — Rewrite for the audience; READMEs are for developers, showcases are for prospects.
 - **English in German showcases** — Keep consistent; translate technical descriptions.

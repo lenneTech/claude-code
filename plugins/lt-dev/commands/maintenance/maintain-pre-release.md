@@ -35,7 +35,7 @@ Execute minimal, zero-risk updates before release:
 - Reject any update that could introduce risk
 - Focus on stability and proven compatibility
 
-Additionally, detect deprecated packages and flag them in the report (do NOT replace before release — document for post-release action).
+Additionally, detect deprecated packages and flag them in the report (do not replace them before release — document them for post-release action).
 
 Allowed updates:
 - Patch versions only (e.g., 5.8.3 → 5.8.9)

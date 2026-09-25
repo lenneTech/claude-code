@@ -8,7 +8,7 @@ description: Complete guide to @lenne.tech/nest-server framework - CrudService b
 ## Table of Contents
 - [Prefer CrudService Over Direct Model Access](#prefer-crudservice-over-direct-model-access)
 - [Core Service Base Class: CrudService](#core-service-base-class-crudservice)
-- [CRITICAL: ServiceOptions When Calling Other Services](#-critical-serviceoptions-when-calling-other-services)
+- [ServiceOptions When Calling Other Services](#serviceoptions-when-calling-other-services)
 - [Framework Patterns](#framework-patterns)
 - [Key Takeaways](#key-takeaways)
 
@@ -87,7 +87,7 @@ await this.update(id, { name: 'new' }, serviceOptions);
 
 ## Core Service Base Class: CrudService
 
-**IMPORTANT**: Before working with Services, ALWAYS read this file to understand the base functionality. The path depends on the project's framework consumption mode:
+Before working with Services, read this file to understand the base functionality; code written against a guessed API fails at runtime or silently skips framework logic. The path depends on the project's framework consumption mode:
 
 ```
 # npm mode (classic):
@@ -149,9 +149,9 @@ export class ProductService extends CrudService<Product> {
 
 ---
 
-##  CRITICAL: ServiceOptions When Calling Other Services
+## ServiceOptions When Calling Other Services
 
-**NEVER blindly pass all ServiceOptions when calling another Service!**
+**Pass another Service only the options it needs, not the whole ServiceOptions object**, because options such as `inputType` from the outer call can be wrong for the inner one (see "Why this is critical" below).
 
 When a Service method calls another Service, you must carefully analyze which options to pass:
 
@@ -244,7 +244,7 @@ async createOrder(input: CreateOrderInput, serviceOptions: ServiceOptions) {
 - [ ] Determine which options the target Service actually needs
 - [ ] Only pass required options (usually just currentUser)
 - [ ] Only set inputType if a specific Input class (DTO) is needed (e.g., UserInput, UserInputCreate)
-- [ ] NEVER blindly pass all serviceOptions
+- [ ] No blanket pass-through of all serviceOptions
 
 ---
 
@@ -313,7 +313,7 @@ export class ProductController {
 
 ```typescript
 // In Model
-export class Product extends CoreModel {
+export class Product extends PersistenceModel {
   securityCheck(user: User, force?: boolean) {
     if (force || user?.hasRole(RoleEnum.ADMIN)) {
       return this; // Admin sees all
@@ -337,7 +337,7 @@ async customMethod(input: Input, serviceOptions?: ServiceOptions) {
 
 A Model's `map()` is **flat**: `CoreModel.map()` clones the input with `proto: false`, so nested objects become **plain objects** and lose their class prototype. The output pipeline (`prepareOutput`) and the response interceptors only re-map the **top level**. Consequence: `checkRestricted` / `CheckResponseInterceptor` read property restrictions via `value.constructor` — a nested plain object (`constructor === Object`) carries **no** decorator metadata, so any `@UnifiedField({ roles })` / `@Restricted` on an embedded class is **silently ignored**. This is both a correctness bug (`instanceof` is false on nested props) and a latent security hole (a stricter sub-field leaks without any visible error).
 
-**RULE: Every Model property whose type is its own class (or an array of one) MUST be re-instantiated in an overridden `map()` via `mapClasses` / `mapClassesAsync` (from `core/common/helpers/model.helper.ts`).** A `map()` that only calls `super.map(input)` while the Model has nested class properties is a defect.
+**Rule: Every Model property whose type is its own class (or an array of one) must be re-instantiated in an overridden `map()` via `mapClasses` / `mapClassesAsync` (from `core/common/helpers/model.helper.ts`).** A `map()` that only calls `super.map(input)` while the Model has nested class properties is a defect.
 
 ```typescript
 import { mapClasses } from '../../../core'; // path depends on mode

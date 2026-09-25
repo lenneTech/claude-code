@@ -12,11 +12,8 @@
       "url": "https://mcp.linear.app/mcp"
     },
     "nuxt-ui-remote": {
-      "type": "stdio",
-      "command": "${CLAUDE_PLUGIN_ROOT}/scripts/npx-mcp-launcher.sh",
-      "args": [
-        "nuxt-ui-mcp@1.0.1"
-      ]
+      "type": "http",
+      "url": "https://ui.nuxt.com/mcp"
     }
   }
 }

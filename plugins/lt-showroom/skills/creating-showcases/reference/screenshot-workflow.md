@@ -27,13 +27,13 @@ If `SHOWCASE.md` does not exist yet, detect everything from source files (see Ph
 
 ### Project Type Detection
 
-Detect the project type BEFORE choosing a startup method:
+Detect the project type before choosing a startup method:
 
 ```bash
-# 1. Monorepo with api + app (lenne.tech fullstack)
+# 1. Monorepo with api + app (lenne.tech stack fullstack)
 [ -d "projects/api" ] && [ -d "projects/app" ] && TYPE="lt-monorepo"
 
-# 2. Lerna monorepo (older lenne.tech projects)
+# 2. Lerna monorepo (older lenne.tech stack projects)
 [ -f "lerna.json" ] && TYPE="lerna-monorepo"
 
 # 3. pnpm workspace monorepo
@@ -67,9 +67,9 @@ grep -q "directus\|strapi\|contentful" package.json && TYPE="headless-cms"
 [ -f "lerna.json" ] && [ -z "$PM" ] && PM="npm"
 ```
 
-### Monorepo Structure Detection (lenne.tech Pattern)
+### Monorepo Structure Detection (lenne.tech Stack Pattern)
 
-Most lenne.tech projects follow this pattern:
+Projects built on the open-source lenne.tech stack (nest-server + nuxt-base-starter) follow this pattern:
 ```
 project/
 ├── projects/
@@ -80,7 +80,7 @@ project/
 └── package.json     # Root with "start" script
 ```
 
-**Lerna monorepos** (forgecloud, gizeh, volksbank/dna, volksbank/imo, volksbank/RegioKonneX, swaktiv):
+**Lerna monorepos** (older lenne.tech stack projects):
 ```bash
 npm run start  # Runs lerna run start --parallel (both api + app)
 ```
@@ -116,22 +116,22 @@ Check in order:
 Check `package.json` (root AND projects/api/) scripts for:
 `seed`, `db:seed`, `demo`, `fixtures`, `populate`, `init:data`
 
-### System Setup Detection (lenne.tech Pattern)
+### System Setup Detection (lenne.tech Stack Pattern)
 
-Most lenne.tech projects support initial admin creation:
+Projects on the lenne.tech stack support initial admin creation:
 ```bash
 curl -s -X POST http://localhost:3000/system-setup/init \
   -H 'Content-Type: application/json' \
   -d '{"email":"showcase@test.com","password":"Showcase123"}'
 ```
 
-This works ONLY when no users exist in the database. Check the response — if 403 "users already exist", the DB already has data.
+This works only when no users exist in the database. Check the response — if 403 "users already exist", the DB already has data.
 
 ## Phase 3: Environment Setup
 
-### Step 0: Install Dependencies (MANDATORY)
+### Step 0: Install Dependencies
 
-**Always check and install dependencies before starting any project.** Missing or broken `node_modules` is the #1 reason projects fail to start.
+Check and install dependencies before starting any project: missing or broken `node_modules` is the most common reason a project fails to start.
 
 ```bash
 # Detect package manager
@@ -180,7 +180,7 @@ ${PM} install
 # Or for Lerna: npm run init
 ```
 
-**Never skip this step.** Even if `node_modules` directories exist, verify that key binaries are present before attempting to start the project.
+Run this step even when `node_modules` directories exist, and verify that key binaries are present before starting the project.
 
 ### Step 1: Create .env from .env.example
 
@@ -239,14 +239,14 @@ fi
 
 ### Type-Specific Startup
 
-**Lerna Monorepo** (most customer projects):
+**Lerna Monorepo** (older projects):
 ```bash
 npm run start
 # This typically runs: lerna run start --parallel
 # Starts both API (port 3000) and App (port 3001)
 ```
 
-**pnpm Monorepo** (newer lenne.tech projects):
+**pnpm Monorepo** (newer lenne.tech stack projects):
 ```bash
 pnpm run start
 # This typically runs: pnpm -r --parallel run start
@@ -258,7 +258,7 @@ docker compose up -d
 # Use this for projects with Qdrant, Redis, Python services
 ```
 
-**Tauri Desktop App** (bornebusch):
+**Tauri Desktop App:**
 ```bash
 # Don't start Tauri — start only the Nuxt dev server
 cd projects/app  # or root if single project
@@ -266,14 +266,14 @@ npx nuxt dev --port 3001
 # The app works as a web app without Tauri
 ```
 
-**Headless CMS Frontend** (swfdigital):
+**Headless CMS Frontend:**
 ```bash
 # Only start the frontend — CMS is external
 cp .env.example .env  # Contains the Directus URL
 npm run dev  # or pnpm run dev
 ```
 
-**Backend-Only** (ontavio email-server):
+**Backend-Only** (e.g. an email server):
 ```bash
 npm run start
 # Screenshots of: Swagger UI (/swagger), GraphQL Playground (/graphql)
@@ -309,7 +309,7 @@ done
 
 ### Priority Order
 
-1. **System Setup** (lenne.tech projects with Better Auth or Legacy Auth):
+1. **System Setup** (lenne.tech stack projects with Better Auth or Legacy Auth):
 ```bash
 # Create first admin user
 curl -s -X POST "http://localhost:3000/system-setup/init" \
@@ -446,7 +446,7 @@ done
 
 ## Port Conflict Resolution
 
-Most lenne.tech projects hardcode port 3000 in `config.env.ts` and cannot be overridden via environment variable. When another service already occupies port 3000:
+Many projects on the lenne.tech stack hardcode port 3000 in `config.env.ts` and cannot be overridden via environment variable. When another service already occupies port 3000:
 
 **Option A: Stop the conflicting service temporarily**
 ```bash
@@ -488,21 +488,7 @@ Always prefer Option A when the user allows stopping the conflicting service.
 
 ## Project-Specific Notes
 
-### Volksbank RegioKonneX
-Requires: MongoDB + Qdrant + Redis + Python NLP Service
-**Best approach:** `docker compose up -d` (all services defined in compose file)
-Then start api + app with `npm run start`
-
-### Bornebusch Tool
-Tauri desktop app — ignore Tauri, start only `nuxt dev` on the web port.
-No backend needed (frontend-only with local file storage).
-
-### SWF Digital
-Headless CMS (Directus) — only start the Nuxt frontend.
-The CMS URL is in `.env.example` and may point to a dev/staging server.
-
-### Ontavio Email Server
-Backend-only — no frontend UI. Screenshot Swagger docs and GraphQL playground.
+An organization can keep notes on its own projects (startup quirks, required services, what to capture) in its internal plugin or the project's CLAUDE.md; read them before starting a project for screenshots.
 
 ### Libraries/Frameworks (nest-server, nuxt-extensions, cli)
 Not screenshottable as applications. Create SHOWCASE.md with code-focused content instead of UI screenshots. Use architecture diagrams or terminal output screenshots if applicable.

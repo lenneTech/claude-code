@@ -1,20 +1,13 @@
----
+# Secure Coding Practices
 
-layout: col-document
-title: Secure Coding Practices
-tags: SCP-QRG
-document: OWASP Secure Coding Practices - Quick Reference Guide
+> **Source:** https://raw.githubusercontent.com/OWASP/www-project-secure-coding-practices-quick-reference-guide/refs/heads/main/stable-en/02-checklist/05-checklist.md
+> **Generated:** 2026-09-25T11:44:16.752Z
 
 ---
+
 
 {% include breadcrumb.html %}
 # Secure Coding Practices Checklist
-
-> **Source:** https://raw.githubusercontent.com/OWASP/www-project-secure-coding-practices-quick-reference-guide/refs/heads/main/stable-en/02-checklist/05-checklist.md
-> **Generated:** 2026-08-22T11:37:45.627Z
-
----
-
 
 ## Input validation
 

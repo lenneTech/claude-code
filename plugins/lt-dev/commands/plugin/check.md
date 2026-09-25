@@ -27,7 +27,7 @@ Analyze and optimize plugin elements against current Claude Code best practices.
 
 ## Step 1: Fetch Best Practices Documentation
 
-**MANDATORY:** Fetch the latest official documentation from GitHub:
+Start by fetching the latest official documentation from GitHub:
 
 ```
 WebFetch: https://github.com/anthropics/claude-code/blob/main/plugins/README.md

@@ -31,27 +31,27 @@ customer: "Kundenname"    # Company or person that commissioned the project
 
 ### Versioning Rules
 
-- `version` MUST equal the `version` field in `package.json` (or the primary `package.json` in a monorepo)
+- `version` equals the `version` field in `package.json` (or the primary `package.json` in a monorepo)
 - When updating SHOWCASE.md, also increment the project version or align with the current version
 - The `analyzed_at` date reflects when the code analysis was performed, not when the file was last edited
 
 ### Technology List
 
-List ALL significant technologies, not just the primary framework. Include:
+List all significant technologies, not just the primary framework. Include:
 - Primary language (TypeScript, Python, Go)
 - All frameworks (NestJS, Nuxt, Vue)
 - Databases and caches (MongoDB, Redis, PostgreSQL)
 - Infrastructure tools (Docker, Kubernetes, AWS)
 - Key libraries if they define the project character (Qdrant, LangChain, Stripe)
 
-Do NOT include development tools (ESLint, Prettier, Vitest) unless the project is a developer tool.
+Leave out development tools (ESLint, Prettier, Vitest) unless the project is a developer tool.
 
 ## Section Structure
 
 ```markdown
 ---
 version: "1.2.0"
-project: "RegioKonneX"
+project: "Musterportal"
 analyzed_at: "2026-03-26"
 technologies:
   - NestJS
@@ -60,10 +60,10 @@ technologies:
   - Qdrant
   - Python
 category: "Web App"
-customer: "IHK Südwestfalen"
+customer: "Beispielkunde"
 ---
 
-# RegioKonneX
+# Musterportal
 
 ## Überblick
 3-5 Absätze: Was ist das Projekt? Welches Problem löst es? Wer nutzt es? Was macht es besonders?
@@ -131,7 +131,7 @@ Only include technologies that are directly referenced in the analysis evidence.
 
 ### Features
 
-One `### Feature N: Name` subsection per feature. Each feature subsection MUST contain:
+One `### Feature N: Name` subsection per feature. Each feature subsection contains:
 
 1. **Description** — 2-3 sentences: what the feature does and why it matters
 2. **Belege** — At least one `file:line` reference to implementing code
@@ -182,18 +182,18 @@ Reference them in Markdown using **relative paths** (no leading slash):
 ![Feature Name Desktop](docs/showcase/screenshots/feature-name-desktop.png)
 ```
 
-**IMPORTANT:** Always use relative paths like `docs/showcase/screenshots/...` — NEVER absolute paths like `/docs/showcase/screenshots/...`. The leading slash breaks rendering in many Markdown viewers and on GitHub.
+Use relative paths like `docs/showcase/screenshots/...`, not absolute paths like `/docs/showcase/screenshots/...`: the leading slash breaks rendering in many Markdown viewers and on GitHub.
 
-**Workflow order:** Screenshots MUST be captured BEFORE writing SHOWCASE.md, so the file references actual existing files — not placeholder paths that may not match.
+**Workflow order:** `/lt-showroom:showroom:analyze` writes SHOWCASE.md first, with placeholder screenshot paths. `/lt-showroom:showroom:screenshot` then captures the screenshots and replaces each placeholder with the file it actually created (Step 5). A SHOWCASE.md is ready for publishing only when no placeholder path is left.
 
-Screenshots MUST:
+Screenshots:
 - Show the actual running application (not mockups)
 - Contain realistic demo data (not empty states)
 - Be taken at standard viewports: desktop (1440×900), mobile (390×844)
 
 ### Teaser Image (`teaserImageFileId`)
 
-Every showcase should have a teaser image that is displayed on showcase cards in listings and as the hero background. When publishing to showroom.lenne.tech:
+Every showcase should have a teaser image that is displayed on showcase cards in listings and as the hero background. When publishing to the platform:
 
 1. Upload the first overview screenshot (typically `overview-desktop.png`) or a dedicated teaser image to GridFS via the file upload endpoint
 2. Set the returned file ID as `teaserImageFileId` on the showcase object
@@ -214,7 +214,7 @@ analyzed_at: "2026-03-26"   # date of analysis
 
 ### How to Calculate `source_hash`
 
-The `source_hash` is the **git tree hash** of the source directory. It depends purely on file contents — NOT on commit history. This means it is **stable across rebases and squashes**.
+The `source_hash` is the **git tree hash** of the source directory. It depends purely on file contents, not on commit history. This means it is **stable across rebases and squashes**.
 
 ```bash
 # For monorepos (projects/api + projects/app):
@@ -303,9 +303,9 @@ When changes are detected (source_hash differs):
 
 ## Validation Rules
 
-- `version` MUST match `package.json` — checked at publish time
-- `source_hash` MUST be recalculated at every analysis
-- Every feature MUST have at least one `file:line` evidence reference
-- Every feature SHOULD have at least one screenshot in `docs/showcase/screenshots/`
-- The `technologies` list MUST contain every technology in the Technologie-Stack table
+- `version` matches `package.json` — checked at publish time
+- `source_hash` is recalculated at every analysis
+- Every feature has at least one `file:line` evidence reference
+- Every feature should have at least one screenshot in `docs/showcase/screenshots/` (recommended, not required)
+- The `technologies` list contains every technology in the Technologie-Stack table
 - No placeholder text — all sections must be substantive

@@ -1,22 +1,38 @@
 #!/bin/bash
-# PostCompact hook: Re-inject critical project context after context compaction.
+# Re-inject critical project context after context compaction.
 # This ensures Claude retains awareness of the project type, package manager,
 # and active conventions even after the conversation context is compressed.
+#
+# Registered on SessionStart with matcher "compact", which fires after auto or manual
+# compaction. PostCompact is the wrong event for this: it has no decision control and
+# Claude Code sends its stdout only to the debug log, so context printed there never
+# reaches Claude. SessionStart adds plain-text stdout to Claude's context.
 
 # Read hook input from stdin
 INPUT=$(cat)
 
-# Extract fields from JSON (jq with fallback to grep/sed)
+# Extract fields from JSON (jq with fallback to grep/sed). SessionStart input carries
+# `source` ("startup" | "resume" | "clear" | "compact" | "fork").
 if command -v jq &>/dev/null; then
-  TRIGGER=$(echo "$INPUT" | jq -r '.trigger // "unknown"')
+  SOURCE=$(echo "$INPUT" | jq -r '.source // ""')
   CWD=$(echo "$INPUT" | jq -r '.cwd // ""')
 else
-  TRIGGER=$(echo "$INPUT" | grep -o '"trigger"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"trigger"[[:space:]]*:[[:space:]]*"//;s/"$//' || echo "unknown")
-  CWD=$(echo "$INPUT" | grep -o '"cwd"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"cwd"[[:space:]]*:[[:space:]]*"//;s/"$//' || echo "")
+  SOURCE=$(echo "$INPUT" | grep -o '"source"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"source"[[:space:]]*:[[:space:]]*"//;s/"$//')
+  CWD=$(echo "$INPUT" | grep -o '"cwd"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"cwd"[[:space:]]*:[[:space:]]*"//;s/"$//')
 fi
 
-# Use CWD from hook input, fall back to CLAUDE_PROJECT_DIR
-PROJECT_DIR="${CWD:-${CLAUDE_PROJECT_DIR:-$(pwd)}}"
+# The matcher already limits this hook to compaction; the check keeps a registration
+# on startup/resume/clear from injecting a "Post-Compaction" block.
+[ -n "$SOURCE" ] && [ "$SOURCE" != "compact" ] && exit 0
+
+# Prefer the stable project root over the payload's cwd: the agent's working directory
+# changes mid-session (see the CwdChanged event), so after a `cd projects/api` the
+# payload's cwd points into the subfolder, where projects/api + projects/app do not
+# exist and the monorepo layout, package manager and plugin context are all missed.
+# CLAUDE_PROJECT_DIR stays at the session's project root; the payload's cwd and then
+# the handler's own working directory are the fallbacks. Same order as the other
+# lt-dev detectors and the lt-offers / lt-showroom compaction hooks.
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${CWD:-$PWD}}"
 
 # --- Detect project structure ---
 CONTEXT_LINES=()
@@ -104,7 +120,7 @@ fi
 
 # --- Output context summary ---
 if [ ${#CONTEXT_LINES[@]} -gt 0 ]; then
-  echo "--- Post-Compaction Project Context (${TRIGGER}) ---"
+  echo "--- Post-Compaction Project Context ---"
   for line in "${CONTEXT_LINES[@]}"; do
     echo "- ${line}"
   done

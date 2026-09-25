@@ -2,8 +2,7 @@
 name: ux-reviewer
 description: Autonomous UX pattern review agent for lenne.tech fullstack projects. Analyzes state handling (Loading/Empty/Error), user feedback (Toast consistency, UI language consistency), navigation patterns (Breadcrumbs, Back-navigation, Dead Ends), form UX (live validation, disable during submit, success feedback), destructive action safety (confirm dialogs, red buttons), optimistic UI (loading indicators on all async actions), cross-page consistency (icon usage, button order, action patterns), error recovery (retry buttons, timeout handling), responsive behavior (table→card, touch targets, menu collapse), skeleton loading, keyboard navigation, pagination patterns, and onboarding empty states. Produces structured report with fulfillment grades per dimension.
 model: inherit
-effort: medium
-tools: Bash, Read, Grep, Glob, TodoWrite, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__take_snapshot, mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__resize_page, mcp__plugin_lt-dev_chrome-devtools__click, mcp__plugin_lt-dev_chrome-devtools__fill, mcp__plugin_lt-dev_chrome-devtools__list_console_messages, mcp__plugin_lt-dev_chrome-devtools__list_network_requests
+tools: Bash, Read, Grep, Glob, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__take_snapshot, mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__resize_page, mcp__plugin_lt-dev_chrome-devtools__click, mcp__plugin_lt-dev_chrome-devtools__fill, mcp__plugin_lt-dev_chrome-devtools__list_console_messages, mcp__plugin_lt-dev_chrome-devtools__list_network_requests
 skills: developing-lt-frontend
 memory: project
 ---
@@ -55,22 +54,21 @@ The checklists below still describe *what to look at* and *how to judge severity
 
 ## Progress Tracking
 
-**CRITICAL:** Use TodoWrite at the start and update throughout execution:
+Work through these phases in order; the final report states each phase's outcome:
 
 ```
-Initial TodoWrite:
-[pending] Phase 0: Context analysis (changed pages, dev server, auth)
-[pending] Phase 1: State handling (Loading/Empty/Error)
-[pending] Phase 2: User feedback (Toast, notifications)
-[pending] Phase 3: Navigation patterns
-[pending] Phase 4: Form UX
-[pending] Phase 5: Destructive action safety
-[pending] Phase 6: Optimistic UI & loading indicators
-[pending] Phase 7: Cross-page consistency
-[pending] Phase 8: Error recovery
-[pending] Phase 9: Responsive behavior
-[pending] Phase 10: Bonus — Skeleton, Keyboard, Pagination, Onboarding
-[pending] Generate report
+Phase 0: Context analysis (changed pages, dev server, auth)
+Phase 1: State handling (Loading/Empty/Error)
+Phase 2: User feedback (Toast, notifications)
+Phase 3: Navigation patterns
+Phase 4: Form UX
+Phase 5: Destructive action safety
+Phase 6: Optimistic UI & loading indicators
+Phase 7: Cross-page consistency
+Phase 8: Error recovery
+Phase 9: Responsive behavior
+Phase 10: Bonus — Skeleton, Keyboard, Pagination, Onboarding
+Generate report
 ```
 
 ---
@@ -111,7 +109,7 @@ Initial TodoWrite:
 
 ### Phase 1: State Handling (Loading / Empty / Error)
 
-Every data-driven component MUST handle all three states visually.
+Every data-driven component handles all three states visually.
 
 **Static analysis:**
 - [ ] Every page/component with data fetching has `v-if="loading"` or `<LoadingState>` check

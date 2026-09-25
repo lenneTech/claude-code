@@ -1,7 +1,7 @@
 ---
 description: Take an lt fullstack project live on TurboOps via GitLab CI/CD — guided end-to-end (deploy contract, lt deployment create, CI variables, multi-service stage via turbo deploy --compose upload, DNS, CI deploy, verification)
 argument-hint: "[--slug=<slug>] [--stage=<dev|production>]"
-allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, TodoWrite, Bash(lt:*), Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(docker:*), Bash(docker compose:*), Bash(dig:*), Bash(nslookup:*), Bash(curl:*), Bash(cat:*), Bash(ls:*), Bash(test:*), mcp__turboops__list_deployment_projects, mcp__turboops__get_deployment_status, mcp__turboops__get_deployment_logs, mcp__turboops__list_deployment_containers, mcp__turboops__get_container_status
+allowed-tools: Read, Grep, Glob, Write, Edit, AskUserQuestion, Bash(lt:*), Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(docker:*), Bash(docker compose:*), Bash(dig:*), Bash(nslookup:*), Bash(curl:*), Bash(cat:*), Bash(ls:*), Bash(test:*), mcp__turboops__list_deployment_projects, mcp__turboops__get_deployment_status, mcp__turboops__get_deployment_logs, mcp__turboops__list_deployment_containers, mcp__turboops__get_container_status
 disable-model-invocation: true
 ---
 
@@ -40,7 +40,7 @@ defaults to the repo's `package.json` name) and `--stage=<dev|production>`
 (defaults to inferring from the current branch: `dev` → `dev`, `main` →
 `production`).
 
-Create a TodoWrite plan covering the skill's step sequence, then execute:
+Work through the skill's step sequence in order; the final report states each step's outcome:
 
 1. **Prerequisites** — Confirm the repo is an lt fullstack project with the deploy
    contract (`docker-compose.yml` with `mongo`/`api`/`app`, `.gitlab-ci.yml` with

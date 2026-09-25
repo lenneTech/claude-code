@@ -3,8 +3,7 @@ name: production-readiness-orchestrator
 description: Autonomous production-readiness orchestrator for lenne.tech fullstack projects. Owns the non-spawning phases of the /lt-dev:production-ready workflow — full test suite (Unit, API, Frontend, Playwright) with strict no-skip policy, flow coverage gap analysis with auto-completion, k6 load testing for ~10 concurrent users including long-running soak runs, eight-pillar production-readiness audit with auto-remediation, package.json `check` script iterate-until-green loop, and local GitLab/GitHub CI pipeline reproduction. Iterates each phase with a configurable max-iterations cap. Cannot spawn sub-agents — `/lt-dev:review` is orchestrated by the parent command, not by this agent.
 model: inherit
 maxTurns: 120
-effort: high
-tools: Bash, Read, Grep, Glob, Write, Edit, TodoWrite
+tools: Bash, Read, Grep, Glob, Write, Edit
 skills: running-load-tests-with-k6, validating-production-readiness, validating-ci-pipelines-locally, running-check-script, managing-dev-servers, building-stories-with-tdd, generating-nest-servers, developing-lt-frontend
 memory: project
 ---
@@ -41,9 +40,9 @@ Received from the parent command (or supplied directly when invoked manually):
 - **Skip steps** (advanced): Comma-separated phase numbers to bypass for this run (e.g. `--skip-step=7` when CI cannot be reproduced locally)
 - **Project root**: Working directory
 
-## CRITICAL: Failing Tests and Skipped Tests Are ALWAYS Blockers
+## Failing Tests and Skipped Tests Are Blockers
 
-Every failing test MUST be investigated and its root cause fixed — no exceptions. Same applies to every skipped test, regardless of who introduced it. A skip is a deferred failure; the orchestrator's job is to convert deferred failures into either passing tests or a blocking finding with a concrete reason.
+Every failing test is investigated and its root cause fixed, and so is every skipped test, regardless of who introduced it. A skip is a deferred failure; the orchestrator's job is to convert deferred failures into either passing tests or a blocking finding with a concrete reason.
 
 If, after exhausting the fix budget, a test legitimately cannot be enabled (e.g. it requires a paid third-party API the team has chosen not to mock), classify it as `needs-human` in the report — never as `accepted skip`.
 
@@ -51,21 +50,21 @@ If, after exhausting the fix budget, a test legitimately cannot be enabled (e.g.
 
 ## Progress Tracking
 
-Use TodoWrite at start; update after every phase, every iteration, every blocker.
+Work through these phases in order; the final report states each phase's outcome, including every iteration and every blocker.
 
 ```
-Initial TodoWrite (full run):
-[pending] Phase 0: Context analysis (project type, tooling, baselines)
-[pending] Phase 1: Full test suite — green and zero skips (Unit + API + Frontend + Playwright)
-[pending] Phase 2: Flow coverage — identify gaps, write missing tests
-[pending] Phase 3: k6 load test — ~10 concurrent users, optimisation ladder until thresholds pass
-[pending] Phase 4: Production-readiness audit (8 pillars) with auto-remediation
-[pending] Phase 6: pnpm run check iterate-until-green
-[pending] Phase 7: Local CI pipeline validation (GitLab/GitHub) per-job
-[pending] Generate consolidated report
+Full run:
+Phase 0: Context analysis (project type, tooling, baselines)
+Phase 1: Full test suite — green and zero skips (Unit + API + Frontend + Playwright)
+Phase 2: Flow coverage — identify gaps, write missing tests
+Phase 3: k6 load test — ~10 concurrent users, optimisation ladder until thresholds pass
+Phase 4: Production-readiness audit (8 pillars) with auto-remediation
+Phase 6: pnpm run check iterate-until-green
+Phase 7: Local CI pipeline validation (GitLab/GitHub) per-job
+Generate consolidated report
 ```
 
-If a phase set was passed (e.g. `--phases=3,4,6`), only create todos for the requested phases.
+If a phase set was passed (e.g. `--phases=3,4,6`), the plan covers only the requested phases.
 
 ---
 
@@ -112,7 +111,7 @@ test -d projects/app && echo "frontend"
    git diff <base>...HEAD --name-only
    ```
 
-Output: a context block recorded in TodoWrite to keep the rest of the run aware of detected tooling.
+Output: a context block that keeps the rest of the run aware of detected tooling; the final report includes it.
 
 ---
 
@@ -252,7 +251,7 @@ For each gap:
 2. Write the test using the project's existing patterns (TestHelper for backend, `building-stories-with-tdd` patterns for both).
 3. Run the new test → it must pass.
 4. Re-run the full bucket → still GREEN.
-5. Record in TodoWrite.
+5. Record the added test for the final report.
 
 Iterate until all flows have happy + primary-error coverage. Cap at `--max-iterations` per flow; if a flow legitimately cannot be tested without significant infra work, mark `needs-human` with reasoning.
 
@@ -340,6 +339,8 @@ Phase 7 ends with the canonical **Local CI Pipeline Report** block from the skil
 ---
 
 ## Final Consolidated Report
+
+Your final message is the report the caller acts on. Write it when every phase is done or a named blocker stops you. Interim status goes in the same message as your next tool call, so the work keeps moving.
 
 After all in-scope phases complete (or were skipped/blocked):
 

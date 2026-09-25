@@ -1,7 +1,7 @@
 ---
 description: Comprehensive fullstack update -- updates backend and frontend frameworks (mode-aware for npm/vendor), applies migrations, updates all packages, syncs CLAUDE.md, and validates everything
 argument-hint: "[--dry-run] [--skip-backend] [--skip-frontend] [--skip-packages]"
-allowed-tools: Read, Grep, Glob, Bash(npm run:*), Bash(pnpm run:*), Bash(yarn run:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(rm:*), Write, Edit, Agent, AskUserQuestion, WebFetch, TodoWrite, SlashCommand
+allowed-tools: Read, Grep, Glob, Bash(npm run:*), Bash(pnpm run:*), Bash(yarn run:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(rm:*), Write, Edit, Agent, AskUserQuestion, WebFetch, Skill, SendMessage
 disable-model-invocation: true
 ---
 
@@ -44,7 +44,7 @@ agent for each combination.
 
 ## Architecture
 
-This command is the **direct orchestrator**. Sub-agents cannot spawn sub-sub-agents,
+This command is the **direct orchestrator**. The lt-dev agents carry no `Agent` tool and do not spawn further agents,
 so the command coordinates the agents directly.
 
 ```
@@ -87,6 +87,10 @@ Parse `$ARGUMENTS` for flags:
 - `--skip-backend`: Skip backend (API) update
 - `--skip-frontend`: Skip frontend (App) update
 - `--skip-packages`: Skip package maintenance phase
+
+### Turn endings
+
+After the plan approval, this command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; a finished phase is the cue to start the next one. The run stops only at the handoff points this command defines (the Phase 2 plan approval, the `--dry-run` stop, the Phase 8 report), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation.
 
 ### Phase 0: CLI Self-Heals (unless --dry-run)
 
@@ -230,6 +234,8 @@ Work fully autonomously.
 
 **Wait for backend to complete** before proceeding to frontend.
 
+Each updater agent's final message, here and in the phases below, is its report, not proof that the task is done. Compare it against the task given; when items are still open and no blocker is named, resume the same agent via `SendMessage` to its agent id, naming the open items. After two or three continuations on the same task, stop and report the gap instead.
+
 ### Phase 4: Frontend Update (unless --skip-frontend)
 
 Based on detected frontend mode, spawn the appropriate agent:
@@ -302,8 +308,8 @@ Mode: FULL
 - Update all non-framework dependencies to latest compatible versions
 - Run security audit and fix vulnerabilities — including TRANSITIVE advisories that
   require a scoped override (audit --fix cannot close these). Apply the Vulnerability
-  Resolution Workflow: group by root advisory, target the fixed-in version (target MUST
-  be >= the advisory's fixed-in version — an exact-but-too-low target silently leaves it
+  Resolution Workflow: group by root advisory, target the fixed-in version (the target is
+  >= the advisory's fixed-in version — an exact-but-too-low target silently leaves it
   open), then re-audit and confirm 0 / expected residual.
 - Remove unused packages — including unused direct deps that are the root of an advisory
   chain (removal is a valid security fix and may eliminate overrides).
@@ -316,7 +322,7 @@ were already updated in previous phases.
 
 ### Phase 6: CLAUDE.md + Workspace Toolchain Sync
 
-**Delegate the CLAUDE.md half to its owner.** Invoke via the `SlashCommand` tool:
+**Delegate the CLAUDE.md half to its owner.** Invoke the `lt-dev:fullstack:sync-claude-md` skill via the `Skill` tool, the equivalent of:
 
 ```
 /lt-dev:fullstack:sync-claude-md

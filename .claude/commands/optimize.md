@@ -1,67 +1,41 @@
 ---
-description: Optimize this marketplace based on official Claude Code documentation and optional secondary sources
+description: Optimize this marketplace against the current Claude Code documentation and default model, with optional secondary sources
 argument-hint: "[--update-cache|--skip-cache] [secondary-sources...]"
-allowed-tools: Read, Write, Edit, Glob, Grep, Agent, AskUserQuestion, TodoWrite, WebFetch, Bash(bun .claude/scripts/:*), Bash(claude plugin validate:*), Bash(git:*), Bash(ls:*), Bash(wc:*), Bash(find:*), Bash(jq:*), Bash(awk:*), Bash(sed:*), Bash(grep:*), Bash(bash scripts/:*)
+allowed-tools: Read, Write, Edit, Glob, Grep, Agent, SendMessage, Skill, AskUserQuestion, WebFetch, Bash(bun .claude/scripts/:*), Bash(claude plugin validate:*), Bash(git:*), Bash(ls:*), Bash(wc:*), Bash(find:*), Bash(jq:*), Bash(awk:*), Bash(sed:*), Bash(grep:*), Bash(bash scripts/:*), Bash(bash plugins/:*), Bash(node --test:*), Bash(npm view:*), Bash(curl -s:*)
+effort: high
 disable-model-invocation: true
 ---
 
 # Optimize Marketplace
 
-Invoke the marketplace-optimizer skill to analyze and improve this Claude Code marketplace.
+Invoke the `marketplace-optimizer` skill with the arguments below and follow its execution protocol. The skill
+holds the procedure; `.claude/skills/marketplace-optimizer/house-rules.md` holds the decisions earlier runs settled.
 
-## What This Command Does
+## What a Run Does
 
-1. **Cache Version Check** (automatic)
-   - Checks if cached Claude Code version matches current version
-   - Behavior depends on `updateBehavior` setting in `sources.json`:
-     - `auto` (default): Update automatically when new version available
-     - `always`: Always update without asking
-     - `ask`: Ask user when new version available
-     - `askAlways`: Always ask user (even if cache is current)
-     - `never`: Never check or update
-   - Use `--update-cache` to force update, `--skip-cache` to skip check
-
-2. **Documentation Cache** (automatic)
-   - Reads all `.md` files from `.claude/docs-cache/`
-   - Contains: Claude Code docs AND GitHub sources (all in one place)
-   - Single source of truth - no additional fetching required
-
-3. **Secondary Sources** (simple prompt)
-   - Prompts for optional additional sources (URLs/local files)
-   - Empty input, "keine", "none", "no" = skip secondary sources
-   - Or provide sources directly as command arguments
-
-4. **Analyzes Marketplace**
-   - Scans all plugins, skills, commands, agents, hooks
-   - Compares against current best practices from documentation cache
-
-5. **Presents Optimization List**
-   - Shows all potential improvements
-   - All options selected by default
-   - Allows deselecting unwanted changes
-
-6. **Executes Optimizations**
-   - Runs approved changes in parallel where possible
-   - Updates files following best practices
-   - Provides completion summary
+1. **Cache, delta, coverage** — records the cached Claude Code version, refreshes `.claude/docs-cache/`, triages
+   failed sources (pages split upstream are added as sources, then accepted with `--accept-shrink`), lists
+   documentation pages the cache lacks, and cuts the changelog to the entries since the last run.
+2. **Default model check** — reads which model the `opus`/`default` aliases resolve to; a changed default adds a
+   model-specific prompt audit against that model's prompting guide.
+3. **Secondary sources** — optional URLs or files, from the arguments or one prompt.
+4. **Parallel analysis** — five element agents (skills, commands, agents, hooks, mcp) analyse without editing,
+   starting from the documentation diff, with live session signals relayed to them (failed MCP servers, hooks firing
+   on the wrong turn); then the marketplace agent checks structure, dependencies, cross-references and features.
+5. **Verification** — the high-impact claims are re-checked against the cached pages before anything is shown.
+6. **Findings and selection** — the numbered findings are printed first, then selected via grouped multi-select.
+7. **Execution** — approved changes are applied by agents on disjoint file partitions; the coordinator handles
+   everything outside them. Nothing is staged or committed.
+8. **Final checks** — plugin validation, cross-references, cache integrity, hook and node tests, a verification pass
+   over the diff, and updates to CLAUDE.md and the house rules.
 
 ## Usage
 
 ```bash
-# Interactive: Prompts for secondary sources (simple text input)
-/optimize
-
-# Force cache update first
-/optimize --update-cache
-
-# Skip cache update
-/optimize --skip-cache
-
-# With secondary sources (skips the prompt)
-/optimize https://blog.example.com/tips.md ./docs/notes.md
-
-# Mix of URLs and local files
-/optimize https://example.com/guide.md /path/to/local.md ./relative/file.md
+/optimize                                   # prompts once for secondary sources
+/optimize --update-cache                    # force a cache refresh first
+/optimize --skip-cache                      # analyse against the current cache
+/optimize https://example.com/guide.md ./docs/notes.md   # secondary sources, no prompt
 ```
 
 ## Flags
@@ -71,59 +45,24 @@ Invoke the marketplace-optimizer skill to analyze and improve this Claude Code m
 | `--update-cache` | Force cache update without version check |
 | `--skip-cache` | Skip cache update entirely |
 
-## Secondary Sources Prompt
+Arguments that start with `http://` or `https://` are URLs; everything else is a local file path. Empty input,
+"keine", "none" or "no" at the prompt skips secondary sources; sources that contradict the cache are ignored.
 
-When no sources are provided as arguments, a simple prompt asks for optional secondary sources:
+## Cache Configuration
 
-```
-Sekundäre Quellen (optional)
-
-Zusätzliche Referenzen eingeben (URLs oder lokale Dateien), oder leer lassen:
-```
-
-- **Empty input / "keine" / "none" / "no"**: Skip secondary sources
-- **Otherwise**: Parse as URLs and/or local file paths
-
-## Source Detection
-
-Sources are automatically detected by pattern:
-- **URL**: Starts with `http://` or `https://`
-- **Local file**: Everything else (relative or absolute paths)
-
-## Related Commands
-
-- `/lt-dev:plugin:check` - Quick validation without optimization
-- `/lt-dev:plugin:element` - Create new elements
-
-## Configuration
-
-The cache update behavior can be configured in `.claude/docs-cache/sources.json`:
-
-```json
-"cache": {
-  "claudeCodeVersion": "2.1.2",
-  "lastUpdated": "2026-01-09T...",
-  "updateBehavior": "auto"  // "never" | "always" | "auto" | "ask" | "askAlways"
-}
-```
+`.claude/docs-cache/sources.json` is the single source of truth for the cache: sources (type `md` for GitHub raw
+files and the `.md` form of Anthropic's docs pages, `spa`/`html` as fallbacks, `pdf` maintained by hand), the
+`coverage.ignore` prefixes, and `cache.updateBehavior`:
 
 | Behavior | Description |
 |----------|-------------|
 | `never` | Never check or update the cache |
 | `always` | Always update without asking |
-| `auto` | Update automatically when new version available (default) |
-| `ask` | Ask user when new version available |
-| `askAlways` | Always ask user (even if cache is current) |
+| `auto` | Update automatically when a new version is available (default) |
+| `ask` | Ask when a new version is available |
+| `askAlways` | Always ask, even if the cache is current |
 
-## Notes
+## Related Commands
 
-- **Documentation Cache** is the single source of truth (`.claude/docs-cache/`)
-- Contains both code.claude.com docs and GitHub sources
-- Cache update supports three source types:
-  - `spa`: Single Page Applications (rendered with Playwright)
-  - `html`: Direct HTML pages (converted via Turndown)
-  - `md`: Direct Markdown files (downloaded as-is)
-- Secondary sources prompt is skipped if sources are provided as arguments
-- Secondary sources with conflicting info are ignored
-- All changes require user approval before execution
-- No history references ("new", "updated") are added to files
+- `/lt-dev:plugin:check` — quick validation without optimization
+- `/lt-dev:plugin:element` — create new elements

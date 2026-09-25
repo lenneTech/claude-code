@@ -122,9 +122,11 @@ Run these three checks on the finished text:
 2. Read the first sentence of every paragraph in a row. If they all have the same shape, vary them.
 3. Ask whether any sentence would survive unchanged in a different project's docs. If yes, it says nothing. Cut it.
 
-## Related skills
+## Related Skills
 
 - `writing-qa-test-instructions` skill. Applies these rules to manual re-test handoffs.
+- `writing-linear-comments` skill. Every Linear comment gets this prose pass before it is posted.
+- `filing-ai-proposed-tickets` skill. Every AI-proposed ticket body gets this prose pass before it is filed.
 - `developing-claude-plugins` skill. Skill, command, and agent bodies are prose and go through this skill before release.
 - `lt-offers:creating-offers` and `lt-showroom:creating-showcases` skills. Customer-facing copy, where German patterns 32 to 38 matter most.
 - `/lt-dev:git:commit-message` and `/lt-dev:git:mr-description` commands. The body is prose, the subject line stays terse.

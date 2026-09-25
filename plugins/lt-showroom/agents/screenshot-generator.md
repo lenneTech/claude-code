@@ -13,13 +13,15 @@ maxTurns: 100
 
 Automates the complete screenshot lifecycle: reads SHOWCASE.md for context, starts the application (Docker preferred), creates realistic demo data, captures feature screenshots at multiple viewports, saves to `docs/showcase/screenshots/`, and cleans up all processes.
 
-> **MCP Dependencies (REQUIRED):**
+> **MCP dependencies:**
 > - **`chrome-devtools`** — browser automation for screenshot capture, realistic interaction flows, and demo data creation via form filling. Provided by the **`lt-dev` plugin**; this plugin does not declare its own instance, so `lt-dev` must be installed alongside it.
 > - **`showroom-api`** — uploading captured screenshots to GridFS and linking them to showcase feature entries
 >
-> Both MCP servers MUST be configured in the user's session. Without them, the agent cannot complete the screenshot lifecycle.
+> Both MCP servers need to be configured in the user's session; without them, the agent cannot complete the screenshot lifecycle.
 
-## Safety Rules (NON-NEGOTIABLE)
+## Safety Rules
+
+These rules leave the user's machine as the agent found it: a server or container left running keeps its port busy and blocks the next project's startup.
 
 - **Always stop servers** started during this session — use `pkill` in cleanup, even if earlier steps fail
 - **Never leave orphaned processes** — check with `lsof -ti :<port>` before and after
@@ -55,32 +57,32 @@ Check for MongoDB/PostgreSQL connection strings in `.env.example`. If a database
 docker run -d --name showcase-mongo -p 27018:27017 mongo:7
 ```
 
-**3. Lerna Monorepo** (many lenne.tech customer projects)
+**3. Lerna Monorepo** (older lenne.tech stack projects)
 ```bash
 [ -f "lerna.json" ] && echo "Lerna monorepo detected"
 # Start with: npm run start (runs lerna run start --parallel)
 # This starts both api (port 3000) and app (port 3001)
 ```
 
-**4. pnpm Workspace Monorepo** (newer lenne.tech projects)
+**4. pnpm Workspace Monorepo** (newer lenne.tech stack projects)
 ```bash
 [ -f "pnpm-workspace.yaml" ] && echo "pnpm workspace detected"
 # Start with: pnpm run start (runs pnpm -r --parallel run start)
 ```
 
-**5. Tauri Desktop App** (bornebusch)
+**5. Tauri Desktop App**
 ```bash
 [ -d "src-tauri" ] && echo "Tauri app — start only web dev server, not Tauri"
 # Start with: npx nuxt dev --port 3001 (ignore Tauri wrapper)
 ```
 
-**6. Headless CMS Frontend** (swfdigital)
+**6. Headless CMS Frontend**
 ```bash
 grep -q "directus\|strapi" package.json && echo "Headless CMS frontend"
 # Start with: npm/pnpm run dev (CMS is external, no local backend needed)
 ```
 
-**7. Backend-Only** (ontavio)
+**7. Backend-Only**
 ```bash
 # No frontend directory — screenshot Swagger/GraphQL docs
 # Start with: npm run start (port 3000)
@@ -209,6 +211,8 @@ Report:
 - Number of screenshots captured per feature
 - Any captures that failed (with error details)
 - Cleanup status (all processes stopped or orphaned PIDs)
+
+Your final message is the report the caller acts on. Write it when every phase is done or a named blocker stops you. Interim status goes in the same message as your next tool call, so the work keeps moving.
 
 ## GridFS Upload Flow
 

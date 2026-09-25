@@ -2,8 +2,8 @@
 
 ## Language & Tone
 
-- **Always German** — All offer content in German
-- **Ansprache klären** — Ask the user: "Soll der Kunde geduzt oder gesiezt werden?" Default is **siezen** ("Sie/Ihr"). If the user chooses duzen, use "du/dein".
+- **German by default** — All offer content in German, unless the user or the knowledge base asks for another language
+- **Clarify the form of address** — Ask the user: "Soll der Kunde geduzt oder gesiezt werden?" Default is **siezen** ("Sie/Ihr"). If the user chooses duzen, use "du/dein".
 - **Avoid direct address** where possible — Focus on outcomes, not "you will get"
 - **Professional but approachable** — Not too formal, not too casual
 - **Action-oriented** — Use active verbs, clear CTAs
@@ -46,27 +46,35 @@ no editorial licence here, and this rule outranks every style rule above.
 
 ### Canonical source and verification
 
-The authoritative wording lives at **https://lenne.tech/kundenerfolge**.
+The authoritative wording is wherever the company publishes its customer
+testimonials. Find it in this order:
 
-**The page shows only 3 of 15 quotes on load.** The rest sit behind a "Mehr
-anzeigen" button that has to be clicked repeatedly (it reappears after each
-click until the list is exhausted). Anyone reading the page visually, or via a
-summarizing fetch, silently sees a fraction of the testimonials and will
-conclude a quote "does not exist" when it does.
+1. **The organization's own conventions** — a skill from its internal plugin
+   or its CLAUDE.md naming the references page.
+2. **The knowledge base** — an entry in category `portfolio` that holds the
+   quotes or links to the page publishing them (`get_offer_context`,
+   `list_knowledge`).
+3. **The user** — when neither names a source, ask for it, and offer to store
+   its link as a `portfolio` entry so later offers find it.
 
-The button only reveals what is already there: **the Nuxt payload in the raw
-HTML contains all entries from the first request** (verified — 15 of 15 quotes
-present without a single click). So pull the raw HTML and work on that; it is
-both complete and exact. Never read this page through a summarizing fetch — that
-paraphrases the very text that must stay verbatim.
+A quote whose published original cannot be found is not used.
+
+**Read a references page as raw HTML, never through a summarizing fetch.** A
+summarizing fetch paraphrases the very text that must stay verbatim. Many
+references pages also show only a few quotes on load and reveal the rest behind
+a "Mehr anzeigen" / "show more" button; anyone reading the page visually sees a
+fraction of the testimonials and concludes a quote "does not exist" when it
+does. On pages built with Nuxt, Next or similar frameworks the embedded payload
+in the raw HTML usually carries every entry from the first request, so pull the
+raw HTML and work on that:
 
 ```bash
-curl -sL https://lenne.tech/kundenerfolge -o /tmp/ke.html
+curl -sL "<references page URL>" -o /tmp/references.html
 ```
 
 ```python
 import re, html
-raw = open('/tmp/ke.html', encoding='utf-8').read()
+raw = open('/tmp/references.html', encoding='utf-8').read()
 txt = raw.replace('\\u002F', '/').replace('\\"', '"').replace('\\n', ' ')  # JSON escapes
 txt = re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', html.unescape(txt)))
 quote = "…exactly the string you put into the offer…"
@@ -76,13 +84,12 @@ print('verbatim' if re.sub(r'\s+', ' ', quote).strip() in txt else 'ALTERED')
 Run this for every quote before publishing. `ALTERED` means fix the offer, not
 the check.
 
-## Reusable Blocks (lenne.tech Developers Only)
+## Reusable Content
 
-> **Guard:** This section only applies if git is installed and `git config user.email` contains `@lenne.tech`. Otherwise skip without mention.
+When creating content, decide whether a block is reusable or belongs to this
+offer alone:
 
-When creating content, consider whether a block should be a **global reusable block** instead of inline content:
-
-| Reusable (→ global block) | Not reusable (→ inline) |
+| Reusable (→ knowledge base or template) | Not reusable (→ inline) |
 |---------------------------|------------------------|
 | Company introduction | Customer-specific greeting |
 | Standard team section | Project-specific timeline |
@@ -90,7 +97,9 @@ When creating content, consider whether a block should be a **global reusable bl
 | Legal disclaimers / AGB | Tailored CTA |
 | "Unser Prozess" / methodology | Customer testimonial |
 
-If a block qualifies as reusable, suggest creating it in the offers repository so it can be referenced via `global-ref` in future offers. See SKILL.md "Reusable Global Blocks" for the full workflow.
+If a block qualifies as reusable, suggest storing it as a knowledge base entry
+or a template offer. See SKILL.md "Reusing Content Across Offers" for which fits
+when.
 
 ## Recommended Block Structure
 
@@ -154,7 +163,7 @@ If a block qualifies as reusable, suggest creating it in the offers repository s
 
 ### Testimonials
 - Include company name for credibility
-- Keep quotes concise (1-2 sentences)
+- Prefer quotes that are already short at the source (1-2 sentences); a longer quote goes in whole, never trimmed (see "Customer quotes are verbatim, always")
 - Choose quotes relevant to the offer topic
 
 ### CTAs

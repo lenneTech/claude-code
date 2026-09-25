@@ -1,7 +1,7 @@
 ---
 description: Convert an existing npm-mode fullstack project (backend + frontend) to vendor mode with automatic migration guide and changelog application. Detects version gaps and applies all breaking-change migrations for both sides.
 argument-hint: "[--dry-run] [--skip-backend] [--skip-frontend] [--api-target-version vX.Y.Z] [--app-target-version X.Y.Z]"
-allowed-tools: Read, Grep, Glob, Bash(lt:*), Bash(node:*), Bash(pnpm:*), Bash(pnpm run:*), Bash(npm:*), Bash(npm run:*), Bash(yarn:*), Bash(yarn run:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(test:*), Agent, AskUserQuestion, TodoWrite
+allowed-tools: Read, Grep, Glob, Bash(lt:*), Bash(node:*), Bash(pnpm:*), Bash(pnpm run:*), Bash(npm:*), Bash(npm run:*), Bash(yarn:*), Bash(yarn run:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(test:*), Agent, AskUserQuestion
 disable-model-invocation: true
 ---
 
@@ -23,7 +23,7 @@ Vendoring copies framework code into the project (`projects/api/src/core/` for b
 **comprehension aid**, not a fork. After the conversion, edit vendored code **only**
 when the change is generally useful to every @lenne.tech consumer (bugfixes, broad
 enhancements, security fixes, build/TS-compat). All project-specific behavior stays
-outside the vendored cores. Generally useful changes MUST flow back upstream via the
+outside the vendored cores. Generally useful changes go back upstream via the
 dedicated contribute commands — otherwise they rot in one project's vendor tree and
 re-conflict on every sync.
 
@@ -101,7 +101,7 @@ once right after the conversion.
 
 ## Architecture
 
-This command is the **direct orchestrator**. Sub-agents cannot spawn sub-sub-agents,
+This command is the **direct orchestrator**. The lt-dev agents carry no `Agent` tool and do not spawn further agents,
 so the command coordinates both the `lt` CLI and the follow-up agents directly.
 Structural conversion is handled by the `lt` CLI; migration-guide / changelog
 application is handled by the respective agents on top of the already-vendored tree.
@@ -228,7 +228,7 @@ and keeps the vendor baseline detection consistent across both sides.
 ## Important
 
 - **The `lt` CLI is called exactly once** for the structural conversion (Phase 3) via
-  `lt fullstack convert-mode`. The agents in Phase 4/5 must NOT re-run the CLI — their
+  `lt fullstack convert-mode`. The agents in Phase 4/5 must not re-run the CLI — their
   job is strictly migration-guide / changelog application on the already-vendored tree.
 - **Backend must complete before frontend.** The frontend's generated API client types
   depend on the API's current shape; running them in parallel risks type drift mid-conversion.

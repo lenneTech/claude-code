@@ -23,9 +23,9 @@ description: Quick reference guide for Test-Driven Development workflow
 - [Decision Tree: Test Failure Analysis](#decision-tree-test-failure-analysis)
 - [Code Quality, Security & Refactoring Check](#code-quality-security--refactoring-check)
 - [Final Report Template](#final-report-template)
-- [Handling Existing Tests](#-handling-existing-tests)
-- [CRITICAL: Git Commits](#-critical-git-commits)
-- [CRITICAL: Database Cleanup & Test Isolation](#-critical-database-cleanup--test-isolation)
+- [Handling Existing Tests](#handling-existing-tests)
+- [Git Commits](#git-commits)
+- [Database Cleanup & Test Isolation](#database-cleanup--test-isolation)
 - [User Authentication: signUp vs signIn](#user-authentication-signup-vs-signin)
 - [Avoiding Test Interdependencies](#avoiding-test-interdependencies)
 - [Async/Await Best Practices](#asyncawait-best-practices)
@@ -97,7 +97,7 @@ description: Quick reference guide for Test-Driven Development workflow
 
 ### Running Tests
 
-**IMPORTANT: Backend tests MUST run with `NODE_ENV=e2e` (set in npm scripts).**
+**Backend tests run with `NODE_ENV=e2e` (set in npm scripts); `NODE_ENV=test` is the customer staging server, not a test environment.**
 
 | NODE_ENV | Purpose |
 |----------|---------|
@@ -334,7 +334,7 @@ describe('[Feature Name] Story', () => {
 
 ### When to Add Indexes
 
-** ALWAYS define indexes in @UnifiedField decorator via mongoose option!**
+** Define indexes in the @UnifiedField decorator via the mongoose option.**
 
 ```typescript
 //  CORRECT: Index in decorator mongoose option
@@ -416,7 +416,7 @@ Before marking complete, verify:
 
 ## REST API Testing Patterns (using TestHelper)
 
-** IMPORTANT: Before writing tests, read the TestHelper source file to understand all available features:**
+** Before writing tests, read the TestHelper source file to learn all available features:**
 
 ```
 node_modules/@lenne.tech/nest-server/src/test/test.helper.ts
@@ -606,7 +606,7 @@ const stringIds = getStringIds(documents);     // Extracts _id from each documen
 const objectIds = getObjectIds(documents);     // Extracts _id/id and converts
 ```
 
-** ALWAYS use these utilities instead of manual conversion:**
+** Use these utilities instead of manual conversion:**
 
 ```typescript
 //  CORRECT: Use utility functions
@@ -845,7 +845,7 @@ Test fails
    - Unique fields -> Add `mongoose: { index: true, unique: true, type: String }`
    - Multiple query fields -> Index each individually
 
-4. ** Security Review (CRITICAL):**
+4. ** Security Review:**
    - @Restricted/@Roles decorators NOT removed or weakened
    - Ownership checks in place for user data
    - All inputs validated with DTOs
@@ -944,7 +944,7 @@ Before marking complete:
 2. path/to/file.ts - description
 ```
 
-##  Handling Existing Tests
+## Handling Existing Tests
 
 **When your changes break existing tests:**
 
@@ -1000,9 +1000,9 @@ git log -p --follow path/to/file.ts
 - Use git freely for investigation (NOT commits!)
 - When in doubt, preserve backward compatibility
 
-##  CRITICAL: Git Commits
+## Git Commits
 
-** NEVER create git commits unless explicitly requested by the developer.**
+** Create git commits only when the developer explicitly asks.**
 
 -  DO NOT use `git add`, `git commit`, or `git push` automatically
 -  DO NOT commit changes when tests pass
@@ -1018,9 +1018,9 @@ git log -p --follow path/to/file.ts
 -  Provide comprehensive report
 -  Never commit to git (unless explicitly requested)
 
-##  CRITICAL: Database Cleanup & Test Isolation
+## Database Cleanup & Test Isolation
 
-**ALWAYS implement comprehensive cleanup in your story tests!**
+**Implement comprehensive cleanup in every story test.**
 
 Tests run in parallel, so improper test data management causes:
 - Conflicts between parallel tests (duplicate keys, race conditions)
@@ -1046,7 +1046,7 @@ Tests run in parallel, so improper test data management causes:
    const email = 'testuser@example.com';
    ```
 
-2. **NEVER Reuse Same Data Across Test Files**
+2. **Never Reuse the Same Data Across Test Files**
    - Tests run in parallel = same data causes conflicts
    - Make ALL data unique (emails, usernames, product names, etc.)
    - Always use timestamp + random suffix
@@ -1079,7 +1079,7 @@ Tests run in parallel, so improper test data management causes:
    - Clean up in correct order (children before parents)
    - Prevents side effects on future test runs
 
-5. **NEVER Use Fixed Port Numbers**
+5. **Never Use Fixed Port Numbers**
    - NestJS assigns random ports automatically for parallel execution
    - Always use TestHelper - it abstracts port handling
    ```typescript
@@ -1155,7 +1155,7 @@ describe('Feature Story', () => {
 
 ### Alternative: Pattern-Based Cleanup (AVOID - Not Parallel-Safe!)
 
-** DO NOT USE pattern-based cleanup - it breaks parallel test execution!**
+**Do not use pattern-based cleanup: it breaks parallel test execution.**
 
 ```typescript
 //  WRONG: Deletes ALL test users, even from parallel tests!
@@ -1174,7 +1174,7 @@ afterAll(async () => {
 - **Flaky tests:** Tests pass/fail randomly depending on execution order
 - **Hard to debug:** Unclear why tests fail intermittently
 
-** ALWAYS use ID-based cleanup instead:**
+** Use ID-based cleanup instead:**
 ```typescript
 //  CORRECT: Only deletes entities created in THIS test file
 if (createdUserIds.length > 0) {
@@ -1253,7 +1253,7 @@ const token = signIn.token;
 
 ## Avoiding Test Interdependencies
 
-###  DON'T: Shared state between tests
+### DON'T: Shared state between tests
 
 ```typescript
 //  BAD: Test 2 depends on Test 1
@@ -1269,7 +1269,7 @@ it('should update user', async () => {
 });
 ```
 
-###  DO: Independent tests
+### DO: Independent tests
 
 ```typescript
 //  GOOD: Each test is independent
@@ -1390,23 +1390,23 @@ await testHelper.rest('/api/resource', {
  **Do:**
 - Follow the 7-step process strictly (including Step 5a security & refactoring check)
 - Ask for clarification early
-- **Preserve all security mechanisms (CRITICAL)**
+- **Preserve all security mechanisms** (weakening one to pass a test ships the hole)
 - **Perform security review before marking complete**
 - Study existing code first
 - Match existing patterns
-- Mark todos complete as you finish them
+- Record each step's outcome as you finish it; the final report states them all
 - Focus on one step at a time
 - **Wait for developer to commit changes**
 - Always use `await` with async operations
 - Make tests independent
 - Use `beforeEach`/`afterEach` for test isolation
 - Use Promise.all() for parallel operations
-- **ALWAYS implement comprehensive cleanup in afterAll**
+- **Implement comprehensive cleanup in afterAll**
 - **Track all created entity IDs immediately after creation**
 - **ONLY delete entities created in THIS test file (parallel-safe)**
 - **Use @test.com suffix for ALL test emails (e2e.brevo.exclude)**
 - **Make ALL test data unique per test file (avoid parallel conflicts)**
-- **NEVER use fixed ports - let NestJS assign random ports automatically**
+- **Use no fixed ports - let NestJS assign random ports automatically** (parallel runs collide on a fixed port)
 - **Always use TestHelper for API calls (handles ports automatically)**
 - Delete entities in correct order (children before parents)
 - **Check for code duplication before marking complete**

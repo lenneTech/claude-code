@@ -19,7 +19,7 @@ paths:
 - **Nuxt's PORT vs NITRO_PORT** — Some Nitro versions read `process.env.PORT` as a string and feed it directly into `net.Server#listen`, which crashes with `ERR_SOCKET_BAD_PORT options.port should be >= 0 and < 65536. Received type string`. Always prefer `NITRO_PORT=<num>` for the production build (`node .output/server/index.mjs`) — `NITRO_PORT` is the documented Nitro-specific knob, goes through Nitro's own env loader, and is coerced to number reliably. The Nuxt dev server (`nuxt dev`) is unaffected — `nuxt.config.ts` `devServer.port` works as expected.
 - **Aligning with the upstream starter is a wholesale dep sync, not a curated pick** — When the project is being brought to the current `nuxt-base-starter` baseline, sync every dep version (both `dependencies` and `devDependencies`) to what the starter ships and read the CHANGELOG of any package whose major moved. The recurring trap that a blanket version-sync does **not** fix is **missing direct deps after a peer-restructure**: when `Rollup failed to resolve import "X"` (or an equivalent module-not-found at install time) appears, the wrapper package no longer pulls "X" transitively — declare X as a direct dependency in `package.json`, even if no app code imports it directly.
 - **`pnpm run generate-types` needs a RUNNING API — and on the current starter it refuses to guess which one.** The generator fetches the OpenAPI schema from the API. Since DEV-2802 the starter resolves that URL instead of defaulting: `NUXT_API_URL` from the **shell** (a `.env` file is not read), else `<repo-root>/.lt-dev/.env` (written by `lt dev up`, which also carries the `NODE_EXTRA_CA_CERTS` the Caddy HTTPS host needs), else a hard exit 1 with an actionable message. It additionally **refuses** a URL belonging to a different `lt dev` project. So under `lt dev up` the documented call needs no extra env, and a stale or foreign API can no longer be generated from silently. **Do not "fix" that hard failure by re-adding a fallback** — the old `http://localhost:3000` default is exactly the bug: on a machine with parallel worktrees that port belongs to whichever project holds it, and the generator then wrote `types.gen.ts` / `sdk.gen.ts` from a foreign contract, reported success and exited 0. **Older projects** that have not adopted the guard still carry that silent fallback; there, verify the API is up before regenerating (`curl -k https://api.<slug>.localhost/health`, or `curl http://localhost:3000/health` in classic mode) and check that an expected endpoint really appears in `sdk.gen.ts`.
-- **UI language: detect it from the project — NEVER assume German.** UI text (labels, buttons, placeholders, toasts) must match the language the project already uses. Determine it in this order: **(1)** an explicit project rule wins — check the project's `CLAUDE.md`, a conventions doc, or i18n config; **(2)** otherwise infer from existing UI files — match the language already used across `*.vue` pages/components; **(3)** only default to German for a true greenfield with no rule and no existing UI text. **NEVER bulk-translate an existing app from one language to another** — silently flipping an established English UI to German (or vice-versa) is a destructive, review-failing change that has broken a whole project before. The project — not this plugin — decides the language; once detected, stay consistent with it (incl. `du` vs `Sie` tone for German).
+- **UI language: detect it from the project instead of assuming German.** UI text (labels, buttons, placeholders, toasts) must match the language the project already uses. Determine it in this order: **(1)** an explicit project rule wins — check the project's `CLAUDE.md`, a conventions doc, or i18n config; **(2)** otherwise infer from existing UI files — match the language already used across `*.vue` pages/components; **(3)** only default to German for a true greenfield with no rule and no existing UI text. **Never bulk-translate an existing app from one language to another** — silently flipping an established English UI to German (or vice-versa) is a destructive, review-failing change that has broken a whole project before. The project — not this plugin — decides the language; once detected, stay consistent with it (incl. `du` vs `Sie` tone for German).
 - **Use `useOverlay()` for modals — NOT conditional rendering** — The default instinct is `<MyModal v-if="showModal" />`. This bypasses Nuxt UI's modal stack, breaks focus trapping, and causes z-index issues with nested dialogs. The correct pattern is `useOverlay().create(ModalComponent)` from composables. See `reference/modals.md`.
 - **`types.gen.ts` and `sdk.gen.ts` are GENERATED — never hand-edit** — Manual changes are overwritten on next `generate-types` run. If a type is missing, the fix is on the API side (add `@ApiProperty`, `@Field`, etc.) not in the generated file. `.gitignore` does NOT ignore these files — they ARE committed, but only via the regeneration command.
 - **Better Auth derives its origins from BASE_URL/APP_URL — not from a hardcoded port number.** When `lt dev up` is used, these env vars are set automatically to the project's stable HTTPS URLs (`https://api.<slug>.localhost`, `https://<slug>.localhost`) and auth works regardless of internal port. The legacy "3000/3001 only" rule applies ONLY to non-migrated projects with hardcoded URLs. Run `lt dev init` once to migrate. See `managing-dev-servers` skill for the full URL rules.
@@ -56,9 +56,9 @@ project/
 
 **NOT for:** NestJS backend development (use `generating-nest-servers` skill instead)
 
-## Framework Source Files (MUST READ before guessing)
+## Framework Source Files (read before guessing)
 
-**ALWAYS read actual source code** from `node_modules/@lenne.tech/nuxt-extensions/` before guessing framework behavior. The framework ships documentation with the npm package.
+**Read the actual source code** in `node_modules/@lenne.tech/nuxt-extensions/` before guessing framework behavior. The framework ships documentation with the npm package.
 
 | File (in `node_modules/@lenne.tech/nuxt-extensions/`) | When to Read |
 |-------------------------------------------------------|-------------|
@@ -72,9 +72,9 @@ project/
 - `README.md` — Project overview, tech stack, auth setup
 - `AUTH.md` — Better Auth integration details
 
-## CRITICAL: Real Backend Integration FIRST
+## Real Backend Integration First
 
-**Never use placeholder data, TODO comments, or manual interfaces!**
+**Build against the real API from the start: no placeholder data, TODO comments, or manual interfaces.**
 
 - Always use real API calls via `sdk.gen.ts` from the start
 - Always use generated types from `types.gen.ts` (never manual interfaces for DTOs)
@@ -153,6 +153,22 @@ nuxt.config.ts
 | Forms | Valibot (not Zod) |
 | Modals | `useOverlay()` |
 
+## Design Without a Mockup
+
+A Figma design or an existing page is the design source whenever one exists. Without either, build from Nuxt UI's page and layout components (`UPageHero`, `UPageSection`, `UPageCard`, `UPageCTA` …) and the project theme's semantic colors; they give a consistent, finished look on their own.
+
+When the user asks for a distinctive look of its own and you write custom Tailwind, leave out the styles the model falls back on by default, which make a page read as machine-made:
+
+- monospace labels (`font-mono`) for eyebrows, metadata or figures
+- small uppercase, widely tracked "eyebrow" labels above headings (`uppercase tracking-widest text-xs`)
+- pill shapes on buttons and label chips (`rounded-full`); buttons keep the theme's radius
+- serif display headlines and italic accent words inside headings
+- cream, off-white or beige page backgrounds
+- numbered section labels such as "01 / 02 / 03"
+- decorative gradient washes, blurred color blobs and pulsing status dots
+
+Build the distinctive part from the project's own theme instead: its colors, type scale, spacing, imagery and layout. After the first version, check which of these crept in anyway and which other stock pattern took their place, and name that one too; a general instruction such as "avoid a generic look" only swaps one default for another. Measured 2026-09-25 on `evals/quality/nuxt-landing-custom-design` (Opus 5.5, four runs per arm): without lt-dev every page used monospace labels, uppercase eyebrows, serif headlines, pill chips and cream backgrounds; with only the semantic-color rule, monospace labels still appeared in every page; with this list none of the ten patterns appeared in any run, and no other stock pattern took their place.
+
 ## Build Identity / Drift Detection
 
 The starter ships `/app/admin/system` + `useSystem()` to show which build runs
@@ -182,7 +198,7 @@ and detect a drifted / stale deployment (App vs. API on different commits):
 
 The backend returns structured errors in the format `#LTNS_XXXX: Developer message` (core) or `#PROJ_XXXX: ...` (project-specific). The `@lenne.tech/nuxt-extensions` package ships `useLtErrorTranslation()` which parses the `#CODE:` marker, loads locale-specific translations from `GET /i18n/errors/:locale`, and returns end-user messages.
 
-**NEVER assert or display raw English backend messages in the UI.** Always pipe errors through `translateError()` / `showErrorToast()` so users see localized text.
+**Raw English backend messages appear neither in the UI nor in test assertions.** Always pipe errors through `translateError()` / `showErrorToast()` so users see localized text.
 
 ```vue
 <script setup lang="ts">
@@ -252,7 +268,7 @@ async function onSubmit() {
 - [ ] TailwindCSS only, semantic colors only
 - [ ] UI text matches the project's detected language (not assumed German), code/comments English, no implicit `any`
 - [ ] Auth uses `useLtAuth()`, protected routes use `middleware: 'auth'`
-- [ ] AI chat uses `useLtAiChat().stop()` for clean abort (NEVER raw `AbortController.abort()` on a `useLtAi*` stream — the composable does cleanup and treats AbortError as a clean stop)
+- [ ] AI chat uses `useLtAiChat().stop()` for clean abort (not a raw `AbortController.abort()` on a `useLtAi*` stream — the composable does cleanup and treats AbortError as a clean stop)
 - [ ] `LtAiPromptInput` (CRUD for `useLtAiPrompts`) vs `LtAiPromptRunInput` (execution payload for `useLtAi.prompt()` / `.promptStream()`) — never conflate; pre-1.7.0 they collided as one name and TypeScript silently merged them
 - [ ] No `v-html` with user content, tokens stored securely
 - [ ] All error-handling sites route through `useLtErrorTranslation()` — no raw backend messages in Toasts / UI

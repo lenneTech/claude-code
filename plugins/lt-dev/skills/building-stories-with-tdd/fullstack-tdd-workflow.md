@@ -6,7 +6,7 @@ This document describes the recommended Test-Driven Development approach for ful
 > - **npm mode**: `@lenne.tech/nest-server` is an npm dependency; imports use `from '@lenne.tech/nest-server'`; framework source lives in `node_modules/@lenne.tech/nest-server/`.
 > - **vendored mode** (`VENDOR.md` exists): framework source is at `<api-root>/src/core/**`; imports use relative paths (`from '../../src/core'` from tests). No npm dependency.
 >
-> Generated backend code, tests, and imports MUST match the project mode.
+> Generated backend code, tests, and imports match the project mode, because the import paths differ between the two.
 
 ## Core Principle
 
@@ -72,7 +72,7 @@ This document describes the recommended Test-Driven Development approach for ful
 
 ## Test Cleanup & Isolation
 
-**CRITICAL: Tests must be repeatable without side effects!**
+**Tests must be repeatable without side effects.**
 
 ### Principles
 
@@ -164,7 +164,7 @@ const uniqueName = `Test-Entity-${Date.now()}`;
 
 ### NODE_ENV Values
 
-**CRITICAL: Understand the NODE_ENV values and their purpose!**
+Each NODE_ENV value selects a deployment target, and the names are easy to misread (`test` is not a test run):
 
 | NODE_ENV | Purpose | Used By |
 |----------|---------|---------|
@@ -174,7 +174,7 @@ const uniqueName = `Test-Entity-${Date.now()}`;
 | `test` | **Customer staging server** | Deployed server for customer testing |
 | `production` | **Production server** | Live production deployment |
 
-**Key rule: `NODE_ENV=e2e` for ALL local backend tests!**
+**Key rule: `NODE_ENV=e2e` for all local backend tests.**
 - `NODE_ENV=test` is **NOT** for running tests - it configures the customer-facing staging server
 - `NODE_ENV=ci` is for CI/CD pipelines only, not for local execution
 

@@ -23,7 +23,7 @@ to every @lenne.tech/nuxt-extensions consumer (bugfixes, broad enhancements
 like new composables or SSR fixes, security fixes, type-compat). All
 project-specific behavior stays outside `app/core/` -- use
 `app/composables/`, `app/components/`, `app/middleware/`, or plugin
-overrides. Generally useful changes MUST flow back upstream via
+overrides. Generally useful changes go back upstream via
 `/lt-dev:frontend:contribute-nuxt-extensions-core` -- otherwise they rot
 in one project's vendor tree and re-conflict on every sync.
 

@@ -107,10 +107,10 @@ Nötig: pnpm build in the nest-server clone before your next api run.
 `CLAIM` carries a fourth line naming what releases the claim, so the peer knows when it is free again:
 
 ```
-[CLAIM] svl — taking the pnpm audit finding GHSA-xxxx-yyyy (nuxt transitive).
+[CLAIM] shop — taking the pnpm audit finding GHSA-xxxx-yyyy (nuxt transitive).
 Betrifft: anyone about to run check in this repo; the lockfile will change.
 Nötig: do not fix it separately, and hold lockfile-touching work for now.
-Frei: when I report LANDED or the ticket SVL-123 is merged.
+Frei: when I report LANDED or the ticket ABC-123 is merged.
 ```
 
 `SOLVED` leads with the cause, not the symptom, because the cause is the part that transfers:
@@ -168,7 +168,7 @@ It reads git, file mtimes, and the socket registry. It sends nothing, writes not
 One message, both halves together, because a second round trip costs another prompt at both ends:
 
 ```
-[ORIGIN] svl — reviewing the working tree before /lt-dev:review; 3 paths predate my session.
+[ORIGIN] shop — reviewing the working tree before /lt-dev:review; 3 paths predate my session.
 Betrifft: projects/api/src/server/modules/invoice/invoice.service.ts, invoice.model.ts,
           projects/app/app/pages/invoices.vue
 Nötig: which of these are yours, what were you solving, and what did you rule out?
@@ -205,7 +205,7 @@ An incoming message arrives as `<cross-session-message from="...">`, between too
 1. **Do not abandon the running task.** Finish the current slice, then act. A message is an input, not an interrupt.
 2. Sort it:
    - **Does not affect me** → keep working, and **do not reply**.
-   - **Affects me later** → put it in the todo list, keep working.
+   - **Affects me later** → add it to your work plan, keep working, and handle it before the final report.
    - **Affects me now** (my working tree, build, or branch is wrong because of it) → close the current slice cleanly, then handle it.
 3. **Reply only** to an `ASK` or an `ORIGIN`, to a `CLAIM` you have to contest because you are already mid-fix on it, or when the sender is plainly waiting on you. `LANDED`, `SOLVED`, and `READY` need no answer; acknowledging them costs the sender a prompt for nothing. Copy the `from` attribute as your `to`.
    **An `ORIGIN` is cheap for you and expensive for the sender**, so answer it properly: which of the named paths are yours, what you were solving, what you ruled out, and whether the work is finished or mid-slice. Two of those save the sender an investigation each. If none of the paths are yours, say exactly that in one line — a "not mine" is as useful as a yes, because it moves the sender from asking to reconstructing.
@@ -241,7 +241,7 @@ The ledger is `scripts/peer-ledger.sh`. It stores state per repository under `${
 ```bash
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh" read
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh" claim   "audit:GHSA-xxxx" "lockfile will move"
-bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh" release "audit:GHSA-xxxx" "fixed in SVL-123"
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh" release "audit:GHSA-xxxx" "fixed in ABC-123"
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh" note    "api-tests-parallel" "cause: … fix: …"
 ```
 
@@ -353,9 +353,12 @@ Do not reach for it when a plain foreground command would answer, and never put 
 | `scripts/peer-ledger.sh` | The persistent half: open claims and diagnoses, per repository, outside every project |
 | `scripts/change-provenance.sh` | The attribution half: what this session wrote, what it found, and who is live to explain the difference |
 
-## Related skills
+## Related Skills
 
 - `coordinating-agent-teams` skill. The **other** parallel model: teammates this session spawns and supervises, with a shared task list. Peers are not teammates, nobody leads them, and the coordination rules here do not apply there.
 - `managing-dev-servers` skill. Why parallel dev servers rarely collide, and the `pkill` rule that still bites across sessions.
 - `contributing-to-lt-framework` skill. The base-repo round trip that produces most `LANDED` messages.
 - `running-check-script` skill. Where cross-cutting findings surface.
+- `maintaining-lt-stack` skill. The deliberate one-session-per-repo split of a stack release, coordinated with `CLAIM`, `READY` and `LANDED`.
+- `rebasing-branches` skill. Before rewriting a branch while a peer is live in the repo, and for asking the incoming author what an ambiguous hunk meant.
+- `maintaining-npm-packages` skill. Lockfile and audit work is exclusive per repo; claim a cross-cutting finding there before fixing it.

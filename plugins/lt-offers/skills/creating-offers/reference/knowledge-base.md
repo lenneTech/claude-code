@@ -22,7 +22,9 @@ The knowledge base stores company-wide information used as AI context when creat
 | process | Development process, workflows |
 | legal | Legal information, compliance |
 | technical | Tech stack, architecture |
-| portfolio | Past projects, case studies |
+| portfolio | Past projects, case studies, customer testimonials (or a link to the page that publishes them) |
+
+The knowledge base is the account's company profile: offers are written from it, so an entry that is missing or outdated shows up in every offer. When an offer needs a fact the knowledge base lacks (a service, a team member, a reference), ask the user and offer to store the answer as an entry.
 
 ## Best Practices
 - Use **priority** to ensure the most important information is always included

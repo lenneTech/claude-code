@@ -2,8 +2,7 @@
 name: nuxt-extensions-core-updater
 description: Autonomous agent for adopting upstream @lenne.tech/nuxt-extensions changes into projects that vendor the frontend module directly into their source tree (app/core/ instead of consuming via npm). Analyzes the delta between the vendored baseline and a chosen upstream target, detects conflicts with local patches, and either adopts approved changes or prepares a human-review document. No flatten-fix needed. NOT for npm-based nuxt-extensions updates.
 model: inherit
-effort: high
-tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, TodoWrite
+tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch
 skills: nuxt-extensions-core-vendoring, developing-lt-frontend
 memory: project
 maxTurns: 100
@@ -59,7 +58,7 @@ Detect mode from initial prompt arguments:
    structure is already flat. Direct file mapping between upstream and vendor.
 4. **Local patches survive:** anything in `VENDOR.md`'s local changes log
    is preserved through the merge unless the user explicitly discards.
-5. **Progress visibility:** TodoWrite throughout execution.
+5. **Progress visibility:** work through the phases in order; the final report states each phase's outcome.
 6. **Dependency parity:** after adopting core changes, raise the project's npm
    packages to at least the versions the upstream target declares, then
    (unless `--no-maintain`) refresh the rest via `/lt-dev:maintenance:maintain`.
@@ -70,20 +69,20 @@ Detect mode from initial prompt arguments:
 
 ## Progress Tracking
 
-Use TodoWrite at the start:
+Work through these phases in order; the final report states each phase's outcome:
 
 ```
-[pending] Phase 1: Verify project is vendored (VENDOR.md exists)
-[pending] Phase 2: Determine target version
-[pending] Phase 3: Fetch upstream baseline + target in /tmp
-[pending] Phase 4: Generate diffs (upstream-delta, local-changes)
-[pending] Phase 5: Categorize hunks (clean pick / conflict / not applicable)
-[pending] Phase 6: Present curation proposal for human review
-[pending] Phase 7: Apply approved changes
-[pending] Phase 7b: Sync npm dependencies to the upstream baseline (+ maintenance)
-[pending] Phase 8: Run nuxt build / lint
-[pending] Phase 9: Sync upstream CLAUDE.md into project
-[pending] Phase 10: Update VENDOR.md + commit
+Phase 1: Verify project is vendored (VENDOR.md exists)
+Phase 2: Determine target version
+Phase 3: Fetch upstream baseline + target in /tmp
+Phase 4: Generate diffs (upstream-delta, local-changes)
+Phase 5: Categorize hunks (clean pick / conflict / not applicable)
+Phase 6: Present curation proposal for human review
+Phase 7: Apply approved changes
+Phase 7b: Sync npm dependencies to the upstream baseline (+ maintenance)
+Phase 8: Run nuxt build / lint
+Phase 9: Sync upstream CLAUDE.md into project
+Phase 10: Update VENDOR.md + commit
 ```
 
 ---
@@ -136,7 +135,7 @@ git -C /tmp/nuxt-extensions-baseline checkout $BASELINE_SHA
 git clone --depth 1 --branch $TARGET_VERSION https://github.com/lenneTech/nuxt-extensions /tmp/nuxt-extensions-target
 ```
 
-**IMPORTANT -- Tag format:** nuxt-extensions tags have **no** `v` prefix. Use
+**Tag format:** nuxt-extensions tags have **no** `v` prefix. Use
 `--branch 1.5.3`, not `--branch v1.5.3`.
 
 ### Phase 4: Generate Diffs
@@ -384,6 +383,8 @@ Update `VENDOR.md`:
    the type gate is clean.
 
 ## Report Output
+
+Your final message is the report the caller acts on. Write it when every phase is done or a named blocker stops you. Interim status goes in the same message as your next tool call, so the work keeps moving.
 
 At end of run, produce a report:
 

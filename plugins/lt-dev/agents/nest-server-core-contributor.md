@@ -2,8 +2,7 @@
 name: nest-server-core-contributor
 description: Autonomous agent for identifying substantial local changes in a vendored nest-server core (projects/api/src/core/) and preparing them as Upstream Pull Requests to the @lenne.tech/nest-server repository. Filters cosmetic commits (formatting, linting), categorizes substantial commits as upstream-candidate or project-specific, cherry-picks candidates into a fresh upstream clone branch, and prepares PR drafts for human review. Never auto-pushes — every PR requires human review before GitHub submission.
 model: inherit
-effort: high
-tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, TodoWrite
+tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch
 skills: nest-server-core-vendoring, generating-nest-servers
 memory: project
 maxTurns: 100
@@ -72,15 +71,17 @@ Use this agent when:
 
 ## Progress Tracking
 
+Work through these phases in order; the final report states each phase's outcome:
+
 ```
-[pending] Phase 1: Verify project is vendored + read VENDOR.md baseline
-[pending] Phase 2: Collect local commits since baseline
-[pending] Phase 3: Filter cosmetic commits
-[pending] Phase 4: Categorize substantial commits
-[pending] Phase 5: Check upstream for duplicates
-[pending] Phase 6: Clone upstream + prepare candidate branches
-[pending] Phase 7: Generate PR drafts
-[pending] Phase 8: Present summary for human review
+Phase 1: Verify project is vendored + read VENDOR.md baseline
+Phase 2: Collect local commits since baseline
+Phase 3: Filter cosmetic commits
+Phase 4: Categorize substantial commits
+Phase 5: Check upstream for duplicates
+Phase 6: Clone upstream + prepare candidate branches
+Phase 7: Generate PR drafts
+Phase 8: Present summary for human review
 ```
 
 ---
@@ -160,7 +161,7 @@ For each remaining commit, run heuristics:
 **Project-specific indicators (reject):**
 
 - Commit touches only `projects/api/src/server/`, not `src/core/`
-- Diff contains customer-name strings (e.g. `Volksbank`, `imo`, `VB`)
+- Diff contains customer-name strings (a customer's company name, product name or abbreviation)
 - Diff adds business-rule enums, status values, or custom field definitions
 - Diff adds a hardcoded URL, API key, or integration endpoint
 - Changes to `VENDOR.md` itself (meta, not framework)
@@ -260,6 +261,8 @@ Save to `/tmp/nest-server-head/.git/PR-DRAFTS/<branch-name>.md`.
 
 ### Phase 8: Present Summary for Human Review
 
+Your final message is the report the caller acts on. Write it when every phase is done or a named blocker stops you. Interim status goes in the same message as your next tool call, so the work keeps moving.
+
 ```markdown
 # Contributor Run Complete
 
@@ -289,7 +292,7 @@ Next steps:
 
 ## Project-Specific (Not Contributed)
 These stay in the vendor as documented in VENDOR.md:
-- `a4714b4` — imo SEC-005 Buyer IDOR restriction (customer-specific access rules)
+- `a4714b4` — SEC-005 Buyer IDOR restriction (customer-specific access rules)
 - ...
 ```
 
@@ -313,7 +316,7 @@ status.
 
 3. **Already-upstream detection:** False negative is possible if upstream
    has refactored the same functionality differently. Show the human the
-   exact file + line range when in doubt.
+   exact file + line range when the match is uncertain.
 
 4. **Multi-file changes:** If a local commit touches 5 different core files
    with one unified intent, prepare a **single** upstream branch with all 5
@@ -325,5 +328,5 @@ status.
 - Open PRs automatically (always human-reviewed)
 - Modify the `main`/`master` branch of the upstream clone
 - Include `VENDOR.md` changes in any upstream PR
-- Include project-specific commit trailers (e.g. `Volksbank:` prefixes)
+- Include project-specific commit trailers (customer-name commit prefixes such as `<Customer>:`)
   in the upstream PR body

@@ -42,9 +42,9 @@ Guide the user through creating a well-structured user story that can be used as
 
 **Workflow:** Create story → Save to Linear → `/lt-dev:resolve-ticket` to implement
 
-**IMPORTANT: The generated story and all user-facing communication must ALWAYS be in German, regardless of the user's input language. Exceptions: Properties (camelCase), code snippets, and technical terms remain in English.**
+The generated story and all user-facing communication are in German, whatever the user's input language. Exceptions: Properties (camelCase), code snippets, and technical terms stay in English.
 
-**ABORT HANDLING: If the user wants to cancel at any point (e.g., "abbrechen", "stop", "cancel", "nicht mehr"), acknowledge it (in German): "Okay, Story-Erstellung abgebrochen." and stop the process.**
+**Abort handling:** If the user wants to cancel at any point (e.g., "abbrechen", "stop", "cancel", "nicht mehr"), acknowledge it in German ("Okay, Story-Erstellung abgebrochen.") and stop the process.
 
 ---
 
@@ -208,7 +208,7 @@ When the user doesn't provide information for certain areas, **don't just leave 
 - Suggest: "Der Nutzen könnte sein: **damit Besucher schnell Antworten auf häufige Fragen finden**. Soll ich das so übernehmen?"
 
 **For missing Properties:**
-- **Do NOT automatically suggest properties** if the user hasn't specified any
+- **Suggest properties only when the user has specified some**
 - Only include properties in the story if the user explicitly provides them
 - If the user mentions data fields vaguely, ask for clarification: "Du hast [Datenfeld] erwähnt. Möchtest du die Properties genauer spezifizieren, oder soll das der Implementierung überlassen werden?"
 - If the user declines to specify properties, omit the Properties section entirely - the implementation agent will determine appropriate properties based on the requirements
@@ -344,7 +344,7 @@ Once the user approves the story, use AskUserQuestion with these 4 options:
 
 - **Option 1 (Neues Linear Ticket):** Proceed to Step 6, Option 1
 - **Option 2 (Bestehendes Ticket erweitern):**
-  - **MUST ask for Ticket-ID first:** "Bitte gib die Ticket-ID des bestehenden Linear Tickets an (z.B. `DEV-123` oder nur `123`):"
+  - **Ask for the Ticket-ID first:** "Bitte gib die Ticket-ID des bestehenden Linear Tickets an (z.B. `DEV-123` oder nur `123`):"
   - Wait for user response with the ID
   - Then proceed to Step 6, Option 2 with the provided ID
 - **Option 3 (Markdown-Datei):** Proceed to Step 6, Option 3
@@ -426,7 +426,7 @@ Once the user approves the story, use AskUserQuestion with these 4 options:
 4. Update the ticket via Linear MCP:
    - **Title:** Update to the optimized story title (ask user: "Soll der Titel auf '[neuer Titel]' aktualisiert werden?")
    - **Description:** Replace or append the story in markdown format based on user choice
-   - **IMPORTANT:** Do NOT include the title as a heading in the description to avoid duplication - the description should start directly with the story statement ("**Story:** Als...")
+   - Start the description directly with the story statement ("**Story:** Als..."), without the title as a heading, so the title is not duplicated
    - If appending, add a separator: `\n\n---\n\n[story content without title heading]`
 
 5. Report the updated ticket URL to the user (in German): "Ticket [ID] wurde erfolgreich aktualisiert: [URL]"
@@ -484,7 +484,7 @@ When the user chooses direct implementation or answers "yes" to TDD after Option
 
 Inform the user: "Fullstack-Story erkannt - schreibe Backend- und Frontend-Tests parallel."
 
-Create an agent team with 2 teammates using Sonnet:
+Create an agent team with 2 teammates:
 
 **Teammate "backend-tests":**
 Write API tests for this story in `projects/api/tests/stories/`.
@@ -509,7 +509,7 @@ Story context:
 
 Lead coordinates and validates contract consistency between backend and frontend tests.
 
-**CRITICAL:** Only test writing is parallel. After team completes and tests are written:
+Only test writing is parallel. After the team completes and the tests are written:
 
 1. Clean up team
 2. Confirm (in German): "Tests geschrieben. Starte sequentielle Implementierung..."
@@ -580,7 +580,7 @@ Und alle anderen FAQs werden entsprechend neu positioniert
 4. **Validate completeness** - INVEST check, coherence, emotional value, and TDD readiness
 5. **Generate and present story** - Format according to template (in German!) and present for discussion/optimization
 6. **Ask for output** - 4 options: Neues Linear Ticket, Bestehendes Ticket erweitern, Markdown, Direkt umsetzen
-   - If "Bestehendes Ticket erweitern": **MUST ask for Ticket-ID separately**
+   - If "Bestehendes Ticket erweitern": ask for the Ticket-ID separately
    - **Shortcut:** "Other" with Ticket-ID (e.g., `123` → `DEV-123`) skips extra question
 7. **Execute choice and offer TDD** - Create output in selected format, then offer TDD implementation if not already chosen
 
@@ -589,5 +589,3 @@ Und alle anderen FAQs werden entsprechend neu positioniert
 - Always validate paths/teams before executing
 - Handle errors gracefully with German error messages
 - "Nichts davon" is a valid choice - story was already displayed
-
-**Remember:** A well-written user story leads to better tests and cleaner implementation!

@@ -75,7 +75,7 @@ Returns variables in format: `{'category/name': value}`
 
 ## Step 3: Identify Global Components from Figma
 
-**CRITICAL: Only use components found in the current Figma design!**
+Use only components found in the current Figma design.
 
 ### 3.1: Scan All Screens
 
@@ -131,15 +131,15 @@ Welche Elemente sollen ins Layout aufgenommen werden?
 
 Use AskUserQuestion for confirmation.
 
-### 3.5: NO Assumptions!
+### 3.5: No Assumptions
 
-**FORBIDDEN:**
+**Not allowed:**
 - Components not in the Figma design
 - Fallback to "standard layouts" (Header, Footer, Sidebar)
 - Template elements from other projects
 - Assumptions about navigation/layout
 
-If nothing found → `{ "globalComponents": [], "layouts": [] }` — this is CORRECT.
+If nothing found → `{ "globalComponents": [], "layouts": [] }` — this is correct.
 
 ## Step 4: Present Findings to User
 
@@ -280,7 +280,7 @@ Update the main CSS file (typically `assets/css/main.css` or `app.css`):
 ```
 
 **Naming rules:**
-- NO prefixes like `figma-` or `custom-`
+- No prefixes like `figma-` or `custom-`
 - Use standard Tailwind/NuxtUI names: `primary`, `secondary`, `success`, etc.
 - Generate full color scales (50-950) for all semantic colors
 - Map Figma values to nearest Tailwind scale step
@@ -461,7 +461,7 @@ Naechste Schritte:
 - **Standard naming** — use Tailwind/NuxtUI standard names, not custom prefixes
 - **Color scales** — generate full 50-950 scales for all semantic colors
 - **Confirm with user** — always get confirmation for semantic color assignments
-- **Only from Figma** — NEVER invent components or layouts not in the design
+- **Only from Figma** — never invent components or layouts not in the design
 - **Semantic colors** — enforce `text-primary`, `bg-error` etc., never hardcoded hex
 - **Accessibility** — `aria-label` on icon-only buttons, semantic HTML in layouts
 - **UI labels in the project's language** — button text, modal titles, placeholder text must match the project's UI language; detect it (project `CLAUDE.md` / existing `*.vue` text) and never assume German

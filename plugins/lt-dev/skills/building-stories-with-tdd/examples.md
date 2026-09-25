@@ -44,7 +44,7 @@ Acceptance Criteria:
 - Can users review a product multiple times? (Assuming NO)
 - What validation for rating? (Assuming 1-5 integer)
 
-** Verification of existing API (CRITICAL - Do this BEFORE writing tests!):**
+**Verification of existing API (before writing tests):**
 
 1. **Check Product endpoints:**
    ```

@@ -2,33 +2,47 @@
 # Skip in non-interactive headless mode (claude -p)
 . "${0%/*}/_headless-skip.sh"
 
-# Detects if the current directory contains an analyzable software project and the user prompt
-# mentions showroom-related keywords, injecting skill context accordingly.
+# Injects analyzing-projects / creating-showcases context when the user asks for a
+# showroom entry or a showcase of the current software project.
+#
+# Showroom or showcase intent is required: the prompt names the showroom or a showcase
+# (or SHOWCASE.md, a portfolio entry, showroom.lenne.tech), or starts with a
+# /lt-showroom: command. Words such as "demo", "screenshot", "analysis", "presentation"
+# or "tech stack" alone are ordinary dev vocabulary ("take a screenshot of the failing
+# page", "demo data for the test") and fired this hook in every project with a
+# package.json, so they no longer count on their own.
 
-INPUT=$(cat)
+# Sets PROMPT from the stdin payload (jq, or an escape-aware fallback without it)
+. "${0%/*}/_read-prompt.sh"
+# Background task / subagent notifications arrive as prompts too: skip them
+. "${0%/*}/_skip-task-notification.sh"
+# Defines strip_self_refs (removes lt-offers / lt-showroom / plugins/lt-* mentions)
+. "${0%/*}/_strip-self-refs.sh"
 
-# ── Extract prompt and cwd with jq fallback ──
-if command -v jq >/dev/null 2>&1; then
-  PROMPT=$(echo "$INPUT" | jq -r '.prompt // .user_prompt // empty' 2>/dev/null)
-  CWD=$(echo "$INPUT" | jq -r '.cwd // empty' 2>/dev/null)
-else
-  PROMPT=$(echo "$INPUT" | grep -o '"prompt"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"prompt"[[:space:]]*:[[:space:]]*"//;s/"$//')
-  CWD=$(echo "$INPUT" | grep -o '"cwd"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"cwd"[[:space:]]*:[[:space:]]*"//;s/"$//')
-fi
-
-# Fallback to CLAUDE_USER_PROMPT env var and PWD
-PROMPT="${PROMPT:-${CLAUDE_USER_PROMPT:-}}"
-# Prefer the stable project root over the hook payload's cwd: the agent's working
-# directory changes mid-session (see the CwdChanged event), so after a `cd projects/api`
-# a check on "$CWD/projects/api/..." would look for projects/api/projects/api/... and
-# miss. CLAUDE_PROJECT_DIR stays put; .cwd and PWD remain the fallbacks.
-CWD="${CLAUDE_PROJECT_DIR:-${CWD:-$PWD}}"
+# The stable project root: the agent's working directory changes mid-session (see the
+# CwdChanged event), so after a `cd projects/api` the manifest checks below would run
+# in a subfolder. CLAUDE_PROJECT_DIR stays put; the handler's own working directory
+# (the payload's cwd) is the fallback.
+CWD="${CLAUDE_PROJECT_DIR:-$PWD}"
 
 CONTEXT=""
 
-# Check for showroom-related keywords in the prompt
-PROMPT_LOWER=$(echo "$PROMPT" | tr '[:upper:]' '[:lower:]')
-if echo "$PROMPT_LOWER" | grep -qE '(showroom|showcase|portfolio|analys|screenshot|demo|präsentation|presentation|feature.?overview|tech.?stack|project.?page)'; then
+RAW_LOWER=$(printf '%s' "$PROMPT" | tr '[:upper:]' '[:lower:]')
+# Match on the prompt with the marketplace's own plugin names removed ("lt-showroom"
+# contains "showroom"), so only what the user actually wrote counts.
+PROMPT_LOWER=$(strip_self_refs "$RAW_LOWER")
+
+INTENT=0
+# The plugin's own slash commands. Checked on the raw prompt because strip_self_refs
+# removes "lt-showroom"; only an invocation at the start counts, not a mention.
+case "${RAW_LOWER#"${RAW_LOWER%%[![:space:]]*}"}" in
+  /lt-showroom:*) INTENT=1 ;;
+esac
+if [ "$INTENT" -eq 0 ] && printf '%s\n' "$PROMPT_LOWER" | grep -qE 'showroom|showcase|portfolio[- ]?(entry|eintrag|page|seite)'; then
+  INTENT=1
+fi
+
+if [ "$INTENT" -eq 1 ]; then
 
   # Check if the current directory is a recognizable software project
   IS_PROJECT=0

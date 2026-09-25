@@ -3,6 +3,8 @@
 . "${0%/*}/_headless-skip.sh"
 # Sets PROMPT from the hook payload on stdin
 . "${0%/*}/_read-prompt.sh"
+# Background task / subagent notifications arrive as prompts too: skip them
+. "${0%/*}/_skip-task-notification.sh"
 
 # Detect lenne.tech CLI and suggest using-lt-cli skill
 

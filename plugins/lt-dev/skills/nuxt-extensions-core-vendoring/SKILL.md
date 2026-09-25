@@ -11,7 +11,7 @@ description: 'Knowledge base for projects that vendored the @lenne.tech/nuxt-ext
 - **`nuxt.config.ts` module registration is NOT auto-handled on sync** — When a new composable or module file is added upstream, the sync agent copies the file but does NOT register it in `nuxt.config.ts`. You must manually add the module reference after a sync, otherwise Nuxt does not expose the new functionality.
 - **Auto-imports work for composables + components but NOT for types** — Files in `app/core/` are auto-imported by Nuxt for composables and components, but explicitly imported types (e.g. `import type { Foo } from '@lenne.tech/nuxt-extensions'`) need their paths rewritten to relative references after vendoring. This rewrite is not fully automated.
 - **Local patches in `app/core/` are invisible to future syncs** — Same gotcha as nest-server-core-vendoring: the updater can't infer your intent. Document intentional local deviations in `app/core/LOCAL-PATCHES.md`.
-- **1.7.0 sync brings the AI module** — The 1.7.0 baseline adds `src/runtime/composables/use-lt-ai*.ts`, `src/runtime/lib/ai.ts`, and `src/runtime/types/ai.ts` (~700 LoC). After sync, projects MUST add an `ltExtensions.ai: { enabled, basePath }` section to `nuxt.config.ts` — auto-imports do not work until the option is registered. Default option in upstream is `enabled: true`, so projects that never want AI should set `enabled: false` after the sync.
+- **1.7.0 sync brings the AI module** — The 1.7.0 baseline adds `src/runtime/composables/use-lt-ai*.ts`, `src/runtime/lib/ai.ts`, and `src/runtime/types/ai.ts` (~700 LoC). After sync, projects must add an `ltExtensions.ai: { enabled, basePath }` section to `nuxt.config.ts` — auto-imports do not work until the option is registered. Default option in upstream is `enabled: true`, so projects that never want AI should set `enabled: false` after the sync.
 - **1.7.0 pre-release-only breaking renames** — Only relevant for projects that vendored a 1.7.0 PRE-release into `app/core/`. Rename map (apply via project-wide replace after sync): `useLtAiSnippets` → `useLtAiPrompts`, `LtAiPromptSnippet` → `LtAiPrompt`, `LtAiPromptSnippetInput` → `LtAiPromptInput`, `LtAiPromptTemplate` → `LtAiSlot`, `LtAiPromptTemplateInput` → `LtAiSlotInput`, `UseLtAiSnippetsReturn` → `UseLtAiPromptsReturn`. Additionally: the EXECUTION payload type for `useLtAi.prompt()` was renamed `LtAiPromptInput` → `LtAiPromptRunInput` (CRUD input keeps the conventional `LtAiPromptInput` name). Projects that synced a 1.6.x or earlier baseline are unaffected.
 
 This skill provides **knowledge and resources** for lenne.tech projects that have
@@ -94,7 +94,7 @@ invitation to fork. The policy:
    via project-level composables, components, middleware, or plugin
    overrides. Project-specific business rules, customer branding, or
    proprietary integrations must never live in the vendored core.
-4. **Generally-useful changes MUST be submitted as an upstream PR** to
+4. **Generally-useful changes go upstream as a PR** to
    `github.com/lenneTech/nuxt-extensions`. Use
    `/lt-dev:frontend:contribute-nuxt-extensions-core` to prepare the PR.
    Do not let useful fixes rot in a single project's vendor tree -- they
@@ -232,7 +232,7 @@ When a new upstream version is available, the `nuxt-extensions-core-updater` age
    section-level merge preserving project-specific content
 11. Updates `VENDOR.md` with new baseline + sync history entry
 
-**IMPORTANT -- Tag format:** nuxt-extensions tags have **no** `v` prefix. Use
+**Tag format:** nuxt-extensions tags have **no** `v` prefix. Use
 `--branch 1.5.3`, not `--branch v1.5.3`.
 
 ## Upstream PR Workflow (contribution)

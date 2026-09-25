@@ -1,7 +1,7 @@
 ---
 description: Implement Figma designs as Nuxt 4 pages using project-local config
 argument-hint: "[section-name-or-node-id] [--screen name] [--team] [--globals]"
-allowed-tools: Bash(pnpm run:*), Bash(npm run:*), Bash(yarn run:*), Bash(npx:*), Bash(git:*), Bash(ls:*), Bash(cat:*), Bash(find:*), Read, Write, Edit, Glob, Grep, AskUserQuestion, Agent, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_screenshot, mcp__plugin_figma_figma__get_variable_defs, mcp__plugin_lt-dev_nuxt-ui-remote__list-components, mcp__plugin_lt-dev_nuxt-ui-remote__get-component, mcp__plugin_lt-dev_nuxt-ui-remote__get-component-metadata, mcp__plugin_lt-dev_nuxt-ui-remote__search-components-by-category, mcp__plugin_lt-dev_nuxt-ui-remote__list-composables
+allowed-tools: Bash(pnpm run:*), Bash(npm run:*), Bash(yarn run:*), Bash(npx:*), Bash(git:*), Bash(ls:*), Bash(cat:*), Bash(find:*), Read, Write, Edit, Glob, Grep, AskUserQuestion, Agent, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_screenshot, mcp__plugin_figma_figma__get_variable_defs, mcp__plugin_lt-dev_nuxt-ui-remote__search-components, mcp__plugin_lt-dev_nuxt-ui-remote__get-component, mcp__plugin_lt-dev_nuxt-ui-remote__get-component-metadata, mcp__plugin_lt-dev_nuxt-ui-remote__search-composables, mcp__plugin_lt-dev_nuxt-ui-remote__list-examples, mcp__plugin_lt-dev_nuxt-ui-remote__get-example
 disable-model-invocation: true
 ---
 
@@ -126,7 +126,7 @@ When a frame shows a modal (recognizable by overlay/backdrop):
 
 ## Step 1.7: Validate Layouts Against Current Figma
 
-**CRITICAL: Validate layouts and globalComponents against current Figma!**
+Validate layouts and globalComponents against the current Figma file.
 
 For each entry in `layouts[]` and `globalComponents[]`:
 
@@ -184,13 +184,13 @@ For each selected screen:
 1. **Screenshot** — `get_screenshot(nodeId: "<screen-node-id>")` for visual overview
 2. **Metadata** — `get_metadata(nodeId: "<screen-node-id>")` to find child components
 3. **Design Context** — `get_design_context` on specific child components (tables, cards, etc.)
-   - NEVER on the full screen frame (token limit!)
+   - Never on the full screen frame: it exceeds the token limit
    - Target one component type at a time
 4. **Extract** — Pull out columns, data, icons, colors, component types
 5. **NuxtUI MCP** — Query NuxtUI MCP for component props/slots before writing code:
-   - `search-components-by-category("forms")` to find components
-   - `get-component-metadata("UTable")` for props/slots
-   - `get-example("UButton", "with-icon")` for examples
+   - `search-components` with `category: "forms"` (or a `search` term) to find components
+   - `get-component-metadata` with `componentName: "UTable"` for props/slots
+   - `list-examples`, then `get-example` with the exact `exampleName`, for example code
 6. **Generate** — Create Vue page file:
    - Apply color mappings from design system
    - Use semantic colors (`text-primary`, `bg-error`) — never hardcoded hex
@@ -207,11 +207,12 @@ Use when 3+ screens need implementation:
 1. **Lead** extracts all screen data from Figma (screenshots + design context for each)
 2. Spawn `frontend-dev` agents via Agent tool to implement screens in parallel (max 3)
 3. Each agent gets: screenshot data, design context, color/spacing mappings, NuxtUI reference
+   - The agents share the caller's working copy, so each one owns only its screen's files (the page and its screen-specific components). Shared files — layouts, shared components, locale files, `figma-project.json` — stay with the lead, who applies what the agents report they need once all of them are done.
 4. After all screens done, spawn `lt-dev:code-reviewer` for review
 
 ## Step 5.5: Fidelity Validation
 
-**CRITICAL: Validate after every screen implementation!**
+Validate after every screen implementation.
 
 ### Checklist
 
@@ -229,10 +230,10 @@ Fidelity-Check fuer Screen "<screen-name>":
 ### Corrections
 
 - Fix deviations from design
-- NEVER "improve" or "add to" the design
+- Never "improve" or "add to" the design
 - Only remove what's not in the design
 
-### FORBIDDEN
+### Forbidden Additions
 
 ```
 ❌ "Ich fuege noch einen Button hinzu der sinnvoll waere"
@@ -243,7 +244,7 @@ Fidelity-Check fuer Screen "<screen-name>":
 ❌ "Das Icon passt besser als das im Design"
 ```
 
-The design is the ONLY truth. If something is missing, it's missing.
+The design is the only source of truth. If something is missing from it, it stays missing.
 
 ## Step 6: Post-Implementation
 

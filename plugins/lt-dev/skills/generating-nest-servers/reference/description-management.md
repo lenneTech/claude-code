@@ -3,24 +3,24 @@ name: nest-server-generator-description-management
 description: Guidelines for consistent description management across all generated components
 ---
 
-#  CRITICAL: Description Management
+# Description Management
 
 ## Table of Contents
-- [Step 1: ALWAYS Extract Descriptions from User Input](#-step-1-always-extract-descriptions-from-user-input)
-- [Step 2: Format Descriptions Correctly](#-step-2-format-descriptions-correctly)
-- [Step 3: Apply Descriptions EVERYWHERE (Most Critical!)](#-step-3-apply-descriptions-everywhere-most-critical)
-- [Common Mistakes to AVOID](#-common-mistakes-to-avoid)
-- [Verification Checklist](#-verification-checklist)
-- [If You Forget](#-if-you-forget)
+- [Step 1: Extract Descriptions from User Input](#step-1-extract-descriptions-from-user-input)
+- [Step 2: Format Descriptions Correctly](#step-2-format-descriptions-correctly)
+- [Step 3: Apply Descriptions to Every Location](#step-3-apply-descriptions-to-every-location)
+- [Common Mistakes](#common-mistakes)
+- [Verification Checklist](#verification-checklist)
+- [If You Forget](#if-you-forget)
 - [Quick Reference](#quick-reference)
 
-** COMMON MISTAKE:** Descriptions are often applied inconsistently or only partially. You MUST follow this process for EVERY component.
+Follow this process for every component, so each property carries one description, applied completely and identically in every file that declares it.
 
 ---
 
-##  Step 1: ALWAYS Extract Descriptions from User Input
+## Step 1: Extract Descriptions from User Input
 
-**BEFORE generating ANY code, scan the user's specification for description hints:**
+**Before generating any code, scan the user's specification for description hints:**
 
 1. **Look for comments after `//`**:
    ```
@@ -30,12 +30,12 @@ description: Guidelines for consistent description management across all generat
    - stock?: number // Current stock level
    ```
 
-2. **Extract ALL comments** and store them for each property
+2. **Extract all comments** and store them for each property
 3. **Identify language** (English or German)
 
 ---
 
-##  Step 2: Format Descriptions Correctly
+## Step 2: Format Descriptions Correctly
 
 **Rule**: `"ENGLISH_DESCRIPTION (DEUTSCHE_BESCHREIBUNG)"`
 
@@ -49,20 +49,20 @@ description: Guidelines for consistent description management across all generat
 | `// Postleizahl` (typo) | German | `'Postal code (Postleitzahl)'` |
 | (no comment) | - | Create meaningful English description |
 
-###  CRITICAL - Preserving Original Text
+### Preserving Original Text
 
-**1. Fix spelling errors ONLY:**
+**1. Fix spelling errors only:**
 -  Correct typos: `Postleizahl` -> `Postleitzahl` (missing 't')
 -  Fix character errors: `Starße` -> `Straße` (wrong character)
 -  Correct English typos: `Prodcut name` -> `Product name`
 
-**2. DO NOT change the wording:**
--  NEVER rephrase: `Straße` -> `Straßenname` (NO!)
--  NEVER expand: `Produkt` -> `Produktbezeichnung` (NO!)
--  NEVER improve: `Name` -> `Full name` (NO!)
--  NEVER translate differently: `Name` -> `Title` (NO!)
+**2. Keep the wording unchanged:**
+-  No rephrasing: `Straße` -> `Straßenname`
+-  No expanding: `Produkt` -> `Produktbezeichnung`
+-  No improving: `Name` -> `Full name`
+-  No different translation: `Name` -> `Title`
 
-**3. Why this is critical:**
+**3. Why:**
 - User comments may be **predefined terms** from requirements
 - External systems may **reference these exact terms**
 - Changing wording breaks **external integrations**
@@ -86,9 +86,9 @@ description: Guidelines for consistent description management across all generat
 
 ---
 
-##  Step 3: Apply Descriptions EVERYWHERE (Most Critical!)
+## Step 3: Apply Descriptions to Every Location
 
-** YOU MUST apply the SAME description to ALL of these locations:**
+**Apply the same description to each of these locations:**
 
 ### For Module Properties
 
@@ -142,12 +142,12 @@ export class Address { ... }
 export class AddressInput { ... }
 
 @ObjectType({ description: 'Product entity (Produkt-Entität)' })
-export class Product extends CoreModel { ... }
+export class Product extends PersistenceModel { ... }
 ```
 
 ---
 
-##  Common Mistakes to AVOID
+## Common Mistakes
 
 1.  **Partial application**: Descriptions only in Models, not in Inputs
 2.  **Inconsistent format**: German-only in some places, English-only in others
@@ -159,9 +159,9 @@ export class Product extends CoreModel { ... }
 
 ---
 
-##  Verification Checklist
+## Verification Checklist
 
-After generating code, ALWAYS verify:
+After generating code, verify:
 
 - [ ] All user comments/descriptions extracted from specification
 - [ ] All descriptions follow format: `"ENGLISH (DEUTSCH)"` or `"ENGLISH"`
@@ -177,16 +177,16 @@ After generating code, ALWAYS verify:
 
 ---
 
-##  If You Forget
+## If You Forget
 
 **If you generate code and realize descriptions are missing or inconsistent:**
 
-1. **STOP** - Don't continue with other phases
-2. **Go back** and add/fix ALL descriptions
+1. **Pause** the other phases
+2. **Go back** and add/fix all descriptions
 3. **Verify** using the checklist above
 4. **Then continue** with remaining phases
 
-**Remember**: Descriptions are NOT optional "nice-to-have" - they are MANDATORY for:
+Descriptions are required, not optional, because they feed:
 - API documentation (Swagger/GraphQL)
 - Code maintainability
 - Developer experience
@@ -219,7 +219,7 @@ For **each class**:
 
 ### Remember
 
-- **Consistency is critical** - Same description everywhere
+- **Consistency** - Same description everywhere
 - **Preserve wording** - Only fix typos, never rephrase
 - **Bilingual format** - Always use "ENGLISH (DEUTSCH)" for German terms
 - **Verification** - Check all files before proceeding

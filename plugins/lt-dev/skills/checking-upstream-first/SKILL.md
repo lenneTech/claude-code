@@ -233,3 +233,11 @@ plugin's removal is triggered automatically when upstream widens it.
 
 The check would have cost minutes at the start. Skipped, it cost a full design, review, and
 rewrite cycle.
+
+## Related Skills
+
+- `maintaining-npm-packages` skill. Routine version bumps and audits; reach for it when the check says "fixed in a newer version" and the upgrade is the whole fix.
+- `contributing-to-lt-framework` skill. When the problem belongs in nest-server or nuxt-extensions, the base-repo round trip that lands the fix there instead of in the project.
+- `nest-server-updating` skill. When the fix is in a newer `@lenne.tech/nest-server` and the project has to follow its migration guides.
+- `managing-agent-memory` skill. Where a finding that will matter again is recorded (see "Record the Finding").
+- `building-stories-with-tdd` skill. Runs this check as a gate before its implementation step wraps a dependency's behaviour.

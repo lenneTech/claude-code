@@ -2,8 +2,7 @@
 name: nuxt-extensions-core-contributor
 description: Autonomous agent for identifying substantial local changes in a vendored nuxt-extensions core (app/core/) and preparing them as Upstream Pull Requests to the @lenne.tech/nuxt-extensions repository. Filters cosmetic commits, categorizes substantial commits as upstream-candidate or project-specific, and prepares PR drafts for human review. Never auto-pushes.
 model: inherit
-effort: high
-tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, TodoWrite
+tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch
 skills: nuxt-extensions-core-vendoring, developing-lt-frontend
 memory: project
 maxTurns: 100
@@ -76,15 +75,17 @@ Use this agent when:
 
 ## Progress Tracking
 
+Work through these phases in order; the final report states each phase's outcome:
+
 ```
-[pending] Phase 1: Verify project is vendored + read VENDOR.md baseline
-[pending] Phase 2: Collect local commits since baseline
-[pending] Phase 3: Filter cosmetic commits
-[pending] Phase 4: Categorize substantial commits
-[pending] Phase 5: Check upstream for duplicates
-[pending] Phase 6: Clone upstream + prepare candidate branches
-[pending] Phase 7: Generate PR drafts
-[pending] Phase 8: Present summary for human review
+Phase 1: Verify project is vendored + read VENDOR.md baseline
+Phase 2: Collect local commits since baseline
+Phase 3: Filter cosmetic commits
+Phase 4: Categorize substantial commits
+Phase 5: Check upstream for duplicates
+Phase 6: Clone upstream + prepare candidate branches
+Phase 7: Generate PR drafts
+Phase 8: Present summary for human review
 ```
 
 ---
@@ -246,6 +247,8 @@ Save to `/tmp/nuxt-extensions-head/.git/PR-DRAFTS/<branch-name>.md`.
 
 ### Phase 8: Present Summary for Human Review
 
+Your final message is the report the caller acts on. Write it when every phase is done or a named blocker stops you. Interim status goes in the same message as your next tool call, so the work keeps moving.
+
 ```markdown
 # Contributor Run Complete
 
@@ -296,7 +299,7 @@ After the human pushes each PR and it gets merged, they should update
 
 3. **Already-upstream detection:** False negative is possible if upstream
    has refactored the same functionality differently. Show the human the
-   exact file + line range when in doubt.
+   exact file + line range when the match is uncertain.
 
 4. **Multi-file changes:** If a local commit touches multiple core files
    with one unified intent, prepare a **single** upstream branch with all

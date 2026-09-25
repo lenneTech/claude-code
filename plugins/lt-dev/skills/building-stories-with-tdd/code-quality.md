@@ -15,7 +15,7 @@ description: Code quality and refactoring guidelines for Test-Driven Development
 - [7. When to Skip Refactoring](#7-when-to-skip-refactoring)
 - [Quick Code Quality Checklist](#quick-code-quality-checklist)
 
-**BEFORE marking the task as complete, perform a code quality review!**
+**Before marking the task as complete, perform a code quality review.**
 
 Once all tests are passing, analyze your implementation for code quality issues.
 
@@ -238,7 +238,7 @@ Code duplication detected?
 
 ## 6. Run Tests After Refactoring
 
-**CRITICAL: After any refactoring:**
+**After any refactoring, run the full suite:**
 
 ```bash
 pnpm test

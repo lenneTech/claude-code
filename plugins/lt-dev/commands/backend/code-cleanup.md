@@ -1,13 +1,13 @@
 ---
 description: Clean up and optimize backend code quality for NestJS / @lenne.tech/nest-server projects
 argument-hint: "[--scope=all|modules|services|models] [--dry-run]"
-allowed-tools: Read, Grep, Glob, Edit, TodoWrite, Bash(npm run build:*), Bash(npm run lint:*), Bash(npm run test:*), Bash(pnpm run build:*), Bash(pnpm run lint:*), Bash(pnpm run test:*), Bash(yarn run build:*), Bash(yarn run lint:*), Bash(yarn run test:*), Bash(git:*), Bash(ls:*), Bash(find:*), Bash(wc:*), Agent
+allowed-tools: Read, Grep, Glob, Edit, Bash(npm run build:*), Bash(npm run lint:*), Bash(npm run test:*), Bash(pnpm run build:*), Bash(pnpm run lint:*), Bash(pnpm run test:*), Bash(yarn run build:*), Bash(yarn run lint:*), Bash(yarn run test:*), Bash(git:*), Bash(ls:*), Bash(find:*), Bash(wc:*), Agent
 disable-model-invocation: true
 ---
 
 # Backend Code Cleanup
 
-**Goal:** Code quality, structure, and conventions — NOT functionality changes. Everything must work exactly as before, just cleaner.
+**Goal:** Code quality, structure, and conventions, not functionality changes. Everything must work exactly as before, just cleaner.
 
 ## When to Use This Command
 
@@ -40,7 +40,7 @@ disable-model-invocation: true
 | Debug artifacts | Remove console.log, commented-out code, TODOs |
 | Formatting | Consistent indentation, blank lines, whitespace |
 
-## What MUST NOT Change
+## What Stays Unchanged
 
 - **Functionality** — every feature works identically after cleanup
 - **API contracts** — same endpoints, same request/response shapes
@@ -69,22 +69,21 @@ The cleanup rules below are `lt-dev:backend-dev`'s own conventions, so spawn tha
 
 It enforces exactly what this command asks for and is the single source of those rules: `@Restricted` / `@Roles` on every endpoint, `securityCheck()` on every model, `CrudService` inheritance, alphabetical properties, bilingual descriptions, zero implicit `any`, and the options-object pattern. Keeping the rules in one place means a convention change is a one-file edit rather than a diff across a command and an agent that then drift apart.
 
-On `--dry-run`, tell the agent to report findings without editing. Either way, the "What MUST NOT Change" list below and the mandatory Verification section stay this command's responsibility: they gate whatever the agent returns.
+On `--dry-run`, tell the agent to report findings without editing. Either way, the "What Stays Unchanged" list above and the mandatory Verification section below stay this command's responsibility: they gate whatever the agent returns.
 
-### 3. Progress Tracking
+### 3. Work Plan
 
-**CRITICAL:** Use TodoWrite at the start and update throughout execution:
+Work through these phases in order; the final report states each phase's outcome:
 
 ```
-Initial TodoWrite:
-[pending] Phase 1: Import optimization
-[pending] Phase 2: Property ordering
-[pending] Phase 3: Description management
-[pending] Phase 4: Code refactoring (DRY)
-[pending] Phase 5: Debug code removal
-[pending] Phase 6: Formatting
-[pending] Phase 7: Build & Lint
-[pending] Verification
+Phase 1: Import optimization
+Phase 2: Property ordering
+Phase 3: Description management
+Phase 4: Code refactoring (DRY)
+Phase 5: Debug code removal
+Phase 6: Formatting
+Phase 7: Build & Lint
+Verification
 ```
 
 ### Phase 1: Import Optimization
@@ -139,13 +138,13 @@ pnpm run lint:fix
 pnpm run build
 ```
 
-Fix all errors and warnings!
+Fix all errors and warnings.
 
 ---
 
-## Verification (MANDATORY — Blocks Completion)
+## Verification (Blocks Completion)
 
-**The cleanup is NOT complete until ALL checks pass.**
+The cleanup is complete only when all checks pass.
 
 ```bash
 # 1. Lint
@@ -164,9 +163,9 @@ pnpm test 2>/dev/null || pnpm run test 2>/dev/null
 | Build | Yes — must succeed | Fix TS errors, re-run |
 | Tests | Yes — ALL must pass | Fix broken tests without changing assertions, re-run |
 
-**CRITICAL:** If tests fail, the cleanup introduced a regression. Fix must restore original behavior, NOT adjust tests.
+If tests fail, the cleanup introduced a regression: the fix restores the original behavior instead of adjusting the tests.
 
-Max 3 fix attempts per check — if still failing, STOP and report errors to user.
+Max 3 fix attempts per check — if still failing, stop and report the errors to the user.
 
 ---
 

@@ -2,8 +2,7 @@
 name: devops-reviewer
 description: Autonomous DevOps code review agent for lenne.tech fullstack projects. Audits Docker configurations (multi-stage builds, non-root containers, health checks, pinned images), docker-compose setups (dev/production separation, volume mounts, port conventions), CI/CD pipelines (stage order, security gates, caching), environment management (.env isolation, secret handling, database naming), and .dockerignore completeness. Produces structured report with severity-classified findings.
 model: inherit
-effort: medium
-tools: Bash, Read, Grep, Glob, TodoWrite
+tools: Bash, Read, Grep, Glob
 skills: generating-nest-servers, using-lt-cli
 memory: project
 ---
@@ -52,18 +51,19 @@ Received from the `/lt-dev:review` command:
 
 ## Progress Tracking
 
+Work through these phases in order; the final report states each phase's outcome:
+
 ```
-Initial TodoWrite:
-[pending] Phase 0: Detect changed infrastructure files
-[pending] Phase 1: Docker — Dockerfiles
-[pending] Phase 2: Docker — Compose files
-[pending] Phase 3: CI/CD pipelines
-[pending] Phase 4: Environment management
-[pending] Phase 5: Permissions & security gates
-[pending] Phase 6: Nuxt 4 SSR build patterns
-[pending] Phase 7: .dockerignore & misc
-[pending] Phase 8: Deprecation scan (non-blocking)
-[pending] Generate report
+Phase 0: Detect changed infrastructure files
+Phase 1: Docker — Dockerfiles
+Phase 2: Docker — Compose files
+Phase 3: CI/CD pipelines
+Phase 4: Environment management
+Phase 5: Permissions & security gates
+Phase 6: Nuxt 4 SSR build patterns
+Phase 7: .dockerignore & misc
+Phase 8: Deprecation scan (non-blocking)
+Generate report
 ```
 
 ---
@@ -151,7 +151,7 @@ For any CI/CD configuration in the diff:
 - [ ] **Cache strategy**: `node_modules` cached between runs
 - [ ] **Pinned images**: CI runner images pinned (not `:latest`)
 - [ ] **Test database**: Uses `app-test` — never `app-dev` or `app-prod`
-- [ ] **E2E DB ↔ API DB alignment** — the `MONGO_URI` / `E2E_MONGO_URI` env vars in the CI job MUST point at the same database the API connects to under that `NODE_ENV` (look up `config.env.ts` → `<env>.config.mongoose.uri`). Mismatch produces `User not found in DB after sign-up` because tests write to one DB and the API authenticates against another. Verify with: `grep -E "E2E_MONGO_URI:|MONGO_URI:" .gitlab-ci.yml .github/workflows/ 2>/dev/null` and cross-check against `projects/api/src/config.env.ts`.
+- [ ] **E2E DB ↔ API DB alignment** — the `MONGO_URI` / `E2E_MONGO_URI` env vars in the CI job point at the same database the API connects to under that `NODE_ENV` (look up `config.env.ts` → `<env>.config.mongoose.uri`). Mismatch produces `User not found in DB after sign-up` because tests write to one DB and the API authenticates against another. Verify with: `grep -E "E2E_MONGO_URI:|MONGO_URI:" .gitlab-ci.yml .github/workflows/ 2>/dev/null` and cross-check against `projects/api/src/config.env.ts`.
 - [ ] **Service-alias hostname (not 127.0.0.1) in CI test config** — Docker-CI services are reachable via their `alias`, not loopback. Hardcoded `127.0.0.1` in test helpers fails with `ECONNREFUSED` in the Job container. Verify with: `grep -rn "127\.0\.0\.1\|localhost" projects/*/tests/e2e/ 2>/dev/null` and require an `process.env.E2E_*` lookup, not a hardcoded fallback that resolves only on dev machines.
 - [ ] **Environment vars**: From CI/CD secrets — not hardcoded in pipeline
 - [ ] **Image tagging**: `git-sha-short` + `branch-name`

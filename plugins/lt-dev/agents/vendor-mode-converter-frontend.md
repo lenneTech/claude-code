@@ -2,8 +2,7 @@
 name: vendor-mode-converter-frontend
 description: Autonomous agent for converting npm-mode frontend projects to vendor mode for @lenne.tech/nuxt-extensions. Detects current version, runs lt CLI conversion, applies changelog changes for the version gap, and validates the result. Fully automated.
 model: inherit
-effort: high
-tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, TodoWrite
+tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch
 skills: nuxt-extensions-core-vendoring, developing-lt-frontend
 memory: project
 maxTurns: 100
@@ -49,29 +48,26 @@ Detect mode from initial prompt arguments:
 2. **Changelog-Driven**: Apply changelog entries in version order for the version gap
 3. **CLI Delegation**: The structural conversion is delegated to `lt frontend convert-mode` -- do NOT reimplement it
 4. **Unlimited Validation Iterations**: Keep fixing until build + lint pass
-5. **Progress Visibility**: Use TodoWrite throughout execution
+5. **Progress Visibility**: Work through the phases in order; the final report states each phase's outcome
 
 ---
 
 ## Progress Tracking
 
-**CRITICAL:** Use TodoWrite at the start and update throughout execution:
+Work through these phases in order; the final report states each phase's outcome:
 
 ```
-Initial TodoWrite (after Phase 1):
-[pending] Detect current npm version and target version
-[pending] Run lt CLI vendor-mode conversion
-[pending] Fetch changelogs/releases for version gap
-[pending] Apply changelog changes (stepwise)
-[pending] Validate: nuxt build
-[pending] Validate: Lint
-[pending] Generate report
+Detect current npm version and target version
+Run lt CLI vendor-mode conversion
+Fetch changelogs/releases for version gap
+Apply changelog changes (stepwise)
+Validate: nuxt build
+Validate: Lint
+Generate report
 ```
 
-**Update rules:**
-- Mark current task as `in_progress` before starting
-- Mark as `completed` immediately when done
-- Add sub-tasks for each changelog step dynamically
+**Plan rules:**
+- Add a sub-step for each changelog step
 
 ---
 
@@ -139,7 +135,7 @@ Initial TodoWrite (after Phase 1):
    gh release view <version> --repo lenneTech/nuxt-extensions
    ```
 
-   **CRITICAL: Filter releases by version range.** Only include releases where
+   **Filter releases by version range.** Only include releases where
    the version is > `SOURCE_VERSION` AND <= `TARGET_VERSION`.
 
 3. **Fallback if no changelog found:**
@@ -163,7 +159,7 @@ Initial TodoWrite (after Phase 1):
    lt frontend convert-mode --to vendor --upstream-branch $TARGET_VERSION --noConfirm
    ```
 
-   **IMPORTANT -- Tag format:** nuxt-extensions tags have **no** `v` prefix
+   **Tag format:** nuxt-extensions tags have **no** `v` prefix
    (e.g., `1.5.3` not `v1.5.3`).
 
    If the tag is not found, try:
@@ -215,13 +211,14 @@ REPEAT until all pass (unlimited iterations):
      -> No: Analyze error, apply fix, repeat
 ```
 
-**CRITICAL RULES:**
-- NEVER skip or disable tests
-- NEVER modify test expectations to make them pass
-- ALWAYS fix the source code
+**Test rules:**
+- Fix the source code until the tests pass
+- Tests stay enabled and unskipped, and their expectations stay unchanged
 - If truly stuck after 10+ attempts on the same error, document and report
 
 ### Phase 6: Report Generation
+
+Your final message is the report the caller acts on. Write it when every phase is done or a named blocker stops you. Interim status goes in the same message as your next tool call, so the work keeps moving.
 
 ```markdown
 ## Frontend Vendor Mode Conversion Report

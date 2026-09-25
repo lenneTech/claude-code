@@ -17,33 +17,81 @@ All Claude Code best practices are cached locally in `.claude/docs-cache/*.md`. 
 
 | File | Content |
 |------|---------|
+| **Authoring elements** | |
 | `skill-building-guide.md` | Anthropic's official complete guide to building skills **(primary reference)** |
-| `plugins.md` | Plugin structure and manifest |
-| `plugins-reference.md` | Plugin JSON schemas and reference |
-| `skills.md` | Skill YAML frontmatter and configuration |
-| `slash-commands.md` | Command frontmatter and usage |
+| `platform-skills-best-practices.md` | Skill authoring best practices and patterns **(primary source)** |
+| `skills.md` | Skill and command frontmatter and configuration (commands are skills; there is no separate command page) |
 | `sub-agents.md` | Agent configuration and tools |
 | `hooks.md` | Hook event types and JSON structure |
 | `mcp.md` | MCP server configuration |
+| `tools-reference.md` | Built-in tool names and behaviour — the authority for `tools` / `allowed-tools` entries, including which task-tracking tools exist on which model |
+| `permissions.md` | Permission rule syntax behind `allowed-tools`, `permissions.json` patterns and hook `if` |
+| `model-config.md` | Model aliases and what they resolve to, effort levels and their per-model defaults, frontmatter `effort`, `ultrathink` |
+| `features-overview.md` | When to use CLAUDE.md, skills, subagents, hooks, MCP and plugins |
+| `commands.md` | Built-in commands and bundled skills — names a plugin command must not shadow |
+| **Prompting the current models** | |
+| `claude-prompting-best-practices.md` | Prompting techniques across current Claude models |
+| `prompting-claude-opus-5-5.md` | Model-specific guidance for the default model: effort calibration, early stops in unattended runs, progress updates |
+| `effort.md` | Effort parameter: levels, per-model recommendations and defaults |
+| **Plugins and marketplace** | |
+| `plugins.md` | Plugins overview and the reading map for the plugin pages |
+| `plugins-components.md` | Skills, hooks, MCP servers, agents and other components inside a plugin, including which agent frontmatter fields plugin agents honor |
+| `plugins-reference.md` | `plugin.json` manifest reference: fields, path forms, `userConfig`, environment variables |
+| `plugins-loading.md` | Where each plugin loads from, which settings decide it, why an update changed nothing |
+| `plugins-create.md` | Building and testing a plugin without a marketplace |
+| `plugins-cli-reference.md` | `claude plugin` commands (`validate`, `eval` …), `/plugin`, `/reload-plugins` |
+| `plugin-evals.md` | `claude plugin eval`: testing skill triggering and plugin behaviour, CI gating |
+| `plugins-measure.md` | A plugin's token cost and usage |
+| `plugin-dependencies.md` | Plugin dependencies and version ranges |
+| `plugin-marketplaces.md` | Creating a marketplace from `marketplace.json` |
+| `plugins-marketplace-reference.md` | `marketplace.json` reference: fields, plugin entries, source objects |
+| `plugins-host-marketplace.md` | Hosting a marketplace, releasing updates and renames without breaking installs |
+| `plugins-publish.md` | Publishing, with a pre-release checklist |
+| `plugin-relevance.md` | Relevance blocks that let Claude Code suggest a plugin |
+| `plugin-hints.md` | The CLI marker that suggests installing a plugin |
+| `discover-plugins.md` | How users install and manage plugins |
+| `plugins-security.md` | What a plugin can do on a user's machine; how users review it |
+| `plugins-troubleshooting.md` | Plugin error messages by stage |
+| **Sessions, parallelism, configuration** | |
+| `agent-teams.md` | Agent Teams coordination, messaging, hooks, and best practices |
+| `cross-session-messaging.md` | Messaging between independent sessions: `ListAgents`/`SendMessage`, inbound controls, `notify_when_idle`, the inbox socket **(primary source)** |
+| `worktrees.md` | Worktree isolation for sessions and subagents: `isolation: worktree`, `worktree.baseRef`, cleanup |
+| `workflows.md` | Dynamic workflows orchestrating many subagents |
+| `common-workflows.md` | Prompt recipes, resuming sessions, Plan Mode, delegating to subagents, piping Claude into scripts |
+| `best-practices.md` | Claude Code best practices |
 | `memory.md` | CLAUDE.md structure and usage |
-| `settings.md` | Settings reference |
-| `settings-reference.md` | Full settings key reference, including `crossSessionInbound`, `isolatePeerMachines`, `dialogExpiry` |
+| `settings.md` | Settings files, scopes and precedence |
+| `settings-reference.md` | Full settings key reference, including `crossSessionInbound`, `isolatePeerMachines`, `dialogExpiry`, `worktree.baseRef` |
 | `cli-reference.md` | CLI options and flags |
 | `env-vars.md` | Environment variables exported to hooks and Bash, including `CLAUDE_CODE_MESSAGING_SOCKET` and `CLAUDE_CODE_MESSAGING_TOKEN` |
-| `common-workflows.md` | Worktrees, parallel sessions, Plan Mode, subagents, PR workflows |
+| `agents.md` | Subagents, agent view, agent teams, dynamic workflows and projects compared |
+| `goal.md` | `/goal` completion conditions for long-running tasks |
+| `headless.md` | `claude -p`: running Claude Code programmatically, the harness for empirical hook and skill tests |
+| `permission-modes.md` | Permission modes and how elements behave under each |
+| `sandboxing.md` | The sandboxed Bash tool that hooks, launchers and MCP servers run under |
+| `large-codebases.md` | Monorepos: nested CLAUDE.md, sparse worktrees, code intelligence |
+| `claude-directory.md` | What Claude Code reads from `.claude/` and `~/.claude/` |
+| `context-window.md` | What loads into context automatically and what each element costs |
+| `prompt-caching.md` | Claude Code's prompt caching: invalidation, effort changes, CLAUDE.md edits |
+| `debug-your-config.md` | Why CLAUDE.md, settings, hooks, MCP servers or skills do not take effect |
+| `hooks-guide.md` | Hook recipes and the `if` field in practice |
+| `output-styles.md` | Output styles, including ones a plugin can ship |
+| `channels-reference.md` | Channel contract for MCP servers that push events into a session |
+| `errors.md` | Runtime error messages with meaning and fix |
+| **Upstream and reference** | |
+| `github-changelog.md` | Claude Code changelog |
 | `github-plugins-readme.md` | Plugin structure, examples (from GitHub) |
 | `github-official-plugins.md` | Official plugin standards, quality guidelines (from GitHub) |
 | `github-skills-readme.md` | Skill specifications, templates (from GitHub) |
-| `github-changelog.md` | Recent changes and updates |
-| `agent-teams.md` | Agent Teams coordination, messaging, hooks, and best practices |
-| `cross-session-messaging.md` | Messaging between independent sessions: `ListAgents`/`SendMessage`, inbound controls, `notify_when_idle`, the inbox socket **(primary source)** |
-| `platform-skills-best-practices.md` | Skill authoring best practices and patterns **(primary source)** |
+| `lt-cli-reference.md` | lt CLI command reference |
 | `owasp-secure-coding-checklist.md` | OWASP Secure Coding Practices (security reference) |
 
-**`settings` and `settings-reference` are two pages, not a duplicate.** The key reference moved to its own page, so a
-settings key looked up only in `settings.md` can come back absent while being fully documented. `crossSessionInbound`,
-`isolatePeerMachines` and `dialogExpiry` are the concrete case: zero hits in `settings.md`, all three in
-`settings-reference.md`. A cache update that reports `settings` shrinking sharply is that split, not a fetch failure.
+**Pages split upstream, not duplicates.** `settings` covers files and precedence while every key lives in
+`settings-reference`, so a key looked up only in `settings.md` can come back absent while being fully documented
+(`crossSessionInbound`, `isolatePeerMachines` and `dialogExpiry` are the concrete case). `common-workflows` likewise
+handed its worktree material to `worktrees`. When a cache update reports a page shrinking sharply, check the live page
+for content that moved to a page of its own, add that page as a source, then accept the smaller page with
+`--source=<name> --accept-shrink`.
 
 ### Cache Management
 
@@ -54,16 +102,18 @@ settings key looked up only in `settings.md` can come back absent while being fu
 
 | Script | Description | Usage |
 |--------|-------------|-------|
-| `update-docs-cache.ts` | Downloads & converts documentation | `bun .claude/scripts/update-docs-cache.ts [--source=<name>]` |
+| `update-docs-cache.ts` | Downloads & converts documentation | `bun .claude/scripts/update-docs-cache.ts [--source=<name>] [--accept-shrink]` |
 | `check-cache-version.ts` | Checks if cache is outdated | `bun .claude/scripts/check-cache-version.ts` |
 | `check-cache-integrity.ts` | Verifies all cache files exist | `bun .claude/scripts/check-cache-integrity.ts [--fix]` |
 | `check-cross-references.ts` | Verifies markdown links and "Rule N" references across `plugins/` resolve | `bun .claude/scripts/check-cross-references.ts [--json] [--plugin=<name>]` |
+| `check-docs-coverage.ts` | Lists code.claude.com pages the cache lacks (minus `coverage.ignore`) | `bun .claude/scripts/check-docs-coverage.ts [--json]` |
+| `changelog-delta.ts` | Prints changelog entries newer than a version | `bun .claude/scripts/changelog-delta.ts --from=<version> [--to=<version>] [--stat]` |
 
 **Source types in `sources.json`:**
-- `md`: Direct Markdown files (downloaded as-is, relative links converted to absolute GitHub URLs)
+- `md`: Markdown served directly — GitHub raw files, and the `.md` form of every code.claude.com and platform.claude.com page (downloaded as-is, relative links made absolute, the llms.txt preamble and YAML frontmatter turned into one `# Title` heading). **Prefer this for Anthropic docs:** the rendered pages lose every heading, the `.md` form keeps them and carries more content.
 - `html`: HTML pages (converted to Markdown via Turndown)
-- `spa`: Single Page Applications (rendered with Playwright, then converted)
-- `pdf`: PDF documents (manually converted to Markdown, not auto-updated by scripts)
+- `spa`: Single Page Applications (rendered with Playwright, then converted) — fallback for sites without a `.md` form
+- `pdf`: PDF documents (converted to Markdown by hand; the script skips them)
 
 **Error handling:** If a source fails to fetch, existing cache is preserved (no data loss)
 
@@ -86,11 +136,16 @@ claude-code/
 │   │   ├── update-docs-cache.ts    # Downloads & converts docs (parallel)
 │   │   ├── check-cache-version.ts  # Checks if cache is outdated
 │   │   ├── check-cache-integrity.ts # Verifies all cache files exist
+│   │   ├── check-docs-coverage.ts  # Lists docs pages the cache lacks
+│   │   ├── changelog-delta.ts      # Changelog entries since a given version
+│   │   ├── check-cross-references.ts # Verifies links across plugins/
 │   │   ├── types.ts                # Shared TypeScript types
-│   │   └── types.d.ts              # Module declarations
+│   │   └── modules.d.ts            # Ambient module declarations (a types.d.ts next to types.ts is ignored by TypeScript)
 │   ├── skills/               # Project-specific skills
 │   │   └── marketplace-optimizer/
-│   │       └── SKILL.md              # Marketplace optimization orchestrator
+│   │       ├── SKILL.md              # Marketplace optimization orchestrator
+│   │       ├── house-rules.md        # Settled decisions, each with its reason
+│   │       └── agent-protocol.md     # Modes, evidence and report format for optimizer agents
 │   ├── agents/               # Project-specific agents (optimizer specialists)
 │   │   ├── optimizer-skills.md       # Skills optimization expert
 │   │   ├── optimizer-commands.md     # Commands optimization expert
@@ -115,6 +170,7 @@ claude-code/
 │       │                     # (e.g. discover-check-scripts.sh) — narrow Bash permission
 │       │                     # pattern: Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*)
 │       ├── skills/           # Context-aware expertise (SKILL.md + references)
+│       ├── evals/            # `claude plugin eval` suite: trigger/ and quality/ cases (results/ is git-ignored)
 │       ├── permissions.json  # Bash permission patterns for auto-approval
 │       ├── permissions.schema.json  # JSON Schema for permissions validation
 │       └── .mcp.json         # MCP server dependencies
@@ -180,12 +236,14 @@ Defines MCP (Model Context Protocol) servers required by the plugin.
 | Server | Type | Used By |
 |--------|------|---------|
 | `chrome-devtools` | stdio | validating-changes-in-browser, developing-lt-frontend, building-stories-with-tdd, managing-dev-servers, vibe commands, frontend-reviewer, ux-reviewer, a11y-reviewer, frontend-dev agent (browser testing & debugging) |
-| `linear` | http | take-ticket, ticket-cycle, resolve-ticket, spec-to-tasks, create-story, create-ticket, create-task, create-bug, review, debug, interview, linear-comment, dev-submit, git:ship, rebasing-branches, branch-rebaser, backend-reviewer, code-reviewer, frontend-reviewer, writing-linear-comments, filing-ai-proposed-tickets (issue tracking, project management, issue documents for long-form detail) |
-| `nuxt-ui-remote` | stdio | developing-lt-frontend, figma-to-code, frontend-dev agent (Nuxt UI component reference) |
+| `linear` | http | take-ticket, ticket-cycle, resolve-ticket, spec-to-tasks, create-story, create-ticket (indirectly, through create-story / create-task / create-bug), create-task, create-bug, review, debug, interview, linear-comment, dev-submit, git:ship, rebasing-branches, branch-rebaser, backend-reviewer, code-reviewer, frontend-reviewer, writing-linear-comments, filing-ai-proposed-tickets (issue tracking, project management, issue documents for long-form detail) |
+| `nuxt-ui-remote` | http | developing-lt-frontend, figma-to-code, frontend-dev agent, the offers schema sync in the internal `lt-projects` plugin (Nuxt UI component reference from the official endpoint `https://ui.nuxt.com/mcp`) |
 
 **Tool naming:** a plugin-bundled server's callable tool name is `mcp__plugin_<plugin>_<server>__<tool>` — e.g. `mcp__plugin_lt-dev_chrome-devtools__take_snapshot`. The unscoped form (`mcp__chrome-devtools__…`) never matches for a bundled server, so an `allowed-tools` entry written that way silently grants nothing.
 
-**Pin stdio server versions.** Servers launched through `scripts/npx-mcp-launcher.sh` name an exact version, never `@latest`: resolving "latest" costs an npm-registry roundtrip on every start (measured 3-22s) against Claude Code's 30s MCP startup timeout, so a slow network becomes a server that never comes up. `chrome-devtools` has its own launcher with a global-binary fast path plus a pinned npx fallback.
+**Pin stdio server versions.** A stdio server started through npx names an exact version, never `@latest`: resolving "latest" costs an npm-registry roundtrip on every start (measured 3-22s) against Claude Code's 30s MCP startup timeout, so a slow network becomes a server that never comes up. It also runs through a launcher script that sources `scripts/lib/ensure-node-path.sh` first, because Claude Code starts MCP servers with a minimal PATH that misses fnm/nvm/volta/asdf/mise. `chrome-devtools` is the model: its launcher has a global-binary fast path plus a pinned npx fallback. `linear` and `nuxt-ui-remote` are HTTP endpoints and need no launcher.
+
+**Prove a server speaks MCP before shipping it.** Run its exact launch command and send an `initialize` plus `tools/list`; every tool name the plugin references must appear in the reply. Observed 2026-09-24: `nuxt-ui-remote` pointed at the npm package `nuxt-ui-mcp@1.0.1`, whose `bin` file has no shebang (the shell ran it, `import` resolved to ImageMagick) and which only serves HTTP on port 3000 — sessions reported `CONNECTION_CLOSED`, while the official endpoint `https://ui.nuxt.com/mcp` answered with the tools the plugin needs.
 
 **Figma runs through the official `figma` plugin, not through lt-dev.** All Figma work — `figma-init`, `figma-research`, `figma-to-code`, and the `--figma=<url>` flag of `take-ticket` / `ticket-cycle` — uses `mcp__plugin_figma_figma__*`, served by that plugin's HTTP endpoint. lt-dev declares no Figma server of its own, so the plugin is a **required companion** for those commands; everything else in lt-dev works without it.
 
@@ -198,7 +256,7 @@ Plugin manifest with metadata. Update `version` before releases.
 |---------|---------|------------|
 | **Skill** | Contextual expertise that enhances capabilities | Auto-detected or manually invoked |
 | **Command** | User-triggered actions via `/command-name` | Explicit user invocation |
-| **Agent** | Autonomous task execution with specific tools | Spawned by Task tool |
+| **Agent** | Autonomous task execution with specific tools | Spawned by the Agent tool |
 | **Hook** | Automated responses to events | Event-triggered (PreToolUse, PostToolUse, UserPromptSubmit, Stop, SubagentStart, SubagentStop, SessionStart, SessionEnd, etc.) |
 | **Script** | Utility functions for hooks or CLI | Called by hooks or directly |
 
@@ -219,6 +277,7 @@ description: Concise description for auto-detection (max 1024 chars). Must expla
 # Optional fields:
 allowed-tools: Read, Grep, Glob  # Restrict available tools
 model: sonnet | opus | haiku     # Override default model
+# effort: omit it unless a measurement shows a gain (house rule 10)
 context: fork                     # Run in isolated sub-agent
 user-invocable: false            # Hide from slash command menu
 ---
@@ -232,7 +291,8 @@ description: What this command does (shown in /help)
 allowed-tools: Bash(git:*), Read  # Restrict available tools
 argument-hint: "[branch-name]"    # MUST quote values with brackets (YAML parses [...] as arrays)
 model: haiku                      # Use specific model
-disable-model-invocation: false   # Prevent SlashCommand tool use
+# effort: omit it — the command then runs at the session level; pin only with an agent-case measurement (house rule 10)
+disable-model-invocation: false   # true blocks model invocation, including through the Skill tool
 ---
 ```
 
@@ -244,14 +304,19 @@ disable-model-invocation: false   # Prevent SlashCommand tool use
 ### Agents
 ```yaml
 ---
-name: agent-name
-description: When and how to use this agent
-model: sonnet | opus | haiku
-tools: Bash, Read, Grep, Glob, Write, Edit, ...
-permissionMode: default | acceptEdits | dontAsk | bypassPermissions
-skills: optional-skill-names
+name: agent-name                 # required
+description: When and how to use this agent   # required
+model: inherit                   # inherit | sonnet | opus | haiku — lt-dev agents inherit the session model
+# effort: omit it — unpinned = session level; pin only with an agent-case measurement and an Effort policy note (house rule 10)
+tools: Bash, Read, Grep, Glob, Write, Edit, ...   # names from tools-reference.md; omit to inherit all
+skills: optional-skill-names     # preloads skill content (listing `Skill` in tools does not)
 ---
 ```
+
+Plugin-shipped agents ignore `permissionMode`, `mcpServers` and `hooks`. Task-tracking tools (`TaskCreate` … /
+`TodoWrite`) are absent on current models unless the user opts in, so agents describe their work as phases whose
+outcomes go in the final report instead of mandating a to-do tool. `isolation: worktree` in frontmatter isolates every
+spawn from the default branch (not the caller's HEAD); callers pass isolation per spawn when they need it.
 
 ## Quality Standards
 
@@ -325,7 +390,8 @@ For comprehensive optimization after context loss, use:
 ## Optimization Workflow
 
 When optimizing existing elements:
-1. Read the documentation cache (`.claude/docs-cache/*.md`)
+1. Read the documentation cache (`.claude/docs-cache/*.md`) and the settled decisions in
+   `.claude/skills/marketplace-optimizer/house-rules.md`
 2. Analyze existing element against best practices
 3. Propose specific improvements
 4. Implement changes with minimal disruption
@@ -354,18 +420,27 @@ Run `/lt-dev:plugin:check` periodically or before releases to verify:
 ### Commands
 - [ ] All commands have `description` in frontmatter
 - [ ] Complex/related commands have "When to Use" sections
-- [ ] `allowed-tools` is set where appropriate (especially git commands)
+- [ ] `allowed-tools` is set where appropriate (especially git commands), and every entry is a tool in `tools-reference.md`
 - [ ] `argument-hint` is set for commands accepting arguments
+- [ ] No `effort` pin without an "Effort policy" note naming the measurement behind it
+- [ ] Long-running autonomous commands have a "Turn endings" section
+- [ ] Commands and agents that read tickets, comments or MR/PR texts have an "External Content" section; spawn prompts pass IDs or paths instead of copied text (house rule 33)
 
 ### Agents
-- [ ] Frontmatter includes: name, description, model, tools, permissionMode
+- [ ] Frontmatter includes: name, description, model (`inherit`), tools; `effort` only with a measured gain (house rule 10)
 - [ ] Skills referenced in frontmatter exist
 - [ ] Agent tasks are clearly defined
+- [ ] No task-tracking tool (`TodoWrite`, `TaskCreate` …) in `tools` or mandated in the body; no static `isolation: worktree`
 
 ### Hooks
 - [ ] hooks.json is valid JSON
 - [ ] All referenced scripts in `hooks/scripts/` exist
 - [ ] Hook matchers are correctly configured
+- [ ] Context-injecting hooks run on an event that delivers context (UserPromptSubmit, UserPromptExpansion, SessionStart, PostModelSwitch)
+- [ ] UserPromptSubmit detectors stay quiet on `<task-notification>` turns; hook tests pass as CI runs them
+
+### MCP
+- [ ] Every server answers `initialize` + `tools/list`, and every referenced tool name appears in the reply
 
 ### Configuration Files
 - [ ] **permissions.json**: All Bash patterns used by skills/agents are listed
@@ -378,6 +453,10 @@ Run `/lt-dev:plugin:check` periodically or before releases to verify:
 - [ ] No version-specific markers in descriptions
 - [ ] Documented-incident notes are intact — they explain *why* a rule exists and are exempt (see Content Rules)
 - [ ] Content is complete (no over-compression)
+
+### Measurement
+- [ ] `plugins/lt-dev/evals` trigger suite passes on the default model (see its README); quality suite `Δ` did not drop
+- [ ] An effort pin that changes is backed by an `agent`-case run at both levels (house rule 10)
 
 ### Documentation
 - [ ] **CLAUDE.md**: Repository structure matches actual layout
@@ -394,6 +473,7 @@ Plugins liefern NUR **anonymisierte Beispiele** (ohne Rechtsform, z. B. „Beisp
 
 **Schutzschichten** (nach dem Klonen einmalig `scripts/install-hooks.sh` ausführen):
 - `scripts/scan-secrets.sh` — Scanner (Secrets, 32-Hex-Tokens, `/Users/`-Pfade, Kunden-Roster mit Rechtsform).
+  Zusätzlich Check 7: Kunden-/Projektnamen **ohne** Rechtsform aus der Sperrliste `public-denylist.txt` im privaten Repo `claude-code-internal` (Geschwister-Checkout oder `LT_PUBLIC_DENYLIST`). Die Liste liegt bewusst nicht hier, sonst veröffentlicht sie genau diese Namen. Neue Kunden dort eintragen.
 - `.githooks/pre-commit` + `.githooks/pre-push` — blocken lokal vor Commit/Push.
 - `.github/workflows/secrets-guard.yml` — CI-Backstop (serverseitig, lokal nicht umgehbar).
 - Empfohlen serverseitig: Branch-Schutz auf `main` (PR-Pflicht + grüner „Secrets & Client-Data Guard"-Check, keine Direct-/Force-Pushes) sowie GitHub **Secret Scanning + Push Protection**.

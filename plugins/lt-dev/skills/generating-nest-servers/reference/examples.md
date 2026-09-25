@@ -218,11 +218,11 @@ Manually update `book.input.ts` and `book-create.input.ts`:
 
 #### Step 5: Update Descriptions
 
-** CRITICAL STEP - Extract descriptions from original specification and apply EVERYWHERE!**
+**Extract descriptions from the original specification and apply them to every file that declares the property.**
 
 **Step 5.1: Extract from specification**
 
-Go back to the original specification and identify ALL comments:
+Go back to the original specification and identify all comments:
 
 ```
 SubObject: Address
@@ -262,7 +262,7 @@ Book.author -> 'Author name'
 Book.publisher -> 'Publisher (Verlag)'  (preserve word "Verlag", don't expand)
 ```
 
-** CRITICAL - Preserve Original Wording:**
+**Preserve Original Wording:**
 
 User comments may be predefined terms or referenced by external systems.
 
@@ -568,9 +568,9 @@ describe('Book Controller (REST)', () => {
 });
 ```
 
-### Execution Todo List Example
+### Execution Plan Example
 
-When processing this specification, create this todo list:
+When processing this specification, work through this plan in order; the final report states each step's outcome:
 
 ```
 1. Create Author SubObject
@@ -703,11 +703,11 @@ Book has borrowedBy?: Member
 6. **Proper descriptions**: "ENGLISH (DEUTSCH)" format throughout
 7. **Complete enum files**: Create all enums immediately after modules
 8. **Comprehensive tests**: Cover all CRUD operations and edge cases
-9. **Quality review before reporting**: ALWAYS perform comprehensive quality review
+9. **Quality review before reporting**: Run the quality review below before the final report
 
 ## Quality Review Workflow Example
 
-**CRITICAL**: Before creating the final report, ALWAYS perform this quality review:
+Before creating the final report, run this quality review:
 
 ```bash
 # Step 1: Identify all changes

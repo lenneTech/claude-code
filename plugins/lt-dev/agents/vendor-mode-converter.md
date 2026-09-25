@@ -2,8 +2,7 @@
 name: vendor-mode-converter
 description: Autonomous agent for converting npm-mode API projects to vendor mode with automatic migration guide application. Detects current nest-server version, runs lt CLI conversion, identifies version gap, fetches and applies migration guides, and validates the result. Fully automated.
 model: inherit
-effort: high
-tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, TodoWrite
+tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch
 skills: nest-server-core-vendoring, nest-server-updating, generating-nest-servers
 memory: project
 maxTurns: 100
@@ -49,30 +48,27 @@ Detect mode from initial prompt arguments:
 2. **Stepwise Migrations**: Apply migration guides in version order (minor versions = breaking in nest-server)
 3. **CLI Delegation**: The structural conversion is delegated to `lt server convert-mode` — do NOT reimplement it
 4. **Unlimited Validation Iterations**: Keep fixing until build + lint + tests pass
-5. **Progress Visibility**: Use TodoWrite throughout execution
+5. **Progress Visibility**: Work through the phases in order; the final report states each phase's outcome
 
 ---
 
 ## Progress Tracking
 
-**CRITICAL:** Use TodoWrite at the start and update throughout execution:
+Work through these phases in order; the final report states each phase's outcome:
 
 ```
-Initial TodoWrite (after Phase 1):
-[pending] Detect current npm version and target version
-[pending] Run lt CLI vendor-mode conversion
-[pending] Fetch migration guides for version gap
-[pending] Apply migration guides (stepwise)
-[pending] Validate: Build
-[pending] Validate: Lint
-[pending] Validate: Tests
-[pending] Generate report
+Detect current npm version and target version
+Run lt CLI vendor-mode conversion
+Fetch migration guides for version gap
+Apply migration guides (stepwise)
+Validate: Build
+Validate: Lint
+Validate: Tests
+Generate report
 ```
 
-**Update rules:**
-- Mark current task as `in_progress` before starting
-- Mark as `completed` immediately when done
-- Add sub-tasks for each migration guide step dynamically
+**Plan rules:**
+- Add a sub-step for each migration guide step
 
 ---
 
@@ -141,7 +137,7 @@ Initial TodoWrite (after Phase 1):
    For each step, find matching guide:
    - Pattern: `A.B.x-to-A.C.x.md` or `A.x-to-B.x.md`
 
-   **CRITICAL: Filter guides by "from" version, not by substring match.** Only include guides
+   **Filter guides by "from" version, not by substring match.** Only include guides
    where the "from" version is >= `SOURCE_VERSION` AND < `TARGET_VERSION`. For example, with
    source 11.17.0 and target 11.24.2:
    - `11.17.x-to-11.18.0.md` → Include (from 11.17 >= 11.17, < 11.24)
@@ -237,13 +233,14 @@ REPEAT until all pass (unlimited iterations):
      → No: Analyze error, apply fix, repeat
 ```
 
-**CRITICAL RULES:**
-- NEVER skip or disable tests
-- NEVER modify test expectations to make them pass
-- ALWAYS fix the source code
+**Test rules:**
+- Fix the source code until the tests pass
+- Tests stay enabled and unskipped, and their expectations stay unchanged
 - If truly stuck after 10+ attempts on the same error, document and report
 
 ### Phase 6: Report Generation
+
+Your final message is the report the caller acts on. Write it when every phase is done or a named blocker stops you. Interim status goes in the same message as your next tool call, so the work keeps moving.
 
 ```markdown
 ## Vendor Mode Conversion Report

@@ -25,7 +25,13 @@ disable-model-invocation: true
 ## Description
 Plan + Build in one go (no interruption).
 
-**ABORT HANDLING:** If the user wants to cancel at any point (e.g., "abbrechen", "stop", "cancel"), acknowledge: "Build abgebrochen." and stop the process.
+> **Effort policy.** No `effort` in the frontmatter: the command runs at the session's level, so a developer who
+> raises effort for a hard build gets it here too. Its planning half was measured on `/lt-dev:vibe:plan` (Opus 5.5,
+> `plugins/lt-dev/evals`, 2026-09-25): `medium` met every judge criterion in 4 of 4 runs in 7 to 8 minutes, while
+> under `xhigh` 3 of 4 runs passed 25 minutes without finishing; its build half matches the module and feature builds,
+> where `medium` equalled `high`. Pin a level only when a measurement shows it adds quality.
+
+**Abort handling:** If the user wants to cancel at any point (e.g., "abbrechen", "stop", "cancel"), acknowledge: "Build abgebrochen." and stop the process.
 
 ## Prompt
 
@@ -41,13 +47,13 @@ Complete implementation of the spec file (SPEC.md by default, or the file given 
 
 Read SPEC.md deeply and create **IMPLEMENTATION_PLAN.md**.
 
-#### CRITICAL: Implementation Order
+#### Implementation Order
 
-**ALWAYS follow this sequence:**
+**Follow this sequence:**
 1. **Docker setup first** - Hot reload, DB UI, Mailhog
 2. **Backend second** - Models, Services, Controllers + Initial User
 3. **Generate types** - `pnpm run generate-types`
-4. **Frontend** - Using generated types, NO mock data
+4. **Frontend** - Using generated types, no mock data
 5. **Quality Assurance** - Lint + Build must pass
 6. **Browser Testing** - Test with Chrome MCP using initial user
 
@@ -57,7 +63,7 @@ Detect from lockfile (`pnpm-lock.yaml` / `yarn.lock` / `package-lock.json`).
 All examples use `pnpm` notation - adapt to detected package manager.
 `pnpm dlx` → `npx` / `yarn dlx`.
 
-**All development runs in Docker!**
+All development runs in Docker.
 
 #### Docker Check
 
@@ -135,20 +141,24 @@ If no `docker-compose.yml` exists in the project:
 
 Include: Architecture decisions, file structure, edge cases, testing strategy.
 
-Ultrathink: What's the cleanest, most maintainable way to build this?
+Guiding question for the plan: What's the cleanest, most maintainable way to build this?
 
 ---
 
 ### STEP 2: EXECUTION
 
-#### CRITICAL: Execution Rules
+#### Execution Rules
 
 1. **Follow the order** - Docker → Backend → Types → Frontend → Security Review → QA → Browser Test
 2. **Docker setup first** - Hot reload, DB UI, Mailhog before any code
 3. **Initial user migration** - Create test user for browser testing
 4. **No mock data** - Frontend always uses real backend API
-5. **Checkbox after EVERY task** - Mark `- [x]` immediately after completing
-6. **DO NOT STOP** until all checkboxes are checked AND browser testing passes
+5. **Checkbox after every task** - Mark `- [x]` immediately after completing
+6. **Run to completion** - the run is done when all checkboxes are checked and browser testing passes
+
+#### Turn endings
+
+This command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; a finished plan or phase is the cue to start the next one. The run stops only at the questions this command defines (a missing spec file, the Docker question when no `docker-compose.yml` exists), when a step is blocked by something only the user can resolve (missing credentials, a spec ambiguity that changes what gets built), or before a destructive or irreversible action that needs confirmation.
 
 #### Package Manager
 
@@ -258,7 +268,7 @@ Role:     admin
 
 #### Completion Criteria
 
-**DO NOT STOP until:**
+**The run is complete when:**
 - All `- [ ]` in IMPLEMENTATION_PLAN.md are `- [x]`
 - All features from SPEC.md are implemented
 - Security review passed (`/lt-dev:backend:sec-review`)
@@ -268,9 +278,9 @@ Role:     admin
 - All bugs found during testing are fixed
 - App works end-to-end (login → use features → logout)
 
-Only interrupt for critical blockers.
+Interruptions follow the Turn endings rules above.
 
-**BEGIN PLANNING NOW. THEN EXECUTE UNTIL 100% COMPLETE INCLUDING BROWSER TESTING.**
+Start with the planning, then carry the execution through to completed browser testing.
 
 ### Troubleshooting
 

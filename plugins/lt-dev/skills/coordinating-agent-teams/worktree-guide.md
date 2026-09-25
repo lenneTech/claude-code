@@ -28,10 +28,33 @@ git worktree add -b ai/task-name /tmp/ai-task-name
 
 ### Subagent Worktree (Automatic)
 
-Agents with `isolation: worktree` in frontmatter get an automatic worktree:
-- Created before agent starts
+A subagent spawned with `isolation: "worktree"` on the Agent call gets an automatic worktree. No lt-dev agent sets `isolation` in its frontmatter; the caller passes it per spawn for parallel file-modifying runs.
+- Created before agent starts, branched from the default branch (see below)
 - Cleaned up automatically if no changes
 - User prompted to keep/remove if changes exist
+
+### Worktree Base Branch
+
+The automatic worktree is branched from the repository's **default branch**, not from the caller's HEAD. Only `worktree.baseRef: "head"` in the user's or project's own settings changes that; a plugin cannot set it. Source: https://code.claude.com/docs/en/worktrees
+
+Without `baseRef: "head"`, work on a feature branch runs through task branches:
+
+```bash
+# Caller (main tree, on feature/DEV-123): commit first; uncommitted changes do not reach the worktree
+git commit -am "wip: state the agent builds on"
+
+# Spawned agent (inside its worktree): branch from the named feature branch, commit there
+git switch -c ai/DEV-123-backend feature/DEV-123
+git commit -am "feat: backend part"
+
+# Caller (main tree), after the agent reports: merge the task branch back, then delete it
+git merge --no-ff ai/DEV-123-backend
+git branch -d ai/DEV-123-backend
+```
+
+The agent branches instead of checking out `feature/DEV-123` directly because git lets a branch be checked out in only one worktree at a time, and the main tree already holds it (`fatal: 'feature/DEV-123' is already checked out at ...`).
+
+**Rebasing follows from the same rule.** `git rebase` rewrites the branch it runs on, so the branch must be checked out in the worktree doing the rebase. A branch that is checked out in the main tree cannot be checked out in a second worktree, so it cannot be rebased inside one. Rebase it in place in the main tree, or switch the main tree to another branch first and then rebase it in the worktree. Batch rebases in isolated worktrees work for every branch the main tree does not have checked out.
 
 ### Worktree Performance Settings
 
@@ -109,7 +132,7 @@ Use descriptive session names for `--resume` identification:
 
 ### Automated Cleanup (Subagents)
 
-Agents with `isolation: worktree` handle cleanup automatically:
+Subagents spawned with `isolation: "worktree"` handle cleanup automatically:
 - No changes → worktree removed silently
 - Changes exist → user prompted (keep for review / remove)
 - Stale worktrees from interrupted runs are auto-cleaned
@@ -150,14 +173,20 @@ Before deleting a worktree with valuable context:
 
 ## Integration with lt-dev Agents
 
-### Agents with `isolation: worktree`
+### Agents a caller may isolate
 
-| Agent | Worktree Use | Reason |
-|-------|-------------|--------|
-| `branch-rebaser` | Always | Rebase requires isolated branch state |
-| `backend-dev` | On request | When parallel with frontend-dev |
-| `frontend-dev` | On request | When parallel with backend-dev |
-| `devops` | On request | When parallel with other modifiers |
+No lt-dev agent carries a static `isolation` field. The caller passes `isolation: "worktree"` on the spawn when several file-modifying agents run in parallel:
+
+| Agent | Pass isolation when | Reason |
+|-------|---------------------|--------|
+| `branch-rebaser` | Rebasing several branches in parallel | Each rebase needs its own checked-out branch; the branch must not be checked out in the main tree (see Worktree Base Branch) |
+| `backend-dev` | Running in parallel with frontend-dev | Separate working copies; merge the task branches afterwards |
+| `frontend-dev` | Running in parallel with backend-dev | Separate working copies; merge the task branches afterwards |
+| `devops` | Running in parallel with other modifiers | Separate working copies |
+
+### Teammates and agent types
+
+Agent-team teammates cannot use a plugin agent type such as `lt-dev:branch-rebaser`; the type and its `skills:` field are not applied. The lead writes the role into the spawn prompt and names the lt-dev skill the teammate invokes via the `Skill` tool (for example `rebasing-branches`). A teammate needing its own worktree gets one the lead creates manually (Setup Protocol above).
 
 ### Agents WITHOUT worktree
 

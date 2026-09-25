@@ -91,7 +91,7 @@ lt dev test -- --ui login.spec.ts # forward args to Playwright
 
 **One-time setup for an existing project:** run `lt dev init` once. Idempotent — patches legacy hardcoded ports in `config.env.ts` / `nuxt.config.ts` / `playwright.config.ts` to env-aware variants (defaults preserved), registers the project in `~/.lenneTech/projects.json`, updates the project's `CLAUDE.md` with the URL block, and rewrites a leftover `lt-monorepo` package name to the directory basename so each project gets its own `<slug>.localhost` (relevant when the user `git clone`d the template directly instead of running `lt fullstack init`).
 
-**If the prompt contains "Active lt-dev project" context, NEVER start with `pnpm dev` / `pnpm start` directly — use `lt dev up`.** The injected context block lists the actual URLs for the current project. If session is `no`, run `lt dev up` first; the URLs only resolve while the Caddy block + processes are active.
+**If the prompt contains "Active lt-dev project" context, start the stack with `lt dev up`, not with `pnpm dev` / `pnpm start` directly.** The injected context block lists the actual URLs for the current project. If session is `no`, run `lt dev up` first; the URLs only resolve while the Caddy block + processes are active.
 
 ## Local email (Mailpit)
 
@@ -227,3 +227,12 @@ Before reporting a task complete:
 - [ ] All background servers started via `run_in_background: true` have been terminated with `pkill`
 - [ ] `pgrep -f "nuxt dev"` and `pgrep -f "nest start"` (and any `build --watch`) return no matches — or the user has been asked and agreed to leave them running
 - [ ] The active project's URLs are free (use `lt dev status` for lt-projects, `lsof -i :3000 -i :3001` for the default fallback) unless the user asked for a running server
+
+## Related Skills
+
+- `validating-changes-in-browser` skill. The Chrome DevTools MCP walk that runs against the servers started here; it closes its tabs by these rules.
+- `coordinating-peer-sessions` skill. When other sessions are live on the machine and a `pkill` could hit their servers.
+- `running-load-tests-with-k6` skill. Starts the API by these rules before a k6 run and stops it afterwards.
+- `validating-ci-pipelines-locally` skill. When a local pipeline job needs a running API.
+- `validating-production-readiness` skill. Health and lifecycle checks against a running stack.
+- The development skills that start servers (`building-stories-with-tdd`, `developing-lt-frontend`, `generating-nest-servers`, `contributing-to-lt-framework`) are covered under Integration Points above.

@@ -68,10 +68,13 @@ If URLs return 404 or fail to load:
 ```yaml
 ---
 name: string          # Required. Kebab-case identifier
-description: string   # Required. Max 280 chars. WHEN to use
+description: string   # Required. Max 1,024 chars (Agent Skills spec). WHEN to use; key use case first
+when_to_use: string   # Optional. Extra trigger phrases, appended to description in the listing
 allowed-tools: string # Optional. Restrict tools: Read, Grep, Glob, etc.
 ---
 ```
+
+**Listing cap:** Claude Code truncates `description` plus `when_to_use` at 1,536 characters in the skill listing (`skillListingMaxDescChars`), so put the key use case first.
 
 **Note on `allowed-tools`:** Use this to restrict which tools Claude can use when the skill is active. Useful for read-only skills or skills that should not modify files.
 
@@ -82,8 +85,8 @@ allowed-tools: string # Optional. Restrict tools: Read, Grep, Glob, etc.
 description: string              # Required. WHAT it does (for /help)
 argument-hint: string            # Optional. Shows expected args, e.g., "[message]" or "[pr-number] [priority]". MUST quote values containing brackets: '"[arg]"'
 allowed-tools: string            # Optional. Restrict tools, e.g., "Bash(git:*), Read, Grep"
-model: string                    # Optional. Force specific model, e.g., "claude-3-5-haiku-20241022"
-disable-model-invocation: bool   # Optional. Prevent SlashCommand tool from calling this command
+model: string                    # Optional. Alias (opus | sonnet | haiku | fable) or inherit; a full ID such as "claude-opus-5-5" only to pin a model
+disable-model-invocation: bool   # Optional. Prevent the Skill tool from invoking this command
 ---
 ```
 
@@ -97,10 +100,11 @@ disable-model-invocation: bool   # Optional. Prevent SlashCommand tool from call
 ---
 name: string              # Required. Kebab-case identifier
 description: string       # Required. When/what for agent spawning
-model: string             # Required. sonnet | opus | haiku
-tools: string             # Required. Comma-separated tool names
-permissionMode: string    # Optional. default | bypassPermissions
-skills: string            # Optional. Comma-separated skill names
+model: string             # Optional. inherit | opus | sonnet | haiku | fable | full ID; falls back to the default subagent model
+tools: string             # Optional. Comma-separated tool names; inherits all tools when omitted
+effort: string            # Optional. low | medium | high | xhigh | max; inherits the session level when omitted
+permissionMode: string    # Optional. default | bypassPermissions (ignored for plugin agents)
+skills: string            # Optional. Comma-separated skill names, preloaded into context
 ---
 ```
 
@@ -108,16 +112,28 @@ skills: string            # Optional. Comma-separated skill names
 
 ```json
 {
-  "hooks": [
-    {
-      "name": "string",        // Required. Hook identifier
-      "event": "string",       // Required. Event type
-      "command": "string",     // Required. Script path + args
-      "description": "string"  // Optional. Human-readable description
-    }
-  ]
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/handler.sh",
+            "if": "Edit(**/*.ts)",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
+
+- Top-level key `hooks` holds an object keyed by event name (`PreToolUse`, `PostToolUse`, `UserPromptSubmit`, ...).
+- `matcher` is always a string tested against the tool name (`"Edit|Write"`); omit it to match every tool.
+- Path or argument filtering uses the optional `if` field on the individual hook object, in permission-rule syntax (`"Edit(**/*.ts)"`, `"Bash(git *)"`). It holds exactly one rule; to cover both tools, add a `Write(...)` handler next to the `Edit(...)` one.
+- A command hook receives the event data as JSON on stdin (for example `tool_input.file_path`); read it with `jq`. There is no `CLAUDE_FILE_PATH` environment variable.
 
 ---
 
@@ -136,8 +152,11 @@ Available tools that can be specified in agent `tools` field:
 | `WebFetch` | Fetch and analyze URLs |
 | `WebSearch` | Search the web |
 | `Agent` | Spawn sub-agents |
-| `TodoWrite` | Manage task lists |
+| `Skill` | Invoke skills and commands at runtime (preloading uses the `skills:` field instead) |
+| `LSP` | Code intelligence via language servers |
 | `AskUserQuestion` | Get user input |
+
+**Task-tracking tools are not a portable choice.** `TaskCreate`, `TaskGet`, `TaskList`, `TaskUpdate` and `TodoWrite` exist by default only on Claude 3.x, Opus 4 to 4.7, Sonnet 4 to 4.6 and Haiku 4.5; on Opus 5.5, Opus 5, Sonnet 5 and Fable they are absent unless the user sets `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`, and a subagent gets them only when its session has them. Describe multi-step work as a phase list whose outcomes the final report states. Source: https://code.claude.com/docs/en/tools-reference#task-tool-availability
 
 ---
 
@@ -162,9 +181,12 @@ Available tools that can be specified in agent `tools` field:
 
 | Model | When to Use |
 |-------|-------------|
-| `haiku` | Fast, simple tasks. Low cost. Good for repetitive operations. |
-| `sonnet` | Default choice. Balanced speed/quality. Most tasks. |
-| `opus` | Complex reasoning. Critical decisions. High-stakes operations. |
+| `inherit` | Follows the session model. The default for plugin agents. |
+| `opus` / `sonnet` / `haiku` / `fable` | Pins that model family for every user. Only where the pinned model is measurably as good for the job. |
+
+The aliases resolve to the latest model per provider. Pin a full ID such as `claude-opus-5-5` only when a specific model is required. Model choice optimizes quality and time per completed task, not per-token price: a pin chosen to save tokens silently downgrades every user who runs a stronger session model.
+
+**Effort:** pin it only where a measurement shows it adds quality; unpinned, the element runs at the session's level and the developer can raise it per task. A pin overrides the session both ways. Any pin needs an "Effort policy" note naming the measurement behind it; `xhigh` and `max` in particular run much longer turns (on Opus 5.5 the lt-dev evals found `medium` equal to `high` and `xhigh` for builds, reviews and planning). The scale is calibrated per model (Opus 5.5 defaults to `medium`, other effort-capable models to `high`), so the same name is not the same amount of thinking across models.
 
 ---
 
@@ -256,7 +278,7 @@ description: What this command does
 ---
 name: my-agent
 description: What this agent does
-model: sonnet
+model: inherit
 tools: Read, Write, Grep, Glob
 ---
 [Protocol]

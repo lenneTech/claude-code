@@ -43,10 +43,10 @@ These plugins are **optional** but enhance the experience when working with this
 
 ## Included
 
-- **29 Skills** - Auto-detected contextual expertise (includes `grilling-decisions` for settling open decisions before implementation, `running-check-script` for runnability validation, `managing-dev-servers` for dev-server lifecycle rules, `contributing-to-lt-framework` for pnpm link workflows, `coordinating-peer-sessions` for parallel sessions on one project, `writing-linear-comments` and `filing-ai-proposed-tickets` for what reaches a Linear ticket and in what shape, and `unslop` for cutting AI tells out of every text that reaches a human)
+- **30 Skills** - Auto-detected contextual expertise (includes `grilling-decisions` for settling open decisions before implementation, `running-check-script` for runnability validation, `managing-dev-servers` for dev-server lifecycle rules, `contributing-to-lt-framework` for pnpm link workflows, `coordinating-peer-sessions` for parallel sessions on one project, `writing-linear-comments` and `filing-ai-proposed-tickets` for what reaches a Linear ticket and in what shape, and `unslop` for cutting AI tells out of every text that reaches a human)
 - **25 Agents** - Autonomous task execution
 - **64 Commands** - User-triggered actions via `/lt-dev:<name>`
-- **18 Hook Scripts** across 8 event types (SessionStart, PreToolUse, PostToolUse, PostToolUseFailure, UserPromptSubmit, StopFailure, SessionEnd, PostCompact) - Automated project detection and validation
+- **19 Hook Scripts** across 7 event types (SessionStart, PreToolUse, PostToolUse, PostToolUseFailure, UserPromptSubmit, StopFailure, SessionEnd) - Automated project detection and validation
 - **Helper Scripts** - Plugin-local shell helpers under `plugins/lt-dev/scripts/` (e.g. `discover-check-scripts.sh` for monorepo-aware `check` discovery, `peer-ledger.sh` for cross-session claims and diagnoses, `change-provenance.sh` for attributing changes this session did not write, `chrome-devtools-mcp-launcher.sh` as Chrome MCP wrapper)
 - **3 MCP Servers** - Chrome DevTools, Linear, and Nuxt UI (Figma via the official `figma` plugin as a companion)
 

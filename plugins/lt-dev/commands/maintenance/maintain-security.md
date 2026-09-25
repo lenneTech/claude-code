@@ -31,7 +31,7 @@ Focus exclusively on security updates:
 - Skip package removal analysis (Priority 1) — EXCEPT when an unused direct dependency is the root of an advisory chain: removing it is a valid (often cheaper) security fix and may eliminate the need for overrides.
 - Skip categorization optimization (Priority 2)
 - Execute Priority 3 with security filter (direct-dep updates that close advisories)
-- **Also execute Phase 6 (override management)** — most real-world advisories are TRANSITIVE and cannot be closed by a direct-dep update or by `audit --fix`; they require a scoped override. Apply the Vulnerability Resolution Workflow: group findings by root advisory, target the fixed-in version (target MUST be `>=` the advisory's fixed-in version — an exact-but-too-low target silently leaves the advisory open), then re-audit.
+- **Also execute Phase 6 (override management)** — most real-world advisories are transitive and cannot be closed by a direct-dep update or by `audit --fix`; they require a scoped override. Apply the Vulnerability Resolution Workflow: group findings by root advisory, target the fixed-in version (the target is `>=` the advisory's fixed-in version — an exact-but-too-low target silently leaves the advisory open), then re-audit.
 - Skip non-security updates to minimize risk and execution time
 
 Check for:

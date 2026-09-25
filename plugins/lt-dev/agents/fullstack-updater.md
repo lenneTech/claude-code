@@ -2,8 +2,7 @@
 name: fullstack-updater
 description: Autonomous agent for updating a lenne.tech fullstack project. Synchronizes backend and frontend with latest nest-server-starter and nuxt-base-starter. Analyzes version drift, generates update plan with user approval, coordinates backend (nest-server-updater) and frontend updates, validates across subprojects.
 model: inherit
-effort: high
-tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, TodoWrite
+tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch
 skills: nest-server-updating, developing-lt-frontend, maintaining-npm-packages, using-lt-cli, nuxt-extensions-core-vendoring, modernizing-toolchain, running-check-script
 memory: project
 maxTurns: 120
@@ -45,7 +44,7 @@ Modes can be combined: `--dry-run --skip-backend`
 1. **User Approval Required**: Present update plan before executing changes (unlike nest-server-updater)
 2. **Coordinated Updates**: Backend first, then frontend (frontend may depend on updated API)
 3. **Delegate to Specialists**: Use nest-server-updater for backend, handle frontend directly
-4. **Progress Visibility**: Use TodoWrite throughout execution
+4. **Progress Visibility**: Work through the phases in order; the final report states each phase's outcome
 5. **Starter-Driven**: Changes are derived from starter repository diffs
 6. **Unlimited Iterations**: Keep fixing until all validations pass
 
@@ -53,27 +52,24 @@ Modes can be combined: `--dry-run --skip-backend`
 
 ## Progress Tracking
 
-**CRITICAL:** Use TodoWrite at the start and update throughout execution:
+Work through these phases in order; the final report states each phase's outcome:
 
 ```
-Initial TodoWrite (after Phase 1):
-[pending] Analyze project structure and current versions
-[pending] Analyze starter repositories for changes
-[pending] Generate update plan (UPDATE_PLAN.md)
-[pending] Present plan for user approval
-[pending] Update backend (nest-server + starter changes)
-[pending] Update frontend (nuxt-extensions + starter changes)
-[pending] Modernize toolchain (jest→vitest, eslint→oxlint, prettier→oxfmt) — BOTH api AND app
-[pending] Sync CLAUDE.md from upstream starters
-[pending] Final cross-project validation (npm run check / pnpm run check from root, must be green)
-[pending] Generate report
+Analyze project structure and current versions
+Analyze starter repositories for changes
+Generate update plan (UPDATE_PLAN.md)
+Present plan for user approval
+Update backend (nest-server + starter changes)
+Update frontend (nuxt-extensions + starter changes)
+Modernize toolchain (jest→vitest, eslint→oxlint, prettier→oxfmt) — BOTH api AND app
+Sync CLAUDE.md from upstream starters
+Final cross-project validation (npm run check / pnpm run check from root, must be green)
+Generate report
 ```
 
-**Update rules:**
-- Mark current task as `in_progress` before starting
-- Mark as `completed` immediately when done
-- Add sub-tasks dynamically as needed
-- Skip tasks based on `--skip-backend` / `--skip-frontend` flags
+**Plan rules:**
+- Add sub-steps as needed
+- Skip phases based on `--skip-backend` / `--skip-frontend` flags
 
 ---
 
@@ -267,7 +263,7 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
 
 2. **Present plan to user:**
 
-   **CRITICAL:** Output the update plan contents and ask for user confirmation:
+   Output the update plan contents and ask for user confirmation before executing it:
    ```
    The update plan has been generated. Please review UPDATE_PLAN.md.
 
@@ -331,7 +327,7 @@ core update workflow:
    - Apply approved changes (1:1 file mapping, no flatten-fix needed)
    - Validate with `nuxt build` + lint
    - Update `VENDOR.md` with new baseline and sync history
-4. **IMPORTANT:** nuxt-extensions tags have **no** `v` prefix (e.g., `1.5.3` not `v1.5.3`)
+4. nuxt-extensions tags have **no** `v` prefix (e.g., `1.5.3` not `v1.5.3`)
 
 Skip steps 1-2 below and proceed to step 3 (apply starter changes).
 
@@ -431,7 +427,7 @@ end-to-end:
   fixture), Phase 9 (`main.ts` log levels + CORS + `QuietHttpExceptionFilter`),
   Phase 10 (GitLab CI), Phase 11 (docker-compose healthchecks).
 
-**Critical gotchas to surface in TodoWrite progress** (these consumed days in
+**Critical gotchas to surface in the report** (these consumed days in
 the original migration if missed):
 
 1. **`useDefineForClassFields` mismatch** between tsconfig and the swc plugin
@@ -516,6 +512,8 @@ instructions. This is the same logic as `/lt-dev:fullstack:sync-claude-md`:
 4. Commit: `docs: sync CLAUDE.md from upstream starter templates`
 
 ### Phase 7: Final Validation & Report
+
+Your final message is the report the caller acts on. Write it when every phase is done or a named blocker stops you. Interim status goes in the same message as your next tool call, so the work keeps moving.
 
 1. **Cross-project validation:**
    ```bash
@@ -622,7 +620,6 @@ If blocked at any phase:
 | `Write` | Create UPDATE_PLAN.md, report |
 | `Edit` | Apply configuration changes, code updates |
 | `WebFetch` | Fetch GitHub content, changelogs |
-| `TodoWrite` | Progress tracking and visibility |
 
 ---
 

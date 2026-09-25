@@ -2,6 +2,8 @@
 
 Detailed coordination patterns for Claude Code Agent Teams. Referenced from SKILL.md.
 
+The team creation templates name no model, so every teammate runs on the lead's model and inherits its effort level. A model named in the spawn prompt overrides that for every teammate it covers, which silently downgrades a user who runs a stronger session model; name one only when it is measurably as good for that role.
+
 ## Pattern: Independent Then Challenge (Review)
 
 Used by `/lt-dev:review` for large or fullstack changes.
@@ -39,7 +41,7 @@ Used by `/lt-dev:review` for large or fullstack changes.
 ### Team Creation Template
 
 ```
-Create an agent team with 3 teammates using Sonnet:
+Create an agent team with 3 teammates:
 
 Teammate "content-quality":
 Review code changes for: purpose fulfillment, acceptance criteria compliance,
@@ -102,7 +104,7 @@ Used by `/lt-dev:create-story` for fullstack test writing.
 ### Team Creation Template
 
 ```
-Create an agent team with 2 teammates using Sonnet:
+Create an agent team with 2 teammates:
 
 Teammate "backend-tests":
 Write API tests for this story in projects/api/tests/stories/.
@@ -156,7 +158,7 @@ N teammates (one per hypothesis), dynamically created after hypothesis generatio
 ### Team Creation Template
 
 ```
-Create an agent team with N teammates (one per hypothesis) using Sonnet:
+Create an agent team with N teammates (one per hypothesis):
 
 Teammate "hypothesis-1-<short-name>":
 Investigate hypothesis: "<hypothesis description>"
@@ -187,7 +189,7 @@ N teammates (one per branch), each working in an isolated git worktree.
 git worktree add /tmp/rebase-<branch-name> <branch-name>
 
 # Teammate works in /tmp/rebase-<branch-name>
-# Executes full rebase workflow (Phases 0-12 from branch-rebaser)
+# Executes the full rebase workflow from the rebasing-branches skill
 
 # Cleanup (lead removes after ALL teammates complete)
 git worktree remove /tmp/rebase-<branch-name> --force
@@ -196,10 +198,11 @@ git worktree prune
 
 ### Important Constraints
 
-- **Worktree cleanup is CRITICAL** - always execute, even on failure
+- **Clean up every worktree, even when a teammate fails** - a leftover worktree keeps its branch checked out, so the next run cannot create one for that branch
 - Each teammate must work exclusively in its assigned worktree path
 - Lead must NOT work in the main worktree during parallel operations
 - Force push operations must be serialized (one at a time) to avoid race conditions
+- A branch checked out in the main tree cannot get a worktree (git allows one checkout per branch); switch the main tree away first or rebase that branch in place
 - **Dependencies must be installed per worktree** - they do not carry over from the main directory
 - For monorepos, consider `worktree.sparsePaths` and `worktree.symlinkDirectories` settings for faster setup
 
@@ -207,13 +210,15 @@ See [worktree-guide.md](${CLAUDE_SKILL_DIR}/worktree-guide.md) for complete oper
 
 ### Team Creation Template
 
+Teammates cannot take the plugin agent type `lt-dev:branch-rebaser`, so the role travels in the prompt and the teammate loads the skill itself.
+
 ```
-Create an agent team with N teammates (one per branch) using Sonnet:
+Create an agent team with N teammates (one per branch):
 
 Teammate "rebase-<branch-1>":
 Rebase branch <branch-1> onto <base-branch>.
 Work in worktree: /tmp/rebase-<branch-1>
-Execute the full rebase workflow (Phases 0-12).
+Invoke the lt-dev rebasing-branches skill via the Skill tool and execute its full workflow.
 Report results when done.
 
 [... repeat for each branch ...]

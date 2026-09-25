@@ -1,9 +1,9 @@
 ---
 name: creating-showcases
-description: 'Creates, updates, and manages showcases on the lenne.tech Showroom platform (showroom.lenne.tech). Implements a 5-phase workflow: (1) project analysis, (2) screenshot capture with Docker/app startup and demo data, (3) SHOWCASE.md creation as single source of truth in the project repository, (4) showcase creation via API using SHOWCASE.md + customer feedback + web research, (5) interactive presentation with modern content blocks. Fetches customer feedback from https://lenne.tech/kundenerfolge. Uses MCP tools (showroom-api) or REST API for CRUD operations. Activates when creating, editing, managing showcases, portfolio entries, or the Showroom platform. NOT for platform development on the showroom codebase itself (use generating-nest-servers or developing-lt-frontend).'
+description: 'Creates, updates, and manages showcases on the Showroom platform (showroom.lenne.tech). Implements a 5-phase workflow: (1) project analysis, (2) screenshot capture with Docker/app startup and demo data, (3) SHOWCASE.md creation as single source of truth in the project repository, (4) showcase creation via API using SHOWCASE.md + the account''s company context and customer testimonials + web research, (5) interactive presentation with modern content blocks. Uses MCP tools (showroom-api) or REST API for CRUD operations. Activates when creating, editing, managing showcases, portfolio entries, or the Showroom platform. NOT for developing the Showroom platform itself.'
 ---
 
-# Creating Showcases on showroom.lenne.tech
+# Creating Showcases on the Showroom Platform
 
 This skill implements a **5-phase workflow** built around SHOWCASE.md as the single source of truth. Every showcase starts from a versioned Markdown file in the project repository and is then published to showroom.lenne.tech.
 
@@ -11,7 +11,7 @@ This skill implements a **5-phase workflow** built around SHOWCASE.md as the sin
 
 - **SHOWCASE.md `version` must match `package.json` version** — A drift between the two is silently ignored by the API, but it confuses future audits and breaks automated "is the showcase current?" checks. Always `sync` the `version` field when running an update.
 - **REST API cookies expire between Claude sessions** — If you fall back from MCP to direct `curl` calls, the session cookie written to `.cookies` is tied to this Claude session. On the next session's first request you'll get a 401 without a clear error. Re-authenticate before each new workflow.
-- **Phase 2 cleanup MUST run even on failure** — If Docker is started for screenshots but the workflow fails before Phase 5, containers remain running and block port 3000 for the next project's startup. Always guard `docker compose down` with a trap/finally-equivalent, not just a success-path call.
+- **Phase 2 cleanup runs even on failure** — If Docker is started for screenshots but the workflow fails before Phase 5, containers remain running and block port 3000 for the next project's startup. Always guard `docker compose down` with a trap/finally-equivalent, not just a success-path call.
 - **Content block `order` values must be ascending with no gaps** — Holes in the sequence (e.g. order 1, 3, 5) cause rendering glitches on the showroom frontend. When deleting a block, re-normalize the remaining orders; when adding, pick the next consecutive integer.
 
 ## When to Use This Skill
@@ -19,36 +19,36 @@ This skill implements a **5-phase workflow** built around SHOWCASE.md as the sin
 - User asks to create, edit, or publish a showcase
 - User references content blocks, tech-stack badges, or showcase templates
 - User mentions showroom.lenne.tech or the showroom platform
-- Working inside the showroom project repository
 - Running `/lt-showroom:showroom:analyze`, `/lt-showroom:showroom:screenshot`, `/lt-showroom:showroom:create`, `/lt-showroom:showroom:update`
 
 ## Related Skills
 
 - `analyzing-projects` — Provides the evidence-based analysis report that populates SHOWCASE.md
-- `lt-dev:generating-nest-servers` / `lt-dev:developing-lt-frontend` — For platform development
 
 ## MCP Connection
 
 All showcase operations go through the `showroom-api` MCP server. Screenshot capture uses the `chrome-devtools` MCP server, which the `lt-dev` plugin provides — this plugin relies on that instance instead of declaring a second one, so both plugins belong in the session for screenshot workflows.
 
-The default MCP endpoint is `https://api.showroom.lenne.tech/mcp` (production). When working inside the showroom project repository, the project-level `.mcp.json` overrides this to `http://localhost:3000/mcp` for local development.
+The MCP endpoint is `https://api.showroom.lenne.tech/mcp`; it signs in through OAuth in the browser on first use.
 
-**If MCP is unavailable** (e.g. OAuth not configured), use the REST API directly via `curl` with session cookies:
+**Everything company-specific comes from the account, not from this plugin.** `get_showroom_context` returns the company settings (name, logo, meeting booking URL), the knowledge base and the platform's global blocks. Build showcases from that context; when it lacks something the showcase needs, ask the user rather than filling the gap with assumptions. An organization can add its own conventions on top (a skill from its internal plugin, or its CLAUDE.md); where those name a source or a rule for this company, follow them.
+
+**If MCP is unavailable** (e.g. OAuth not configured), use the REST API directly via `curl` with session cookies. The cookie is bound to the host it was issued for, so sign in against the same API you then call:
 ```bash
 # Login
-curl -s -c /tmp/showroom-cookies.txt -X POST http://localhost:3000/iam/sign-in/email \
+curl -s -c /tmp/showroom-cookies.txt -X POST https://api.showroom.lenne.tech/iam/sign-in/email \
   -H 'Content-Type: application/json' -d '{"email":"...","password":"..."}'
 
 # Create showcase
-curl -s -b /tmp/showroom-cookies.txt -X POST http://localhost:3000/showcases \
+curl -s -b /tmp/showroom-cookies.txt -X POST https://api.showroom.lenne.tech/showcases \
   -H 'Content-Type: application/json' -d '{"title":"...","description":"...","contentBlocks":[...]}'
 
 # Update showcase (add content blocks)
-curl -s -b /tmp/showroom-cookies.txt -X PATCH http://localhost:3000/showcases/{id} \
+curl -s -b /tmp/showroom-cookies.txt -X PATCH https://api.showroom.lenne.tech/showcases/{id} \
   -H 'Content-Type: application/json' -d '{"contentBlocks":[...]}'
 
 # Publish
-curl -s -b /tmp/showroom-cookies.txt -X POST http://localhost:3000/showcases/{id}/publish
+curl -s -b /tmp/showroom-cookies.txt -X POST https://api.showroom.lenne.tech/showcases/{id}/publish
 ```
 
 ## Reference Files
@@ -75,7 +75,7 @@ Phase 5: Present      → modern blocks with glassmorphism, scroll-reveal, 3D-ti
 
 ## Phase 1: Analysis
 
-Run the `project-analyzer` agent (or use `analyzing-projects` skill inline) for a full 8-dimension report. The report MUST include:
+Run the `project-analyzer` agent (or use `analyzing-projects` skill inline) for a full 8-dimension report. The report includes:
 
 - All 8 analysis dimensions (tech stack, architecture, features, API, tests, UI/UX, security, performance)
 - Feature list with evidence and screenshot candidates
@@ -145,7 +145,7 @@ Write `SHOWCASE.md` in the project root (or `docs/showcase/SHOWCASE.md` for mono
 The file format is defined in `${CLAUDE_SKILL_DIR}/reference/showcase-markdown.md`.
 
 **Key requirements:**
-- `version` in frontmatter MUST match `package.json` version
+- `version` in frontmatter matches the `package.json` version
 - `analyzed_at` is the ISO date of the analysis
 - Every feature section references at least one screenshot from `docs/showcase/screenshots/`
 - Every feature section cites at least one code evidence reference
@@ -161,13 +161,14 @@ Parse the SHOWCASE.md frontmatter and sections as the primary content source.
 
 ### 4b. Gather Additional Context
 
-1. **Customer feedback** — WebFetch `https://lenne.tech/kundenerfolge`:
-   - Extract all testimonials (name, company, role, quote)
-   - Match to the project by company name
-2. **Ask the user** for:
+1. **Company context** — `get_showroom_context`: company name, meeting booking URL, knowledge base, global blocks
+2. **Customer feedback** — from the source the organization names for its testimonials (its conventions, or a knowledge base entry in category `portfolio` that holds the quotes or links to their page; otherwise ask the user):
+   - Read a references page as raw HTML, never through a summarizing fetch (see `best-practices.md` → "Customer Testimonials")
+   - Match to the project by company name; copy quotes character for character
+3. **Ask the user** for:
    - Live URL / landing page of the project (if publicly accessible)
    - Any additional links (app stores, documentation, press mentions)
-3. **Web research** — Use WebSearch to find:
+4. **Web research** — Use WebSearch to find:
    - Public mentions of the project or customer
    - Press releases, case study posts, conference talks
 
@@ -181,32 +182,32 @@ Block 4:  text "Architektur" — From SHOWCASE.md architecture section
 Block 5:  screenshot-gallery — Screenshots from docs/showcase/screenshots/
 Block 6:  text "Highlights"  — From SHOWCASE.md technical highlights section
 Block 7:  timeline           — Project milestones (if derivable from git or SHOWCASE.md)
-Block 8:  testimonial        — Customer feedback from lenne.tech/kundenerfolge
+Block 8:  testimonial        — Customer feedback from the company's testimonial source
 Block 9:  team               — Team members (if known)
 Block 10: text "Ergebnis"    — From SHOWCASE.md results section
-Block 11: cta                — "Termin vereinbaren" + meeting URL
+Block 11: cta                — "Termin vereinbaren" + the meeting URL from the company settings
 ```
 
 ### 4d. Create and Publish
 
 ```bash
 # Auth
-curl -s -c /tmp/showroom-cookies.txt -X POST http://localhost:3000/iam/sign-in/email \
+curl -s -c /tmp/showroom-cookies.txt -X POST https://api.showroom.lenne.tech/iam/sign-in/email \
   -H 'Content-Type: application/json' -d '{"email":"...","password":"..."}'
 
 # Create with all content blocks
-curl -s -b /tmp/showroom-cookies.txt -X POST http://localhost:3000/showcases \
+curl -s -b /tmp/showroom-cookies.txt -X POST https://api.showroom.lenne.tech/showcases \
   -H 'Content-Type: application/json' -d '{ "title": "...", "description": "...", "contentBlocks": [...] }'
 
 # Publish
-curl -s -b /tmp/showroom-cookies.txt -X POST http://localhost:3000/showcases/{id}/publish
+curl -s -b /tmp/showroom-cookies.txt -X POST https://api.showroom.lenne.tech/showcases/{id}/publish
 ```
 
 ---
 
 ## Phase 5: Presentation
 
-Use modern content blocks that align with lt-website-reloaded styling:
+Use the modern content blocks the platform renders with:
 
 **Visual design principles:**
 - **Glassmorphism** — `feature-grid` cards use glass-style background with blur
@@ -292,10 +293,10 @@ Use modern content blocks that align with lt-website-reloaded styling:
 - [ ] Title is specific and meaningful (not generic)
 - [ ] Description is 2-3 compelling sentences
 - [ ] At least 8 content blocks with proper ordering
-- [ ] Tech-stack block includes ALL major technologies
+- [ ] Tech-stack block includes all major technologies
 - [ ] Feature-grid has 6-8 features with evidence-based descriptions
 - [ ] At least one text block with 3+ paragraphs (project overview)
-- [ ] Customer testimonial included (if available on lenne.tech/kundenerfolge)
+- [ ] Customer testimonial included (if the company's testimonial source has one for this customer)
 - [ ] Technologies array matches tech-stack block
 - [ ] Tags are relevant and searchable
 - [ ] All content is in German (unless project is English-only)

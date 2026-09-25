@@ -199,8 +199,7 @@
       "usedBy": [
         "creating-showcases",
         "showroom:create",
-        "showroom:update",
-        "showroom:sync-schema"
+        "showroom:update"
       ]
     },
     {

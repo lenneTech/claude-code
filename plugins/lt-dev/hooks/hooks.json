@@ -1,5 +1,5 @@
 {
-  "description": "Project detection, safety guards, circuit breaker, file protection, peer-session coordination, and lt-plugin auto-update",
+  "description": "Project detection, post-compaction context, safety guards, circuit breaker, file protection, peer-session coordination, and lt-plugin auto-update",
   "hooks": {
     "SessionStart": [
       {
@@ -22,6 +22,17 @@
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/detect-peer-sessions.sh\"",
             "timeout": 5,
             "statusMessage": "Checking for parallel Claude Code sessions"
+          }
+        ]
+      },
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/post-compact-context.sh\"",
+            "timeout": 5,
+            "statusMessage": "Re-injecting project context"
           }
         ]
       }
@@ -186,18 +197,6 @@
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/circuit-breaker-cleanup.sh\"",
             "timeout": 1
-          }
-        ]
-      }
-    ],
-    "PostCompact": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/post-compact-context.sh\"",
-            "timeout": 5,
-            "statusMessage": "Re-injecting project context"
           }
         ]
       }

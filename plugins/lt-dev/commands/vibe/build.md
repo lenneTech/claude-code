@@ -25,7 +25,7 @@ disable-model-invocation: true
 ## Description
 Execute IMPLEMENTATION_PLAN.md completely.
 
-**ABORT HANDLING:** If the user wants to cancel at any point (e.g., "abbrechen", "stop", "cancel"), acknowledge: "Build abgebrochen." and stop the process.
+**Abort handling:** If the user wants to cancel at any point (e.g., "abbrechen", "stop", "cancel"), acknowledge: "Build abgebrochen." and stop the process.
 
 ## Prompt
 
@@ -33,15 +33,18 @@ Execute IMPLEMENTATION_PLAN.md completely.
 
 Read the implementation plan (IMPLEMENTATION_PLAN.md by default, or the file given as argument) and SPEC.md.
 
-### CRITICAL: Execution Rules
+### Execution Rules
 
 1. **Follow the order** - Docker → Backend → Types → Frontend → Security Review → QA → Browser Test
 2. **Docker setup first** - Hot reload, DB UI, Mailhog before any code
 3. **Initial user migration** - Create test user for browser testing
 4. **No mock data** - Frontend always uses real backend API
-5. **Checkbox after EVERY task** - Mark `- [x]` immediately after completing each item
-6. **DO NOT STOP** until all checkboxes are checked AND browser testing passes
-7. **Only interrupt** for critical blockers (missing credentials, major ambiguities)
+5. **Checkbox after every task** - Mark `- [x]` immediately after completing each item
+6. **Run to completion** - the run is done when all checkboxes are checked and browser testing passes
+
+### Turn endings
+
+This command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; a finished phase is the cue to start the next one. The run stops only at the handoff this command defines (the closing PR question once every completion criterion is met), when a step is blocked by something only the user can resolve (missing credentials, a spec ambiguity that changes what gets built), or before a destructive or irreversible action that needs confirmation.
 
 ### Package Manager
 
@@ -151,7 +154,7 @@ Role:     admin
 
 ### Completion Criteria
 
-**DO NOT STOP until:**
+**The run is complete when:**
 - All `- [ ]` in IMPLEMENTATION_PLAN.md are `- [x]`
 - All features from SPEC.md are implemented
 - Security review passed (`/lt-dev:backend:sec-review`)
@@ -163,9 +166,7 @@ Role:     admin
 
 **After all criteria met:** Ask the user: "Soll ich eine PR erstellen?" — If yes, create PR with `gh pr create`, then suggest running `/review` for a final PR-level check.
 
-Ultrathink.
-
-**START IMPLEMENTATION NOW. CONTINUE UNTIL 100% COMPLETE INCLUDING BROWSER TESTING.**
+Start the implementation and carry it through to completed browser testing.
 
 ### Troubleshooting
 

@@ -2,8 +2,7 @@
 name: security-reviewer
 description: Autonomous OWASP-aligned security review agent for lenne.tech fullstack projects. Audits 3-layer permission model (@Restricted/@Roles/securityCheck), injection vectors (NoSQL, command, path traversal), XSS (v-html, innerHTML, eval), CSRF (SameSite cookies, CORS), auth patterns (Better Auth, JWT, httpOnly cookies), input validation (class-validator, Valibot), dependency CVEs (npm audit), Docker security, and environment secrets. Produces structured report with severity classification and before/after remediation code.
 model: inherit
-effort: medium
-tools: Bash, Read, Grep, Glob, TodoWrite
+tools: Bash, Read, Grep, Glob
 skills: generating-nest-servers, general-frontend-security, developing-lt-frontend
 memory: project
 ---
@@ -54,16 +53,17 @@ Received from the `/lt-dev:review` command:
 
 ## Progress Tracking
 
+Work through these phases in order; the final report states each phase's outcome:
+
 ```
-Initial TodoWrite:
-[pending] Phase 1: Permission model audit (Backend/Fullstack)
-[pending] Phase 2: Injection prevention (Backend/Fullstack)
-[pending] Phase 3: XSS & frontend security (Frontend/Fullstack)
-[pending] Phase 4: Auth & session security
-[pending] Phase 5: Data exposure & secrets (incl. Layer 5b ErrorCode enforcement)
-[pending] Phase 6: Dependency audit
-[pending] Phase 7: Infrastructure security (Docker, env, CORS)
-[pending] Generate report
+Phase 1: Permission model audit (Backend/Fullstack)
+Phase 2: Injection prevention (Backend/Fullstack)
+Phase 3: XSS & frontend security (Frontend/Fullstack)
+Phase 4: Auth & session security
+Phase 5: Data exposure & secrets (incl. Layer 5b ErrorCode enforcement)
+Phase 6: Dependency audit
+Phase 7: Infrastructure security (Docker, env, CORS)
+Generate report
 ```
 
 ---
@@ -90,7 +90,7 @@ The nest-server 3-layer permission model is the primary security mechanism.
 
 #### Layer 1: @Restricted (Class-Level Fallback)
 
-Every controller MUST have `@Restricted(RoleEnum.ADMIN)`:
+Every controller needs `@Restricted(RoleEnum.ADMIN)`:
 
 ```bash
 # Find controllers without @Restricted
@@ -102,7 +102,7 @@ grep -rn "class.*Controller" src/server/modules/
 
 #### Layer 2: @Roles (Method-Level Override)
 
-Every endpoint MUST have explicit `@Roles()`:
+Every endpoint needs an explicit `@Roles()`:
 
 ```bash
 grep -rn "@(Get|Post|Put|Delete|Patch)\(" src/server/modules/
@@ -114,7 +114,7 @@ grep -rn "@(Get|Post|Put|Delete|Patch)\(" src/server/modules/
 
 #### Layer 3: securityCheck()
 
-Every Model extending `CoreModel`/`CorePersisted` MUST declare `securityCheck(user, force)`. `CoreModel` provides a default `return this` — this is the intentional "no per-Model restrictions" state. A trivial/default `securityCheck` is **legitimate when the Model genuinely has nothing to filter**, but requires active evaluation.
+Every Model extending `CoreModel`/`CorePersisted` needs `securityCheck(user, force)`. `CoreModel` provides a default `return this` — this is the intentional "no per-Model restrictions" state. A trivial/default `securityCheck` is **legitimate when the Model genuinely has nothing to filter**, but requires active evaluation.
 
 ```bash
 # Models that must have securityCheck
@@ -179,7 +179,7 @@ grep -rn "\.aggregate(" src/server/ --include="*.ts" | grep -v ".spec.ts"
 
 #### Layer 4: Native MongoDB Driver Access
 
-Direct native driver access bypasses ALL Mongoose plugins (Tenant, Audit, RoleGuard, Password).
+Direct native driver access bypasses all Mongoose plugins (Tenant, Audit, RoleGuard, Password).
 
 **Type-level protection in the framework:** `ModuleService.mainDbModel` is typed as `SafeModel<T>` which is `Omit<Model<T>, 'collection' | 'db'>`. This means direct `this.mainDbModel.collection` and `this.mainDbModel.db` access **fails at compile time**. Legitimate native access goes through the helpers:
 - `protected getNativeCollection(reason: string): Collection` — requires reason ≥20 chars, throws if shorter, logs `[SECURITY] Native collection access: <reason> (Model: <name>)`
@@ -228,7 +228,7 @@ grep -rn 'Model\.\(create\|find\|findOne\|findById\|updateOne\|updateMany\|delet
 
 Instance of the **Informed-Trade-off Pattern** (same meta-pattern as Layer 3b plain objects and Deprecation-scan phase). Full definition: `generating-nest-servers` skill, `reference/informed-trade-off-pattern.md` and Rule 12. Cross-reference Layer 3b: a single call site can bypass `securityCheck` via both a foreign `@InjectModel` AND a plain-object return path — inspect call sites that trigger both.
 
-**Scope:** This layer audits `@InjectModel` ONLY for Models that do NOT belong to the injecting Service. A Service's OWN primary Model (passed to `super({ mainDbModel })`) is the standard pattern and is not subject to this audit.
+**Scope:** This layer audits `@InjectModel` only for Models that do not belong to the injecting Service. A Service's own primary Model (passed to `super({ mainDbModel })`) is the standard pattern and is not subject to this audit.
 
 For every `@InjectModel` of a Model belonging to a different Service, the usage requires **justification** and **analysis of the corresponding Service** to ensure no processes or security measures are unintentionally bypassed. Direct Model access skips Service-level logic: `securityCheck()`, `@Restricted`/`@Roles` pre-checks, ownership checks (`S_CREATOR`), field-level permissions, secret-field removal, output sanitization, and lifecycle side-effects (hooks, events, audit, notifications).
 
@@ -273,7 +273,7 @@ grep -rn "this\.\(mainDbModel\|[a-zA-Z]*Model\)\.\(findOne\|findById\|find\|crea
 - CrudService-emitted events / audit hooks — downstream consumers may silently miss notifications, cache invalidation, relation updates
 - Ownership pre-checks (`S_CREATOR`)
 
-**Security impact — what is NOT bypassed** (distinguishes from Layer 5 native driver):
+**Security impact — what is not bypassed** (distinguishes from Layer 5 native driver):
 - Mongoose-level plugins (Tenant, Audit, RoleGuard, Password)
 - Model `securityCheck()` — still runs via the interceptor if the return reaches a controller response
 
@@ -306,7 +306,7 @@ Instance of the **Informed-Trade-off Pattern** with elevated risk because `Force
 grep -rn "\.\(getForce\|createForce\|updateForce\|findForce\|findOneForce\|findAndCountForce\|findAndUpdateForce\|deleteForce\|readForce\|aggregateForce\|getRaw\|createRaw\|updateRaw\|findRaw\|findOneRaw\|findAndCountRaw\|findAndUpdateRaw\|deleteRaw\|readRaw\|aggregateRaw\)(" src/server/ --include="*.ts" | grep -v ".spec.ts" | grep -v node_modules
 ```
 
-**Security impact:** results from `*Force`/`*Raw` may contain `password` hashes, `verificationToken`, `passwordResetToken`, `refreshTokens`, `tempTokens`, and any field with `hideField: true` — because `removeSecrets` does NOT run. This is by design for system-internal flows (credential verification needs the password hash; migrations need raw data). The risk materializes when the result travels to a user-facing response.
+**Security impact:** results from `*Force`/`*Raw` may contain `password` hashes, `verificationToken`, `passwordResetToken`, `refreshTokens`, `tempTokens`, and any field with `hideField: true` — because `removeSecrets` does not run. This is by design for system-internal flows (credential verification needs the password hash; migrations need raw data). The risk materializes when the result travels to a user-facing response.
 
 **For every `*Force` or `*Raw` call found, trace the return value:**
 1. **Does the result travel to a controller response?** If yes → **Critical** finding unless the calling method explicitly strips sensitive fields before the return.
@@ -514,7 +514,7 @@ grep "JWT_SECRET\|BETTER_AUTH_SECRET" .env.example
 - [ ] Database connection strings not in source code
 - [ ] JWT/auth secrets >= 64 characters
 - [ ] `.env` in `.gitignore`
-- [ ] `.env.example` has ONLY placeholder values
+- [ ] `.env.example` has only placeholder values
 
 #### Layer 5c: AI Module Secrets (nest-server ≥ 11.26.0, only when `ai` config block present)
 
@@ -530,7 +530,7 @@ grep -E "^[[:space:]]*ai:[[:space:]]*\{" projects/api/src/config.env.ts
 - [ ] Project-registered `AiTool`s route through a `CrudService` with `ctx.serviceOptions` — direct `Model.find()` / `.lean()` inside a tool's `execute()` bypasses `@Restricted` + `securityCheck` and silently leaks fields the calling user is not allowed to see.
 - [ ] Mutating tools set `readonly mutating = true`, destructive tools `readonly destructive = true` — without these flags the confirmation policy is bypassed and the LLM can fire-and-forget side-effects.
 - [ ] If `ai.mcp.oauth: true`: `ai.mcp.oauthSecret` (or `ai.encryptionSecret`) resolves to a 32+ char production value — `CoreAiMcpOAuthService.onModuleInit` throws at boot otherwise. The OAuth access tokens are HMAC-signed with this secret.
-- [ ] If `ai.allowedBaseUrlHosts` is set: verify the list does NOT contain internal-network ranges that could enable an SSRF pivot through an admin-controlled connection (`baseUrl` is admin-only, but a compromised admin should not be able to point the provider at `169.254.169.254`).
+- [ ] If `ai.allowedBaseUrlHosts` is set: verify the list does not contain internal-network ranges that could enable an SSRF pivot through an admin-controlled connection (`baseUrl` is admin-only, but a compromised admin should not be able to point the provider at `169.254.169.254`).
 - [ ] OAuth `client_secret` (when `ai.mcp.oauth: true`): the framework persists and returns it from `CoreAiMcpOAuthService.getClient()` so the SDK middleware can verify it. A project override that strips `client_secret` silently downgrades confidential clients to public clients — flag immediately.
 - [ ] Refresh-token rotation is bound to `client_id` — `rotateRefreshToken(token, clientId)` signature. A project override using the older single-arg signature would let a stolen refresh token rotate into a different client's session — high-severity finding.
 
@@ -611,7 +611,7 @@ cd projects/app && pnpm audit 2>/dev/null || npm audit 2>/dev/null || yarn audit
 - [ ] `.dockerignore` excludes: `.env`, `node_modules`, `.git`
 - [ ] CORS not set to `*` — explicit origin list
 - [ ] Helmet configured (CSP, HSTS, X-Frame-Options, nosniff)
-- [ ] MongoDB port NOT exposed in production compose
+- [ ] MongoDB port not exposed in production compose
 - [ ] Database names differ per environment
 
 ---
@@ -692,15 +692,17 @@ cd projects/app && pnpm audit 2>/dev/null || npm audit 2>/dev/null || yarn audit
 
 ---
 
-## FORBIDDEN During Review
+## Review Guardrails
 
-- **NEVER** suggest removing `@Restricted` to fix test failures
-- **NEVER** suggest weaker `@Roles` to simplify access
-- **NEVER** suggest bypassing `securityCheck()`
-- **NEVER** suggest `localStorage` for token storage
-- **NEVER** classify auth/permission gaps below HIGH
-- **NEVER** accept CORS `*` configuration
-- **NEVER** accept secrets in source code at any severity
+Every remediation you recommend keeps the protection in place:
+
+- Fix test failures without removing `@Restricted`; without it, all endpoints are unprotected by default
+- Recommend `@Roles` that match the intended access, never a weaker role to simplify access
+- Keep `securityCheck()` in force; never suggest bypassing it
+- Recommend httpOnly cookies for token storage, never `localStorage`
+- Classify auth/permission gaps at HIGH or above
+- Reject a CORS `*` configuration and require an explicit origin list
+- Reject secrets in source code at every severity
 
 ## Error Recovery
 

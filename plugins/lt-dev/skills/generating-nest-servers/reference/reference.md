@@ -9,7 +9,7 @@ description: Quick reference for ALL NestJS server development - from simple sin
 > - **npm mode**: `@lenne.tech/nest-server` is an npm dependency. Imports use bare specifiers (`from '@lenne.tech/nest-server'`). Framework source lives in `node_modules/@lenne.tech/nest-server/src/core/...`.
 > - **vendored mode** (`VENDOR.md` exists): framework source is first-class project code at `<api-root>/src/core/...`. Imports use relative paths (`from '../../../core'`). All `node_modules/@lenne.tech/nest-server/src/core/` references in this document substitute for `src/core/`.
 >
-> Generated code MUST match the project mode — mixing will fail at build time.
+> Generated code matches the project mode, because mixing the two fails at build time.
 
 ## Table of Contents
 - [Scope](#scope)
@@ -79,12 +79,12 @@ Use this skill for **ANY** NestJS/nest-server work, no matter how simple or comp
 
 ```
 ☐ 1. Parse specification completely
-☐ 2. Create comprehensive todo list
+☐ 2. Derive the ordered work plan (these phases)
 ☐ 3. Create all SubObjects (dependency order)
 ☐ 4. Create all Objects
 ☐ 5. Create all Modules (dependency order)
 ☐ 6. Handle inheritance (manual edits)
-☐ 7. Update ALL descriptions EVERYWHERE (CRITICAL!)
+☐ 7. Update the descriptions everywhere they appear
     ☐ 7.1. Extract ALL user comments (after //) from specification
     ☐ 7.2. Format descriptions: ENGLISH (DEUTSCH)
     ☐ 7.3. Apply to ALL Module files (Model, CreateInput, UpdateInput)
@@ -180,7 +180,7 @@ lt server addProp --type Module --element <Name> \
 
 ## Description Format
 
-** CRITICAL:** Always extract descriptions from user comments (after `//`) and apply EVERYWHERE!
+**Extract descriptions from user comments (after `//`) and apply them to every file that declares the property.**
 
 **Rule**: `"ENGLISH_DESCRIPTION (DEUTSCHE_BESCHREIBUNG)"`
 
@@ -403,7 +403,7 @@ Final checks before completing:
 ☐ All Objects created
 ☐ All Modules created
 ☐ Properties in alphabetical order
-☐ DESCRIPTIONS - CRITICAL (check ALL):
+☐ Descriptions (check every one):
   ☐ User comments extracted from specification
   ☐ German descriptions -> ENGLISH (DEUTSCH) format
   ☐ English descriptions -> kept as-is
@@ -480,7 +480,7 @@ test/
 
 ```bash
 # 1. Receive specification
-# 2. Parse and create todo list
+# 2. Parse and derive the ordered work plan
 # 3. Execute commands in order:
 
 # SubObjects

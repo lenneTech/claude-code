@@ -1,14 +1,20 @@
 ---
 description: 'Sequential 7-phase production-readiness workflow for lt-stack projects. Phase 1: full test suite (Unit+API+Frontend+Playwright) green with zero skips. Phase 2: flow coverage gap analysis with auto-completion. Phase 3: k6 load test stable for ~10 concurrent users with optimisation ladder. Phase 4: 8-pillar production-readiness audit with auto-remediation. Phase 5: iterative /lt-dev:review until clean. Phase 6: pnpm run check iterate-until-green. Phase 7: local GitLab/GitHub CI pipeline validation. Strict no-skip policy. Configurable --max-iterations cap. Final consolidated report.'
 argument-hint: '[--max-iterations=5] [--max-load-vus=10] [--include-soak] [--base=main] [--ci=gitlab|github|both] [--skip-step=N,M] [--phase=N,M]'
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Bash(jq:*), Bash(yq:*), Bash(cat:*), Bash(ls:*), Bash(test:*), Bash(command:*), Bash(which:*), Bash(curl:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(npm run test\:e2e:*), Bash(pnpm run test\:e2e:*), Bash(yarn run test\:e2e:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), Bash(npx vitest:*), Bash(pnpm audit:*), Bash(npm audit:*), Bash(yarn audit:*), Bash(pnpm update:*), Bash(npm update:*), Bash(yarn upgrade:*), Bash(pnpm add:*), Bash(npm install:*), Bash(yarn add:*), Bash(pnpm install:*), Bash(k6:*), Bash(brew install k6:*), Bash(brew install gitlab-runner:*), Bash(brew install act:*), Bash(gitlab-runner:*), Bash(act:*), Bash(docker:*), Bash(docker compose:*), Bash(docker-compose:*), Bash(lt dev:*), Bash(pkill:*), Bash(pgrep:*), Bash(mkdir:*), Bash(cp:*), Bash(mv:*), Bash(rm:*), Bash(diff:*), Agent, AskUserQuestion, SlashCommand, TodoWrite
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Bash(jq:*), Bash(yq:*), Bash(cat:*), Bash(ls:*), Bash(test:*), Bash(command:*), Bash(which:*), Bash(curl:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(npm run test\:e2e:*), Bash(pnpm run test\:e2e:*), Bash(yarn run test\:e2e:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), Bash(npx vitest:*), Bash(pnpm audit:*), Bash(npm audit:*), Bash(yarn audit:*), Bash(pnpm update:*), Bash(npm update:*), Bash(yarn upgrade:*), Bash(pnpm add:*), Bash(npm install:*), Bash(yarn add:*), Bash(pnpm install:*), Bash(k6:*), Bash(brew install k6:*), Bash(brew install gitlab-runner:*), Bash(brew install act:*), Bash(gitlab-runner:*), Bash(act:*), Bash(docker:*), Bash(docker compose:*), Bash(docker-compose:*), Bash(lt dev:*), Bash(pkill:*), Bash(pgrep:*), Bash(mkdir:*), Bash(cp:*), Bash(mv:*), Bash(rm:*), Bash(diff:*), Agent, AskUserQuestion, Skill, SendMessage
 disable-model-invocation: true
-effort: max
 ---
 
 # Production Ready
 
 End-to-end production-readiness workflow that gates a release on tests, coverage, load capacity, eight production pillars, code review, runnability, and CI pipeline parity — all locally, in a fixed order, with no skips.
+
+> **Effort policy.** No `effort` in the frontmatter: the command runs at the session's level, so a developer who
+> raises effort for a release it considers risky gets it here too. This gate cannot run in an eval (it needs a real
+> stack), so the decision rests on the work it consists of: in every lt-dev measurement of that work (Opus 5.5,
+> `plugins/lt-dev/evals`, 2026-09-25), code review of obvious and subtle defects, planning and module or feature
+> builds, the default `medium` reached the quality of `high` and `xhigh`, which took 1.3 to more than 3 times as long. Pin a
+> level only when a measurement shows it adds quality.
 
 ## When to Use This Command
 
@@ -33,12 +39,12 @@ End-to-end production-readiness workflow that gates a release on tests, coverage
 
 ## Architecture
 
-This command is the **direct orchestrator**. Plugin sub-agents cannot spawn sub-sub-agents, so the command is the parallelisation / sequencing point.
+This command is the **direct orchestrator**. The lt-dev agents carry no `Agent` tool and do not spawn further agents, so the command is the parallelisation / sequencing point.
 
 ```
 /lt-dev:production-ready (this command)
 │
-│  Phase 0: Argument parsing, stack detection, TodoWrite scaffold
+│  Phase 0: Argument parsing, stack detection, phase plan
 │
 │  Phase 1: Full test suite (Unit + API + Frontend + Playwright)         ──┐
 │  Phase 2: Flow coverage gap analysis & completion                        │
@@ -72,6 +78,10 @@ Parse arguments from `$ARGUMENTS`:
 - **`--skip-step=N[,M]`**: bypass listed phases for this run (e.g. `--skip-step=7` when CI cannot be reproduced locally). **Skipped phases are clearly flagged in the final report — they do NOT count as PASS.**
 - **`--phase=N[,M]`**: only run the listed phases (advanced; for re-running a single phase after a fix)
 
+### Turn endings
+
+After the Phase 0 scope confirmation, this command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; a passed phase is the cue to start the next one. The run stops only at the handoff points this command defines (the Phase 0 scope question, the hard stops listed in the Behaviour Summary, the Phase 8 ship-or-optimize gate, and the closing option question after the Final Consolidated Report), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation.
+
 ### Phase 0 — Setup
 
 1. **Confirm scope with the user before starting** if `--phase` and `--skip-step` were both omitted. Use `AskUserQuestion` to confirm:
@@ -79,7 +89,7 @@ Parse arguments from `$ARGUMENTS`:
    - If `Configure`, ask for `--max-iterations`, `--include-soak`, and `--ci` overrides.
    - If `Cancel`, exit cleanly.
 2. **Detect the stack** (backend / frontend / fullstack) and the package manager.
-3. **Scaffold TodoWrite** with the 7 phases (mark skipped phases as `pending` with a clear `(skipped)` suffix in `content`).
+3. **Lay out the phase plan.** Work through these phases in order; the final report states each phase's outcome. Skipped phases stay in the plan with a clear `(skipped)` marker.
 4. **Snapshot HEAD** for after-the-fact diff: `git rev-parse HEAD`. Save to scratch.
 
 ### Phase 1 — Full Test Suite
@@ -107,6 +117,8 @@ Agent tool with subagent_type "lt-dev:production-readiness-orchestrator":
 ```
 
 If the agent returns `Verdict: FAIL`, **stop the workflow** and surface the report. Do not proceed to Phase 2 — a project that cannot get its test suite green is not ready for any further hardening work.
+
+The orchestrator's final message is its report, not proof that the phase is done; this holds for every phase it runs below. Compare it against the phase goal; when items are still open and no blocker is named, resume the same agent via `SendMessage` to its agent id, naming the open items. After two or three continuations on the same phase, stop and report the gap instead.
 
 ### Phase 2 — Flow Coverage
 
@@ -186,7 +198,7 @@ This phase is orchestrated by the command directly because sub-agents cannot inv
 
 Loop with `iteration = 1`:
 
-1. Invoke `/lt-dev:review --base=<base-branch>` via the SlashCommand tool. Capture the resulting report.
+1. Invoke the `lt-dev:review` skill via the `Skill` tool with arguments `--base=<base-branch>`. Capture the resulting report.
 2. Parse the report for blockers:
    - Any `❌` / `BLOCK` markers in the unified report
    - Any per-reviewer `Critical` or `High`-severity findings still open after Phase 6 of `/lt-dev:review`
@@ -197,7 +209,7 @@ Loop with `iteration = 1`:
 
 The expectation: review → apply → review → apply, converging to clean within the iteration cap.
 
-If `SlashCommand` is not available in this runtime, fall back to spawning the same reviewers directly via `Agent` (mirror the parallel pattern from `/lt-dev:review` Phase 3A/3B). This is a degraded mode — record it in the final report.
+If the `Skill` tool is not available in this runtime, fall back to spawning the same reviewers directly via `Agent` (mirror the parallel pattern from `/lt-dev:review` Phase 3A/3B). This is a degraded mode — record it in the final report.
 
 ### Phase 6 — `pnpm run check` Iterate-Until-Green
 
@@ -268,7 +280,7 @@ If the skill returns `boot_failed` or `stall_guard_triggered`, the global verdic
 
 ### Final Consolidated Report
 
-Concatenate the Phase 1–8 reports (Phase 5 is the SlashCommand output's executive summary, Phase 8 is the validating-changes-in-browser skill's final block), then emit:
+Concatenate the Phase 1–8 reports (Phase 5 is the `lt-dev:review` executive summary, Phase 8 is the validating-changes-in-browser skill's final block), then emit:
 
 ```
 # Production Readiness — Final Report
@@ -326,6 +338,6 @@ This mirrors the closing pattern of `/lt-dev:review`.
 
 ## Limitations
 
-- Phase 5 requires the `SlashCommand` tool. If the runtime forbids it, the command falls back to direct Agent spawning of the reviewer set — this is a degraded mode and is recorded in the final report.
+- Phase 5 requires the `Skill` tool. If the runtime forbids it, the command falls back to direct Agent spawning of the reviewer set — this is a degraded mode and is recorded in the final report.
 - Phase 7 depends on Docker. On machines without Docker, the agent classifies the phase as `BLOCKED — runner toolchain unavailable` and the global verdict cannot be `READY-FOR-PRODUCTION`.
 - This command does not deploy. It only proves the project is ready to be deployed.

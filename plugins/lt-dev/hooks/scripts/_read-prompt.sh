@@ -15,7 +15,7 @@ if [ ! -t 0 ]; then
   if command -v jq >/dev/null 2>&1; then
     PROMPT=$(printf '%s' "$_hook_input" | jq -r '.prompt // empty' 2>/dev/null)
   else
-    PROMPT=$(printf '%s' "$_hook_input" | tr -d '\n' | grep -o '"prompt"[[:space:]]*:[[:space:]]*"\(\\.\|[^"\\]\)*"' | head -1 | sed 's/^"prompt"[[:space:]]*:[[:space:]]*"//;s/"$//')
+    PROMPT=$(printf '%s' "$_hook_input" | tr -d '\n' | grep -oE '"prompt"[[:space:]]*:[[:space:]]*"(\\.|[^"\\])*"' | head -1 | sed 's/^"prompt"[[:space:]]*:[[:space:]]*"//;s/"$//')
     PROMPT=$(printf '%b' "${PROMPT//\\\"/\"}")
   fi
   unset _hook_input

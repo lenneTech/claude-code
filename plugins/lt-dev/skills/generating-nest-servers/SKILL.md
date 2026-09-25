@@ -20,6 +20,7 @@ paths:
 - **`securityCheck()` returning `this` unchanged is a red flag** — A trivial `return this;` implementation means no permission boundary exists on the model. The decorator system requires `@Restricted`/`@Roles` + an actual check (usually filtering sensitive fields or verifying ownership). If the model genuinely has nothing to restrict, add a comment explaining why — otherwise it will be flagged in every security review.
 - **`--controller` flag generates REST — even in GraphQL projects** — `lt server object <name> --controller` produces a REST controller by default. For GraphQL projects, use `--resolver` instead. The CLI does not auto-detect from the project's existing pattern.
 - **`CrudService` is the default — always extend it** — New modules often get hand-rolled service classes instead of `extends CrudService`. The framework's pagination, filtering, population, and permission integration all depend on CrudService inheritance. Hand-rolled services break `/api/<entity>/find` queries silently for consumers.
+- **Module models extend the project's `PersistenceModel`, objects extend `CoreModel`** — `lt server module` generates `export class X extends PersistenceModel` with `import { PersistenceModel } from '../../common/models/persistence.model'` (the project base, itself `extends CorePersistenceModel`), which carries id, timestamps and createdBy/updatedBy. `lt server object` generates `extends CoreModel` for embedded, non-persisted types. A module model on `CoreModel` loses those persistence fields.
 - **Alphabetical property order is enforced in reviews** — Class fields, DTO properties, and model definitions are reviewed for alphabetical ordering. Generated code from `lt server` usually respects this; hand-edited additions often break it. Run a final pass before committing.
 
 ## Ecosystem Context
@@ -84,7 +85,7 @@ project/
 
 When starting the API for manual testing, debugging, or E2E tests: **prefer `lt dev up`** over `nest start` / `pnpm dev` directly. `lt dev up` serves the API under a stable HTTPS URL (`https://api.<slug>.localhost`) via Caddy, sets `BASE_URL`/`APP_URL`/`NSC__MONGOOSE__URI` automatically, and detaches into `<root>/.lt-dev/api.log`. Stop with `lt dev down`. For non-lt-projects (or when explicitly requested): use `run_in_background: true` and `pkill -f "nest start"` afterwards. Leaving dev servers orphaned blocks the Claude Code session ("Unfurling..."). Full rules: `managing-dev-servers` skill.
 
-## CRITICAL RULES
+## Core Rules
 
 ### CLI-First Development
 
@@ -107,13 +108,15 @@ lt server addProp --type Module --element User --noConfirm --skipLint \
 
 **Complete flag reference: [reference/configuration.md](${CLAUDE_SKILL_DIR}/reference/configuration.md#property-flags-reference)**
 
-### Security (NON-NEGOTIABLE)
+### Security
 
-1. **NEVER** remove/weaken `@Restricted()` or `@Roles()` decorators
-2. **NEVER** modify `securityCheck()` to bypass security
-3. **ALWAYS** analyze permissions BEFORE writing tests
-4. **ALWAYS** test with the LEAST privileged authorized user
-5. **VERIFY** decorator coverage with `lt server permissions` after creating modules
+These rules have no exceptions, because the decorators and `securityCheck()` are the access control itself; a weakened one exposes data to every caller.
+
+1. Never remove or weaken `@Restricted()` or `@Roles()` decorators
+2. Never modify `securityCheck()` to bypass security
+3. Analyze permissions before writing tests, so each test uses a user the rules actually admit
+4. Test with the least privileged authorized user, so a test cannot pass only because an admin was used
+5. Verify decorator coverage with `lt server permissions` after creating modules
 
 **Complete security rules: [reference/security-rules.md](${CLAUDE_SKILL_DIR}/reference/security-rules.md)** | **OWASP checklist: [reference/owasp-checklist.md](${CLAUDE_SKILL_DIR}/reference/owasp-checklist.md)**
 
@@ -158,7 +161,7 @@ await this.userService.findOne({ id: userId }, { currentUser });
 - Direct query + framework helper: `const doc = await this.mainDbModel.findById(id).exec(); return this.processResult(doc, serviceOptions);` (`processResult` runs population + `prepareOutput`/secret removal but requires YOU to authorize upstream)
 - Aggregation with hydration: `const raw = await this.mainDbModel.aggregate(pipeline); return raw.map(r => this.mainModelConstructor.map(r));` or `raw.map(r => this.mainDbModel.hydrate(r))`.
 
-**`Force` and `Raw` variants — Rule 15:** every CrudService method has `*Force` (disables `checkRights` + `removeSecrets` + RoleGuard) and `*Raw` (additionally disables `prepareInput`/`prepareOutput` entirely) variants. Use `getForce`/`findForce`/`createForce`/etc. for system-internal flows where no user exists. **Results may contain passwords, tokens, and hidden fields** — they MUST NOT reach a user response without explicit field stripping. `*Raw` returns closest-to-DB shape, no translations, no type mapping. See `reference/security-rules.md` Rule 15.
+**`Force` and `Raw` variants — Rule 15:** every CrudService method has `*Force` (disables `checkRights` + `removeSecrets` + RoleGuard) and `*Raw` (additionally disables `prepareInput`/`prepareOutput` entirely) variants. Use `getForce`/`findForce`/`createForce`/etc. for system-internal flows where no user exists. **Results may contain passwords, tokens, and hidden fields** — they must not reach a user response without explicit field stripping, because these variants skip `removeSecrets`. `*Raw` returns closest-to-DB shape, no translations, no type mapping. See `reference/security-rules.md` Rule 15.
 
 **Native driver access — Rules 5-6:** `mainDbModel.collection` and `mainDbModel.db` are blocked at the type level via `SafeModel<T>`. Use `this.getNativeCollection(reason)` or `this.getNativeConnection(reason)` — both require ≥20-char reasons and log `[SECURITY]` warnings. Bypasses ALL Mongoose plugins.
 
@@ -172,9 +175,9 @@ await this.userService.findOne({ id: userId }, { currentUser });
 
 **Details: [reference/framework-guide.md](${CLAUDE_SKILL_DIR}/reference/framework-guide.md#prefer-crudservice-over-direct-model-access)**
 
-### Error Handling — Always Use `ErrorCode` (NON-NEGOTIABLE)
+### Error Handling — Always Use `ErrorCode`
 
-**NEVER throw NestJS exceptions with raw string messages.** Every project MUST use the framework's structured `ErrorCode` registry (`src/core/modules/error-code/`).
+**Throw NestJS exceptions with an `ErrorCode`, not a raw string message.** Every project uses the framework's structured `ErrorCode` registry (`src/core/modules/error-code/`), because a raw string carries no stable code for the client and cannot be translated.
 
 ```typescript
 // WRONG — raw string, no code, not translatable
@@ -250,15 +253,17 @@ lt server permissions --failOnWarnings  # CI/CD mode
 5. Then proceed to frontend (E2E tests first)
 ```
 
-### Detect Test Framework First (CRITICAL)
+### Detect Test Framework First
 
-**BEFORE writing or running ANY test**, detect which framework and import style the project uses. Vitest vs. Jest, plus `globals: true/false` in `vitest.config.ts`, determines whether `describe`/`it`/`expect` must be imported.
+**Before writing or running any test**, detect which framework and import style the project uses. Vitest vs. Jest, plus `globals: true/false` in `vitest.config.ts`, determines whether `describe`/`it`/`expect` must be imported.
 
 **Details: [reference/workflow-process.md](${CLAUDE_SKILL_DIR}/reference/workflow-process.md#phase-7-api-test-creation)**
 
 For full TDD workflow orchestration, use `building-stories-with-tdd` skill.
 
-### Test Cleanup (CRITICAL)
+### Test Cleanup
+
+Every test run removes what it created, so the next run starts from a clean database:
 
 ```typescript
 afterAll(async () => {
@@ -269,7 +274,7 @@ afterAll(async () => {
 
 **Use separate test database:** `app-test` instead of `app-dev`
 
-### E2E Database Isolation — the shared-DB 401 flake (CRITICAL)
+### E2E Database Isolation — the shared-DB 401 flake
 
 E2e specs run in **parallel forks** sharing **one** database. A spec that clears a GLOBAL collection
 (BetterAuth's `jwks` signing keys, `users`, `session`, `ratelimitstates`, …) corrupts every parallel
@@ -286,15 +291,15 @@ if (process.env.MONGODB_URI && !/-w\d+(\?|$)/.test(process.env.MONGODB_URI)) {
 }
 ```
 
-**And** the `db-lifecycle.reporter.ts` cleanup of other runs' DBs MUST be `isPidAlive` + age guarded —
+**And** the `db-lifecycle.reporter.ts` cleanup of other runs' DBs must be `isPidAlive` + age guarded —
 an unconditional pattern-drop wipes a *concurrent* run's live databases.
 
 **Full mechanism, cross-run-safety proof, anti-patterns, and a review checklist:
 [reference/e2e-database-isolation.md](${CLAUDE_SKILL_DIR}/reference/e2e-database-isolation.md)**
 
-## Framework Source Files (MUST READ before guessing)
+## Framework Source Files (read before guessing)
 
-**ALWAYS read actual source code** before guessing framework behavior. lenne.tech projects ship the framework source in one of two consumption modes:
+**Read the actual source code** before assuming framework behavior; code written against a guessed API fails at runtime or silently skips framework logic. lenne.tech projects ship the framework source in one of two consumption modes:
 
 - **npm mode** — `@lenne.tech/nest-server` installed as a dependency. Source lives in `node_modules/@lenne.tech/nest-server/`.
 - **vendored mode** — `src/core/VENDOR.md` exists in the api project. Source lives DIRECTLY in `<api-root>/src/core/` as first-class project code (no `@lenne.tech/nest-server` npm dependency). Detect via `test -f <api-root>/src/core/VENDOR.md`.
@@ -306,7 +311,7 @@ All paths in the table below use the npm-mode base. **In vendored projects, subs
 - `node_modules/@lenne.tech/nest-server/FRAMEWORK-API.md` → same concept in upstream repo; vendored projects may copy it into `src/core/` during sync, else consult the upstream GitHub repo at the baseline tag recorded in `VENDOR.md`.
 - `node_modules/@lenne.tech/nest-server/.claude/rules/` → not shipped into vendored projects; read from the upstream repo if needed.
 
-Generated imports MUST match the project mode:
+Generated imports match the project mode, since the other mode's path does not resolve:
 - npm: `import { CrudService } from '@lenne.tech/nest-server';`
 - vendored: `import { CrudService } from '../../../core';` (relative depth varies by file location)
 
@@ -327,7 +332,7 @@ Generated imports MUST match the project mode:
 
 - [ ] Read CrudService before modifying any Service
 - [ ] **Prefer CrudService methods** (`this.findOne()`, `this.find()`, `this.update()`) over direct model access (`this.someModel.findOne()`, `mainDbModel.find()`) — direct model access only with comment explaining why
-- [ ] NEVER blindly pass all serviceOptions to other Services (only pass `currentUser`)
+- [ ] Pass only `currentUser` to other Services, not the whole serviceOptions object (options such as `inputType` can be wrong for the callee)
 - [ ] Check if CrudService already provides needed functionality
 - [ ] **ALL exceptions use `ErrorCode`** from `src/server/common/errors/project-errors.ts` — zero raw-string `throw new XxxException('...')` outside tests
 - [ ] Read `FRAMEWORK-API.md` for quick overview of available interfaces and methods
@@ -352,7 +357,7 @@ against `/meta.commit` to detect a drifted / stale deployment.
 
 ## Workflow (7 Phases)
 
-1. **Analysis & Planning** - Parse spec, create todo list
+1. **Analysis & Planning** - Parse spec, derive the ordered work plan (these phases)
 2. **SubObject Creation** - Create in dependency order
 3. **Module Creation** - Create with all properties
 4. **Inheritance Handling** - Update extends, CreateInput must include parent fields

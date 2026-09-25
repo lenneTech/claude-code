@@ -37,7 +37,7 @@ test -f projects/api/src/core/VENDOR.md || test -f packages/api/src/core/VENDOR.
   Imports in generated code use the bare specifier
   `from '@lenne.tech/nest-server'`.
 
-Generated tests and implementation MUST match the project's mode. Mixing
+Generated tests and implementation match the project's mode. Mixing
 vendored files with a bare-specifier import (or vice-versa) will fail at
 build/test time.
 
@@ -50,7 +50,7 @@ build/test time.
    - List all acceptance criteria
    - Note any technical constraints
 
-2. ** VERIFY existing API structure - NEVER assume!**
+2. ** Verify the existing API structure instead of assuming it**
    - **Read actual Controller files** to verify endpoints exist:
      - Check HTTP methods (GET, POST, PUT, DELETE)
      - Verify exact endpoint paths (e.g., `/api/users` vs `/users`)
@@ -71,18 +71,18 @@ build/test time.
    - Look for conflicting requirements
    - Check for unclear specifications
    - Verify if requirements match existing architecture
-   - **Verify assumed endpoints actually exist!**
+   - **Verify that assumed endpoints actually exist.**
 
-4. **Ask developer for clarification IMMEDIATELY if needed**
+4. **Ask the developer for clarification immediately if needed**
    - Don't assume or guess requirements
    - Don't assume endpoints exist without verification
    - Clarify contradictions BEFORE writing tests
    - Get confirmation on architectural decisions
    - Verify security/permission requirements
 
-** CRITICAL:** If you find ANY contradictions or ambiguities, STOP and use AskUserQuestion to clarify BEFORE proceeding to Step 2.
+** Contradictions or ambiguities:** if you find any, stop and use AskUserQuestion to clarify before proceeding to Step 2; a test written on a guessed requirement encodes the guess.
 
-** CRITICAL:** If you assume an endpoint exists but didn't verify it in the code, you are doing it WRONG! Always read the actual controller/resolver files first.
+** Unverified endpoints:** an endpoint you have not seen in the code may not exist. Read the actual controller/resolver files first.
 
 **Step 1 Checklist:**
 - [ ] Story completely read and understood
@@ -95,9 +95,9 @@ build/test time.
 
 ## Step 2: Create Story Test
 
-** BEFORE Creating New Tests - Check Existing Tests First!**
+**Before creating new tests, check existing tests first.**
 
-**CRITICAL:** Before writing ANY new test, verify that the functionality isn't already tested!
+Before writing any new test, verify that the functionality isn't already tested, so the suite does not grow duplicates.
 
 1. **Search existing tests** in `tests/` directory:
    - Look for tests covering the same endpoints/mutations
@@ -110,11 +110,11 @@ build/test time.
    -  **Update** existing tests if the story changes expected behavior
 
 3. **If story changes require modifying existing tests:**
-   -  **ALWAYS inform the user** about which tests will be modified and why
+   -  **Inform the user** about which tests will be modified and why
    -  **Only modify tests** when story requirements explicitly change the expected behavior
-   -  **NEVER modify tests just because they fail** - failing tests indicate bugs in implementation!
+   -  **Never modify tests just because they fail** - a failing test indicates a bug in the implementation, and editing it hides the bug
 
-** CRITICAL RULE: Tests Protect Against Unintended Side Effects!**
+** Rule: Tests Protect Against Unintended Side Effects**
 
 ```
 Test fails after your changes?
@@ -155,19 +155,19 @@ expect(response.status).toBe(401); // Changed from 200 to make test pass
 
 ---
 
-** CRITICAL: ALWAYS TEST THROUGH API - NEVER DIRECT SERVICE/DB ACCESS! **
+** Test through the API, never through direct Service/DB access **
 
 **FUNDAMENTAL RULE - Read This First:**
 
-Tests MUST go through REST/GraphQL interfaces (Controller/Resolver) using TestHelper. Direct Service or Database access in test logic makes tests WORTHLESS because they bypass the actual API layer that users interact with.
+Tests go through REST/GraphQL interfaces (Controller/Resolver) using TestHelper. Direct Service or Database access in test logic makes tests worthless because they bypass the actual API layer that users interact with.
 
-** ALWAYS DO:**
+** Do:**
 -  Test via REST endpoints: `testHelper.rest('/api/users', { method: 'POST', ... })`
 -  Test via GraphQL: `testHelper.graphQl('mutation { createUser(...) }', { ... })`
 -  Use TestHelper for ALL functional testing
 -  Test the complete chain: Controller/Resolver -> Guards -> Service -> Database
 
-** NEVER DO:**
+** Do not:**
 -  Direct Service calls: `userService.create()` - bypasses authentication!
 -  Direct DB queries in tests: `db.collection('users').findOne()` - bypasses business logic!
 -  Service instantiation: `new UserService()` - bypasses dependency injection!
@@ -192,12 +192,12 @@ Direct database access is ONLY allowed in these specific cases:
 ** Ask Yourself First:**
 Before using direct DB/Service access, ask:
 1. Can I do this via an API endpoint? -> If YES, use the API!
-2. Am I testing functionality? -> If YES, MUST use API!
+2. Am I testing functionality? -> If YES, use the API.
 3. Is this just setup/cleanup? -> Only then consider direct access
 4. Am I setting roles/verified status? -> Allowed exception
 5. Am I reading data that has NO API endpoint? -> Allowed, but prefer API
 
-** Still NEVER Allowed - Even in Setup:**
+** Not allowed, even in setup:**
 -  Testing functionality via Services
 -  Creating test data via Services when API exists
 -  Verifying results via DB when API query exists
@@ -279,7 +279,7 @@ describe('User Registration Story', () => {
 
 ** BEFORE Writing Any Tests - Study the TestHelper:**
 
-**CRITICAL: Read the TestHelper source file to understand all available features!**
+**Read the TestHelper source file to learn all available features** before writing helpers it already provides.
 
 ```
 node_modules/@lenne.tech/nest-server/src/test/test.helper.ts
@@ -311,7 +311,7 @@ mkdir -p tests/stories
 
 **📁 File Organization - Avoid Too Many Files:**
 
-**IMPORTANT:** Before creating a NEW test file, check if existing test files can be extended!
+Before creating a new test file, check whether an existing test file can be extended.
 
 Story tests typically require significant setup (TestHelper, database connections, test users, etc.), so files naturally grow larger. A typical story test file ranges from 400-800 lines, with complex features reaching 1000+ lines.
 
@@ -343,7 +343,7 @@ tests/stories/
 
 ** BEFORE Writing Tests - Verify Your Assumptions:**
 
-**CRITICAL: Only write tests for endpoints that you have VERIFIED exist in the code!**
+**Only write tests for endpoints you have verified exist in the code.**
 
 1. **For REST endpoints:**
    ```typescript
@@ -450,9 +450,9 @@ describe('User Registration Story', () => {
 });
 ```
 
-** CRITICAL: Test Data Management for Parallel Execution**
+** Test Data Management for Parallel Execution**
 
-**ALWAYS follow these rules to ensure tests can run in parallel safely!**
+**Follow these rules so tests can run in parallel safely.**
 
 Tests run in parallel, so improper test data management causes:
 - Conflicts between parallel tests (duplicate keys, race conditions)
@@ -478,7 +478,7 @@ Tests run in parallel, so improper test data management causes:
 
    **Why:** Configuration in `src/config.env.ts` uses `e2e.brevo.exclude` to filter out @test.com emails from external services. The random suffix ensures uniqueness even when multiple tests run simultaneously.
 
-2. **NEVER Reuse Same Data Across Test Files**
+2. **Never Reuse the Same Data Across Test Files**
    ```typescript
    //  WRONG: user-story-1.test.ts and user-story-2.test.ts both use:
    const email = 'admin@test.com';  //  Conflict when running in parallel!
@@ -527,7 +527,7 @@ Tests run in parallel, so improper test data management causes:
 
    **Why:** Leftover data causes side effects in future test runs.
 
-5. **NEVER Use Fixed Port Numbers**
+5. **Never Use Fixed Port Numbers**
    ```typescript
    //  WRONG: Fixed port causes conflicts in parallel tests
    await app.listen(3000);
@@ -652,9 +652,9 @@ pnpm test -- tests/stories/your-story.story.test.ts
    - Missing implementation (expected)
    - Test errors/bugs (needs fixing)
    - Misunderstood requirements (needs clarification)
-   - Pre-existing failures unrelated to current changes (MUST STILL BE FIXED)
+   - Pre-existing failures unrelated to current changes (these are fixed too)
 
-**CRITICAL: Failing tests are ALWAYS a problem.** Every failing test must be investigated and its root cause fixed — even if the failure predates the current changes or seems unrelated to the current task. A green test suite is a non-negotiable prerequisite.
+**Every failing test is a problem.** Every failing test must be investigated and its root cause fixed — even if the failure predates the current changes or seems unrelated to the current task. A green test suite is a non-negotiable prerequisite.
 
 **Decision point:**
 - If test has bugs/errors -> Go to Step 3a
@@ -713,11 +713,11 @@ See **reference.md** for detailed debugging instructions and examples.
      - Study MapAndValidatePipe for validation logic (automatically activated via CoreModule - see `node_modules/@lenne.tech/nest-server/src/core/common/pipes/map-and-validate.pipe.ts`)
    - **Review existing similar implementations** - don't assume, verify!
 
-   ** CRITICAL:** Don't assume methods or properties exist - READ THE CODE to verify!
+   Don't assume methods or properties exist - read the code to verify.
 
-2a. ** CRITICAL: Property Descriptions with German Comments**
+2a. ** Property Descriptions with German Comments**
 
-   **When user provides German comments/descriptions for properties, you MUST preserve them correctly!**
+   **When the user provides German comments/descriptions for properties, preserve their wording** (they may be predefined terms that external systems reference; see [description-management.md](../generating-nest-servers/reference/description-management.md)).
 
    **Rule: `ENGLISH (GERMAN)` format**
    - German: `// Produktname` -> Description: `'Product name (Produktname)'`
@@ -729,8 +729,8 @@ See **reference.md** for detailed debugging instructions and examples.
    2.  Translate German to English, keep German in parentheses
    3.  Fix spelling errors but preserve exact wording
    4.  Apply SAME description to: Model, CreateInput, UpdateInput, @ObjectType, @InputType
-   5.  NEVER change wording (e.g., `Straße` -> `Straßenname` is WRONG!)
-   6.  NEVER skip German original in parentheses
+   5.  Keep the wording (e.g., `Straße` -> `Straßenname` is wrong)
+   6.  Keep the German original in parentheses
 
    **Example from user requirements:**
    ```
@@ -758,9 +758,9 @@ See **reference.md** for detailed debugging instructions and examples.
 
    **See `nest-server-generator` skill -> `description-management.md` for complete details.**
 
-3. ** CRITICAL: ServiceOptions when calling other Services:**
+3. ** ServiceOptions when calling other Services:**
 
-   **NEVER blindly pass all ServiceOptions when one Service calls another!**
+   **Do not blindly pass the whole ServiceOptions object when one Service calls another**; options such as `inputType` can be wrong for the callee.
 
    When implementing Service methods that call other Services, analyze which options to pass:
 
@@ -809,9 +809,9 @@ See **reference.md** for detailed debugging instructions and examples.
    - Follow established conventions
    - Reuse existing utilities
 
-4a. ** IMPORTANT: Guards in Controllers**
+4a. ** Guards in Controllers**
 
-   **DO NOT manually add `@UseGuards(AuthGuard(AuthGuardStrategy.JWT))` - it's automatically activated by `@Roles()`!**
+   **Leave `@UseGuards(AuthGuard(AuthGuardStrategy.JWT))` out: `@Roles()` activates it automatically.**
 
    ```typescript
    //  CORRECT: @Roles automatically activates JWT guard
@@ -843,15 +843,15 @@ See **reference.md** for detailed debugging instructions and examples.
    - Adding `@UseGuards(AuthGuard(...))` manually is redundant and creates duplicate guards
    - Existing controllers don't use manual guards - follow this pattern
 
-5. ** IMPORTANT: Database Indexes**
+5. ** Database Indexes**
 
-   **Always define indexes directly in the @UnifiedField decorator via mongoose option!**
+   **Define indexes directly in the @UnifiedField decorator via the mongoose option.**
 
    **Quick Guidelines:**
    - Fields used in queries -> Add `mongoose: { index: true, type: String }`
    - Foreign keys -> Add index
    - Unique fields -> Add `mongoose: { index: true, unique: true, type: String }`
-   -  NEVER define indexes separately in schema files
+   -  Do not define indexes separately in schema files
 
    ** For detailed index patterns and examples, see: `database-indexes.md`**
 
@@ -880,11 +880,11 @@ pnpm test
  **Some tests still fail?**
 - Return to Step 3 (analyze failures)
 - Continue iteration
-- **CRITICAL:** This includes ALL tests — not just the ones you wrote. Pre-existing failures MUST also be fixed. A green test suite is non-negotiable.
+- This includes all tests, not just the ones you wrote. Pre-existing failures are fixed too; a green test suite is non-negotiable.
 
 ## Step 5a: Code Quality & Refactoring Check
 
-**BEFORE marking the task as complete, perform a code quality review!**
+**Before marking the task as complete, perform a code quality review.**
 
 Once all tests are passing, analyze your implementation for code quality issues:
 
@@ -925,9 +925,9 @@ Once all tests are passing, analyze your implementation for code quality issues:
 
 ### 4b. Security Review
 
-** CRITICAL: Perform security review before final testing!**
+** Perform the security review before final testing.**
 
-**ALWAYS review all code changes for security vulnerabilities.**
+**Review all code changes for security vulnerabilities**, because final testing only proves what the tests cover.
 
 #### Run `/lt-dev:review` (MANDATORY)
 
@@ -984,7 +984,7 @@ Code duplication detected?
 
 ### 6. Run Tests After Refactoring & Security Review
 
-**CRITICAL: After any refactoring, adding indexes, or security fixes (NODE_ENV=e2e via package.json scripts):**
+**After any refactoring, adding indexes, or security fixes, rerun the suite (NODE_ENV=e2e via package.json scripts):**
 
 ```bash
 pnpm test

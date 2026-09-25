@@ -1,5 +1,5 @@
 ---
-description: Read SHOWCASE.md, fetch customer feedback and web research, then create and publish a detailed showcase on showroom.lenne.tech with modern interactive content blocks
+description: Read SHOWCASE.md, gather the account's company context, customer feedback and web research, then create and publish a detailed showcase on showroom.lenne.tech with modern interactive content blocks
 argument-hint: "[project-path]"
 allowed-tools: Read, Grep, Glob, Bash(curl:*), Bash(ls:*), Bash(git:*), Bash(node:*), Bash(mkdir:*), Agent, WebFetch, WebSearch, mcp__plugin_lt-showroom_showroom-api__*
 disable-model-invocation: true
@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 # /showroom:create — Create and Publish a Showcase
 
-This command runs Phase 4 (showcase creation) and Phase 5 (presentation) of the showcase workflow. It reads `SHOWCASE.md` from the project, enriches it with customer feedback and web research, then creates a detailed showcase on showroom.lenne.tech with 8-12 modern content blocks.
+This command runs Phase 4 (showcase creation) and Phase 5 (presentation) of the showcase workflow. It reads `SHOWCASE.md` from the project, enriches it with the account's company context, customer feedback and web research, then creates a detailed showcase on showroom.lenne.tech with 8-12 modern content blocks.
 
 ## When to Use This Command
 
@@ -23,7 +23,6 @@ This command runs Phase 4 (showcase creation) and Phase 5 (presentation) of the 
 | `/lt-showroom:showroom:screenshot` | Capture feature screenshots from the running app |
 | `/lt-showroom:showroom:create` | Publish the showcase to showroom.lenne.tech |
 | `/lt-showroom:showroom:update` | Re-analyze after source changes and update the showcase |
-| `/lt-showroom:showroom:sync-schema` | Refresh content-block schemas from the platform |
 
 **Related Skills:**
 
@@ -38,7 +37,7 @@ This command runs Phase 4 (showcase creation) and Phase 5 (presentation) of the 
 
 - `SHOWCASE.md` must exist in the project root (or `docs/showcase/SHOWCASE.md`)
 - Ideally: screenshots exist in `docs/showcase/screenshots/`
-- Access to showroom.lenne.tech API (MCP or REST)
+- An account on the Showroom platform (MCP or REST access)
 
 ## Workflow
 
@@ -55,16 +54,34 @@ Parse the full SHOWCASE.md file:
 - Extract all sections (overview, tech stack, features, architecture, highlights, results)
 - Note which screenshots exist in `docs/showcase/screenshots/`
 
-### Step 3: Fetch Customer Feedback
+### Step 3: Load Company Context and Customer Feedback
 
-Use WebFetch to check for matching customer feedback:
+Call `get_showroom_context`. It returns the company settings (name, logo, meeting booking URL), the knowledge base
+and the platform's global blocks; write the showcase from that context.
 
+Then find where the company publishes its customer testimonials, in this order: the organization's own conventions
+(a skill from its internal plugin, or its CLAUDE.md), a knowledge base entry in category `portfolio` that holds the
+quotes or links to their page, otherwise ask the user. No source means no testimonial block.
+
+Pull the raw HTML of the references page and read the quotes from it. A summarizing fetch (WebFetch) paraphrases
+the very text that must stay verbatim, and many references pages show only a few testimonials until a "show more"
+button is clicked; on pages built with Nuxt, Next or similar frameworks the payload in the raw HTML already contains
+all of them.
+
+```bash
+curl -sL "<references page URL>" -o /tmp/references.html
+node -e '
+const raw = require("fs").readFileSync("/tmp/references.html", "utf8");
+const txt = raw.replace(/\\u002F/g, "/").replace(/\\"/g, "\"").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+const needle = process.argv[1];
+let i = txt.indexOf(needle);
+while (i !== -1) { console.log("…" + txt.slice(Math.max(0, i - 300), i + 600) + "…\n"); i = txt.indexOf(needle, i + 1); }
+' "<customer name from SHOWCASE.md>"
 ```
-WebFetch https://lenne.tech/kundenerfolge
-Prompt: Extract ALL customer testimonials with: company name, person name, role, and exact quote text.
-```
 
-Match testimonials to the project using the `customer` field from SHOWCASE.md frontmatter. Check both exact company name and partial matches.
+Match testimonials to the project using the `customer` field from SHOWCASE.md frontmatter, trying the exact company
+name and distinctive parts of it. Copy a quote character for character from this output, typos included; a quote
+that cannot be found there is not used.
 
 ### Step 4: Ask the User for Additional Context
 
@@ -114,7 +131,7 @@ Create content blocks in this order using the `creating-showcases` skill:
 - Additional screenshots not tied to specific features (overview pages, mobile views)
 - Upload screenshots to GridFS, store as `ScreenshotRef` objects with fileId, caption, device, order
 
-**Block N+3: testimonial** (if customer match found on lenne.tech/kundenerfolge)
+**Block N+3: testimonial** (if the company's testimonial source has a match for this customer)
 - Customer quote, author name, company
 
 **Block N+4: text "Ergebnis"**
@@ -123,7 +140,7 @@ Create content blocks in this order using the `creating-showcases` skill:
 
 **Block N+5: cta**
 - Button: "Termin vereinbaren"
-- URL: `https://meet.brevo.com/kai-haase`
+- URL: the meeting booking URL from the company settings (`get_showroom_context`); ask the user when it is empty
 - Optional secondary button: "Live Demo" (if live URL was provided)
 
 ### Step 7: Upload Screenshots
@@ -150,13 +167,15 @@ curl -s -b /tmp/showroom-cookies.txt -X POST https://api.showroom.lenne.tech/sho
     "customerCompany": "<company from frontmatter>",
     "technologies": ["<all technologies from frontmatter>"],
     "tags": ["<relevant tags>"],
-    "meetingUrl": "https://meet.brevo.com/kai-haase",
     "contentBlocks": [...]
   }'
 
 # Publish
 curl -s -b /tmp/showroom-cookies.txt -X POST https://api.showroom.lenne.tech/showcases/{id}/publish
 ```
+
+`meetingUrl` is left out on purpose: the showcase then uses the booking link from the company settings. Pass it only
+when this one showcase needs a different link.
 
 ### Step 9: Report Result
 

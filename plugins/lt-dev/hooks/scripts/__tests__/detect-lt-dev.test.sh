@@ -156,6 +156,19 @@ out=$(run_hook "$PROJ" "$REGISTRY")
 assert_contains "$out" "not yet migrated" "detected via projects/api/package.json"
 cleanup
 
+# --- Case 8: notification turn → identity context is still injected ---
+# Unlike the topical detect-* hooks, detect-lt-dev.sh deliberately has no
+# <task-notification> guard (see the header comment in the script).
+echo "Case 8: background task notification turn"
+setup_tmp
+echo '{"name":"crm","dependencies":{"@lenne.tech/nest-server":"^11"}}' > "$PROJ/package.json"
+cat > "$REGISTRY" <<EOF
+{ "projects": { "crm": { "path": "$PROJ", "subdomains": { "api": "api.crm.localhost", "app": "crm.localhost" } } }, "version": 1 }
+EOF
+out=$(printf '%s' '{"prompt":"<task-notification><status>completed</status><result>done</result></task-notification>"}' | run_hook "$PROJ" "$REGISTRY")
+assert_contains "$out" "https://crm.localhost" "still emits the URL block on a notification turn"
+cleanup
+
 echo ""
 echo "─────────────────────────────────────────"
 echo "Total: $((PASS + FAIL)) | Passed: $PASS | Failed: $FAIL"

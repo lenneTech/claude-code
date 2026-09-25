@@ -43,7 +43,7 @@ Beispiele:
 
 ## Step 2: Fetch Best Practices Documentation
 
-**MANDATORY:** Before proceeding, fetch the latest official documentation from GitHub:
+Before proceeding, fetch the latest official documentation from GitHub:
 
 ```
 WebFetch: https://github.com/anthropics/claude-code/blob/main/plugins/README.md
@@ -115,7 +115,7 @@ Based on the chosen element type, ask for specific details using AskUserQuestion
 - Agent name (kebab-case)
 - What tasks should it handle autonomously?
 - Which tools does it need? (Bash, Read, Write, Edit, Grep, Glob, WebFetch, etc.)
-- Which model? (haiku for simple, sonnet for complex, opus for critical)
+- Which model? (`inherit` by default, so the agent runs on the session model; name another model only where it is measurably as good for this job)
 - Does it need any skills?
 
 ### For Hooks

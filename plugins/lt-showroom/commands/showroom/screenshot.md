@@ -23,7 +23,6 @@ This command runs Phase 2 of the showcase workflow: starts the application, crea
 | `/lt-showroom:showroom:screenshot` | Capture feature screenshots from the running app |
 | `/lt-showroom:showroom:create` | Publish the showcase to showroom.lenne.tech |
 | `/lt-showroom:showroom:update` | Re-analyze after source changes and update the showcase |
-| `/lt-showroom:showroom:sync-schema` | Refresh content-block schemas from the platform |
 
 **Related Skills:**
 

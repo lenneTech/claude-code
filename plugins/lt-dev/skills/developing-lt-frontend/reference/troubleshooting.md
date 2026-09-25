@@ -131,9 +131,8 @@
 │     → Wait for user confirmation                            │
 │     → Then run: pnpm run generate-types                     │
 │                                                             │
-│  ❌ NEVER create manual interfaces as workaround!           │
-│  ❌ NEVER skip this workflow!                               │
-│  ❌ NEVER say "I'll create interfaces manually"             │
+│  Types come only from this workflow, not from hand-written  │
+│  interfaces: those drift from the API the moment it changes.│
 └─────────────────────────────────────────────────────────────┘
 ```
 

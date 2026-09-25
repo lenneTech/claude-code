@@ -92,7 +92,7 @@ test('filterByAssignee: me+null keeps mine + unassigned, drops others', () => {
   assert.deepEqual(filterByAssignee(rows, ME, 'any').map((r) => r.identifier), ['A', 'B', 'C']);
 });
 
-test('rank: reproduces the real SVL pick (DEV-2676 > DEV-2678 > DEV-2681)', () => {
+test('rank: reproduces a real pick (DEV-2676 > DEV-2678 > DEV-2681)', () => {
   const { fixNeededIds } = computeEligibleStates(STATES);
   const rows = [
     issue({ identifier: 'DEV-2681', priority: 4, createdAt: '2026-07-24T03:59:28.651Z', stateId: 's-open' }),
@@ -156,25 +156,25 @@ test('rank key 1 dominates key 5: higher priority beats older createdAt', () => 
 
 // ── Project resolution (tolerant --project matching) ────────────────────────
 
-// Two SVL projects (no bare "SVL") + an unrelated one — the real trap that made
-// `--project "SVL"` silently return an empty pool under the old `name: { eq }`.
+// Two ACME projects (no bare "ACME") + an unrelated one — the real trap that made
+// `--project "ACME"` silently return an empty pool under the old `name: { eq }`.
 const PROJECTS = [
-  { id: 'p-kont', name: 'SVL - Kontingent' },
-  { id: 'p-fix', name: 'SVL - Fixpreis' },
+  { id: 'p-kont', name: 'ACME - Kontingent' },
+  { id: 'p-fix', name: 'ACME - Fixpreis' },
   { id: 'p-show', name: 'Showroom' },
 ];
 
 test('resolveProject: exact (trimmed, case-insensitive) name wins', () => {
-  const { project, error } = resolveProject(PROJECTS, '  svl - kontingent ');
+  const { project, error } = resolveProject(PROJECTS, '  acme - kontingent ');
   assert.equal(error, null);
   assert.equal(project.id, 'p-kont');
 });
 
 test('resolveProject: exact name beats an otherwise-ambiguous substring', () => {
-  const withBare = [{ id: 'x', name: 'SVL' }, ...PROJECTS];
-  const { project, error } = resolveProject(withBare, 'SVL');
+  const withBare = [{ id: 'x', name: 'ACME' }, ...PROJECTS];
+  const { project, error } = resolveProject(withBare, 'ACME');
   assert.equal(error, null);
-  assert.equal(project.id, 'x'); // "SVL" exact, not ambiguous against the two "SVL - …"
+  assert.equal(project.id, 'x'); // "ACME" exact, not ambiguous against the two "ACME - …"
 });
 
 test('resolveProject: unique substring resolves a short alias', () => {
@@ -191,11 +191,11 @@ test('resolveProject: a unique prefix wins even when the substring set is ambigu
 });
 
 test('resolveProject: an ambiguous alias fails loudly, does not guess', () => {
-  const { project, error } = resolveProject(PROJECTS, 'SVL'); // prefix matches both SVL projects
+  const { project, error } = resolveProject(PROJECTS, 'ACME'); // prefix matches both ACME projects
   assert.equal(project, null);
-  assert.match(error, /ambiguous project "SVL"/);
-  assert.match(error, /SVL - Kontingent/);
-  assert.match(error, /SVL - Fixpreis/);
+  assert.match(error, /ambiguous project "ACME"/);
+  assert.match(error, /ACME - Kontingent/);
+  assert.match(error, /ACME - Fixpreis/);
 });
 
 test('resolveProject: an unknown name lists the available projects', () => {
@@ -207,8 +207,8 @@ test('resolveProject: an unknown name lists the available projects', () => {
 
 test('resolveProject: empty needle and empty/absent project list are handled', () => {
   assert.match(resolveProject(PROJECTS, '   ').error, /empty --project value/);
-  assert.match(resolveProject([], 'SVL').error, /team has no projects/);
-  assert.match(resolveProject(null, 'SVL').error, /team has no projects/);
+  assert.match(resolveProject([], 'ACME').error, /team has no projects/);
+  assert.match(resolveProject(null, 'ACME').error, /team has no projects/);
 });
 
 // ── Blocked-column analysis ─────────────────────────────────────────────────

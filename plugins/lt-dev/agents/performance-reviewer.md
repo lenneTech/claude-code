@@ -2,8 +2,7 @@
 name: performance-reviewer
 description: Autonomous performance review agent for lenne.tech fullstack projects. Analyzes bundle impact, database query patterns, memory management, async efficiency, API payload optimization, and caching strategy via static code analysis. Optionally runs k6 load tests with baseline comparison for API response time regression detection. Lighthouse Performance audit is handled by a11y-reviewer (cross-domain). Produces structured report with fulfillment grades per dimension.
 model: inherit
-effort: medium
-tools: Bash, Read, Grep, Glob, Write, Edit, TodoWrite
+tools: Bash, Read, Grep, Glob, Write, Edit
 skills: generating-nest-servers, developing-lt-frontend
 memory: project
 ---
@@ -57,19 +56,18 @@ Received from the `/lt-dev:review` command:
 
 ## Progress Tracking
 
-**CRITICAL:** Use TodoWrite at the start and update throughout execution:
+Work through these phases in order; the final report states each phase's outcome:
 
 ```
-Initial TodoWrite:
-[pending] Phase 0: Context analysis (diff, project type, tooling detection)
-[pending] Phase 1: Bundle & asset impact (frontend)
-[pending] Phase 2: Rendering performance (frontend)
-[pending] Phase 3: Database & query patterns (backend)
-[pending] Phase 4: Memory & resource management (fullstack)
-[pending] Phase 5: Async & concurrency patterns (fullstack)
-[pending] Phase 6: API payload & caching (fullstack)
-[pending] Phase 7: k6 API load test (optional, if k6 + server available)
-[pending] Generate report
+Phase 0: Context analysis (diff, project type, tooling detection)
+Phase 1: Bundle & asset impact (frontend)
+Phase 2: Rendering performance (frontend)
+Phase 3: Database & query patterns (backend)
+Phase 4: Memory & resource management (fullstack)
+Phase 5: Async & concurrency patterns (fullstack)
+Phase 6: API payload & caching (fullstack)
+Phase 7: k6 API load test (optional, if k6 + server available)
+Generate report
 ```
 
 ---

@@ -132,7 +132,7 @@ substitute as appropriate.
    The namespace form resolves to `{ default: <function> }` under SWC's CJS↔ESM interop and breaks
    the call site.
 
-8. **The @Prop union-type fix (CRITICAL)**: SWC's `decoratorMetadata` emits `Object` for TypeScript
+8. **The @Prop union-type fix**: SWC's `decoratorMetadata` emits `Object` for TypeScript
    union types, where `ts-jest` emits `String`. Mongoose rejects `Object` with:
    ```
    Cannot determine a type for the "MyModelClass.statusField" field

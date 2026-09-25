@@ -3,24 +3,24 @@ name: nest-server-generator-declare-keyword
 description: Critical warning about using the declare keyword in TypeScript classes
 ---
 
-#  CRITICAL: NEVER USE `declare` KEYWORD FOR PROPERTIES
+# No `declare` Keyword for Properties
 
 ## Table of Contents
-- [WRONG - Using `declare`](#-wrong---using-declare)
-- [CORRECT - Without `declare`](#-correct---without-declare)
+- [WRONG - Using `declare`](#wrong---using-declare)
+- [CORRECT - Without `declare`](#correct---without-declare)
 - [Why This Matters](#why-this-matters)
 - [When You Might Be Tempted to Use `declare`](#when-you-might-be-tempted-to-use-declare)
 - [Correct Approach Instead](#correct-approach-instead)
 - [Examples](#examples)
 - [Remember](#remember)
 
-** IMPORTANT RULE: DO NOT use the `declare` keyword when defining properties in classes!**
+**Define class properties without the `declare` keyword.**
 
 The `declare` keyword in TypeScript signals that a property is only a type declaration without a runtime value. This prevents decorators from being properly applied and overridden.
 
 ---
 
-##  WRONG - Using `declare`
+## WRONG - Using `declare`
 
 ```typescript
 export class ProductCreateInput extends ProductInput {
@@ -31,7 +31,7 @@ export class ProductCreateInput extends ProductInput {
 
 ---
 
-##  CORRECT - Without `declare`
+## CORRECT - Without `declare`
 
 ```typescript
 export class ProductCreateInput extends ProductInput {
@@ -63,7 +63,7 @@ export class ProductCreateInput extends ProductInput {
 
 ## Correct Approach Instead
 
-Use the `override` keyword (when appropriate) but NEVER `declare`:
+Use the `override` keyword (when appropriate) instead of `declare`:
 
 ```typescript
 export class ProductCreateInput extends ProductInput {

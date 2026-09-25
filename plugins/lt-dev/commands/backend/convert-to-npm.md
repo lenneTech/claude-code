@@ -47,6 +47,6 @@ to the classic npm mode (`@lenne.tech/nest-server` as dependency).
 ## Important
 
 - This command requires the `lt` CLI to be installed globally or available in PATH.
-- **Local patches in `src/core/` will be lost!** The vendored source is deleted during conversion. Make sure any valuable changes have been committed upstream first.
+- **Local patches in `src/core/` will be lost.** The vendored source is deleted during conversion. Make sure any valuable changes have been committed upstream first.
 - After conversion, `@lenne.tech/nest-server` is restored as an npm dependency.
 - Use `/lt-dev:backend:convert-to-vendor` to reverse the conversion.

@@ -12,7 +12,6 @@ This skill enables Claude Code to perform deep, evidence-based analysis of softw
 - User asks to analyze a project for a showcase or portfolio entry
 - User wants to understand what a codebase does or how it is structured
 - Running `/showroom:analyze`, `/showroom:create`, or `/showroom:update` commands
-- Working inside the showroom platform repository on analysis features
 - User asks about a project's technology stack, features, or architecture
 
 ## Skill Boundaries
@@ -21,13 +20,11 @@ This skill enables Claude Code to perform deep, evidence-based analysis of softw
 |------------|---------------|
 | Analyze project source code | **THIS SKILL** |
 | Create or update a showcase | `creating-showcases` |
-| Develop the showroom platform itself | `lt-dev:generating-nest-servers` / `lt-dev:developing-lt-frontend` |
 
 ## Related Skills
 
 **Works closely with:**
 - `creating-showcases` — Consumes analysis reports to build SHOWCASE.md and showcase content
-- `lt-dev:generating-nest-servers` — For backend development on the showroom API
 
 ## Analysis Dimensions
 
@@ -46,7 +43,7 @@ Every project analysis covers exactly 8 dimensions. Read the full guide in `${CL
 
 ## Additional Analysis (Required for Phase 2+3)
 
-Beyond the 8 dimensions, every analysis MUST also produce:
+Beyond the 8 dimensions, every analysis also produces:
 
 ### Feature List with Evidence
 
@@ -58,9 +55,9 @@ For each feature, record:
 
 Apply heuristics from `${CLAUDE_SKILL_DIR}/reference/feature-extraction.md` to detect features systematically.
 
-### How to Get the Project Running (CRITICAL)
+### How to Get the Project Running
 
-The analysis MUST produce a complete, actionable recipe to start the project from scratch. This is not optional — without it, screenshots cannot be taken and features cannot be verified.
+The analysis produces a complete, actionable recipe to start the project from scratch, because without it screenshots cannot be taken and features cannot be verified.
 
 Follow the full 8-step detection protocol in `${CLAUDE_SKILL_DIR}/reference/startup-detection.md`:
 
@@ -77,7 +74,7 @@ Output the findings as a `startupInfo` YAML block (schema in `${CLAUDE_SKILL_DIR
 
 ### Gotchas
 
-- **Ports 3000/3001 are hardcoded in lenne.tech projects** — If another project is already running, screenshots will capture the wrong app. Always check `lsof -i :3000 -i :3001` before starting.
+- **Ports 3000/3001 are hardcoded in many lenne.tech stack projects** — If another project is already running, screenshots will capture the wrong app. Always check `lsof -i :3000 -i :3001` before starting.
 - **`.env.example` often hides required secrets** — Keys like `OPENAI_API_KEY`, `DIRECTUS_URL`, or database credentials look optional but the app will fail silently at runtime. Flag these as `envRequired`.
 - **Tauri projects need web-only mode for screenshots** — If `src-tauri/` is present, the full `npm run dev` builds the desktop app. Use `npx nuxt dev` directly to bypass Tauri and get a browser-accessible dev server on port 3001.
 
@@ -135,7 +132,7 @@ pagesInventory:
 
 Produce a structured report following `${CLAUDE_SKILL_DIR}/reference/report-schema.md`.
 
-The report MUST include:
+The report includes:
 - All 8 analysis dimensions
 - Feature list with evidence and screenshot candidates
 - `startupInfo` block

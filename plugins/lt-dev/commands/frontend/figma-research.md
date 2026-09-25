@@ -7,7 +7,7 @@ disable-model-invocation: false
 
 # Figma Research
 
-**IMPORTANT: This command is RESEARCH ONLY. Do NOT implement any code, pages, or components. Do NOT use `get_design_context`. Only discover the Figma file structure and save configuration files.**
+This command is research only: it discovers the Figma file structure and saves configuration files. It implements no code, pages, or components and does not call `get_design_context` (see Important Notes).
 
 Discover the structure of a Figma file and generate project-local configuration for the `/lt-dev:frontend:figma-init` and `/lt-dev:frontend:figma-to-code` workflow.
 

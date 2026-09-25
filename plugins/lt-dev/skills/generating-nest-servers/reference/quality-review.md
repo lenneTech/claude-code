@@ -16,7 +16,7 @@ description: Comprehensive quality review guidelines before creating final repor
 - [Step 6: Pre-Report Testing](#step-6-pre-report-testing)
 - [Step 7: Final Verification](#step-7-final-verification)
 
-**CRITICAL**: Before creating the final report, you MUST perform a comprehensive quality review:
+Before creating the final report, run this quality review:
 
 ## Step 1: Identify All Changes
 
@@ -34,11 +34,11 @@ For each file, review:
 
 ## Step 2: Test Management
 
-**CRITICAL**: Ensure tests are created/updated for all changes:
+Create or update tests for every change:
 
 ### Step 2.1: Analyze Existing Tests FIRST
 
-**BEFORE creating or modifying ANY tests, you MUST thoroughly analyze existing tests**:
+**Before creating or modifying tests, analyze the existing ones**, since new tests mirror their structure (see Step 2.2):
 
 1. **Identify all existing test files**:
    ```bash
@@ -59,9 +59,9 @@ For each file, review:
    cat tests/project.e2e-spec.ts
    ```
 
-3. **CRITICAL: Understand the TestHelper thoroughly**:
+3. **Understand the TestHelper**:
 
-   **Before creating any tests, you MUST understand the TestHelper from @lenne.tech/nest-server**:
+   **Before creating any tests, read the TestHelper from @lenne.tech/nest-server**:
 
    ```bash
    # Read the TestHelper source code to understand its capabilities
@@ -151,7 +151,7 @@ For each file, review:
 
 ### Step 2.1.1: Understanding Permissions and User Rights in Tests
 
-**CRITICAL**: Before creating tests, you MUST understand the 3-layer permission system:
+Before creating tests, understand the 3-layer permission system:
 
 **Important Definitions**:
 
@@ -240,7 +240,7 @@ Before writing tests, check these 3 locations:
    ```typescript
    // In product.model.ts
    @Restricted(RoleEnum.ADMIN) // ← Model-level restriction
-   export class Product extends CoreModel {
+   export class Product extends PersistenceModel {
 
      @Restricted(RoleEnum.ADMIN) // ← Property-level restriction
      @UnifiedField()
@@ -456,7 +456,7 @@ Before creating tests, verify:
 
 ### Step 2.2: For Newly Created Modules
 
-**CRITICAL: Follow the correct test folder structure**:
+**Test folder structure**:
 
 The project uses a specific test organization:
 
@@ -502,7 +502,7 @@ ls tests/modules/
 tests/modules/book.e2e-spec.ts
 ```
 
-**IMPORTANT**: Your new test file MUST:
+A new test file follows the existing ones:
 1. **Match the exact structure** of existing test files
 2. **Use the same imports** as existing tests
 3. **Follow the same setup/cleanup pattern** (beforeAll, afterAll)
@@ -567,7 +567,7 @@ afterAll(async () => {
 });
 ```
 
-**CRITICAL**: Look at how existing tests handle prerequisites and replicate the exact same approach.
+Replicate how the existing tests handle prerequisites.
 
 ### Step 2.3: For Modified Existing Modules
 
@@ -694,7 +694,7 @@ afterAll(async () => {
 
 ## Step 6: Pre-Report Testing
 
-**MANDATORY**: Run all tests before reporting (NODE_ENV=e2e is set in package.json scripts):
+Run the build, the linter and all tests before reporting (NODE_ENV=e2e is set in package.json scripts):
 
 ```bash
 # Run TypeScript compilation
@@ -783,8 +783,8 @@ pnpm run test:e2e
 
    | Problem | Cause | Solution |
    |---------|-------|----------|
-   | 401/403 on endpoint | `@Roles()` too restrictive | Adjust decorator in controller/resolver |
-   | Empty result despite data existing | `securityCheck()` returns undefined | Modify securityCheck logic or use Admin |
+   | 401/403 on endpoint | The test user lacks a role `@Roles()` requires | Test with a user the decorator admits (least privilege, [Rule 4](security-rules.md#rule-4-test-with-least-privileged-user)); change the decorator only with developer approval ([Rule 1](security-rules.md#rule-1-never-weaken-security-for-test-convenience)) |
+   | Empty result despite data existing | `securityCheck()` returns undefined for this user | Decide whether this user should see the object: if yes, fix the test data (e.g. make the user the creator); change `securityCheck()` only with developer approval ([Rule 3](security-rules.md#rule-3-adapt-tests-to-security-not-vice-versa)) |
    | Service throws permission error | `serviceOptions.roles` check fails | Pass correct roles in serviceOptions |
 
 7. **Remove debug messages after fixing**:
@@ -828,7 +828,7 @@ async create(input: ProductCreateInput, serviceOptions?: ServiceOptions) {
 // 🔵 END createProduct { result: undefined }  ← AHA! Result is undefined!
 
 // 3. Check model securityCheck() - likely returns undefined for non-creator (user.id !== object.createdBy)
-// 4. Fix: Either use Admin user (user.roles contains 'admin') or adjust securityCheck logic
+// 4. Fix: test as a user securityCheck() admits (e.g. the creator), not as Admin; change securityCheck() only with developer approval (security-rules.md Rules 1 and 3)
 // 5. Test passes -> Remove console.log statements
 // 6. Verify tests still pass
 ```
@@ -862,4 +862,4 @@ Before reporting, verify:
 - [ ] **All tests pass AFTER changes**
 - [ ] No console errors or warnings
 
-**Only after ALL checks pass, proceed to Final Report.**
+**Proceed to the Final Report once all checks pass.**

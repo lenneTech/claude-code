@@ -1,9 +1,8 @@
 ---
 description: 'Publish the current lt base repo (or a named one) as a new version and immediately update its downstream base repos. Auto-detects which base repo the current working directory belongs to (nest-server, nuxt-extensions, lt-monorepo, cli, nuxt-base-starter, nest-server-starter, claude-code, claude-code-internal), analyzes its committed AND uncommitted changes, then ASKS whether to refresh dependencies (FULL maintenance) before publishing or publish the change directly, releases per the repo recipe, waits for npm propagation, then bumps + releases the dependent base repos (nest-server → nest-server-starter, nuxt-extensions → nuxt-base-starter), maintaining them too when the gate was answered "Maintain first" — the answer applies to the whole chain. Marketplace repos release via their own bump-version.ts and have no downstream. No smoke test by default (opt-in via --smoke-test). Complements /lt-dev:maintenance:maintain-stack, which cycles ALL base repos with the full release gate.'
 argument-hint: '[nest-server|nuxt-extensions|lt-monorepo|cli|nuxt-base-starter|nest-server-starter|claude-code|claude-code-internal] [--release-as=patch|minor|major] [--skip-downstream] [--maintenance|--skip-maintenance] [--smoke-test] [--dry-run]'
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, SlashCommand, TodoWrite, ToolSearch
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, Skill, ToolSearch
 disable-model-invocation: true
-effort: high
 ---
 
 # Publish (current base repo + downstream chain)
@@ -27,6 +26,12 @@ target.
   right in that repo.
 - A specific repo should be published from anywhere: `/lt-dev:publish nest-server`.
 - NOT for the periodic full-stack cycle → `/lt-dev:maintenance:maintain-stack`.
+
+## Turn endings
+
+This command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; waiting on npm propagation means polling again, not reporting. The run stops only at the handoff points this command defines (a cwd that is not a base repo, foreign-looking changes in the preflight, the step 1b report on red gates, the step 2 maintenance gate, a downstream `check` failing on its own outdated dependencies, the `--dry-run` plan), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation. The releases themselves are the job the user started this command for.
+
+Commands named below as `/lt-dev:<name>` are invoked through the `Skill` tool in their `lt-dev:<name>` form.
 
 ## Step 0 — Resolve the target repo
 
@@ -152,7 +157,7 @@ A restart of Claude Code is required — running sessions keep the old version.
    gates the release in full. A vacuous regression test does not make the
    package wrong — it makes a future regression harder to catch, which is worth
    fixing soon and rarely worth blocking on.
-2. **Maintenance gate — ALWAYS ASK FIRST (default).** This command never
+2. **Maintenance gate — ask first (default).** This command never
    silently runs dependency maintenance. After the change summary, ask the
    user via `AskUserQuestion` how to proceed:
    - **Publish directly** — skip the dependency refresh and release exactly

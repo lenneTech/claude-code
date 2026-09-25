@@ -1,7 +1,7 @@
 ---
 description: Convert an existing vendor-mode fullstack project (backend + frontend) back to npm mode — restores @lenne.tech/nest-server and @lenne.tech/nuxt-extensions as npm dependencies.
 argument-hint: "[--skip-backend] [--skip-frontend] [--api-version vX.Y.Z] [--app-version X.Y.Z]"
-allowed-tools: Read, Grep, Glob, Bash(lt:*), Bash(node:*), Bash(pnpm:*), Bash(pnpm run:*), Bash(npm:*), Bash(npm run:*), Bash(yarn:*), Bash(yarn run:*), Bash(git:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(test:*), AskUserQuestion, TodoWrite
+allowed-tools: Read, Grep, Glob, Bash(lt:*), Bash(node:*), Bash(pnpm:*), Bash(pnpm run:*), Bash(npm:*), Bash(npm run:*), Bash(yarn:*), Bash(yarn run:*), Bash(git:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(test:*), AskUserQuestion
 disable-model-invocation: true
 ---
 
@@ -94,7 +94,7 @@ as npm dependencies and removes the vendored source trees
 ## Important
 
 - This command requires the `lt` CLI to be installed globally or available in PATH.
-- **Local patches in `src/core/` and `app/core/` will be lost!** The vendored source trees are deleted during conversion. Make sure any valuable changes have been committed upstream first.
+- **Local patches in `src/core/` and `app/core/` will be lost.** The vendored source trees are deleted during conversion. Make sure any valuable changes have been committed upstream first.
 - After conversion, `@lenne.tech/nest-server` and `@lenne.tech/nuxt-extensions` are restored as npm dependencies.
 - Commit before starting so `git reset` remains a safe rollback path.
 - Use `/lt-dev:fullstack:convert-to-vendor` to reverse the conversion.
