@@ -154,24 +154,26 @@ Never use any of the following to silence errors:
 
 The ONLY permitted "non-fix" is an upstream dependency vulnerability where the escalation ladder has been fully exhausted. Everything else must be fixed at the root.
 
-### Step 6.5 — `check-server-start.sh` failure modes (Nitro/Nest port hazards)
+### Step 6.5 — server-start step failures (Nitro/Nest port hazards)
 
-The starter `check` pipeline ends with `bash scripts/check-server-start.sh`, which boots the production build and waits for the readiness log. Three known failure modes — all surface as the same symptom (`ERR_SOCKET_BAD_PORT` from `node:net`) but have different root causes:
+The starter `check` pipeline ends by booting the production build, waiting for its readiness line, and rendering one request. Since September 2026 both starters do that with **`node scripts/check-server-start.mjs`** (Node built-ins only, runs on Windows); the app calls it without arguments, the API as `pnpm run check:server-start` with `--entry=dist/src/main.js --port-env=NSC__PORT --ready="Server starte[dt] at"`. Projects generated earlier still end in `bash scripts/check-server-start.sh`. Which one you face decides the triage:
 
-1. **Nitro `PORT`-string bug** (App side): the script must use `NITRO_PORT=$FREE_PORT`, never `PORT=$FREE_PORT`. Some Nitro versions read `process.env.PORT` without `parseInt` and crash; `NITRO_PORT` is the documented Nitro-specific knob, goes through Nitro's own env loader, and is coerced to number reliably. Nest does not have this issue — `NSC__PORT` is fine on the API side.
+- **Node script:** it allocates ports in-process, so hazards 2 and 3 below cannot occur. A failure prints the reason — boot timeout, early exit, a non-2xx/3xx answer — plus the last 30 lines of server output. Read those first. `Server booted but GET / did not render` is the mis-traced-bundle case: the server listens, then throws on every render.
+- **Bash script:** all three hazards below apply. They share one symptom, `ERR_SOCKET_BAD_PORT` from `node:net`, with different causes. If the project has to run on Windows, port it to the Node script instead of patching the bash one (`nuxt-base-starter` migration guide `2.26.0-windows-check-chain.md`).
 
-2. **lerna/nx ANSI-injection** (BOTH api and app, only when `check` is invoked from a workspace runner): the runner wraps subprocess stdout and may inject ANSI color escape sequences (`\x1b[33m...\x1b[39m`) into command output. A naive `FREE_PORT=$(node -e "...console.log(p)")` captures the codes too. **A naive `tr -cd '0-9'` makes it worse** — the codes contain digits (33, 39) themselves, producing nonsense ports like 335454639. The only correct fix is to strip the ANSI sequence pattern explicitly with `sed`:
+1. **Nitro `PORT`-string bug** (App side, both scripts): the port must go into `NITRO_PORT`, never `PORT`. Some Nitro versions read `process.env.PORT` without `parseInt` and crash; `NITRO_PORT` goes through Nitro's own env loader and is coerced to number. The Node script defaults to `NITRO_PORT`. Nest does not have this issue — `NSC__PORT` is fine on the API side.
+
+2. **lerna/nx ANSI-injection** (bash only, when `check` runs under a workspace runner): the runner may inject ANSI color escapes (`\x1b[33m...\x1b[39m`) into captured output, so `FREE_PORT=$(node -e "...console.log(p)")` captures the codes too. **A naive `tr -cd '0-9'` makes it worse** — the codes contain digits (33, 39), producing ports like 335454639. Strip the escape pattern with `sed`:
    ```bash
    FREE_PORT=$(node -e "..." | sed $'s/\x1b\\[[0-9;]*m//g' | tr -d '[:space:]')
    ```
 
-3. **Phantom Unix-domain-sockets** named `[33m12345[39m` next to the package.json (mode `srwx`): leftover from earlier failed runs. When Nest's port-parser fell through "string with weird chars" → "treat as Unix socket path", it actually bound a socket file. `cleanup()` SIGTERM kills the process, the file stays. Delete with:
+3. **Phantom Unix-domain-sockets** named `[33m12345[39m` next to the package.json (mode `srwx`, bash only): leftovers from runs that hit hazard 2. Nest's port parser fell through to "treat as a socket path" and bound a file. Delete them, then re-run `check`:
    ```bash
    rm -f $'\x1b[33m'*$'\x1b[39m'
    ```
-   Then re-run `check`.
 
-These hazards are documented in detail in the `modernizing-toolchain` skill (Phase 6). When a `check` run fails with `ERR_SOCKET_BAD_PORT`, the first triage step is to confirm the script in question already has both the `NITRO_PORT` and ANSI-strip fixes applied.
+Details live in the `modernizing-toolchain` skill (Phase 6).
 
 ### Step 6.6 — API tests fail only inside `check`? Suspect a shared test database
 

@@ -422,7 +422,8 @@ end-to-end:
 - API: Phases 2 (jest→vitest) and 3 (eslint→oxlint, prettier→oxfmt) of the skill.
 - App: Phase 4 of the skill (vitest+happy-dom, oxlint with vue plugin, oxfmt).
 - BOTH: Phase 5 (`check` / `check:fix` / `check:envs` scripts), Phase 6
-  (`scripts/check-server-start.sh` with the ANSI-strip + `NITRO_PORT` guards),
+  (`scripts/check-server-start.mjs` — the Node port that also runs on Windows;
+  replaces `check-server-start.sh` and its ANSI-strip + `NITRO_PORT` guards),
   Phase 7 (`config.env.ts` offers pattern), Phase 8 (`scripts/check-envs.sh` +
   fixture), Phase 9 (`main.ts` log levels + CORS + `QuietHttpExceptionFilter`),
   Phase 10 (GitLab CI), Phase 11 (docker-compose healthchecks).
@@ -440,10 +441,12 @@ the original migration if missed):
    `type: Object` for record-likes).
 3. **`import * as supertest`**: replace with default-import — the namespace
    form does not call under SWC's CJS↔ESM interop.
-4. **`PORT` vs `NITRO_PORT`** in `check-server-start.sh` for the App: some
-   Nitro versions crash on string-typed `PORT`. Use `NITRO_PORT` — it is the
-   documented Nitro env knob and is coerced to number reliably.
-5. **ANSI-injection by lerna/nx** in `check-server-start.sh`: a naive
+4. **`PORT` vs `NITRO_PORT`** for the App's server-start step: some Nitro
+   versions crash on string-typed `PORT`. Use `NITRO_PORT` — it is the
+   documented Nitro env knob and is coerced to number reliably. The Node
+   script (`check-server-start.mjs`) defaults to it.
+5. **ANSI-injection by lerna/nx**, only in a project still on the bash
+   `check-server-start.sh` (the Node script allocates ports in-process): a naive
    `FREE_PORT=$(node -e "...console.log(p)")` captures color codes from the
    workspace runner. Always strip with
    `sed $'s/\x1b\\[[0-9;]*m//g' | tr -d '[:space:]'`. **Do not** strip with

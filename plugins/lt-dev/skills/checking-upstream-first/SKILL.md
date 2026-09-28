@@ -30,7 +30,7 @@ Both halves of the stack are affected the same way — the frontend is not the e
 
 - `Dockerfile`, `docker-entrypoint.sh`, `.dockerignore`, `.gitlab-ci.yml`
 - `tsconfig*.json`, `nest-cli.json`, `.oxlintrc.json`, `vitest*.config.ts`
-- `scripts/**` (`check.mjs`, `check-envs.sh`, `check-server-start.sh`), the `check:*` /
+- `scripts/**` (`check.mjs`, `check-envs.sh`, `check-server-start.mjs`), the `check:*` /
   `copy:*` / `migrate:*` chains in `package.json`
 - `src/config.env.ts`, `.env.example`, `src/main.ts`, `src/server/server.module.ts`,
   `migrations/**`
@@ -40,8 +40,8 @@ Both halves of the stack are affected the same way — the frontend is not the e
 
 - `Dockerfile`, `.dockerignore`, `.gitlab-ci.yml`
 - `nuxt.config.ts`, `app/app.config.ts`, `app/app.vue`, `app/error.vue`, `openapi-ts.config.ts`
-- `tsconfig*.json`, `oxlint.json`, `.oxfmtrc.jsonc`, `vitest.config.ts`, `playwright.config.ts`
-- `scripts/**` (`check.mjs`, `check-server-start.sh`, `generate-types.mjs`,
+- `tsconfig*.json`, `.oxlintrc.json`, `.oxfmtrc.jsonc`, `vitest.config.ts`, `playwright.config.ts`
+- `scripts/**` (`check.mjs`, `check-server-start.mjs`, `generate-types.mjs`,
   `resolve-api-url.mjs`), the `check:*` chain in `package.json`
 - `.env.example`, `server/**` (Nitro routes and plugins), `app/middleware/**`, `app/layouts/**`
 - Anything under a vendored `app/core/`

@@ -37,7 +37,7 @@ Eleven phases in fixed order, each assuming the previous one landed. Every phase
 | 3 | API: eslint to oxlint, prettier to oxfmt |
 | 4 | App: jest/eslint/prettier to vitest/oxlint/oxfmt |
 | 5 | `check` pipeline |
-| 6 | `scripts/check-server-start.sh` (port-robust, ANSI-safe) |
+| 6 | `scripts/check-server-start.mjs` (Node, runs on Windows too) |
 | 7 | `config.env.ts` |
 | 8 | `scripts/check-envs.sh` + `tests/fixtures/.env.deployed-test` |
 | 9 | `main.ts` |

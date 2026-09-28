@@ -160,18 +160,24 @@ Per round:
 1. Feature branch from `dev` with a visible change (e.g. a badge `SMOKE-R<n>` with `data-testid="smoke-marker"` on the landing page).
 2. `glab mr create --source-branch … --target-branch dev` → `glab mr merge --auto-merge --remove-source-branch`.
 
-   **Wait until the branch pipeline is running, then set `--auto-merge`.** The flag is
+   **Wait until the MR pipeline is running, then set `--auto-merge`.** The flag is
    no guarantee: if `glab` finds no running pipeline when the command is issued, it
    reports `! No pipeline running on <branch>` and merges **immediately and ungated**.
    The tests then never checked the merge, although the command looks as if it waits.
    The run on 2026-09-01 did exactly that; on 2026-09-02, after a short wait, GitLab
    acknowledged with `✓ Will auto-merge`, and the merge really did wait for the green
-   pipeline. The only difference is the timing between push and command:
+   pipeline. The only difference is the timing between MR and command.
+
+   Poll the **MR's** pipelines, not the branch's: the template's test jobs run `only:
+   [merge_requests, dev, main]`, so pushing a feature branch creates no pipeline at all.
+   The one to wait for is the `merge_request_event` pipeline on
+   `refs/merge-requests/<iid>/head`, which `pipelines?ref=<branch>` never returns
+   (verified 2026-09-28):
 
    ```bash
    for i in $(seq 1 30); do
-     n=$(glab api "projects/<id>/pipelines?ref=<branch>&per_page=1" | node -e "…length…")
-     [ "$n" = "1" ] && break; sleep 5
+     n=$(glab api "projects/<id>/merge_requests/<iid>/pipelines" | node -e "…length…")
+     [ "$n" != "0" ] && break; sleep 5
    done
    glab mr merge <iid> --auto-merge --remove-source-branch --yes
    ```
@@ -202,7 +208,7 @@ Per round:
    deletion by an earlier run otherwise blocks the name and stays unnoticed.
 4. Local: `lt dev down` in the project, `lt dev test down` (if anything is left), delete the project folder, check the registry entry (`~/.lenneTech/projects.json`; `lt dev down` removes the Caddy block; clean orphaned entries via `lt dev prune`/registry check).
 5. Local Mongo: `lt dev prune --noConfirm` also removes orphaned smoke-test DBs (reserved `lt-smoke-test` prefix) automatically since CLI 1.38.0; the same sweep also runs on every `lt dev up` of any project. Direct drop commands may be blocked by a hook policy. In that case do not work around it; prune is the canonical way.
-5b. Server volumes: orphaned `<stack>_mongo_data` volumes remain after stage deletion and are reused by the next run. That is a data leak between runs, and the reason a fixed test email wrongly returns `400 Email already registered`. **They can be deleted through the TurboOps MCP, without SSH** (verified 2026-08-23): `exec_in_container` in a container with the Docker CLI and a read-write socket (on Turbo-Dev `deploy-party_api`), with `allowWrite: true` and `confirmHostname: <server-IP>`. Pass **the IP, not the server name**; a server name is rejected with "confirmHostname mismatch". First list with `volume ls --filter name=<name>`, then run `volume rm` on the two stack volumes. An earlier version of this document claimed this was blocked by a blocklist and required SSH. That is not (or no longer) true: the command is classified as `needs-write` and runs with `allowWrite`. SSH remains the fallback when the MCP is unreachable.
+5b. Server volumes: orphaned `<stack>_mongo_data` volumes remain after stage deletion and are reused by the next run. That is a data leak between runs, and the reason a fixed test email wrongly returns `400 Email already registered`. **They can be deleted through the TurboOps MCP, without SSH** (verified 2026-08-23): `exec_in_container` in a container with the Docker CLI and a read-write socket (on Turbo-Dev the task container of the `deploy-party_api` service: pass its ID or full `deploy-party_api.1.<task>` name from `list_server_containers`, since the bare service name answers `No such container`), with `allowWrite: true` and `confirmHostname: <server-IP>`. Pass **the IP, not the server name**; a server name is rejected with "confirmHostname mismatch". First list with `volume ls --filter name=<name>`, then run `volume rm` on the two stack volumes. An earlier version of this document claimed this was blocked by a blocklist and required SSH. That is not (or no longer) true: the command is classified as `needs-write` and runs with `allowWrite`. SSH remains the fallback when the MCP is unreachable.
 6. `turbo logout` is not needed (the user login stays); the minted project token dies with the project.
 7. Final check: all four stage URLs must return 404/default cert again, `glab repo view` 404, the TurboOps project list without `<name>`, no `<name>` DBs, no `$SMOKE_DIR/<name>`.
 

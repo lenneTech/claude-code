@@ -11,7 +11,8 @@ The eleven phases of the toolchain migration, in order. Run them in sequence: ea
    - eslint? → `eslint.config.*` or `.eslintrc.*` exists
    - prettier? → `.prettierrc*` exists
    - vitest? → `vitest.config.ts` or `vitest-e2e.config.ts` exists
-   - oxlint? → `oxlint.json` exists
+   - oxlint? → `.oxlintrc.json` exists. A file named `oxlint.json` counts as "no config": oxlint only
+     discovers the dotted name, so every rule in it is ignored — rename it in Phase 3/4.
 4. Detect deployment shape: GitLab CI? Docker Compose? both?
 
 The migration is identical regardless of mode (monorepo / single, npm / pnpm) — only the invocation
@@ -210,11 +211,13 @@ substitute as appropriate.
    ```jsonc
    {
      "lint": "oxlint --ignore-path .oxlintignore src/ tests/",
-     "lint:fix": "oxlint --fix --fix-suggestions --ignore-path .oxlintignore src/ tests/",
+     "lint:fix": "oxlint --fix --ignore-path .oxlintignore src/ tests/",
      "format": "oxfmt --write src/ tests/",
      "format:check": "oxfmt --check src/ tests/"
    }
    ```
+   Never add `--fix-suggestions`: oxlint marks suggestions as possibly behaviour-changing, and
+   the `no-console` suggestion deletes every console call it touches.
 
 5. **Remove eslint/prettier**: `eslint`, `@typescript-eslint/*`, `eslint-config-prettier`,
    `eslint-plugin-unused-imports`, `prettier`, `pretty-quick`, plus the configs
@@ -261,8 +264,8 @@ The same migration, with Nuxt-specific deltas:
    `navigateTo`, `useRoute`, `useRouter`, `useState`, `useFetch`, `$fetch`. See nuxt-base-starter
    for the canonical shapes.
 
-4. **`oxlint.json`** uses `["typescript", "vue", "unicorn", "import"]` plugins (vue is the addition
-   over the API config).
+4. **`.oxlintrc.json`** (never `oxlint.json` — oxlint does not discover that name) uses
+   `["typescript", "vue", "unicorn", "import"]` plugins (vue is the addition over the API config).
 
 5. **Sync the full dep set to the upstream starter** — both `dependencies` and
    `devDependencies`. The starter's `package.json` is the single source of truth; do not
@@ -285,12 +288,23 @@ Adopt these scripts in EACH subproject (api + app). The shape mirrors `nest-serv
 ```jsonc
 {
   "audit": "<pm> audit --omit=dev || echo '\\n[check] audit reported issues; continuing.'",
-  "check":     "<pm> run audit && <pm> run format:check && <pm> run lint && <pm> run test && <pm> run build && bash scripts/check-server-start.sh",
-  "check:fix": "<pm> install && <pm> run format && <pm> run lint:fix && <pm> run test && <pm> run build && bash scripts/check-server-start.sh",
-  "check:naf": "<pm> install && <pm> run format && <pm> run lint:fix && <pm> run test && <pm> run build && bash scripts/check-server-start.sh",
+  "check":     "<pm> run audit && <pm> run format:check && <pm> run lint && <pm> run test && <pm> run build && <pm> run check:server-start",
+  "check:fix": "<pm> install && <pm> run format && <pm> run lint:fix && <pm> run test && <pm> run build && <pm> run check:server-start",
+  "check:naf": "<pm> install && <pm> run format && <pm> run lint:fix && <pm> run test && <pm> run build && <pm> run check:server-start",
   "check:envs":        "bash scripts/check-envs.sh",
   "check:envs:docker": "bash scripts/check-envs.sh --docker"
 }
+```
+
+`check:server-start` is the one entry that differs per project, because the script's built-in
+defaults are the Nuxt ones — an API calling it without arguments looks for
+`.output/server/index.mjs` and fails on every run (details in Phase 6):
+
+```jsonc
+// app (projects/app) — nuxt-base-starter inlines this call at the end of its chains instead
+"check:server-start": "node scripts/check-server-start.mjs",
+// api (projects/api) — as in nest-server-starter
+"check:server-start": "<pm> run migrate:up && cross-env NODE_ENV=local node scripts/check-server-start.mjs --entry=dist/src/main.js --port-env=NSC__PORT --ready=\"Server starte[dt] at\" --path=/",
 ```
 
 For monorepos, add a root `package.json` aggregator:
@@ -304,44 +318,44 @@ For monorepos, add a root `package.json` aggregator:
 ```
 `--concurrency 1` is **mandatory** so api and app don't fight over MongoDB or ports.
 
-## Phase 6 — `scripts/check-server-start.sh` (port-robust + ANSI-safe)
+## Phase 6 — `scripts/check-server-start.mjs` (boot + render smoke test)
 
-Both API and App ship a bash smoke-test that boots the production build and waits for the
-readiness log line. **Two non-obvious bugs you must guard against** — both produce the same
-symptom, `ERR_SOCKET_BAD_PORT` from `node:net`:
+Both API and App end their `check` chain by booting the production build, waiting for the
+readiness line, and rendering one request. Copy **`scripts/check-server-start.mjs`** (and its
+`.d.mts`) from the starter. It uses Node built-ins only and spawns the server without a shell,
+so it runs on Windows too; the old `bash scripts/check-server-start.sh` dies there at the last
+step of every chain (`bash` is missing or resolves to the WSL launcher).
 
-1. **The Nitro PORT-string bug** (App only): some Nitro releases do not `parseInt`
-   `process.env.PORT` and feed the raw string to `net.Server#listen`. **Use `NITRO_PORT`, not
-   `PORT`** — `NITRO_PORT` goes through Nitro's own env loader and is coerced to number. Nest
-   does not have this bug; `NSC__PORT` is fine. Even after Nitro upstream patches the bug,
-   prefer `NITRO_PORT` — it is the documented Nitro-specific knob and survives any future
-   regression.
+- **App:** `node scripts/check-server-start.mjs` — no arguments; the Nuxt defaults
+  (`.output/server/index.mjs`, `NITRO_PORT`, Nitro's ready lines, `GET /`) are built in. It also
+  points `NUXT_API_URL` at a closed port so SSR fetches fail fast instead of hanging.
+- **API:** as in `nest-server-starter`'s `check:server-start`, which runs `migrate:up` first and
+  sets `NODE_ENV=local` via `cross-env`:
+  ```bash
+  node scripts/check-server-start.mjs --entry=dist/src/main.js --port-env=NSC__PORT --ready="Server starte[dt] at" --path=/
+  ```
+  The ready line is the one `src/main.ts` logs, not Nest's "application successfully started",
+  which Nest prints at the end of `init()` before the port is bound.
 
-2. **The lerna/nx ANSI-injection bug** (both): When `npm run check` is invoked from a workspace
-   runner, the runner wraps subprocess stdout and may inject ANSI color escape sequences
-   (`\x1b[33m...\x1b[39m`) into command output. A naive `FREE_PORT=$(node -e "...console.log(p)")`
-   captures the codes too. The downstream `NITRO_PORT=$FREE_PORT` then becomes
-   `NITRO_PORT='\x1b[33m54546\x1b[39m'` and crashes Nitro/Nest. A naive `tr -cd '0-9'` makes it
-   worse — the codes contain digits (33, 39) themselves, producing nonsense ports like 335454639.
+Only a 2xx or 3xx answer counts: a bundle whose externals are mis-traced listens happily and
+then throws on every render. The server is always stopped (SIGTERM, 2 s grace, SIGKILL on
+POSIX; `taskkill /PID <pid> /T /F` on Windows).
 
-   **The right fix is to strip the escape sequences explicitly with sed**:
+**Still on the bash script?** Replace it. If that cannot happen now, it needs two guards, both
+of which surface as `ERR_SOCKET_BAD_PORT` from `node:net`:
+
+1. **`NITRO_PORT`, not `PORT`** (App only): some Nitro releases feed `process.env.PORT` to
+   `net.Server#listen` as a string. Nest does not have this bug; `NSC__PORT` is fine.
+2. **Strip ANSI escapes from the captured port** (both): a workspace runner (lerna/nx) may
+   inject `\x1b[33m...\x1b[39m` into `$(node -e ...)`. `tr -cd '0-9'` makes it worse — the codes
+   contain digits. Use:
    ```bash
-   FREE_PORT=$(node -e "const s=require('net').createServer();s.listen(0,'127.0.0.1',()=>{const p=s.address().port;s.close(()=>console.log(p));});" \
-     | sed $'s/\x1b\\[[0-9;]*m//g' \
-     | tr -d '[:space:]')
+   FREE_PORT=$(node -e "..." | sed $'s/\x1b\\[[0-9;]*m//g' | tr -d '[:space:]')
    ```
 
-   The `sed` keeps port digits intact; the `tr` drops trailing whitespace.
-
-3. **Phantom Unix-domain-sockets**: If a check-server-start ran without the ANSI fix, you may find
-   files named `[33m12345[39m` next to the package.json with mode `srwx`. Those are Unix sockets
-   Nest opened when its port-parser fell through to "treat as path". Delete with:
-   ```bash
-   rm -f $'\x1b[33m'*$'\x1b[39m'
-   ```
-
-The full canonical script lives in nest-server-starter and nuxt-base-starter on GitHub; copy from
-there and apply the ANSI strip.
+**Phantom Unix-domain-sockets** named `[33m12345[39m` (mode `srwx`) next to the package.json are
+leftovers of bash runs that missed guard 2 — Nest bound the garbled "port" as a socket path.
+Delete them with `rm -f $'\x1b[33m'*$'\x1b[39m'`.
 
 ## Phase 7 — `config.env.ts` (offers/starter pattern)
 
