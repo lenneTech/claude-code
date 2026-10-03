@@ -556,7 +556,7 @@ The reviewer is not the arbiter of generic-vs-specific — surface the
 judgment call, don't block on it. Format findings as:
 
 ```
-app/core/composables/useBetterAuth.ts
+app/core/runtime/composables/auth/use-lt-auth.ts
   ⚠ Touches vendored core — ensure this is a generic fix.
   Status: ✅ logged in VENDOR.md  |  ⚠ no upstream PR tracked
   Next step: /lt-dev:frontend:contribute-nuxt-extensions-core

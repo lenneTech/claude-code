@@ -234,35 +234,19 @@ function handleStopClick(): void {
 
 ## Authentication Composable (Better Auth)
 
+`useLtAuth()` comes from `@lenne.tech/nuxt-extensions`, auto-imported.
+**Never hand-write an auth composable** — the library owns the `lt-auth-state`
+cookie and a local copy fights it.
+
 ```typescript
-// app/composables/use-better-auth.ts (pre-configured in nuxt-base-starter)
-import { authClient } from '~/lib/auth-client'
-
-export function useBetterAuth() {
-  const session = authClient.useSession(useFetch)
-
-  const user = computed(() => session.data.value?.user ?? null)
-  const isAuthenticated = computed<boolean>(() => !!session.data.value?.session)
-  // Dual-shape admin check — see `app/utils/is-admin-user.ts` in the
-  // nuxt-base-starter (≥ 2.8.0). Accepts `roles: string[]` (nest-server) AND
-  // `role: string` (Better-Auth standalone). Inline body if you can't import:
-  //   !!u?.roles?.includes('admin') || u?.role === 'admin'
-  const isAdmin = computed<boolean>(() => isAdminUser(user.value))
-  const is2FAEnabled = computed<boolean>(() => !!user.value?.twoFactorEnabled)
-  const isLoading = computed<boolean>(() => session.isPending.value)
-
-  return {
-    // State
-    session, user, isAuthenticated, isAdmin, is2FAEnabled, isLoading,
-    // Methods (passwords auto-hashed via authClient wrapper)
-    passkey: authClient.passkey,
-    signIn: authClient.signIn,
-    signOut: authClient.signOut,
-    signUp: authClient.signUp,
-    twoFactor: authClient.twoFactor,
-  }
-}
+const { user, isAuthenticated, isAdmin, hasRole, signIn, signUp, signOut } = useLtAuth()
 ```
+
+`isAdmin` accepts BOTH role shapes (`roles: string[]` from
+`@lenne.tech/nest-server`, `role: string` from Better-Auth standalone). Prefer
+`hasRole(role)` over a raw `roles.includes(x)` — the raw shape fails OPEN on a
+malformed string via substring match. Raw client (`twoFactor.*`, `admin.*`,
+`passkey`): `useLtAuthClient()`.
 
 > **Full authentication details:** See [reference/authentication.md](./authentication.md)
 

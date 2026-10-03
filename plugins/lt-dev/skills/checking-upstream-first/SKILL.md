@@ -1,6 +1,6 @@
 ---
 name: checking-upstream-first
-description: 'Before writing a custom fix for a framework- or library-level problem, verifies that the current version does not already solve it. Covers the version actually resolved vs. the current one, reading the dependency''s own code in node_modules, release notes and issue tracker, and whether an lt base repo already solved it. Activates whenever a workaround, shim, patch, wrapper, polyfill or guard is about to be built around a dependency''s behaviour, and on "workaround", "patchen", "wir bauen uns das selbst", "eigene Lösung". NOT for feature work the dependency was never meant to cover. NOT for routine version bumps (use maintaining-npm-packages).'
+description: 'Before writing a custom fix for a framework- or library-level problem, verifies that the current version does not already solve it. Covers the version actually resolved vs. the current one, reading the dependency''s own code in node_modules, release notes and issue tracker, and whether an lt base repo already solved it. Activates whenever a workaround, shim, patch, wrapper, polyfill or guard is about to be built around a dependency''s behaviour, and on "workaround", "patchen", "wir bauen uns das selbst", "eigene Lösung". Also activates before DESIGNING a mechanism the framework may already ship (upload, progress, resumability, auth, queueing, caching, realtime, file storage, search) — "the framework does not have X" is a claim to verify, not a premise. NOT for work that is genuinely the project''s own domain (business rules, entities, screens). NOT for routine version bumps (use maintaining-npm-packages).'
 ---
 
 # Check Upstream Before Building It Yourself
@@ -49,7 +49,13 @@ Both halves of the stack are affected the same way — the frontend is not the e
 **Monorepo root (from `lt-monorepo`):** `docker-compose.yml`, the root `package.json` scripts,
 `scripts/**`.
 
-It does NOT apply to ordinary feature work the dependency was never meant to cover.
+It does NOT apply to work that is genuinely the project's own domain — business rules,
+entities, screens, customer-specific behaviour.
+
+It DOES apply when the plan is to build a **mechanism** the framework might already provide,
+even when that feels like feature work rather than a workaround. "The framework doesn't have
+X" is a claim, and check 0 below is how it gets verified instead of assumed. The premise is
+wrong often enough to be worth the seconds it costs.
 
 ## The Rule
 
@@ -60,6 +66,44 @@ Skipping the check is not a time saving. It moves the cost from ten minutes of r
 full design-and-review cycle plus permanent maintenance.
 
 ## The Check
+
+### 0. Does the framework already HAVE it? (seconds — run this first)
+
+Checks 1 to 4 ask whether upstream already **fixed a bug**. This one asks whether upstream
+already **ships the thing about to be designed** — cheaper to answer and more expensive to get
+wrong. A duplicated fix wastes a day. A duplicated *mechanism* gets designed, reviewed, tested
+and then carried forever beside the real one, and afterwards nobody can tell which of the two
+is authoritative.
+
+Run it whenever the plan is a mechanism rather than a screen or a business rule: upload,
+progress, resumability, auth, permissions, queueing, caching, realtime, file storage, search,
+import/export, rate limiting.
+
+```bash
+# backend — every module the framework ships (vendored, else npm)
+ls projects/api/src/core/modules/ 2>/dev/null || \
+  ls projects/api/node_modules/@lenne.tech/nest-server/dist/core/modules/
+
+# frontend — every composable and component it ships
+ls projects/app/app/core/runtime/composables/ projects/app/app/core/runtime/components/ 2>/dev/null || \
+  ls projects/app/node_modules/@lenne.tech/nuxt-extensions/dist/runtime/composables/
+
+# and what is already wired up in THIS project
+grep -n "Module.forRoot()" projects/api/src/server/server.module.ts
+```
+
+**List the directory. Do not grep the docs for a name.** A renamed export makes a capability
+unfindable by name while the code sits right there, so a name-based search returns nothing and
+reads as proof of absence. Measured: `useBetterAuth` stood in this plugin, in both starters and
+in consuming projects for months after the library renamed it to `useLtAuth` — a
+`grep useBetterAuth` therefore "proved" that no auth composable existed. A directory listing
+cannot drift that way.
+
+What skipping it cost once (DEV-2818, lt-crm): a streaming upload and a progress mechanism were
+designed and partly built while `tus` sat in `src/core/modules/`, `useLtTusUpload` and
+`TusFileUpload.vue` sat in the vendored frontend core, and `TusModule.forRoot()` was already
+registered in `server.module.ts` — one line below the `FileModule` the new work was built on.
+
 
 ### 1. Installed version vs. current version
 

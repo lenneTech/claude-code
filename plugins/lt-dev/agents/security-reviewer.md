@@ -483,7 +483,7 @@ grep -rnE "new EventSource" app/ --include="*.ts" --include="*.vue" | grep -i "a
 
 #### Frontend Auth
 
-- [ ] `useBetterAuth()` for auth — no custom auth
+- [ ] `useLtAuth()` for auth — no custom auth
 - [ ] `authClient.useSession(useFetch)` — always with `useFetch` for SSR
 - [ ] Protected routes: `definePageMeta({ middleware: 'auth' })`
 - [ ] No tokens in `localStorage` or `sessionStorage`

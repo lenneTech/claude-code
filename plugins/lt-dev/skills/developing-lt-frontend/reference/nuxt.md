@@ -105,9 +105,9 @@ const { data } = await useAsyncData('dashboard', async () => {
 ## Route Middleware
 
 ```typescript
-// middleware/auth.ts (uses useBetterAuth - see reference/authentication.md)
+// middleware/auth.ts (uses useLtAuth - see reference/authentication.md)
 export default defineNuxtRouteMiddleware(async () => {
-  const { isAuthenticated } = useBetterAuth()
+  const { isAuthenticated } = useLtAuth()
 
   if (!isAuthenticated.value) {
     return navigateTo('/auth/login')
@@ -116,13 +116,13 @@ export default defineNuxtRouteMiddleware(async () => {
 
 // middleware/guest.ts (redirect authenticated users)
 export default defineNuxtRouteMiddleware(() => {
-  const { isAuthenticated } = useBetterAuth()
+  const { isAuthenticated } = useLtAuth()
   if (isAuthenticated.value) return navigateTo('/dashboard')
 })
 
 // middleware/admin.ts (admin-only routes)
 export default defineNuxtRouteMiddleware(() => {
-  const { isAuthenticated, isAdmin } = useBetterAuth()
+  const { isAuthenticated, isAdmin } = useLtAuth()
   if (!isAuthenticated.value) return navigateTo('/auth/login')
   if (!isAdmin.value) return navigateTo('/dashboard')
 })

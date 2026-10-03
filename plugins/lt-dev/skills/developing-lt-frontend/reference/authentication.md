@@ -6,7 +6,7 @@ lenne.tech projects use [Better Auth](https://www.better-auth.com/) for authenti
 
 - [Preferred Authentication Methods](#preferred-authentication-methods)
 - [Password handling: never roll your own](#password-handling-never-roll-your-own)
-- [useBetterAuth Composable](#usebetterauth-composable)
+- [useLtAuth Composable](#useltauth-composable)
 - [Auth Middleware](#auth-middleware)
 - [Basic Usage Examples](#basic-usage-examples)
 - [Environment Configuration](#environment-configuration)
@@ -101,52 +101,46 @@ library's own wrappers are pinned to that rule by
 `test/auth-client-param-forwarding.test.ts`.
 
 
-## useBetterAuth Composable
+## useLtAuth Composable
+
+`useLtAuth()` ships with `@lenne.tech/nuxt-extensions` and is auto-imported.
+**Never hand-write an auth composable.** The library owns the `lt-auth-state`
+cookie (see "Authentication Cookie Rules" below); a local copy fights it, and the
+symptom is an SSR `Set-Cookie` that overwrites the browser's own cookie.
 
 ```typescript
-// app/composables/use-better-auth.ts
-import { authClient } from '~/lib/auth-client'
-
-export function useBetterAuth() {
-  const session = authClient.useSession(useFetch)
-
-  const user = computed(() => session.data.value?.user ?? null)
-  const isAuthenticated = computed<boolean>(() => !!session.data.value?.session)
-  // Dual-shape admin check — nest-server projects use `roles: string[]`
-  // (the `users` collection field), Better-Auth standalone setups use
-  // `role: string`. Accept either via the canonical helper.
-  // nuxt-base-starter ≥ 2.8.0 ships this as `app/utils/is-admin-user.ts`
-  // (auto-imported). For ad-hoc inline use, the body is:
-  //   !!user?.roles?.includes('admin') || user?.role === 'admin'
-  const isAdmin = computed<boolean>(() => isAdminUser(user.value))
-  const is2FAEnabled = computed<boolean>(() => !!user.value?.twoFactorEnabled)
-  const isLoading = computed<boolean>(() => session.isPending.value)
-
-  return {
-    // State
-    session,
-    user,
-    isAuthenticated,
-    isAdmin,
-    is2FAEnabled,
-    isLoading,
-
-    // Methods (delegated from authClient)
-    passkey: authClient.passkey,
-    signIn: authClient.signIn,
-    signOut: authClient.signOut,
-    signUp: authClient.signUp,
-    twoFactor: authClient.twoFactor,
-  }
-}
+const {
+  user,                 // ComputedRef<LtUser | null>
+  isAuthenticated,
+  isAdmin,              // accepts BOTH role shapes — see below
+  hasRole,              // UX gating only; the backend is what enforces
+  signIn, signUp, signOut,
+  validateSession,
+  changePassword, requestPasswordReset, resetPassword,
+  setUser, clearUser,
+} = useLtAuth()
 ```
+
+`isAdmin` accepts `roles: string[]` (`@lenne.tech/nest-server`) AND `role: string`
+(Better-Auth standalone), so one frontend works against either backend. Prefer
+`hasRole(role)` over a raw `user.value?.roles?.includes(x)`: on a malformed string
+`roles`, `String.prototype.includes` fails OPEN via substring match.
+
+For the raw Better-Auth client — `twoFactor.*`, `admin.*`, `passkey` — use
+`useLtAuthClient()`.
+
+> **API source of truth:** the library's own
+> [CLAUDE.md](https://github.com/lenneTech/nuxt-extensions/blob/main/CLAUDE.md).
+> Deliberately not re-documented here: this file would drift and then prescribe a
+> name that does not exist, which is exactly what the `useBetterAuth()` block it
+> replaced did for months.
 
 ## Auth Middleware
 
 ```typescript
 // middleware/auth.ts
 export default defineNuxtRouteMiddleware(async (to) => {
-  const { isAuthenticated } = useBetterAuth()
+  const { isAuthenticated } = useLtAuth()
 
   if (!isAuthenticated.value) {
     return navigateTo('/auth/login')
@@ -155,7 +149,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
 // middleware/guest.ts
 export default defineNuxtRouteMiddleware(() => {
-  const { isAuthenticated } = useBetterAuth()
+  const { isAuthenticated } = useLtAuth()
 
   if (isAuthenticated.value) {
     return navigateTo('/dashboard')
@@ -164,7 +158,7 @@ export default defineNuxtRouteMiddleware(() => {
 
 // middleware/admin.ts
 export default defineNuxtRouteMiddleware(() => {
-  const { isAuthenticated, isAdmin } = useBetterAuth()
+  const { isAuthenticated, isAdmin } = useLtAuth()
 
   if (!isAuthenticated.value) {
     return navigateTo('/auth/login')
@@ -181,7 +175,7 @@ export default defineNuxtRouteMiddleware(() => {
 ### Sign In
 
 ```typescript
-const { signIn } = useBetterAuth()
+const { signIn } = useLtAuth()
 const toast = useToast()
 
 async function handleLogin(email: string, password: string) {
@@ -201,7 +195,7 @@ async function handleLogin(email: string, password: string) {
 ### Sign Up
 
 ```typescript
-const { signUp } = useBetterAuth()
+const { signUp } = useLtAuth()
 
 async function handleRegister(name: string, email: string, password: string) {
   const { error } = await signUp.email({
@@ -220,7 +214,7 @@ async function handleRegister(name: string, email: string, password: string) {
 ### Passkey Login
 
 ```typescript
-const { signIn } = useBetterAuth()
+const { signIn } = useLtAuth()
 
 async function handlePasskeyLogin() {
   const { error } = await signIn.passkey()
@@ -231,7 +225,7 @@ async function handlePasskeyLogin() {
 ### 2FA Verification
 
 ```typescript
-const { twoFactor } = useBetterAuth()
+const { twoFactor } = useLtAuthClient()
 
 // TOTP code
 await twoFactor.verifyTotp({
@@ -432,7 +426,7 @@ await authClient.resetPassword({
 | Pattern | Implementation |
 |---------|----------------|
 | Session access | `authClient.useSession(useFetch)` for SSR |
-| Composable | `useBetterAuth()` (auto-imported) |
+| Composable | `useLtAuth()` (auto-imported) |
 | Password security | Client-side SHA256 hashing before transmission |
 | 2FA redirect | Automatic via `twoFactorClient({ onTwoFactorRedirect })` |
 | Passkey autofill | `autocomplete="username webauthn"` |

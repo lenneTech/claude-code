@@ -32,7 +32,7 @@ Every architecture uses exactly this stack, without alternatives or substitution
 | Frontend | Nuxt 4 + Vue 3 Composition API | `<script setup lang="ts">` only |
 | UI Framework | Nuxt UI + TailwindCSS | Semantic colors only, no `<style>` blocks |
 | Form Validation | Valibot | No Zod, no custom validation |
-| Authentication | Better Auth | `useBetterAuth()`, base path `/iam` |
+| Authentication | Better Auth | `useLtAuth()`, base path `/iam` |
 | Modals | `useOverlay()` | Programmatic ONLY, never inline |
 | Backend | NestJS + @lenne.tech/nest-server | Services extend `CrudService` |
 | API Style | REST | GraphQL ONLY when explicitly requested |
@@ -59,7 +59,7 @@ Before designing anything, understand what exists.
 6. Docker setup:          ls docker-compose*.yml Dockerfile* 2>/dev/null
 7. Package manager:       ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
 8. Existing patterns:     Read 2-3 existing modules + components for conventions
-9. Auth setup:            Grep for useBetterAuth, authClient, middleware/auth
+9. Auth setup:            Grep for useLtAuth, useLtAuthClient, middleware/auth
 10. Generated types:      ls projects/app/app/api-client/ 2>/dev/null
 ```
 

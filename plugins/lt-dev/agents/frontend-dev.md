@@ -340,7 +340,7 @@ export function useSeasons() {
 | One per controller | `useSeasons`, `useTeams`, `useUsers` |
 | Explicit types on every ref | `ref<boolean>(false)`, not `ref(false)` |
 | No UI logic in composables | No `modalOpen`, no DOM refs — composables are data/logic only |
-| Auth via `useBetterAuth()` | `authClient.useSession(useFetch)` — pass `useFetch` for SSR |
+| Auth via `useLtAuth()` | From `@lenne.tech/nuxt-extensions`, SSR-safe — never hand-write one |
 
 ## State Management
 
@@ -404,7 +404,7 @@ Modal components: `isOpen = ref<boolean>(true)`, close via `overlay.close(result
 ## Authentication — Better Auth
 
 ```typescript
-const { user, isAuthenticated, signIn, signOut } = useBetterAuth()
+const { user, isAuthenticated, signIn, signOut } = useLtAuth()
 ```
 
 - Preferred methods: Passkey (WebAuthn) or Email/Password + 2FA (TOTP)

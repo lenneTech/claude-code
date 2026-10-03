@@ -328,6 +328,7 @@ Build an internal **requirements map** by reading, in order:
 3. **Repo conventions:** `CLAUDE.md`, `docs/`, `README.md` for stack-specific rules.
 4. **Figma design** (if provided): call `mcp__plugin_figma_figma__get_design_context` and `mcp__plugin_figma_figma__get_metadata` for the node, plus `get_screenshot` for visual anchors. Extract: component tree, spacing, colors, copy, interactions.
 5. **Existing code** related to the ticket: grep for entity names from the title in `projects/api/src/server/`, `projects/app/app/`, or equivalent.
+6. **What the framework already ships** — whenever the ticket asks for a *mechanism* (upload, progress, resumability, auth, permissions, queueing, caching, realtime, file storage, search, import/export, rate limiting), LIST the framework's own modules, composables and components before designing one: check 0 of [`checking-upstream-first`](${CLAUDE_PLUGIN_ROOT}/skills/checking-upstream-first/SKILL.md). List directories, never grep the docs for a name — a renamed export is invisible to a name search and reads as absent. An existing mechanism MUST reach STEP 5c as an option: a decision round that never heard of it cannot choose it, and the user then approves a design that duplicates the framework.
 
 Produce a concise internal plan covering:
 - Acceptance criteria (numbered, verbatim where possible)
@@ -336,6 +337,7 @@ Produce a concise internal plan covering:
 - API contract changes (if any)
 - UI / UX changes (if any)
 - **Role / permission matrix** — for every endpoint / mutation / UI action touched, list every role (e.g. `Admin`, `User`, `Guest`, custom org roles) and whether it is `allowed`, `denied`, or `partial` (own-records-only via `securityCheck`). Derive from `@Restricted` / `@Roles` decorators on the affected services, from the ticket text, and from existing call sites. If no role-aware behaviour applies, explicitly note "Single-role feature — no permission matrix needed".
+- **Framework capabilities that already cover part of this** (from source 6) — name them with their real exported names, or state explicitly "nothing in the framework covers this"
 - Open questions for the user
 - **Size signals** for STEP 5c (see the table there)
 

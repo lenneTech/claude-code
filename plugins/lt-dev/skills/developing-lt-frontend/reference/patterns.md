@@ -43,30 +43,19 @@ export function useSettings() {
 
 ## Authentication (Better Auth)
 
+`useLtAuth()` comes from `@lenne.tech/nuxt-extensions`, auto-imported.
+**Never hand-write an auth composable** — the library owns the `lt-auth-state`
+cookie and a local copy fights it.
+
 ```typescript
-// app/composables/use-better-auth.ts (pre-configured in nuxt-base-starter)
-import { authClient } from '~/lib/auth-client'
-
-export function useBetterAuth() {
-  const session = authClient.useSession(useFetch)
-
-  const user = computed(() => session.data.value?.user ?? null)
-  const isAuthenticated = computed<boolean>(() => !!session.data.value?.session)
-  // Accept BOTH role-shapes: nest-server `roles: string[]` AND Better-Auth
-  // singular `role: string`. Use `isAdminUser()` from app/utils/ (nuxt-base-starter
-  // ≥ 2.8.0 auto-imports it). Inline body: `!!u?.roles?.includes('admin') || u?.role === 'admin'`.
-  const isAdmin = computed<boolean>(() => isAdminUser(user.value))
-
-  return {
-    user, isAuthenticated, isAdmin,
-    signIn: authClient.signIn,   // Password auto-hashed (SHA256)
-    signUp: authClient.signUp,   // Password auto-hashed (SHA256)
-    signOut: authClient.signOut,
-    twoFactor: authClient.twoFactor,
-    passkey: authClient.passkey,
-  }
-}
+const { user, isAuthenticated, isAdmin, hasRole, signIn, signUp, signOut } = useLtAuth()
 ```
+
+`isAdmin` accepts BOTH role shapes (`roles: string[]` from
+`@lenne.tech/nest-server`, `role: string` from Better-Auth standalone). Prefer
+`hasRole(role)` over a raw `roles.includes(x)` — the raw shape fails OPEN on a
+malformed string via substring match. Raw client (`twoFactor.*`, `admin.*`,
+`passkey`): `useLtAuthClient()`.
 
 **Preferred auth methods:** Passkey (WebAuthn) or Email/Password + 2FA (TOTP)
 **Base path:** `/iam` (must match nest-server config)
