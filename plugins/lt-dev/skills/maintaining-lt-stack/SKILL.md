@@ -327,7 +327,9 @@ is auto-detected from the current working directory (origin remote matched
 against the six stack repos plus the two marketplace repos) or passed
 explicitly. Differences to the full
 cycle: uncommitted changes in the source repo are the payload (not a
-preflight error — but stop on unrelated-looking files); maintenance is an
+preflight error — but stop on unrelated-looking files), except in
+`claude-code`, whose release script commits only the version bump, so the
+payload has to be committed first (recipes.md, "Marketplace repos"); maintenance is an
 interactive gate — the command ASKS "publish directly" vs. "maintain first"
 (`/lt-dev:maintenance:maintain`) rather than auto-running it; the smoke test is
 opt-in instead of mandatory; and the chain ends after the direct consumers.

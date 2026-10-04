@@ -210,23 +210,33 @@ it as one argument; `npm run` forwards it without a `--` separator.
 - **Version bumps are mandatory.** Plugins run from the versioned cache
   `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`; without a bump the
   same folder is overwritten, which costs rollback and traceability.
-- **`bump-version.ts` stages the whole tree (`git add .`), so a peer's uncommitted
-  work rides along.** This repo is worked in parallel more than most, because
-  stack-wide findings are supposed to land here, so foreign changes in the tree are
-  the normal case rather than an edge one. `git:ship` and `dev-submit` gate against
-  this; the publish path cannot, because the npm script owns the commit. So the gate
-  is manual and belongs before the bump:
+- **What the bump commit contains differs per repo.** Both repos are worked in
+  parallel more than most, because stack-wide findings are supposed to land here, so
+  foreign uncommitted changes in the tree are the normal case rather than an edge one.
+  - **`claude-code`** commits **only the version bump** on top of `HEAD` and refuses
+    to start while anything is staged; it never sweeps the tree. The release content
+    is what is already committed, so commit the final changes first, with explicit
+    paths, then bump:
 
-  ```bash
-  bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh"
-  git stash push -m "held out of <version>" -- <foreign paths>
-  npm run version:minor "<message>"
-  git stash pop
-  ```
+    ```bash
+    bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh"   # whose work is in the tree
+    git add <final paths> && git commit -m "<conventional message>"
+    npm run version:minor "<message>"
+    ```
 
-  Tell the affected sessions before the stash (`CONFLICT`) and after the pop
-  (`READY`) — the window is seconds, but a parallel writer turns it into a conflict.
+    Run the bump over uncommitted content and the release carries a version number
+    without that content.
+  - **`claude-code-internal`** still stages the whole tree (`git add .`), so a peer's
+    uncommitted work rides along. Hold foreign paths out around the bump, and tell the
+    affected sessions before the stash (`CONFLICT`) and after the pop (`READY`):
 
+    ```bash
+    git stash push -m "held out of <version>" -- <foreign paths>
+    npm run version:minor "<message>"
+    git stash pop
+    ```
+
+  Either way, decide per foreign group whether it is final before it ships.
   Observed on 2026-09-01 during the 8.9.0 release: two foreign files were in the
   tree, both finished, both describing versions that did not exist — nuxt-extensions
   1.16.0 and nest-server 11.38.0 against npm's 1.15.1 and 11.37.0, plus lt CLI guards
