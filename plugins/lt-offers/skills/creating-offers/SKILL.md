@@ -1,6 +1,6 @@
 ---
 name: creating-offers
-description: 'Creates and edits business offers on the Offers platform (angebote.lenne.tech) and its demo instance (demo-angebote.lenne.tech), using the account''s own knowledge base for company profile, services and references. Knows all 18 content block types, offer lifecycle (draft/sent/viewed/template), custom HTML with Tailwind CSS and NuxtUI components (via rich-component block), HTML embeds for click-dummies, per-offer themes and color mode, and file uploads via single-use upload tickets. Activates when working with offers, content blocks, or the Offers API. Uses MCP tools (offers-api for production, offers-api-demo for demo) for all CRUD operations.'
+description: 'Creates and edits business offers on the Offers platform (angebote.lenne.tech) and its demo instance (demo-angebote.lenne.tech), using the account''s own knowledge base for company profile, services and references. Knows all 18 content block types, offer lifecycle (draft/sent/viewed/template), custom HTML with Tailwind CSS and NuxtUI components (via rich-component block), HTML embeds for click-dummies, per-offer themes and color mode, and file uploads via single-use upload tickets. Activates when working with offers, content blocks, or the Offers API. Uses MCP tools (offers-api for production, offers-api-demo for demo) for all CRUD operations. NOT for concept folders / Konzeptmappen (use creating-concepts).'
 ---
 
 # Creating Offers on angebote.lenne.tech
@@ -11,7 +11,8 @@ This skill enables Claude Code to create, optimize, and manage business offers o
 
 - **Content block `order` values must be ascending without gaps** — Gaps in the sequence (e.g., `1, 3, 5`) cause rendering glitches on the offers frontend. When deleting a block, re-normalize remaining orders; when inserting, pick the next consecutive integer. The API does not validate this — the bug only surfaces client-side.
 - **`global-ref` blocks point at blocks the platform provides** — `list_globals` shows which reusable blocks exist and `get_global` shows their versions. The MCP catalog has no tool to create one, so reuse your own recurring content through the knowledge base or a template offer instead (see "Reusing content across offers").
-- **OAuth session expires silently across sessions** — The `offers-api` and `offers-api-demo` MCP OAuth cookies are tied to the current Claude session and tracked per-server. Resuming an earlier offers session (via `--resume`) often hits a 401 on the first MCP call without a clear error. Re-authenticate by running a trivial MCP tool first. The first call against `offers-api-demo` triggers its own OAuth flow even if `offers-api` is already authenticated.
+- **OAuth authorization expires silently across sessions** — The `offers-api` and `offers-api-demo` MCP OAuth tokens are tied to the current Claude session and tracked per-server. Resuming an earlier offers session (via `--resume`) often hits a **401** on the first MCP call without a clear error, which needs a re-authorization: run a trivial MCP tool first, and note that the first call against `offers-api-demo` triggers its own OAuth flow even when `offers-api` is already authorized.
+  A **deploy** used to look identical from the client side and is a different problem, now fixed (DEV-3408): the server holds MCP sessions in process memory, so restarting the container invalidates every session id in the wild. It answered that with `400 No valid session`, on which a client does not recover — so every connected session stayed dead until somebody ran `/mcp` by hand. It now answers `404`, and the client sends a fresh `initialize` by itself. So a `400` after a deploy is no longer expected; a `401` is still the authorization case above. `showroom` carries the same older controller and is not fixed yet.
 - **Template offers cannot be published — only duplicated** — Offers with `isTemplate: true` cannot be `mark_sent`. Attempting to publish a template silently returns the unchanged offer. To publish, first `create_from_template` to produce a regular offer, then send that one.
 - **Hardcoded colors in `custom-html` break in the other color mode** — A block styled with inline colors for a light page turns unreadable when the viewer flips the theme toggle: dark headings and dark body text end up on the dark page background. `colorMode: 'light'` does not prevent this — it only sets the initial preference, the toggle stays available. Every `custom-html` block must paint its own background on the outermost element whenever it sets text colors. See [`custom-html-guide.md`](./reference/custom-html-guide.md) → "Readability in both color modes".
 - **`cta.text` is rendered as plain text, not HTML** — Passing `"<p>…</p>"` prints the literal tags on the offer page. The block docs list it next to HTML-bearing fields, which invites the mistake. Pass a bare sentence. `text` blocks, `custom-html` and `faq` answers are unaffected.
@@ -34,11 +35,13 @@ This skill enables Claude Code to create, optimize, and manage business offers o
 |------------|---------------|
 | Create/edit offers via MCP | **THIS SKILL** |
 | Company profile, services, team, references for offers | **THIS SKILL** (the account's knowledge base) |
+| Concept folder (Konzeptmappe) from workshop results | `creating-concepts` |
 
 ## Related Skills
 
 **Works closely with:**
 - `/lt-offers:offers:create` and `/lt-offers:offers:optimize` — the guided workflows built on this skill
+- `creating-concepts` and `/lt-offers:offers:concept` — concept folders, which build on this skill's tools and references
 
 ## MCP Connection
 
@@ -61,7 +64,7 @@ Both connections use OAuth 2.1 with automatic browser-based login, and each inst
 - `add_offer_source` — Add a source (text/link/file) to an offer
 - `create_from_template` — Create offer from template
 - `create_knowledge` — Create a knowledge base entry
-- `create_offer` — Create new offer (returns offer + access code). Accepts an optional `theme: { enabled, light, dark }` per-offer override and an optional `colorMode: 'system' | 'light' | 'dark'` (forces the offer page into light/dark; default `system` = browser preference)
+- `create_offer` — Create new document (returns document + access code). Takes `kind`: `offer` (default) or `concept` for a Konzeptmappe — see **Two document kinds** below. Accepts an optional `theme: { enabled, light, dark }` per-offer override and an optional `colorMode: 'system' | 'light' | 'dark'` (forces the offer page into light/dark; default `system` = browser preference)
 - `create_upload_ticket` — Create a single-use upload URL (valid 15 min) for uploading files via plain HTTP instead of base64 through MCP. `purpose` selects validation: `html-embed` (validated HTML, ≤ 5 MB), `image` (`image/*`, ≤ 10 MB), `file` (any, ≤ 25 MB). POST multipart form-data with field `file` to the returned `uploadUrl`; the response contains the GridFS file `id` for use as `fileId` in content blocks
 - `delete_knowledge` — Delete a knowledge base entry
 - `delete_offer` — Delete offer permanently
@@ -76,7 +79,7 @@ Both connections use OAuth 2.1 with automatic browser-based login, and each inst
 - `get_offer_sources` — Get all sources for an offer
 - `list_globals` — List reusable global content blocks
 - `list_knowledge` — List knowledge base entries
-- `list_offers` — List offers (with optional status filter)
+- `list_offers` — List documents (optional `status` and `kind` filters)
 - `list_templates` — List template offers
 - `mark_draft` — Reset to draft (sent → draft)
 - `mark_sent` — Mark offer as sent (draft → sent)
@@ -91,25 +94,56 @@ Both connections use OAuth 2.1 with automatic browser-based login, and each inst
 ## Reference Files
 
 - `${CLAUDE_SKILL_DIR}/reference/content-blocks.md` — All 18 block types with schemas (incl. `lottie`, `html-embed`) and upload-ticket usage
-- `${CLAUDE_SKILL_DIR}/reference/offer-model.md` — Offer model, status lifecycle, per-offer theme and colorMode fields
+- `${CLAUDE_SKILL_DIR}/reference/offer-model.md` — Offer model, document kinds and linked documents, status lifecycle, per-offer theme and colorMode fields
 - `${CLAUDE_SKILL_DIR}/reference/knowledge-base.md` — Knowledge base schema and categories
 - `${CLAUDE_SKILL_DIR}/reference/custom-html-guide.md` — HTML + Tailwind + NuxtUI guide (incl. WYSIWYG editor)
 - `${CLAUDE_SKILL_DIR}/reference/theming.md` — Per-offer theme override, app-wide default theme, MCP & UI workflows
 - `${CLAUDE_SKILL_DIR}/reference/best-practices.md` — Content structure and examples
 
+## Two document kinds
+
+The platform carries two kinds in one collection, told apart by `kind`:
+
+| | `offer` (default) | `concept` — Konzeptmappe |
+|---|---|---|
+| What it is | A customer offer | A worked-out concept from a workshop |
+| Link | `angebote.lenne.tech/angebot/<slug>` | `konzept.lenne.tech/<slug>` |
+| `pricing-table` block | yes | **rejected by the API** |
+| Uploaded offer PDF (`offerPdfFileId`) | yes | **rejected by the API** |
+| Wording the customer reads | „Geschütztes Angebot" … | „Geschützte Konzeptmappe" … |
+
+What this means when working through MCP:
+
+- **Ask which kind it is** before building content, not after. The kind decides the available
+  blocks and the link, and a document that already carries a pricing table cannot be switched to
+  `concept` until the block is gone — the API judges the resulting state, not the payload.
+- **Never assemble the link.** `generate_snippet` returns the one that matches the kind.
+- `duplicate_offer`, `create_from_template` and saving as a template all keep the kind, so
+  templates are effectively separated by kind.
+- Everything else is identical: blocks, themes, access code, analytics, and the PDF, which both kinds print from the
+  rendered customer page. Only blocks that run in the browser differ on paper: `html-embed` and `lottie` print a
+  still image or a hint (`reference/content-blocks.md`, sections 17 and 18).
+- **Linked documents:** `relatedDocumentIds` links an offer and a concept folder in both directions with one call,
+  and the customer never sees a link. `update_offer` replaces the whole list, so send the current links plus the new
+  one; `get_offer` resolves them into `relatedDocuments`. An offer that follows a concept folder reads and links it
+  (`/lt-offers:offers:create`, Step 1); details in `creating-concepts` → "Linked Offers".
+- Concept folders have their own skill, `creating-concepts`, with the workflow from workshop material and every rule
+  that differs from offers.
+
 ## Core Workflow
 
-### Creating an Offer
+### Creating a document
 
 1. **Load context** — `get_offer_context` → Company knowledge + global blocks
-2. **Gather requirements** — Title, customer, content, approach
-3. **Additional materials?** — Ask if there are briefing docs/notes
-4. **Store sources** — Via `add_offer_source` / `upload_offer_source_file`
+2. **Decide the kind** — offer or Konzeptmappe (see above); it governs blocks, link and wording
+3. **Gather requirements** — Title, customer, content, approach
+4. **Additional materials?** — Ask if there are briefing docs/notes
 5. **Choose approach** — From template or new
-6. **Build content blocks** — Based on knowledge + sources + briefing
+6. **Build content blocks** — Based on knowledge + briefing
 7. **Create offer** — `create_offer`
-8. **Review and refine** — `get_offer` / `update_offer`
-9. **Share** — `mark_sent` → `generate_snippet`
+8. **Store sources** — Via `add_offer_source` / `upload_offer_source_file`; both need the id from step 7
+9. **Review and refine** — `get_offer` / `update_offer`
+10. **Share** — `mark_sent` → `generate_snippet`
 
 ### Optimizing an Offer
 

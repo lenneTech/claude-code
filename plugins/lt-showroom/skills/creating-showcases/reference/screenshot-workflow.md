@@ -1,6 +1,6 @@
 # Screenshot Workflow — Feature-Based Guide
 
-This document details the complete screenshot capture workflow for the `screenshot-generator` agent and the `/showroom:screenshot` command. Screenshots are feature-driven: one set of captures per feature defined in `SHOWCASE.md`.
+This document details the complete screenshot capture workflow for the `screenshot-generator` agent and the `/lt-showroom:showroom:screenshot` command. Screenshots are feature-driven: one set of captures per feature defined in `SHOWCASE.md`.
 
 ## Overview
 

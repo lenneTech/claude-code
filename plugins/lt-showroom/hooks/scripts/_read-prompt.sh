@@ -24,7 +24,9 @@ if [ ! -t 0 ]; then
     PROMPT=$(printf '%s' "$_hook_input" | jq -r '.prompt // empty' 2>/dev/null)
   else
     PROMPT=$(printf '%s' "$_hook_input" | tr -d '\n' | grep -oE '"prompt"[[:space:]]*:[[:space:]]*"(\\.|[^"\\])*"' | head -1 | sed 's/^"prompt"[[:space:]]*:[[:space:]]*"//;s/"$//')
-    PROMPT=$(printf '%b' "${PROMPT//\\\"/\"}")
+    # sed, not ${PROMPT//\\\"/\"}: bash's pattern substitution is quadratic and took ~50 s
+    # on a 20 KB prompt, past the 5 s hook timeout.
+    PROMPT=$(printf '%b' "$(printf '%s' "$PROMPT" | sed 's/\\"/"/g')")
   fi
   unset _hook_input
 fi

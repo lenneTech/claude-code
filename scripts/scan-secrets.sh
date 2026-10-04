@@ -54,6 +54,9 @@ PLACEHOLDER='HIER_|CHANGE_?ME|EXAMPLE|BEISPIEL|MUSTER|<[^>]*>|xxxx|deine?[-_]|de
 # CI ohne Zugriff auf das private Repo), wird Check 7 übersprungen und das gemeldet.
 # Vorfall 2026-09-25: Kunden- und Projektnamen standen seit v7.6.0 in lt-showroom und
 # lt-dev, unbemerkt, weil keiner davon eine Rechtsform trug.
+# Dieselbe Liste sperrt interne Infrastruktur (Server-IPs, interne Hosts, Server-/Runner-
+# Namen, TurboOps-IDs). Vorfall 2026-10-01: eine Server-IP stand vom 2026-07-18 bis zum
+# 2026-08-23 in deploying-to-turboops und ist seitdem in der öffentlichen Historie.
 DENYLIST="${LT_PUBLIC_DENYLIST:-$ROOT/../claude-code-internal/public-denylist.txt}"
 DENY_RE=""
 if [[ -r "$DENYLIST" ]]; then
@@ -137,7 +140,7 @@ while IFS= read -r f; do
   if [[ -n "$DENY_RE" ]]; then
     hit=$(grep -niwE "$DENY_RE" "$f" 2>/dev/null | head -1 | cut -d: -f1)
     if [[ -n "$hit" ]]; then
-      report "$f:$hit" "Enthält einen Namen aus der internen Sperrliste (echter Kunde/Projekt). Anonymisieren (z. B. Beispielkunde, ABC-123, shop)."
+      report "$f:$hit" "Enthält einen Eintrag der internen Sperrliste (echter Kunde/Projekt oder interne Infrastruktur). Anonymisieren (z. B. Beispielkunde, ABC-123, shop) bzw. Platzhalter wie <gitlab-host>, <server-ip> verwenden."
     fi
   fi
 done < <(list_files "$@")

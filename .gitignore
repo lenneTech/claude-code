@@ -20,3 +20,8 @@ bun.lockb
 
 # claude plugin eval run output (reports, per-run transcripts)
 plugins/*/evals/results/
+
+# Project-scoped subagent memory (lt-dev reviewers declare `memory: project`). Their notes
+# can describe private repositories and local machines, and this repo is public: keep them
+# local. Knowledge worth sharing goes into the plugin elements instead.
+.claude/agent-memory/

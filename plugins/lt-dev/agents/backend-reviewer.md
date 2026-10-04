@@ -271,6 +271,15 @@ For every `*Force` or `*Raw` call found, verify:
 | `this.processResult(result, serviceOptions)` wrapper with upstream authorization | Allowed (preferred pattern B) |
 | `*Force`/`*Raw` in documented system-internal flow (credential check, migration, admin tooling) | Allowed |
 
+#### Layer 6: Role Checks Outside the Controller (Rule 19)
+
+`@Roles` on a controller is enforced by its `RolesGuard` only. For every service method that an MCP tool, AI guide, queue job, WebSocket handler or webhook calls directly, verify it applies the role check the matching controller declares (tenant role via `RequestContext.get()?.tenantRole`, global roles from the user), and that one API test calls that entry point with a role that must be refused.
+
+| Scenario | Severity |
+|----------|----------|
+| Operation restricted on REST, callable through a non-REST entry point without the check | **CRITICAL** — privilege escalation |
+| Check present, no refused-role test for the non-REST entry point | **HIGH** |
+
 #### Permissions Scanner
 
 ```bash
@@ -390,6 +399,8 @@ that module's `INTEGRATION-CHECKLIST.md` (the four project classes as one table)
 - [ ] No blind `serviceOptions` passthrough
 - [ ] Constructor follows pattern: `@InjectModel`, `configService`, then custom deps
 - [ ] **`@InjectModel` audit (instance of Informed-Trade-off Pattern) — applies ONLY to Models that do NOT belong to this Service.** The Service's OWN primary Model (passed to `super({ mainDbModel })`) is the standard pattern and requires nothing extra. For every `@InjectModel` of a Model belonging to a different Service, verify: (1) a code comment states a **good reason** for not using the corresponding Service, AND (2) the corresponding Service has been analyzed — `securityCheck()`, `@Restricted`/`@Roles`, ownership, field filtering, hooks/events, and side-effects are either safely skippable in this context or manually replicated. Unjustified or unanalyzed foreign `@InjectModel` = finding. See Layer 3b below (plain-object responses share the same bypass vectors).
+- [ ] **Tenant-authored values never resolve `process.env` at large (Rule 17).** A template, placeholder or "credential from env" field a tenant user writes resolves only an explicit allow-list; a free lookup exposes every tenant's secrets. Flag any `process.env[...]` whose key can come from tenant data.
+- [ ] **User-entered URLs pass an SSRF guard (Rule 18).** Outgoing requests to webhook, preview, import or "test connection" URLs refuse loopback, private, link-local (cloud metadata), CGNAT and ULA addresses and re-check every redirect hop.
 - [ ] **Hardcoded collection/model lists need a registry-drift test.** Any service that enumerates collections or models by a hardcoded list (backup, export, migration, wipe, seed) needs a test comparing the list against `mongoose.connection.modelNames()` → `model.collection.name`. Without it, every new module is silently omitted. Collection names are Mongoose's **pluralization** (`Staff` → `staffs`, `Race` → `races`), never the module name — a hardcoded singular/guessed name is a bug (wrong collection backed up / wiped). Flag a hardcoded list with no drift test.
 
 **Scoring:**

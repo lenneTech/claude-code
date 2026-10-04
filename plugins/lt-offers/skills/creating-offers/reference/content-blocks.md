@@ -8,10 +8,18 @@ All 18 supported content block types for offers and templates. Each block has:
   title?: string;      // Display title (shown in TOC)
   content: object;     // Type-specific content (see below)
   order: number;       // Sort position (0-based, ascending)
-  visible: boolean;    // Whether block is rendered
+  visible: boolean;    // Whether the block reaches the customer at all
   showInToc?: boolean; // Whether block appears in table of contents
 }
 ```
+
+`visible: false` is not a display toggle. The public endpoint strips those blocks from the
+response server-side (including inside a resolved `global-ref`), so the content never reaches
+the customer's browser. A hidden block is still stored and still visible to employees.
+
+Do not park a customer-facing asset in a hidden block to keep it referenced. The file stays
+referenced for cleanup purposes, but delivery of files is moving to visible blocks only, so a
+customer will no longer be able to load it.
 
 ---
 
@@ -77,10 +85,14 @@ List of downloadable files. `includeInPdf` controls whether the file is listed i
 ## 6. `cta` — Call to Action
 
 ```json
-{ "buttonLabel": "Jetzt kontaktieren", "buttonUrl": "https://...", "text": "<p>Optional text above button</p>" }
+{ "buttonLabel": "Jetzt kontaktieren", "buttonUrl": "https://...", "text": "Optional text above button" }
 ```
 
 Action button with optional descriptive text.
+
+`text` is **plain text, not HTML**. The editor field is a plain textarea and the renderer prints
+the value as text, so any markup you put here shows up literally as `<p>…</p>` on the customer's
+page. This example used to show HTML, which is how that happened.
 
 ---
 
@@ -182,7 +194,7 @@ Use `list_globals` to find available globals, then reference by ID.
 
 Pure HTML + Tailwind CSS classes. Sanitized with DOMPurify on render. No Vue components.
 
-**File-URL tokens.** Use `{{fileUrl:<24-hex-id>}}` to embed GridFS images / PDFs without baking a host into the stored HTML. The frontend renderer, the WYSIWYG editor and the PDF builder all expand these tokens at render time. Example: `<img src="{{fileUrl:69e9c4b6014c53740c761ca5}}" alt="Screenshot">`.
+**File-URL tokens.** Use `{{fileUrl:<24-hex-id>}}` to embed GridFS images / PDFs without baking a host into the stored HTML. The frontend renderer and the WYSIWYG editor expand these tokens at render time, and so does the PDF, which is printed from the rendered page. Example: `<img src="{{fileUrl:69e9c4b6014c53740c761ca5}}" alt="Screenshot">`.
 
 **Editor UX.** The block has two synchronised surfaces in the offer editor:
 - "Visuell" — Squire-based WYSIWYG that **preserves any HTML you put in** (divs, inline `style="..."`, tables, classes). Toolbar covers bold/italic/strike/code, headings 1–3, lists, quotes, links and clear-format. Image tokens render as real images via the bridge above.
@@ -203,6 +215,9 @@ Both modes feed the same `content.html` field. Squire's contract is "no schema-r
 
 HTML + Tailwind CSS + whitelisted NuxtUI components.
 
+**In the PDF as online.** The PDF is printed from the rendered customer page, so the block appears as in the browser,
+in the light palette.
+
 **Whitelisted components:** UButton, UBadge, UIcon, UCard, UAlert, UAccordion, UAvatar, UDivider, UProgress, UMeter, UChip, UKbd, USeparator
 
 ---
@@ -218,6 +233,10 @@ HTML + Tailwind CSS + whitelisted NuxtUI components.
   ]
 }
 ```
+
+**Offers only.** A concept folder (`kind: "concept"`) rejects this block: `create_offer` and `update_offer` fail, and
+switching an existing offer to `concept` fails as long as the block is present. Prices for a concept folder's next
+step belong in the linked offer.
 
 ---
 
@@ -235,11 +254,11 @@ HTML + Tailwind CSS + whitelisted NuxtUI components.
 }
 ```
 
-Renders a [Lottie](https://lottiefiles.com/) JSON animation. Auto-plays only once it scrolls into view (`IntersectionObserver`), so a long offer page stays cheap to render. PDFs and the email-share preview cannot run JS animations and use a static fallback in this order:
+Renders a [Lottie](https://lottiefiles.com/) JSON animation. Auto-plays only once it scrolls into view (`IntersectionObserver`), so a long offer page stays cheap to render. PDFs and the email-share preview cannot run JS animations. The PDF prints a still instead, in this order:
 
-1. **`previewFileId`** — author-uploaded PNG/JPG (recommended for branded outputs).
-2. **Auto-snapshot** — first frame of the animation, captured server-side via Puppeteer at PDF render time. No DB persistence.
-3. **Inline placeholder** — "Interaktive Animation — im Online-Angebot sichtbar".
+1. **`previewFileId`** — author-uploaded PNG/JPG (recommended when the motif matters).
+2. **Auto-snapshot** — when `previewFileId` is empty, the first PDF captures the animation's first frame and stores it as the block's `previewFileId`, so every later PDF reuses it.
+3. **Framed hint** — „<block title> — Animation, online zu sehen", only when no image can be captured.
 
 **Constraints**
 - Max 2 MB per JSON file (rejected at upload).
@@ -272,7 +291,7 @@ Renders an uploaded, self-contained HTML file (e.g. an interactive click-dummy o
 - The HTML must be **fully self-contained**: inline all CSS/JS, embed fonts and images as data URIs. External `<script src>`, external stylesheets and remote media trigger upload warnings (they will not load reliably in the sandbox).
 - Max 5 MB per file; upload validator checks UTF-8 and HTML structure.
 - `height` is clamped to 200–1600 px.
-- PDFs cannot run the embed: the PDF builder uses `previewFileId` (author-uploaded PNG/JPG) when set, otherwise a placeholder ("Interaktiver Inhalt — im Online-Angebot verfügbar").
+- PDFs cannot run the embed: the PDF prints `previewFileId` (author-uploaded PNG/JPG) when set, otherwise a framed hint „<block title> — interaktiv, online abrufbar" („Interaktive Demo" without a title), the same for offers and concept folders. `hint` above and `caption` below are printed as well, so a `caption` tells the PDF reader what the online version offers.
 
 **Authoring paths**
 - **MCP one-shot:** `add_html_embed` uploads base64 HTML and inserts the block in one atomic call (same insert-at-order pattern as `add_lottie_animation`). Suitable for small files only — base64 through a tool call gets unwieldy fast.
@@ -291,6 +310,14 @@ The field is named `fileId` on purpose: orphan-file cleanup and backup remapping
 - **File references**: Use existing `fileId` values from uploaded files. For Lottie files, use `add_lottie_animation`; for HTML embeds, use `add_html_embed` or an upload ticket; for offer-source files (briefing material, NOT content blocks) use `upload_offer_source_file`.
 - **Uploading new files via MCP**: `create_upload_ticket` (`purpose`: `"html-embed"` | `"image"` | `"file"`) returns a single-use upload URL valid for 15 minutes. `POST` the file as multipart form-data (field `file`) to that URL — no session required, the token IS the authorization. Purpose selects the server-side validation: `html-embed` (validated HTML, ≤ 5 MB), `image` (`image/*`, ≤ 10 MB), `file` (any type, ≤ 25 MB). Caveat: `curl` sends `application/octet-stream` for less-common extensions like `.webp` — set the MIME type explicitly (`-F "file=@shot.webp;type=image/webp"`), otherwise an `image` ticket rejects the upload with 400 and the single-use ticket is burned.
 - **Image tokens**: Inside `text`, `custom-html`, `rich-component` blocks, embed GridFS images via `{{fileUrl:<24-hex-id>}}` — the renderer expands these at view/PDF time and keeps the HTML portable across environments.
+- **Jump marks**: A long document can carry its own navigation. Give the target an `id`
+  (`<p id="simulator">`, `<h2 id="auf-einen-blick">`) and link to it with `<a href="#simulator">`.
+  The `id` survives sanitation, the link stays in the same tab, and the browser stops a little
+  short of the viewport edge so the target is readable. Deep links work too: a customer link with
+  `#simulator` appended lands at that spot, including after the access code has been entered.
+  Every other link in block HTML opens in a new tab, which is why a jump mark must be written as
+  a same-page href — `https://angebote.lenne.tech/angebot/abc#simulator` as a full URL would open
+  a second tab, and that tab asks for the access code again.
 
 ---
 

@@ -117,6 +117,9 @@ These rules have no exceptions, because the decorators and `securityCheck()` are
 3. Analyze permissions before writing tests, so each test uses a user the rules actually admit
 4. Test with the least privileged authorized user, so a test cannot pass only because an admin was used
 5. Verify decorator coverage with `lt server permissions` after creating modules
+6. Values a tenant user writes (templates, placeholders, "credential from env" fields) resolve only an explicit allow-list, never `process.env` at large, because the platform environment holds every tenant's secrets (Rule 17)
+7. Every server-side request to a user-entered URL passes an SSRF guard that refuses loopback, private, link-local (cloud metadata), CGNAT and ULA addresses and re-checks every redirect (Rule 18)
+8. `@Roles` protects its controller only: a service that MCP tools, jobs or sockets call directly checks the role itself via `RequestContext.get()?.tenantRole` (Rule 19)
 
 **Complete security rules: [reference/security-rules.md](${CLAUDE_SKILL_DIR}/reference/security-rules.md)** | **OWASP checklist: [reference/owasp-checklist.md](${CLAUDE_SKILL_DIR}/reference/owasp-checklist.md)**
 

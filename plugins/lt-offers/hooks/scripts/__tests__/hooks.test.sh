@@ -10,6 +10,8 @@
 # - detect-offers-project.sh fires only on offers intent named in the prompt; generic
 #   analytics and UI words stay quiet in every project, and the demo stage needs a
 #   user-written "demo"
+# - concept-folder intent ("Konzeptmappe", konzept.lenne.tech, /lt-offers:offers:concept)
+#   names the creating-concepts skill; "Konzept" alone is an everyday word and stays quiet
 #
 # Run: bash hooks/scripts/__tests__/hooks.test.sh
 #
@@ -53,7 +55,7 @@ trap 'rm -rf "$TMP_ROOT"' EXIT
 
 # A PATH without jq, so the scripts take their grep/sed fallback.
 NOJQ_BIN="$TMP_ROOT/nojq-bin"; mkdir -p "$NOJQ_BIN"
-for t in cat grep head sed tr; do
+for t in awk cat grep head sed tr; do
   printf '#!/bin/sh\nexec "%s" "$@"\n' "$(command -v "$t")" > "$NOJQ_BIN/$t"
   chmod +x "$NOJQ_BIN/$t"
 done
@@ -148,6 +150,54 @@ assert_contains "$(detect "$OTHER" '/lt-offers:create-offer demo')" "Demo stage 
 OUT=$(detect "$OTHER" 'erstelle ein Demonstrations-Angebot')
 assert_contains "$OUT" "Default stage" "Demonstrations-Angebot stays on production"
 assert_not_contains "$OUT" "Demo stage requested" "Demonstrations-Angebot is not a demo request"
+
+echo "detect-offers-project.sh: concept folders"
+OUT=$(detect "$OTHER" 'Erstelle eine Konzeptmappe für die Musterfirma aus diesen Workshop-Notizen')
+assert_contains "$OUT" "Concept-folder keywords detected" "German: Konzeptmappe"
+assert_contains "$OUT" "creating-concepts" "a concept prompt names the creating-concepts skill"
+assert_contains "$OUT" "Default stage" "a concept prompt without demo routes to production"
+assert_not_contains "$OUT" "Offer-related keywords detected" "a concept prompt is not reported as an offer prompt"
+assert_contains "$(detect "$OTHER" 'Die Konzeptmappen von Muster-Kunde überarbeiten')" "creating-concepts" "German: Konzeptmappen"
+assert_contains "$(detect "$OTHER" 'check konzept.lenne.tech/abc12345')" "creating-concepts" "concept domain"
+assert_contains "$(detect "$OTHER" '/lt-offers:offers:concept Musterfirma')" "creating-concepts" "/lt-offers:offers:concept names the concept skill"
+assert_contains "$(detect "$OTHER" 'Konzeptmappe auf der Demo-Stage anlegen')" "Demo stage requested" "concept prompt with demo routes to demo"
+OUT=$(detect "$OTHER" 'öffne demo-konzept.lenne.tech/abc12345')
+assert_contains "$OUT" "Demo stage requested" "demo concept domain routes to demo"
+assert_contains "$OUT" "creating-concepts" "demo concept domain names the concept skill"
+OUT=$(detect "$OTHER" 'Erstelle eine Konzeptmappe auf Basis des Angebots für die Musterfirma')
+assert_contains "$OUT" "creating-concepts" "concept and offer in one prompt: concept skill"
+assert_contains "$OUT" "creating-offers" "concept and offer in one prompt: offer skill"
+assert_not_contains "$(detect "$OTHER" 'erstelle ein Angebot für den Kunden')" "creating-concepts" "an offer prompt does not name the concept skill"
+assert_silent "$(detect "$OTHER" 'schreib ein Konzept für die Datenbankmigration')" "Konzept alone stays quiet"
+assert_silent "$(detect "$OTHER" 'Konzeptpapier und Konzeptentwurf für das Caching')" "Konzept compounds other than Konzeptmappe stay quiet"
+assert_silent "$(detect "$OTHER" 'the concept of the caching layer is unclear')" "English concept stays quiet"
+assert_silent "$(detect "$OTHER" 'review plugins/lt-offers/skills/creating-concepts/SKILL.md')" "concept skill path alone does not fire"
+assert_silent "$(detect "$OFFERS" '<task-notification><result>Konzeptmappe auf demo-konzept.lenne.tech geprüft</result></task-notification>')" "concept words in a task-notification are ignored"
+
+echo "detect-offers-project.sh: pasted material does not choose the stage"
+# Workshop notes and customer mails arrive pasted, wrapped in <pasted_content> markers.
+# A "Live-Demo" inside them is content, not a request for the demo stage.
+PASTED_BLOCK=$(printf 'Erstelle eine Konzeptmappe für die Musterfirma aus diesen Workshop-Notizen:\n\n<pasted_content id="ab12">\nWorkshop 12.09.: Ziele, Personas, Live-Demo des Klick-Prototyps\n</pasted_content id="ab12">')
+OUT=$(detect "$OTHER" "$PASTED_BLOCK")
+assert_contains "$OUT" "creating-concepts" "pasted notes: the concept prompt still fires"
+assert_contains "$OUT" "Default stage" "pasted notes: a demo inside the pasted block stays on production"
+assert_contains "$(HOOK_PATH="$NOJQ_BIN" detect "$OTHER" "$PASTED_BLOCK")" "Default stage" "pasted notes without jq: stays on production"
+PASTED_INLINE='Erstelle ein Angebot aus dieser Mail: <pasted_content id="cd34">Bitte zeigen Sie uns die Demo nächste Woche.</pasted_content id="cd34"> Danke'
+assert_contains "$(detect "$OTHER" "$PASTED_INLINE")" "Default stage" "pasted inline: a demo inside the pasted block stays on production"
+assert_contains "$(detect "$OTHER" "$PASTED_BLOCK
+Bitte auf der Demo-Stage anlegen")" "Demo stage requested" "a demo the user typed after the pasted block still routes to demo"
+
+echo "detect-offers-project.sh: large prompts without jq"
+# The escape-aware fallback once took ~50 s on a 20 KB prompt (bash pattern substitution
+# over the whole string), so every large paste hit the 5 s hook timeout. The stage request
+# sits at the very end, so a parser that reads only the start of the prompt fails here.
+LARGE=$(node -e 'process.stdout.write("Erstelle eine Konzeptmappe. " + "Notiz mit \"Zitat\" und Zeilenumbruch\n".repeat(600) + "Bitte auf der Demo-Stage anlegen")')
+START=$SECONDS
+OUT=$(HOOK_PATH="$NOJQ_BIN" detect "$OTHER" "$LARGE")
+ELAPSED=$((SECONDS - START))
+assert_contains "$OUT" "creating-concepts" "without jq: a 20 KB prompt names the concept skill"
+assert_contains "$OUT" "Demo stage requested" "without jq: a 20 KB prompt is read to its last line"
+if [ "$ELAPSED" -le 3 ]; then pass "without jq: a 20 KB prompt is parsed well inside the hook timeout (${ELAPSED}s)"; else fail "without jq: a 20 KB prompt took ${ELAPSED}s"; fi
 
 echo "detect-offers-project.sh: prompt parsing without jq"
 # JSON.stringify escapes the quotes and the newline; a plain "[^"]*" match stopped at

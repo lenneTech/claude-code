@@ -401,7 +401,7 @@ Read [release-performance.md](release-performance.md) when a publish run looks s
   release gate (`claude plugin validate`).
 - Skill `running-check-script` — iterate `check` until green.
 - Command `/lt-dev:fullstack:smoke-test` — the release gate.
-- Skill `deploying-to-turboops` — deploy contract + Trap 5 (Turbo-Dev Traefik).
+- Skill `deploying-to-turboops` — deploy contract + Trap 5 (foreign Traefik on the target server).
 - Skill `coordinating-peer-sessions` — the message protocol behind the parallel
   wave execution above (CLAIM per repo, READY between waves, SOLVED for
   environmental findings).

@@ -1001,7 +1001,8 @@
         "debug",
         "git:ship",
         "rebasing-branches",
-        "dev-submit"
+        "dev-submit",
+        "cleaning-up-disk-space"
       ]
     },
     {
@@ -1025,7 +1026,8 @@
         "debug",
         "git:ship",
         "rebasing-branches",
-        "dev-submit"
+        "dev-submit",
+        "cleaning-up-disk-space"
       ]
     },
     {

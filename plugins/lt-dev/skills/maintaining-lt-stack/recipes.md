@@ -245,7 +245,7 @@ it as one argument; `npm run` forwards it without a `--` separator.
   aborts the release on findings — critical for the PUBLIC `claude-code`. Fix
   findings, never bypass with `--no-verify`.
 - **Push channel:** `claude-code` → GitHub (SSH-agent check + HTTPS fallback as
-  above); `claude-code-internal` → `gitlab.lenne.tech:intern/claude-code-internal`,
+  above); `claude-code-internal` → the self-hosted GitLab its `origin` names,
   where `gh` does not apply and no GitHub release is created.
 - **Consumers:** `lt claude plugins` refreshes the marketplace cache and updates
   every plugin; a Claude Code restart applies it.

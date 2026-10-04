@@ -43,7 +43,7 @@ These plugins are **optional** but enhance the experience when working with this
 
 ## Included
 
-- **30 Skills** - Auto-detected contextual expertise (includes `grilling-decisions` for settling open decisions before implementation, `running-check-script` for runnability validation, `managing-dev-servers` for dev-server lifecycle rules, `contributing-to-lt-framework` for pnpm link workflows, `coordinating-peer-sessions` for parallel sessions on one project, `writing-linear-comments` and `filing-ai-proposed-tickets` for what reaches a Linear ticket and in what shape, and `unslop` for cutting AI tells out of every text that reaches a human)
+- **31 Skills** - Auto-detected contextual expertise (includes `cleaning-up-disk-space` for auditing and freeing disk space through deterministic scripts, `grilling-decisions` for settling open decisions before implementation, `running-check-script` for runnability validation, `managing-dev-servers` for dev-server lifecycle rules, `contributing-to-lt-framework` for pnpm link workflows, `coordinating-peer-sessions` for parallel sessions on one project, `writing-linear-comments` and `filing-ai-proposed-tickets` for what reaches a Linear ticket and in what shape, and `unslop` for cutting AI tells out of every text that reaches a human)
 - **25 Agents** - Autonomous task execution
 - **64 Commands** - User-triggered actions via `/lt-dev:<name>`
 - **19 Hook Scripts** across 7 event types (SessionStart, PreToolUse, PostToolUse, PostToolUseFailure, UserPromptSubmit, StopFailure, SessionEnd) - Automated project detection and validation

@@ -5,7 +5,7 @@ allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(mkdir:*), Bash(pnpm run:*), Ba
 disable-model-invocation: true
 ---
 
-# /showroom:screenshot — Capture Feature Screenshots
+# /lt-showroom:showroom:screenshot — Capture Feature Screenshots
 
 This command runs Phase 2 of the showcase workflow: starts the application, creates realistic demo data, captures screenshots for each feature defined in `SHOWCASE.md`, and saves them to `docs/showcase/screenshots/` in the project.
 
@@ -13,7 +13,7 @@ This command runs Phase 2 of the showcase workflow: starts the application, crea
 
 - User wants to capture screenshots for features listed in SHOWCASE.md
 - User wants to refresh outdated screenshots after project changes
-- Running after `/showroom:analyze` and before `/showroom:create`
+- Running after `/lt-showroom:showroom:analyze` and before `/lt-showroom:showroom:create`
 
 ## Related Commands
 
@@ -39,7 +39,7 @@ This command runs Phase 2 of the showcase workflow: starts the application, crea
 
 If `$ARGUMENTS` is provided, use it as the project root. Otherwise, use the current working directory.
 
-Verify the path contains a `SHOWCASE.md` file (or `docs/showcase/SHOWCASE.md`). If not found, suggest running `/showroom:analyze` first.
+Verify the path contains a `SHOWCASE.md` file (or `docs/showcase/SHOWCASE.md`). If not found, suggest running `/lt-showroom:showroom:analyze` first.
 
 ### Step 2: Read SHOWCASE.md
 
@@ -116,4 +116,4 @@ If orphaned processes remain, display the exact kill commands for the user to ru
 After successful capture, suggest:
 
 > Screenshots saved to docs/showcase/screenshots/.
-> Run `/showroom:create` to publish the showcase to showroom.lenne.tech.
+> Run `/lt-showroom:showroom:create` to publish the showcase to showroom.lenne.tech.

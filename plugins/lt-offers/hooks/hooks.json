@@ -1,5 +1,5 @@
 {
-  "description": "Detects offer-related prompts to activate the creating-offers skill and names the MCP server (production or demo) the prompt should use",
+  "description": "Detects offer and concept-folder prompts to activate the creating-offers or creating-concepts skill and names the MCP server (production or demo) the prompt should use",
   "hooks": {
     "UserPromptSubmit": [
       {

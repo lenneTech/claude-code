@@ -1,7 +1,7 @@
 {
   "name": "lt-offers",
   "version": "8.15.2",
-  "description": "Skills & Commands for creating and managing business offers on angebote.lenne.tech (production) and demo-angebote.lenne.tech (demo) — MCP tools for offers, knowledge base, analytics, and content management",
+  "description": "Skills & Commands for creating and managing business offers on angebote.lenne.tech and concept folders (Konzeptmappen) on konzept.lenne.tech, each with its demo instance — MCP tools for offers, concept folders, knowledge base, analytics, and content management",
   "author": {
     "name": "lenne.tech GmbH",
     "url": "https://lenne.tech"
@@ -18,6 +18,9 @@
     "business-offers",
     "nuxt-ui",
     "tailwind",
-    "rich-component"
+    "rich-component",
+    "konzeptmappe",
+    "concept-folders",
+    "workshop"
   ]
 }

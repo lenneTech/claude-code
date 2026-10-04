@@ -11,7 +11,7 @@ This skill enables Claude Code to perform deep, evidence-based analysis of softw
 
 - User asks to analyze a project for a showcase or portfolio entry
 - User wants to understand what a codebase does or how it is structured
-- Running `/showroom:analyze`, `/showroom:create`, or `/showroom:update` commands
+- Running `/lt-showroom:showroom:analyze`, `/lt-showroom:showroom:create`, or `/lt-showroom:showroom:update` commands
 - User asks about a project's technology stack, features, or architecture
 
 ## Skill Boundaries

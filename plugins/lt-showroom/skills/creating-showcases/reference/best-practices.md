@@ -61,7 +61,7 @@ Customer quotes come from wherever the company publishes its testimonials, found
 3. **The user** — when neither names a source, ask for it, and offer to store its link as a `portfolio` entry so later
    showcases find it.
 
-Read a references page as raw HTML with `curl`, as `/showroom:create` Step 3 shows. A summarizing fetch paraphrases
+Read a references page as raw HTML with `curl`, as `/lt-showroom:showroom:create` Step 3 shows. A summarizing fetch paraphrases
 quotes, and many references pages reveal only a few testimonials until a "show more" button is clicked; on pages built
 with Nuxt, Next or similar frameworks the embedded payload in the raw HTML usually holds all of them verbatim.
 
@@ -216,4 +216,4 @@ Use `custom-html` blocks for detailed feature presentations (one per feature wit
 - **No screenshots** — A showcase without visuals is incomplete. All screenshots go in `docs/showcase/screenshots/`.
 - **Copy-paste from README** — Rewrite for the audience; READMEs are for developers, showcases are for prospects.
 - **English in German showcases** — Keep consistent; translate technical descriptions.
-- **Outdated SHOWCASE.md** — Version must match `package.json`. Run `/showroom:update` when the project changes.
+- **Outdated SHOWCASE.md** — Version must match `package.json`. Run `/lt-showroom:showroom:update` when the project changes.

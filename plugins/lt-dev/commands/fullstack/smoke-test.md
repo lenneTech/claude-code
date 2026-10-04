@@ -38,7 +38,7 @@ any rework.
 
 **Reference run:** 2026-07-17 (`lt-smoke-test`). Findings: duplicate unhead
 version (SSR 500 in the built app), standalone-layout assumptions in the pnpm
-pin contract tests of both starters, incomplete oxlint allow list, Turbo-Dev
+pin contract tests of both starters, incomplete oxlint allow list, target-server
 Traefik mismatch (see `deploying-to-turboops` Trap 5).
 
 ## Prerequisites (Phase 0 — verify each one strictly, do not assume)
@@ -46,7 +46,7 @@ Traefik mismatch (see `deploying-to-turboops` Trap 5).
 | Check | Command |
 |-------|---------|
 | lt CLI linked globally | `lt --version` |
-| glab authenticated on gitlab.lenne.tech | `glab auth status` |
+| glab authenticated on the team GitLab | `glab auth status --hostname <gitlab-host>` |
 | TurboOps MCP reachable | `list_workspaces` (MCP) |
 | turbo CLI + login | `turbo whoami` — on "Unauthorized": `turbo login` (browser flow; the user token lands in `~/Library/Preferences/turboops-cli-nodejs/config.json`) |
 | MongoDB running locally | `pgrep mongod` |
@@ -69,13 +69,14 @@ A   *.<smoke-domain>   <server-ip>
 | Domain | `<smoke-domain>` |
 | Target server | Name + provider + IP, and the TurboOps server ID for the MCP calls |
 | Workspace | TurboOps workspace ID |
+| GitLab | `<gitlab-host>` — the self-hosted instance the throwaway repo is created on |
 | Stages | dev → `dev.<smoke-domain>` · production → `<smoke-domain>` |
 | API per stage | `api.dev.<smoke-domain>` · `api.<smoke-domain>` |
 
-> **Where the concrete values live.** Server addresses, TurboOps server and workspace IDs,
+> **Where the concrete values live.** Server addresses, TurboOps server and workspace IDs, the GitLab host
 > and the real domain are infrastructure assignments. They therefore do **not** belong in
 > this public marketplace, but in the internal one
-> (`claude-code-internal`, plugin `lt-ops` → `reference/lt-smoke-test-environment.md`).
+> (`claude-code-internal` → `plugins/*/reference/lt-smoke-test-environment.md`).
 > This document describes only the procedure.
 
 **Run the `dig` check every time anyway.** Not out of distrust of the record, but
@@ -110,12 +111,12 @@ cd <name> && git add -A && git commit -m "chore: lt dev URL blocks"
 ### Phase 3 — GitLab
 
 ```bash
-GITLAB_HOST=gitlab.lenne.tech glab repo create <group>/<name> --private \
+GITLAB_HOST=<gitlab-host> glab repo create <group>/<name> --private \
   --description "Temporärer Fullstack-Smoke-Test (wird gelöscht)"
 ```
 
 SSH agent trap: if `git push` hangs with `communication with agent failed`, fall
-back to HTTPS: `git remote set-url origin https://gitlab.lenne.tech/<group>/<name>.git`
+back to HTTPS: `git remote set-url origin https://<gitlab-host>/<group>/<name>.git`
 and `git config credential.helper '!glab auth git-credential'`.
 
 ### Phase 4 — TurboOps (fully automated, no web UI step)
@@ -141,7 +142,7 @@ skill `deploying-to-turboops`):
 1. `git push -u origin dev` → watch the pipeline (test → turboops-build → deploy-dev) via `glab api`.
 2. **Set `main` as a protected branch first**, otherwise `deploy-prod` never runs:
    ```bash
-   GITLAB_HOST=gitlab.lenne.tech glab api --method POST \
+   GITLAB_HOST=<gitlab-host> glab api --method POST \
      "projects/<group>%2F<name>/protected_branches?name=main&push_access_level=40&merge_access_level=40"
    ```
    The template gates the production stage with
@@ -152,7 +153,7 @@ skill `deploying-to-turboops`):
    `git branch main dev && git push -u origin main` → deploy-prod.
 3. **Probe the real URLs after every deploy.** A green `--wait` does not prove reachability (Trap 5): app 200/302, `api.<domain>/health-check` 200, `/meta` commit == CI SHA, cert issuer Let's Encrypt.
 3b. **Sign-up deep check with a run-unique email** (e.g. `smoke-test+<runid>@lenne.tech`): orphaned `<stack>_mongo_data` volumes from earlier runs (see Phase 7, step 5b; they survive stage deletion) are reused by the new stack. A fixed test email then wrongly returns `400 Email already registered`, although the API is healthy.
-4. 404 + `TRAEFIK DEFAULT CERT` ⇒ a server with its own Traefik (e.g. Turbo-Dev): run the label pass from `deploying-to-turboops` Trap 5, and repeat it after **every** further deploy.
+4. 404 + `TRAEFIK DEFAULT CERT` ⇒ a server with its own Traefik: run the label pass from `deploying-to-turboops` Trap 5, and repeat it after **every** further deploy.
 
 ### Phase 6 — MR rounds (× `--rounds`)
 
@@ -199,16 +200,16 @@ Per round:
    run on 2026-08-22 left such a project behind, and it was only noticed on the next day
    during a recount. So always remove it permanently, then search for leftovers:
    ```bash
-   GITLAB_HOST=gitlab.lenne.tech glab api --method DELETE \
+   GITLAB_HOST=<gitlab-host> glab api --method DELETE \
      "projects/<id>?permanently_remove=true&full_path=<group>/<name>-deletion_scheduled-<id>"
    # Check — must return 0 hits, including from EARLIER runs:
-   GITLAB_HOST=gitlab.lenne.tech glab api "projects?search=<name>"
+   GITLAB_HOST=<gitlab-host> glab api "projects?search=<name>"
    ```
    The search belongs in every run, not only for the current one: a project scheduled for
    deletion by an earlier run otherwise blocks the name and stays unnoticed.
 4. Local: `lt dev down` in the project, `lt dev test down` (if anything is left), delete the project folder, check the registry entry (`~/.lenneTech/projects.json`; `lt dev down` removes the Caddy block; clean orphaned entries via `lt dev prune`/registry check).
 5. Local Mongo: `lt dev prune --noConfirm` also removes orphaned smoke-test DBs (reserved `lt-smoke-test` prefix) automatically since CLI 1.38.0; the same sweep also runs on every `lt dev up` of any project. Direct drop commands may be blocked by a hook policy. In that case do not work around it; prune is the canonical way.
-5b. Server volumes: orphaned `<stack>_mongo_data` volumes remain after stage deletion and are reused by the next run. That is a data leak between runs, and the reason a fixed test email wrongly returns `400 Email already registered`. **They can be deleted through the TurboOps MCP, without SSH** (verified 2026-08-23): `exec_in_container` in a container with the Docker CLI and a read-write socket (on Turbo-Dev the task container of the `deploy-party_api` service: pass its ID or full `deploy-party_api.1.<task>` name from `list_server_containers`, since the bare service name answers `No such container`), with `allowWrite: true` and `confirmHostname: <server-IP>`. Pass **the IP, not the server name**; a server name is rejected with "confirmHostname mismatch". First list with `volume ls --filter name=<name>`, then run `volume rm` on the two stack volumes. An earlier version of this document claimed this was blocked by a blocklist and required SSH. That is not (or no longer) true: the command is classified as `needs-write` and runs with `allowWrite`. SSH remains the fallback when the MCP is unreachable.
+5b. Server volumes: orphaned `<stack>_mongo_data` volumes remain after stage deletion and are reused by the next run. That is a data leak between runs, and the reason a fixed test email wrongly returns `400 Email already registered`. **They can be deleted through the TurboOps MCP, without SSH** (verified 2026-08-23): `exec_in_container` in a container with the Docker CLI and a read-write socket (on a deploy.party server the task container of the `deploy-party_api` service: pass its ID or full `deploy-party_api.1.<task>` name from `list_server_containers`, since the bare service name answers `No such container`), with `allowWrite: true` and `confirmHostname: <server-IP>`. Pass **the IP, not the server name**; a server name is rejected with "confirmHostname mismatch". First list with `volume ls --filter name=<name>`, then run `volume rm` on the two stack volumes. An earlier version of this document claimed this was blocked by a blocklist and required SSH. That is not (or no longer) true: the command is classified as `needs-write` and runs with `allowWrite`. SSH remains the fallback when the MCP is unreachable.
 6. `turbo logout` is not needed (the user login stays); the minted project token dies with the project.
 7. Final check: all four stage URLs must return 404/default cert again, `glab repo view` 404, the TurboOps project list without `<name>`, no `<name>` DBs, no `$SMOKE_DIR/<name>`.
 

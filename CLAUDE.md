@@ -237,7 +237,7 @@ Defines MCP (Model Context Protocol) servers required by the plugin.
 |--------|------|---------|
 | `chrome-devtools` | stdio | validating-changes-in-browser, developing-lt-frontend, building-stories-with-tdd, managing-dev-servers, vibe commands, frontend-reviewer, ux-reviewer, a11y-reviewer, frontend-dev agent (browser testing & debugging) |
 | `linear` | http | take-ticket, ticket-cycle, resolve-ticket, spec-to-tasks, create-story, create-ticket (indirectly, through create-story / create-task / create-bug), create-task, create-bug, review, debug, interview, linear-comment, dev-submit, git:ship, rebasing-branches, branch-rebaser, backend-reviewer, code-reviewer, frontend-reviewer, writing-linear-comments, filing-ai-proposed-tickets (issue tracking, project management, issue documents for long-form detail) |
-| `nuxt-ui-remote` | http | developing-lt-frontend, figma-to-code, frontend-dev agent, the offers schema sync in the internal `lt-projects` plugin (Nuxt UI component reference from the official endpoint `https://ui.nuxt.com/mcp`) |
+| `nuxt-ui-remote` | http | developing-lt-frontend, figma-to-code, frontend-dev agent, an offers schema sync in the internal marketplace (Nuxt UI component reference from the official endpoint `https://ui.nuxt.com/mcp`) |
 
 **Tool naming:** a plugin-bundled server's callable tool name is `mcp__plugin_<plugin>_<server>__<tool>` — e.g. `mcp__plugin_lt-dev_chrome-devtools__take_snapshot`. The unscoped form (`mcp__chrome-devtools__…`) never matches for a bundled server, so an `allowed-tools` entry written that way silently grants nothing.
 
@@ -473,7 +473,7 @@ Plugins liefern NUR **anonymisierte Beispiele** (ohne Rechtsform, z. B. „Beisp
 
 **Schutzschichten** (nach dem Klonen einmalig `scripts/install-hooks.sh` ausführen):
 - `scripts/scan-secrets.sh` — Scanner (Secrets, 32-Hex-Tokens, `/Users/`-Pfade, Kunden-Roster mit Rechtsform).
-  Zusätzlich Check 7: Kunden-/Projektnamen **ohne** Rechtsform aus der Sperrliste `public-denylist.txt` im privaten Repo `claude-code-internal` (Geschwister-Checkout oder `LT_PUBLIC_DENYLIST`). Die Liste liegt bewusst nicht hier, sonst veröffentlicht sie genau diese Namen. Neue Kunden dort eintragen.
+  Zusätzlich Check 7: Kunden-/Projektnamen **ohne** Rechtsform aus der Sperrliste `public-denylist.txt` im privaten Repo `claude-code-internal` (Geschwister-Checkout oder `LT_PUBLIC_DENYLIST`). Dieselbe Liste sperrt interne Infrastruktur: Server-IPs, interne Hostnamen (GitLab, Smoke-Test-Domain), Server- und Runner-Namen, TurboOps-IDs und interne Plugin-Namen, sofern sie kein allgemeiner Begriff sind. Im öffentlichen Repo stehen dafür Platzhalter wie `<gitlab-host>`. Die Liste liegt bewusst nicht hier, sonst veröffentlicht sie genau diese Werte. Neue Kunden und neue Infrastruktur dort eintragen.
 - `.githooks/pre-commit` + `.githooks/pre-push` — blocken lokal vor Commit/Push.
 - `.github/workflows/secrets-guard.yml` — CI-Backstop (serverseitig, lokal nicht umgehbar).
 - Empfohlen serverseitig: Branch-Schutz auf `main` (PR-Pflicht + grüner „Secrets & Client-Data Guard"-Check, keine Direct-/Force-Pushes) sowie GitHub **Secret Scanning + Push Protection**.

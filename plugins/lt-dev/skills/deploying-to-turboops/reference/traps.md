@@ -107,7 +107,7 @@ valid TLS. Create + verify DNS first, then deploy.
 
 Empirically hit during the 2026-07 smoke-test run, on a host that had been
 provisioned before TurboOps managed it (the concrete host is named in the internal
-marketplace, `lt-ops` → `reference/lt-smoke-test-environment.md`): the deploy job goes green (`3/3 containers healthy`), but
+marketplace, `plugins/*/reference/lt-smoke-test-environment.md`): the deploy job goes green (`3/3 containers healthy`), but
 every stage URL answers **404**. `--wait` checks container health only — it never
 performs an external HTTP probe.
 
@@ -138,7 +138,7 @@ to the path nobody reads.
 
 **Workaround (per deploy — labels are wiped by every `docker stack deploy`):**
 add the deploy.party-style labels directly to the swarm services, via a
-container that has the docker CLI + RW socket (on Turbo-Dev:
+container that has the docker CLI + RW socket (on a deploy.party server:
 `deploy-party_api`):
 
 ```

@@ -27,7 +27,7 @@ call that counts against the plan's usage; `--max-cost-usd` caps the list-price 
 
 | Group | Case | Measures |
 |---|---|---|
-| `trigger/` | `nest-module`, `nuxt-form`, `tdd-story`, `npm-audit`, `rebase-branch`, `lt-cli-init`, `unslop-readme`, `frontend-security`, `turboops-deploy`, `upstream-workaround` | The named skill (or its command) is invoked for a German or English request that does not name it |
+| `trigger/` | `nest-module`, `nuxt-form`, `tdd-story`, `npm-audit`, `rebase-branch`, `lt-cli-init`, `unslop-readme`, `frontend-security`, `turboops-deploy`, `upstream-workaround`, `disk-cleanup` | The named skill (or its command) is invoked for a German or English request that does not name it |
 | `trigger/` | `nest-server-update` | Boundary: a nest-server upgrade goes to `nest-server-updating`, not generic npm maintenance |
 | `trigger/` | `unrelated-question` | Boundary: an unrelated question fires no lt-dev skill |
 | `quality/` | `nest-model` | A model written to lt conventions: `@UnifiedField`, `@Restricted`, `RoleEnum.ADMIN`, `securityCheck`, and the project base `PersistenceModel` that `lt server module` generates |

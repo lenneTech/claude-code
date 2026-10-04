@@ -85,6 +85,15 @@ assert_silent   "$(run_hook detect-nest-server.sh "$NEST" 'what time is it')" "n
 echo "without jq"
 assert_contains "$(HOOK_PATH="$NOJQ_BIN" run_hook detect-plugin-dev.sh "$MARKET" 'add a "release" skill')" "developing-claude-plugins" "prompt with escaped quotes is read"
 assert_silent   "$(HOOK_PATH="$NOJQ_BIN" run_hook detect-plugin-dev.sh "$MARKET" '/lt-dev:plugin:check')" "slash command is still recognised"
+# The fallback once took ~50 s on a 20 KB prompt (bash pattern substitution over the whole
+# string), so every large paste hit the 5 s hook timeout. The request sits at the very end,
+# so a parser that reads only the start of the prompt fails here.
+LARGE=$(node -e 'process.stdout.write("note with \"quote\" and a newline\n".repeat(600) + "add a new skill.")')
+START=$SECONDS
+OUT=$(HOOK_PATH="$NOJQ_BIN" run_hook detect-plugin-dev.sh "$MARKET" "$LARGE")
+ELAPSED=$((SECONDS - START))
+assert_contains "$OUT" "developing-claude-plugins" "a 20 KB prompt is read in full"
+if [ "$ELAPSED" -le 3 ]; then pass "a 20 KB prompt is parsed well inside the hook timeout (${ELAPSED}s)"; else fail "a 20 KB prompt took ${ELAPSED}s"; fi
 
 NUXT="$TMP_ROOT/nuxt"
 mkdir -p "$NUXT/app/components"

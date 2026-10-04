@@ -38,7 +38,7 @@ Commands named below as `/lt-dev:<name>` are invoked through the `Skill` tool in
 Without an argument, detect which base repo the current working directory
 belongs to (walk up to the git root, match the `origin` remote against
 `lenneTech/{nest-server,nuxt-extensions,lt-monorepo,cli,nuxt-base-starter,nest-server-starter,claude-code}`
-or `gitlab.lenne.tech:intern/claude-code-internal`;
+or the private marketplace `claude-code-internal` (an `origin` on the self-hosted GitLab ending in `/claude-code-internal.git`);
 fall back to the directory name). If the cwd is NOT a base repo, stop and
 list the valid targets — never guess. An explicit argument always wins.
 
@@ -52,7 +52,7 @@ that is how the base repos are usually referred to:
 | Argument | Resolves to |
 |---|---|
 | `lt-dev`, `lt-offers`, `lt-showroom` | `claude-code` |
-| `lt-time`, `lt-ops` | `claude-code-internal` |
+| every plugin listed in the sibling checkout's `claude-code-internal/.claude-plugin/marketplace.json` | `claude-code-internal` |
 
 State the resolution in the report ("lt-dev → releasing claude-code"), since a
 marketplace release always bumps ALL of its plugins in lock-step, not just the
@@ -85,8 +85,18 @@ npm run version:patch "<commit message>"    # or version:minor / version:major
 
 `scripts/bump-version.ts` bumps `package.json`, `.claude-plugin/marketplace.json`
 and **every** `plugins/*/plugin.json` to the same version, then commits, tags
-(`vX.Y.Z`) and pushes. It is a complete release in one step — run it only once
-all changes are final.
+(`vX.Y.Z`) and pushes. What the commit contains differs per repo:
+
+- **`claude-code`** commits **only the version bump**, on top of `HEAD`, and refuses to
+  start while anything is staged. Several sessions share this checkout and leave their
+  work uncommitted by house rule, so the script never sweeps the tree. The release
+  content is whatever is **already committed**: commit the final changes first with
+  explicit paths (`git add <paths>`, never `git add .`), then run the script. Run it
+  over uncommitted content and the release ships a version number with none of that
+  content. 8.15.2 shows the intended shape: a content commit, then a bump commit that
+  touches only the version files.
+- **`claude-code-internal`** still runs `git add .` and releases the whole tree in one
+  step, so run it only once every change in the tree is final.
 
 **Always pass the message.** It becomes the body of the bump commit and the tag
 annotation; without it the release reads only "chore: bump version to X.Y.Z".
@@ -111,7 +121,7 @@ What differs from the npm/template recipes:
   pre-commit/pre-push) blocks the release on customer data, tokens or
   `/Users/<name>/` paths. Never bypass it with `--no-verify` — fix the finding.
 - **Push channel:** `claude-code` goes to GitHub (`scripts/check-push-channel.sh` + HTTPS fallback
-  per the skill), `claude-code-internal` to `gitlab.lenne.tech` — `gh` does not
+  per the skill), `claude-code-internal` to the self-hosted GitLab its `origin` names — `gh` does not
   apply there, and there is no GitHub release to create.
 
 Afterwards, tell the user how to pull the new version:
@@ -128,9 +138,11 @@ A restart of Claude Code is required — running sessions keep the old version.
    never `ssh-add -l`, which is a permanent false negative on 1Password
    `IdentityAgent` setups (see the skill's Push-channel rule).
    Uncommitted changes in the SOURCE repo are allowed — they are exactly what
-   is being published; foreign-looking changes (files unrelated to the stated
-   purpose, e.g. agent-memory files) ⇒ stop and list them instead of
-   releasing blind.
+   is being published, except in `claude-code`, where only committed content is
+   released (see "Marketplace repos"): there, uncommitted changes that belong in
+   the release must be committed first. Foreign-looking changes (files unrelated
+   to the stated purpose, e.g. agent-memory files) ⇒ stop and list them instead
+   of releasing blind.
 
 1b. **Check the previous release's non-blocking gates** (nest-server only, for
    now). Some CI jobs run ALONGSIDE the publish instead of in front of it — the

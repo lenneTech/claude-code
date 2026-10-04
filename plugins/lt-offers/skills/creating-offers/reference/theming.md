@@ -46,7 +46,7 @@ Order applied at render time (browser, PDF, share-preview):
 2. **App-wide default** (`settings.defaultTheme`), otherwise.
 3. **Platform fallback** (the platform's built-in palette), if no settings default has been configured yet.
 
-The API merges the resolved theme into the offer payload before sending it down — `get_offer` and `findBySlug` both apply this. Consumers (browser, PDF service) never need to read settings directly; they always see a fully resolved `theme.light` / `theme.dark`.
+The API merges the resolved theme into the offer payload before sending it down — `get_offer` and `findBySlug` both apply this. Consumers (the browser view, and the PDF printed from it) never need to read settings directly; they always see a fully resolved `theme.light` / `theme.dark`.
 
 ## Forced Color Mode (`offer.colorMode`)
 
@@ -132,9 +132,9 @@ Use a forced mode when the offer design is tuned for one appearance (e.g. a bran
 
 ## PDF Rendering
 
-The PDF service (`pdf.service.ts`) injects `SettingsService` and applies the same default-merge logic before laying out the document. Brand colors come from theme lookups rather than hardcoded hex codes (such as `#FF611E`), so a customer-specific PDF matches the on-screen experience.
+The PDF is printed from the rendered customer page, so it carries the same resolved theme (per-offer override merged over the app-wide default) as the browser view. Brand colors come from theme lookups rather than hardcoded hex codes (such as `#FF611E`), so a customer-specific PDF matches the on-screen experience.
 
-**Light palette only.** PDFs render in light mode regardless of the customer's OS preference. The dark palette is preserved on the document (for the browser view) but not consulted during PDF generation.
+**Light palette only.** PDFs render in light mode regardless of the customer's OS preference and of the document's `colorMode` preset. The dark palette is preserved on the document (for the browser view) but not consulted during printing.
 
 ## Frontend Token Bridge
 

@@ -30,6 +30,18 @@ Do not rewrite these. Cutting a pattern here breaks something or misrepresents s
 - Quoted upstream text: release notes from a dependency, an error message, a customer email, an excerpt from a third-party doc. Quote it as it stands.
 - Customer documents in their original language. Translating or restyling them changes the record.
 
+## Fixed spellings
+
+- **lenne.Tech**: lowercase l, dot, capital T, in every sentence, heading, title, slide and print text, German or
+  English, including the legal form `lenne.Tech GmbH`. Never "lenne.tech", "Lenne.Tech", "lenneTech" or "Lenne Tech"
+  as the company name. Technical identifiers keep their real spelling: URLs and hostnames (`https://lenne.tech`,
+  `angebote.lenne.tech`), e-mail addresses, repository, package and plugin names (`lenneTech/claude-code`,
+  `@lenne.tech/nest-server`, `lenne-tech`), code identifiers. When editing text that spells the name differently,
+  fix it in passing.
+- **Web addresses are always lowercase** so readers recognise them as links: `https://lenne.tech/…`, with
+  `https://` wherever there is room (print, slides, offers), `lenne.tech/…` only where there is not. Never
+  `lenne.Tech` inside a URL.
+
 ## Process
 
 1. Scan for the patterns below.

@@ -10,7 +10,7 @@ description: 'Knowledge base for projects that vendored the @lenne.tech/nest-ser
 - **Flatten-fix edge case on `core-persistence-model.interface.ts`** — During flatten-fix, most files get `'../../..'` rewritten to `'../..'`. This file is an exception: it sits one directory deeper and needs `'../../..'` → `'../..'` → `'..'`. Missing this step causes a silent `Cannot find module` at runtime, not compile-time.
 - **`migrate` CLI disappears after vendoring** — The upstream `@lenne.tech/nest-server` package exports a `migrate` binary in its `package.json`. When vendored (no longer a dependency), that binary is gone from `node_modules/.bin/`. `convert-mode` copies `bin/migrate.js` into the project and repoints the `migrate:*` scripts at it. See "The migrate CLI in a Vendored Project" below — and note that the **production** path differs from the local ts-node path, which is how migrations end up silently never running in the container.
 - **Cosmetic commits are tempting upstream PR candidates** — Formatting-only, linting-only, or rename-only commits look substantive but offer no value as upstream PRs. The contributor agent filters these — if authoring manually, verify the commit changes behavior, not just style.
-- **Local patches in `src/core/` are invisible to future `/update-nest-server-core` runs** — The updater does AI-driven curation but cannot read your intent. Document every intentional local deviation in `src/core/LOCAL-PATCHES.md` so the next sync doesn't silently undo your work.
+- **Local patches in `src/core/` are invisible to future `/lt-dev:backend:update-nest-server-core` runs** — The updater does AI-driven curation but cannot read your intent. Document every intentional local deviation in `src/core/LOCAL-PATCHES.md` so the next sync doesn't silently undo your work.
 
 This skill provides **knowledge and resources** for lenne.tech projects that have
 vendored the @lenne.tech/nest-server core into their source tree. For automated
@@ -231,6 +231,7 @@ no failed deploy, just data that was never migrated:
 | `dist/bin/migrate.js` exists | `copy:bin` script | entrypoint's `[ -f … ]` guard fails → **silent skip** |
 | No `*.d.ts` in `dist/migrations/` | `prune:migrations` script | runner loads the declaration file as a second migration and throws on `export declare` |
 | Store works without ts-node | `migrations-utils/migrate.js` probes for the compiled helper before `require('./ts-compiler')` | `MODULE_NOT_FOUND` under `set -e` → container never starts |
+| Shim enters via `runCli()` | `bin/migrate.js` copied from a nest-server that has the fix | migrations run, then the process **never exits** — see below |
 
 Current `lt` versions wire all four up automatically. **When auditing an older
 project, verify them explicitly** — the failure is invisible until a real data
@@ -246,6 +247,59 @@ grep -c ts-compiler projects/api/migrations-utils/migrate.js   # must be guarded
 To prove the whole chain end-to-end, run the entrypoint's exact command against
 the built output with `NODE_ENV=production` — that is the only way to catch a
 silent skip before the deploy does.
+
+### The stale-shim trap: migrations that run and then hang forever
+
+`bin/migrate.js` is **not** under `src/core/`, so **no core sync ever updates
+it**. It is copied once, by `lt fullstack convert-mode`, and from then on it
+drifts. That matters because the CLI's entry contract changed: `main()` does the
+work, and **`runCli()` is what terminates the process** — it drains stdout and
+then exits explicitly, so a handle left behind by MongoDB or GridFS cannot keep
+Node alive after the work is done. A stale shim calls `main()`.
+
+The symptom is the opposite of the silent skip above, and it does not look like a
+migration problem at all:
+
+```
+✓ Migration completed: …
+All migrations completed successfully
+<nothing, until the CI job's timeout>
+```
+
+Observed in lt-crm (DEV-2818): the `app:test` job sat at its **one-hour limit**
+having produced no Playwright output whatsoever, so the failure read as a slow
+E2E suite. The migrate step had completed its work and simply never returned.
+
+Three things make this hard to spot:
+
+- **It is latent until a sync "fixes" something else.** The stale shim probed only
+  `../dist/core/…`, a layout a project with `rootDir: src` never emits, so every
+  run fell through to ts-node — which happens to exit. Adding the correct
+  `../dist/src/core/…` candidate (necessary: a pruned production image has no
+  ts-node) is what activated the hang.
+- **Production is usually unaffected**, which removes the loudest signal:
+  `docker-entrypoint.sh` invokes the compiled CLI *directly*, so
+  `require.main === module` holds and `runCli()` runs. Only the `migrate:*`
+  scripts that go through the shim hang.
+- **A hang is not a failure.** Nothing is logged, the exit code never arrives, and
+  the job that dies is whichever one happened to call migrations.
+
+Check it in one grep, and adopt rather than re-derive:
+
+```bash
+tail -4 projects/api/bin/migrate.js        # must reach runCli, not bare main()
+curl -fsSL https://raw.githubusercontent.com/lenneTech/nest-server/develop/bin/migrate.js \
+  | diff - projects/api/bin/migrate.js     # upstream is authoritative — copy it over
+```
+
+Upstream's version resolves `const run = cli.runCli || cli.main`, so it also works
+against a `dist` built before `runCli` existed, and it probes all three layouts
+(npm package, vendored repo, vendored image). **Do not hand-roll a `process.exit()`
+into the shim** — it would discard the buffered completion log, which is exactly
+what `flushAndExit()` exists to prevent.
+
+**On every core sync, diff this file against the target tag along with
+`src/core/`.** It is part of the same contract and nothing else covers it.
 
 ## Upstream Sync Workflow (curated)
 

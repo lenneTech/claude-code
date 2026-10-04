@@ -34,7 +34,7 @@
 #             fix SSH, or add a credential helper. Field 4 says what to do.
 #
 # The `blocked` verdict matters because the lt stack pushes to TWO hosts — github.com and the
-# self-hosted gitlab.lenne.tech — and the fallback is not the same for both. Reporting `https`
+# self-hosted GitLab instance — and the fallback is not the same for both. Reporting `https`
 # with a GitHub-only command for a GitLab remote would fail mid-release, which is worse than an
 # honest stop. So availability is established by asking, in git's own resolution order:
 #

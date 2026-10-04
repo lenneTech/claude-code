@@ -23,7 +23,7 @@ This is a deliberate departure from schema-based editors like TipTap/ProseMirror
 Embed GridFS images inside `<img>`/`<a>` tags via `{{fileUrl:<24-hex-id>}}`. The token is expanded:
 - in the customer-facing browser view,
 - in the editor's WYSIWYG surface (so images render while editing),
-- in the PDF builder.
+- in the PDF, which is printed from the customer-facing view.
 
 The persisted HTML keeps the **token form** — collapse-on-save in the editor ensures no host name is ever baked into the database. This makes a single offer portable across local/staging/production without rewriting paths.
 

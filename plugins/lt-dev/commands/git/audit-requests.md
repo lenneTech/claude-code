@@ -70,7 +70,7 @@ For each repo:
 1. Resolve `origin` URL via `git remote get-url origin`
 2. Classify provider:
    - URL contains `github.com` → **GitHub** (use `gh`)
-   - URL contains `gitlab` (e.g. `gitlab.com`, `gitlab.lenne.tech`) → **GitLab** (use `glab`)
+   - URL contains `gitlab` (e.g. `gitlab.com`, `gitlab.example.com`) → **GitLab** (use `glab`)
    - Otherwise → mark as "unsupported provider" and skip
 
 ### STEP 2: Fetch Open Requests Per Repo

@@ -5,19 +5,22 @@ argument-hint: "[customer-name-or-description]"
 disable-model-invocation: true
 ---
 
-# /offers:create — Create a New Offer
+# /lt-offers:offers:create — Create a New Offer
 
 ## When to Use This Command
 
 - User wants to create a new offer/Angebot
 - User has customer details and wants to build an offer interactively
 
+For a concept folder (Konzeptmappe), use `/lt-offers:offers:concept`.
+
 ## Related Commands
 
 | Command | Purpose |
 |---------|---------|
 | `/lt-offers:offers:create` | Create a new offer from a guided interview |
-| `/lt-offers:offers:optimize` | Improve an existing offer's text, structure, and completeness |
+| `/lt-offers:offers:concept` | Create a concept folder from workshop material |
+| `/lt-offers:offers:optimize` | Improve an existing offer or concept folder |
 
 **Related Skills:**
 
@@ -33,7 +36,8 @@ disable-model-invocation: true
 
 1. Call `get_offer_context` to load company knowledge and global blocks — use this information to inform content creation
 2. Ask: "Gibt es zusätzliche Unterlagen oder Briefing-Dokumente für dieses Angebot?"
-3. Store provided files/text as sources via `add_offer_source` or `upload_offer_source_file`
+3. Keep provided files/text at hand; they are stored as sources in Step 5, because a source needs an existing offer
+4. If the offer follows a concept folder (typically the implementation offer after a workshop), find the folder with `list_offers` (`kind: "concept"`) and read it with `get_offer`: its results, open questions and next step are the basis of this offer. Pass its id in `relatedDocumentIds` in Step 5, which links both documents
 
 ### Step 2: Gather Requirements
 
@@ -70,7 +74,7 @@ Recommended minimum:
 
 ### Step 5: Create the Offer
 
-Use the `create_offer` MCP tool with all gathered data.
+Use the `create_offer` MCP tool with all gathered data, including `relatedDocumentIds` when Step 1 found a concept folder. An offer created from a template in Step 3 is linked afterwards with `update_offer` (`relatedDocumentIds`), since `create_from_template` takes no links. Then store the material from Step 1 as sources of the new offer via `add_offer_source` or `upload_offer_source_file`.
 
 Show the user:
 - Offer ID

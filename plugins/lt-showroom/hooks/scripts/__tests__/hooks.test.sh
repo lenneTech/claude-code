@@ -143,6 +143,15 @@ echo "prompt parsing without jq"
 # the first \" and never saw the rest of the prompt.
 assert_contains "$(HOOK_PATH="$NOJQ_BIN" analyzable "$APP" "$(printf 'the client said "urgent"\ncreate a showcase for this project')")" "analyzing-projects" "detect-analyzable-project: text after an escaped quote and a newline is read"
 assert_silent "$(HOOK_PATH="$NOJQ_BIN" analyzable "$APP" "$(printf 'take a "screenshot"\nof the demo')")" "detect-analyzable-project: dev words stay quiet"
+# The fallback once took ~50 s on a 20 KB prompt (bash pattern substitution over the whole
+# string), so every large paste hit the 5 s hook timeout. The request sits at the very end,
+# so a parser that reads only the start of the prompt fails here.
+LARGE=$(node -e 'process.stdout.write("note with \"quote\" and a newline\n".repeat(600) + "create a showcase for this project.")')
+START=$SECONDS
+OUT=$(HOOK_PATH="$NOJQ_BIN" analyzable "$APP" "$LARGE")
+ELAPSED=$((SECONDS - START))
+assert_contains "$OUT" "analyzing-projects" "detect-analyzable-project: a 20 KB prompt is read in full without jq"
+if [ "$ELAPSED" -le 3 ]; then pass "detect-analyzable-project: a 20 KB prompt is parsed well inside the hook timeout (${ELAPSED}s)"; else fail "detect-analyzable-project: a 20 KB prompt took ${ELAPSED}s without jq"; fi
 
 echo "prompt source"
 EMPTY='{"hook_event_name":"UserPromptSubmit","prompt":""}'

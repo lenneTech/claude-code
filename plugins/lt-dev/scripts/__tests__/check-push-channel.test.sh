@@ -103,14 +103,14 @@ echo "check-push-channel.sh"
 echo "host parsing"
 SCP_REPO="$(make_repo "$TMP_ROOT/scp" 'git@github.com:lenneTech/nuxt-extensions.git')"
 URL_REPO="$(make_repo "$TMP_ROOT/url" 'https://github.com/lenneTech/nuxt-extensions.git')"
-GL_REPO="$(make_repo "$TMP_ROOT/gl" 'git@gitlab.lenne.tech:intern/claude-code-internal.git')"
-AUTH_REPO="$(make_repo "$TMP_ROOT/auth" 'https://user@gitlab.lenne.tech/intern/x.git')"
+GL_REPO="$(make_repo "$TMP_ROOT/gl" 'git@gitlab.example.com:group/private-repo.git')"
+AUTH_REPO="$(make_repo "$TMP_ROOT/auth" 'https://user@gitlab.example.com/group/x.git')"
 
 export FAKE_SSH_OUTPUT="Hi kaihaase! You've successfully authenticated, but GitHub does not provide shell access."
 assert_field "$(bash "$SCRIPT" "$SCP_REPO")" 2 'github.com' 'scp-form remote (git@host:owner/repo)'
 assert_field "$(bash "$SCRIPT" "$URL_REPO")" 2 'github.com' 'url-form remote (https://host/owner/repo)'
-assert_field "$(bash "$SCRIPT" "$GL_REPO")"  2 'gitlab.lenne.tech' 'self-hosted GitLab host'
-assert_field "$(bash "$SCRIPT" "$AUTH_REPO")" 2 'gitlab.lenne.tech' 'url with userinfo strips the user'
+assert_field "$(bash "$SCRIPT" "$GL_REPO")"  2 'gitlab.example.com' 'self-hosted GitLab host'
+assert_field "$(bash "$SCRIPT" "$AUTH_REPO")" 2 'gitlab.example.com' 'url with userinfo strips the user'
 
 echo "verdict mapping"
 assert_field "$(bash "$SCRIPT" "$SCP_REPO")" 1 'ssh' 'GitHub success banner -> ssh'
@@ -137,11 +137,11 @@ assert_field "$(bash "$SCRIPT" "$SCP_REPO")" 4 "-c credential.helper='!gh auth g
 export FAKE_GH_AUTH_EXIT=1
 assert_field "$(bash "$SCRIPT" "$SCP_REPO")" 1 'blocked' 'GitHub + gh NOT authenticated -> blocked, not a broken https'
 
-# The case this whole verdict exists for: the lt stack pushes to gitlab.lenne.tech, where no
+# The case this whole verdict exists for: the lt stack pushes to a self-hosted GitLab, where no
 # fallback is configured. Reporting `https` there would hand back a GitHub-only command.
 export FAKE_GLAB_AUTH_EXIT=1
 assert_field "$(bash "$SCRIPT" "$GL_REPO")" 1 'blocked' 'GitLab without a helper -> blocked'
-assert_field "$(bash "$SCRIPT" "$GL_REPO")" 4 'no credentials for gitlab.lenne.tech — fix SSH, or store them (glab auth login / git credential approve)' 'GitLab blocked names the actual remedy'
+assert_field "$(bash "$SCRIPT" "$GL_REPO")" 4 'no credentials for gitlab.example.com — fix SSH, or store them (glab auth login / git credential approve)' 'GitLab blocked names the actual remedy'
 
 export FAKE_GLAB_AUTH_EXIT=0
 assert_field "$(bash "$SCRIPT" "$GL_REPO")" 1 'https' 'GitLab + glab authenticated for THIS host -> https'
@@ -149,7 +149,7 @@ assert_field "$(bash "$SCRIPT" "$GL_REPO")" 4 "-c credential.helper='!glab auth 
 
 # Stored credentials win over both CLIs: a plain https push already works, so the caller should
 # not be handed a `-c credential.helper=…` it does not need. This is the osxkeychain case, which
-# is exactly how gitlab.lenne.tech is reachable on a real machine.
+# is exactly how the self-hosted GitLab is reachable on a real machine.
 export FAKE_GLAB_AUTH_EXIT=1
 git -C "$GL_REPO" config --add credential.helper "$CRED_STUB"
 assert_field "$(bash "$SCRIPT" "$GL_REPO")" 1 'https' 'stored credentials -> https'

@@ -6,6 +6,9 @@
 # names the offers domain ("Angebot"/"Angebote", "offer" used as a noun about a
 # business offer, a distinctive content block type, the offers-api MCP server,
 # angebote.lenne.tech) or starts with a /lt-offers: command.
+# Injects creating-concepts context when it names a concept folder ("Konzeptmappe",
+# konzept.lenne.tech) or starts with /lt-offers:offers:concept. "Konzept" alone is an
+# everyday word for any plan and never fires.
 # Generic analytics or UI words (views, downloads, scroll, sources, analytics ...)
 # never fire: they occur in every web project, and firing on them put offers context
 # and a stage instruction into unrelated sessions.
@@ -34,17 +37,51 @@ DOMAIN_RE="$DOMAIN_RE|(^|[^a-z])(create|draft|write|send|prepare|update|edit|pub
 DOMAIN_RE="$DOMAIN_RE|(^|[^a-z])offers?[- ](page|link|pdf|template|document|platform|analytics|statistics|stats)"
 DOMAIN_RE="$DOMAIN_RE|offers-api|angebote\\.lenne|(^|[^a-z-])(pricing-table|global-ref|rich-component|html-embed)([^a-z-]|$)"
 
+# ── Concept-folder intent ──
+# Only the compound "Konzeptmappe(n)" and the concept domain (also demo-konzept.lenne.tech).
+CONCEPT_RE='konzeptmappe|konzept\.lenne'
+
 INTENT=0
+CONCEPT_INTENT=0
 # The plugin's own slash commands. Checked on the raw prompt because strip_self_refs
 # removes "lt-offers"; only an invocation at the start counts, not a mention.
 case "${RAW_LOWER#"${RAW_LOWER%%[![:space:]]*}"}" in
+  /lt-offers:offers:concept*) CONCEPT_INTENT=1 ;;
   /lt-offers:*) INTENT=1 ;;
 esac
 if [ "$INTENT" -eq 0 ] && printf '%s\n' "$PROMPT_LOWER" | grep -qE "$DOMAIN_RE"; then
   INTENT=1
 fi
+if [ "$CONCEPT_INTENT" -eq 0 ] && printf '%s\n' "$PROMPT_LOWER" | grep -qE "$CONCEPT_RE"; then
+  CONCEPT_INTENT=1
+fi
 
-if [ "$INTENT" -eq 1 ]; then
+if [ "$INTENT" -eq 1 ] || [ "$CONCEPT_INTENT" -eq 1 ]; then
+
+  # The stage is chosen by what the user typed, not by pasted material: workshop notes and
+  # customer mails arrive inside <pasted_content> markers and routinely mention a "Demo".
+  # The markers may sit on their own lines or inline; text outside them is kept.
+  STAGE_LOWER=$(printf '%s\n' "$PROMPT_LOWER" | awk '
+    {
+      line = $0; out = ""
+      while (1) {
+        if (inblock) {
+          i = index(line, "</pasted_content")
+          if (i == 0) { line = ""; break }
+          line = substr(line, i); j = index(line, ">")
+          line = j ? substr(line, j + 1) : ""
+          inblock = 0
+        } else {
+          i = index(line, "<pasted_content")
+          if (i == 0) { out = out line; break }
+          out = out substr(line, 1, i - 1)
+          line = substr(line, i); j = index(line, ">")
+          line = j ? substr(line, j + 1) : ""
+          inblock = 1
+        }
+      }
+      print out
+    }' 2>/dev/null) || STAGE_LOWER=$PROMPT_LOWER
 
   # Stage routing — `offers-api` (prod, default) vs `offers-api-demo` (demo).
   # Trigger: any explicit mention of "demo" inside an offers-related prompt the user
@@ -53,13 +90,19 @@ if [ "$INTENT" -eq 1 ]; then
   # plugins/lt-offers/.../demo-notes.md cannot reach this check.
   # The whole-word match avoids false positives like "Demonstrations-Angebot"
   # being routed to the demo stage when the author meant production.
-  if printf '%s\n' "$PROMPT_LOWER" | grep -qE '(^|[^a-z0-9])demo([^a-z0-9]|$)|demo-angebote\.lenne|demo[- ]?(stage|umgebung|instanz|server|deployment)'; then
-    STAGE_HINT="Demo stage requested. Use the **offers-api-demo** MCP server (https://api.demo-angebote.lenne.tech/mcp) for all offer operations in this prompt. Do NOT call tools on the default \`offers-api\` server — that one is production."
+  if printf '%s\n' "$STAGE_LOWER" | grep -qE '(^|[^a-z0-9])demo([^a-z0-9]|$)|demo-angebote\.lenne|demo[- ]?(stage|umgebung|instanz|server|deployment)'; then
+    STAGE_HINT="Demo stage requested. Use the **offers-api-demo** MCP server (https://api.demo-angebote.lenne.tech/mcp) for all offer and concept-folder operations in this prompt. Do NOT call tools on the default \`offers-api\` server — that one is production."
   else
     STAGE_HINT="Default stage. Use the **offers-api** MCP server (https://api.angebote.lenne.tech/mcp, production). The sibling \`offers-api-demo\` is available but should only be used when the user explicitly mentions the demo stage."
   fi
 
-  CONTEXT="Offer-related keywords detected. ${STAGE_HINT} Use the creating-offers skill for creating and managing offers."
+  if [ "$INTENT" -eq 1 ] && [ "$CONCEPT_INTENT" -eq 1 ]; then
+    CONTEXT="Offer and concept-folder keywords detected. ${STAGE_HINT} Use the creating-concepts skill for the concept folder (Konzeptmappe) and the creating-offers skill for the offer."
+  elif [ "$CONCEPT_INTENT" -eq 1 ]; then
+    CONTEXT="Concept-folder keywords detected. ${STAGE_HINT} Use the creating-concepts skill for creating and managing concept folders (Konzeptmappen)."
+  else
+    CONTEXT="Offer-related keywords detected. ${STAGE_HINT} Use the creating-offers skill for creating and managing offers."
+  fi
 fi
 
 # ── Emit structured hookSpecificOutput JSON (consistent with other detect scripts) ──

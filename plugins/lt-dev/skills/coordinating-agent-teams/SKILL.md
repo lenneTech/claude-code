@@ -24,7 +24,7 @@ Two different things run several Claude Code sessions at once, and only one of t
 
 ## Gotchas
 
-- **`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` must be set BEFORE session start** — Setting it mid-session has no effect. The flag is read once at startup. Team-capable commands silently fall back to single-agent mode if the env var is missing. Verify with `echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` before running `/debug`, `/review`, or any team command.
+- **`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` must be set BEFORE session start** — Setting it mid-session has no effect. The flag is read once at startup. Team-capable commands silently fall back to single-agent mode if the env var is missing. Verify with `echo $CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` before running `/lt-dev:debug`, `/lt-dev:review`, or any team command.
 - **Token cost is 3-5× single-agent — not 2×** — Each teammate runs a full Claude Code session with its own context, memory, and transcript. A 4-teammate debug session easily consumes 5× the tokens of a single-agent run. Budget accordingly and prefer `--no-team` for simple tasks.
 - **No session resumption for teams** — `claude --resume` cannot restore a multi-teammate session. If a team run is interrupted (crash, network, user exit), the teammates' transcripts are lost. Treat every team run as one-shot and save important findings to disk before stopping.
 - **Nested spawning depends on the agent's own `tools` list, not on a platform ban** — A subagent may spawn subagents of its own, by default up to three layers below the main conversation (`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` changes the limit; `1` turns nesting off). At the limit Claude Code withholds the `Agent` tool, so that layer does its work itself and returns one summary. Every lt-dev agent omits `Agent` from its `tools` list, so none of them nests today — that is a deliberate per-agent choice, and the reason to keep team workflows flat is cost and legibility rather than an unavailable capability. To keep one agent read-only, leave `Agent` out of its `tools` or list it in `disallowedTools`.
@@ -52,10 +52,10 @@ Every team-capable command follows this decision tree:
 
 | Command | Team Trigger |
 |---------|-------------|
-| `/review` | >100 changed lines AND >3 files, OR changes in both projects/api/ and projects/app/ |
-| `/create-story` (TDD) | Fullstack monorepo detected AND story involves backend + frontend |
-| `/rebase-mrs` | >2 branches selected |
-| `/debug` | Always team (the workflow requires it) |
+| `/lt-dev:review` | >100 changed lines AND >3 files, OR changes in both projects/api/ and projects/app/ |
+| `/lt-dev:create-story` (TDD) | Fullstack monorepo detected AND story involves backend + frontend |
+| `/lt-dev:git:rebase-mrs` | >2 branches selected |
+| `/lt-dev:debug` | Always team (the workflow requires it) |
 
 ## When Teams Beat Single Agents
 

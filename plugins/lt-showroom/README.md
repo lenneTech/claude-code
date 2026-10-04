@@ -54,10 +54,10 @@ Activates automatically when showcase-related keywords are detected or a project
 
 | Command | Description |
 |---------|-------------|
-| `/showroom:analyze [path]` | Analyze a project and produce a structured report |
-| `/showroom:create [path]` | Analyze a project and create a showcase on showroom.lenne.tech |
-| `/showroom:update [showcase-id]` | Re-analyze a project and update its existing showcase |
-| `/showroom:screenshot [showcase-id]` | Capture and upload screenshots for a showcase |
+| `/lt-showroom:showroom:analyze [path]` | Analyze a project and produce a structured report |
+| `/lt-showroom:showroom:create [path]` | Analyze a project and create a showcase on showroom.lenne.tech |
+| `/lt-showroom:showroom:update [showcase-id]` | Re-analyze a project and update its existing showcase |
+| `/lt-showroom:showroom:screenshot [showcase-id]` | Capture and upload screenshots for a showcase |
 
 ## Agents
 

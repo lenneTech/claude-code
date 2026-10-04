@@ -5,7 +5,7 @@ allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(ls:*), Bash(node:*), Bash(mkd
 disable-model-invocation: true
 ---
 
-# /showroom:analyze — Analyze Project and Create SHOWCASE.md
+# /lt-showroom:showroom:analyze — Analyze Project and Create SHOWCASE.md
 
 This command runs Phase 1 (analysis) and Phase 3 (SHOWCASE.md creation) of the showcase workflow. It produces a versioned `SHOWCASE.md` file in the project repository that serves as the single source of truth for all showcase content.
 
@@ -14,7 +14,7 @@ This command runs Phase 1 (analysis) and Phase 3 (SHOWCASE.md creation) of the s
 - User wants to analyze a project before creating a showcase
 - User needs a `SHOWCASE.md` file created or updated in a project
 - User asks what a project does or how it is built
-- Starting point before running `/showroom:screenshot` or `/showroom:create`
+- Starting point before running `/lt-showroom:showroom:screenshot` or `/lt-showroom:showroom:create`
 
 ## Related Commands
 
@@ -100,7 +100,7 @@ SHOWCASE.md created: <project-path>/SHOWCASE.md
 Version:     1.2.0
 Features:    8 features identified
 Pages:       12 pages inventoried
-Screenshots: 16 placeholders (run /showroom:screenshot to capture)
+Screenshots: 16 placeholders (run /lt-showroom:showroom:screenshot to capture)
 Startup:     pnpm run dev (port 3001, requires MongoDB)
 ```
 
@@ -109,5 +109,5 @@ Startup:     pnpm run dev (port 3001, requires MongoDB)
 After presenting the summary, suggest:
 
 > SHOWCASE.md is ready. Next steps:
-> - Run `/showroom:screenshot` to capture screenshots for each feature
-> - Or run `/showroom:create` to publish directly to showroom.lenne.tech
+> - Run `/lt-showroom:showroom:screenshot` to capture screenshots for each feature
+> - Or run `/lt-showroom:showroom:create` to publish directly to showroom.lenne.tech

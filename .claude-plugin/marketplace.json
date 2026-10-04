@@ -15,7 +15,7 @@
     {
       "name": "lt-offers",
       "source": "./plugins/lt-offers",
-      "description": "Skills & Commands for creating business offers on angebote.lenne.tech via MCP"
+      "description": "Skills & Commands for creating business offers on angebote.lenne.tech and concept folders (Konzeptmappen) on konzept.lenne.tech via MCP"
     },
     {
       "name": "lt-showroom",

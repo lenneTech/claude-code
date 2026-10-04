@@ -5,7 +5,7 @@ allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(ls:*), Bash(curl:*), Bash(nod
 disable-model-invocation: true
 ---
 
-# /showroom:update — Update an Existing Showcase
+# /lt-showroom:showroom:update — Update an Existing Showcase
 
 Detects what changed since the last analysis using git tree hashes, re-analyzes only affected areas, updates SHOWCASE.md, and publishes changes.
 
@@ -39,7 +39,7 @@ Detects what changed since the last analysis using git tree hashes, re-analyzes 
 
 If `$ARGUMENTS` is provided, use it as the project root. Otherwise, use the current working directory.
 
-Verify the path contains a `SHOWCASE.md` file (or `docs/showcase/SHOWCASE.md`). If not found, suggest running `/showroom:analyze` first.
+Verify the path contains a `SHOWCASE.md` file (or `docs/showcase/SHOWCASE.md`). If not found, suggest running `/lt-showroom:showroom:analyze` first.
 
 ### Step 2: Read Current State
 

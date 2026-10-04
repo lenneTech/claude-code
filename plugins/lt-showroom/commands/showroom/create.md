@@ -5,7 +5,7 @@ allowed-tools: Read, Grep, Glob, Bash(curl:*), Bash(ls:*), Bash(git:*), Bash(nod
 disable-model-invocation: true
 ---
 
-# /showroom:create — Create and Publish a Showcase
+# /lt-showroom:showroom:create — Create and Publish a Showcase
 
 This command runs Phase 4 (showcase creation) and Phase 5 (presentation) of the showcase workflow. It reads `SHOWCASE.md` from the project, enriches it with the account's company context, customer feedback and web research, then creates a detailed showcase on showroom.lenne.tech with 8-12 modern content blocks.
 
@@ -13,7 +13,7 @@ This command runs Phase 4 (showcase creation) and Phase 5 (presentation) of the 
 
 - User wants to publish a project to showroom.lenne.tech
 - User has a `SHOWCASE.md` in the project and wants it turned into a live showcase
-- Running after `/showroom:analyze` and optionally `/showroom:screenshot`
+- Running after `/lt-showroom:showroom:analyze` and optionally `/lt-showroom:showroom:screenshot`
 
 ## Related Commands
 
@@ -45,7 +45,7 @@ This command runs Phase 4 (showcase creation) and Phase 5 (presentation) of the 
 
 If `$ARGUMENTS` is provided, use it as the project root. Otherwise, use the current working directory.
 
-Verify that `SHOWCASE.md` exists. If not, suggest running `/showroom:analyze` first.
+Verify that `SHOWCASE.md` exists. If not, suggest running `/lt-showroom:showroom:analyze` first.
 
 ### Step 2: Read SHOWCASE.md
 

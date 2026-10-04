@@ -324,6 +324,22 @@ grep -rn "\.\(getForce\|createForce\|updateForce\|findForce\|findOneForce\|findA
 | `*Force`/`*Raw` in documented migration/backfill/seed script | Allowed |
 | `*Force` in documented admin tooling where ADMIN role is verified upstream | Allowed |
 
+#### Layer 9: Entry Points Outside the Controller (Rule 19)
+
+`@Roles` is enforced by the `RolesGuard` on the controller. MCP tools, AI guides and agents, queue jobs, WebSocket handlers and webhooks that call a service directly never pass it.
+
+```bash
+# Service calls from non-REST entry points
+grep -rln "registerTool\|@Processor\|@Process(\|@SubscribeMessage\|@Cron(\|@OnEvent(" src/server/ --include="*.ts" | grep -v ".spec.ts"
+```
+
+For every service method such an entry point calls, compare with the controller that exposes the same operation: if the controller carries `@Roles(...)`, the service method (or the handler before the call) must check the same role, typically via `RequestContext.get()?.tenantRole` and the user's global roles.
+
+| Scenario | Severity |
+|----------|----------|
+| Operation restricted by `@Roles` on REST but callable through MCP, a job or a socket without the same check | **CRITICAL** — privilege escalation (OWASP A01) |
+| Role check present in the service, no test for the non-REST entry point with a refused role | **HIGH** — unproven boundary |
+
 #### Permissions Scanner
 
 ```bash
@@ -425,6 +441,21 @@ grep -rn "fs\.readFile\|fs\.writeFile\|fs\.unlink\|path\.join.*req\.\|path\.join
 
 - Flag: File operations with user-controlled paths without `path.basename` sanitization
 
+#### Server-Side Request Forgery (Rule 18)
+
+```bash
+# Outgoing requests whose URL may come from user data
+grep -rn "fetch(\|axios\.\|got(\|http\.request(\|https\.request(\|HttpService" src/server/ --include="*.ts" | grep -v ".spec.ts"
+```
+
+Trace every URL to its origin. A URL a user entered (webhook, preview, import, remote image, OIDC discovery, "test connection", provider base URL) needs a guard that resolves the host and refuses loopback, private, link-local (including `169.254.169.254`), CGNAT, ULA, unspecified and IPv4-mapped addresses, allows only `http`/`https`, and validates every redirect hop against the address actually connected to.
+
+| Scenario | Severity |
+|----------|----------|
+| User-entered URL fetched without a guard, response stored or returned | **CRITICAL** — full-read SSRF (OWASP A10) |
+| User-entered URL fetched without a guard, response discarded | **HIGH** — blind SSRF |
+| Guard present but redirects followed unchecked, or host re-resolved after validation | **HIGH** — bypassable guard |
+
 #### Input Validation Gaps
 
 For every CreateInput/UpdateInput in changed files:
@@ -515,6 +546,21 @@ grep "JWT_SECRET\|BETTER_AUTH_SECRET" .env.example
 - [ ] JWT/auth secrets >= 64 characters
 - [ ] `.env` in `.gitignore`
 - [ ] `.env.example` has only placeholder values
+
+#### Layer 5a: Tenant-Authored Values Must Not Read the Process Environment (Rule 17)
+
+```bash
+# Dynamic environment lookups
+grep -rn "process\.env\[" src/server/ --include="*.ts" | grep -v ".spec.ts"
+```
+
+For every dynamic lookup, trace the key: when it can come from data a tenant user authored (template, placeholder, "credential from env" field, webhook header, connection setting), the resolver must accept only an explicit allow-list. Check preview, dry-run and test endpoints that return the resolved value.
+
+| Scenario | Severity |
+|----------|----------|
+| Tenant-controlled name reaches `process.env` | **CRITICAL** — cross-tenant secret disclosure (OWASP A01/A02) |
+| Allow-list prefix that also matches platform secrets | **CRITICAL** |
+| Allow-list in place, no test that a platform secret name is refused | **HIGH** — unproven boundary |
 
 #### Layer 5c: AI Module Secrets (nest-server ≥ 11.26.0, only when `ai` config block present)
 
