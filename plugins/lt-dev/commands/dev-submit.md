@@ -190,7 +190,12 @@ The change is not merged yet on this path, so the instructions describe what the
 1. **Get workflow states:** Use Linear MCP to list available workflow states for the issue's team.
 2. **Find "Dev Review" state:** Look for a state matching "Dev Review", "In Review", "Review", or "Code Review" (case-insensitive).
    - If no matching state is found, ask the user which state to use.
-3. **Update issue status** via Linear MCP `update_issue` to the matched state.
+3. **Update issue status** via `mcp__plugin_lt-dev_linear__save_issue` with `state` = the matched
+   state. The tool is `save_issue` (there is no `update_issue`), and the parameter is `state` —
+   `stateId` is rejected with `Unrecognized keys` and writes nothing.
+
+   This step deliberately does **not** touch the assignee: the ticket stays with whoever held it.
+   A caller that wants it unassigned has to pass `assignee` = JSON `null` itself.
 
 ### STEP 5: Zusammenfassung
 

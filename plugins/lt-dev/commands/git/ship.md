@@ -597,8 +597,18 @@ With `--unattended`, post without the preview: the developer already approved th
 1. Find the team's review state in the list from 10b. Match case-insensitively against: `Dev Review`, `In Review`, `Review`, `Code Review`. Pick the first match.
    - If none match, ask the user which state to use (offer the team's available states as options).
 2. Update the issue via `mcp__plugin_lt-dev_linear__save_issue` with:
-   - `stateId` = matched review state
-   - `assigneeId` = `null` (explicitly unassign — the implementer is no longer the owner during functional review)
+   - `state` = matched review state
+   - `assignee` = JSON `null` — explicitly unassign; the implementer is no longer the owner
+     during functional review
+
+   **Two spellings matter here, and both fail silently or loudly if you guess.** The
+   parameters are `assignee` and `state`, not `assigneeId` / `stateId` (the tool answers
+   `Unrecognized keys` and writes nothing). And removing an assignee takes **JSON `null`**,
+   which is the one documented way: the string `"none"` fails with
+   `Could not find user "none"`, and an empty string is accepted and then **silently
+   ignored** — the response still carries the old assignee, so a run can report success
+   while the ticket stayed assigned. A removal is confirmed by `assignee`/`assigneeId`
+   being ABSENT from the response, not by the call returning without error.
 
 If the call fails (permissions, archived issue, etc.), surface the error and continue to the summary — **do not** retry the call silently. The merge has already landed; Linear state is recoverable manually.
 

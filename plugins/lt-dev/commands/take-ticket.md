@@ -260,8 +260,14 @@ Persist collected sources in a working note (in-context). Do **not** write a mar
 2. Resolve current Linear user via `mcp__plugin_lt-dev_linear__get_user` (the authenticated viewer — no ID needed).
 3. Find the team's "In Progress" state ID from `STATE_IDS`. Match case-insensitively against: `In Progress`, `Started`, `Doing`. If none match, ask the user which state to use.
 4. Update the issue via `mcp__plugin_lt-dev_linear__save_issue` with:
-   - `assigneeId` = current user
-   - `stateId` = matched in-progress state
+   - `assignee` = current user (an ID, name, email, or the literal `"me"`)
+   - `state` = matched in-progress state
+
+   **The parameters are `assignee` and `state`, never `assigneeId` / `stateId`.** The tool
+   rejects the `*Id` spellings outright — `Unrecognized keys: "stateId", "assigneeId"` — so
+   the whole call fails and nothing is written. Those names read plausibly because
+   `get_issue` RETURNS `assigneeId` and the pick flow genuinely uses `stateId` when
+   FILTERING `list_issues`; only `save_issue` takes the short forms.
 
 **Set `In Progress` here and only here — at the actual start of work.** Never earlier, e.g. right after creating a follow-up you intend to take next (see STEP 9a): a ticket parked in `In Progress` that nobody is actually working reads as busy and gets picked up by no one, which loses it silently.
 

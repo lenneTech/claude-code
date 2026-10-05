@@ -499,7 +499,13 @@ A GitLab job stays `created` while it waits on its `needs:` predecessors — tha
 | `awaiting-release` | Awaiting Release | `Awaiting Release`, `Ready for Release`, `Release` | unassigned |
 
 1. Find the state via `mcp__plugin_lt-dev_linear__list_issue_statuses` on the ticket's team. If no name matches, surface the team's actual state list and ask the user via `AskUserQuestion` which one to use — the merge has already landed, so never guess and never silently skip.
-2. Call `mcp__plugin_lt-dev_linear__save_issue` with the resolved `stateId` and `assigneeId` (`QA_ASSIGNEE` was already resolved in STEP 4b.2b; `null` where the table says unassigned).
+2. Call `mcp__plugin_lt-dev_linear__save_issue` with the resolved `state` and `assignee` (`QA_ASSIGNEE` was already resolved in STEP 4b.2b; JSON `null` where the table says unassigned).
+
+   **The parameters are `state` and `assignee` — not `stateId` / `assigneeId`, which the tool
+   rejects with `Unrecognized keys` so that nothing is written at all.** Unassigning needs
+   JSON `null`: `"none"` errors, and an empty string is accepted and then ignored, leaving the
+   ticket assigned behind a call that looked like it worked. Verify by the ABSENCE of
+   `assignee` in the response.
 
 If `POST_MERGE_STATUS = dev-review`, no Linear override follows — `git:ship` already set "Dev Review" + unassigned. But the healthy-deploy verification (steps 3a → 3b → 3b-2) is **still mandatory**: the cycle is not complete until the new version runs healthy on dev, even though "Dev Review" is a developer/QA state. Do **not** skip the deploy wait + container-health check for `dev-review`.
 
@@ -527,7 +533,7 @@ Capture `REVIEWER` = `{linearUserId, displayName, email}`.
 
 **3. Override Linear assignee.** `dev-submit` leaves the ticket unassigned. Override:
 
-- Call `mcp__plugin_lt-dev_linear__save_issue` with `assigneeId = REVIEWER.linearUserId` (keep status at "Dev Review" — `dev-submit` already set it).
+- Call `mcp__plugin_lt-dev_linear__save_issue` with `assignee = REVIEWER.linearUserId` (the parameter is `assignee`, not `assigneeId`; keep status at "Dev Review" — `dev-submit` already set it).
 
 **4. Reviewer auf MR/PR eintragen.** Use the platform CLI corresponding to the host (detect from `REQUEST_URL`):
 
