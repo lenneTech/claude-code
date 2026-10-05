@@ -12,6 +12,9 @@
 set -u
 
 SCRIPTS="$(cd "$(dirname "$0")/.." && pwd)"
+
+# The scripts are Unix tools (lsof, ps, launchctl): there is nothing to test on Windows.
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) echo "skipped: disk-cleanup scripts are macOS/Linux only"; exit 0 ;; esac
 PASS=0
 FAIL=0
 
@@ -53,10 +56,10 @@ case \"\$*\" in
   'system df -v') cat \"\$f/df-v.txt\" ;;
   'ps -aq') cut -f1 \"\$f/containers.txt\" ;;
   ps\ -a*) cat \"\$f/stopped.txt\" ;;
-  *'{{.Image}}'*) for c in \"\${@:4}\"; do grep \"^\$c\t\" \"\$f/containers.txt\" | cut -f2; done ;;
+  *'{{.Image}}'*) for c in \"\${@:4}\"; do awk -F'\t' -v k=\"\$c\" '\$1 == k {print \$2}' \"\$f/containers.txt\"; done ;;
   images*) cat \"\$f/images.txt\" ;;
-  *State.FinishedAt*) grep \"^\${@: -1}\t\" \"\$f/finished.txt\" | cut -f2 ;;
-  *State.Status*) grep \"^\${@: -1}\t\" \"\$f/status.txt\" | cut -f2 ;;
+  *State.FinishedAt*) awk -F'\t' -v k=\"\${@: -1}\" '\$1 == k {print \$2}' \"\$f/finished.txt\" ;;
+  *State.Status*) awk -F'\t' -v k=\"\${@: -1}\" '\$1 == k {print \$2}' \"\$f/status.txt\" ;;
   'volume ls -qf dangling=true') cat \"\$f/dangling.txt\" ;;
   *) echo \"docker \$*\" >> '$TMP/calls.txt' ;;
 esac"

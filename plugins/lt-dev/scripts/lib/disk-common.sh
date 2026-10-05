@@ -15,9 +15,13 @@ export LC_ALL=C
 # ---------------------------------------------------------------- portability
 
 # mtime_of <path> — epoch seconds, 0 when missing.
+# GNU first: on Linux `stat -f` means FILESYSTEM status and answers "%m" with garbage instead of
+# failing, so a BSD-first chain never reached its fallback there (CI on ubuntu, 2026-10-05).
 mtime_of() {
+  local m
   [ -e "$1" ] || { echo 0; return; }
-  stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null || echo 0
+  m=$(stat -c %Y "$1" 2>/dev/null) || m=$(stat -f %m "$1" 2>/dev/null)
+  case "$m" in ''|*[!0-9]*) echo 0 ;; *) echo "$m" ;; esac
 }
 
 # day_of <epoch> — YYYY-MM-DD.
@@ -34,7 +38,7 @@ size_mb() {
 
 # free_mb — free space on the volume holding $HOME. This, not du, is what a cleanup must be
 # measured against: pnpm imports node_modules as APFS clones, so du counts shared blocks twice.
-free_mb() { df -k "$HOME" | awk 'NR==2 {print int($4 / 1024)}'; }
+free_mb() { df -Pk "$HOME" | awk 'NR==2 {print int($4 / 1024)}'; }  # -P: GNU wraps long device names otherwise
 
 # to_mb <docker size string> — "21.18GB" / "512MB" / "3.2kB" / "0B" → integer MB.
 to_mb() {
@@ -67,7 +71,7 @@ untilde() { case "$1" in "~"*) echo "$HOME${1#"~"}" ;; *) echo "$1" ;; esac; }
 _DISK_PROC_SNAPSHOT=""
 disk_proc_init() {
   [ -n "$_DISK_PROC_SNAPSHOT" ] && return 0
-  _DISK_PROC_SNAPSHOT="$(ps -axo command= 2>/dev/null | grep -v -e 'disk-clean\.sh' -e 'disk-audit\.sh')
+  _DISK_PROC_SNAPSHOT="$(ps -Ao command= 2>/dev/null | grep -v -e 'disk-clean\.sh' -e 'disk-audit\.sh')
 $(lsof -nP -d cwd -Fn 2>/dev/null | sed -n 's/^n//p')
 ."
 }
@@ -91,7 +95,7 @@ proc_mentions() {
 # and dev servers do not count; a bare `pnpm` does (it means install).
 store_writers() {
   local procs
-  procs="$(ps -axo command= 2>/dev/null)"
+  procs="$(ps -Ao command= 2>/dev/null)"
   printf '%s\n' "$procs" | awk '
     BEGIN {
       n = split("install i add update up upgrade fetch dedupe remove rm uninstall un dlx import rebuild rb link ln", w, " ")
