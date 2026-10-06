@@ -47,7 +47,7 @@ These plugins are **optional** but enhance the experience when working with this
 - **25 Agents** - Autonomous task execution
 - **64 Commands** - User-triggered actions via `/lt-dev:<name>`
 - **19 Hook Scripts** across 7 event types (SessionStart, PreToolUse, PostToolUse, PostToolUseFailure, UserPromptSubmit, StopFailure, SessionEnd) - Automated project detection and validation
-- **Helper Scripts** - Plugin-local shell helpers under `plugins/lt-dev/scripts/` (e.g. `discover-check-scripts.sh` for monorepo-aware `check` discovery, `peer-ledger.sh` for cross-session claims and diagnoses, `change-provenance.sh` for attributing changes this session did not write, `chrome-devtools-mcp-launcher.sh` as Chrome MCP wrapper)
+- **Helper Scripts** - Plugin-local shell helpers under `plugins/lt-dev/scripts/` (e.g. `discover-check-scripts.sh` for monorepo-aware `check` discovery, `peer-ledger.sh` for cross-session claims and diagnoses, `change-provenance.sh` for attributing changes this session did not write, `find-vault-logins.sh` for the 1Password test accounts of a deployed stage, returned as login name plus private link and never as a secret, `chrome-devtools-mcp-launcher.sh` as Chrome MCP wrapper)
 - **3 MCP Servers** - Chrome DevTools, Linear, and Nuxt UI (Figma via the official `figma` plugin as a companion)
 
 ## Chrome DevTools MCP — Canary auto-detection

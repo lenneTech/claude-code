@@ -528,9 +528,11 @@ Store as `ISSUE_ID`.
 
 ### 10c. Generate & Post Comment
 
-Generate a **German** comment for non-developers, using commits + diff stat from STEP 6. Follow [`writing-qa-test-instructions`](${CLAUDE_PLUGIN_ROOT}/skills/writing-qa-test-instructions/SKILL.md) — it owns the testability classification, the step format, the deployed-URL resolution, and the rule that the comment names **roles, never passwords**.
+Generate a **German** comment for non-developers, using commits + diff stat from STEP 6. Follow [`writing-qa-test-instructions`](${CLAUDE_PLUGIN_ROOT}/skills/writing-qa-test-instructions/SKILL.md) — it owns the testability classification, the step format, the deployed-URL resolution, the check of the dev stage for accounts and records, and the rule that the comment names the account and links its private vault entry, **never a secret**.
 
 Classify first (skill Part 1): can a non-developer exercise this change through the running application on the dev deployment? The answer picks the shape.
+
+For the testable shape, take the test context next (skill Part 4: an account per role with its private 1Password link, and per step a record that already exists on dev or was prepared for it). A context handed over by `/lt-dev:ticket-cycle` STEP 3b is used as it stands. Otherwise resolve it here; with `--unattended` and no handed-over context, use only the stored account mapping and skip every `op` call, because nobody is there to answer its unlock prompt.
 
 **Testable:**
 
@@ -542,13 +544,19 @@ Classify first (skill Part 1): can a non-developer exercise this change through 
 ## Testanleitung
 
 Umgebung: <Dev-URL>
-Rollen:   <benötigte Rollen>
-Zugang:   Zugangsdaten für die genannten Rollen bitte beim Team erfragen —
-          dieser Kommentar enthält bewusst keine Passwörter.
 
-1. Als <Rolle> anmelden → [<Seite>](<URL>) → <genaue Aktion>
+Zugänge (Passwörter stehen nur in 1Password, hier bewusst nicht):
+- <Rolle>: `<login>` → [1Password: <Eintrag>](<privater Link>)
+- <Rolle ohne Eintrag>: kein Eintrag im Team-Tresor, Zugang bitte beim Team erfragen
+
+Vorbereitete Daten:
+- [<Datensatz>](<Deep-Link>) — <vorhanden | für diesen Test angelegt | wird nach der Bereitstellung angelegt>
+
+1. Als <Rolle> (`<login>`) anmelden → [<Seite>](<URL mit Datensatz-ID>) → <genaue Aktion>
    → erwartet: <Ergebnis> → prüft: <warum>
-2. …
+2. Gegenprobe: <dieselbe Aktion mit einem Datensatz oder Wert deiner Wahl>
+   → erwartet: <Ergebnis> → prüft: <dass es nicht nur am vorbereiteten Fall hängt>
+3. …
 
 ## Status
 

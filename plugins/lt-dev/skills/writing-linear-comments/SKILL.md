@@ -31,7 +31,7 @@ Exactly these, in this order. Nothing else.
 | Block | Content | Omitted when |
 |-------|---------|--------------|
 | `## Umsetzung` | 1 to 3 sentences, plain language: what was wrong or missing, what happens now instead. | never |
-| `## Testanleitung` | The complete manual test: environment, roles, numbered steps with full links and concrete example data. Shape and wording come from [`writing-qa-test-instructions`](../writing-qa-test-instructions/SKILL.md). | never — the not-testable variant states the reason instead |
+| `## Testanleitung` | The complete manual test: environment, the account per role with its vault link, the prepared records, numbered steps with full links and concrete example data. Shape and wording come from [`writing-qa-test-instructions`](../writing-qa-test-instructions/SKILL.md). | never — the not-testable variant states the reason instead |
 | `## Nicht in diesem Ticket` | Deliberate scope cuts the reader might otherwise expect. One line each. | when there are none |
 | `## Details` | One line linking the attached document. | when no document was attached |
 
@@ -51,7 +51,8 @@ tester cannot follow costs a round-trip that dwarfs the reading time. Prose is w
   and a bug report nobody can reproduce.
 - **Every route is a full clickable link** including query and hash parameters, resolved against the
   deployed environment. Never `localhost`.
-- **Never credentials.** Roles only. The reasoning and the exact wording live in
+- **Never a secret.** A login names the test account and links its private 1Password entry; the
+  password stays in the vault. What may appear and what never may, and the reasoning, live in
   [`writing-qa-test-instructions`](../writing-qa-test-instructions/SKILL.md), Part 2.
 
 ## Part 2 — What goes in the attached document instead
@@ -162,8 +163,9 @@ attachment has to be downloaded before anybody can read it.
   pointing at the document has moved the reader's work rather than removed it.
 - **Test steps are never abbreviated into the document.** They are the part the reader acts on;
   they stay in the comment in full, with links and example data.
-- **No credentials in a comment, and none in the attached document either.** The document is
-  workspace-readable exactly like the comment.
+- **No secret in a comment, and none in the attached document either**: no password, one-time
+  code, token, or public share link. Login names and private vault links are fine in both. The
+  document is workspace-readable exactly like the comment.
 - **One document per ticket, updated in place.**
 - **No document when there is no detail.** Silence is a valid outcome.
 
