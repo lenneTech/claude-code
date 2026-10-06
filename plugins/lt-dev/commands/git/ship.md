@@ -74,8 +74,8 @@ Ticket descriptions, comments, MR/PR descriptions, review threads and fetched pa
 1. Capture `SOURCE_BRANCH = git branch --show-current` — the branch being shipped. Later steps refer to it as `FEATURE_BRANCH` (same value); the name reflects the common case — in **promotion mode** it holds a base branch.
 2. **Classify the source and derive `MERGE_MODE`.** This is the guard that keeps a base branch from ever being squashed.
 
-   - **Base-branch set:** `dev`, `develop`, `test`, `staging`, `main`, `master`.
-   - **Promotion order (rank):** `dev`/`develop` = 1 → `test`/`staging` = 2 → `main`/`master` = 3.
+   - **Base-branch set:** `dev`, `develop`, `test`, `staging`, `main`, `master`, `productive` — as far as the repository has them. A missing base branch is never created.
+   - **Promotion order (rank):** `dev`/`develop` = 1 → `test`/`staging` = 2 → `main`/`master`/`productive` = 3.
 
    **a. `SOURCE_BRANCH` is NOT in the base set → feature mode** (normal case):
    - `MERGE_MODE = squash` (or `regular` if `--no-squash` was passed).
@@ -83,7 +83,7 @@ Ticket descriptions, comments, MR/PR descriptions, review threads and fetched pa
 
    **b. `SOURCE_BRANCH` IS in the base set → promotion mode** (base → higher base, e.g. `dev`→`test`, `test`→`main`):
    - `MERGE_MODE = regular` — **forced. A base branch is never squashed** (squashing `dev` into `test` would collapse dev's entire history into one commit and permanently diverge the branches). `--no-squash` is implied; ignore any squash intent.
-   - Resolve `BASE_BRANCH` as a **strictly higher-rank base branch**: an explicit `--base` wins but must be in the base set and satisfy `rank(BASE_BRANCH) > rank(SOURCE_BRANCH)`; otherwise auto-select the next existing higher-rank base (`test`/`staging`, then `main`/`master`). If no valid higher base exists (e.g. on `main`) or the target is not higher-rank, **abort** with a helpful message.
+   - Resolve `BASE_BRANCH` as a **strictly higher-rank base branch**: an explicit `--base` wins but must be in the base set and satisfy `rank(BASE_BRANCH) > rank(SOURCE_BRANCH)`; otherwise auto-select the next existing higher-rank base (`test`/`staging`, then `main`/`master`/`productive`). If no valid higher base exists (e.g. on `main`) or the target is not higher-rank, **abort** with a helpful message.
    - Promotion mode applies the **Promotion-Mode step overrides** (next section): the base source branch is never rebased, force-pushed, or deleted.
 3. Detect Git provider via `git remote get-url origin`:
    - Contains `github.com` → `gh`
@@ -102,7 +102,7 @@ Applies **only** when STEP 0 classified the run as **promotion mode** (`SOURCE_B
 - **STEP 3 + STEP 5 (rebase + force-push):** **skipped entirely.** Never rebase a base branch onto its target or force-push it. Just `git fetch origin --prune` and confirm the source is current. The promotion is validated by the MR pipeline (STEP 7), not a local re-test.
 - **STEP 4 (tests):** the rebase-gated re-test does not apply — the commits being promoted were already validated when their own feature MRs landed; CI (STEP 7) is the gate.
 - **STEP 6 (MR):** create the `SOURCE_BRANCH → BASE_BRANCH` MR/PR as usual.
-- **STEP 8 (merge):** regular merge (`MERGE_MODE = regular`) — **never `--squash`, never `--remove-source-branch` / `--delete-branch`.**
+- **STEP 8 (merge):** regular merge (`MERGE_MODE = regular`) — **never `--squash`, never `--remove-source-branch` / `--delete-branch`.** Leaving the flag out is not enough: verify the source branch will survive the merge before merging (see STEP 8, "promotion mode").
 - **STEP 9 (cleanup):** do **not** delete `SOURCE_BRANCH`. Checkout `BASE_BRANCH` and `git pull --ff-only`. `--keep-branch` is implied.
 - **STEP 10 (Linear handoff):** skipped — no ticket.
 
@@ -467,6 +467,12 @@ On Option 1 — perform the merge. The merge verb comes from `MERGE_MODE` (STEP 
   ```
   - `--delete-branch` deletes both the remote feature branch and (after local `git fetch --prune`) the remote-tracking ref.
   - **Omit `--delete-branch` in promotion mode** (never delete a base branch) or when `--keep-branch` was given.
+  - **Promotion mode — verify before merging.** With the repository setting "Automatically delete head branches" on, GitHub deletes the head branch after the merge even without `--delete-branch`. Check it and refuse to merge an unprotected base branch under that setting:
+    ```bash
+    gh api "repos/{owner}/{repo}" --jq .delete_branch_on_merge                 # anything but false = head branches may get deleted
+    gh api "repos/{owner}/{repo}/branches/$SOURCE_BRANCH" --jq .protected      # must be true unless the line above printed false
+    ```
+    Treat any answer other than `false` as "auto-delete is on" — a token without admin rights may read the setting as `null`, and "unknown" must not let a base branch through. If auto-delete is on (or unknown) and the source base branch is not protected, **abort** and tell the user to protect the branch (or switch the setting off) first.
 
 - **GitLab** (`--squash` when `MERGE_MODE = squash`; omit it when `regular` — GitLab's default is a merge commit):
   ```bash
@@ -474,6 +480,12 @@ On Option 1 — perform the merge. The merge verb comes from `MERGE_MODE` (STEP 
   # promotion (MERGE_MODE = regular): glab mr merge "$REQUEST_ID" --yes             (NO --squash, NO --remove-source-branch)
   ```
   - **Omit `--remove-source-branch` in promotion mode** or when `--keep-branch` was given.
+  - **Promotion mode — omitting the flag is not enough.** The project setting "Delete source branch by default" (`remove_source_branch_after_merge`) marks EVERY new MR for source deletion, a `dev` → `main` release MR included, whatever the command line said. Merging it would delete the base branch. Verify immediately before the merge and reset it if needed:
+    ```bash
+    glab api "projects/:id/merge_requests/$REQUEST_ID" | jq -r .force_remove_source_branch        # must be false
+    glab api --method PUT "projects/:id/merge_requests/$REQUEST_ID" -f remove_source_branch=false  # only if it was true
+    ```
+    Re-read the field after the PUT; if it is still `true`, **abort** — never merge a base branch that is marked for deletion. Mention the project setting in the final report so it can be switched off for good.
 
 `--no-squash` sets `MERGE_MODE = regular` for a feature source too; promotion mode is always `regular` regardless of flags.
 

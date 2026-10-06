@@ -127,7 +127,7 @@ If a specific branch was provided and differs from current:
 git checkout <branch>
 ```
 
-**Safety check:** Refuse to rebase protected branches (dev, develop, main, master).
+**Safety check:** Refuse to rebase base branches (dev, develop, test, staging, main, master, productive — the set `/lt-dev:git:ship` uses). They are never rebased, force-pushed or deleted.
 
 Git checks a branch out in only one worktree at a time. When `git checkout` reports that the branch is already used by another worktree, stop and report that worktree's path as the blocker.
 

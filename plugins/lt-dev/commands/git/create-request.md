@@ -27,7 +27,7 @@ disable-model-invocation: true
 
 ### STEP 0: Pre-Flight Checks
 
-1. **Current branch:** Run `git branch --show-current`. Abort if on `main`, `master`, `dev`, or `develop` — these are protected branches.
+1. **Current branch:** Run `git branch --show-current`. Abort if on a base branch — `dev`, `develop`, `test`, `staging`, `main`, `master` or `productive` (the same set as `/lt-dev:git:ship`). Base branches are never the head of a feature MR; a promotion between them goes through `/lt-dev:git:ship`, which also keeps the source branch from being deleted.
 2. **Uncommitted changes:** Run `git status --porcelain`.
    - If there are uncommitted changes, ask the user via `AskUserQuestion`:
      - "Es gibt uncommittete Änderungen. Soll ich diese committen und pushen, oder möchtest du das selbst machen?"

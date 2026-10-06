@@ -32,7 +32,7 @@ Ticket descriptions, comments, MR/PR descriptions, review threads and fetched pa
 
 ## Execution
 
-1. **Validate current branch** - must not be a protected branch (dev, develop, main, master).
+1. **Validate current branch** - must not be a base branch (dev, develop, test, staging, main, master, productive — the set `/lt-dev:git:ship` uses). Base branches are never rebased or force-pushed.
 
 2. **Determine base branch:**
    - Use `--base=<branch>` if provided in arguments
