@@ -279,6 +279,7 @@ Renders a [Lottie](https://lottiefiles.com/) JSON animation. Auto-plays only onc
   "height": 950,
   "hint": "Am besten im Vollbildmodus ausprobieren",
   "caption": "Optional caption shown below the embed",
+  "printHtml": "<div style=\"display:grid;gap:16px\">…all states, printable…</div>",
   "previewFileId": ""
 }
 ```
@@ -291,12 +292,18 @@ Renders an uploaded, self-contained HTML file (e.g. an interactive click-dummy o
 - The HTML must be **fully self-contained**: inline all CSS/JS, embed fonts and images as data URIs. External `<script src>`, external stylesheets and remote media trigger upload warnings (they will not load reliably in the sandbox).
 - Max 5 MB per file; upload validator checks UTF-8 and HTML structure.
 - `height` is clamped to 200–1600 px.
-- PDFs cannot run the embed: the PDF prints `previewFileId` (author-uploaded PNG/JPG) when set, otherwise a framed hint „<block title> — interaktiv, online abrufbar" („Interaktive Demo" without a title), the same for offers and concept folders. `hint` above and `caption` below are printed as well, so a `caption` tells the PDF reader what the online version offers.
+- PDFs cannot run the embed. Three printed forms, most complete first:
+  1. **`printHtml` — the print version. Write one for every embed.** Static HTML holding everything the demo can show: every step, every row, every case. It replaces the element in the PDF and is ordinary DOM, so page numbers, the table of contents and the footer pick it up by themselves. Sanitised and styled exactly like a `custom-html` block (same DOMPurify defaults, same theme classes), so inline styles survive — `white-space: pre-wrap`, `background: transparent`, `color: inherit`, `break-after`, `break-inside`, `overflow-x` all work and are what keep tables on the page and bold passages visible inside a `<pre>`. Online it is **not** rendered at all, not even hidden in the DOM.
+  2. `previewFileId` (author-uploaded PNG/JPG) — the **fallback**, not the goal. One image is one state: for a simulator with eight steps or a matrix with 36 justifications, nearly everything is missing from the paper. This is what `printHtml` exists to replace.
+  3. Otherwise a framed hint „<block title> — interaktiv, online abrufbar" („Interaktive Demo" without a title).
+
+  Same for offers and concept folders. `caption` is printed in every case; `hint` is dropped once `printHtml` takes over, because it asks the reader to interact and there is nothing to click on paper.
+- **Generate the print version from the same data the demo uses, do not retype it.** The pattern, not a file in this repository: keep a small generator next to the diagram's own sources in the project that owns them, walking their data and helper functions, so no state can be missing and the PDF cannot drift from the online version. Where no such source exists — a hand-built click dummy — write the print version by hand and accept that both have to be kept in step; that is the cost the generator removes, and the reason to prefer one.
 
 **Authoring paths**
-- **MCP one-shot:** `add_html_embed` uploads base64 HTML and inserts the block in one atomic call (same insert-at-order pattern as `add_lottie_animation`). Suitable for small files only — base64 through a tool call gets unwieldy fast.
-- **Recommended for real files:** `create_upload_ticket` with `purpose: "html-embed"`, then `POST` the file via HTTP to the returned `uploadUrl` (multipart field `file`), then reference the returned file `id` as `fileId` in an `update_offer` call.
-- **Editor:** the block editor accepts direct `.html` uploads and manages height/caption/preview.
+- **MCP one-shot:** `add_html_embed` uploads base64 HTML and inserts the block in one atomic call (same insert-at-order pattern as `add_lottie_animation`). It takes `printHtml` too, so the block is complete after one call. Suitable for small files only — base64 through a tool call gets unwieldy fast.
+- **Recommended for real files:** `create_upload_ticket` with `purpose: "html-embed"`, then `POST` the file via HTTP to the returned `uploadUrl` (multipart field `file`), then reference the returned file `id` as `fileId` in an `update_offer` call. `printHtml` goes into the same `update_offer` call — it is plain text in `content`, so it needs no upload.
+- **Editor:** the block editor accepts direct `.html` uploads and manages height, caption, preview image and the print version. The field „Druckfassung (HTML)" offers the same two surfaces as the „Individuelles HTML" block (editable preview plus source view), and the editor warns about a block that carries neither a print version nor a preview image.
 
 The field is named `fileId` on purpose: orphan-file cleanup and backup remapping treat it like every other file reference automatically.
 
@@ -306,7 +313,8 @@ The field is named `fileId` on purpose: orphan-file cleanup and backup remapping
 
 - **Order**: Start at 0, increment by 1
 - **Visible**: Always `true` unless intentionally hiding (e.g., draft blocks)
-- **ShowInToc**: Set to `true` for major sections, `false` for dividers/small blocks
+- **ShowInToc**: Set to `true` for major sections, `false` for dividers/small blocks. It arrives over MCP since DEV-3422 — before that the server dropped the key silently and every block created this way ended up in the table of contents, whatever was sent. If a document created before that fix has stray entries, re-send its blocks with `showInToc` and they disappear.
+- **Unknown block keys are rejected by name** (DEV-3422). A block has exactly six properties: `type`, `title`, `content`, `order`, `visible`, `showInToc`. A typo in one of them now fails the call with a message naming the key and the block, instead of being dropped. `content` stays a free object — it differs per block type.
 - **File references**: Use existing `fileId` values from uploaded files. For Lottie files, use `add_lottie_animation`; for HTML embeds, use `add_html_embed` or an upload ticket; for offer-source files (briefing material, NOT content blocks) use `upload_offer_source_file`.
 - **Uploading new files via MCP**: `create_upload_ticket` (`purpose`: `"html-embed"` | `"image"` | `"file"`) returns a single-use upload URL valid for 15 minutes. `POST` the file as multipart form-data (field `file`) to that URL — no session required, the token IS the authorization. Purpose selects the server-side validation: `html-embed` (validated HTML, ≤ 5 MB), `image` (`image/*`, ≤ 10 MB), `file` (any type, ≤ 25 MB). Caveat: `curl` sends `application/octet-stream` for less-common extensions like `.webp` — set the MIME type explicitly (`-F "file=@shot.webp;type=image/webp"`), otherwise an `image` ticket rejects the upload with 400 and the single-use ticket is burned.
 - **Image tokens**: Inside `text`, `custom-html`, `rich-component` blocks, embed GridFS images via `{{fileUrl:<24-hex-id>}}` — the renderer expands these at view/PDF time and keeps the HTML portable across environments.
@@ -334,6 +342,14 @@ The field is named `fileId` on purpose: orphan-file cleanup and backup remapping
 | `fileIds` | `gallery` |
 | `members[].imageFileId` | `team` (per index) |
 | `files[].fileId` | `download` (per index) |
+
+**`printHtml` is NOT in this table, and that has a consequence worth planning for.** It is text,
+not a file reference, so nothing merges it back: an `update_offer` that re-sends an `html-embed`
+block without `printHtml` **clears the print version**. That is the documented semantics of
+"replaces the whole block array" and it applies to `caption`, `hint` and `height` just the same —
+but a print version can be 38 kB, so the temptation to leave it out when changing only the height
+is real, and the loss is silent. Read the block with `get_offer` first and send `printHtml` back
+with it, or re-generate it from its source data in the same step.
 
 Three values, three meanings:
 

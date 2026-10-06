@@ -55,7 +55,8 @@ A starting point for the proposal:
    rich-component    cards per module
 5. timeline        — Vorgehen: phases or roadmap
 6. faq             — Offene Fragen, Annahmen, Entscheidungsbedarf
-7. html-embed      — Klick-Dummy or prototype (with previewFileId and caption)
+7. html-embed      — Klick-Dummy or prototype (with printHtml for the PDF, a caption, and
+                     previewFileId only as a fallback)
 8. download        — Workshop documents the customer may keep (photo protocol, slides)
 9. team            — Ansprechpartner
 10. cta            — Nächster Schritt: an appointment, or the offer for the implementation
@@ -81,8 +82,11 @@ words. The offer has its own link and access code, so the folder does not link t
   (content-blocks.md → "Jump marks"). Write the links as same-page anchors (`href="#zielbild"`).
 - **Theme:** the customer's palette via `theme`, and `colorMode` when the design is tuned for one appearance
   (`${CLAUDE_PLUGIN_ROOT}/skills/creating-offers/reference/theming.md`).
-- **PDF:** the PDF prints the page, but a click dummy or an animation becomes a still image or a hint there
-  (SKILL.md → "Gotchas"). Put the core results in blocks that read on paper, not only inside an `html-embed`.
+- **PDF:** the PDF prints the page, and an `html-embed` prints its `printHtml` print version — static HTML holding
+  everything the demo can show. Without one it falls back to a still image (one state, so a multi-step demo loses
+  nearly everything on paper) and then to a hint (SKILL.md → "Gotchas"). So the core results may live inside an
+  `html-embed`, as long as that embed carries a print version; it is the missing print version, not the embed, that
+  loses them.
 - **Language:** German by default, form of address as agreed (default Sie), and the tone rules from
   `${CLAUDE_PLUGIN_ROOT}/skills/creating-offers/reference/best-practices.md`: no dashes as punctuation, no emojis,
   customer quotes verbatim.

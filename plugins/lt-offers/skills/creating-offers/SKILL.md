@@ -59,7 +59,7 @@ Both connections use OAuth 2.1 with automatic browser-based login, and each inst
 **Everything company-specific comes from the account, not from this plugin.** Company profile, services, team, process, legal notes and past projects live in the account's knowledge base, and `get_offer_context` delivers them. Build offers from that context; when it lacks something the offer needs, ask the user rather than filling the gap with assumptions. An organization can add its own conventions on top (a skill from its internal plugin, or its CLAUDE.md); where those name a source or a rule for this company, follow them.
 
 **Available MCP Tools (identical on both servers):**
-- `add_html_embed` — Upload a self-contained HTML file (base64) and create an `html-embed` content block in one atomic call (validates the HTML, ≤ 5 MB). For larger files prefer `create_upload_ticket` + HTTP upload
+- `add_html_embed` — Upload a self-contained HTML file (base64) and create an `html-embed` content block in one atomic call (validates the HTML, ≤ 5 MB). Takes `printHtml`, the print version that replaces the element in the PDF, so the block is complete after one call. For larger files prefer `create_upload_ticket` + HTTP upload
 - `add_lottie_animation` — Upload a Lottie JSON file and create a `lottie` content block in one atomic call (validates the JSON, rejects unsupported features, ≤ 2 MB)
 - `add_offer_source` — Add a source (text/link/file) to an offer
 - `create_from_template` — Create offer from template
@@ -121,8 +121,9 @@ What this means when working through MCP:
 - `duplicate_offer`, `create_from_template` and saving as a template all keep the kind, so
   templates are effectively separated by kind.
 - Everything else is identical: blocks, themes, access code, analytics, and the PDF, which both kinds print from the
-  rendered customer page. Only blocks that run in the browser differ on paper: `html-embed` and `lottie` print a
-  still image or a hint (`reference/content-blocks.md`, sections 17 and 18).
+  rendered customer page. Only blocks that run in the browser differ on paper: an `html-embed` prints its `printHtml`
+  print version, else a still image, else a hint; a `lottie` prints a still or a hint
+  (`reference/content-blocks.md`, sections 17 and 18).
 - **Linked documents:** `relatedDocumentIds` links an offer and a concept folder in both directions with one call,
   and the customer never sees a link. `update_offer` replaces the whole list, so send the current links plus the new
   one; `get_offer` resolves them into `relatedDocuments`. An offer that follows a concept folder reads and links it
@@ -204,4 +205,8 @@ Use `get_offer_analytics` to check how an offer performs. In Claude Desktop, an 
 - [ ] Customer name/company is set if known
 - [ ] `validUntil` date is set if offer has an expiration
 - [ ] No duplicate block titles
+- [ ] Every `html-embed` has a `printHtml` holding all of its content, and a `caption`; a `previewFileId` only where
+  there is no print version. One image is one state — for a multi-step demo almost nothing reaches the paper
+- [ ] `showInToc` set deliberately per block: `true` for main sections, `false` for diagrams, dividers and the
+  closing call to action
 - [ ] CTA block included at the end

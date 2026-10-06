@@ -31,11 +31,18 @@ to the offer for the implementation. The platform links these documents to each 
   decision phase, or leave it empty.
 - **The PDF prints the page, except what runs in the browser.** The platform prints the rendered customer page,
   always in light mode, with a table of contents that has page numbers and links; `rich-component` and `custom-html`
-  look as they do online. A click dummy or an animation cannot run on paper. An `html-embed` prints its
-  `previewFileId` image, otherwise a framed hint „<block title> — interaktiv, online abrufbar"; its `hint` above and
-  `caption` below are printed too. A `lottie` block prints its `previewFileId`, which the first PDF fills with the
-  animation's first frame when it is empty. Upload a preview image of your own when the motif matters, and give every
-  `html-embed` a `caption` that tells the PDF reader what the online version offers.
+  look as they do online. A click dummy or an animation cannot run on paper.
+- **Give every `html-embed` a `printHtml`.** It is static HTML that takes the element's place in the PDF and holds
+  everything the demo can show: every step, every row, every case. The reader on paper then gets the same content,
+  conveyed differently. Without it the block prints its `previewFileId` image — one image is one state, so for a
+  simulator with eight steps or a matrix with 36 justifications nearly everything is missing; the image is the
+  fallback, not the goal. Without either, a framed hint „<block title> — interaktiv, online abrufbar". The print
+  version is sanitised and styled like a `custom-html` block, so tables, lists, headings and `<pre><code>` work, and
+  online it is not rendered at all. Generate it from the diagram's own data rather than retyping it, or the two
+  versions drift apart. `caption` is printed in every case and stays; `hint` is dropped once `printHtml` takes over,
+  because it asks for interaction that paper cannot offer.
+- A `lottie` block prints its `previewFileId`, which the first PDF fills with the animation's first frame when it is
+  empty. Upload a preview image of your own when the motif matters.
 - **Use the sharing text the platform renders.** `generate_snippet` returns the finished text in `snippet`, next to
   `link` (on the concept domain), `accessCode`, `title` and `kind`. The text comes from the template an admin
   maintains per document kind (Einstellungen → Anschreiben-Vorlagen) and is the same text the platform's own
@@ -175,7 +182,8 @@ Own reference:
 - [ ] No prices; the next step names the offer or the appointment instead
 - [ ] Blocks ordered from 0 without gaps, meaningful titles, `showInToc` on the main sections
 - [ ] `custom-html` readable in both color modes (`custom-html-guide.md`)
-- [ ] Every `html-embed` has a `previewFileId` and a `caption`
+- [ ] Every `html-embed` has a `printHtml` carrying all its content, and a `caption`; a `previewFileId` only as a
+  fallback where no print version exists
 - [ ] Language rules from `best-practices.md`; form of address as agreed
 - [ ] „Zugang bis" set, or left empty on purpose
 - [ ] Sharing text is the `snippet` from `generate_snippet` and calls the document a Konzeptmappe; if it says
