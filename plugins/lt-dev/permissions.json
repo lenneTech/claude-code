@@ -944,7 +944,8 @@
         "fullstack-updater",
         "vendor-mode-converter-frontend",
         "nuxt-extensions-core-updater",
-        "nuxt-extensions-core-contributor"
+        "nuxt-extensions-core-contributor",
+        "briefing"
       ]
     },
     {
@@ -977,7 +978,8 @@
         "branch-rebaser",
         "maintaining-npm-packages",
         "running-check-script",
-        "check"
+        "check",
+        "briefing"
       ]
     },
     {
@@ -1003,7 +1005,8 @@
         "rebasing-branches",
         "dev-submit",
         "cleaning-up-disk-space",
-        "writing-qa-test-instructions"
+        "writing-qa-test-instructions",
+        "briefing"
       ]
     },
     {
@@ -1029,7 +1032,8 @@
         "rebasing-branches",
         "dev-submit",
         "cleaning-up-disk-space",
-        "writing-qa-test-instructions"
+        "writing-qa-test-instructions",
+        "briefing"
       ]
     },
     {
@@ -1071,7 +1075,8 @@
         "a11y-reviewer",
         "architect",
         "nuxt-extensions-core-updater",
-        "nuxt-extensions-core-contributor"
+        "nuxt-extensions-core-contributor",
+        "briefing"
       ]
     },
     {
@@ -1085,7 +1090,8 @@
         "code-reviewer",
         "architect",
         "nuxt-extensions-core-updater",
-        "nuxt-extensions-core-contributor"
+        "nuxt-extensions-core-contributor",
+        "briefing"
       ]
     },
     {
@@ -1102,7 +1108,8 @@
       "usedBy": [
         "fullstack-updater",
         "branch-rebaser",
-        "nuxt-extensions-core-updater"
+        "nuxt-extensions-core-updater",
+        "briefing"
       ]
     },
     {
@@ -1130,7 +1137,8 @@
         "review",
         "branch-rebaser",
         "coordinating-agent-teams",
-        "code-reviewer"
+        "code-reviewer",
+        "briefing"
       ]
     },
     {
@@ -1165,7 +1173,8 @@
       "pattern": "Bash(git branch:*)",
       "description": "List and manage git branches",
       "usedBy": [
-        "branch-rebaser"
+        "branch-rebaser",
+        "briefing"
       ]
     },
     {
@@ -1199,7 +1208,8 @@
         "ship",
         "take-ticket",
         "ticket-cycle",
-        "nuxt-extensions-core-contributor"
+        "nuxt-extensions-core-contributor",
+        "briefing"
       ]
     },
     {
@@ -1207,7 +1217,8 @@
       "description": "GitHub CLI for inspecting / retrying workflow runs (used during CI-wait + retry loops)",
       "usedBy": [
         "ship",
-        "ticket-cycle"
+        "ticket-cycle",
+        "briefing"
       ]
     },
     {
@@ -1219,7 +1230,8 @@
         "dev-submit",
         "ship",
         "take-ticket",
-        "ticket-cycle"
+        "ticket-cycle",
+        "briefing"
       ]
     },
     {
@@ -1227,7 +1239,8 @@
       "description": "GitLab CLI for pipeline status / retry / trace (used during CI-wait + retry loops)",
       "usedBy": [
         "ship",
-        "ticket-cycle"
+        "ticket-cycle",
+        "briefing"
       ]
     },
     {
@@ -1257,7 +1270,8 @@
       "description": "Manage git worktrees for parallel branch operations",
       "usedBy": [
         "branch-rebaser",
-        "coordinating-agent-teams"
+        "coordinating-agent-teams",
+        "briefing"
       ]
     },
     {
@@ -1342,7 +1356,8 @@
         "writing-linear-comments",
         "writing-qa-test-instructions",
         "git:ship",
-        "dev-submit"
+        "dev-submit",
+        "briefing"
       ]
     },
     {
@@ -1661,6 +1676,20 @@
         "running-load-tests-with-k6",
         "production-readiness-orchestrator",
         "production-ready"
+      ]
+    },
+    {
+      "pattern": "Bash(git rev-parse:*)",
+      "description": "Resolve the repository root and verify that a ref exists before reading it",
+      "usedBy": [
+        "briefing"
+      ]
+    },
+    {
+      "pattern": "Bash(git ls-remote:*)",
+      "description": "Read tags and branches on the remote to confirm a release or push actually landed (exit code checked, never an empty result taken as absence)",
+      "usedBy": [
+        "briefing"
       ]
     }
   ]

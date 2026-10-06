@@ -430,7 +430,7 @@ image carried any at all.
 
 ## Gotchas / Traps
 
-Seven traps account for nearly every failed go-live or redeploy on this stack: a stage that stays single-service, an image the registry never received, a certificate issued before DNS pointed anywhere, a MongoDB URI that works locally but not in the swarm, a rollout that reports healthy while no route reaches it, a hand-edited Traefik config that still names services a redeploy renamed, and an `env_file` or port in the compose that only works on a developer machine.
+Eight traps account for nearly every failed go-live, redeploy or stage move on this stack: a stage that stays single-service, an image the registry never received, a certificate issued before DNS pointed anywhere, a MongoDB URI that works locally but not in the swarm, a rollout that reports healthy while no route reaches it, a hand-edited Traefik config that still names services a redeploy renamed, an `env_file` or port in the compose that only works on a developer machine, and a stage move that puts the app's domain on the service instead of the stage or leaves the backup schedule behind.
 
 Each one, with its symptom, its cause, and its fix: [reference/traps.md](${CLAUDE_SKILL_DIR}/reference/traps.md). Read it before the first deploy of a project, and again whenever a deploy behaves in a way the steps above do not explain.
 

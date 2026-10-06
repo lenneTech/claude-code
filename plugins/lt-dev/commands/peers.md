@@ -74,3 +74,4 @@ Print a short summary in the user's language: how many sessions are live, what i
 | `coordinating-peer-sessions` skill | The protocol this command reports against |
 | `/lt-dev:check` | Claims cross-cutting findings via the same ledger (Step 4a) |
 | `/lt-dev:take-ticket` | Checks peers before claiming a ticket |
+| `/lt-dev:briefing` | Uses the same sources, then finishes what it can and briefs the user on their decisions and tasks |

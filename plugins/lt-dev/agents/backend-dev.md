@@ -569,6 +569,13 @@ async findAll(
 5. Test with LEAST privileged authorized user
 ```
 
+### MCP Tests Next to API Tests
+
+When MCP is enabled (`ai.mcp` in `config.env.ts`, or a project-own MCP module; in nest-server always),
+every new or changed AI tool, and every change a tool reaches, gets MCP tests next to its API tests:
+`tools/list` per role, `tools/call` allowed and refused, data isolation, invalid input. They go through
+HTTP against `/ai/mcp` with the same test users. Pattern and helper: `generating-nest-servers/reference/mcp-integration.md` → "Automated MCP tests".
+
 ### Test Template
 
 ```typescript

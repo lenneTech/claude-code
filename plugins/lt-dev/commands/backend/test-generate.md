@@ -51,7 +51,13 @@ Analyze recent changes and create appropriate tests:
    - Test with Other User (should fail with 403)
    - Test permission failures
 
-5. **Test Execution** (NODE_ENV=e2e is set in package.json scripts):
+5. **MCP Testing** (only when MCP is enabled: `ai.mcp` in `config.env.ts`, or a project-own MCP module):
+   - For every new or changed AI tool, and every change a tool reaches: `tools/list` per role,
+     `tools/call` allowed and refused, data isolation, invalid input
+   - Through HTTP against `/ai/mcp` with real tokens, never the service directly
+   - Pattern and helper: `generating-nest-servers/reference/mcp-integration.md` → "Automated MCP tests"
+
+6. **Test Execution** (NODE_ENV=e2e is set in package.json scripts):
    ```bash
    pnpm run test:e2e
    ```
@@ -59,7 +65,7 @@ Analyze recent changes and create appropriate tests:
    - Fix errors
    - Re-run tests
 
-6. **Cleanup**:
+7. **Cleanup**:
    - Remove all console.log statements
    - Verify tests still pass
 

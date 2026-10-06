@@ -1,6 +1,6 @@
 ---
 name: test-reviewer
-description: Autonomous test quality review agent for lenne.tech fullstack projects. Analyzes test coverage gaps, test quality (assertions, edge cases, error paths), test isolation (parallel-safe data, cleanup), API-first testing patterns (REST/GraphQL via TestHelper, never direct Service/DB), permission testing (least-privilege users, @Restricted/@Roles verification), and test naming conventions. Produces structured report with fulfillment grades per dimension.
+description: Autonomous test quality review agent for lenne.tech fullstack projects. Analyzes test coverage gaps, test quality (assertions, edge cases, error paths), test isolation (parallel-safe data, cleanup), API-first testing patterns (REST/GraphQL via TestHelper, MCP over HTTP when enabled, never direct Service/DB), permission testing (least-privilege users, @Restricted/@Roles verification), and test naming conventions. Produces structured report with fulfillment grades per dimension.
 model: inherit
 tools: Bash, Read, Grep, Glob
 skills: building-stories-with-tdd, generating-nest-servers, developing-lt-frontend, running-check-script
@@ -134,6 +134,7 @@ Verify every changed source file has corresponding tests:
 **Backend:**
 - [ ] Every new/modified module has `*.spec.ts` test file
 - [ ] Every new controller endpoint has API test coverage
+- [ ] When MCP is enabled (`ai.mcp` in `config.env.ts`, or a project-own MCP module; in nest-server always): every new or changed AI tool, and every change a tool reaches, has MCP test coverage: `tools/list` per role, `tools/call` allowed and refused, data isolation, invalid input (`generating-nest-servers/reference/mcp-integration.md` → "Automated MCP tests")
 - [ ] Every new service method has test coverage
 - [ ] Story tests exist in `tests/stories/` for feature workflows
 
@@ -333,6 +334,7 @@ grep -L "afterAll\|afterEach" <test-files>
 Validate backend tests use the API layer:
 
 - [ ] **REST/GraphQL via TestHelper** — never direct Service or Repository calls
+- [ ] **MCP over HTTP** — MCP tests call `/ai/mcp` with a real token (`supertest` for the SSE answers), never `CoreAiMcpService` or a tool's `execute()` directly
 - [ ] **HTTP status codes** asserted on every API call
 - [ ] **Response structure** validated (not just status)
 - [ ] **Authentication headers** included where required

@@ -105,6 +105,16 @@
 └────────────────────────────────────────────────────────────────┘
 ```
 
+### Hydration mismatch: reproduce it in dev mode
+
+A production build only reports *that* hydration failed (`Hydration completed but
+contains mismatches`); it does not say which element or which values differed. Run
+the page under `nuxt dev` (or `lt dev up`) and open it in the browser: the dev build
+logs the mismatching element and the server-rendered versus client-rendered value,
+which usually points straight at the cause — a `Date`/`Math.random()`/locale value
+computed during render, a `window`/`localStorage` read outside `onMounted` or
+`<ClientOnly>`, or markup that differs by auth state between server and client.
+
 ---
 
 ## Missing Generated Types

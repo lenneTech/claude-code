@@ -1,3 +1,18 @@
 #!/usr/bin/env bash
 # Letzte Verteidigungslinie vor dem Push in ein ÖFFENTLICHES Repo.
-exec "$(git rev-parse --show-toplevel)/scripts/scan-secrets.sh" --all
+# --all prüft den ganzen Stand. --range prüft je gepushtem Bereich zusätzlich die neu hinzugefügten
+# Zeilen auf neue Eigennamen im Kunden-Kontext (Check 8) — das kann --all nicht, weil dort jedes
+# Wort schon zum Repo gehört.
+root="$(git rev-parse --show-toplevel)"
+"$root/scripts/scan-secrets.sh" --all || exit 1
+
+zero=0000000000000000000000000000000000000000
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+  [ "$local_sha" = "$zero" ] && continue            # Branch wird gelöscht
+  if [ "$remote_sha" = "$zero" ]; then               # neuer Branch: ab dem Stand des Default-Branches
+    remote_sha=$(git merge-base "$local_sha" origin/HEAD 2>/dev/null \
+      || git merge-base "$local_sha" origin/main 2>/dev/null) || continue
+  fi
+  "$root/scripts/scan-secrets.sh" --range "$remote_sha..$local_sha" || exit 1
+done
+exit 0

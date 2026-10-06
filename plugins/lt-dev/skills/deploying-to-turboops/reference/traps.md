@@ -211,6 +211,13 @@ docker run --rm --entrypoint sed -v /opt/traefik/dynamic:/d nginx:alpine -i \
 Traefik picks the change up within seconds. Fix the saved config in the UI right
 after; otherwise the next deploy writes the stale version back.
 
+**A hand correction in the file itself never lasts.** Every deploy rewrites
+`/opt/traefik/dynamic/<stack>.yml` from the stage's config, and
+`reload_traefik_config` writes the generated one (or refuses with
+`hasCustomConfig` while a hand-edited saved config differs) — either way the file
+on the host is overwritten silently. The emergency `sed` above buys minutes; the
+saved config in the Traefik tab is the only place an edit survives.
+
 ### Trap 7 — `env_file: .env` in the compose the pipeline uses
 
 TurboOps injects every service's environment itself (Env-Variablen tab, one scope
@@ -226,6 +233,27 @@ The same review catches the sibling mistake: Nuxt's Nitro server listens on
 `expose` on 3001 marks a healthy app container unhealthy and points Traefik at a
 closed port. Change the port in compose only together with a `PORT` env var on
 the `app` service and the Traefik service URL.
+
+### Trap 8 — moving a project to a new stage: domains belong to the STAGE, and backups do not come along
+
+Two things a stage move (new stage, new server, renamed project) silently drops or
+breaks, each one invisible until it matters:
+
+**The app's domains go on the stage, never on the `app` service.** The main domain
+and any old address that must keep working are the stage's primary domain and
+alias (`update_stage_domains`, TurboOps 1.74.0+). Do **not** call
+`update_service_domain` for the main service `app`: a service-level domain
+*replaces* the stage domains in the generated Traefik config completely, so the
+stage's primary and alias stop routing while the service domain works — which
+reads like a DNS problem. `update_service_domain` is right only for the `api`
+service (`api.<root>`, see Step 4). To undo a service domain set on `app`:
+`update_service_domain` with `clear: true`, then `reload_traefik_config`.
+
+**A new stage has no backup schedule.** Schedules belong to the stage, not to the
+project, so the old stage's schedule does not move with the deployment. Read it
+from the old stage (`list_backup_schedules`) and recreate it on the new one with
+`create_backup_schedule` before the old stage is removed — otherwise the first
+backup of the moved database is the one nobody configured.
 
 ### CI completeness (mirrors `pnpm run check`)
 

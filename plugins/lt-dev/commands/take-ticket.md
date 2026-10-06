@@ -528,7 +528,7 @@ The full test pipeline has **three pillars** — all must be fully green, no ski
 For every `package.json` in the repo, identify scripts and assign them to a pillar:
 
 - **Unit:** `test`, `test:unit`, `test:cov`, `vitest`, `jest` (without `e2e`/`integration` suffix). Typically backend `projects/api/src/` and frontend `projects/app/app/`.
-- **API / Integration:** `test:e2e` (backend), `test:integration`, `test:api`, `test:stories`, controller + e2e-spec files. Typically backend `projects/api/tests/` (story tests, controller tests).
+- **API / Integration:** `test:e2e` (backend), `test:integration`, `test:api`, `test:stories`, controller + e2e-spec files. Typically backend `projects/api/tests/` (story tests, controller tests). When the project has MCP enabled, the MCP tests against `/ai/mcp` belong to this pillar, and a ticket that touches an AI tool or anything a tool reaches gets them in STEP 6 like its API tests (`generating-nest-servers/reference/mcp-integration.md` → "Automated MCP tests").
 - **Frontend E2E:** `test:e2e` (frontend), `e2e`, `playwright`, `pw`, `pw:e2e`. Typically frontend `projects/app/tests/`, `tests/e2e/`, `e2e/`.
 
 **Disambiguation:** A `test:e2e` script can mean *either* "backend e2e-spec" *or* "Playwright frontend e2e" — look at the script body, config files (`playwright.config.ts` → Frontend E2E), and directory location to assign correctly.

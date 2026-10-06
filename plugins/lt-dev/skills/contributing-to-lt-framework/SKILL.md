@@ -135,6 +135,7 @@ lt dev up                  # starts nest-server-starter behind Caddy under https
 
 - Run the starter's test suite: `pnpm test`
 - Exercise the changed code path via REST/GraphQL (Chrome DevTools MCP or API calls)
+- A change to the AI module, the tool registry, MCP auth or sessions, or a role or tenant check a tool relies on gets MCP e2e tests in nest-server itself (block "MCP server (/ai/mcp)" in `tests/ai.e2e-spec.ts`), next to its API tests. See `generating-nest-servers/reference/mcp-integration.md` → "Automated MCP tests"
 - If the change touches auth, cookies, or CORS: verify that `BASE_URL`/`APP_URL` (set automatically by `lt dev up`) propagate correctly. Auth is bound to those env vars, not to fixed port numbers — see `managing-dev-servers` skill.
 
 ### 4. Unlink

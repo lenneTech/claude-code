@@ -79,6 +79,8 @@ Claude Code sessions can list and message each other (v2.1.224+, on by default).
 
 **Coordination is settled between sessions; decisions go to you.** Who takes which ticket, who fixes a shared finding, and who waits for whom are resolved session-to-session without a prompt. Scope, priority, risk, anything destructive, anything a permission prompt would cover, and a contested claim that one exchange did not settle always reach the user.
 
+**`/lt-dev:briefing` says what is left for you.** It re-checks every open thread of the session against its source (git, pipelines, releases, tickets, peer sessions, asking a peer only what only it knows), finishes what Claude can still do on its own, and then lists in plain words the decisions that are yours and the tasks only you can do, each with a step-by-step guide and complete links. It also runs when you just ask "Was ist noch offen?".
+
 **One setup caveat.** With `crossSessionInbound` unset, Claude Code decides per message from both sessions' permission modes and delivers only when the two match (both bypassing prompts, or both prompting). Mixed in either direction means an approval dialog that expires after `dialogExpiry`, five minutes by default — which is exactly how coordination fails on unattended sessions. Setting `crossSessionInbound: "accept"` in user settings (or via `/config` → "Messages from your other sessions") removes the classification and is the fix; matching permission modes is the workaround when the default has to stay.
 
 ## Framework consumption modes (nest-server)

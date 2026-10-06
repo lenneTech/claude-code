@@ -550,7 +550,8 @@ For each existing test file, **read** (do not execute) and check:
 3. **Validation tests**: grep for missing fields, invalid types test cases
 4. **Test cleanup**: verify `afterAll` with data removal exists
 5. **Test database**: verify `app-test` usage — never `app-dev`
-6. **Regression tests for bug fixes**: If the diff fixes a bug or security issue (check commit messages, branch name for "fix", "bug", "security", "CVE"), verify a regression test exists that specifically covers the fixed scenario. Flag as Critical if missing.
+6. **MCP tests when MCP is enabled**: if `ai.mcp` is set in `config.env.ts` (or the project runs its own MCP module, or this is nest-server itself) and the diff adds or changes an AI tool or anything a tool reaches, verify MCP tests exist next to the API tests: `tools/list` per role, `tools/call` allowed and refused, data isolation (`generating-nest-servers/reference/mcp-integration.md` → "Automated MCP tests"). Flag as High if missing: the MCP door has its own auth and role filter, and API tests do not cover it.
+7. **Regression tests for bug fixes**: If the diff fixes a bug or security issue (check commit messages, branch name for "fix", "bug", "security", "CVE"), verify a regression test exists that specifically covers the fixed scenario. Flag as Critical if missing.
 
 **Scoring:**
 

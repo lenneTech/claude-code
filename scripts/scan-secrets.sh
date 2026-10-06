@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Sicherheits-Scanner für den ÖFFENTLICHEN Marktplatz claude-code.
-# Findet: .env-Dateien, Secrets/Tokens, private Keys, lokale /Users/-Pfade und
-# "Kunden-Roster"-Daten (echte Firmennamen mit Rechtsform). Blockiert Commits/Pushes/CI.
+# Findet: .env-Dateien, Secrets/Tokens, private Keys, lokale /Users/-Pfade,
+# "Kunden-Roster"-Daten (echte Firmennamen mit Rechtsform), Namen der internen Sperrliste
+# und neue Eigennamen im Kunden-Kontext. Blockiert Commits/Pushes/CI.
 #
 # Nutzung:
 #   scripts/scan-secrets.sh --staged        # gestagte Dateien (pre-commit)
@@ -17,6 +18,7 @@ cd "$ROOT" || exit 2
 
 # ---- Zu prüfende Dateien bestimmen (bash-3.2-kompatibel, ohne mapfile) ---------
 mode="${1:---staged}"
+RANGE="${2:-HEAD~1..HEAD}"
 list_files() {
   case "$mode" in
     --staged) git diff --cached --name-only --diff-filter=ACMR ;;
@@ -29,7 +31,7 @@ list_files() {
 # Ausschlüsse: Scanner/Doku selbst, Beispiele, Lockfiles, Binärkram.
 is_excluded() {
   case "$1" in
-    scripts/scan-secrets.sh|.githooks/*|.github/workflows/secrets-guard.yml) return 0 ;;
+    scripts/scan-secrets.sh|scripts/__tests__/scan-secrets.test.sh|.githooks/*|.github/workflows/secrets-guard.yml) return 0 ;;  # Scanner, seine Tests (erfundene Namen) und Hooks
     .claude/docs-cache/*) return 0 ;;  # extern gecachte Anthropic-Doku (Beispielwerte)
     *.env.example|*.example|*.lock|*.png|*.jpg|*.jpeg|*.gif|*.pdf|*.ico|*.woff*) return 0 ;;
     node_modules/*|*/node_modules/*) return 0 ;;
@@ -57,10 +59,23 @@ PLACEHOLDER='HIER_|CHANGE_?ME|EXAMPLE|BEISPIEL|MUSTER|<[^>]*>|xxxx|deine?[-_]|de
 # Dieselbe Liste sperrt interne Infrastruktur (Server-IPs, interne Hosts, Server-/Runner-
 # Namen, TurboOps-IDs). Vorfall 2026-10-01: eine Server-IP stand vom 2026-07-18 bis zum
 # 2026-08-23 in deploying-to-turboops und ist seitdem in der öffentlichen Historie.
+#
+# Die Datei allein hinkt hinterher: ein neuer Kunde steht in den lokalen lt-time-Stammdaten,
+# lange bevor jemand die Liste neu erzeugt. Darum fragt der Scanner den Generator des privaten
+# Repos (--print), der Datei UND lokale Stammdaten zusammenführt. Ohne bun oder ohne den
+# Generator gilt die Datei allein. Vorfall 2026-10-06: ein Kundenname stand in einem
+# öffentlichen lt-offers-Skill, weil er in den lokalen Stammdaten stand, aber nicht in der Liste.
 DENYLIST="${LT_PUBLIC_DENYLIST:-$ROOT/../claude-code-internal/public-denylist.txt}"
+DENY_GEN="$(dirname "$DENYLIST")/scripts/build-public-denylist.ts"
 DENY_RE=""
 if [[ -r "$DENYLIST" ]]; then
-  DENY_RE=$(grep -vE '^[[:space:]]*(#|$)' "$DENYLIST" | paste -sd'|' -)
+  # Nur ein Generator, der --print kennt: ein älterer Checkout ignoriert den Schalter, schreibt die
+  # Datei neu und gibt seine Statuszeile aus, die dann als „Muster" die Prüfung lautlos aushebelt.
+  if [[ -z "${LT_PUBLIC_DENYLIST:-}" && -f "$DENY_GEN" ]] && grep -q -- "'--print'" "$DENY_GEN" \
+      && command -v bun >/dev/null 2>&1; then
+    DENY_RE=$(bun "$DENY_GEN" --print | grep -vE '^[[:space:]]*(#|$)' | paste -sd'|' -)
+  fi
+  [[ -z "$DENY_RE" ]] && DENY_RE=$(grep -vE '^[[:space:]]*(#|$)' "$DENYLIST" | paste -sd'|' -)
 fi
 
 while IFS= read -r f; do
@@ -144,6 +159,89 @@ while IFS= read -r f; do
     fi
   fi
 done < <(list_files "$@")
+
+# 8) Neue Eigennamen im Kunden-Kontext — der Fall, den keine Liste kennen kann.
+#    Nur für hinzugefügte Zeilen (--staged, --range) mit einem Kunden-Hinweiswort (customer, Kunde,
+#    Kundenprojekt, Auftraggeber …). Kandidaten sind großgeschriebene Wörter, die im bisherigen
+#    Repo-Stand nirgends vorkommen, und zwar
+#      a) direkt hinter dem Hinweiswort, in jeder Sprache („customer <Name>", „Kundenprojekt <Name>"),
+#      b) in englischen Zeilen mitten im Satz, höchstens 15 Wörter vom Hinweiswort entfernt — dort
+#         ist ein großgeschriebenes Wort fast immer ein Eigenname.
+#    Nie Kandidat: Satzanfänge, Bindestrich-Komposita, Platzhalter (Muster…, Beispiel…). Deutsche
+#    Zeilen fallen nur unter a), weil dort jedes Substantiv großgeschrieben ist. Gemessen über die 60
+#    Commits vor seiner Einführung: ohne diese Grenzen hätte der Check 6 davon fälschlich blockiert,
+#    mit ihnen 2 — beide führten neue deutsche Fachbegriffe in englischem Text ein (Konzeptmappe,
+#    Nominalstil). Das ist der Preis: ein neuer Begriff kostet einmal eine word:-Zeile.
+#    „client" und „Mandant" fehlen als Hinweiswort bewusst: in technischer Doku (MCP client,
+#    Multi-Tenancy) stehen sie neben jedem neuen Produktnamen.
+#    Fehlalarm (ein neuer Fachbegriff, kein Name): `word:<Wort>` in .secrets-allow eintragen.
+#    Vorfall 2026-10-06: „the <Kunde> concept folder … (in that customer project, not here)".
+CUE_RE='customers?|kunde|kundin|kunden[a-zäöüß]*|auftraggeber(in)?|referenzkunden?'
+allowed_word() {
+  [[ -f .secrets-allow ]] && grep -qixF "word:$1" .secrets-allow
+}
+# Liest eine Zeile auf stdin, gibt die Kandidaten (a/b oben) aus, einen pro Zeile.
+name_candidates() {
+  # Zeichenklassen als Variablen statt Regex-Literal mit \047: mawk (CI) und BSD-awk (macOS) lesen
+  # Oktal-Escapes in Regex-Literalen nicht gleich.
+  awk -v cue="^($CUE_RE)$" -v sq="'" '
+    function capital(w) { return w ~ /^[A-Z]/ || w ~ /^(Ä|Ö|Ü)/ }
+    function skip(w) { return length(w) < 3 || w ~ /-/ || tolower(w) ~ /^(muster|beispiel|example|sample|acme)/ }
+    {
+      line = $0; low = tolower(line)
+      german = low ~ /(^|[^a-zäöüß])(der|das|und|ist|nicht|für|mit|wird|werden|ein|eine|einen|dem|den|des|im|zum|zur|bei|auf|sich|oder|wir)([^a-zäöüß]|$)/
+      n = 0; rest = line; offset = 0
+      while (match(rest, /[A-Za-z0-9ÄÖÜäöüß&-]+/)) {
+        n++; word[n] = substr(rest, RSTART, RLENGTH); pos[n] = offset + RSTART
+        offset += RSTART + RLENGTH - 1; rest = substr(rest, RSTART + RLENGTH)
+      }
+      for (i = 1; i <= n; i++) {
+        w = word[i]
+        if (!capital(w) || skip(w) || tolower(w) ~ cue) continue
+        # a) directly behind the cue word; only blanks, a colon or quotes may stand between
+        gap = i > 1 ? substr(line, pos[i-1] + length(word[i-1]), pos[i] - pos[i-1] - length(word[i-1])) : ""
+        after_cue = i > 1 && tolower(word[i-1]) ~ cue && gap ~ ("^[ \t:\"" sq "„“”»«]*$")
+        # b) English line, mid-sentence, within 15 words of a cue word
+        near_cue = 0
+        for (j = i - 15; j <= i + 15; j++) if (j >= 1 && j <= n && j != i && tolower(word[j]) ~ cue) { near_cue = 1; break }
+        before = substr(line, 1, pos[i] - 1); sub("[ \t*_`\"" sq "(\\[„“”»«]+$", "", before)
+        initial = before == "" || before ~ /[.!?:;|#>]$/ || before ~ /(—|–)$/ || before ~ /(^|[ \t])([-*+]|[0-9]+\.)$/
+        if (after_cue || (!german && !initial && near_cue)) print w
+      }
+    }'
+}
+check_new_names() {
+  local base diff_out file="" lineno=0 line tok
+  case "$mode" in
+    --staged) base=HEAD; diff_out=$(git diff --cached -U0 --diff-filter=ACMR) ;;
+    --range)  base="${RANGE%%..*}"; diff_out=$(git diff -U0 --diff-filter=ACMR "$RANGE") ;;
+    *) return 0 ;;
+  esac
+  git rev-parse -q --verify "$base^{commit}" >/dev/null || return 0
+  while IFS= read -r line; do
+    case "$line" in
+      '+++ b/'*) file="${line#+++ b/}"; continue ;;
+      '+++ '*|'--- '*) continue ;;
+      '@@ '*) lineno=$(printf '%s' "$line" | sed -E 's/^@@ -[0-9,]+ \+([0-9]+).*/\1/'); continue ;;
+      '+'*) ;;
+      *) continue ;;
+    esac
+    line="${line#+}"
+    if [[ -n "$file" && "$file" != .secrets-allow ]] && ! is_excluded "$file" \
+        && printf '%s' "$line" | grep -qiwE "$CUE_RE"; then
+      while IFS= read -r tok; do
+        [[ -z "$tok" ]] && continue
+        allowed_word "$tok" && continue
+        # Scanner und Tests zählen nicht als Wortschatz: ihre Beispielnamen schalten sonst frei.
+        git grep -qiwF -e "$tok" "$base" -- . ':(exclude)scripts/scan-secrets.sh' ':(exclude)scripts/__tests__/*' 2>/dev/null && continue
+        # shellcheck disable=SC1111  # deutsche Anführungszeichen sind Absicht; ${tok} hält sie aus dem Namen
+        report "$file:$lineno" "Neuer Eigenname „${tok}“ neben einem Kunden-Hinweiswort. Kundennamen gehören nicht ins öffentliche Repo: anonymisieren (z. B. Beispielkunde). Sicher kein Kunden- oder Personenname? Dann word:${tok} in .secrets-allow eintragen (öffentlich, im Zweifel Maintainer fragen)."
+      done < <(printf '%s\n' "$line" | name_candidates | sort -u)
+    fi
+    lineno=$((lineno+1))
+  done <<< "$diff_out"
+}
+check_new_names
 
 if [[ "$violations" -gt 0 ]]; then
   printf '\n❌ %s sicherheitsrelevante Fund(e). Commit/Push blockiert.\n' "$violations"

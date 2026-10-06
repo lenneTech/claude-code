@@ -177,6 +177,138 @@ curl -X POST http://127.0.0.1:3000/ai/mcp \
 
 For the OAuth flow, the discovery document is at `GET /.well-known/oauth-authorization-server` once `mountAiMcpOAuth(app)` is mounted.
 
+## Automated MCP tests (required when MCP is enabled)
+
+An MCP client reaches the same services as the REST and GraphQL API, through a different door: its
+own authentication, its own role filter (`AiToolRegistry.forUser()`), its own session handling, and
+error results instead of HTTP status codes. API tests prove nothing about that door. So wherever API
+tests are written, MCP tests are written too, as soon as the project exposes MCP.
+
+### When they are required
+
+| Where | Condition | What gets an MCP test |
+|---|---|---|
+| nest-server itself | always (the MCP server is part of the AI module) | a change to the AI module, the tool registry, MCP auth or sessions, role or tenant checks a tool relies on, and every tool the repo ships |
+| a project | MCP is **present and enabled**: `ai.mcp` is `true` or an object without `enabled: false` (e.g. `{ oauth: true, … }`) in `config.env.ts` for any environment, or the project runs its own MCP module (`@modelcontextprotocol/sdk` imported under `src/`) | every tool it registers, and every change to what a tool reads, writes or permits |
+
+Check the condition before writing the tests, from the code rather than from memory:
+
+```bash
+grep -nE "mcp\s*:" src/config.env.ts                       # built-in /ai/mcp enabled?
+grep -rln "@modelcontextprotocol/sdk" src/ --include=*.ts   # project-own MCP module?
+```
+
+If `ai.mcp` is enabled only for deployed environments, enable it in the `e2e` / `ci` block too: the
+tests run there, and a disabled MCP answers 404 to every test.
+
+### What each tool needs
+
+1. **`tools/list` shows it to the roles that may use it and hides it from one that may not.** Use a
+   least-privilege user for the negative side, as for API tests.
+2. **`tools/call` with valid arguments returns the expected result** for a permitted user. The
+   built-in returns the tool's own result as JSON in `result.content[0].text`.
+3. **`tools/call` by a user outside its roles is refused without running the tool**:
+   `result.isError: true`, and the payload does not appear in the response.
+4. **Data isolation**: a tool that returns records returns only those the caller may see, never
+   another user's or tenant's.
+5. **Invalid input** gives `isError: true` with a message, not a crash or a 500.
+
+Once per project, not per tool: an unauthenticated request gets 401, and a session opened by one
+user answers 404 to another user (not 403: confirming that a session id exists would turn the
+endpoint into an oracle).
+
+### How to write them
+
+MCP tests are API-level tests: they go through HTTP with a real token, like every TestHelper test,
+and never call `CoreAiMcpService` or a tool's `execute()` directly. The user's normal Better-Auth
+token is accepted as `Authorization: Bearer …`; no extra MCP token is needed.
+
+**Use the TestHelper's MCP helpers where they exist** (nest-server 11.42.5 and later). Check the
+project itself rather than its version, because vendor-mode projects carry the helper in their own
+source tree (`src/core/test/`) and never update through npm:
+
+```bash
+grep -l "mcpSession" node_modules/@lenne.tech/nest-server/src/test/test.helper.ts src/core/test/test.helper.ts src/test/test.helper.ts 2>/dev/null
+```
+
+With a hit, a test reads like this; the helpers handle the `Accept` header, the session header, the
+SSE stream and the `initialize` handshake:
+
+```typescript
+it('find_users: listed for admins, hidden from users, refused when called by a user', async () => {
+  const userSession = await testHelper.mcpSession({ token: userToken });
+  expect((await userSession.listTools()).map(tool => tool.name)).not.toContain('find_users');
+
+  const refused = await userSession.callTool('find_users', { query: 'a' });
+  expect(refused.isError).toBe(true);
+
+  const adminSession = await testHelper.mcpSession({ token: adminToken });
+  const result = await adminSession.callTool('find_users', { query: '@test.com' });
+  expect(result.isError).toBeFalsy();
+  // `json` is the first text content parsed as JSON: the tool's own `{ data, success }`
+  expect(result.json.data.length).toBeGreaterThan(0);
+});
+
+// HTTP-level cases a session hides: a single message with an expected status
+await testHelper.mcp({ id: 1, method: 'initialize', params: {} }, { statusCode: 401 });
+await testHelper.mcp(
+  { id: 2, method: 'tools/list' },
+  { sessionId: adminSession.sessionId, statusCode: 404, token: userToken },
+);
+```
+
+`session.request(method, params)` sends any other request and returns the whole JSON-RPC message;
+`session.close()` ends the session. The reference is `src/test/README.md` → "MCP Testing" in the
+installed nest-server (`src/core/test/README.md` in a vendor-mode project).
+
+**Without the helpers** (no hit above), `TestHelper.rest()` covers the JSON answers (the 401, the
+404 on a foreign session), while `initialize`, `tools/list` and `tools/call` answer as an SSE stream
+and go through `supertest`, reading the `data:` line. Mention in the final report that a nest-server
+update brings the helpers.
+
+```typescript
+import request from 'supertest';
+
+/** One JSON-RPC message to /ai/mcp; a request answers as SSE, a notification with 202 and no body. */
+async function mcpPost(token: string, body: Record<string, unknown>, sessionId?: string) {
+  const req = request(app.getHttpServer())
+    .post('/ai/mcp')
+    .set('Authorization', `Bearer ${token}`)
+    .set('Accept', 'application/json, text/event-stream')
+    .set('Content-Type', 'application/json');
+  if (sessionId) req.set('mcp-session-id', sessionId);
+  const res = await req.send(body);
+  const data = (res.text || '').split('\n').find((line) => line.startsWith('data: '));
+  return { json: data ? JSON.parse(data.slice(6)) : res.body, res };
+}
+
+/** initialize + notifications/initialized, as every MCP client sends them; returns the session id. */
+async function mcpSession(token: string): Promise<string> {
+  const init = await mcpPost(token, {
+    id: 1, jsonrpc: '2.0', method: 'initialize',
+    params: { capabilities: {}, clientInfo: { name: 'e2e', version: '1.0.0' }, protocolVersion: '2025-03-26' },
+  });
+  expect(init.res.status).toBe(200);
+  const sessionId = init.res.headers['mcp-session-id'];
+  await mcpPost(token, { jsonrpc: '2.0', method: 'notifications/initialized' }, sessionId);
+  return sessionId;
+}
+
+// tools/call: the tool's result is JSON in result.content[0].text
+const call = await mcpPost(adminToken, {
+  id: 2, jsonrpc: '2.0', method: 'tools/call', params: { arguments: { query: '@test.com' }, name: 'find_users' },
+}, await mcpSession(adminToken));
+expect(JSON.parse(call.json.result.content[0].text).data.length).toBeGreaterThan(0);
+```
+
+The same pattern runs in nest-server's own `tests/ai.e2e-spec.ts` (block "MCP server (/ai/mcp)"),
+which is the place to look for the current shape. Test data follows the usual rules: `@test.com`
+users, cleaned up in `afterAll`.
+
+A project with its **own** MCP module (path `/mcp`, its own token format) keeps the same five
+points; the appendix below shows how to mint its tokens in tests. The better fix is to move it to
+the built-in, which makes these tests shorter and the role filter shared.
+
 ## Further reading
 
 - `src/core/modules/ai/INTEGRATION-CHECKLIST.md` — the canonical step-by-step
@@ -479,6 +611,9 @@ mcp.registerTool('list_items', { description: '...', inputSchema: {} }, async (_
 - Use `z.record(z.string(), z.unknown())` for flexible object fields (not `z.record(z.unknown())`)
 
 ### Testing MCP Endpoints
+
+This section covers a hand-rolled module at `/mcp` with its own token format. When MCP tests are
+required and what each tool needs is the same as for the built-in: see "Automated MCP tests" above.
 
 `TestHelper.rest()` supports custom `headers` and works for all JSON-based MCP responses (401, 400, 404, consent).
 For SSE-based responses (initialize, tool calls), use `supertest` directly with an `Accept: text/event-stream` header.

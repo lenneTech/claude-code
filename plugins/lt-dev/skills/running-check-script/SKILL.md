@@ -101,9 +101,71 @@ When `pnpm audit` / `npm audit` / `yarn audit` (invoked by `check`) reports a vu
 | 3 | Force semver-major upgrade | `pnpm audit --fix --force` / `npm audit fix --force` |
 | 4 | Bump direct dep to next major if advisory lists fix there | `pnpm add <pkg>@<major>` / `npm install <pkg>@<major>` / `yarn add <pkg>@<major>` |
 | 5 | Force a transitive dep version | `pnpm.overrides` / `resolutions` (yarn) / `overrides` (npm) block in `package.json`, then re-install |
-| 6 | Replace the package | Switch to a maintained alternative if abandoned |
+| 6 | Raise the CONSUMER, not the vulnerable package | the direct dependency that pulls it, and the lt framework if the framework pins it (`@lenne.tech/nest-server` / `@lenne.tech/nuxt-extensions`) — a full `/lt-dev:maintenance:maintain` is the thorough form |
+| 7 | Patch the consumer — **only under the conditions below** | `pnpm patch <pkg>` → `patchedDependencies` |
+| 8 | Replace the package | Switch to a maintained alternative if abandoned |
 
-A finding may only be classified as Accepted after **every** applicable step has been tried and verified, with documented evidence that no patched version exists anywhere in the ecosystem.
+**Step 6 is the rung that gets skipped, and it is the one that most often works.** Steps 1 to 5 all push the *vulnerable* package forward. When that fails, the reason is usually not the vulnerable package at all — it is the consumer holding it back, by pinning a vulnerable range or by using an API the patched major removed. So the question to ask is "who keeps this version here?", and the answer is a direct dependency, or a framework whose pin an override cannot beat. An override is a pin, and a pin is strictly worse than a real version bump: it diverges the tree from what upstream tests, and it rots silently. Take the bump where one exists.
+
+**Step 7 (patching) is narrow on purpose, and the narrowness is the point.** When the patched major only fails to *load* — a removed default export, a renamed entry point — a one-line patch looks like it closes the advisory properly rather than suppressing it. Sometimes it does. Three conditions have to hold first, and the third is the one that usually fails:
+
+1. The patch targets a **stable path in the vulnerable package**, and is pinned to one exact version. What breaks a patch is not `dist/` as such — published packages ship `dist/` and nothing else — it is a path that moves between releases. `dist/chunks/<hash>.mjs` is renamed by the next build and the patch then fails for everyone on the team; `dist/index.mjs` is the package's own entry point and stays. A patch that names a minified symbol is still acceptable **with** the version pin, because the pin turns the risk into a loud `pnpm install` failure instead of a silent mis-patch. Patch the vulnerable dependency, not a consumer that happens to import it — see the measured case below, where the first assessment looked at the consumer's chunk and rejected the rung on that basis.
+2. Weigh the **production closure** against the maintenance cost. A patch is a standing obligation on every future bump, so for a dev-tooling path that cannot reach production it may well spend more than it buys — in a single project. A TEMPLATE flips that arithmetic: every generated project inherits one patch, while a residual would have to be re-argued in each of them. This is a judgement, not a veto; conditions 1 and 3 are the hard ones.
+3. Loading is not the same as working. A major that removed an export usually changed behaviour too, so a patched import makes the module *import* while leaving the consumer running against an API it was never tested on. If you cannot say what else changed in that major and why it does not matter here, the patch is a guess wearing the costume of a fix.
+
+**Patch the VULNERABLE package, not the consumer.** This is the distinction that decides whether the rung works, and it is easy to get wrong, because the error points at the consumer. Measured, lt-crm 2026-10-06: `@nuxt/devtools@3.4.1` does `import Git from 'simple-git'`, and raising simple-git to the only fixed line (4.x, which dropped that default export) made `nuxt prepare` abort with `does not provide an export named 'default'`. The first assessment looked at devtools' own `dist/chunks/module-main.mjs`, found the import there, and rejected patching on condition 1 — a compiled chunk — which was the right verdict about the wrong file. The patch belongs one level down, in `simple-git`'s own `dist/index.mjs`, where a single added line re-exports as `default` the very factory the module already exports as `simpleGit`. Nothing about the hardened code changes; only the module's surface comes back.
+
+With that, all three conditions hold: it is the vulnerable package rather than a consumer artefact, it is pinned to one exact version (`patchedDependencies: { 'simple-git@4.0.2': … }` plus the override target), and the API devtools actually calls — `branch`, `revparse`, `status` — is core API in 4.x, so there is an answer to "what else did the major change". One CRITICAL and two HIGH advisories closed instead of suppressed; `pnpm audit` went from `critical 1 · high 5` to `critical 0 · high 3` on that tree, and the `ignoreGhsas` list shrank from six entries to three.
+
+The pin is what makes a minified symbol acceptable: the patch names an internal name from that exact build, so any other version renames it and `pnpm install` fails LOUDLY rather than silently patching the wrong binding. That failure is the signal to check whether the consumer has moved to the named import — at which point the PATCH goes. The override has its own exit condition and usually outlives it: it can go only once nothing in the tree resolves the vulnerable line any more (here: once nuxt requests a `@nuxt/devtools` that no longer depends on simple-git 3). simple-git 3.36.0 already has the named export, so a consumer that switches to it may still ask for the vulnerable 3.x.
+
+`nuxt-base-starter` and `nuxt-extensions` carry the identical patch for the identical path, and a project generated from the template should keep it rather than "fix" it into a residual. The template also accepts the standing maintenance cost more readily than a single project would, because every generated project inherits it while a residual would have to be re-argued in each one.
+
+**So the order is: patch the vulnerable package, and only then declare a residual.** Condition 3 still rules out a patch whose behavioural effect you cannot state, and condition 2 still argues against taking on a patch for a dev-only path in a project of your own — but "the consumer cannot use the fix" is a claim about the CONSUMER, and it does not survive a one-line, security-neutral patch in the dependency. **Record that you evaluated patching and what you concluded**, either way, or the next person pays to rediscover it.
+
+A finding may only be classified as Accepted after **every** applicable step has been tried and verified. Two shapes qualify, and they carry different evidence and different follow-up:
+
+| Shape | What must be documented | Re-checked when |
+|---|---|---|
+| **No patched version exists** | the advisory's stated fix range, and proof that no version in it was ever published (registry listing, not the advisory's own claim) | on every `check` — a publish closes it |
+| **A patched version exists but the consumer cannot use it** | which consumer holds it, what breaks on the patched version **as measured** (the error, not a guess), that raising or replacing the consumer was tried (Step 6), and that the vulnerable path is outside the production closure | on every `check` — the consumer can adapt at any time, and this shape rots faster than the first |
+
+**Verify the fix range against the registry, never against the advisory.** An advisory naming a patched version that was never published is not a rarity: measured twice in lt-crm — `node-forge` 1.4.1 (advisory says patched, npm's latest is the vulnerable 1.4.0) and `simple-git` 3.36.1 (the 3.36 line ends at 3.36.0, which the same advisories mark vulnerable). `npm view <pkg> versions` settles it in one call, and an override pointed at a version that does not exist, or at one that is itself vulnerable, is worse than no override: the guard reports the finding as handled.
+
+**The second shape is the one to be strict about**, because "the consumer cannot use it" is also what it looks like when nobody tried hard enough — and the simple-git case above is the cautionary tale, not the model. Everything on its record was true: the CRITICAL needs `>=4.0.1`, simple-git 4 removed the default export devtools imports, the newest 3.x devtools still imports it that way, and devtools is a hard `dependencies` entry of `nuxt` so it cannot be dropped. The documented residual looked honest and still was not the answer, because one rung had been assessed against the wrong file. A record that complete is exactly what makes a residual hard to re-open later, so the time to look again is before writing it.
+
+What earns this shape is therefore narrower than it reads: no patch in the vulnerable package can restore what the consumer needs, **and** that was tested rather than assumed. The two entries nest-server carries today qualify because their advisories have no published fix at all — a different claim, and the one that does not depend on a consumer's import style.
+
+**Write the residual down where the guard can re-check it, not only in prose.** Since nest-server
+11.42.5 the second shape has a machine-readable counterpart next to the `ignoreGhsas` entry, and
+`check:overrides` re-examines it on every run:
+
+```yaml
+auditConfig:
+  ignoreGhsas:
+    - GHSA-x6jw-m9v5-85vh
+  unusableFixConsumers:
+    GHSA-x6jw-m9v5-85vh: '@nuxt/devtools@3.4.1 cannot use 4.0.1'
+```
+
+The entry shows the syntax only. For this particular advisory the patch above is the answer, so do not copy the line as it stands.
+
+Three parts, and all three are load-bearing: the consumer, **the version it was assessed against**,
+and the patched version that was rejected. Each can change without anybody revisiting the entry — a
+consumer bump, a backport into a line the consumer *can* use, a second package starting to pull the
+same vulnerable version — and each of those turns the printed "cannot use it" into a false
+statement. That is what gets re-checked; the entry expires by itself rather than aging into a
+permanent exception.
+
+**Two situations where this declaration is the wrong answer**, both of which the guard rejects:
+
+- **The project itself depends on the affected package**, in the root `package.json` or in a
+  workspace package. Then the ladder is not exhausted at all: a direct dependency can simply be
+  raised, so the advisory was closable the whole time. A declaration here does not record a dead
+  end, it hides a version bump nobody made.
+- **The declared consumer is not actually the one holding the version.** Naming a plausible package
+  that does not pull the affected one at all reads like a considered assessment and is not one. Get
+  the parent from the lockfile (`pnpm why <pkg>`), not from memory.
 
 **CI parity — the local audit must match the CI security gate.** A project's local `check` may run `pnpm audit` at a *lower* severity threshold (or narrower scope) than the CI gate — e.g. local `pnpm audit --prod --audit-level=critical` while a CI job runs `pnpm audit --prod --audit-level=high` (`allow_failure: false`). A green local `check` then **hides** findings that fail CI: the pipeline goes red on a "pre-existing" HIGH CVE the local loop never even surfaced. **Before trusting a green local `check`, confirm its `--audit-level` and `--prod`/scope match the strictest audit gate in `.gitlab-ci.yml` / `.github/workflows`.** If they diverge, raise the local `check` audit-level to match CI (so the local loop becomes the single source of truth that catches exactly what CI enforces), then run the ladder above on whatever new findings surface. An audit-level mismatch is a silent local↔CI parity bug — never an Accepted Residual.
 
@@ -133,7 +195,8 @@ Only after a project has STALLED (and, for audit findings, only after the escala
 
 | Residual type | Treatment |
 |---------------|-----------|
-| Vulnerable dependency where the full ladder has been tried and no patched version exists (verified via registry, advisory database, upstream repo) | **Accepted Residual** — document with package name, advisory ID, ladder steps tried, why each failed, evidence of unfixability. NOT a blocker. |
+| Vulnerable dependency where the full ladder has been tried and no patched version exists (verified against the REGISTRY's version list, not the advisory's claim) | **Accepted Residual** — document with package name, advisory ID, ladder steps tried, why each failed, evidence of unfixability. NOT a blocker. |
+| Vulnerable dependency where a patched version exists but the consumer provably cannot use it (Step 6 tried in both directions, the breakage measured, the path outside the production closure) | **Accepted Residual, with a shorter leash** — same documentation plus the consumer's name and the measured error, and it is re-examined on every run rather than treated as settled. |
 | Vulnerable dependency where the ladder has NOT been fully tried | **Critical blocker** — the loop is not allowed to terminate until the ladder is exhausted. |
 | Any other residual (typecheck, lint, build, test, import, etc.) | **Critical blocker** — add to Remediation Catalog with Critical priority. |
 

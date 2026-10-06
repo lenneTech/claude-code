@@ -250,11 +250,22 @@ lt server permissions --failOnWarnings  # CI/CD mode
 
 ```
 1. Detect test framework BEFORE writing or running any test (see below)
-2. Write API tests FIRST (REST/GraphQL endpoint tests)
+2. Write API tests FIRST (REST/GraphQL endpoint tests), plus MCP tests when MCP is enabled
 3. Implement backend code until tests pass
 4. Iterate until all tests green
 5. Then proceed to frontend (E2E tests first)
 ```
+
+### MCP Tests Next to API Tests
+
+When MCP is present and enabled, API tests alone leave a second door untested. An MCP client reaches
+the same services through its own authentication, role filter, sessions and error results. So every
+change an MCP tool can reach gets MCP tests next to its API tests: `tools/list` per role,
+`tools/call` allowed and refused, data isolation, invalid input. This applies in nest-server itself
+always, and in a project when `ai.mcp` is enabled in `config.env.ts` or the project runs its own MCP
+module.
+
+**Details, detection and the test helper: [reference/mcp-integration.md → Automated MCP tests](${CLAUDE_SKILL_DIR}/reference/mcp-integration.md#automated-mcp-tests-required-when-mcp-is-enabled)**
 
 ### Detect Test Framework First
 

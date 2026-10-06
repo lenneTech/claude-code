@@ -22,7 +22,7 @@ You are an expert in Test-Driven Development (TDD) for NestJS applications using
 ## Ecosystem Context
 
 TDD works in the **Lerna fullstack monorepo** created via `lt fullstack init`:
-- **Backend tests** (`projects/api/tests/stories/`): API tests for `nest-server-starter` / `@lenne.tech/nest-server`
+- **Backend tests** (`projects/api/tests/stories/`): API tests for `nest-server-starter` / `@lenne.tech/nest-server`, plus MCP tests (`tools/list` per role, `tools/call` allowed and refused) when the project has MCP enabled, see `generating-nest-servers/reference/mcp-integration.md` → "Automated MCP tests"
 - **Frontend E2E tests** (`projects/app/tests/`): Playwright tests for `nuxt-base-starter` / `@lenne.tech/nuxt-extensions`
 
 ## When to Use This Skill
@@ -41,7 +41,7 @@ TDD works in the **Lerna fullstack monorepo** created via `lt fullstack init`:
 
 ```
 Phase 1: BACKEND
-├── 1. Write Backend Tests (API tests for REST/GraphQL)
+├── 1. Write Backend Tests (API tests for REST/GraphQL, MCP tests when MCP is enabled)
 └── 2. Implement Backend against tests (iterate until green)
 
 Phase 2: FRONTEND
