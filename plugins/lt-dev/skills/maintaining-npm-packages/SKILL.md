@@ -224,6 +224,61 @@ pnpm install --lockfile-only && pnpm audit
 
 Found live in lt-monorepo (2026-08-22): `GHSA-mh99-v99m-4gvg` (HIGH) suppressed since 2026-07-30 on a range that had since been narrowed to per-major windows, so the installed version no longer matched. Its own removal condition was met verbatim and nothing had re-read it.
 
+## `minimumReleaseAgeExclude`: Our Own Packages, Never a Version (Critical)
+
+`minimumReleaseAge: 1440` refuses any package published inside the last 24 hours, so a
+compromised release has to survive a day of public scrutiny before it can enter an install.
+That reasoning is about a **foreign** release. The packages from this stack's own release
+pipeline (`@lenne.tech/nest-server`, `@lenne.tech/nuxt-extensions`, `@lenne.tech/bug.lt`)
+are scrutinised in that pipeline, by people you can ask, so they are exempt. **Kai's decision,
+2026-10-06.** Everything else keeps the full 1440 minutes.
+
+**List them by NAME, never with a version:**
+
+```yaml
+minimumReleaseAgeExclude:
+  - '@lenne.tech/nest-server'
+  - '@lenne.tech/nuxt-extensions'
+  - '@lenne.tech/bug.lt'
+```
+
+**A version-bound entry cannot survive its own purpose.** It stops doing anything the moment
+that version passes the 24-hour window or leaves the tree, and then it sits there reading like
+standing policy. This is the same decay as a stale `ignoreGhsas` above, with an even shorter fuse:
+the entry is dead within a day of being written.
+
+Two live cases, both found by reading the file rather than by any tool:
+
+| Where | Entry | What happened |
+| --- | --- | --- |
+| `offers`, 2026-10-06 | `'@lenne.tech/nest-server@11.41.5'` | Inert for 4.9 days. Its own comment said "delete at the next dependency change, not later"; a dependency change that touched nine overrides went past it. |
+| `nest-server-starter`, 2026-08-22 | six `@nestjs/*@11.1.29` lines, each listed twice | Written by `pnpm audit --fix` during a bump. The project then declared 11.2.1, so none resolved anywhere. |
+
+A version-less entry has no such failure mode: it covers the version that resolves today and every
+next one, and it only needs revisiting when a package leaves the stack.
+
+**Verify the LIST is what grants the exception, not a disabled policy.** A passing install proves
+nothing by itself: the same green run happens if `minimumReleaseAge` was never read. Take one
+entry out and expect a refusal:
+
+```bash
+# with the entry removed, a fresh own-package release must be REJECTED:
+pnpm install --frozen-lockfile
+# ✗ [ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION] @lenne.tech/nest-server@11.42.6 was published
+#   at 2026-10-06T10:04:50Z, within the minimumReleaseAge cutoff
+```
+
+**Changing a version-bound entry has a trap of its own,** and it is the reason to stop writing
+them. Rewriting `...@11.42.5` to `...@11.42.6` makes the next install refuse, because the lockfile
+still holds 11.42.5 and nothing excludes it any more. The error suggests `pnpm clean --lockfile`,
+which re-resolves everything; in a project with 71 overrides that moves far more than intended.
+Reset the lockfile to its committed state instead, make every manifest change, then install once.
+
+**What does NOT belong here:** a foreign package, because a fix is urgently needed. That is what
+the window is for. If such an exception is ever unavoidable it carries a date, a reason, and a
+removal condition, and then somebody has to actually re-read it, which is exactly what failed
+twice above.
+
 ## Vulnerability Resolution Workflow
 
 When `audit` reports vulnerabilities, resolve them in this order. Most are fixable without a major upgrade or a framework bump — escalation is the last resort, not the first diagnosis.
