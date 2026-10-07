@@ -17,6 +17,7 @@
 | `customerEmail` | string | Customer email (optional) |
 | `customerCompany` | string | Customer company (optional) |
 | `customerContacts` | array | Additional contacts `[{ name, email, position }]` |
+| `subtitle` | string | Overrides the line under the document title, which otherwise reads `<customerCompany> — <customerName>`. Plain text, no HTML. Useful for a concept folder: „für Musterfirma GmbH" instead of „Musterfirma GmbH — Max Mustermann". An empty string falls back to the automatic line, so clearing it restores the default. Applies online and in the PDF. `duplicate_offer` and `create_from_template` carry it; `save_as_template` drops it like every other customer field, because a line naming one customer has no place in a reusable template |
 | `contentBlocks` | array | Content blocks (see content-blocks.md) |
 | `tags` | string[] | Tags for categorization |
 | `theme` | object | Per-offer theme override `{ enabled, light, dark }` — see [theming.md](./theming.md). When `enabled: false` (or missing), the renderer falls back to the app-wide default theme (`set_default_theme`); when neither is configured, the platform palette applies. |

@@ -109,6 +109,7 @@ Every tool handles both kinds. What differs for concept folders:
 | Tool | Concept-folder behaviour |
 |---|---|
 | `create_offer` | `kind: "concept"`; `relatedDocumentIds` links the offer it is based on, on both sides in one call |
+| `create_offer` / `update_offer` | `subtitle` overrides the line under the title, which otherwise reads `<company> — <contact>`. A concept folder usually wants „für <Firma>" there, because it is handed to a team rather than to one addressee — see [offer-model.md](../creating-offers/reference/offer-model.md) |
 | `update_offer` | `relatedDocumentIds` replaces the whole list (see Gotchas); switching `kind` follows the rules above |
 | `list_offers` | `kind: "concept"` lists concept folders only |
 | `get_offer` / `get_offer_context` | report `kind` and `relatedDocuments` (`id`, `kind`, `slug`, `status`, `title`) next to the raw `relatedDocumentIds` |
@@ -165,7 +166,7 @@ Own reference:
 
 1. **Load context** — `get_offer_context` → company knowledge and global blocks
 2. **Find the linked offer** — `list_offers` / `get_offer`; customer data and agreed scope
-3. **Gather the frame** — title, customer, form of address (default **Sie**), „Zugang bis"
+3. **Gather the frame** — title, customer, form of address (default **Sie**), „Zugang bis", and the line under the title (`subtitle`; „für <Firma>" is the usual choice for a folder)
 4. **Create the draft** — `create_offer` with `kind: "concept"`, the customer data and `relatedDocumentIds`
 5. **Store the workshop material as sources** — see `concept-structure.md` → "Material into sources"
 6. **Reload the context** — `get_offer_context` with the folder id, now including sources and the linked offer

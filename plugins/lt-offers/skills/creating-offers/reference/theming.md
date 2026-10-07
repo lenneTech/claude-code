@@ -109,8 +109,8 @@ Use a forced mode when the offer design is tuned for one appearance (e.g. a bran
 ```json
 // set_default_theme
 {
-  "light": { "background": "#ffffff", "foreground": "#0a0a0a", "primary": "#ff611e", ... },
-  "dark":  { "background": "#0b0b0b", "foreground": "#fafafa", "primary": "#ff7a3c", ... }
+  "light": { "background": "#ffffff", "foreground": "#0a0a0a", "primary": "#fb6500", ... },
+  "dark":  { "background": "#0b0b0b", "foreground": "#fafafa", "primary": "#ff8147", ... }
 }
 ```
 
@@ -132,7 +132,9 @@ Use a forced mode when the offer design is tuned for one appearance (e.g. a bran
 
 ## PDF Rendering
 
-The PDF is printed from the rendered customer page, so it carries the same resolved theme (per-offer override merged over the app-wide default) as the browser view. Brand colors come from theme lookups rather than hardcoded hex codes (such as `#FF611E`), so a customer-specific PDF matches the on-screen experience.
+The PDF is printed from the rendered customer page, so it carries the same resolved theme (per-offer override merged over the app-wide default) as the browser view. Brand colors come from theme lookups rather than hardcoded hex codes (such as `#fb6500`), so a customer-specific PDF matches the on-screen experience.
+
+**`primary` is the tone that FILLS a button or a badge; text gets a darker step derived from it.** The platform's own `#fb6500` measures 3.02:1 on white, below the 4.5:1 of WCAG AA, so a heading or a label coloured with it is unreadable to the standard — the renderer therefore uses the scale's step 700 wherever the accent carries text, online and in the PDF alike. For orange and for dark or cool brand tones there is nothing to configure: pick the tone you would put on a button, and the darker text tone is derived from it. A light primary is the exception. Mint `#10b981` still lands at 3.35:1 at step 700, and the theme editor gives no warning, so for such a brand pick a darker `primary` or measure headings and links before the offer goes out.
 
 **Light palette only.** PDFs render in light mode regardless of the customer's OS preference and of the document's `colorMode` preset. The dark palette is preserved on the document (for the browser view) but not consulted during printing.
 

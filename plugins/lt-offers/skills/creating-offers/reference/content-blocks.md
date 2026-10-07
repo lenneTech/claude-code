@@ -111,12 +111,12 @@ Style options: `line`, `dots`, `space`.
 ```json
 {
   "members": [
-    { "name": "Max Mustermann", "position": "Lead Developer", "email": "max@example.com", "imageFileId": "" }
+    { "name": "Max Mustermann", "role": "Lead Developer", "bio": "Zehn Jahre Erfahrung mit Vue und NestJS.", "imageFileId": "" }
   ]
 }
 ```
 
-Team member cards with photo, name, position, email.
+Team member cards with photo, name, role and an optional short bio.
 
 ---
 
@@ -145,10 +145,55 @@ Team member cards with photo, name, position, email.
 ```json
 {
   "items": [
-    { "question": "Wie lange dauert das Projekt?", "answer": "Ca. 3 Monate ab Projektstart." }
+    { "question": "Wie lange dauert das Projekt?", "answer": "Ca. 3 Monate ab Projektstart." },
+    { "question": "Was schlagen Sie vor?", "answer": "<p><strong>Vorschlag:</strong> Stufe 1 mit <code>min</code> Konfiguration.</p>" }
   ]
 }
 ```
+
+`answer` may be HTML, exactly like a `text` block: paragraphs, `<strong>`, `<em>`, lists, `<a>`,
+`<code>`. Same sanitising and the same prose styles, online and in the PDF (DEV-3444). Plain text
+keeps working unchanged — including `<`, `>` and `&` in running text, so „a < b" and „Q&A" come
+out as written, and a newline becomes a line break instead of collapsing into a space.
+
+A value counts as HTML once it carries a closing tag or a `<br>`. That is the one edge to know:
+an answer whose plain prose talks ABOUT `<br>` is read as markup. Write it as `&lt;br&gt;` if you
+mean the characters.
+
+`question` is plain text.
+
+**Before DEV-3444 the answer was plain text and the tags were visible to the customer.** On one
+customer's concept folder nine answers had to be flattened to plain text for exactly that reason,
+which cost them the emphasis they were written for. If you are reading this in a checkout where
+the feature has not landed yet, treat the answer as plain text.
+
+---
+
+### Which fields are plain text
+
+Only five fields in the whole catalogue carry HTML: `text.html`, `custom-html.html`,
+`rich-component.html`, `html-embed.printHtml` and `faq.items[].answer`. Plus the document's own
+`greeting` and `description`.
+
+Everything else is interpolated as text and shows its markup if you write any:
+
+| Block | Plain-text fields |
+| --- | --- |
+| `faq` | `question` |
+| `cta` | `text`, `buttonLabel` |
+| `timeline` | `milestones[].title`, `.description`, `.date` |
+| `image` | `alt`, `caption` |
+| `gallery` | — (ids only) |
+| `testimonial` | `quote`, `author`, `company` |
+| `team` | `members[].name`, `.role`, `.bio` |
+| `reference` | `projectName`, `description`, `quote`, `quoteAuthor` |
+| `download` | `files[].fileName`, `.description` |
+| `html-embed` | `caption` |
+| `pricing-table` | `items[].name`, `.price`, `.description` |
+| `lottie` | — (ids and numbers only) |
+
+Rich text belongs in `text`, `custom-html` or a FAQ answer. Putting markup anywhere else means
+the customer reads the tags.
 
 ---
 
@@ -228,8 +273,8 @@ in the light palette.
 {
   "currency": "EUR",
   "items": [
-    { "title": "Website-Design", "description": "Responsive Design nach Figma-Vorlage", "price": 5000, "unit": "pauschal" },
-    { "title": "Entwicklung", "description": "Frontend + Backend", "price": 120, "unit": "pro Stunde" }
+    { "name": "Website-Design", "description": "Responsive Design nach Figma-Vorlage, pauschal", "price": 5000 },
+    { "name": "Entwicklung", "description": "Frontend + Backend, pro Stunde", "price": 120 }
   ]
 }
 ```

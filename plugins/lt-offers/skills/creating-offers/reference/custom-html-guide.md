@@ -37,7 +37,7 @@ Example:
 ```html
 <!-- Highlight box -->
 <div class="rounded-lg bg-primary-50 p-6 dark:bg-primary-950">
-  <h3 class="text-lg font-semibold text-primary">Warum wir?</h3>
+  <h3 class="text-lg font-semibold text-primary-700 dark:text-primary-400">Warum wir?</h3>
   <p class="mt-2 text-muted">Jahrelange Erfahrung und ein starkes Team.</p>
 </div>
 
@@ -56,11 +56,11 @@ Example:
 <!-- Styled list -->
 <ul class="space-y-2">
   <li class="flex items-start gap-2">
-    <span class="mt-1 text-primary">✓</span>
+    <span class="mt-1 text-primary-700 dark:text-primary-400">✓</span>
     <span>Responsive Design</span>
   </li>
   <li class="flex items-start gap-2">
-    <span class="mt-1 text-primary">✓</span>
+    <span class="mt-1 text-primary-700 dark:text-primary-400">✓</span>
     <span>SEO-Optimierung</span>
   </li>
 </ul>
@@ -124,7 +124,14 @@ Example:
 
 ## Tailwind CSS Tips
 
-- Use semantic colors: `text-primary`, `bg-primary-50`, `border-default`, `text-muted`
+- Use semantic colors: `bg-primary-50`, `border-default`, `text-muted`
+- **`text-primary` is a FILL tone, not a text colour.** It is the shade that fills a button or a
+  badge, and on the platform's white page it measures 3.02:1 — fine for an icon (non-text content
+  needs 3:1), below AA for anything a customer reads. For text use `text-primary-700
+  dark:text-primary-400`, and `text-primary-800 dark:text-primary-300` when it sits on a
+  `bg-primary/10` or `/15` tint. A tint lowers whatever stands on it, and in dark mode the tint
+  is mixed from the 400 itself, so the text has to move away from it: darker in light mode,
+  lighter in dark mode. Keeping `dark:text-primary-400` there fails on customer palettes
 - Dark mode: Use `dark:` prefix for overrides
 - Spacing: Use consistent `p-4`, `p-6`, `gap-4`, `gap-6`
 - Borders: `border border-default rounded-lg`
@@ -194,6 +201,16 @@ bold). Two traps that recur with brand palettes:
   2.3:1 — unusable for the small uppercase kickers it is typically used for.
   Keep the brand tone for rules, borders and dark surfaces, and use a darkened
   variant for text on light (e.g. `#5c5b21`, 7.4:1).
+
+  **This holds for the platform's own palette too, which is why the `text-primary`
+  note under "Tailwind CSS Tips" exists.** lenne.Tech orange is `#fb6500`, 3.02:1
+  on white; the step meant for text is `#be4000` at 5.35:1. A themed offer gets
+  the same treatment by itself: the renderer derives all eleven steps from the
+  customer's picked colour, so `text-primary-700` follows the document's palette.
+  That step holds AA for orange and for dark or cool hues (step 700 of `#2563eb`
+  reaches 9.69:1), but not for a light primary: mint `#10b981` lands at 3.35:1. For such a
+  palette use a darker step such as `text-primary-800` and measure it, because the
+  theme editor does not warn.
 - **A theme `neutral` anchor near `#777` fails.** The renderer derives muted
   text from it; `#777777` on white is 4.48:1 and misses AA. Anchor `neutral`
   around `#5c5c5c` instead — light steps stay light, so borders and card fills

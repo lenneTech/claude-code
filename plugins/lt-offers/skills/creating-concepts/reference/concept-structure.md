@@ -55,6 +55,8 @@ A starting point for the proposal:
    rich-component    cards per module
 5. timeline        — Vorgehen: phases or roadmap
 6. faq             — Offene Fragen, Annahmen, Entscheidungsbedarf
+                     (answer darf HTML sein wie ein text-Block, siehe
+                      creating-offers/reference/content-blocks.md §11)
 7. html-embed      — Klick-Dummy or prototype (with printHtml for the PDF, a caption, and
                      previewFileId only as a fallback)
 8. download        — Workshop documents the customer may keep (photo protocol, slides)
