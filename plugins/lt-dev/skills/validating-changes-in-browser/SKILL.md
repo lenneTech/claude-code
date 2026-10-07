@@ -104,6 +104,20 @@ Seed rules:
 
 **Maintain an account registry** in your working notes from this step onwards. For every account you reuse or create, record: email, literal password, role, and provenance (`existing seed` vs `NEW for this walk`). The registry feeds the test-list header AND the closing summary — the user needs every credential visible to reproduce the walk. Translate the provenance labels to the user's session language when rendering.
 
+#### Destructive database operations
+
+Seeding adds records; cleaning up deletes them, and a wrong filter cannot be undone: a local dev database usually has neither a replica set nor a dump. Every `deleteMany`, `updateMany`, or `deleteOne` in a loop that you run or write (`mongosh`, driver code, a seed or cleanup script) follows these rules, on any database: local, test, or deployed. One exception: a test suite's own teardown inside the per-run test database it created (the `deleteMany({ email: /@test\.com$/ })` pattern in the TDD skills) is exempt, because that database holds nothing else and is dropped after the run.
+
+1. **Target what you know.** When the targets are known, filter by exact values (`{ _id: { $in: [...] } }`, `{ email: { $in: [...] } }`), not by a pattern. The account registry above lists every account this walk created. `@test.com` makes seed data findable, not safe to delete by: the shared dev database also holds a peer's and earlier walks' `@test.com` accounts.
+2. **Dry-run the same filter object.** Build the filter once in a variable, count and print its matches, then pass that very variable to the write.
+3. **Brake on the count.** Abort unless the count equals the number you expect: `if (n !== expected) throw new Error(...)`.
+4. **Never give one key two entries.** A JavaScript object literal keeps only the last of two identical keys, so `{ email: /^walk-/, email: { $not: /<stamp>/ } }` reaches MongoDB as `{ email: { $not: /<stamp>/ } }`. Put both conditions under the key (`{ email: { $regex: /^walk-/, $not: /<stamp>/ } }`) or use `$and`.
+5. **Check the stored BSON type before `$in` / `$nin`.** A value of the wrong type matches nothing, so `$in` silently hits nothing and `$nin` hits everything. nest-server mixes the types: `tenantmembers.user` is a String, `account.userId` and `session.userId` are ObjectIds. Read one stored document first; `mongosh` prints an ObjectId as `ObjectId('…')`, a String in quotes.
+
+Observed 2026-10-07 (DEV-3465, local dev database): a cleanup meant for two leftover walk accounts broke rule 4 and deleted 39 accounts; only the initial admin came back, because nest-server's bootstrap recreates it. The repair's first draft then ran into rule 5: a `$nin` of ObjectIds against `tenantmembers.user` matched every membership, valid ones included, and the dry run with its count brake stopped it before the write.
+
+On customer or deployed data these rules add to, and never replace, the user's confirmation for anything destructive ([coordinating-peer-sessions](../coordinating-peer-sessions/SKILL.md#when-to-involve-the-user-and-when-not-to)) and the additive-only rule for shared stages ([writing-qa-test-instructions](../writing-qa-test-instructions/SKILL.md#2-check-the-records-each-step-acts-on)).
+
 ### Step 4 — Derive the step-by-step test list from the diff
 
 Build the list **from the actual diff**, not from a generic template. For every changed or newly-added surface, generate one or more concrete check steps.
