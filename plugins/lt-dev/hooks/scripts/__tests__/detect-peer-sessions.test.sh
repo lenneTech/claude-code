@@ -76,7 +76,13 @@ out="$(run_hook CLAUDE_CODE_MESSAGING_SOCKET="$SOCKS/1.sock" CLAUDE_PID=1)"
 assert_silent "$out" "silent for a stale socket of a dead process and a non-numeric name"
 
 # --- a live peer is reported ----------------------------------------------
-if command -v node >/dev/null 2>&1; then
+# Native Windows binds each inbox as a named pipe, so the socket directory these
+# cases stage does not exist there; Git Bash's ps also has no -o to confirm the
+# peer process. Peer discovery is macOS/Linux (incl. WSL 2) only.
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) NATIVE_WINDOWS=1 ;; *) NATIVE_WINDOWS=0 ;; esac
+if [ "$NATIVE_WINDOWS" -eq 1 ]; then
+  echo "  - skipped live-peer cases (native Windows: inboxes are named pipes)"
+elif command -v node >/dev/null 2>&1; then
   PEER_DIR="$TMP_ROOT/peer-repo"; mkdir -p "$PEER_DIR"
   # Start the stand-in peer WITHOUT a subshell: a subshell inherits the EXIT
   # trap above and would fire cleanup when it ends, deleting the sockets this

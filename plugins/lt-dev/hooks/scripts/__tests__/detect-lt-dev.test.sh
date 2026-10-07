@@ -169,6 +169,22 @@ out=$(printf '%s' '{"prompt":"<task-notification><status>completed</status><resu
 assert_contains "$out" "https://crm.localhost" "still emits the URL block on a notification turn"
 cleanup
 
+# --- Case 9: the walk-up probes /name at the root, never //name ---
+# "//name" is a UNC path in Git Bash, and probing one waits for a network lookup.
+# /usr carries no workspace marker on any platform, so the walk reaches "/".
+echo "Case 9: walk-up to / probes /name, not //name"
+setup_tmp
+trace=$(CLAUDE_PROJECT_DIR=/usr LT_DEV_REGISTRY_PATH="$REGISTRY" bash -x "$HOOK" 2>&1 >/dev/null)
+if printf '%s\n' "$trace" | grep -qE -- '-[fd] //(pnpm-workspace\.yaml|projects|lt\.config\.json)'; then
+  FAIL=$((FAIL + 1))
+  echo "  ✗ no UNC-style probe at the filesystem root"
+  printf '%s\n' "$trace" | grep -E -- '-[fd] //' | sed 's/^/      /'
+else
+  PASS=$((PASS + 1))
+  echo "  ✓ no UNC-style probe at the filesystem root"
+fi
+cleanup
+
 echo ""
 echo "─────────────────────────────────────────"
 echo "Total: $((PASS + FAIL)) | Passed: $PASS | Failed: $FAIL"

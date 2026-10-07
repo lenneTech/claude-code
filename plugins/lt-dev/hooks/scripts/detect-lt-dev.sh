@@ -31,10 +31,15 @@ set -u
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 
+# At "/" the probe paths are built from "" rather than "/": "//name" is a UNC path in
+# Git Bash, and each probe of one waits for a network lookup. Observed in Plugin CI on
+# windows-latest (2026-10-07): every hook call that walked up to "/" took 3.2 s instead
+# of 0.45 s.
 find_workspace_root() {
-  local dir="$1"
+  local dir="$1" base
   for _ in 1 2 3 4 5 6; do
-    if [ -f "$dir/pnpm-workspace.yaml" ] || [ -d "$dir/projects" ] || [ -f "$dir/lt.config.json" ]; then
+    base="${dir%/}"
+    if [ -f "$base/pnpm-workspace.yaml" ] || [ -d "$base/projects" ] || [ -f "$base/lt.config.json" ]; then
       echo "$dir"
       return 0
     fi

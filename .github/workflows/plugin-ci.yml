@@ -39,15 +39,32 @@ jobs:
           fi
       # The remaining steps run even when an earlier one fails, so the windows leg shows
       # everything that is red there in one run.
+      # One test file per core in parallel, so the step takes about as long as its slowest
+      # files rather than their sum (windows-latest: 110 s run one after another). Each file
+      # writes to its own log; the logs are printed afterwards in a fixed order, with the
+      # file's duration in the group title. Every test file works in its own mktemp directory.
       - name: Bash tests
         if: ${{ !cancelled() }}
         run: |
+          logs="$(mktemp -d)"
+          find plugins -path '*/__tests__/*.test.sh' | sort > "$logs/list"
+          jobs="$(nproc 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 2)"
+          xargs -P "$jobs" -I{} bash -c '
+            log="$1/$(printf %s "$2" | tr / _)"
+            start=$SECONDS
+            bash "$2" > "$log.out" 2>&1 && rc=0 || rc=$?
+            echo "$rc $((SECONDS - start))" > "$log.rc"
+          ' _ "$logs" {} < "$logs/list"
           fail=0
           while IFS= read -r t; do
-            echo "::group::$t"
-            bash "$t" || { echo "::error file=$t::test failed"; fail=1; }
+            log="$logs/$(printf %s "$t" | tr / _)"
+            rc=1; secs="?"
+            [ -r "$log.rc" ] && read -r rc secs < "$log.rc"
+            echo "::group::$t (${secs}s)"
+            cat "$log.out" 2>/dev/null || echo "no output: the test file did not run"
             echo "::endgroup::"
-          done < <(find plugins -path '*/__tests__/*.test.sh' | sort)
+            if [ "$rc" -ne 0 ]; then echo "::error file=$t::test failed"; fail=1; fi
+          done < "$logs/list"
           exit "$fail"
       - name: Node tests
         if: ${{ !cancelled() }}

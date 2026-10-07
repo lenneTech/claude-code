@@ -12,6 +12,8 @@
 # CLAUDE_CODE_MESSAGING_SOCKET is unset — messaging off, an unsupported
 # platform or provider, or the feature flag unresolved on a first run after
 # install — there is nothing to discover and the function prints nothing.
+# Native Windows binds each inbox as a named pipe rather than a socket file in
+# one directory, so the scan finds no peers there either.
 #
 # The third field is deliberately allowed to be empty: a peer whose working
 # directory cannot be read is still a live peer, and reporting it as

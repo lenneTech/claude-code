@@ -2,7 +2,7 @@
 # Tests for scripts/disk-audit.sh, scripts/disk-clean.sh, scripts/disk-guards.sh and the guards.
 #
 # Hermetic: HOME is a temp directory, and docker, pnpm, ps, lsof, launchctl, mongosh, npm,
-# pgrep and osascript are stubs earlier on PATH. The tests therefore assert the DECISIONS —
+# pgrep, osascript and xcrun are stubs earlier on PATH. The tests therefore assert the DECISIONS —
 # what counts as stale, in use, safe to lose, still referenced — not this machine's state.
 # Those decisions are the point: every one of them was got wrong by hand at least once while
 # the cleanup these scripts encode was done interactively (2026-10-02).
@@ -40,6 +40,9 @@ stub ps "cat '$TMP/ps.txt'"
 stub lsof "case \"\$*\" in *cwd*) sed 's/^/n/' '$TMP/cwd.txt' ;; *) exit 1 ;; esac"
 stub pgrep 'exit 1'
 stub osascript 'exit 0'
+# The real `xcrun simctl` lists this machine's simulators and starts the simulator service:
+# 2.8 s on a warm Mac; on a cold macos-latest runner the audit call that ran it took 31 s.
+stub xcrun 'exit 0'
 stub npm "echo \"npm \$*\" >> '$TMP/calls.txt'"
 stub mongosh "echo \"mongosh \$*\" >> '$TMP/calls.txt'"
 stub launchctl "echo \"launchctl \$*\" >> '$TMP/calls.txt'; case \"\$1\" in print) [ -f '$TMP/loaded' ] ;; esac"
