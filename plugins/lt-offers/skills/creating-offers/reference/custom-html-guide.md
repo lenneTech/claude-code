@@ -8,6 +8,14 @@ Two block types support custom HTML:
 - Only standard HTML elements + Tailwind CSS classes
 - No Vue components, no JavaScript
 - Wrapped in `prose prose-sm max-w-none dark:prose-invert`
+- **The same sanitization runs on the customer page and in both HTML-based PDF engines** (`page`,
+  the default, and `puppeteer`), so what survives on the page survives in their PDFs — a block
+  does not need checking twice for those. Until DEV-3455 the `puppeteer` engine used a weaker
+  regex filter, so the two could differ without saying so.
+- **The `pdf-lib` engine is the exception: it draws plain text and strips all markup.** A block's
+  layout exists on the page and in the two HTML engines, never there. The engine is an admin
+  setting that also governs the customer's download, so a card grid or a table is worth a look at
+  whichever engine the target installation actually runs on.
 
 ### Editor — WYSIWYG ↔ Source toggle
 
