@@ -1007,7 +1007,8 @@
         "cleaning-up-disk-space",
         "writing-qa-test-instructions",
         "briefing",
-        "plugin:check"
+        "plugin:check",
+        "checking-upstream-first"
       ]
     },
     {
@@ -1035,7 +1036,8 @@
         "cleaning-up-disk-space",
         "writing-qa-test-instructions",
         "briefing",
-        "plugin:check"
+        "plugin:check",
+        "checking-upstream-first"
       ]
     },
     {

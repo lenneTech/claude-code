@@ -935,7 +935,7 @@ doing — that decision was the gates.
 **2. Re-run the check script** after all fixes, per the `running-check-script` skill. Fixes that
 break the build are worse than the findings they addressed. Iterate until green.
 
-**3. Ask the user only in these three cases.** They are the only ones where the answer changes what
+**3. Ask the user only in these four cases.** They are the only ones where the answer changes what
 you do:
 
 - **A fix exceeds the ticket's scope** — it turns out to need a change to a shared module, a schema
@@ -946,6 +946,10 @@ you do:
   `SOLVED` message with the diagnosis (the expensive part, and it transfers perfectly), and report
   the finding as handed back. Exception: a trivial self-contained fix that cannot collide — a
   missing import, a format violation.
+- **The fix is in a repository a live session works in and this one does not**
+  (`bash "${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh" <path>` says `HANDOVER-QUESTION`). That
+  session is the expert there: ask whether the fix is handed over to it, recommending the handover,
+  per [`coordinating-peer-sessions`](${CLAUDE_PLUGIN_ROOT}/skills/coordinating-peer-sessions/SKILL.md#the-session-in-a-repository-is-its-expert).
 
 Anything else: fix it and report it as fixed.
 

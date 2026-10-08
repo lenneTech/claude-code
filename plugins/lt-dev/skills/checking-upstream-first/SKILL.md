@@ -198,6 +198,9 @@ gone. What the base repo already carries has also been reviewed, released, and r
 projects — a private version has none of that behind it.
 
 **When it does not have it: fix it there, then adopt.** Same reasoning in the other direction.
+When a live session works in that base repo, it is the expert there: `repo-expert.sh` says so, and
+the user decides whether the fix is handed over to it
+([`coordinating-peer-sessions`](../coordinating-peer-sessions/SKILL.md#the-session-in-a-repository-is-its-expert)).
 
 #### Why this one is easy to skip
 

@@ -202,16 +202,27 @@ If all ACs are satisfied, log `All acceptance criteria satisfied — proceeding`
    Act on the `origin-question:` verdict:
 
    - `NOT-NEEDED` or `INCONCLUSIVE` with nothing predating the session — continue to 1b.
-   - `WARRANTED` or `POSSIBLE` — the paths flagged `pre-session` are the ones to resolve. Ask the
+   - `WARRANTED`, `WARRANTED-CROSS-REPO` or `POSSIBLE` — the paths flagged `pre-session` are the ones to resolve. Ask the
      user via `AskUserQuestion`, showing the paths and their attribution: stage only this session's
      paths (`git add <paths>` instead of `git add -A`), stage everything, or abort. Default to
      staging only this session's paths. Send the author-peer one `ORIGIN` naming the paths if it is
      live, and do not wait for the answer — the user's choice is what unblocks the ship.
    - `UNATTRIBUTABLE` — nobody live wrote them, so they are this session's from a cleared context or
-     a closed one. Show them to the user with that stated, and let them decide.
-   - **With `--unattended`:** do not ask. Stage only this session's paths, leave every flagged or
-     unattributable path untouched in the working tree, and list those paths in the STEP 11
-     summary. Committing somebody else's work under this ticket is never the unattended default.
+     a closed one, or tool output in this checkout (a tracked file a tool rewrote, such as the URL
+     block `lt dev up` maintains in `CLAUDE.md`). Show them to the user with that stated, and let
+     them decide.
+   - **With `--unattended`:** do not ask, and resolve only what this session can account for: its
+     own paths, and known tool output in this checkout (a tracked file a tool rewrote, such as the
+     URL block `lt dev up` maintains in `CLAUDE.md`, and agent memory curated per 1b). Resolve each
+     of these: commit it into this branch (the normal case), add it to `.gitignore` (an untracked
+     local artefact every checkout produces), or delete it (throwaway output this session made).
+     Every other flagged path stays untouched in the working tree and is listed in the STEP 11
+     summary: the `pre-session` paths of `WARRANTED`, `WARRANTED-CROSS-REPO` and `POSSIBLE`,
+     because a peer in this or another checkout may be mid-slice on them; every `UNATTRIBUTABLE`
+     path that is not known tool output, because the verdict proves only that the peer scan found
+     nobody (the scan comes back empty when cross-session messaging is unavailable); and any path
+     the user kept out of the ticket at its start. Committing somebody else's work under this
+     ticket is never the unattended default. Name each resolution in the STEP 11 summary.
 
    Format and occasions: [`coordinating-peer-sessions`](../../skills/coordinating-peer-sessions/SKILL.md).
 
@@ -221,8 +232,10 @@ If all ACs are satisfied, log `All acceptance criteria satisfied — proceeding`
    remembering the answer locally) and curates the notes so no note that a
    rename or a fix has invalidated gets committed. Only then continue below.
 2. **If there are uncommitted changes:**
-   - With `--unattended`: take Option 1 without asking, staging only the paths 1a attributed to this
-     session (`git add <paths>`, not `git add -A`). Typical source: fixes made during the browser walk.
+   - With `--unattended`: take Option 1 without asking, staging the paths 1a attributed to this
+     session plus the tool output it resolved by committing (`git add <paths>`, not
+     `git add -A`). Typical sources: fixes made during the browser walk, a tool's rewrite of a
+     tracked file.
    - Otherwise ask via `AskUserQuestion`:
      - Show the list of changed files.
      - Option 1: "Automatisch committen & pushen" — proceed below
@@ -495,13 +508,27 @@ On Option 1 — perform the merge. The merge verb comes from `MERGE_MODE` (STEP 
 
 ## STEP 9 — Local Cleanup
 
-1. `git checkout "$BASE_BRANCH"`
+1. `git checkout "$BASE_BRANCH"`. When git refuses because the base branch is checked out in
+   another worktree (`'dev' is already used by worktree at …`), use
+   `git fetch origin && git checkout --detach "origin/$BASE_BRANCH"` instead and skip step 2: that
+   worktree owns the branch, and this one only needs the merged state.
 2. `git pull --ff-only origin "$BASE_BRANCH"` — confirms the merge landed.
 3. **Verify the merge actually happened** via `git log --oneline -1 -- ` to see the new commit, or `gh pr view "$REQUEST_ID" --json state --jq .state` (must be `MERGED`).
 4. **In promotion mode (base source), never delete `SOURCE_BRANCH`** — skip this whole step regardless of `--keep-branch`; a promoted base branch keeps living. Otherwise, if `--keep-branch` was NOT given:
    - `git branch -D "$FEATURE_BRANCH"` (local hard-delete; safe because it's already merged into base via squash).
    - The remote branch is already deleted by Phase 8.
    - `git fetch --prune` to clean up stale remote-tracking refs.
+5. **The working tree is clean.** Run `git status --porcelain`; it must print nothing apart from the
+   paths STEP 1a held out. A path that shows up only now and that this session cannot account for
+   stays where it is and is listed in the STEP 11 summary, exactly as in STEP 1a. A path it does
+   account for (a tool regenerated a tracked file after the merge, a note written during the
+   deploy wait) gets **no branch and no MR of its own**. Either it belongs on the base branch,
+   then it goes there as a single commit,
+   fast-forwarded with `git push origin HEAD:"$BASE_BRANCH"` from a checkout of the fresh
+   `origin/$BASE_BRANCH` — where branch protection allows pushes, and only for such leftovers,
+   never for code that still needs CI — or it does not, and it is removed or added to
+   `.gitignore`. Where a push is not allowed, fold it into the next ticket's branch and say so in
+   the STEP 11 summary. Note that a push to the base branch triggers its deploy like any merge.
 
 ## STEP 9a — Tell peer sessions, but only when the merge changes their next move
 
