@@ -1,7 +1,7 @@
 ---
 description: 'Auto-pick the next Linear ticket (default pool: Fix needed + Open states; ranked by priority DESC → fix-needed tie-break → assigned-to-me DESC → bug-flag DESC → createdAt ASC; tickets assigned to other users are excluded) — or take an explicit ID — then branch, TDD-implement, run all tests, run check, and report a review-ready summary'
 argument-hint: "[issue-id | --project=<name> --team=<name> --status=<list> --base=<branch> --figma=<url> --flows=<path> --grill --no-grill --in-cycle]"
-allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, ListAgents, SendMessage, Bash(git:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(wc:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run test:e2e:*), Bash(pnpm run e2e:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__list_teams, mcp__plugin_lt-dev_linear__list_projects, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__save_issue_label, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__list_users, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_screenshot, mcp__plugin_lt-dev_linear__get_document, mcp__plugin_lt-dev_linear__list_documents, mcp__plugin_lt-dev_linear__get_attachment, mcp__plugin_lt-dev_linear__extract_images
+allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, ListAgents, SendMessage, Bash(git:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(wc:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run test:e2e:*), Bash(pnpm run e2e:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__list_teams, mcp__plugin_lt-dev_linear__list_projects, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__save_issue_label, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__list_users, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_screenshot, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document, mcp__plugin_lt-dev_linear__list_documents, mcp__plugin_lt-dev_linear__get_attachment, mcp__plugin_lt-dev_linear__extract_images
 disable-model-invocation: false
 ---
 
@@ -330,6 +330,7 @@ Build an internal **requirements map** by reading, in order:
 
 1. **Linear issue body** + all comments — extract acceptance criteria (lines starting with `- [ ]`, `AK:`, `Acceptance Criteria`, "Definition of Done").
    **Then the context around it**, because what a ticket depends on often sits somewhere it does not point to: the parent issue and its sub-issues (`list_issues` filtered by parent), related and blocking issues, documents attached to the issue (`list_documents` / `get_document`, for example a `<ID> — Technische Details` document) and attachments (`get_attachment`). Look at images in the description and comments with `extract_images`; screenshots of a bug or a mockup carry details the text leaves out.
+   **Order and implementation are read apart.** The description and the comments that add to the order (typically from the product owner) are the requirements. The lt-dev decisions comment (it starts with `## Entscheidungen und Annahmen`), the `<ID> — Fragen und Antworten` document, and earlier completion comments are what previous runs did: they seed the STEP 5c record as settled entries, they are not requirements, and only the new feedback can reopen one of them.
 2. **User-supplied flows path** (if provided): read every `.md` / `.mmd` / `.svg` / image referenced by Linear inside the path.
 3. **Repo conventions:** `CLAUDE.md`, `docs/`, `README.md` for stack-specific rules.
 4. **Figma design** (if provided): call `mcp__plugin_figma_figma__get_design_context` and `mcp__plugin_figma_figma__get_metadata` for the node, plus `get_screenshot` for visual anchors. Extract: component tree, spacing, colors, copy, interactions.
@@ -425,15 +426,15 @@ Run it via the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/skills/grilling-deci
 
 Everything the code, the ticket, or Figma already answers is a fact, not a question: state it in the record as such, do not ask it. What remains goes to the user in frontier rounds.
 
-**4. Decision record.** Close with the skill's decision record (`Entscheidungen`, `Annahmen`, `Außerhalb des Scopes`) and let the user confirm it via `AskUserQuestion`: "Passt so, umsetzen (Recommended)" / "Noch etwas anpassen". On the second option, take the correction and run one more round for whatever it reopened.
+**4. Decision record.** Close with the skill's decision record (`Entscheidungen`, `Annahmen`, `Außerhalb des Scopes`), every entry with its source marker (`[Ticket <ID>]`, `[Entwickler]` or `[Claude]`, see the skill's [Source markers](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md#source-markers)) and every answered question kept with its decision, and let the user confirm it via `AskUserQuestion`: "Passt so, umsetzen (Recommended)" / "Noch etwas anpassen". On the second option, take the correction and run one more round for whatever it reopened. Once confirmed, put the record on the ticket right away, per [`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md#decisions-and-assumptions-for-the-product-owner): post the decisions comment when the record holds an `[Entwickler]` or `[Claude]` entry, and attach the questions document when the round asked anything ([`<ID> — Fragen und Antworten`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md#questions-document)); on a rework ticket, update the ones a previous run left (a decisions comment a colleague posted is not edited but replaced, as the skill describes). The product owner sees the premises while the work runs, and the record survives a `/clear` or a change of session. From here on both are kept at the current state, never appended to; what the ticket already says stays in the ticket.
 
 **With `--in-cycle`, the process round follows right here**, while the user is still at the screen: `/lt-dev:ticket-cycle` STEP 1a defines its questions (review, merge strategy, post-merge status). Asking them now, and not at the phase that needs each answer, is what lets the rest of the cycle run unattended. The light round asks it too, even when it had no ticket questions.
 
 **5. After confirmation, STEP 6 to STEP 9a run without questions.** The record is the contract:
 
 - A recorded decision is implemented as recorded. It is never asked again and never silently changed.
-- Something the record does not cover and that is **non-blocking** becomes one more `Annahme`, logged when it is taken and listed in the STEP 10 summary.
-- Only a **blocking** discovery stops the run: a fact that contradicts a recorded decision, or a gap that would mean rework if guessed wrong. Present the evidence and the options, get the answer, add it to the record, continue.
+- Something the record does not cover and that is **non-blocking** becomes one more `Annahme`, marked `[Claude]`, logged when it is taken, added to the decisions comment (posting it, if this is the first entry), and listed in the STEP 10 summary.
+- Only a **blocking** discovery stops the run: a fact that contradicts a recorded decision, or a gap that would mean rework if guessed wrong. Present the evidence and the options, get the answer, and bring the record, the decisions comment, and the questions document to the new state: the entry the answer changes is replaced, the question is added, and anything the answer made obsolete is deleted. Then continue.
 
 When a blocking stop happens on a ticket that got the light round, the size signals missed something. Say which one in the STEP 10 summary, so the sizing can be sharpened.
 
@@ -505,7 +506,7 @@ Implement what the acceptance criteria need, and take along what belongs with it
 | Removes friction this ticket actually ran into | Dependency upgrades that fix nothing |
 | Required by the `check` (formatter output on touched files) | Rework with no benefit for this ticket |
 
-A take-along that changes behaviour is an `Annahme`, so the developer sees it under "Bitte besonders prüfen".
+A take-along that changes behaviour is an `Annahme` (`[Claude]`), so the developer sees it under "Bitte besonders prüfen" and the product owner in the ticket's decisions comment.
 
 **Keep the extras apart from the core in the history.** Core slices commit as in 6b. Every defect fix and every take-along gets its own commit, marked with a trailer that carries its reason:
 
@@ -645,7 +646,7 @@ Print a compact German status block showing each AC's verdict, "Mitgenommen"-ite
 
 - A `missing` or `partial` AC that the record covers is implemented now: another TDD slice, then STEP 7 and 8 again.
 - A "Mitgenommen" item follows the STEP 9a rules and is logged as an `Annahme`.
-- Only an item that would change the recorded scope (cutting an AC, adding scope nobody decided) is blocking. Those go to the user as one round via the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md) skill, each carrying your recommendation (implement now, cut with a stated reason, or file as a follow-up per the rules above).
+- Only an item that would change the recorded scope (cutting an AC, adding scope nobody decided) is blocking. Those go to the user as one round via the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md) skill, each carrying your recommendation (implement now, cut with a stated reason, or file as a follow-up per the rules above). The answers update the record, the decisions comment, and the questions document in place.
 
 Then continue to STEP 9c.
 
@@ -726,8 +727,10 @@ Check
 - check: <ergebnis> (<n> auto-fixes, <n> accepted residuals)
 
 Für den Review wichtig
-- Entscheidungsprotokoll aus STEP 5c: <E1..En, oder "leichte Runde, keine offenen Fragen">
-- Annahmen, die getroffen wurden: <liste, inklusive der während der Umsetzung ergänzten>
+- Entscheidungsprotokoll aus STEP 5c: <je Zeile "E1 <Entscheidung> [Ticket <ID> | Entwickler]", oder "leichte Runde, keine offenen Fragen">
+- Annahmen, die getroffen wurden: <je Zeile "A1 <Annahme> [Claude]", inklusive der während der Umsetzung ergänzten, oder "keine">
+- Außerhalb des Scopes: <je Zeile mit Marker, oder "nichts">
+- Alles mit [Entwickler] oder [Claude] steht im Kommentar „Entscheidungen und Annahmen“ im Ticket, laufend aktualisiert (`writing-linear-comments`), damit der PO es im Review und Test prüfen kann; was mit [Ticket …] markiert ist, steht schon im Ticket und bleibt dort.
 - Ungeplante Rückfragen während der Umsetzung: <anzahl und welches Größensignal sie verfehlt hat, oder "keine">
 - Umfang (STEP 9c): Kern <n> Dateien, +<x>/−<y> · Mitgenommen <m> (je: was, warum, vorbestehender Fehler | Verbesserung) · im Audit entfernt: <liste | "nichts">
 - Getrennt lesen: `git log -p --invert-grep --grep='^Taken-Along:' origin/<BASE>..HEAD` (Kern) und `git log -p --grep='^Taken-Along:' origin/<BASE>..HEAD` (Mitgenommen)

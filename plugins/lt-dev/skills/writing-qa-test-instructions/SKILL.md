@@ -217,6 +217,9 @@ supplies the QA-specific content that goes into that structure.
 <1–3 Sätze in Nutzersprache: was war das Problem, was ist jetzt anders. Kein Jargon,
 keine Dateinamen, keine internen Begriffe.>
 
+Entscheidungen und Annahmen: im Kommentar „Entscheidungen und Annahmen“.
+<ohne solchen Kommentar: "Entscheidungen und Annahmen: keine, umgesetzt wie im Ticket beschrieben.">
+
 ## Testanleitung
 
 Umgebung: <[Dev-URL](Dev-URL) — oder "<Dev-System>", wenn nicht auflösbar>
@@ -243,7 +246,7 @@ Vorbereitete Daten:
 
 ## Details
 
-<nur wenn ein Dokument angehängt wurde — eine Zeile mit Link>
+<je angehängtem Dokument eine Zeile mit Link: Fragen und Antworten, Technische Details>
 ```
 
 ### Not testable
@@ -253,6 +256,8 @@ Vorbereitete Daten:
 
 <1–3 Sätze in Nutzersprache.>
 
+Entscheidungen und Annahmen: <wie oben>
+
 ## Testanleitung
 
 Nicht manuell testbar: <Grund in einem Satz, den ein Nicht-Entwickler versteht>.
@@ -260,7 +265,7 @@ Abgesichert über: <Unit-/API-/E2E-Tests, grüne CI-Pipeline, verifiziertes Depl
 
 ## Details
 
-<nur wenn ein Dokument angehängt wurde — eine Zeile mit Link>
+<je angehängtem Dokument eine Zeile mit Link: Fragen und Antworten, Technische Details>
 ```
 
 ### Quality bar per step
@@ -279,10 +284,12 @@ Abgesichert über: <Unit-/API-/E2E-Tests, grüne CI-Pipeline, verifiziertes Depl
 - **"Prüfen, ob alles funktioniert" is not a step.** Name the element and the expected state.
 - **Every step is executable without the code.** No file paths, no function names, no "wie besprochen".
 - **Cover the roles the change touches** — including the negative case, when the change is permission-relevant ("als User B → erwartet: kein Zugriff").
+- **Every decision or assumption with a visible effect has a step that shows it**, and its `Prüfen:` line in the decisions comment (`## Entscheidungen und Annahmen`) names that step. Reuse an existing step where it already shows the effect; add one where none does. The tester then checks the interpretation instead of taking it on trust, and an assumption Claude took without the developer's answer is exactly where that matters.
 - **Include the empty and error state** when the change touches a list or a form.
-- **Nothing else goes in the comment.** Findings, trade-offs, architecture notes, file references:
-  those belong in the attached document, per
-  [`writing-linear-comments`](../writing-linear-comments/SKILL.md).
+- **Nothing else goes in the comment** beyond the blocks
+  [`writing-linear-comments`](../writing-linear-comments/SKILL.md) defines, the decisions and
+  assumptions among them. Findings, technical trade-offs, architecture notes, file references:
+  those belong in the attached technical document.
 
 ## Hard Rules
 

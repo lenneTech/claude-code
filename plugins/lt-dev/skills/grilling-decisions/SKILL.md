@@ -71,19 +71,36 @@ Close every grilling with a compact record in German, shown to the user for conf
 
 ```
 Entscheidungen
-E1 Löschen: Soft Delete über `deletedAt`, Listen filtern standardmäßig
-E2 Rechte: Admin und Owner dürfen löschen, alle anderen 403
+E1 Löschen: Soft Delete über `deletedAt`, Listen filtern standardmäßig [Entwickler]
+   Frage (F1): Gelöschte Datensätze endgültig entfernen (Hard Delete) oder im Hintergrund behalten (Soft Delete)? Empfehlung: Soft Delete
+E2 Rechte: Admin und Owner dürfen löschen, alle anderen 403 [Ticket DEV-1234]
 Annahmen
-A1 Bestehende Datensätze brauchen keine Migration (Feld ist optional)
+A1 Bestehende Datensätze brauchen keine Migration (Feld ist optional) [Claude]
 Außerhalb des Scopes
-- Wiederherstellen gelöschter Einträge
+- Wiederherstellen gelöschter Einträge [Ticket DEV-1234]
 ```
 
-The record is the contract for the work that follows. Downstream steps treat a recorded decision as settled: they do not ask it again, and they do not silently deviate from it. When the implementation hits something the record does not cover, the [blocking vs non-blocking split](#when-the-user-is-unreachable) decides: a non-blocking point becomes one more `Annahme`, and only a blocking one stops the run.
+**A decision that answered a question keeps the question.** Under the entry, record the question as it was asked, with the options offered, the recommendation, and the answer given, so anybody reading the decision later sees what it was chosen from. In a ticket, these lines become the ticket's questions document (`writing-linear-comments`), where each question stands with its answer. A decision the user gave unprompted, an entry taken from the ticket, and an `Annahme` have no question line.
+
+**The record is the current state, not a log.** It answers how the work got to where it is, so it only ever holds what produced the result. When a decision is revised later (a blocking stop, the scope round, a correction at the approval gate), its entry is replaced under the same number, never joined by a second one; an entry that no longer applies is deleted, and its question with it; an `Annahme` the user confirmed or corrected becomes a decision of theirs. A superseded entry costs every later reader time and contradicts what they will find in the code.
+
+The record is the contract for the work that follows. Downstream steps treat a recorded decision as settled: they do not ask it again, and they do not silently deviate from it. When the implementation hits something the record does not cover, the [blocking vs non-blocking split](#when-the-user-is-unreachable) decides: a non-blocking point becomes one more `Annahme`, numbered on (`A2`, `A3`, …) and marked `[Claude]`, and only a blocking one stops the run.
+
+### Source markers
+
+When the record governs the implementation of a requirement somebody else owns (`take-ticket` STEP 5c and everything downstream of it), every entry carries one of three markers. They decide what travels into the ticket's comments: the ticket holds what was ordered and keeps it, the comments hold how it was interpreted and built.
+
+| Marker | Meaning | In the ticket's decisions comment |
+|---|---|---|
+| `[Ticket <ID>]` | The order already says so: the ticket description, a comment that adds to the order (typically from the product owner or the requester), or a linked ticket (`<ID>` names which). A comment that reports implementation, such as an earlier completion comment, is not the order. | no: it stays where it is written and is not repeated |
+| `[Entwickler]` | Settled by the developer who implements the ticket: answered in this round, or given later as a decision or a note. | yes, under the developer's entries; the question it answered goes into the ticket's questions document |
+| `[Claude]` | An `Annahme` Claude took without the developer's answer, in this round or during the implementation, including a reading of ambiguous ticket text. | yes, under Claude's assumptions |
+
+Mark every entry, including the facts the ticket answered that went into the record as decisions. On a ticket that comes back for rework, the record starts from the current state the earlier run left behind (its decisions comment and questions document): those entries keep their markers and count as settled, and only a contradiction with the new feedback reopens one. A record written while creating a ticket or grilling one's own plan (`create-story`, `create-task`, `create-bug`, `/lt-dev:interview`, `vibe:plan`) carries no markers: the person answering owns the requirement, so there is nobody else to tell apart.
 
 ## Completion criterion
 
-The frontier is empty, every blocking question is answered by the user, every assumption is written down and labelled, and the user has confirmed the decision record. Only then does implementation begin.
+The frontier is empty, every blocking question is answered by the user, every assumption is written down and labelled, every entry carries its [source marker](#source-markers) where the record governs someone else's requirement, and the user has confirmed the decision record. Only then does implementation begin.
 
 ## Related Skills & Commands
 
@@ -102,5 +119,6 @@ The frontier is empty, every blocking question is answered by the user, every as
 - `/lt-dev:ticket-cycle` inherits all three via `take-ticket`
 
 **Works closely with:**
+- `writing-linear-comments` skill: carries the record's `[Entwickler]` and `[Claude]` entries into the ticket's decisions comment for the product owner, posted early and kept current
 - `building-stories-with-tdd` skill: the seams agreed here are the seams its tests are written at
 - `validating-changes-in-browser` skill: the roles and states agreed here become the walked list

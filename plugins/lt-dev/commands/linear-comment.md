@@ -1,7 +1,7 @@
 ---
 description: Generate and post a short, testable comment on a Linear issue — plain-language summary plus complete test steps, with the technical detail moved into an attached Linear document
 argument-hint: "[issue-id]"
-allowed-tools: Read, Bash(git:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document, AskUserQuestion
+allowed-tools: Read, Bash(git:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document, AskUserQuestion
 disable-model-invocation: true
 ---
 
@@ -65,27 +65,30 @@ Store the resolved issue ID as `ISSUE_ID` for subsequent steps.
 
 The comment has one reader: somebody who did not write the code. Follow
 [`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md) — it owns
-the split. In short: the comment answers "what is different now?" and "what do I do to see it?",
-and everything else goes into a Linear document attached to the ticket.
+the split. In short: the decisions comment, which comes first, answers "what was decided or assumed
+to build it, and what should be checked?"; the completion comment answers "what is different now?"
+and "what do I do to see it?"; everything else goes into Linear documents attached to the ticket.
+The ticket is the order; the comments are everything that happened while carrying it out, so
+nothing the ticket already says is repeated.
 
-Sort the material you gathered in STEP 1 into two piles:
+Sort the material you gathered in STEP 1 into four piles:
 
-| Into the comment | Into the attached document |
-|------------------|----------------------------|
-| What changed, in 1 to 3 plain sentences | file:line references, code, diffs |
-| The complete test steps, with full links and concrete example data | decisions taken and alternatives dropped |
-| Deliberate scope cuts the reader would otherwise expect | known limitations with a technical cause |
-| | anything else a developer would want and a product owner would scroll past |
+| Decisions comment | Completion comment | `<ISSUE_ID> — Fragen und Antworten` | `<ISSUE_ID> — Technische Details` |
+|-------------------|--------------------|-------------------------------------|-----------------------------------|
+| The developers' decisions and notes (one answering a question names it: `(auf Frage F1)`) and Claude's assumptions, each with reason and what to check | What changed, in 1 to 3 plain sentences, and one line pointing at the decisions comment | each question Claude asked, with the options offered and the answer given | file:line references, code, diffs, technical alternatives dropped |
+| | The complete test steps, with full links and concrete example data | | known limitations with a technical cause |
+| | Deliberate scope cuts the reader would otherwise expect | | anything else a developer would want and a product owner would scroll past |
 
-Write no document when there is nothing in the right-hand column. A near-empty document trains
-people to stop opening them.
+[`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md#decisions-and-assumptions-for-the-product-owner) names where the decision entries come from and how
+the decisions comment is kept current. Write nothing for an empty column. A near-empty document
+trains people to stop opening them.
 
 ### STEP 3: Write the comment
 
 Classify testability first, per
 [`writing-qa-test-instructions`](${CLAUDE_PLUGIN_ROOT}/skills/writing-qa-test-instructions/SKILL.md)
 Part 1: is the change verifiable through the frontend, directly or through a named reproducible
-symptom? The answer picks the comment shape (Part 4 of that skill has both).
+symptom? The answer picks the comment shape (Part 6 of that skill has both).
 
 German, no jargon, no file names, no severity words. Every step names its concrete example data
 (`Suchfeld: Muster GmbH`, `Menge: 3`) and every route is a full clickable link against the deployed
@@ -95,17 +98,22 @@ Run the result through [`unslop`](${CLAUDE_PLUGIN_ROOT}/skills/unslop/SKILL.md).
 
 ### STEP 4: User Approval
 
-Present the comment — and the document, if one is being attached — using `AskUserQuestion`:
+Present the decisions comment, the completion comment, and the documents being attached, using `AskUserQuestion`:
 - **Option 1:** "Posten" — post as-is
 - **Option 2:** "Erst anpassen" — let the user modify before posting
 
 ### STEP 5: Post to Linear
 
-1. **Attach the document first**, if there is one, so the comment can link to it:
-   `save_document` with `issue: ISSUE_ID`, `title: "<ISSUE_ID> — Technische Details"`. Where the
-   ticket already carries such a document (check `get_issue` → `documents`), **update that one**
-   via its `id` instead of attaching a second.
-2. **Post the comment** via `save_comment` with `issueId: ISSUE_ID`, including the `## Details`
-   link line when a document exists.
+1. **Decisions comment first**, because the decisions were the premise: find the lt-dev comment
+   that starts with `## Entscheidungen und Annahmen` (`list_comments`) and bring it to the current
+   state via `save_comment` with its `id`, its `Prüfen:` lines pointing at the steps of the
+   completion comment; with entries to report and no such comment yet, post it now. A decisions
+   comment a colleague posted is replaced, not edited, as `writing-linear-comments` describes.
+2. **Attach the documents**, those that have content, so the completion comment can link to them:
+   `save_document` with `issue: ISSUE_ID` and `title: "<ISSUE_ID> — Fragen und Antworten"` or
+   `"<ISSUE_ID> — Technische Details"`. Where the ticket already carries a document of that kind
+   (check `get_issue` → `documents`), **update that one** via its `id` instead of attaching a second.
+3. **Post the completion comment** via `save_comment` with `issueId: ISSUE_ID`, including one
+   `## Details` link line per attached document.
 
-Confirm in one line: which comment was posted, and which document it links to.
+Confirm in one line: which comments were posted or updated, and which documents they link to.

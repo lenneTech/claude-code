@@ -126,7 +126,17 @@ Invoke the `lt-dev:take-ticket` skill via the `Skill` tool, the equivalent of:
 
 **Relevance gate (`take-ticket` STEP 5b).** Before implementing, `take-ticket` verifies the picked ticket is still current — ticket/comment timestamps against the base-branch history, a check for parallel work on it, and a substantive check that the described problem still reproduces. A ticket written weeks ago can have been solved in the meantime, from a different angle or by another session. Implementing it anyway does not just waste the run: it can re-introduce something that was deliberately removed, undo a newer fix, or add a second mechanism beside an existing one so nobody can tell which is authoritative. If that gate reports "already solved" or "premise no longer holds", `take-ticket` stops and asks — surface that to the user and do **not** push the cycle onward to Phase B/C/D.
 
-**Decision round (`take-ticket` STEP 5c).** After the optional extra sources (`take-ticket` STEP 2) are collected and the relevance gate has passed, every open decision is settled with the user before the first line of code, via the `grilling-decisions` skill. Larger tickets (a data model, API contract, or permission change, missing acceptance criteria, or two soft signals such as backend plus frontend) get a full round that walks the planned implementation dimension by dimension; small tickets only get the questions the analysis produced. The round closes with a decision record the user confirms. From there to the STEP 9 gate the implementation runs without questions: recorded decisions are not asked again, non-blocking gaps become logged `Annahmen`, and only a blocking contradiction stops the run. This is what lets the user leave the cycle alone during implementation, so front-load the questions here instead of spreading them over the run. `--grill` / `--no-grill` override the sizing.
+**Decision round (`take-ticket` STEP 5c).** After the optional extra sources (`take-ticket` STEP 2) are collected and the relevance gate has passed, every open decision is settled with the user before the first line of code, via the `grilling-decisions` skill. Larger tickets (a data model, API contract, or permission change, missing acceptance criteria, or two soft signals such as backend plus frontend) get a full round that walks the planned implementation dimension by dimension; small tickets only get the questions the analysis produced. The round closes with a decision record the user confirms, every entry marked `[Ticket <ID>]`, `[Entwickler]` or `[Claude]` ([source markers](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md#source-markers)). From there to the STEP 9 gate the implementation runs without questions: recorded decisions are not asked again, non-blocking gaps become logged `Annahmen`, and only a blocking contradiction stops the run. This is what lets the user leave the cycle alone during implementation, so front-load the questions here instead of spreading them over the run. `--grill` / `--no-grill` override the sizing.
+
+**The record's path into the ticket's comments.** The ticket is the order; everything that happens while carrying it out goes into its comments. The developer often settles these points without the product owner, so every entry the ticket does not already state ends up in the decisions comment, where the reviewer and the tester can check it. It comes before the completion comment, because the decisions were the premise of the work:
+
+1. `take-ticket` STEP 5c writes the record with a marker on every entry, posts the decisions comment and attaches the questions document right away, so both are on the ticket while the work runs ([`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md#decisions-and-assumptions-for-the-product-owner)).
+2. The implementation keeps all three at the current state: it adds every `Annahme` it takes (`take-ticket` STEP 5c.5, a behaviour-changing take-along in STEP 6c, STEP 9b), marked `[Claude]`, replaces an entry a later answer revises, and deletes one that no longer applies; `take-ticket` STEP 10 lists the result.
+3. STEP 3b fixes the final list as `DECISION_RECORD` and shows it to the developer exactly as the decisions comment will read, before the approval.
+4. Phase D writes the completion comment (`git:ship` STEP 10c or `dev-submit` STEP 3) and, in the same pass, brings the decisions comment and the questions document to `DECISION_RECORD`, with the `Prüfen:` lines pointing at the completion comment's steps; STEP 4b.3c checks it.
+5. STEP 5 lists the same entries in the final summary.
+
+What reaches the ticket is the state that produced the result, never the way there: a decision revised along the way appears only in its final form, a dropped one not at all ([`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md#decisions-and-assumptions-for-the-product-owner)).
 
 **Base-repo gate (`checking-upstream-first`).** Before touching anything that ORIGINALLY CAME FROM a base repo, look at what that repo carries today. Projects are born as a copy of a template and then stand still while the template moves on, so the file in front of you is the template as it was on project-creation day — not as it is now. This covers far more than workarounds, and it covers **both halves of the stack**: a bug in `Dockerfile`, `.gitlab-ci.yml`, `tsconfig*.json`, `scripts/**` or a `check:*` chain is a base-repo question first and a project question second — on the backend (`docker-entrypoint.sh`, `nest-cli.json`, `src/config.env.ts`, `migrations/**`, a vendored `src/core/`) exactly as on the frontend (`nuxt.config.ts`, `app/app.config.ts`, `openapi-ts.config.ts`, `playwright.config.ts`, `server/**`, a vendored `app/core/`).
 
@@ -216,6 +226,8 @@ If the skill returns `boot_failed` or `stall_guard_triggered`, surface the diagn
 Before anything is deployed, the developer gets the chance to test everything themselves. This step runs on **every** `READY-TO-SHIP` verdict; no flag and no answer skips it. Claude does all the setup, so the developer spends their time on the check itself: the stack is running, the test data exists, and the package tells them in one screen what was asked for and what changed, then walks them through every check with complete links.
 
 **No new browser walk here.** The package is assembled from what the cycle already produced: Phase C's `final_list`, `accounts_registry`, `also_fixed`, `out_of_scope_findings`; Phase A's `task_summary`, `implementation_summary`, AC verdicts (`take-ticket` STEP 9a), the STEP 5c decision record and every `Annahme`; the review outcome from Phase B.
+
+**Fix `DECISION_RECORD` here**, at the current state: every `[Entwickler]` and `[Claude]` entry of the record that still holds, the questions from Claude behind the developer decisions (with options and answers, for the questions document), the assumptions added during the implementation and in a loop-back included, the scope cuts decided during the implementation, and the developer's notes from this cycle that a reviewer or tester should know (a correction given at this gate that changed the behaviour is one). Entries marked `[Ticket <ID>]` stay out: the ticket already says them. It goes into the package below and, unchanged, into the decisions comment, while `DEV_TEST_CONTEXT` goes into the completion comment.
 
 **1. Prepare the stack.** Keep `lt dev up` running; the automation browser is already closed.
 
@@ -308,6 +320,27 @@ Daten:
 - <Vorbedingung>: fehlt — wird nach der Freigabe angelegt | legt der Tester an (prüft genau das Anlegen)
 Nicht geprüft: <Grund | "nichts">
 
+FÜR DEN PO (so steht es im Kommentar „Entscheidungen und Annahmen“; was schon im Ticket steht, bleibt dort)
+Entscheidungen und Hinweise der Entwickler
+- E1 Entscheidung: <in einfachen Worten> (auf Frage F1)
+  Warum: <Grund in einem Satz>
+  Prüfen: <was der PO beurteilen soll> → <Schritt der Testanleitung im Kommentar | wie sonst prüfbar>
+- E2 Entscheidung: <ohne vorherige Frage, von dir eingebracht>
+  Warum: <…>
+  Prüfen: <…>
+- Hinweis: <was du dem Reviewer oder Tester mitgeben willst>
+Annahmen von Claude
+- A1 <Annahme>
+  Warum: <…>
+  Prüfen: <…>
+Nicht in diesem Ticket (bei der Umsetzung entschieden)
+- <Eintrag>
+| oder "Keine: umgesetzt wie im Ticket beschrieben."
+
+FRAGEN UND ANTWORTEN (geht als Dokument „<ISSUE_IDENTIFIER> — Fragen und Antworten“ ans Ticket)
+- F1 <Kurztitel>: <deine Antwort, kurz> → E1
+| oder "keine Fragen gestellt, kein Dokument"
+
 Ideen außerhalb des Tickets (keine Fehler, die sind oben behoben)
 - <out_of_scope_findings | "nichts">
 
@@ -322,10 +355,10 @@ Technische Details
 - Question: "Alles ist vorbereitet, das Test-Paket steht oben. Bereitstellen?"
 - Options:
   1. "Getestet, bereitstellen (Recommended)" → continue to STEP 4, which runs unattended to the end.
-  2. "Anpassen" → free text; step numbers are enough ("Schritt 5: Fehlermeldung fehlt"). Loop back to Phase A's implementation steps (`take-ticket` STEP 6 to 9c: implement, test, check, re-analyse, audit; cap **3** in total), then re-run STEP 2 → 3 → 3b with a rebuilt, marked package.
+  2. "Anpassen" → free text; step numbers are enough ("Schritt 5: Fehlermeldung fehlt"). Loop back to Phase A's implementation steps (`take-ticket` STEP 6 to 9c: implement, test, check, re-analyse, audit; cap **3** in total), then re-run STEP 2 → 3 → 3b with a rebuilt, marked package. Bring `DECISION_RECORD`, the decisions comment, and the questions document to the state the correction produced: a revised decision replaces its entry, a dropped one is deleted, and an `Annahme` the developer corrected becomes their decision. The `(neu)` / `(geändert)` marks are for the developer's re-test only; FÜR DEN PO shows the current state without them.
   3. "Abbrechen" → delete the session cookies, stop here, branch remains local, nothing merged.
 
-A free-text answer that only corrects the REVIEW AUF DEV block ("Admin auf dev ist der Eintrag <Titel>", "für Kunden gibt es den Datensatz <Link>") is applied without a loop-back: update `DEV_TEST_CONTEXT`, write a corrected account to the stored mapping, show the corrected block, and ask the question again.
+A free-text answer that only corrects the REVIEW AUF DEV block ("Admin auf dev ist der Eintrag <Titel>", "für Kunden gibt es den Datensatz <Link>") is applied without a loop-back: update `DEV_TEST_CONTEXT`, write a corrected account to the stored mapping, show the corrected block, and ask the question again. The same holds for a correction that only touches FÜR DEN PO: a wording, a note to add, or an entry that the ticket already states ("E2 steht so im Ticket", which moves it out of the block): update `DECISION_RECORD`, show the block again, ask again. A correction that changes what was built is option 2.
 
 The question waits as long as the developer needs. A free-text answer meaning "not yet" ("teste noch", "schaue erst drauf", "warte") is a pause: acknowledge it in one line, keep the stack running, and wait for the next message. A go continues with option 1, a reported problem is option 2.
 
@@ -423,7 +456,7 @@ The file is per-machine and outside every repository, so a team member's name ne
 /lt-dev:git:ship --auto-merge --skip-reanalysis --unattended <forwarded ship flags>
 ```
 
-Its STEP 10c comment uses `DEV_TEST_CONTEXT` from STEP 3b as it stands; preconditions still missing appear as "wird nach der Bereitstellung angelegt" until STEP 4b.3c fills them in.
+Its STEP 10c pass uses `DEV_TEST_CONTEXT` for the completion comment and `DECISION_RECORD` for the decisions comment, both from STEP 3b as they stand; preconditions still missing appear as "wird nach der Bereitstellung angelegt" until STEP 4b.3c fills them in.
 
 The `--skip-reanalysis` flag tells `git:ship` to bypass its STEP 1.5 because `take-ticket` STEP 9 already did the equivalent re-analysis. `--unattended` removes its routine questions (commit, infra-flake re-run, Linear comment preview), because the developer approved the result at STEP 3b and expects the rest to run on its own. **Do not** pass either flag when invoking `git:ship` directly.
 
@@ -508,7 +541,7 @@ Steps 0 and 1 run for **every** `POST_MERGE_STATUS`, `dev-review` included: the 
 - An expired session, a failed creation or a dead link does not stop the cycle: that step then tells the tester to create the record, with concrete values.
 - Where records or links changed, update the STEP 10c comment in place via `mcp__plugin_lt-dev_linear__save_comment` with its `id`, so the ticket carries one current instruction instead of two.
 
-**1. Testanleitung verifizieren — vor jeder Transition.** `git:ship` STEP 10c already posted the German "Umsetzung + Testanleitung" comment, following the same [`writing-qa-test-instructions`](${CLAUDE_PLUGIN_ROOT}/skills/writing-qa-test-instructions/SKILL.md) skill. Confirm via `mcp__plugin_lt-dev_linear__list_comments` that it is actually on the ticket, and that its shape matches `QA_TESTABLE`.
+**1. Testanleitung verifizieren — vor jeder Transition.** `git:ship` STEP 10c already posted the German "Umsetzung + Testanleitung" comment, following the same [`writing-qa-test-instructions`](${CLAUDE_PLUGIN_ROOT}/skills/writing-qa-test-instructions/SKILL.md) skill. Confirm via `mcp__plugin_lt-dev_linear__list_comments` that it is actually on the ticket, that its shape matches `QA_TESTABLE`, that the decisions comment (`## Entscheidungen und Annahmen`, posted earlier in the cycle) carries every entry of `DECISION_RECORD` with step numbers from this completion comment, and, where the record holds questions, that the `<ISSUE_IDENTIFIER> — Fragen und Antworten` document is attached and at the same state. A missing or outdated piece is fixed in place via `save_comment` / `save_document` with its `id` (a decisions comment a colleague posted is replaced, not edited, per `writing-linear-comments`), before any transition.
 
 - Comment present and matching → continue to step 2.
 - Comment missing (the user chose "Überspringen" at ship STEP 10c) or its shape contradicts the classification → generate it now per the skill and post it via `mcp__plugin_lt-dev_linear__save_comment`, then continue.
@@ -552,7 +585,7 @@ Capture `REVIEWER` = `{linearUserId, displayName, email}`.
 /lt-dev:dev-submit --unattended
 ```
 
-Right before it, create the missing preconditions from `DEV_TEST_CONTEXT` that the current dev version can already hold, with the STEP 3b session and the rules of `writing-qa-test-instructions` Parts 4 and 5. Preconditions that need the unmerged version are left to the tester, with concrete values. `dev-submit` writes its comment from the completed context.
+Right before it, create the missing preconditions from `DEV_TEST_CONTEXT` that the current dev version can already hold, with the STEP 3b session and the rules of `writing-qa-test-instructions` Parts 4 and 5. Preconditions that need the unmerged version are left to the tester, with concrete values. `dev-submit` writes its comment from the completed context and brings the decisions comment to `DECISION_RECORD`.
 
 `dev-submit` creates the MR/PR, posts the German Linear comment, and moves the ticket to "Dev Review". Capture `REQUEST_URL` from its output.
 
@@ -598,8 +631,10 @@ QA-Übergabe
 - Testanleitung:   <als Linear-Comment gepostet | fehlt — Transition ausgesetzt>
 
 Ablauf
-- Entscheidungen (STEP 5c): <E1..En | "leichte Runde, keine offenen Fragen">
-- Annahmen: <liste inkl. der während der Umsetzung ergänzten | "keine">
+- Entscheidungen und Hinweise der Entwickler: <je Zeile "E1 <kurz>" | "keine über das Ticket hinaus">
+- Annahmen von Claude: <je Zeile "A1 <kurz>", inkl. der während der Umsetzung ergänzten | "keine">
+- Nicht in diesem Ticket (bei der Umsetzung entschieden): <je Zeile | "nichts">
+- Kommentar „Entscheidungen und Annahmen“ im Ticket: <aktuell | fehlt: <Grund> | keiner nötig>
 - Freigabe: durch Entwickler nach eigenem Test
 - Ungeplante Rückfragen: <anzahl + Anlass | "keine">
 - Nicht committet (fremde Änderungen): <pfade | "keine">
@@ -656,8 +691,10 @@ Ticket
 - Assignee: <REVIEWER.displayName>
 
 Ablauf
-- Entscheidungen (STEP 5c): <E1..En | "leichte Runde, keine offenen Fragen">
-- Annahmen: <liste inkl. der während der Umsetzung ergänzten | "keine">
+- Entscheidungen und Hinweise der Entwickler: <je Zeile "E1 <kurz>" | "keine über das Ticket hinaus">
+- Annahmen von Claude: <je Zeile "A1 <kurz>", inkl. der während der Umsetzung ergänzten | "keine">
+- Nicht in diesem Ticket (bei der Umsetzung entschieden): <je Zeile | "nichts">
+- Kommentar „Entscheidungen und Annahmen“ im Ticket: <aktuell | fehlt: <Grund> | keiner nötig>
 - Freigabe: durch Entwickler nach eigenem Test
 - Ungeplante Rückfragen: <anzahl + Anlass | "keine">
 - Nicht committet (fremde Änderungen): <pfade | "keine">
@@ -699,6 +736,7 @@ If `--review` ran (or the user opted in at STEP 2), include a one-line summary o
 - **A green `check` is the precondition for every MR/PR and every merge in this cycle.** The `check` script runs in the [`running-check-script`](${CLAUDE_PLUGIN_ROOT}/skills/running-check-script/SKILL.md) skill's **Blocking** mode at three points: `take-ticket` STEP 8 (Phase A), and `git:ship` STEP 1 and STEP 4b (Phase D). At each one, **every** error is fixed at its root, across **every** discovered project — pre-existing errors included, because whether an error came from this ticket makes no difference to whether the project runs, and it blocks the next person just as hard either way. The deciding question is only ever "can this be fixed?", and while the answer is yes, it gets fixed; `STALLED` means attack it differently, not give up.
 
   The single Accepted residual is a dependency CVE whose full six-step escalation ladder is exhausted and documented. Everything else that stays red stops the cycle: no push, no MR/PR, no merge, branch left local and intact. A red `check` landing on `dev` turns CI red for the whole team, and the next auto-pick then branches off that broken state — which is why this gate sits before the MR and not after it.
+- **The ticket is the order; the comments carry the implementation.** The decisions comment, posted right after the decision round and kept current as [`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md#decisions-and-assumptions-for-the-product-owner) shapes it, carries the developers' decisions and notes and every assumption of Claude, the ones added during the implementation included; it comes before the completion comment because it was the premise. What the ticket already says is not repeated there, and none of it is written into the ticket description. Only the current state is shown, in one decisions comment per ticket: superseded decisions and dropped questions disappear from the comment and the questions document alike. The developer often decides without the product owner; the reviewer and the tester can only check what they can see.
 - **All questions are asked up front; the developer judges the result once.** The cycle asks while the developer is at the screen: the STEP 5c decision round and the STEP 1a process round. From there it runs unattended, and the developer's quality verdict is collected once, at STEP 3b, on a fully prepared stack. A process question asked in the middle of the run, or a second completeness question after `take-ticket` STEP 9, stops a run the developer believes is unattended and is a defect. The only mid-run stops are blocking ones: a contradiction with the decision record, a review finding that could not be fixed, a failed boot, CI or deploy, and the questions a failure path in Phase D already defines.
 - **`take-ticket` STEP 9 completing cleanly gates everything after Phase A.** With `--in-cycle` its completeness verdict is not asked but carried: the AC verdicts go into the STEP 3b test package, where each one maps to the steps that show it.
 - **The browser is walked once per iteration, in Phase C, after the review.** `take-ticket --in-cycle` skips its own STEP 9.5 walk; walking before the review and again after it doubles the longest step for no additional evidence.

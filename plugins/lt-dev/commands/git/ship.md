@@ -1,7 +1,7 @@
 ---
 description: 'Ship the current feature branch into dev — pre-flight check, commit, rebase, test, check, MR/PR, Linear comment + "Dev Review" + unassign, wait for CI, merge (squash for feature branches, regular merge when promoting a base branch into a higher base branch), delete branch. Auto-retries on pipeline failure.'
 argument-hint: "[--base=<branch>] [--max-pipeline-retries=<n>] [--no-squash] [--keep-branch] [--auto-merge] [--skip-reanalysis] [--unattended]"
-allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, ListAgents, SendMessage, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document
+allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, ListAgents, SendMessage, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document
 disable-model-invocation: false
 ---
 
@@ -553,6 +553,9 @@ For the testable shape, take the test context next (skill Part 4: an account per
 
 [1-3 Sätze in Nutzersprache: was war das Problem, was ist jetzt anders. Kein Jargon.]
 
+Entscheidungen und Annahmen: im Kommentar „Entscheidungen und Annahmen“.
+[ohne solchen Kommentar: "Entscheidungen und Annahmen: keine, umgesetzt wie im Ticket beschrieben."]
+
 ## Testanleitung
 
 Umgebung: <Dev-URL>
@@ -590,13 +593,27 @@ This comment is what a later `/lt-dev:ticket-cycle` run reads back at its STEP 4
 
 **A take-along the tester will notice gets one line in the comment** (a pre-existing defect fixed along the way, a visible improvement), so the tester does not report it as an unexpected change. Take-alongs with no visible effect belong in the attached document.
 
-**Keep it short, and move the technical detail into an attached document.** The reader is a product
-owner or a tester, and the comment is the thing they act on: what changed, and the steps to see it.
-Everything a developer would want — file references, decisions taken, alternatives dropped, known
-limitations — goes into a Linear document attached to the ticket, linked from a single `## Details`
-line at the end of the comment. [`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md)
-owns that split and the `save_document` mechanics; where the ticket already carries a
-`<ISSUE_ID> — Technische Details` document, update that one rather than attaching a second.
+**Decisions and assumptions live in their own comment, before this one.** The ticket is the order;
+the comments are everything that happened while carrying it out, and the decisions were the
+premise. `take-ticket` posted the decisions comment (`## Entscheidungen und Annahmen`) right after
+the decision round; in this same pass, bring it to its final state via `save_comment` with its
+`id` (one a colleague posted is replaced instead, per the skill), with every `Prüfen:` line pointing at a step of this comment, and the questions document
+with it, per
+[`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md#decisions-and-assumptions-for-the-product-owner).
+The entries come from `DECISION_RECORD` when `/lt-dev:ticket-cycle` hands it over, otherwise the
+`take-ticket` STEP 10 list from this session, otherwise the skill's fallback order. No decisions
+comment yet but entries to report (work done by hand, a fresh session): post it now, before this
+comment.
+
+**Keep the rest short, and move two things into attached documents.** The reader is a product
+owner or a tester, and the comment is the thing they act on. The questions Claude asked, with the
+options offered and the answers given, go into `<ISSUE_ID> — Fragen und Antworten` (only when
+there were questions). Everything only a developer would want — file references, technical
+alternatives dropped, known limitations with a technical cause — goes into
+`<ISSUE_ID> — Technische Details`. Each is linked from its own line under `## Details` at the end
+of the comment. [`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md)
+owns that split and the `save_document` mechanics; where the ticket already carries a document of
+the same kind, update that one rather than attaching a second.
 No document when there is no detail worth keeping.
 
 Every test step names its concrete example data (`Suchfeld: Muster GmbH`, `Menge: 3`) and every

@@ -146,6 +146,9 @@ For the testable shape, take the test context next (skill Part 4). A context han
 
 [1-3 Sätze in Nutzersprache: was war das Problem, was ist jetzt anders. Kein Jargon.]
 
+Entscheidungen und Annahmen: im Kommentar „Entscheidungen und Annahmen“.
+[ohne solchen Kommentar: "Entscheidungen und Annahmen: keine, umgesetzt wie im Ticket beschrieben."]
+
 ## Testanleitung
 
 Umgebung: <Dev-URL>
@@ -168,13 +171,26 @@ Vorbereitete Daten:
 MR/PR: REQUEST_URL
 ```
 
-**Keep it short.** Technical detail — file references, decisions, alternatives dropped, known
-limitations — goes into a Linear document attached to the ticket, linked from one `## Details` line
-at the end of the comment, per
+**Decisions and assumptions live in their own comment, before this one**: the developers'
+decisions and notes and every assumption of Claude, each with reason and what to check, per
+[`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md#decisions-and-assumptions-for-the-product-owner).
+The ticket is the order and the comments are everything that happened while carrying it out; the
+decisions were the premise, so `take-ticket` posted that comment right after the decision round.
+In this same pass, bring it to its final state via `save_comment` with its `id` (one a colleague posted is replaced instead, per the skill), with every
+`Prüfen:` line pointing at a step of this comment, and the questions document with it. The entries
+come from `DECISION_RECORD` when `/lt-dev:ticket-cycle` hands it over, otherwise from the
+`take-ticket` STEP 10 list in this session, otherwise from the skill's fallback order. No decisions
+comment yet but entries to report: post it now, before this comment.
+
+**Keep the rest short.** The questions Claude asked, with options and answers, go into the
+attached document `<ISSUE_ID> — Fragen und Antworten` (only when there were questions); technical
+detail — file references, technical alternatives dropped, known limitations — goes into
+`<ISSUE_ID> — Technische Details`. Each is linked from its own line under `## Details` at the end
+of the comment, per
 [`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md). Every
-test step carries its concrete example data and full links. No document when there is no detail
-worth keeping; update the existing `<ISSUE_ID> — Technische Details` document rather than attaching
-a second one.
+test step carries its concrete example data and full links. No document when there is nothing to
+carry; where the ticket already carries a document of the same kind, update it rather than
+attaching a second one.
 
 **Not testable** — same block, with the Testanleitung section replaced by:
 
@@ -191,7 +207,7 @@ The change is not merged yet on this path, so the instructions describe what the
    - Show the generated comment
    - Option 1: "Posten" → Post as-is
    - Option 2: "Bearbeiten" → Let the user modify before posting
-5. **Post** the comment to issue **#ISSUE_ID** via Linear MCP `create_comment`.
+5. **Post** the comment to issue **#ISSUE_ID** via Linear MCP `save_comment` (`issueId`, `body`).
 
 ### STEP 4: Ticket-Status auf "Dev Review" setzen
 
