@@ -61,26 +61,43 @@ run() {
   env -u CLAUDE_CODE_MESSAGING_SOCKET "$@" bash -c "cd '$REPO' && CLAUDE_PID=\$CLAUDE_PID bash '$SCRIPT' 2>&1"
 }
 
+# Native Windows: CLAUDE_PID names a process whose start time Git Bash cannot read
+# (its ps has no -o), so every verdict there is INCONCLUSIVE by design, which the
+# "session start unreadable" case covers; inboxes are named pipes, so there are no
+# socket peers either. Cases that need a readable session start or a socket peer run
+# on macOS/Linux only. Gated by platform, not by probing: a broken start-time read
+# on macOS or Linux has to fail here, not skip.
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) NATIVE_WINDOWS=1 ;; *) NATIVE_WINDOWS=0 ;; esac
+skip_on_windows() {
+  [ "$NATIVE_WINDOWS" -eq 1 ] || return 1
+  echo "  - skipped on native Windows: $1"
+}
+
 echo "change-provenance.sh"
 
 # --- clean tree ------------------------------------------------------------
 out="$(run CLAUDE_PID="$SESSION_PID")"
-assert_contains "$out" "origin-question: NOT-NEEDED" "a clean tree with no peer needs no question"
+skip_on_windows "clean-tree verdict" \
+  || assert_contains "$out" "origin-question: NOT-NEEDED" "a clean tree with no peer needs no question"
 assert_contains "$out" "the working tree is clean" "reports the clean tree"
 
 # --- a path older than the session ----------------------------------------
 echo "changed by somebody else" > "$REPO/tracked.txt"
 touch -t 202001010900 "$REPO/tracked.txt"
-out="$(run CLAUDE_PID="$SESSION_PID")"
-assert_contains "$out" "pre-session" "classifies a path older than the session as pre-session"
-assert_contains "$out" "origin-question: UNATTRIBUTABLE" "no live peer in this checkout leaves it unattributable"
-assert_contains "$out" "pre-session=1" "counts the pre-session path"
+if ! skip_on_windows "pre-session classification"; then
+  out="$(run CLAUDE_PID="$SESSION_PID")"
+  assert_contains "$out" "pre-session" "classifies a path older than the session as pre-session"
+  assert_contains "$out" "origin-question: UNATTRIBUTABLE" "no live peer in this checkout leaves it unattributable"
+  assert_contains "$out" "pre-session=1" "counts the pre-session path"
+fi
 
 # --- a path written during the session ------------------------------------
 echo "written now" > "$REPO/other.txt"
-out="$(run CLAUDE_PID="$SESSION_PID")"
-assert_contains "$out" "in-session" "classifies a freshly written path as in-session"
-assert_contains "$out" "in-session=1" "counts the in-session path separately"
+if ! skip_on_windows "in-session classification"; then
+  out="$(run CLAUDE_PID="$SESSION_PID")"
+  assert_contains "$out" "in-session" "classifies a freshly written path as in-session"
+  assert_contains "$out" "in-session=1" "counts the in-session path separately"
+fi
 
 # --- a deleted path has no mtime and never forces a question ---------------
 git -C "$REPO" checkout -q -- tracked.txt
@@ -99,7 +116,9 @@ assert_contains "$out" "origin-question: INCONCLUSIVE" "an unreadable session st
 assert_contains "$out" "start time unavailable" "says why classification was impossible"
 
 # --- a live peer sharing the checkout -------------------------------------
-if command -v node >/dev/null 2>&1; then
+if skip_on_windows "live-peer cases"; then
+  :
+elif command -v node >/dev/null 2>&1; then
   # Start the peer stand-in without a subshell: a subshell would inherit the
   # EXIT trap and delete the fixtures when it ends.
   pushd "$REPO" >/dev/null || exit 1

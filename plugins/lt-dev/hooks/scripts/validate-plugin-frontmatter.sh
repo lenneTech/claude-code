@@ -59,43 +59,39 @@ fi
 CONTENT=""
 
 if [ "$TOOL" = "Edit" ]; then
-  # Require jq for Edit validation — the legacy regex fallback cannot reliably
-  # extract multi-line old_string / new_string from the JSON payload, so without
-  # jq we cannot perform an accurate substitution. Fail-open in that case.
-  if ! command -v jq &>/dev/null; then
-    exit 0
-  fi
-
-  OLD_STRING=$(echo "$INPUT" | jq -r '.tool_input.old_string // ""')
-  NEW_STRING=$(echo "$INPUT" | jq -r '.tool_input.new_string // ""')
-  REPLACE_ALL=$(echo "$INPUT" | jq -r '.tool_input.replace_all // false')
-
   # Existing file must be readable for us to compute the resulting content.
   # If not (new file via Edit is an Edit-tool error anyway), fail-open.
   [ -r "$FILE_PATH" ] || exit 0
 
   # Use node for the substitution. Node is robust against any UTF-8, newlines,
-  # quotes, and backslashes in the strings (passed as argv, not interpolated).
+  # quotes, and backslashes in the strings.
   # Node is already an allowed bash pattern in this plugin's permissions.json.
   if ! command -v node &>/dev/null; then
     exit 0
   fi
 
-  # node -e places user-args starting at argv[1] (no script-path slot),
-  # so destructure with a single skip.
-  CONTENT=$(node -e '
+  # node reads old_string / new_string / replace_all straight from the payload on
+  # stdin. Extracting them with `jq -r` first broke on Windows: a native jq.exe writes
+  # CRLF for every newline inside a string, so a multi-line old_string never matched
+  # the file, and an edit that stripped the frontmatter passed unchecked (Plugin CI
+  # windows-latest, 2026-10-07). node -e places user-args starting at argv[1].
+  CONTENT=$(printf '%s' "$INPUT" | node -e '
     const fs = require("node:fs");
-    const [, path, oldStr, newStr, replaceAll] = process.argv;
-    let content;
+    const path = process.argv[1];
+    let input, content;
+    try { input = JSON.parse(fs.readFileSync(0, "utf8")).tool_input || {}; }
+    catch { process.exit(0); }
     try { content = fs.readFileSync(path, "utf8"); }
     catch { process.exit(0); }
+    const oldStr = input.old_string ?? "";
+    const newStr = input.new_string ?? "";
     // The replacer function inserts newStr verbatim. Passed as a plain string,
     // String.replace would expand replacement patterns such as $& inside it.
-    const out = replaceAll === "true"
+    const out = String(input.replace_all) === "true"
       ? content.split(oldStr).join(newStr)
       : content.replace(oldStr, () => newStr);
     process.stdout.write(out);
-  ' "$FILE_PATH" "$OLD_STRING" "$NEW_STRING" "$REPLACE_ALL" 2>/dev/null) || exit 0
+  ' "$FILE_PATH" 2>/dev/null) || exit 0
 else
   # ── Write tool: tool_input.content is the full file content verbatim ──
   if command -v jq &>/dev/null; then

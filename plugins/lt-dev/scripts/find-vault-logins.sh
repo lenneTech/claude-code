@@ -116,7 +116,10 @@ found=0
 tmp=$(mktemp)
 trap 'rm -f "$tmp"' EXIT
 
+# A native jq.exe on Windows ends every line it prints with CRLF; `read` keeps the CR,
+# and `op --account "<url>\r"` lists nothing (Plugin CI windows-latest, 2026-10-07).
 while IFS= read -r acct; do
+  acct="${acct%$'\r'}"
   [ -n "$acct" ] || continue
   if ! op item list --categories Login --account "$acct" --format json >"$tmp" 2>/dev/null; then
     echo "find-vault-logins: could not list items for account $acct" >&2
@@ -124,6 +127,7 @@ while IFS= read -r acct; do
   fi
   listed_any=true
   while IFS= read -r item; do
+    item="${item%$'\r'}"
     [ -n "$item" ] || continue
     item_id=$(printf '%s' "$item" | jq -r '.itemId')
     vault_id=$(printf '%s' "$item" | jq -r '.vaultId')
