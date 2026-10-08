@@ -1,6 +1,6 @@
 ---
 name: generating-nest-servers
-description: 'Handles ALL NestJS and @lenne.tech/nest-server work: modules, services, controllers/resolvers, models, DTOs, and debugging. Covers `lt server` generators, @Roles/@Restricted security, CrudService patterns, and API tests via TestHelper. Supports monorepos (projects/api/, packages/api/). Activates on files under src/server/, guards, decorators, REST/GraphQL endpoints, and on "Backend bauen", "Endpoint anlegen", "Modul erstellen". NOT for Vue/Nuxt frontend (use developing-lt-frontend). NOT for nest-server version updates (use nest-server-updating). NOT for TDD orchestration (use building-stories-with-tdd).'
+description: 'Handles all NestJS and @lenne.tech/nest-server work: modules, services, controllers/resolvers, models, DTOs, @Roles/@Restricted security, `lt server` generators, API tests via TestHelper, and debugging. Activates on files under src/server/, REST/GraphQL endpoints, and on "Backend bauen", "Endpoint anlegen", "Modul erstellen". NOT for Vue/Nuxt frontend (use developing-lt-frontend). NOT for nest-server version updates (use nest-server-updating). NOT for TDD orchestration (use building-stories-with-tdd).'
 paths:
   - "**/src/server/**"
   - "**/projects/api/**"

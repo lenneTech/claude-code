@@ -1,6 +1,6 @@
 ---
 name: nest-server-updating
-description: 'Migration guides, release notes, and error solutions for updating @lenne.tech/nest-server in npm mode. Covers version-specific breaking changes, stepwise major upgrades, and starter comparisons; delegates execution to the lt-dev:nest-server-updater agent. Activates on nest-server version upgrades ("update nest-server", "nest-server aktualisieren", "auf die neueste nest-server-Version heben"), "pnpm run update", TypeScript errors after an upgrade, or stepwise migration planning. NOT for vendored cores (use nest-server-core-vendoring). NOT for writing NestJS code (use generating-nest-servers). NOT for general npm updates (use maintaining-npm-packages).'
+description: 'Updates @lenne.tech/nest-server in npm mode: version-specific breaking changes, stepwise major upgrades and error fixes, executed by the lt-dev:nest-server-updater agent. Activates on "update nest-server", "nest-server aktualisieren", "auf die neueste nest-server-Version heben", "pnpm run update", or TypeScript errors after an upgrade. NOT for vendored cores (use nest-server-core-vendoring). NOT for writing NestJS code (use generating-nest-servers). NOT for general npm updates (use maintaining-npm-packages).'
 ---
 
 # @lenne.tech/nest-server Update Knowledge Base

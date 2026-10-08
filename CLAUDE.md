@@ -171,6 +171,7 @@ claude-code/
 │       │                     # pattern: Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*)
 │       ├── skills/           # Context-aware expertise (SKILL.md + references)
 │       ├── evals/            # `claude plugin eval` suite: trigger/ and quality/ cases (results/ is git-ignored)
+│       ├── context-budget.json  # Accepted always-on size (skill listing, agents), gated by scripts/context-budget.mjs
 │       ├── permissions.json  # Bash permission patterns for auto-approval
 │       ├── permissions.schema.json  # JSON Schema for permissions validation
 │       └── .mcp.json         # MCP server dependencies
@@ -415,13 +416,15 @@ Run `/lt-dev:plugin:check` periodically or before releases to verify:
 - [ ] All SKILL.md have valid frontmatter (name, description)
 - [ ] All referenced .md files exist
 - [ ] "Related Skills" sections are present and accurate
-- [ ] Descriptions include trigger terms for auto-detection
+- [ ] Descriptions include trigger terms for auto-detection; skills only commands load have a one-line description
+- [ ] `node plugins/lt-dev/scripts/context-budget.mjs plugins/lt-dev --check` passes; growth only with a deliberate `--update` (house rule 4)
 
 ### Commands
 - [ ] All commands have `description` in frontmatter
 - [ ] Complex/related commands have "When to Use" sections
 - [ ] `allowed-tools` is set where appropriate (especially git commands), and every entry is a tool in `tools-reference.md`
 - [ ] `argument-hint` is set for commands accepting arguments
+- [ ] A command no other command invokes through the `Skill` tool has `disable-model-invocation: true` (house rules 4 and 6)
 - [ ] No `effort` pin without an "Effort policy" note naming the measurement behind it
 - [ ] Long-running autonomous commands have a "Turn endings" section
 - [ ] Commands and agents that read tickets, comments or MR/PR texts have an "External Content" section; spawn prompts pass IDs or paths instead of copied text (house rule 33)
@@ -438,6 +441,7 @@ Run `/lt-dev:plugin:check` periodically or before releases to verify:
 - [ ] Hook matchers are correctly configured
 - [ ] Context-injecting hooks run on an event that delivers context (UserPromptSubmit, UserPromptExpansion, SessionStart, PostModelSwitch)
 - [ ] UserPromptSubmit detectors stay quiet on `<task-notification>` turns; hook tests pass as CI runs them
+- [ ] A skill named by no detector and loaded by no command has a row in `detect-skill-keywords.sh` when its trigger words are distinctive, or a trigger-eval case
 
 ### MCP
 - [ ] Every server answers `initialize` + `tools/list`, and every referenced tool name appears in the reply

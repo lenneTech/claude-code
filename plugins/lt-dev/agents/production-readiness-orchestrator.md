@@ -1,6 +1,6 @@
 ---
 name: production-readiness-orchestrator
-description: Autonomous production-readiness orchestrator for lenne.tech fullstack projects. Owns the non-spawning phases of the /lt-dev:production-ready workflow — full test suite (Unit, API, Frontend, Playwright) with strict no-skip policy, flow coverage gap analysis with auto-completion, k6 load testing for ~10 concurrent users including long-running soak runs, eight-pillar production-readiness audit with auto-remediation, package.json `check` script iterate-until-green loop, and local GitLab/GitHub CI pipeline reproduction. Iterates each phase with a configurable max-iterations cap. Cannot spawn sub-agents — `/lt-dev:review` is orchestrated by the parent command, not by this agent.
+description: 'Runs the non-spawning phases of /lt-dev:production-ready: full test suite without skips, flow-coverage gaps, k6 load and soak tests, production-readiness audit with fixes, check-script loop, local CI reproduction, each iterated up to a cap. Cannot spawn sub-agents; the parent command runs /lt-dev:review.'
 model: inherit
 maxTurns: 120
 tools: Bash, Read, Grep, Glob, Write, Edit

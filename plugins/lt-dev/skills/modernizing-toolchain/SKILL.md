@@ -1,6 +1,6 @@
 ---
 name: modernizing-toolchain
-description: 'Migrates lenne.tech projects from the legacy jest+eslint+prettier toolchain to the current vitest+oxlint+oxfmt baseline used by nest-server-starter and nuxt-base-starter. Covers swc decoratorMetadata config, the @Prop union-type fix, supertest default-import correction, the Nitro PORT-vs-NITRO_PORT bug, and the config.env.ts + check-envs.sh patterns. Activates when aligning a project with current starter conventions, and on Mongoose union-type errors or ERR_SOCKET_BAD_PORT crashes. NOT for dependency version bumps (use maintaining-npm-packages). NOT for nest-server major upgrades (use nest-server-updating).'
+description: 'Migrates lenne.tech projects from the legacy jest+eslint+prettier toolchain to the vitest+oxlint+oxfmt baseline of nest-server-starter and nuxt-base-starter, including its known pitfalls (swc decoratorMetadata, @Prop union types, Nitro PORT). Activates when aligning a project with current starter conventions, and on Mongoose union-type errors or ERR_SOCKET_BAD_PORT crashes. NOT for dependency version bumps (use maintaining-npm-packages). NOT for nest-server major upgrades (use nest-server-updating).'
 ---
 
 # Modernizing the lenne.tech Toolchain

@@ -1,6 +1,6 @@
 ---
 name: docs-reviewer
-description: Autonomous documentation review agent for lenne.tech fullstack projects. Validates README completeness for new features, JSDoc/interface documentation, migration guide existence for breaking changes or new config options, INTEGRATION-CHECKLIST updates, inline comments for complex logic, and configuration documentation. Produces structured report with fulfillment grades per dimension.
+description: 'Reviews the documentation of a change in lenne.tech projects: README, JSDoc, migration guides for breaking changes or new config options, INTEGRATION-CHECKLIST, comments on complex logic. Graded report.'
 model: inherit
 tools: Bash, Read, Grep, Glob
 skills: generating-nest-servers, developing-lt-frontend

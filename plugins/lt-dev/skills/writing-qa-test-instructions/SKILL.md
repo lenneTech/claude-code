@@ -1,6 +1,6 @@
 ---
 name: writing-qa-test-instructions
-description: 'Decides whether a ticket is manually testable by non-developers and writes the German QA test instructions for the Linear comment. Makes frontend verifiability (directly or through a named reproducible symptom) the hard gate: no browser path means QA Testing is never offered. Covers the not-testable categories, the deployed-environment URL, the account rule (login name plus private 1Password link, never the secret), checking and preparing test data on the deployed stage, guard rails that keep prepared data from deciding the result, example data per step, and both comment formats. Activates whenever a command hands a merged or submitted ticket to QA (ticket-cycle, git:ship, dev-submit). NOT for the developer-facing local re-test manual with literal passwords (that is ticket-cycle STEP 3b). NOT for the browser walk itself (use validating-changes-in-browser).'
+description: 'Decides whether a ticket is manually testable by non-developers and writes the German QA test instructions for the Linear comment when a command hands a ticket to QA.'
 user-invocable: false
 ---
 

@@ -27,7 +27,7 @@ if echo "$PROMPT" | grep -iqE '(npm audit|update.*packages|outdated.*packages|pa
   done
 
   if [ "$has_package" = true ]; then
-    echo '{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"npm maintenance context detected. Use the maintaining-npm-packages skill for package updates, audits, and optimization. Run /lt-dev:maintain-check for a dry-run analysis first."}}'
+    echo '{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"npm maintenance context detected. Use the maintaining-npm-packages skill for package updates, audits, and optimization. For a dry-run analysis first, suggest the user run /lt-dev:maintenance:maintain-check (slash only)."}}'
   fi
 fi
 

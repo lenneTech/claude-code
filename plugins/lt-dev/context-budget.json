@@ -1,0 +1,5 @@
+{
+  "$comment": "Accepted always-on size of this plugin, in characters. Checked by scripts/context-budget.mjs --check in Plugin CI and /lt-dev:plugin:check. Raise it only on purpose, with --update in the same change that grows a description.",
+  "listingChars": 15660,
+  "agentChars": 6959
+}

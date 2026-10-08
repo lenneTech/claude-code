@@ -1,6 +1,6 @@
 ---
 name: backend-reviewer
-description: Autonomous backend code review agent for NestJS / @lenne.tech/nest-server. Analyzes security decorators, CrudService patterns, model rules, controller conventions, input validation, service patterns, type strictness, and test coverage. Produces structured report with fulfillment grades per dimension. Enforces backend-dev agent guidelines as review baseline.
+description: Reviews backend changes in NestJS / @lenne.tech/nest-server against the backend-dev conventions (security decorators, CrudService, models, controllers, validation, types, tests). Graded report. For a fullstack OWASP audit use security-reviewer.
 model: inherit
 tools: Bash, Read, Grep, Glob, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
 skills: generating-nest-servers, building-stories-with-tdd

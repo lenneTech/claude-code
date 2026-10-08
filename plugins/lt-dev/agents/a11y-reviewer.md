@@ -1,6 +1,6 @@
 ---
 name: a11y-reviewer
-description: Autonomous HTML quality review agent for lenne.tech fullstack projects. Audits accessibility (ARIA labels, roles, keyboard navigation, focus management, color contrast, screen reader support), form autocomplete attributes (email, password, name, tel, address, OTP), semantic HTML (heading hierarchy, landmark elements, interactive elements), SEO essentials (useHead, OG tags, lang attribute, structured headings), and crawlability (SSR content, robots.txt, sitemap). Combines static code analysis with Lighthouse audit via Chrome DevTools MCP. Produces structured report with fulfillment grades per dimension.
+description: 'Reviews the HTML quality of lenne.tech Nuxt frontends: accessibility, form autocomplete, semantic HTML, SEO and crawlability, by static analysis plus Lighthouse (accessibility, SEO, performance) via Chrome DevTools MCP. Graded report. UX patterns go to ux-reviewer, component code to frontend-reviewer.'
 model: inherit
 tools: Bash, Read, Grep, Glob, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__take_snapshot, mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__resize_page, mcp__plugin_lt-dev_chrome-devtools__click, mcp__plugin_lt-dev_chrome-devtools__fill, mcp__plugin_lt-dev_chrome-devtools__list_console_messages, mcp__plugin_lt-dev_chrome-devtools__list_network_requests, mcp__plugin_lt-dev_chrome-devtools__lighthouse_audit
 skills: developing-lt-frontend

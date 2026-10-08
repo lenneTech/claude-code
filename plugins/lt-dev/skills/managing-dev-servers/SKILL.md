@@ -1,6 +1,6 @@
 ---
 name: managing-dev-servers
-description: 'Rules for starting, monitoring, and stopping local dev servers (nuxt dev, nest start, pnpm run dev, build --watch, Playwright, Mailpit) and for closing Chrome DevTools MCP tabs afterward. Prefers `lt dev up/down/status/tunnel` for lt projects: stable HTTPS URLs, project-scoped env, parallel projects without port or auth cross-wiring. Falls back to the run_in_background / pkill contract elsewhere, so no orphaned process blocks the session. Also governs WAITING on anything that finishes by itself — CI pipelines, deployments, long test suites, builds: poll them in the background and carry on, never end a turn on "it is running, I will report back". Activates whenever a long-running process starts for manual validation, MCP debugging, TDD, framework linking, or E2E, and whenever a pipeline or deployment has to be watched to its end.'
+description: 'Starts, monitors and stops local dev servers (nuxt dev, nest start, pnpm run dev, build --watch, Playwright, Mailpit), preferring `lt dev up/down/status` in lt projects, so no orphaned process blocks the session, and closes Chrome DevTools MCP tabs afterwards. Also governs waiting on CI pipelines, deployments, long test suites and builds: poll them in the background instead of ending the turn. Activates whenever a long-running process starts, and whenever a pipeline or deployment has to be watched to its end.'
 user-invocable: false
 ---
 

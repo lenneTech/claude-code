@@ -69,6 +69,18 @@ jobs:
       - name: Node tests
         if: ${{ !cancelled() }}
         run: node --test $(find plugins -name '*.test.mjs' -not -path '*/node_modules/*' | sort)
+      # What a plugin adds to every session (skill listing, agent descriptions) may only grow on
+      # purpose: a plugin with a context-budget.json fails here when it outgrows that baseline.
+      # Raising it is a visible change to that file (context-budget.mjs --update).
+      - name: Context budget
+        if: ${{ !cancelled() }}
+        run: |
+          fail=0
+          for baseline in plugins/*/context-budget.json; do
+            [ -f "$baseline" ] || continue
+            node plugins/lt-dev/scripts/context-budget.mjs "$(dirname "$baseline")" --check --top 5 || fail=1
+          done
+          exit "$fail"
       - name: Validate plugin manifests
         if: ${{ !cancelled() }}
         run: |

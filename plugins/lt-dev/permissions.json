@@ -1006,7 +1006,8 @@
         "dev-submit",
         "cleaning-up-disk-space",
         "writing-qa-test-instructions",
-        "briefing"
+        "briefing",
+        "plugin:check"
       ]
     },
     {
@@ -1033,7 +1034,8 @@
         "dev-submit",
         "cleaning-up-disk-space",
         "writing-qa-test-instructions",
-        "briefing"
+        "briefing",
+        "plugin:check"
       ]
     },
     {

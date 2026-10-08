@@ -78,6 +78,10 @@ assert_silent   "$(run_hook detect-plugin-dev.sh "$MARKET" 'what time is it')" "
 assert_silent   "$(run_hook detect-plugin-dev.sh "$MARKET" '/lt-dev:plugin:check the skill')" "slash commands are skipped"
 assert_contains "$(run_hook detect-security-context.sh "$WEB" 'check the login form for XSS')" "general-frontend-security" "security-context reacts to a security prompt"
 assert_contains "$(run_hook detect-npm-maintenance.sh "$WEB" 'run npm audit and fix it')" "maintaining-npm-packages" "npm-maintenance reacts to an audit prompt"
+# The hint once named /lt-dev:maintain-check, a command that does not exist (it lives under maintenance/).
+assert_contains "$(run_hook detect-npm-maintenance.sh "$WEB" 'run npm audit and fix it')" "/lt-dev:maintenance:maintain-check" "npm-maintenance names the dry-run command by its real name"
+# sec-audit runs only by slash, so the hint asks Claude to suggest it rather than call it.
+assert_contains "$(run_hook detect-security-context.sh "$WEB" 'check the login form for XSS')" "suggest the user run /lt-dev:backend:sec-audit" "security-context leaves the slash-only audit to the user"
 assert_contains "$(HOOK_PATH="$LT_BIN:$PATH" run_hook detect-lt-cli.sh "$WEB" 'lt fullstack init for a new project')" "using-lt-cli" "lt-cli reacts to an lt prompt"
 assert_contains "$(run_hook detect-nest-server.sh "$NEST" 'add a service for invoices')" "generating-nest-servers" "nest-server reacts to a backend prompt"
 assert_silent   "$(run_hook detect-nest-server.sh "$NEST" 'what time is it')" "nest-server keyword filter now applies"

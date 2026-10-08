@@ -55,14 +55,12 @@ Two properties decide how much this rule is worth:
 - **The budget is global, not per plugin.** It covers every skill from every source at once — all installed plugins, personal, project, and bundled skills. Shrinking one plugin's total does not buy that plugin any guarantee, because the other sources spend the same budget. A measurement scoped to `plugins/lt-dev/` describes a contribution, never a headroom.
 - **Overflow degrades gracefully and by usage.** Every skill *name* stays listed. Claude Code drops *descriptions*, starting with the skills invoked least, so frequently used skills keep their full text. It is not a cliff, and it is not silent: `/doctor` estimates the listing's cost and names the biggest contributors, and a `--debug` run logs the overflow.
 
-Observed 2026-08-23 on a machine with eight skill sources: the listing measured 26,935 characters against a ~8,000-character budget, and 13 of lt-dev's 27 skills were already listed name-only. Rounds of shortening under the belief that the limit was 16,000 per plugin had cost real trigger vocabulary and prevented none of that dropping. **So do not shorten a description to chase a total.** Raise `skillListingBudgetFraction` when the listing needs more room, and shorten only what is genuinely padded.
+Observed 2026-08-23 on a machine with eight skill sources: the listing measured 26,935 characters against a ~8,000-character budget, and 13 of lt-dev's 27 skills were already listed name-only. Rounds of shortening under the belief that the limit was 16,000 per plugin had cost real trigger vocabulary and prevented none of that dropping. **So cut padding, never trigger words.** lt-dev's share is kept small by the levers in house rule 4 (slash-only commands, one-line descriptions for skills only commands load, keyword hooks for distinctive vocabulary), and its size is gated against `plugins/lt-dev/context-budget.json`.
 
-Measure the total with the first `description:` of each file only, so example frontmatter inside a body never inflates the count:
+Measure with the plugin's own script. It counts exactly what reaches the model (model-invocable skills and commands at any depth, agents separately), which `claude plugin details` does not:
 
 ```bash
-for f in plugins/lt-dev/skills/*/SKILL.md; do
-  sed -n '/^description:/{s/^description: *//;p;q;}' "$f"
-done | awk '{s+=length($0)} END{print s}'
+node plugins/lt-dev/scripts/context-budget.mjs plugins/lt-dev --check --details
 ```
 
 Per-skill breakdown, largest first, to find what to shorten:

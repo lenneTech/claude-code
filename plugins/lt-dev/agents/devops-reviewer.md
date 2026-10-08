@@ -1,6 +1,6 @@
 ---
 name: devops-reviewer
-description: Autonomous DevOps code review agent for lenne.tech fullstack projects. Audits Docker configurations (multi-stage builds, non-root containers, health checks, pinned images), docker-compose setups (dev/production separation, volume mounts, port conventions), CI/CD pipelines (stage order, security gates, caching), environment management (.env isolation, secret handling, database naming), and .dockerignore completeness. Produces structured report with severity-classified findings.
+description: Reviews Docker, docker-compose, CI/CD pipelines, environment and secret handling in lenne.tech projects without changing them; findings by severity. devops builds or changes these configurations.
 model: inherit
 tools: Bash, Read, Grep, Glob
 skills: generating-nest-servers, using-lt-cli

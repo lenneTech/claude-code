@@ -1,6 +1,6 @@
 ---
 name: running-load-tests-with-k6
-description: 'Runs and interprets k6 load tests against lenne.tech fullstack APIs. Covers installation, Better-Auth authentication for a realistic path, the three canonical scenarios (smoke / load / soak), threshold defaults for ~10 concurrent users (p95 under 500ms, error rate under 1%), and the optimisation ladder when a threshold fails. Activates on "k6", "Lasttest", "load test", "hält das unter Last", or checking API stability under concurrent users. NOT for Lighthouse frontend performance (use the a11y-reviewer agent). NOT for unit-level performance assertions.'
+description: 'Runs and interprets k6 load tests against lenne.tech fullstack APIs: authenticated smoke, load and soak scenarios, threshold defaults, and what to optimise when one fails. Activates on "k6", "Lasttest", "load test", "hält das unter Last", or checking API stability under concurrent users. NOT for Lighthouse frontend performance (use the a11y-reviewer agent). NOT for unit-level performance assertions.'
 user-invocable: false
 ---
 

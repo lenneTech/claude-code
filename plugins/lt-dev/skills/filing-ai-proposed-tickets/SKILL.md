@@ -1,6 +1,6 @@
 ---
 name: filing-ai-proposed-tickets
-description: 'Governs every Linear ticket Claude opens for work nobody asked for: an improvement idea, an out-of-scope finding, a refactor, a follow-up. Requires a duplicate search before filing, routes the ticket into the team Triage state, marks it with an AI label so a human sees at a glance that a machine proposed it, and caps how many proposals one run may file. Activates whenever a command is about to create a ticket that did not come from the user, and on "Ticket dafür anlegen", "Folge-Ticket", "sollte man mal", "separates Ticket". NOT for tickets the user asked for (use create-story / create-task / create-bug). NOT for tracking findings a review deliberately dropped.'
+description: 'Governs every Linear ticket Claude opens for work nobody asked for (duplicate search, Triage state, AI label, per-run cap); triggers on "Folge-Ticket".'
 user-invocable: false
 ---
 

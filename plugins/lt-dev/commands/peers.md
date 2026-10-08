@@ -1,7 +1,7 @@
 ---
 description: Show what other Claude Code sessions are doing on this machine, plus the open claims and recorded diagnoses for this repository
 allowed-tools: ListAgents, Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git status:*), Bash(git branch:*), Bash(git worktree:*)
-disable-model-invocation: false
+disable-model-invocation: true
 ---
 
 # Peers — who else is working here

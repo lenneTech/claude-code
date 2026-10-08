@@ -1,5 +1,5 @@
 ---
-description: 'Fully automated maintenance of all lt base repos in dependency order. Wave 1 (nuxt-extensions, nest-server, lt-monorepo, cli) is maintained and released (npm via GitHub release/publish.yml, or template tagging). After npm propagation, wave 2 (nuxt-base-starter, nest-server-starter) is raised to the new versions and released. Then the full /lt-dev:fullstack:smoke-test runs as the release gate, including TurboOps deploy, online verification and a complete cleanup. Each finding is fixed in the base repo that caused it, re-released as a patch, and the smoke test repeats until the stack is clean. Leaves no test artifacts behind.'
+description: Fully automated maintenance and release of all lt base repos in dependency order, gated by the full fullstack smoke test. Every finding is fixed in the base repo that caused it and re-released until the stack is clean. Leaves no test artifacts.
 argument-hint: '[--only=<repo,repo>] [--skip-smoke-test] [--smoke-rounds=1] [--release-as=patch|minor|major] [--dry-run]'
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, Skill, SendMessage, ToolSearch
 disable-model-invocation: true

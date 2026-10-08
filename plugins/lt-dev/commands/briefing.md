@@ -1,5 +1,5 @@
 ---
-description: Refreshes the state of this session's work from its sources (repositories, pipelines, deployments, releases, tickets, peer sessions), finishes what Claude can still do on its own, then briefs the user in plain language on what is open, which decisions are theirs, and what only they can do, each with a step-by-step guide and complete links
+description: Refreshes this session's work from its sources (repositories, pipelines, deployments, tickets, peer sessions), finishes what Claude can still do, then briefs the user in plain language on what is open, which decisions are theirs and what only they can do
 argument-hint: "[focus: ticket, repository or topic]"
 allowed-tools: Read, Grep, Glob, ListAgents, SendMessage, AskUserQuestion, Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git fetch:*), Bash(git branch:*), Bash(git worktree:*), Bash(git rev-parse:*), Bash(git ls-remote:*), Bash(gh run:*), Bash(gh pr:*), Bash(gh release:*), Bash(glab ci:*), Bash(glab mr:*), Bash(curl:*), Bash(jq:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__list_issues
 disable-model-invocation: false

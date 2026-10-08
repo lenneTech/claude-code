@@ -2,7 +2,7 @@
 description: Grill a plan or specification until every open decision is settled, then write the outcome back into the plan file
 argument-hint: "[plan-file-path]"
 allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(git:*), AskUserQuestion, Write, Edit, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
-disable-model-invocation: false
+disable-model-invocation: true
 ---
 
 # Plan Interview

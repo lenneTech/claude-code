@@ -1,5 +1,5 @@
 ---
-description: 'Ship the current feature branch into dev — pre-flight check, commit, rebase, test, check, MR/PR, Linear comment + "Dev Review" + unassign, wait for CI, merge (squash for feature branches, regular merge when promoting a base branch into a higher base branch), delete branch. Auto-retries on pipeline failure.'
+description: Ship the current feature branch into dev, or promote a base branch into a higher one. Commit, rebase, test, run check, open the MR/PR, move the Linear ticket to Dev Review, wait for CI, merge and delete the branch, retrying on pipeline failure.
 argument-hint: "[--base=<branch>] [--max-pipeline-retries=<n>] [--no-squash] [--keep-branch] [--auto-merge] [--skip-reanalysis] [--unattended]"
 allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, ListAgents, SendMessage, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document
 disable-model-invocation: false
@@ -34,9 +34,9 @@ This command is the **closing bookend** to `/lt-dev:take-ticket`. It does **not*
 |---------|---------|
 | `/lt-dev:ticket-cycle` | Full orchestrator: `take-ticket` → this command in one shot |
 | `/lt-dev:take-ticket` | Pick + implement + test a ticket (the typical predecessor) |
-| `/lt-dev:check` | Standalone check-script runner (used internally by Phase 1) |
-| `/lt-dev:git:rebase` | Standalone rebase onto dev (used internally by Phase 3) |
-| `/lt-dev:git:create-request` | Standalone MR/PR creation (used internally by Phase 6) |
+| `/lt-dev:check` | Standalone check-script runner; STEP 1 and 4b run the same loop through the `running-check-script` skill |
+| `/lt-dev:git:rebase` | Standalone rebase onto dev; STEP 3 rebases through the `branch-rebaser` agent |
+| `/lt-dev:git:create-request` | Standalone MR/PR creation; STEP 6b follows its STEP 1-4 |
 | `/lt-dev:dev-submit` | MR/PR + Linear comment + Linear status → "Dev Review" (no merge, no pipeline wait) |
 | [`managing-agent-memory`](../../skills/managing-agent-memory/SKILL.md) skill | Agent-memory commit policy + pre-commit curation (STEP 2) |
 | [`writing-qa-test-instructions`](../../skills/writing-qa-test-instructions/SKILL.md) skill | Testability classification + German QA test instructions for the Linear comment (STEP 10c) |
@@ -364,7 +364,7 @@ Store as `REQUEST_URL` and `REQUEST_ID`.
 
 ### 6b. If No Open Request Exists
 
-Delegate to the `/lt-dev:git:create-request` command's own STEP 1-4 logic (provider detection already done; target branch is `$BASE_BRANCH`). Capture `REQUEST_URL` and `REQUEST_ID` from the created MR/PR.
+Follow STEP 1-4 of [`create-request`](${CLAUDE_PLUGIN_ROOT}/commands/git/create-request.md) (provider detection already done; target branch is `$BASE_BRANCH`). Read that file: the command runs only by slash, so the Skill tool cannot start it. Capture `REQUEST_URL` and `REQUEST_ID` from the created MR/PR.
 
 **Title:** derive from branch name + Linear ID + ticket title (fetch via `mcp__plugin_lt-dev_linear__get_issue` if the branch carries a Linear identifier).
 

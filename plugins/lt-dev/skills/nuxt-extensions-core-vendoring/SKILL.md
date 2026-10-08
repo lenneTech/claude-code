@@ -1,6 +1,6 @@
 ---
 name: nuxt-extensions-core-vendoring
-description: 'Knowledge base for projects that vendored the @lenne.tech/nuxt-extensions module into their source tree (app/core/, no npm dependency). Covers detecting a vendored frontend, the one-way vendor model, when `app/core/` may be touched, upstream sync and upstream-PR workflows, and cosmetic-vs-substantial classification; no flatten-fix is needed here, unlike the backend core. Activates on "sync frontend core from upstream" or frontend vendor-sync conflicts. NOT for npm-based nuxt-extensions updates or new Nuxt code (use developing-lt-frontend).'
+description: 'Knowledge base for projects that vendored the @lenne.tech/nuxt-extensions module into app/core/ (no npm dependency): when the core may be touched, upstream sync and upstream PRs. Activates on "sync frontend core from upstream" or frontend vendor-sync conflicts. NOT for npm-based nuxt-extensions updates or new Nuxt code (use developing-lt-frontend).'
 ---
 
 # Vendored nuxt-extensions core Knowledge Base

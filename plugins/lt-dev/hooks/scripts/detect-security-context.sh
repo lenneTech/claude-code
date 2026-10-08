@@ -33,7 +33,7 @@ if echo "$PROMPT" | grep -iqE '(security.audit|xss|csrf|csp|owasp|vulnerabilit|s
   done
 
   if [ "$has_web_project" = true ]; then
-    echo '{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"Security context detected. Use /security-review for general security scan of branch diff. Use the general-frontend-security skill for OWASP-based frontend security. For backend: /lt-dev:backend:sec-review (nest-server focused) or /lt-dev:backend:sec-audit (full OWASP audit)."}}'
+    echo '{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"Security context detected. Use /security-review for general security scan of branch diff. Use the general-frontend-security skill for OWASP-based frontend security. For backend: /lt-dev:backend:sec-review (nest-server focused); for a full OWASP audit, suggest the user run /lt-dev:backend:sec-audit (slash only)."}}'
   fi
 fi
 

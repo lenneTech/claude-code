@@ -1,6 +1,6 @@
 ---
 name: backend-dev
-description: Autonomous backend development agent for NestJS / @lenne.tech/nest-server with strict security enforcement. Creates modules, services, controllers, models, DTOs with mandatory @Restricted/@Roles decorators, securityCheck() on every model, CrudService inheritance, alphabetical properties, and consistent bilingual descriptions. Enforces zero implicit any, options object pattern, least-privilege testing, and OWASP-aligned security. Operates in projects/api/ or packages/api/ monorepo structures.
+description: 'Implements backend features with tests in NestJS / @lenne.tech/nest-server (projects/api or packages/api): modules, services, controllers, models, DTOs, enforcing the stack security rules (@Restricted/@Roles, securityCheck, CrudService). architect plans, backend-reviewer reviews.'
 model: inherit
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, WebSearch
 skills: generating-nest-servers, nest-server-updating

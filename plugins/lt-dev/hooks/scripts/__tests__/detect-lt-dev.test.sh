@@ -78,6 +78,7 @@ out=$(run_hook "$PROJ" "$REGISTRY")
 assert_contains "$out" "not yet migrated" "emits 'not yet migrated' header"
 assert_contains "$out" "lt dev init" "instructs to run lt dev init"
 assert_contains "$out" "crm-thing" "shows the slug that would be used"
+assert_contains "$out" "managing-dev-servers skill" "names the dev-server skill in the migration hint"
 cleanup
 
 # --- Case 3: lt project, registered, no session → URL block + start hint ---
@@ -104,6 +105,7 @@ assert_contains "$out" "https://api.crm.localhost" "shows API URL"
 assert_contains "$out" "session: no" "shows session: no"
 assert_contains "$out" "lt dev test" "instructs to use lt dev test for E2E (isolated)"
 assert_contains "$out" "lt dev up" "still mentions lt dev up for manual browser/API work"
+assert_contains "$out" "managing-dev-servers skill" "names the dev-server skill in the URL block"
 cleanup
 
 # --- Case 4: lt project, registered, ACTIVE session ---

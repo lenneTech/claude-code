@@ -1,6 +1,6 @@
 ---
 description: Verify plugin elements against best practices
-allowed-tools: Read, Glob, Grep, Bash(find:*), Bash(cat:*), Bash(ls:*), Bash(grep:*), AskUserQuestion, WebFetch, Write, Edit
+allowed-tools: Read, Glob, Grep, Bash(find:*), Bash(cat:*), Bash(ls:*), Bash(grep:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), AskUserQuestion, WebFetch, Write, Edit
 disable-model-invocation: false
 ---
 
@@ -149,7 +149,24 @@ grep -r "Chrome MCP\|Linear MCP" plugins/lt-dev/commands/ --include="*.md"
 - [ ] All required fields present (name, version, description, author)
 - [ ] Keywords are relevant and complete
 
-### 4.7 Documentation Consistency
+### 4.7 Context Budget
+
+Every model-invocable skill and command puts its name and description into Claude's skill listing on every turn. That listing has a character budget of 1% of the context window, shared by every installed plugin; on overflow the descriptions of the least-used skills are dropped and those skills rarely trigger on their own. Agent descriptions reach every session through the Agent tool. Measure both and compare them with the plugin's accepted baseline:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/context-budget.sh" <plugin-dir> --check --details
+```
+
+- `FAIL … grew`: the listing or the agent descriptions are larger than `<plugin-dir>/context-budget.json`. Shorten what grew (padding first; trigger phrases and `NOT for X (use Y)` boundaries stay), or, when the growth is wanted, raise the baseline in the same change with `--update`. Plugin CI runs the same check and fails the build.
+- `FAIL … exceed 1536 chars`: Claude Code cuts that entry's description + `when_to_use`; shorten it.
+- `NOTE … shrank`: lock the gain in with `--update`.
+- No baseline file: report it; create one with `--update` once the numbers are reviewed.
+- A command that no other command invokes through the `Skill` tool belongs on `disable-model-invocation: true`: it leaves the listing and stays a slash command. Commands with an "Invocation policy" note stay as they are.
+- A skill that only commands load needs a one-line description; a domain skill whose trigger words are distinctive can get a row in `hooks/scripts/detect-skill-keywords.sh`, which names it to Claude whatever the budget.
+
+`--details` adds the Always-on figure of `claude plugin details` for reference. It is not the gate: it counts slash-only top-level commands in full and misses commands in subdirectories.
+
+### 4.8 Documentation Consistency
 
 **CLAUDE.md:**
 - [ ] Repository structure matches actual file layout
@@ -211,6 +228,7 @@ Create a comprehensive report of findings:
 | permissions.json | ✅/⚠️/❌ | [issues if any] |
 | .mcp.json | ✅/⚠️/❌ | [issues if any] |
 | plugin.json | ✅/⚠️/❌ | [issues if any] |
+| context-budget.json | ✅/⚠️/❌ | listing <n> / baseline <n> chars · agents <n> / baseline <n> chars |
 
 [Detailed issues per config file]
 
@@ -289,6 +307,7 @@ After all fixes:
 - **permissions.json**: Invalid pattern format
 - **.mcp.json**: Missing required MCP server
 - **plugin.json**: Invalid or missing required fields
+- **Context budget**: listing or agent descriptions above the baseline, or an entry over 1,536 chars
 
 ### Warnings (⚠️)
 - Description too long or too short

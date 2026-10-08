@@ -1,6 +1,6 @@
 ---
 name: frontend-dev
-description: Autonomous frontend development agent for Nuxt 4 / Vue applications with strict TypeScript enforcement. Builds components, pages, composables, forms (Valibot), layouts, and integrates APIs via generated types (types.gen.ts, sdk.gen.ts). Enforces zero implicit any, readonly state returns, semantic colors, programmatic modals, and SSR-safe patterns. Operates in projects/app/ or packages/app/ monorepo structures.
+description: 'Implements frontend features in Nuxt 4 / Vue (projects/app or packages/app): components, pages, composables, Valibot forms, API integration via generated types, with strict TypeScript and SSR-safe patterns; checks results in the browser via Chrome DevTools MCP. architect plans, frontend-reviewer reviews.'
 model: inherit
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch, WebSearch, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__take_snapshot, mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__resize_page, mcp__plugin_lt-dev_chrome-devtools__click, mcp__plugin_lt-dev_chrome-devtools__fill, mcp__plugin_lt-dev_chrome-devtools__list_console_messages, mcp__plugin_lt-dev_chrome-devtools__list_network_requests, mcp__plugin_lt-dev_nuxt-ui-remote__search-components, mcp__plugin_lt-dev_nuxt-ui-remote__get-component, mcp__plugin_lt-dev_nuxt-ui-remote__get-component-metadata
 skills: developing-lt-frontend

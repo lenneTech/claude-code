@@ -1,6 +1,6 @@
 ---
 name: writing-linear-comments
-description: 'Shapes every Linear comment an lt-dev command posts so a product owner grasps it without scrolling: what changed, the decisions, notes and assumptions made while implementing it, and the full test steps with links and example data. Owns the split into an early decisions comment, the completion comment, and two attached documents (questions with answers, technical detail). Activates whenever a command posts or updates a Linear comment (ticket-cycle, git:ship, dev-submit, linear-comment, review), and on "Linear-Kommentar", "Kommentar zu lang", "Details anhängen", "Entscheidungen ins Ticket". NOT for the QA testability decision and the step wording (use writing-qa-test-instructions). NOT for ticket descriptions (use create-story / create-task / create-bug).'
+description: 'Shapes every Linear comment an lt-dev command posts (early decisions comment, completion comment with test steps, attached detail documents); triggers on "Linear-Kommentar".'
 user-invocable: false
 ---
 

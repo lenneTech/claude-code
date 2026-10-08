@@ -1,6 +1,6 @@
 ---
 name: nest-server-updater
-description: Autonomous agent for updating @lenne.tech/nest-server to the latest version. Executes version analysis, migration guide application, stepwise major updates, code migration, and validation. Works fully automated.
+description: 'Updates the @lenne.tech/nest-server npm package to the latest version: applies migration guides stepwise across majors, migrates code and validates. For a vendored core use nest-server-core-updater.'
 model: inherit
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch
 skills: nest-server-updating, generating-nest-servers, maintaining-npm-packages

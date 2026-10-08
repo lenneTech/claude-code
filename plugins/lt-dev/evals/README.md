@@ -28,6 +28,7 @@ call that counts against the plan's usage; `--max-cost-usd` caps the list-price 
 | Group | Case | Measures |
 |---|---|---|
 | `trigger/` | `nest-module`, `nuxt-form`, `tdd-story`, `npm-audit`, `rebase-branch`, `lt-cli-init`, `unslop-readme`, `frontend-security`, `turboops-deploy`, `upstream-workaround`, `disk-cleanup` | The named skill (or its command) is invoked for a German or English request that does not name it |
+| `trigger/` | `ci-pipeline-local`, `k6-load-test`, `framework-local-link`, `toolchain-migration`, `production-readiness`, `stack-release`, `browser-walk` | The same for the skills that no other detector names and no command loads on its own; `detect-skill-keywords.sh` names them in interactive sessions, so these cases measure what their descriptions reach without that hook |
 | `trigger/` | `nest-server-update` | Boundary: a nest-server upgrade goes to `nest-server-updating`, not generic npm maintenance |
 | `trigger/` | `briefing` | "Was ist noch offen, was muss ich selbst tun?" invokes `/lt-dev:briefing` instead of a retelling from memory |
 | `trigger/` | `unrelated-question` | Boundary: an unrelated question fires no lt-dev skill |

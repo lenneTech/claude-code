@@ -1,6 +1,6 @@
 ---
 name: vendor-mode-converter
-description: Autonomous agent for converting npm-mode API projects to vendor mode with automatic migration guide application. Detects current nest-server version, runs lt CLI conversion, identifies version gap, fetches and applies migration guides, and validates the result. Fully automated.
+description: Converts an API project from npm-mode @lenne.tech/nest-server to vendor mode (src/core/) via the lt CLI, applies the migration guides for the version gap and validates. An already vendored core is updated by nest-server-core-updater.
 model: inherit
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch
 skills: nest-server-core-vendoring, nest-server-updating, generating-nest-servers

@@ -141,6 +141,9 @@ if [ -f "$REGISTRY_PATH" ] && command -v jq >/dev/null 2>&1; then
 fi
 
 # Decide: registered → URL block; lt project but unregistered → migration hint; otherwise silent.
+# Every block also names the skill that governs dev servers: this hook runs on every turn in an
+# lt project, so the skill reaches Claude whether or not its description survives the listing budget.
+SKILL_LINE="Starting, watching or stopping dev servers, and waiting on a pipeline or deployment: follow the managing-dev-servers skill."
 if [ "$REGISTERED" = "yes" ]; then
   echo ""
   echo "## Active lt-dev project"
@@ -157,6 +160,7 @@ if [ "$REGISTERED" = "yes" ]; then
   else
     echo "**For Playwright/E2E run \`lt dev test\` — an ISOLATED parallel stack on a dedicated \`<slug>-test\` DB that runs alongside this dev session and never pollutes it (do NOT run E2E against this dev session). For manual browser tests / API calls / Chrome DevTools, use these URLs as \`baseURL\`. Never assume \`localhost:3000\`/\`localhost:3001\`.**"
   fi
+  echo "$SKILL_LINE"
   echo ""
   exit 0
 fi
@@ -169,6 +173,7 @@ if [ -n "$TICKET" ]; then
   echo "- slug: \`$SLUG\`  ·  root: \`$ROOT\`"
   echo ""
   echo "**This is an ISOLATED per-ticket worktree (\`lt ticket\`). Run \`lt dev up\` here to serve it on \`https://$SLUG.localhost\` + \`https://api.$SLUG.localhost\` with its own empty database. Work ONLY in this folder; never touch another ticket's folder or database. List all tickets with \`lt ticket list\`; for E2E use \`lt dev test\` (its DB is the per-ticket \`<slug>-test\`).**"
+  echo "$SKILL_LINE"
   echo ""
   exit 0
 fi
@@ -181,6 +186,7 @@ if is_lt_project "$ROOT"; then
   echo "- root: \`$ROOT\`"
   echo ""
   echo "**Before starting any dev server in this project: run \`lt dev init\` (idempotent — also runs \`lt dev install\` automatically if this machine isn't set up yet; registers the project, patches legacy hardcoded ports, injects URL block into CLAUDE.md). Then \`lt dev up\` to serve under \`https://$SLUG.localhost\` + \`https://api.$SLUG.localhost\`. Do NOT start \`pnpm dev\` / \`pnpm start\` directly — multi-project parallelism + auth cross-wiring guards depend on \`lt dev\`.**"
+  echo "$SKILL_LINE"
   echo ""
   exit 0
 fi

@@ -1,6 +1,6 @@
 ---
 name: branch-rebaser
-description: Autonomous agent for rebasing feature branches onto the development branch. Handles conflict resolution, Linear ticket analysis, code optimization, linting (oxfmt/oxlint), testing, and code review.
+description: 'Rebases a feature branch onto the development branch: resolves conflicts, loads the Linear ticket, optimizes the code, lints (oxfmt/oxlint), tests and reviews. Batch mode also commits and force-pushes with lease.'
 model: inherit
 tools: Bash, Read, Grep, Glob, Write, Edit, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
 memory: project

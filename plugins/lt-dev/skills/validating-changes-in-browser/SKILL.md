@@ -1,6 +1,6 @@
 ---
 name: validating-changes-in-browser
-description: 'Final browser validation after implementation AND review have succeeded. Boots the app via `lt dev up`, seeds realistic `@test.com` data, derives a step-by-step test list from the diff (every affected page, role, flow, empty/error state, mobile pass, console + network sweep), then walks it autonomously via Chrome DevTools MCP. Fixes everything it finds, including pre-existing issues, in the same loop. Activates as the last step of any ship-oriented workflow, and on "im Browser prüfen", "durchklicken". NOT a substitute for implementation, code review, or automated E2E tests, which run before.'
+description: 'Final browser validation after implementation and review: boots the app via `lt dev up`, seeds test data, derives a test list from the diff and walks it via Chrome DevTools MCP, fixing what it finds. Activates as the last step of any ship-oriented workflow, and on "im Browser prüfen", "durchklicken". NOT a substitute for implementation, code review, or automated E2E tests.'
 user-invocable: false
 ---
 

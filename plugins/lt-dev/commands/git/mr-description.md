@@ -2,7 +2,7 @@
 description: Generate a Merge Request description, optionally copied straight to the clipboard
 argument-hint: "[--clipboard]"
 allowed-tools: Bash(git:*), Bash(pbcopy:*), Bash(xclip:*), Bash(wl-copy:*), Bash(clip:*), Bash(command -v:*), Read
-disable-model-invocation: false
+disable-model-invocation: true
 ---
 
 # Generate MR Description

@@ -2,7 +2,7 @@
 description: Recurring model review — inventory every AI usage, research current models, measure them against the project's own benchmark, and adopt the confirmed winners
 allowed-tools: Bash(pnpm run bench\:ai:*), Bash(npm run bench:ai:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(git:*), Bash(curl:*), Bash(jq:*), Bash(node:*), Bash(grep:*), Bash(ls:*), Bash(cat:*), Bash(test:*), Read, Grep, Glob, Write, Edit, WebFetch, WebSearch, AskUserQuestion
 argument-hint: "[--usage=<list>] [--dry-run] [--no-research] [--repeat=<n>]"
-disable-model-invocation: false
+disable-model-invocation: true
 ---
 
 # AI Model Review

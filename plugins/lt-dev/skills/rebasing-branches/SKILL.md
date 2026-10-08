@@ -1,6 +1,6 @@
 ---
 name: rebasing-branches
-description: 'Rebases feature branches onto the current development branch (dev/develop). Handles conflict resolution with priority ordering, extracts Linear ticket context from the branch name for smarter conflict decisions, optimizes after the rebase, and force-pushes with lease. Activates on "rebase", "branch aktualisieren", "auf dev Stand bringen", "merge conflicts", "Konflikte lösen", "force push". NOT for merge request descriptions (use /lt-dev:git:mr-description). NOT for shipping a finished branch (use /lt-dev:git:ship).'
+description: 'Rebases feature branches onto the current development branch (dev/develop), resolves conflicts with the Linear ticket context from the branch name, and force-pushes with lease. Activates on "rebase", "branch aktualisieren", "auf dev Stand bringen", "merge conflicts", "Konflikte lösen", "force push". NOT for merge request descriptions (use /lt-dev:git:mr-description). NOT for shipping a finished branch (use /lt-dev:git:ship).'
 ---
 
 # Rebase Workflow Knowledge Base

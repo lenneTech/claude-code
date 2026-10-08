@@ -1,6 +1,6 @@
 ---
 name: validating-ci-pipelines-locally
-description: 'Executes GitLab CI/CD pipelines locally with the same image, env vars, and service containers as the real runner, so pipeline failures surface before the push. Covers pipeline discovery, per-job execution via gitlab-runner exec, service-container orchestration, env injection without secrets, and a job-by-job verdict report. Also covers the GitHub Actions equivalent via act. Activates on "Pipeline lokal testen", "warum failt die CI", .gitlab-ci.yml changes, or before a push that must not break CI. NOT for the local check script (use running-check-script). NOT for authoring CI configs (use the devops agent).'
+description: 'Runs GitLab CI/CD pipelines locally with the real runner''s image, env vars and service containers (gitlab-runner exec; act for GitHub Actions), so failures surface before the push. Activates on "Pipeline lokal testen", "warum failt die CI", .gitlab-ci.yml changes, or before a push that must not break CI. NOT for the local check script (use running-check-script). NOT for authoring CI configs (use the devops agent).'
 user-invocable: false
 ---
 

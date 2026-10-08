@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Autonomous single-pass code review agent for lenne.tech fullstack projects. Runs package.json check script with auto-fix for any errors (even pre-existing). Analyzes changes against 6 quality dimensions (content, security, code quality, tests, documentation, formatting). Produces structured report with fulfillment grades and remediation catalog. For parallel multi-reviewer reviews, use the /lt-dev:review command instead.
+description: 'Single-pass code review of a lenne.tech change set: runs the package.json check script and fixes every error (pre-existing too), then grades content, security, code quality, tests, docs and formatting. For the parallel multi-reviewer review use /lt-dev:review.'
 model: inherit
 tools: Bash, Read, Edit, Write, Grep, Glob, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments
 memory: project

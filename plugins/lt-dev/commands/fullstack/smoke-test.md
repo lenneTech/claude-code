@@ -1,5 +1,5 @@
 ---
-description: 'Complete end-to-end smoke test of the lt stack. Creates a fullstack project in vendor mode, validates it fully on the local machine (Playwright E2E + pnpm run check), sets up a GitLab repo and a TurboOps deployment (stages dev/production) fully automatically, drives the deployment pipeline through MRs (feature→dev→main), and verifies the online state of both stages. Fixes every error it finds directly in the base repos (uncommitted), and finishes with a complete cleanup (TurboOps, GitLab, local, DBs, registry).'
+description: End-to-end smoke test of the lt stack. Creates a vendor-mode fullstack project, validates it locally, deploys it through GitLab and TurboOps (dev and production), verifies both stages online, fixes errors in the base repos and cleans up everything.
 argument-hint: '[--name=<name>] [--domain=<smoke-domain>] [--group=<gitlab-group>] [--server=<turboops-server>] [--rounds=1] [--keep] [--skip-deploy] [--skip-cleanup]'
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, Skill, ToolSearch
 disable-model-invocation: false

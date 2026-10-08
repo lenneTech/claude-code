@@ -1,6 +1,6 @@
 ---
 name: vendor-mode-converter-frontend
-description: Autonomous agent for converting npm-mode frontend projects to vendor mode for @lenne.tech/nuxt-extensions. Detects current version, runs lt CLI conversion, applies changelog changes for the version gap, and validates the result. Fully automated.
+description: Converts a frontend from npm-mode @lenne.tech/nuxt-extensions to vendor mode (app/core/) via the lt CLI, applies the changelog changes for the version gap and validates. Backend counterpart is vendor-mode-converter.
 model: inherit
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch
 skills: nuxt-extensions-core-vendoring, developing-lt-frontend

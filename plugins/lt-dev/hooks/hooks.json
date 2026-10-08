@@ -172,6 +172,12 @@
           },
           {
             "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/detect-skill-keywords.sh\"",
+            "timeout": 5,
+            "statusMessage": "Matching skill keywords"
+          },
+          {
+            "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/detect-lt-dev.sh\"",
             "timeout": 5,
             "statusMessage": "Detecting lt-dev URLs"

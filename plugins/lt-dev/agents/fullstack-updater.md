@@ -1,6 +1,6 @@
 ---
 name: fullstack-updater
-description: Autonomous agent for updating a lenne.tech fullstack project. Synchronizes backend and frontend with latest nest-server-starter and nuxt-base-starter. Analyzes version drift, generates update plan with user approval, coordinates backend (nest-server-updater) and frontend updates, validates across subprojects.
+description: 'Updates a lenne.tech fullstack monorepo to the current nest-server-starter and nuxt-base-starter: plans for user approval, updates backend and frontend (npm or vendor mode), modernizes the toolchain and validates both subprojects. Backend package only: nest-server-updater.'
 model: inherit
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch
 skills: nest-server-updating, developing-lt-frontend, maintaining-npm-packages, using-lt-cli, nuxt-extensions-core-vendoring, modernizing-toolchain, running-check-script

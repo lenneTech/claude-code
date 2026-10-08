@@ -1,6 +1,6 @@
 ---
 name: running-check-script
-description: 'Single source of truth for running the package.json `check` script. Defines discovery (multi-package monorepo aware), the iterate-until-green auto-fix loop, the mandatory audit-finding escalation ladder, residual classification (Accepted vs Critical), and report formatting. Activates on "check laufen lassen", "pnpm run check", "läuft das noch", and whenever an agent or command must prove runnability before shipping. NOT for general npm package maintenance (use maintaining-npm-packages). NOT for reproducing the CI pipeline (use validating-ci-pipelines-locally).'
+description: 'Runs the package.json check script (monorepo-aware) and auto-fixes until green, escalating audit findings, whenever work must prove runnability; triggers on "pnpm run check".'
 user-invocable: false
 ---
 

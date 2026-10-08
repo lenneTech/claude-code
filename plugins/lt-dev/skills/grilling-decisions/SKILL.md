@@ -1,6 +1,6 @@
 ---
 name: grilling-decisions
-description: 'Relentless round-based interview that settles every open decision before implementation starts. Maps the decisions as a tree, asks the whole frontier (every question whose prerequisites are settled) per round with a recommended answer on each, looks facts up in the codebase instead of asking for them, and closes with a decision record that lets the implementation run without further questions. Activates on "grill me", "interview me", "stress-test this", "frag mich aus", "löcher mich", or when a command reaches open questions it must settle with a human before writing code. NOT for reviewing finished code (use /lt-dev:review). NOT for autonomous fact-finding without a human in the loop.'
+description: 'Round-based interview that settles every open decision with a human before implementation starts and ends in a decision record; triggers on "grill me" and "frag mich aus".'
 user-invocable: false
 ---
 

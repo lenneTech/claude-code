@@ -24,11 +24,20 @@ ignore it silently.
 
 ## Skills
 
-4. **Descriptions are optimized for quality, not to hit a character budget.** The skill-listing budget
-   (`skillListingBudgetFraction`, default 1% of the context window, fallback 8,000 chars) is global across every
-   installed plugin and personal skill; overflow drops descriptions of the least-used skills first and never removes a
-   name. Trigger phrases and `NOT for X (use Y instead)` boundaries stay. Observed 2026-08-23: three trimming rounds
-   against a wrongly assumed per-plugin limit cost trigger vocabulary and prevented no dropping.
+4. **What lt-dev adds to every session is measured and gated; descriptions keep their trigger words.** The
+   skill-listing budget (`skillListingBudgetFraction`, default 1% of the context window, fallback 8,000 chars) is
+   global across every installed plugin and personal skill, and colleagues work with the default. Overflow drops the
+   descriptions of the least-used skills first, and least used is not least important. Three levers keep lt-dev's
+   share small, in this order: a command no other command invokes through the `Skill` tool runs on
+   `disable-model-invocation: true`; a skill that only commands load has a one-line description; a domain skill keeps
+   its trigger phrases and `NOT for X (use Y instead)` boundaries, core case first, without padding. A skill with
+   distinctive vocabulary also gets a row in `hooks/scripts/detect-skill-keywords.sh`, the route that works whatever
+   the budget. `plugins/lt-dev/context-budget.json` holds the accepted size; `scripts/context-budget.mjs --check`
+   fails Plugin CI and `/lt-dev:plugin:check` on growth, so raising it is a visible `--update` in the same change.
+   Measure with that script, not `claude plugin details`, which counts slash-only top-level commands in full and
+   misses nested ones (probe plugin, 2026-10-08, DEV-3466). Observed 2026-08-23: three trimming rounds against a
+   wrongly assumed per-plugin limit cost trigger vocabulary and prevented no dropping, so padding is cut, trigger
+   words are not.
 5. **Teaching material is copy-paste source.** Templates and examples in `developing-claude-plugins` are checked
    against the fresh docs like code: a wrong hooks.json template or a retired model ID there propagates into every
    element written from it.
