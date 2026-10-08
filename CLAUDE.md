@@ -175,6 +175,10 @@ claude-code/
 │       ├── permissions.json  # Bash permission patterns for auto-approval
 │       ├── permissions.schema.json  # JSON Schema for permissions validation
 │       └── .mcp.json         # MCP server dependencies
+│   ├── lt-offers/ · lt-showroom/   # Offer and showcase platforms (MCP-backed)
+│   └── lt-tools/             # General-purpose tools (website mirror + comparison):
+│                             # skills/ + commands/ + dependency-free Node scripts with
+│                             # node --test suites in scripts/__tests__/
 ```
 
 ## Important: Plugin Isolation

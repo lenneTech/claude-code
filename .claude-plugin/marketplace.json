@@ -21,6 +21,11 @@
       "name": "lt-showroom",
       "source": "./plugins/lt-showroom",
       "description": "Skills & Commands for analyzing projects and creating showcases on showroom.lenne.tech via MCP"
+    },
+    {
+      "name": "lt-tools",
+      "source": "./plugins/lt-tools",
+      "description": "General-purpose tools: save complete websites as offline copies (file://) and verify them against the live site in headless Chrome"
     }
   ]
 }

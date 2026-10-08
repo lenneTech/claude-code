@@ -1,0 +1,22 @@
+{
+  "$schema": "./permissions.schema.json",
+  "description": "Bash permissions for the lt-tools plugin. Covers the bundled Node.js helper scripts (website mirror and comparison).",
+  "permissions": [
+    {
+      "pattern": "Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/*)",
+      "description": "Run the plugin's Node.js helper scripts in plugins/lt-tools/scripts/ (mirror-site.mjs, compare-site.mjs) — narrowly scoped to the plugin's own scripts",
+      "usedBy": [
+        "saving-websites-locally",
+        "save-website"
+      ]
+    },
+    {
+      "pattern": "Bash(node \"${CLAUDE_PLUGIN_ROOT}/scripts/*)",
+      "description": "Run the same scripts with the placeholder quoted (node \"${CLAUDE_PLUGIN_ROOT}/scripts/x.mjs\"), the form the plugin instructs so a home path with spaces survives. Bash rules match the literal command text, so the unquoted pattern does not cover it",
+      "usedBy": [
+        "saving-websites-locally",
+        "save-website"
+      ]
+    }
+  ]
+}

@@ -57,6 +57,10 @@ If the file already exists, merge the `allow` entries with your existing permiss
 
 Skills, Commands, Hooks and Agents for Frontend (Nuxt 4), Backend (NestJS/nest-server), TDD and CLI Tools.
 
+### lt-tools
+
+General-purpose tools: `/lt-tools:save-website` saves a complete website as an offline copy that opens from `file://` and verifies it against the live site in headless Chrome.
+
 ## Included Components
 
 ### Skills (10)

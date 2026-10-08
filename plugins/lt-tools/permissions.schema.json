@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Claude Code Plugin Permissions",
+  "description": "Schema for defining Bash permissions required by Claude Code plugin skills",
+  "type": "object",
+  "required": ["permissions"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to this schema file"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of this permissions file"
+    },
+    "permissions": {
+      "type": "array",
+      "description": "List of permission entries",
+      "items": {
+        "type": "object",
+        "required": ["pattern", "description", "usedBy"],
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "The permission pattern for Claude Code (e.g., 'Bash(npm test:*)')",
+            "pattern": "^Bash\\(.+\\)$"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of what this permission allows"
+          },
+          "usedBy": {
+            "type": "array",
+            "description": "Array of skill names that require this permission",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
