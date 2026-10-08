@@ -240,6 +240,8 @@ Fragen von Claude an den Entwickler bei der Umsetzung, Stand <TT.MM.JJJJ>. Die E
 daraus stehen im Kommentar „Entscheidungen und Annahmen“ unter der Nummer, die bei „Führt zu“ steht.
 
 ## F1 <Kurztitel>
+Ausgangslage: <zwei bis drei Sätze: was die Anwendung heute tut, was das Ticket dazu sagt, und
+warum daraus eine Frage wurde>
 Frage: <die Frage, wie sie gestellt wurde>
 Optionen:
 - <Option> (Vorschlag von Claude)
@@ -252,6 +254,14 @@ Question and answer stand together, in the order the questions arose. The source
 record, which keeps every question with its entry
 ([`grilling-decisions`](../grilling-decisions/SKILL.md#decision-record)). A question whose answer
 was "so wie im Ticket" leads to no comment entry; write `Führt zu: nichts, steht im Ticket`.
+
+**The `Ausgangslage` lets a reader judge the answer without the conversation it came from.**
+Condense it from the question's
+[decision brief](../grilling-decisions/SKILL.md#decision-brief) when the question is added: the
+current behaviour in the words of somebody who uses the application, the decisive ticket sentence
+quoted, and the reason it needed a decision (the ticket is imprecise there, contradicts itself, or
+says nothing about it). File paths and code belong in the technical document; a later session that
+needs them finds them there or in the code.
 
 ## Part 3 — The mechanics
 

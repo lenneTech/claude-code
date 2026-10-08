@@ -345,10 +345,10 @@ Produce a concise internal plan covering:
 - UI / UX changes (if any)
 - **Role / permission matrix** — for every endpoint / mutation / UI action touched, list every role (e.g. `Admin`, `User`, `Guest`, custom org roles) and whether it is `allowed`, `denied`, or `partial` (own-records-only via `securityCheck`). Derive from `@Restricted` / `@Roles` decorators on the affected services, from the ticket text, and from existing call sites. If no role-aware behaviour applies, explicitly note "Single-role feature — no permission matrix needed".
 - **Framework capabilities that already cover part of this** (from source 6) — name them with their real exported names, or state explicitly "nothing in the framework covers this"
-- Open questions for the user
+- Open decisions, each with the evidence its [decision brief](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md#decision-brief) needs: the current code at `path:line`, and the quotes from the sources with where they stand. STEP 5c decides which of them the evidence settles and which go to the user.
 - **Size signals** for STEP 5c (see the table there)
 
-The open questions are not asked yet. STEP 5b first establishes that the ticket still applies, so no decision round is spent on a ticket that turns out to be solved already; STEP 5c then settles everything in one pass.
+The open decisions are not settled or asked yet. STEP 5b first establishes that the ticket still applies, so no decision round is spent on a ticket that turns out to be solved already; STEP 5c then settles everything in one pass.
 
 ---
 
@@ -384,7 +384,7 @@ Nothing since that date → age is not a concern; skip to step 3. Commits touchi
 | Already solved | leave the code untouched. Present the evidence (commit, file:line, test) and ask the user whether to close the ticket. |
 | Premise no longer holds (code restructured, feature dropped) | stop and grill. The ticket's current meaning is the user's call, not a translation you make on your own. |
 
-The three verdicts that end in a question run through the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md) skill, with the evidence you just gathered as the facts on the table: what the history shows, what still reproduces, which symbols survived. Present that first, then ask what it should mean.
+The three verdicts that end in a question run through the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md) skill, each as a [decision brief](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md#decision-brief) built from the evidence you just gathered: what the history shows (commits), what still reproduces, which symbols survived (`path:line`), set against what the ticket says. What the ticket means today is the user's call, so these three verdicts are always asked.
 
 **Ask when the verdict is unclear.** The cost of one question is a minute; the cost of implementing a stale ticket is a change that has to be found and reverted later, by someone who no longer knows why it was made.
 
@@ -394,7 +394,7 @@ The three verdicts that end in a question run through the [`grilling-decisions`]
 
 This is where the cycle is cheapest to correct. Everything downstream (TDD slices, the full test loop, the check script, the review, the browser walk, the merge, the deploy verification) is built on the understanding fixed here, so an assumption that turns out wrong is paid for by all of it. The second purpose is speed: every question settled here is one the implementation does not stop for later, when the user has moved on to something else and the run waits for them.
 
-Run it via the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md) skill: facts looked up rather than asked, the frontier asked in rounds, a recommendation on every question, a decision record at the end. The ticket's size decides how wide the round reaches.
+Run it via the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md) skill: facts looked up rather than asked, every open decision worked through a [decision brief](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md#decision-brief) (current code, planned change, quoted sources, options with impact, recommendation), what the ticket states clearly implemented as written, a gap settled by you where the evidence leaves one option standing, and everything imprecise, contradictory, or still unclear asked with its brief ([Settle or ask](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md#settle-or-ask)), the frontier asked in rounds, a decision record at the end. The ticket's size decides how wide the round reaches.
 
 **1. Size the ticket** from the STEP 5 requirements map:
 
@@ -411,7 +411,7 @@ Run it via the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/skills/grilling-deci
 
 **One hard signal or two soft signals make it a larger ticket.** `--grill` forces the full round regardless, `--no-grill` forces the light round.
 
-**2. Light round (small ticket).** Ask only the open questions the requirements map produced. When there are none, say so in one line and continue. A silent skip and a genuinely unambiguous ticket otherwise look identical in the summary.
+**2. Light round (small ticket).** Put only the open decisions the requirements map produced through the skill's Settle or ask. When none is left for the user, say so in one line and continue to the record. A silent skip and a genuinely unambiguous ticket otherwise look identical in the summary.
 
 **3. Full round (larger ticket).** Go beyond the questions the map happened to produce and walk the planned implementation once, dimension by dimension, collecting every decision it rests on:
 
@@ -424,9 +424,9 @@ Run it via the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/skills/grilling-deci
 - **Test seams:** where the story tests sit, which roles the tests exercise
 - **Precedent:** which neighbouring feature this one follows where it could go either way
 
-Everything the code, the ticket, or Figma already answers is a fact, not a question: state it in the record as such, do not ask it. What remains goes to the user in frontier rounds.
+What the ticket states clearly goes into the record in its words, marked `[Ticket <ID>]`, and is built as written. A gap the code or Figma answers unambiguously goes in as an `Annahme` with its `Beleg:`. Every point where the ticket is imprecise, contradicts itself, or misses a consequence, and every gap that stays unclear, goes to the user in frontier rounds, each question [re-checked against the ticket and the sources](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md#re-check-before-asking) first and sent with its brief.
 
-**4. Decision record.** Close with the skill's decision record (`Entscheidungen`, `Annahmen`, `Außerhalb des Scopes`), every entry with its source marker (`[Ticket <ID>]`, `[Entwickler]` or `[Claude]`, see the skill's [Source markers](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md#source-markers)) and every answered question kept with its decision, and let the user confirm it via `AskUserQuestion`: "Passt so, umsetzen (Recommended)" / "Noch etwas anpassen". On the second option, take the correction and run one more round for whatever it reopened. Once confirmed, put the record on the ticket right away, per [`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md#decisions-and-assumptions-for-the-product-owner): post the decisions comment when the record holds an `[Entwickler]` or `[Claude]` entry, and attach the questions document when the round asked anything ([`<ID> — Fragen und Antworten`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md#questions-document)); on a rework ticket, update the ones a previous run left (a decisions comment a colleague posted is not edited but replaced, as the skill describes). The product owner sees the premises while the work runs, and the record survives a `/clear` or a change of session. From here on both are kept at the current state, never appended to; what the ticket already says stays in the ticket.
+**4. Decision record.** Close with the skill's decision record (`Entscheidungen`, `Annahmen`, `Außerhalb des Scopes`), every entry with its source marker (`[Ticket <ID>]`, `[Entwickler]` or `[Claude]`, see the skill's [Source markers](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md#source-markers)), every answered question kept with its decision and every gap you settled kept with its `Beleg:`, and let the user confirm it via `AskUserQuestion`: "Passt so, umsetzen (Recommended)" / "Noch etwas anpassen". On the second option, take the correction and run one more round for whatever it reopened. Once confirmed, put the record on the ticket right away, per [`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md#decisions-and-assumptions-for-the-product-owner): post the decisions comment when the record holds an `[Entwickler]` or `[Claude]` entry, and attach the questions document when the round asked anything ([`<ID> — Fragen und Antworten`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md#questions-document)); on a rework ticket, update the ones a previous run left (a decisions comment a colleague posted is not edited but replaced, as the skill describes). The product owner sees the premises while the work runs, and the record survives a `/clear` or a change of session. From here on both are kept at the current state, never appended to; what the ticket already says stays in the ticket.
 
 **With `--in-cycle`, the process round follows right here**, while the user is still at the screen: `/lt-dev:ticket-cycle` STEP 1a defines its questions (review, merge strategy, post-merge status). Asking them now, and not at the phase that needs each answer, is what lets the rest of the cycle run unattended. The light round asks it too, even when it had no ticket questions.
 
@@ -434,7 +434,7 @@ Everything the code, the ticket, or Figma already answers is a fact, not a quest
 
 - A recorded decision is implemented as recorded. It is never asked again and never silently changed.
 - Something the record does not cover and that is **non-blocking** becomes one more `Annahme`, marked `[Claude]`, logged when it is taken, added to the decisions comment (posting it, if this is the first entry), and listed in the STEP 10 summary.
-- Only a **blocking** discovery stops the run: a fact that contradicts a recorded decision, or a gap that would mean rework if guessed wrong. Present the evidence and the options, get the answer, and bring the record, the decisions comment, and the questions document to the new state: the entry the answer changes is replaced, the question is added, and anything the answer made obsolete is deleted. Then continue.
+- Only a **blocking** discovery stops the run: a fact that contradicts a recorded decision, or a gap that would mean rework if guessed wrong. Present it as a [decision brief](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md#decision-brief), get the answer, and bring the record, the decisions comment, and the questions document to the new state: the entry the answer changes is replaced, the question is added, and anything the answer made obsolete is deleted. Then continue.
 
 When a blocking stop happens on a ticket that got the light round, the size signals missed something. Say which one in the STEP 10 summary, so the sizing can be sharpened.
 
@@ -647,7 +647,7 @@ Print a compact German status block showing each AC's verdict, "Mitgenommen"-ite
 
 - A `missing` or `partial` AC that the record covers is implemented now: another TDD slice, then STEP 7 and 8 again.
 - A "Mitgenommen" item follows the STEP 9a rules and is logged as an `Annahme`.
-- Only an item that would change the recorded scope (cutting an AC, adding scope nobody decided) is blocking. Those go to the user as one round via the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md) skill, each carrying your recommendation (implement now, cut with a stated reason, or file as a follow-up per the rules above). The answers update the record, the decisions comment, and the questions document in place.
+- Only an item that would change the recorded scope (cutting an AC, adding scope nobody decided) is blocking. Those go to the user as one round via the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md) skill, each as a [decision brief](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md#decision-brief) whose options are implement now, cut with a stated reason, or file as a follow-up per the rules above. The answers update the record, the decisions comment, and the questions document in place.
 
 Then continue to STEP 9c.
 
