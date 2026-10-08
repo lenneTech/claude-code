@@ -1,6 +1,6 @@
 {
   "name": "lt-tools",
-  "version": "8.20.0",
+  "version": "8.21.0",
   "description": "General-purpose tools for everyday work — save complete websites as offline copies (file://) and verify them against the live site in headless Chrome",
   "author": {
     "name": "lenne.tech GmbH",
