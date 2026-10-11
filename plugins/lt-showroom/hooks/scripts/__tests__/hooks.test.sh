@@ -10,6 +10,8 @@
 #   without jq it is still read in full across escaped quotes and newlines
 # - detect-analyzable-project.sh needs showroom / showcase intent: "demo" or
 #   "screenshot" in an ordinary dev prompt stays quiet
+# - sweep-screenshot-sessions.sh runs on every SessionEnd, returns within the 1.5 s budget,
+#   and cleans only the screenshot runs of the ending session
 #
 # Run: bash hooks/scripts/__tests__/hooks.test.sh
 #
@@ -105,7 +107,37 @@ assert_contains "$REG" "postcompact:no" "no PostCompact registration left (its o
 CMDS=$(node -e '
   const h = JSON.parse(require("fs").readFileSync(0, "utf8")).hooks;
   console.log(Object.values(h).flat().flatMap((g) => g.hooks.map((x) => (x.command || "").replace(/.*scripts\//, "").replace(/"$/, ""))).sort().join(" "));' < "$HOOKS_JSON")
-assert_contains "$CMDS" "detect-analyzable-project.sh post-compact-context.sh" "only the analyzable-project detector and the compaction hook are registered"
+assert_contains "$CMDS" "detect-analyzable-project.sh post-compact-context.sh sweep-screenshot-sessions.sh" "only the detector, the compaction hook and the screenshot sweep are registered"
+
+echo "hooks.json: screenshot runs are swept when a session ends"
+SWEEP_REG=$(node -e '
+  const h = JSON.parse(require("fs").readFileSync(0, "utf8")).hooks;
+  const g = (h.SessionEnd || []).find((x) => x.hooks.some((y) => (y.command || "").includes("sweep-screenshot-sessions.sh")));
+  console.log(g ? `registered matcher:${g.matcher || "all"}` : "missing");' < "$HOOKS_JSON")
+assert_contains "$SWEEP_REG" "registered matcher:all" "SessionEnd runs the sweep for every end reason (exit, clear, logout …)"
+
+echo "sweep-screenshot-sessions.sh: cleans the ending session's runs only"
+SWEEP_HOME="$TMP_ROOT/lt-showroom-home"
+end_payload() { node -e 'process.stdout.write(JSON.stringify({ hook_event_name: "SessionEnd", session_id: process.argv[1], reason: "other" }))' "$1"; }
+run_sweep() { LT_SHOWROOM_HOME="$SWEEP_HOME" CLAUDE_PLUGIN_ROOT="$SCRIPT_DIR/../.." "$BASH" "$SCRIPT_DIR/sweep-screenshot-sessions.sh"; }
+# Owner pid = this shell, alive, so only --session can match. Git Bash's $$ is an MSYS pid that node's
+# process.kill does not know; /proc/$$/winpid holds the Windows pid there.
+OWNER_PID=$(cat /proc/$$/winpid 2>/dev/null || echo $$)
+fake_run() { # $1 slug, $2 owning session id
+  mkdir -p "$SWEEP_HOME/$1/checkout" "$SWEEP_HOME/$1/screenshots"
+  node -e 'require("fs").writeFileSync(process.argv[1], JSON.stringify({ slug: process.argv[2], startedAt: new Date().toISOString(), owner: { pid: Number(process.argv[3]), sessionId: process.argv[4] }, resources: [] }))' \
+    "$SWEEP_HOME/$1/session.json" "$1" "$OWNER_PID" "$2"
+}
+assert_silent "$(end_payload s-none | run_sweep)" "silent and immediate without any screenshot run"
+fake_run ending-run s-ending
+fake_run other-run s-other
+START=$(date +%s)
+assert_silent "$(end_payload s-ending | run_sweep)" "returns without output (the sweep is detached)"
+[ $(( $(date +%s) - START )) -le 2 ] && pass "hook returns within the SessionEnd budget" || fail "hook returns within the SessionEnd budget"
+for _ in $(seq 1 50); do [ -d "$SWEEP_HOME/ending-run/checkout" ] || break; sleep 0.1; done
+[ ! -d "$SWEEP_HOME/ending-run/checkout" ] && pass "the ending session's clone is removed" || fail "the ending session's clone is removed"
+[ -d "$SWEEP_HOME/ending-run/screenshots" ] && pass "its screenshots are kept" || fail "its screenshots are kept"
+[ -d "$SWEEP_HOME/other-run/checkout" ] && pass "another live session's run is left alone" || fail "another live session's run is left alone"
 
 echo "post-compact-context.sh: SessionStart output"
 assert_hook_output "$(session_payload compact | run_script post-compact-context.sh "$SHOWCASED")" "SessionStart" "SHOWCASE.md detected" "SHOWCASE.md project: SessionStart additionalContext"

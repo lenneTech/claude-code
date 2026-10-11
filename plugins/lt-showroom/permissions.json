@@ -167,30 +167,10 @@
       ]
     },
     {
-      "pattern": "Bash(pkill:*)",
-      "description": "Stop dev server process after screenshot capture",
-      "usedBy": [
-        "creating-showcases",
-        "screenshot-generator",
-        "showroom:screenshot"
-      ]
-    },
-    {
-      "pattern": "Bash(pgrep:*)",
-      "description": "Check for running dev server processes (non-disruptive port/process checks)",
-      "usedBy": [
-        "creating-showcases",
-        "screenshot-generator",
-        "showroom:screenshot"
-      ]
-    },
-    {
       "pattern": "Bash(lsof:*)",
-      "description": "Check if a port is already in use before starting the project",
+      "description": "Check whether a port is taken before starting a project for screenshots (read only; the owner is never stopped)",
       "usedBy": [
-        "creating-showcases",
-        "screenshot-generator",
-        "showroom:screenshot"
+        "screenshot-generator"
       ]
     },
     {
@@ -203,44 +183,8 @@
       ]
     },
     {
-      "pattern": "Bash(docker compose up:*)",
-      "description": "Start application services via Docker Compose for screenshot capture",
-      "usedBy": [
-        "creating-showcases",
-        "screenshot-generator",
-        "showroom:screenshot"
-      ]
-    },
-    {
-      "pattern": "Bash(docker compose down:*)",
-      "description": "Stop Docker Compose services after screenshot capture",
-      "usedBy": [
-        "creating-showcases",
-        "screenshot-generator",
-        "showroom:screenshot"
-      ]
-    },
-    {
       "pattern": "Bash(docker run:*)",
-      "description": "Start standalone MongoDB container for screenshot capture when not in compose",
-      "usedBy": [
-        "creating-showcases",
-        "screenshot-generator",
-        "showroom:screenshot"
-      ]
-    },
-    {
-      "pattern": "Bash(docker stop:*)",
-      "description": "Stop standalone Docker container after screenshot capture",
-      "usedBy": [
-        "creating-showcases",
-        "screenshot-generator",
-        "showroom:screenshot"
-      ]
-    },
-    {
-      "pattern": "Bash(docker rm:*)",
-      "description": "Remove standalone Docker container after screenshot capture",
+      "description": "Start the database container of a screenshot run (recorded in session.json and removed by cleanup)",
       "usedBy": [
         "creating-showcases",
         "screenshot-generator",
@@ -249,13 +193,11 @@
     },
     {
       "pattern": "Bash(mkdir -p docs/showcase*)",
-      "description": "Create screenshot output directory in project repository",
+      "description": "Create the docs/showcase/ folder for a monorepo SHOWCASE.md",
       "usedBy": [
         "analyzing-projects",
         "project-analyzer",
-        "screenshot-generator",
-        "showroom:analyze",
-        "showroom:screenshot"
+        "showroom:analyze"
       ]
     },
     {
@@ -337,6 +279,84 @@
       "usedBy": [
         "screenshot-generator",
         "showroom:screenshot"
+      ]
+    },
+    {
+      "pattern": "Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/*)",
+      "description": "Run the plugin scripts (screenshot-session.mjs: work folder, session record, database check, manifest, cleanup)",
+      "usedBy": [
+        "screenshot-generator",
+        "showroom:screenshot",
+        "showroom:create",
+        "creating-showcases"
+      ]
+    },
+    {
+      "pattern": "Bash(node \"${CLAUDE_PLUGIN_ROOT}/scripts/*)",
+      "description": "The same scripts with the placeholder quoted, the form the plugin uses so a home path with spaces survives. Bash rules match the literal command text, so the unquoted pattern does not cover it",
+      "usedBy": [
+        "screenshot-generator",
+        "showroom:screenshot",
+        "showroom:create",
+        "creating-showcases"
+      ]
+    },
+    {
+      "pattern": "Bash(docker compose -p showroom-*)",
+      "description": "Start a screenshot run Compose stack under its own project name (recorded and taken down by cleanup)",
+      "usedBy": [
+        "screenshot-generator",
+        "creating-showcases"
+      ]
+    },
+    {
+      "pattern": "Bash(lt ticket start:*)",
+      "description": "Start an lt project for screenshots as an isolated stack (own URLs, ports and database) from the throwaway clone",
+      "usedBy": [
+        "screenshot-generator",
+        "creating-showcases"
+      ]
+    },
+    {
+      "pattern": "Bash(TMPDIR=/tmp lt ticket start:*)",
+      "description": "The same with a short TMPDIR, which keeps Nuxt SSR under lt dev from crashing on the macOS socket-path limit",
+      "usedBy": [
+        "screenshot-generator"
+      ]
+    },
+    {
+      "pattern": "Bash(lt dev status:*)",
+      "description": "Read the URLs and processes of the screenshot run lt stack",
+      "usedBy": [
+        "screenshot-generator"
+      ]
+    },
+    {
+      "pattern": "Bash(lt dev doctor:*)",
+      "description": "Check that lt dev (Caddy) is set up before choosing the lt route",
+      "usedBy": [
+        "screenshot-generator"
+      ]
+    },
+    {
+      "pattern": "Bash(cwebp:*)",
+      "description": "Convert older PNG screenshots to WebP for the fallback chain",
+      "usedBy": [
+        "screenshot-generator"
+      ]
+    },
+    {
+      "pattern": "Bash(TMPDIR=/tmp lt dev up --no-prune:*)",
+      "description": "Start the screenshot run's lt ticket stack without the prune of the developer's other environments",
+      "usedBy": [
+        "screenshot-generator"
+      ]
+    },
+    {
+      "pattern": "Bash(lt dev up --no-prune:*)",
+      "description": "The same without the short TMPDIR",
+      "usedBy": [
+        "screenshot-generator"
       ]
     }
   ]

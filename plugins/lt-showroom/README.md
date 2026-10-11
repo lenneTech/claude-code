@@ -57,19 +57,35 @@ Activates automatically when showcase-related keywords are detected or a project
 | `/lt-showroom:showroom:analyze [path]` | Analyze a project and produce a structured report |
 | `/lt-showroom:showroom:create [path]` | Analyze a project and create a showcase on showroom.lenne.tech |
 | `/lt-showroom:showroom:update [showcase-id]` | Re-analyze a project and update its existing showcase |
-| `/lt-showroom:showroom:screenshot [showcase-id]` | Capture and upload screenshots for a showcase |
+| `/lt-showroom:showroom:screenshot [path \| repo-url] [--cleanup]` | Capture feature screenshots (desktop + mobile, WebP) from a throwaway clone with demo data into `~/.lt-showroom/<slug>/screenshots/`; writes nothing into the project |
 
 ## Agents
 
 | Agent | Description |
 |-------|-------------|
 | `project-analyzer` | Deep read-only source code analysis across 8 dimensions |
-| `screenshot-generator` | Full screenshot lifecycle: start, demo data, capture, upload, cleanup |
+| `screenshot-generator` | One screenshot run: clone, start with a database of its own, demo data, capture, fallback chain, cleanup of exactly what it started |
 
 ## Hooks
 
 - **detect-analyzable-project** (`UserPromptSubmit`) — Activates when a software project is detected and showroom keywords appear in the prompt
 - **post-compact-context** (`SessionStart`, matcher `compact`) — Re-injects showcase context after compaction when the project carries a `SHOWCASE.md`
+- **sweep-screenshot-sessions** (`SessionEnd`) — Cleans up the screenshot runs the ending session started (detached, because SessionEnd hooks get 1.5 s)
+
+## Screenshot Runs
+
+Each run works in `~/.lt-showroom/<slug>/` (override with `LT_SHOWROOM_HOME`): a throwaway clone, the process and
+stack record `session.json`, and the deliverables `screenshots/*.webp` and `manifest.json`. The developer's checkout,
+its database and any stack another session runs stay untouched.
+
+| File | Purpose |
+|------|---------|
+| `scripts/screenshot-session.mjs` | Work folder, clone, process groups, database check, manifest, cleanup of exactly what the run recorded (`node scripts/screenshot-session.mjs help`) |
+| `scripts/browser/prepare-page.js` | Scroll-reveal, hides consent banners and dev overlays, freezes animations before a capture |
+| `scripts/browser/anonymize-dom.js` | Replaces production data in the rendered page only, before a capture on a live system |
+| `scripts/browser/teaser-cover.html` | Branded teaser cover, the last stage of the fallback chain |
+
+Tests: `node --test plugins/lt-showroom/scripts/__tests__/*.test.mjs` (dependency-free, run in Plugin CI).
 
 ## Reference
 

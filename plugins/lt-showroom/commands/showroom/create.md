@@ -36,7 +36,7 @@ This command runs Phase 4 (showcase creation) and Phase 5 (presentation) of the 
 ## Prerequisites
 
 - `SHOWCASE.md` must exist in the project root (or `docs/showcase/SHOWCASE.md`)
-- Ideally: screenshots exist in `docs/showcase/screenshots/`
+- Ideally: screenshots exist in `~/.lt-showroom/<slug>/screenshots/` (from `/lt-showroom:showroom:screenshot`; `<slug>` is the output of `node "${CLAUDE_PLUGIN_ROOT}/scripts/screenshot-session.mjs" slug <project-path>`)
 - An account on the Showroom platform (MCP or REST access)
 
 ## Workflow
@@ -52,7 +52,7 @@ Verify that `SHOWCASE.md` exists. If not, suggest running `/lt-showroom:showroom
 Parse the full SHOWCASE.md file:
 - Extract frontmatter (version, project, technologies, category, customer)
 - Extract all sections (overview, tech stack, features, architecture, highlights, results)
-- Note which screenshots exist in `docs/showcase/screenshots/`
+- Note which screenshots exist: `~/.lt-showroom/<slug>/manifest.json` lists every image; its `pendingTag` (set when only the teaser cover exists) goes into the showcase's `tags`
 
 ### Step 3: Load Company Context and Customer Feedback
 
@@ -145,7 +145,7 @@ Create content blocks in this order using the `creating-showcases` skill:
 
 ### Step 7: Upload Screenshots
 
-For each screenshot in `docs/showcase/screenshots/`:
+For each screenshot listed in `~/.lt-showroom/<slug>/manifest.json`:
 1. Upload via showroom API: `POST /files/upload`
 2. Associate the returned `fileId` with the screenshot-gallery block
 3. Tag each upload with viewport metadata (desktop/mobile)

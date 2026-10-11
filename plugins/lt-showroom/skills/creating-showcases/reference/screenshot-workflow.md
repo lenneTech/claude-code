@@ -1,494 +1,366 @@
-# Screenshot Workflow — Feature-Based Guide
+# Screenshot Workflow
 
-This document details the complete screenshot capture workflow for the `screenshot-generator` agent and the `/lt-showroom:showroom:screenshot` command. Screenshots are feature-driven: one set of captures per feature defined in `SHOWCASE.md`.
+The complete procedure behind `/lt-showroom:showroom:screenshot` and the `screenshot-generator` agent. One run
+captures one project: it starts the project from a throwaway clone with realistic demo data, takes desktop and mobile
+screenshots per feature as WebP, and tears everything down again. Where the project cannot run locally, a fixed
+fallback chain takes over.
 
-## Overview
+## Ground Rules
 
-```
-Phase 1: Read SHOWCASE.md   → features + pages + startup info
-Phase 2: Startup Detection  → project type detection, dependency mapping
-Phase 3: Environment Setup  → .env, dependencies, database, ports
-Phase 4: Start Application  → appropriate method per project type
-Phase 5: Demo Data          → seed script, system-setup, or UI creation
-Phase 6: Capture            → desktop + mobile per feature
-Phase 7: Cleanup            → stop all processes, verify ports
-```
+Each rule exists because the opposite already went wrong, or would on a machine where ten Claude sessions run at once.
 
-## Phase 1: Read SHOWCASE.md
+1. **Work in a throwaway clone, never in the developer's checkout.** `lt dev up` in an existing checkout serves the
+   developer's database (`<slug>-local`) and collides with a stack another session already runs there. The clone lives
+   in `~/.lt-showroom/<slug>/checkout`, and everything it changes disappears with it.
+2. **Nothing leaves the clone.** No push, no change to any repository: showroom work never alters a project.
+   `clone` gives every remote a push URL no transport accepts, which covers the `lt ticket` worktree too.
+3. **Stop only what this run started.** Processes, the `lt ticket` stack, Compose projects, containers and volumes are
+   recorded in the run's `session.json` and torn down from there. Never `pkill` by name, never `kill` by port, never
+   `docker compose down` without the run's own project name: each of those hits processes of other sessions.
+4. **Seed only into the run's own database, after proving it is local.** Never into a database that already existed,
+   never into a remote one, never with production data or a dump.
+5. **Local demo data is the run's own; live data never is.** In the run's database records may be created and
+   changed freely until a screen shows what it should, so local captures need no DOM manipulation. On a live system
+   the run only reads; production data is replaced in the browser before the capture, and apart from the data the
+   screenshot shows the original.
+6. **No production data on any image.** Local captures use demo data; live and legacy images are checked one by one.
+7. **Clean up always**, also after an error or an interruption.
 
-Parse `SHOWCASE.md` (or `docs/showcase/SHOWCASE.md`) to extract:
-- Feature list with screenshot candidate pages (from the "Features" sections)
-- `startupInfo` block (if present) — startup method, port, database, seed command
-- `pagesInventory` list — all routes with auth levels
+## The Session Script
 
-If `SHOWCASE.md` does not exist yet, detect everything from source files (see Phase 2).
-
-## Phase 2: Startup Detection
-
-### Project Type Detection
-
-Detect the project type before choosing a startup method:
-
-```bash
-# 1. Monorepo with api + app (lenne.tech stack fullstack)
-[ -d "projects/api" ] && [ -d "projects/app" ] && TYPE="lt-monorepo"
-
-# 2. Lerna monorepo (older lenne.tech stack projects)
-[ -f "lerna.json" ] && TYPE="lerna-monorepo"
-
-# 3. pnpm workspace monorepo
-[ -f "pnpm-workspace.yaml" ] && TYPE="pnpm-monorepo"
-
-# 4. Frontend-only with external CMS (e.g. Directus)
-grep -q "directus\|strapi\|contentful" package.json && TYPE="headless-cms"
-
-# 5. Desktop app (Tauri)
-[ -d "src-tauri" ] && TYPE="tauri-desktop"
-
-# 6. Backend-only (no frontend directory)
-[ ! -d "projects/app" ] && [ ! -d "src/pages" ] && [ ! -d "app/pages" ] && TYPE="backend-only"
-
-# 7. Single Nuxt/Next/Vite project
-[ -f "nuxt.config.ts" ] && TYPE="nuxt"
-[ -f "next.config.js" ] && TYPE="next"
-[ -f "vite.config.ts" ] && TYPE="vite"
-
-# 8. NPM package / CLI tool / Library
-[ -f "tsconfig.build.json" ] && ! [ -d "src/pages" ] && TYPE="library"
-```
-
-### Package Manager Detection
+Every state-changing step goes through `scripts/screenshot-session.mjs` of this plugin, so cleanup knows exactly
+what to undo. `<plugin-root>` below is the plugin's install path: the `screenshot-generator` agent and the
+`/lt-showroom:showroom:screenshot` command state it as an absolute path, because a reference file read with Read
+keeps the placeholder as written and the Bash environment carries no plugin variable.
 
 ```bash
-[ -f "pnpm-lock.yaml" ] && PM="pnpm"
-[ -f "yarn.lock" ] && PM="yarn"
-[ -f "package-lock.json" ] && PM="npm"
-# Lerna projects often use npm even without lockfile
-[ -f "lerna.json" ] && [ -z "$PM" ] && PM="npm"
+node "<plugin-root>/scripts/screenshot-session.mjs" <command> …
 ```
 
-### Monorepo Structure Detection (lenne.tech Stack Pattern)
+`$S` in the examples below stands for that path. Shell variables do not survive from one Bash call to the next, so
+write the full path in each call (or set `S=…` within the same call).
 
-Projects built on the open-source lenne.tech stack (nest-server + nuxt-base-starter) follow this pattern:
+| Command | Use |
+|---|---|
+| `slug <path-or-url>` | Work-folder name: the repository name in kebab-case |
+| `start <slug> --source <path-or-url>` | Opens the run; cleans an abandoned earlier run of the same slug; refuses (exit 3) while another live Claude session runs it |
+| `clone <slug> <path-or-url> [--ref <branch>]` | Clones the remote's default branch (falls back to the local checkout when the remote is unreachable), disables pushing, records the commit |
+| `run <slug> <name> --cwd <dir> [--env K=V]… -- <cmd…>` | Starts a dev server or worker in its own process group, logs to `logs/<name>.log` |
+| `compose-file <slug> --cwd <dir> [--files a.yml,b.yml]` | Writes an isolated copy of the Compose project and records it: fixed volume, network and container names dropped, bind mounts outside the clone refused (exit 2) |
+| `record <slug> lt-ticket\|compose\|container\|volume <value> [--cwd <dir>]` | Records a stack the run started by other means |
+| `check-db --scan <dir>` / `check-db <uri>…` | Exit 2 unless every database URI points at this machine or a service of the run's own Compose project |
+| `connections <slug>` | Exit 2 if a process of the run holds a connection to a remote database port |
+| `wait-http <url>` | Waits until a local URL answers below 500 |
+| `free-port` | A free port on 127.0.0.1 |
+| `elapsed <slug>` | Minutes used of the 45-minute budget |
+| `capture-path <slug> <feature> <device>` | The file path for `take_screenshot`, in the temp folder the browser MCP may write to |
+| `manifest add\|remove\|meta\|show <slug> …` | Records each image and moves a capture into `screenshots/` (refuses a capture whose size does not match its device); `remove` drops an image that failed the visual check |
+| `cleanup <slug> [--keep-checkout]` | Tears the run down; `--keep-checkout` stops the stack but keeps clone and session for the fallback chain |
+| `status [<slug>]` | Open runs and what they hold |
+| `verify-source <slug>` | Exit 2 if the local checkout given to `start` changed during the run |
+
+## Work Folder
+
 ```
-project/
-├── projects/
-│   ├── api/         # NestJS backend (port 3000)
-│   └── app/         # Nuxt frontend (port 3001)
-├── lerna.json       # Older projects use Lerna
-├── pnpm-workspace.yaml  # Newer projects use pnpm
-└── package.json     # Root with "start" script
-```
-
-**Lerna monorepos** (older lenne.tech stack projects):
-```bash
-npm run start  # Runs lerna run start --parallel (both api + app)
-```
-
-**pnpm monorepos** (offers, showroom):
-```bash
-pnpm run start  # Runs pnpm -r --parallel run start
-```
-
-### External Service Detection
-
-Check for services beyond MongoDB:
-
-| Service | Detection | Docker Run Command |
-|---------|-----------|-------------------|
-| MongoDB | `MONGO_URI` in .env.example | `docker run -d --name showcase-mongo -p 27018:27017 mongo:7` |
-| Redis | `REDIS_URL` in .env.example | `docker run -d --name showcase-redis -p 6380:6379 redis:7` |
-| Qdrant | `QDRANT_URL` in .env.example or docker-compose.yml | `docker run -d --name showcase-qdrant -p 6334:6333 qdrant/qdrant:latest` |
-| Directus | `DIRECTUS_URL` in .env / nuxt.config.ts | Use the URL from .env.example (external CMS, no local start needed) |
-| Python Service | `python-service/` directory in monorepo | `cd projects/python-service && pip install -r requirements.txt && uvicorn main:app --port 8000` |
-
-### Detect Dev Ports
-
-Check in order:
-1. `.env` or `.env.example`: `PORT=`, `NUXT_PORT=`, `APP_PORT=`
-2. `nuxt.config.ts`: `devServer: { port: ... }`
-3. `projects/app/nuxt.config.ts`: (monorepo pattern)
-4. `main.ts` (NestJS): `app.listen(PORT)` — default 3000
-5. Default: API=3000, App=3001
-
-### Detect Seed Script
-
-Check `package.json` (root AND projects/api/) scripts for:
-`seed`, `db:seed`, `demo`, `fixtures`, `populate`, `init:data`
-
-### System Setup Detection (lenne.tech Stack Pattern)
-
-Projects on the lenne.tech stack support initial admin creation:
-```bash
-curl -s -X POST http://localhost:3000/system-setup/init \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"showcase@test.com","password":"Showcase123"}'
+~/.lt-showroom/<slug>/
+├── checkout/                    throwaway clone (removed by cleanup)
+├── <name>-showroom/             lt ticket worktree, lt projects only (removed by cleanup)
+├── logs/                        output of `run` processes (removed by cleanup)
+├── session.json                 what the run started (removed by cleanup)
+├── screenshots/                 the deliverable, kept
+│   ├── overview-desktop.webp
+│   ├── overview-mobile.webp
+│   ├── <feature-slug>-desktop.webp
+│   └── <feature-slug>-mobile.webp
+└── manifest.json                one entry per image plus run metadata, kept
 ```
 
-This works only when no users exist in the database. Check the response — if 403 "users already exist", the DB already has data.
+Nothing is written into the project repository: not the screenshots, not `SHOWCASE.md`, not a `.gitkeep`.
 
-## Phase 3: Environment Setup
+## Phase 1: Inputs
 
-### Step 0: Install Dependencies
+- **Source:** a local path, a repository URL, or the current directory. A local checkout is only read, and only to
+  find its remote; the run clones from the remote.
+- **What to capture:** the feature list and pages from a `SHOWCASE.md` (in the work folder or the project, read only)
+  or, without one, a page inventory from the `analyzing-projects` skill (`reference/startup-detection.md` and the pages
+  of the frontend). Always add the overview (landing page or dashboard).
+- **Project notes:** an organization can keep start quirks, live URLs and demo access per project in its own internal
+  plugin or the project's `CLAUDE.md`. Read them before starting. They decide more than detection does.
+- **Live URL** for the fallback chain: the showcase's links, the project notes, `README.md`, deployment config.
 
-Check and install dependencies before starting any project: missing or broken `node_modules` is the most common reason a project fails to start.
+## Phase 2: Session and Clone
 
 ```bash
-# Detect package manager
-[ -f "pnpm-lock.yaml" ] && PM="pnpm"
-[ -f "yarn.lock" ] && PM="yarn"
-[ -f "package-lock.json" ] && PM="npm"
-[ -f "lerna.json" ] && PM="npm"  # Lerna projects use npm
-
-# Check if node_modules exist at root
-if [ ! -d "node_modules" ]; then
-  echo "Root node_modules missing — installing..."
-  ${PM} install
-fi
-
-# For monorepos: check subprojects
-if [ -d "projects/api" ] && [ ! -d "projects/api/node_modules" ]; then
-  echo "API node_modules missing — installing..."
-  # Lerna projects: use 'npm run init' or 'npx lerna bootstrap'
-  if [ -f "lerna.json" ]; then
-    npm run init 2>/dev/null || npx lerna bootstrap
-  elif [ -f "pnpm-workspace.yaml" ]; then
-    pnpm install
-  fi
-fi
-
-if [ -d "projects/app" ] && [ ! -d "projects/app/node_modules" ]; then
-  echo "App node_modules missing — installing..."
-  if [ -f "lerna.json" ]; then
-    npm run init 2>/dev/null || npx lerna bootstrap
-  elif [ -f "pnpm-workspace.yaml" ]; then
-    pnpm install
-  fi
-fi
+SLUG=$(node "$S" slug <source>)
+node "$S" start "$SLUG" --source <source>
+node "$S" clone "$SLUG" <source>            # --ref <branch> only when the user names one
 ```
 
-**Repair broken dependencies:**
+The clone is the run's own: copying `.env.example` to `.env`, installing dependencies, pointing the config at the
+run's database or a free port is all allowed there, and all of it disappears with the clone.
 
-If `node_modules` exists but binaries are missing (e.g., `nuxt: command not found`):
-```bash
-# Check for broken bin links
-[ -f "projects/app/node_modules/.bin/nuxt" ] || echo "Nuxt binary missing — reinstalling..."
+## Phase 3: Start the Project
 
-# Force reinstall
-rm -rf node_modules projects/*/node_modules
-${PM} install
-# Or for Lerna: npm run init
-```
+### Project Types
 
-Run this step even when `node_modules` directories exist, and verify that key binaries are present before starting the project.
+| Type | Detection (in the clone) | Start |
+|---|---|---|
+| **lt project** | `projects/api` + `projects/app`, or a standalone API/App on the current lt stack; `lt dev doctor` passes | `TMPDIR=/tmp lt ticket start showroom --base origin/<branch> --noConfirm --no-up` in `checkout/`, then `node "$S" record "$SLUG" lt-ticket showroom --cwd <checkout>`, then `TMPDIR=/tmp lt dev up --no-prune` in the worktree; URLs from `lt dev status` there |
+| **Compose stack** | A compose file that defines the app services | `node "$S" compose-file <slug> --cwd <checkout>` (records the project), then the `docker compose -p showroom-<slug> -f <file> up -d` it prints |
+| **Lerna monorepo** (older lt stack) | `lerna.json` | Install (`npm run init` or `npm install`), database of the run (below), then `run … app -- npm run start` |
+| **pnpm workspace** without lt dev | `pnpm-workspace.yaml` | `pnpm install`, database of the run, `run … app -- pnpm run start` |
+| **Single frontend** | `nuxt.config.*`, `next.config.*`, `vite.config.*` | `run … app --env PORT=<free-port> -- <pm> run dev` |
+| **Headless CMS frontend** | Directus, Strapi or Contentful URL in the env | Frontend only; the CMS is external and is only read |
+| **Desktop app (Tauri)** | `src-tauri/` | Only the web dev server, never the Tauri wrapper |
+| **Backend only** | No frontend | API only; capture Swagger (`/swagger`) and the GraphQL playground (`/graphql`) |
+| **Library, CLI, framework** | `tsconfig.build.json`, no pages | Not screenshottable: go straight to the fallback chain, stage 3 |
 
-### Step 1: Create .env from .env.example
+`lt ticket start` gives the run its own URLs (`<name>-showroom.localhost`), its own ports and Caddy block and its own
+empty database `<base>-showroom`; `lt ticket stop` removes all of it. `--no-up` keeps it from starting the stack itself:
+its own start is a bare `lt dev up`, whose prune would run from the clone. `TMPDIR=/tmp` avoids the macOS socket-path limit
+that crashes Nuxt SSR under `lt dev`.
 
-```bash
-# Check for .env
-if [ ! -f ".env" ] && [ -f ".env.example" ]; then
-  cp .env.example .env
-  echo "Created .env from .env.example"
-fi
+Restart a crashed lt stack inside the worktree with `TMPDIR=/tmp lt dev up --no-prune`. A bare `lt dev up` also
+prunes orphaned databases and registry entries of the developer's other environments; that housekeeping is the
+developer's, and a screenshot run changes only what it started.
 
-# For monorepos: also check subprojects
-for dir in projects/api projects/app; do
-  if [ -d "$dir" ] && [ ! -f "$dir/.env" ] && [ -f "$dir/.env.example" ]; then
-    cp "$dir/.env.example" "$dir/.env"
-    echo "Created $dir/.env from .env.example"
-  fi
-done
-```
+### Nothing Leaves the Machine, Nothing Is Hogged
 
-### Step 2: Install Dependencies
+- **Analytics and error reporting off in the clone** (Plausible, Matomo, Google Analytics, Sentry, feedback widgets):
+  set the project's switch in `.env`, or remove the snippet in the clone. A local run otherwise sends page views to the
+  project's production account. Observed 2026-10-11: a production build in a verification run reported its page views
+  to plausible.io.
+- **Heavy shared services belong to the developer.** A local LLM in the host's Ollama, a GPU or a host database are
+  shared with every other session: use a stub or the smallest model the feature needs, and name it in the report.
+  Observed 2026-10-11: a 14B model loaded for a RAG screenshot took 17.7 GB and slowed down the other sessions.
 
-```bash
-# Detect and install
-if [ "$PM" = "pnpm" ]; then
-  pnpm install
-elif [ "$PM" = "npm" ]; then
-  npm install
-fi
+Install dependencies with the package manager of the lockfile (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn,
+`package-lock.json` or `lerna.json` → npm). Repair a broken install inside the clone only.
 
-# For Lerna monorepos: lerna bootstrap or npm install at root
-[ -f "lerna.json" ] && npm install
-```
+### Ports
 
-### Step 3: Check Port Availability
+`lt dev` needs no fixed ports. Elsewhere, when a hard-coded port (3000, 3001) is taken, give the clone another one:
+the `PORT` variable, or edit the port in the clone's config to a value from `free-port`. The process holding the port
+belongs to someone else and keeps running.
+
+### Database of the Run
+
+| Start | Database |
+|---|---|
+| lt ticket | `<base>-showroom` on 127.0.0.1, created empty, dropped by `lt ticket stop` |
+| Compose | The database service of the Compose project, started from the `compose-file` copy; its volumes go with `cleanup` |
+| Everything else | A container of its own: `docker run -d --name showroom-<slug>-mongo -p 127.0.0.1:<free-port>:27017 mongo:7`, then `record … container showroom-<slug>-mongo`; point the clone's config or env at it |
+
+Never use a database that existed before the run. A Compose file whose volume has a fixed `name:` (or is `external`)
+would mount the developer's real volume under any project name, and a seed that empties collections first would wipe
+it; `compose-file` makes every volume, network and container the run's own (verified 2026-10-11: a second Compose
+project with the same fixed volume name read the first project's data). An older project's `config.env.ts` often hard-codes
+`mongodb://127.0.0.1/<project>-local`: that is a developer's data, so change the URI in the clone instead.
+
+Three checks keep the data local:
 
 ```bash
-for port in 3000 3001; do
-  if lsof -ti :$port > /dev/null 2>&1; then
-    echo "WARNING: Port $port is in use"
-    lsof -ti :$port | head -1
-  fi
-done
+node "$S" check-db --scan "$HOME/.lt-showroom/$SLUG/checkout"   # before the start: env and Compose files
+node "$S" check-db "<effective URI>"                            # before every seed, with the URI the seed uses
+node "$S" connections "$SLUG"                                   # after the start: no process talks to a remote DB
 ```
 
-### Step 4: Start Database (if needed and not running)
+`check-db --scan` reads env files only; for a `config.env.ts` pass the URI of the environment the start uses
+explicitly. Exit 2 means stop: fix the URI in the clone, or leave the local route.
+
+### Readiness
 
 ```bash
-# Check if MongoDB is accessible
-if ! mongosh --quiet --eval "db.runCommand({ping:1})" 2>/dev/null; then
-  echo "MongoDB not running, starting via Docker..."
-  docker run -d --name showcase-mongo -p 27017:27017 mongo:7
-fi
+node "$S" wait-http "https://showroom-name-showroom.localhost" --timeout 240
 ```
 
-## Phase 4: Start Application
+On a timeout read `logs/<name>.log` (or `.lt-dev/*.log` in the lt worktree), fix what is fixable in the clone, and
+check the time budget.
 
-### Type-Specific Startup
+## Phase 4: Demo Data
 
-**Lerna Monorepo** (older projects):
-```bash
-npm run start
-# This typically runs: lerna run start --parallel
-# Starts both API (port 3000) and App (port 3001)
+Order: the project's own seed script (`seed`, `db:seed`, `demo`, `fixtures`, `populate`, `init:data`), then the API,
+then the UI.
+
+- **API (TestHelper pattern):** lt projects create the first admin through `POST /system-setup/init` (works only on an
+  empty database), sign in, then create records through REST or GraphQL as the app's own frontend would.
+- **UI:** through Chrome DevTools MCP when no API route fits.
+
+The data is the run's own: when a capture shows an empty list, an odd state or a bad example, change or add records
+and capture again. Demo data must make the feature readable at a glance:
+
+- German, realistic, and fitting the customer's industry: fictitious people and companies, plausible amounts and dates,
+  never "Test", "foo" or lorem ipsum
+- E-mail addresses on `example.com`; phone numbers and IBANs in demo form
+- At least three records per main entity, in different states (open, in progress, done), so lists, filters and
+  status badges show something
+- Never production data, never a dump, never content copied from the live system
+
+## Phase 5: Capture
+
+One browser page per run, in an isolated context, closed at the end:
+
+```
+new_page          url=<start URL>  isolatedContext="showroom-<slug>"
+emulate           viewport="1440x900x1"                       # desktop
+emulate           viewport="390x844x2,mobile,touch"           # mobile
+navigate_page     type="reload"                               # after every emulation change
+evaluate_script   function=<content of <plugin-root>/scripts/browser/prepare-page.js>
+evaluate_script   function=<content of <plugin-root>/scripts/browser/anonymize-dom.js>  # live and older pages only
+take_screenshot   format="webp"  quality=80  filePath=<output of: node "$S" capture-path <slug> <feature> <device>>
 ```
 
-**pnpm Monorepo** (newer lenne.tech stack projects):
-```bash
-pnpm run start
-# This typically runs: pnpm -r --parallel run start
-```
+- **`emulate`, not `resize_page`.** `resize_page` keeps the host's pixel density, so a Retina Mac delivers 2880×1800
+  PNGs of about 1.2 MB. With the emulation above a desktop capture is exactly 1440×900, a mobile capture 780×1688.
+- **Viewport screenshots**, never `fullPage`: one screen per feature, the way a visitor sees it.
+- **Capture into the temp folder.** Chrome DevTools MCP writes files only below the session's workspace roots and the
+  temp folder, so `take_screenshot` into `~/.lt-showroom` fails with "not within any of the configured workspace
+  roots". `capture-path` names a file in the temp folder, and `manifest add` moves it into `screenshots/`.
+- **Reload after switching the device.** Many layouts decide on load whether they are mobile.
+- **`prepare-page.js`** scrolls once through the page (lazy images, scroll-reveal), hides cookie banners, chat launchers
+  and dev overlays, freezes animations and waits for fonts and images. Its `horizontalOverflow` answer is the mobile
+  check.
+- **Mobile only where the app is usable on a phone:** no horizontal overflow at 390 px and a viewport meta tag.
+  Otherwise record `manifest meta <slug> notes.mobile="not responsive"` and capture desktop only.
+- **Record every image:**
 
-**Docker Compose** (when present and complex stack):
-```bash
-docker compose up -d
-# Use this for projects with Qdrant, Redis, Python services
-```
+  ```bash
+  node "$S" manifest add "$SLUG" --file <capture path> \
+    --feature overview --device desktop --level local [--customer-branding] [--anonymized]
+  ```
 
-**Tauri Desktop App:**
-```bash
-# Don't start Tauri — start only the Nuxt dev server
-cd projects/app  # or root if single project
-npx nuxt dev --port 3001
-# The app works as a web app without Tauri
-```
+  `--customer-branding` marks an image that shows the customer's logo or name (anonymous showcases need a variant
+  without it); `--shows-people` one with real people from the repository's own content; `--anonymized` marks a live or older image whose data was replaced. The command refuses a capture whose
+  size does not match the device, which catches a missed emulation, and leaves it where it was.
+- **Look at the images.** Open each saved file once (Read) before it counts. A blank page, an error page, a spinner or a
+  leftover banner is a failed capture: `manifest remove <slug> <feature> <device>`, fix the cause, capture again.
+- **Real people in the repository's own content** (a website's team page with names, photos and phone numbers) are
+  shipped content, not demo data. Keep the image, record it with `--shows-people`, and name it in the report so the
+  editor decides whether the showcase shows it. On a live system the same people are blurred (stage 1 and 2 rules).
 
-**Headless CMS Frontend:**
-```bash
-# Only start the frontend — CMS is external
-cp .env.example .env  # Contains the Directus URL
-npm run dev  # or pnpm run dev
-```
+Filenames: `<feature-slug>-<device>.webp`, kebab-case, always including `overview-desktop.webp` and
+`overview-mobile.webp`.
 
-**Backend-Only** (e.g. an email server):
-```bash
-npm run start
-# Screenshots of: Swagger UI (/swagger), GraphQL Playground (/graphql)
-```
+## Phase 6: Fallback Chain
 
-**Library/CLI/Framework** (nest-server, nuxt-extensions, cli):
-```bash
-# These are not showcase-screenshottable applications
-# Skip screenshot phase, note in SHOWCASE.md that screenshots are not applicable
-```
+The local route is first choice. It is abandoned when the project cannot be started or seeded, or when
+`node "$S" elapsed "$SLUG"` reports the budget exceeded (about 45 minutes per project; check it at every phase
+boundary). Stop the local stack with `node "$S" cleanup "$SLUG" --keep-checkout`: the clone stays for the comparison
+below. Then, in this order:
 
-### Readiness Check
+| Stage | Source | Condition |
+|---|---|---|
+| 1 | Demo tenant or demo access on the live system | The live system matches the repository, and demo credentials are documented (project notes) or given by the user |
+| 2 | Public pages of the live system, no login | The live system matches the repository |
+| 3 | Older screenshots | Earlier runs in `screenshots/`, `docs/showcase/screenshots/` in a local checkout (read only), screenshots of the existing showcase on the platform |
+| 4 | Branded teaser cover | Always possible |
 
-Poll until the application responds:
-```bash
-FRONTEND_PORT=${FRONTEND_PORT:-3001}
-API_PORT=${API_PORT:-3000}
+A feature can be covered at different stages: take the highest stage per feature, not per project.
 
-# Wait for API
-for i in $(seq 1 20); do
-  curl -s -o /dev/null -w "%{http_code}" "http://localhost:${API_PORT}" 2>/dev/null | grep -qE "200|301|302|404" && break
-  sleep 3
-done
+### Does the Live System Still Match the Repository?
 
-# Wait for Frontend
-for i in $(seq 1 20); do
-  curl -s -o /dev/null -w "%{http_code}" "http://localhost:${FRONTEND_PORT}" 2>/dev/null | grep -qE "200|301|302" && break
-  sleep 3
-done
-```
+Live stages only count when the live system still runs this code. Many old projects are offline or were replaced by
+another provider's website. Compare with plain GET requests (`curl -sL`), never by logging in:
 
-## Phase 5: Demo Data
+- 3 to 5 routes from the repository's pages answer on the live host, and none is a generic 404 page
+- distinctive texts from the repository (page titles, meta description, i18n strings, hero copy) appear in the live
+  HTML
+- the framework fingerprint matches (`/_nuxt/` or `__NUXT__`, `/_next/`, `ng-version="<major>"` against
+  `package.json`)
+- where exposed, a version or build marker matches the clone's `package.json` or commit
 
-### Priority Order
-
-1. **System Setup** (lenne.tech stack projects with Better Auth or Legacy Auth):
-```bash
-# Create first admin user
-curl -s -X POST "http://localhost:3000/system-setup/init" \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"showcase@test.com","password":"Showcase123"}'
-```
-
-2. **Seed Script** (if exists):
-```bash
-cd projects/api  # or root
-${PM} run seed   # or db:seed, demo, fixtures
-```
-
-3. **Chrome DevTools MCP** (manual creation via UI):
-   - Log in with the system-setup credentials
-   - Create 2-3 realistic records per primary entity
-   - Use realistic German names, descriptions, company names
-   - Cover the main user workflow
-
-4. **API Calls** (programmatic creation):
-```bash
-# Login to get session cookie
-curl -s -c /tmp/showcase-cookies.txt -X POST "http://localhost:3000/iam/sign-in/email" \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"showcase@test.com","password":"Showcase123"}'
-
-# Create entities via REST or GraphQL
-curl -s -b /tmp/showcase-cookies.txt -X POST "http://localhost:3000/{entity}" \
-  -H 'Content-Type: application/json' \
-  -d '{"title":"Beispiel","description":"Realistische Beschreibung..."}'
-```
-
-### Demo Data Quality
-
-- Use realistic German names (not "Test" or "Lorem ipsum")
-- Create enough data to fill the UI (not just 1 record)
-- Cover edge cases that demonstrate features (e.g., different statuses)
-- If the project has a public-facing page, ensure it has content visible without auth
-
-## Phase 6: Capture Screenshots
-
-### Output Directory
+Record the verdict with its evidence:
 
 ```bash
-mkdir -p docs/showcase/screenshots
+node "$S" manifest meta "$SLUG" liveCheck.url=<url> liveCheck.matchesRepo=false \
+  liveCheck.evidence="routes 0/4, title differs, WordPress instead of Nuxt"
 ```
 
-### Viewports
+`matchesRepo=false` or an unreachable host skips stages 1 and 2. Without a repository there is nothing to compare
+against: the live system is used only when the user confirms it still runs this project's code
+(`liveCheck.evidence="confirmed by the user"`). A live URL passed to the command is an address, not that confirmation. The screenshots then come from the repository: the
+local route once more after fixing what blocked it, if budget remains, otherwise stage 3.
 
-| Viewport | Width | Height |
-|----------|-------|--------|
-| desktop | 1440 | 900 |
-| mobile | 390 | 844 |
+### Live Systems (Stages 1 and 2)
 
-### Capture Sequence
+Nothing on the system or its production data changes. Reading is fine, by whatever means the page itself uses
+(GET requests, GraphQL queries, search endpoints).
 
-**Step 1: Overview Screenshots**
-- Landing page / public home: `overview-desktop.png`, `overview-mobile.png`
-- Login page (if exists): `login-desktop.png`
-- Dashboard (after login): `dashboard-desktop.png`
+- **Allowed:** navigating, scrolling, opening tabs, menus and accordions, filters, sorting and search that only change
+  the view, and the login with demo access.
+- **Never:** submitting a form other than the login; clicking save, send, delete, create, upload, accept, order, book or
+  pay; changing settings; starting exports that send mail; creating accounts; resetting passwords.
+- **Replace the data before every capture** with `anonymize-dom.js`: fill `REPLACEMENTS` with every person, company,
+  address, amount and free text visible on the page (read it from `take_snapshot`), and `BLUR` with selectors for
+  photos, avatars, canvas charts, maps and embedded documents. Every recognizable person in a photo or video still
+  counts as personal data and is blurred, children always; public marketing content is no exception on a live system.
+  Re-run until its `remaining` lists are empty, then check the saved image. Content that can be neither replaced nor blurred in the DOM is covered in the image before saving;
+  an image that still shows real data is deleted, not recorded.
+- **Check the network after every page:** `list_network_requests`, then look at every request that is not a GET. The
+  login and read-only requests (a GraphQL `query`, a search) are fine. Any request that writes (a GraphQL `mutation`
+  other than the login, PUT, PATCH, DELETE, a POST to a create or update endpoint) stops the live capture at once:
+  report method and path, and do not use the images of that page.
+- The isolated browser context ends with the page, so no live session cookie outlives the run. Credentials are never
+  written to a file.
 
-**Step 2: Feature Screenshots**
-For each feature in SHOWCASE.md:
-1. Navigate to the page demonstrating the feature
-2. Wait 2000ms for animations, data loading, and scroll-reveal
-3. Trigger scroll-reveal by scrolling through the page:
-```javascript
-async () => {
-  const steps = Array.from({length: 20}, (_, i) => i * 300);
-  for (const y of steps) {
-    window.scrollTo({top: y, behavior: 'instant'});
-    await new Promise(r => setTimeout(r, 200));
-  }
-  window.scrollTo({top: 0, behavior: 'instant'});
-}
-```
-4. Set viewport to desktop (1440×900)
-5. Take screenshot: `{feature-slug}-desktop.png`
-6. Set viewport to mobile (390×844)
-7. Take screenshot: `{feature-slug}-mobile.png`
+### Older Screenshots (Stage 3)
 
-**Step 3: Backend-Only Projects**
-For projects without a frontend UI:
-- Screenshot Swagger UI: `http://localhost:3000/swagger`
-- Screenshot GraphQL Playground: `http://localhost:3000/graphql`
-- Save as `api-swagger-desktop.png`, `api-graphql-desktop.png`
+Convert them into the capture folder as WebP (the original stays where it is): with
+`cwebp -q 80 <in.png> -o <capture path>` where installed, otherwise open the PNG via `file://` with the emulation set to
+its size and capture it as WebP. Check each one for production data like a live capture. Record with
+`--level legacy`; their size is not checked.
 
-### Filename Convention
+### Teaser Cover (Stage 4)
 
 ```
-docs/showcase/screenshots/
-├── overview-desktop.png
-├── overview-mobile.png
-├── login-desktop.png
-├── dashboard-desktop.png
-├── {feature-1-slug}-desktop.png
-├── {feature-1-slug}-mobile.png
-├── {feature-2-slug}-desktop.png
-├── {feature-2-slug}-mobile.png
-└── ...
+navigate_page  url="file://<plugin-root>/scripts/browser/teaser-cover.html?title=<name>&subtitle=<category>&tags=Nuxt,NestJS&accent=<hex>&org=<company>&year=<year>"
+emulate        viewport="1440x900x1"
+take_screenshot format="webp" quality=80 filePath=<output of: node "$S" capture-path <slug> cover desktop>
 ```
+
+Use the name the showcase shows (the alias when the customer stays anonymous), no customer logo. Record it with
+`--feature cover --device desktop --level teaser` and mark the run:
+
+```bash
+node "$S" manifest meta "$SLUG" pendingTag=screenshots-ausstehend
+```
+
+The screenshot run writes nothing to the Showroom: the tag and the images reach the showcase when it is created or
+updated.
 
 ## Phase 7: Cleanup
 
-**Always run cleanup, even if earlier phases failed.**
+Always, also after a failure:
 
-```bash
-# Stop Lerna-managed processes
-pkill -f "lerna run" 2>/dev/null
+1. Close the browser page the run opened (`close_page`).
+2. `node "$S" cleanup "$SLUG"`: stops the recorded processes (by process group, checked against their start time),
+   runs `lt ticket stop showroom --force --noConfirm` (which also drops the run's database), takes the Compose project
+   down with its volumes, removes the run's containers, and deletes everything in the work folder except
+   `screenshots/` and `manifest.json`, plus the run's capture folder in the temp folder.
+3. Exit 0 and an empty `leftovers` list mean done. Anything listed is reported verbatim with the command that removes it.
+4. If the source was a local checkout, `node "$S" verify-source "$SLUG"` exits 0: its HEAD and `git status` are
+   what `start` recorded.
 
-# Stop dev servers
-pkill -f "nuxt dev" 2>/dev/null
-pkill -f "next dev" 2>/dev/null
-pkill -f "nest start" 2>/dev/null
-pkill -f "nodemon" 2>/dev/null
-pkill -f "vite" 2>/dev/null
-pkill -f "uvicorn" 2>/dev/null
-
-# Stop Docker Compose services (if started in this session)
-[ -f "docker-compose.yml" ] && docker compose down 2>/dev/null
-
-# Stop standalone Docker containers (if started manually)
-docker stop showcase-mongo 2>/dev/null && docker rm showcase-mongo 2>/dev/null
-docker stop showcase-redis 2>/dev/null && docker rm showcase-redis 2>/dev/null
-docker stop showcase-qdrant 2>/dev/null && docker rm showcase-qdrant 2>/dev/null
-
-# Verify ports are free
-for port in 3000 3001 6333 6379 8000 27017 27018; do
-  if lsof -ti :$port > /dev/null 2>&1; then
-    echo "WARNING: Port $port still in use"
-  fi
-done
-```
-
-## Port Conflict Resolution
-
-Many projects on the lenne.tech stack hardcode port 3000 in `config.env.ts` and cannot be overridden via environment variable. When another service already occupies port 3000:
-
-**Option A: Stop the conflicting service temporarily**
-```bash
-# Find what's on port 3000
-lsof -ti :3000
-# Stop it, start the new project, capture screenshots, then restart the original
-```
-
-**Option B: Frontend-only screenshots** (limited but non-disruptive)
-```bash
-# Start only the frontend on a different port
-cd projects/app && npx nuxt dev --port 3002
-# Screenshots will show auth/login pages but no data-driven views
-```
-
-**Option C: Use Docker with port mapping** (if docker-compose.yml exists)
-```bash
-# Modify the API port mapping in docker-compose.yml
-# api: ports: ["3005:3000"]
-docker compose up -d
-```
-
-Always prefer Option A when the user allows stopping the conflicting service.
+An interrupted run is cleaned by the next run of the same slug (`start`), by the `SessionEnd` hook when the session
+ends, or explicitly with `/lt-showroom:showroom:screenshot <source> --cleanup`.
 
 ## Error Recovery
 
 | Error | Recovery |
-|-------|----------|
-| Port already in use | Show what process owns the port. Ask user before killing. |
-| Docker not installed | Fall back to npm/pnpm dev server + local MongoDB |
-| MongoDB not available | Start via Docker: `docker run -d --name showcase-mongo -p 27017:27017 mongo:7` |
-| Lerna not found | Run `npx lerna run start --parallel` or start api + app separately |
-| Server startup timeout | Capture startup logs, report error, proceed to cleanup |
-| System-setup returns 403 | Database has existing users. Ask user for credentials or use existing admin. |
-| External CMS unreachable | Note in SHOWCASE.md that screenshots may be incomplete. Use cached/example data if available. |
-| Seed script fails | Continue without demo data; note that screenshots may show empty states |
-| Screenshot capture fails | Continue with remaining features, report failures in summary |
-| Cleanup fails | Warn user with exact PIDs and `kill -9` commands |
+|---|---|
+| `start` exits 3 (BUSY) | Another live session runs this project. Wait, or work on another project |
+| Clone fails | Remote unreachable and no local checkout: ask the user for access, or go to stage 3 |
+| `lt ticket start` fails | Read its output; `lt dev doctor`; fall back to the Lerna/pnpm route with a database of the run |
+| Port taken | Another port in the clone; never stop the owner |
+| `check-db` exits 2 | Point the clone at the run's database; never seed until it passes |
+| Startup timeout | Read the log, fix in the clone, watch the budget |
+| `system-setup/init` answers 403 | The database is not empty, so it is not the run's own: stop and check the URI |
+| Seed fails | Demo data through the API or UI; an empty state is not a showcase image |
+| Capture fails | Continue with the remaining features, report the missing ones |
+| `manifest add` refuses the size | Set the emulation again, reload, capture again |
+| Cleanup lists leftovers | Report them with exact commands; never widen the cleanup to processes the run did not start |
 
-## Project-Specific Notes
+## Libraries and Frameworks
 
-An organization can keep notes on its own projects (startup quirks, required services, what to capture) in its internal plugin or the project's CLAUDE.md; read them before starting a project for screenshots.
-
-### Libraries/Frameworks (nest-server, nuxt-extensions, cli)
-Not screenshottable as applications. Create SHOWCASE.md with code-focused content instead of UI screenshots. Use architecture diagrams or terminal output screenshots if applicable.
+Packages such as nest-server, nuxt-extensions or a CLI are not applications. Skip the local route: older screenshots,
+terminal output or an architecture diagram, otherwise the teaser cover.

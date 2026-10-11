@@ -15,7 +15,7 @@ Performs a comprehensive, evidence-based analysis of a software project's source
 
 ## Scope
 
-Read-only analysis of source code. May write `SHOWCASE.md` and create `docs/showcase/screenshots/` directory when requested. No server starts, no package installs.
+Read-only analysis of source code. May write `SHOWCASE.md` when requested; screenshots are never stored in the project. No server starts, no package installs.
 
 ## Analysis Dimensions
 
@@ -132,7 +132,6 @@ The report includes:
 
 If `SHOWCASE.md` creation was requested:
 - Write the file to the project root (or `docs/showcase/SHOWCASE.md` for monorepos)
-- Create `docs/showcase/screenshots/` directory with `.gitkeep`
 
 ## Validation Rules
 

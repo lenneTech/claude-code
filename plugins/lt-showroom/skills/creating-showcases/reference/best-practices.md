@@ -47,8 +47,8 @@ Each feature is:
 - Minimum 1 screenshot per feature (desktop viewport required, mobile optional)
 - Screenshots must show the running application with realistic demo data
 - Never use empty states or placeholder screens
-- All screenshots in `docs/showcase/screenshots/` of the project repository
-- Naming: `{feature-slug}-desktop.png`, `{feature-slug}-mobile.png`
+- All screenshots in `~/.lt-showroom/<slug>/screenshots/`, never in the project repository
+- Naming: `{feature-slug}-desktop.webp`, `{feature-slug}-mobile.webp`
 
 ## Customer Testimonials
 
@@ -213,7 +213,7 @@ Use `custom-html` blocks for detailed feature presentations (one per feature wit
 - **One-sentence descriptions** — Every block meets the depth set in "Content Depth Requirements" above.
 - **Generic features** — "Benutzerfreundlich" or "Modern" without specifics tell a prospect nothing; name the concrete capability.
 - **Missing testimonials** — Always check the company's testimonial source before publishing.
-- **No screenshots** — A showcase without visuals is incomplete. All screenshots go in `docs/showcase/screenshots/`.
+- **No screenshots** — A showcase without visuals is incomplete. `/lt-showroom:showroom:screenshot` captures them into `~/.lt-showroom/<slug>/screenshots/`, with a fallback chain for projects that no longer run.
 - **Copy-paste from README** — Rewrite for the audience; READMEs are for developers, showcases are for prospects.
 - **English in German showcases** — Keep consistent; translate technical descriptions.
 - **Outdated SHOWCASE.md** — Version must match `package.json`. Run `/lt-showroom:showroom:update` when the project changes.

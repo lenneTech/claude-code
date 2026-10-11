@@ -1,5 +1,5 @@
 ---
-description: Analyze a software project and create a versioned SHOWCASE.md with features, architecture, and screenshot paths. If screenshots exist in docs/showcase/screenshots/, reference them. Otherwise, use placeholder paths that match the naming convention.
+description: Analyze a software project and create a versioned SHOWCASE.md with features, architecture, and the screenshot file name of each feature (captured later by showroom:screenshot into ~/.lt-showroom/<slug>/screenshots/).
 argument-hint: "[project-path]"
 allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(ls:*), Bash(node:*), Bash(mkdir:*), Bash(find:*), Agent, WebFetch, mcp__plugin_lt-showroom_showroom-api__*
 disable-model-invocation: true
@@ -79,19 +79,9 @@ The file contains:
 - Frontmatter with `version`, `source_hash`, `last_commit`, `analyzed_at` (today), `project`, `technologies`, `category`, `customer`
 - All sections: Überblick, Technologie-Stack, Features (minimum 6), Architektur, Technische Highlights, Ergebnis, Changelog
 - Each feature section with description, `file:line` evidence, and screenshot placeholder paths
-- Screenshot paths using the convention: `docs/showcase/screenshots/{feature-slug}-desktop.png`
+- Screenshot file names using the convention `{feature-slug}-desktop.webp` / `{feature-slug}-mobile.webp` (the files are captured into `~/.lt-showroom/<slug>/screenshots/`, never into the project)
 
-### Step 5: Create Screenshot Directory Placeholder
-
-Create the screenshot directory in the project:
-
-```bash
-mkdir -p <project-path>/docs/showcase/screenshots
-```
-
-Add a `.gitkeep` if the directory is empty so it is tracked by git.
-
-### Step 6: Present Report
+### Step 5: Present Report
 
 Display a summary to the user:
 
@@ -104,7 +94,7 @@ Screenshots: 16 placeholders (run /lt-showroom:showroom:screenshot to capture)
 Startup:     pnpm run dev (port 3001, requires MongoDB)
 ```
 
-### Step 7: Offer Next Steps
+### Step 6: Offer Next Steps
 
 After presenting the summary, suggest:
 

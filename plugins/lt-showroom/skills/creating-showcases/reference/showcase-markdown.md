@@ -85,8 +85,8 @@ Beschreibung (2-3 Sätze) was das Feature macht und warum es relevant ist.
 
 **Belege:** `src/server/modules/matching/matching.service.ts:42`
 
-![KI-Vektor-Matching Desktop](docs/showcase/screenshots/matching-desktop.png)
-![KI-Vektor-Matching Mobile](docs/showcase/screenshots/matching-mobile.png)
+![KI-Vektor-Matching Desktop](matching-desktop.webp)
+![KI-Vektor-Matching Mobile](matching-mobile.webp)
 
 ### Feature 2: Echtzeit-Chat
 ...
@@ -135,9 +135,9 @@ One `### Feature N: Name` subsection per feature. Each feature subsection contai
 
 1. **Description** — 2-3 sentences: what the feature does and why it matters
 2. **Belege** — At least one `file:line` reference to implementing code
-3. **Screenshots** — At least one screenshot reference using a relative path
+3. **Screenshots** — At least one screenshot, referenced by file name
 
-Screenshot path format: `docs/showcase/screenshots/{feature-slug}-{viewport}.png`
+Screenshot names: `{feature-slug}-{device}.webp` (`desktop` or `mobile`); the files live in `~/.lt-showroom/<slug>/screenshots/`
 
 **Feature naming rules:**
 - Action-oriented: "KI-Vektor-Matching" not "Matching-Funktion"
@@ -166,25 +166,30 @@ Format: `- vX.Y.Z (YYYY-MM-DD): Description of changes`
 
 ## Screenshot References
 
-All screenshots are stored relative to the project root:
+Screenshots never live in the project repository. `/lt-showroom:showroom:screenshot` writes them to the project's work
+folder, together with a manifest that lists every image:
 
 ```
-docs/showcase/screenshots/
-├── {feature-slug}-desktop.png   # 1440×900
-├── {feature-slug}-mobile.png    # 390×844
-├── overview-desktop.png
-├── overview-mobile.png
-└── ...
+~/.lt-showroom/<slug>/
+├── screenshots/
+│   ├── overview-desktop.webp          # 1440×900
+│   ├── overview-mobile.webp           # 780×1688 (390×844 at 2x)
+│   ├── {feature-slug}-desktop.webp
+│   ├── {feature-slug}-mobile.webp
+│   └── ...
+└── manifest.json                      # feature, device, size, level, customer branding per image
 ```
 
-Reference them in Markdown using **relative paths** (no leading slash):
+SHOWCASE.md names each feature's screenshots by **file name only**:
+
 ```markdown
-![Feature Name Desktop](docs/showcase/screenshots/feature-name-desktop.png)
+![Feature Name Desktop](feature-name-desktop.webp)
 ```
 
-Use relative paths like `docs/showcase/screenshots/...`, not absolute paths like `/docs/showcase/screenshots/...`: the leading slash breaks rendering in many Markdown viewers and on GitHub.
-
-**Workflow order:** `/lt-showroom:showroom:analyze` writes SHOWCASE.md first, with placeholder screenshot paths. `/lt-showroom:showroom:screenshot` then captures the screenshots and replaces each placeholder with the file it actually created (Step 5). A SHOWCASE.md is ready for publishing only when no placeholder path is left.
+**Workflow order:** `/lt-showroom:showroom:analyze` writes SHOWCASE.md with the file names each feature will have.
+`/lt-showroom:showroom:screenshot` captures them into the work folder and changes nothing in the project.
+`/lt-showroom:showroom:create` resolves the names against `manifest.json`: a name without an entry is a screenshot
+still missing, and the manifest's `pendingTag` marks a project that only has the teaser cover so far.
 
 Screenshots:
 - Show the actual running application (not mockups)
@@ -306,6 +311,6 @@ When changes are detected (source_hash differs):
 - `version` matches `package.json` — checked at publish time
 - `source_hash` is recalculated at every analysis
 - Every feature has at least one `file:line` evidence reference
-- Every feature should have at least one screenshot in `docs/showcase/screenshots/` (recommended, not required)
+- Every feature should have at least one screenshot in the work folder's `manifest.json` (recommended, not required)
 - The `technologies` list contains every technology in the Technologie-Stack table
 - No placeholder text — all sections must be substantive

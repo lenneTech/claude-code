@@ -1,6 +1,6 @@
 ---
 name: creating-showcases
-description: 'Creates, updates, and manages showcases on the Showroom platform (showroom.lenne.tech). Implements a 5-phase workflow: (1) project analysis, (2) screenshot capture with Docker/app startup and demo data, (3) SHOWCASE.md creation as single source of truth in the project repository, (4) showcase creation via API using SHOWCASE.md + the account''s company context and customer testimonials + web research, (5) interactive presentation with modern content blocks. Uses MCP tools (showroom-api) or REST API for CRUD operations. Activates when creating, editing, managing showcases, portfolio entries, or the Showroom platform. NOT for developing the Showroom platform itself.'
+description: 'Creates, updates, and manages showcases on the Showroom platform (showroom.lenne.tech). Implements a 5-phase workflow: (1) project analysis, (2) screenshot capture from a throwaway clone with demo data and a fallback chain, (3) SHOWCASE.md creation as single source of truth in the project repository, (4) showcase creation via API using SHOWCASE.md + the account''s company context and customer testimonials + web research, (5) interactive presentation with modern content blocks. Uses MCP tools (showroom-api) or REST API for CRUD operations. Activates when creating, editing, managing showcases, portfolio entries, or the Showroom platform. NOT for developing the Showroom platform itself.'
 ---
 
 # Creating Showcases on the Showroom Platform
@@ -11,7 +11,7 @@ This skill implements a **5-phase workflow** built around SHOWCASE.md as the sin
 
 - **SHOWCASE.md `version` must match `package.json` version** — A drift between the two is silently ignored by the API, but it confuses future audits and breaks automated "is the showcase current?" checks. Always `sync` the `version` field when running an update.
 - **REST API cookies expire between Claude sessions** — If you fall back from MCP to direct `curl` calls, the session cookie written to `.cookies` is tied to this Claude session. On the next session's first request you'll get a 401 without a clear error. Re-authenticate before each new workflow.
-- **Phase 2 cleanup runs even on failure** — If Docker is started for screenshots but the workflow fails before Phase 5, containers remain running and block port 3000 for the next project's startup. Always guard `docker compose down` with a trap/finally-equivalent, not just a success-path call.
+- **Screenshot runs stop only what they recorded** — Several Claude sessions run on one machine, so `pkill -f "nuxt dev"`, `kill` by port or a bare `docker compose down` hit other sessions' servers. Every start goes through `scripts/screenshot-session.mjs`, which records it, and `cleanup` stops exactly that; an interrupted run is cleaned by the next run of the same project or when the session ends.
 - **Content block `order` values must be ascending with no gaps** — Holes in the sequence (e.g. order 1, 3, 5) cause rendering glitches on the showroom frontend. When deleting a block, re-normalize the remaining orders; when adding, pick the next consecutive integer.
 
 ## When to Use This Skill
@@ -55,7 +55,7 @@ curl -s -b /tmp/showroom-cookies.txt -X POST https://api.showroom.lenne.tech/sho
 
 - `${CLAUDE_SKILL_DIR}/reference/showcase-model.md` — Showcase data model and status lifecycle
 - `${CLAUDE_SKILL_DIR}/reference/content-blocks.md` — All content block types with schemas
-- `${CLAUDE_SKILL_DIR}/reference/screenshot-workflow.md` — Docker-based startup, demo data, feature screenshots
+- `${CLAUDE_SKILL_DIR}/reference/screenshot-workflow.md` — Screenshot runs: throwaway clone, database of the run, demo data, WebP capture, fallback chain, live-system rules, cleanup
 - `${CLAUDE_SKILL_DIR}/reference/best-practices.md` — Content guidelines and block structure
 - `${CLAUDE_SKILL_DIR}/reference/showcase-markdown.md` — SHOWCASE.md format specification
 
@@ -65,7 +65,7 @@ SHOWCASE.md is the **single source of truth**. Everything flows from this file.
 
 ```
 Phase 1: Analyze      → structured report with features + pages + startup info
-Phase 2: Screenshots  → start app, create demo data, capture per feature
+Phase 2: Screenshots  → clone, start with demo data, capture per feature (WebP)
 Phase 3: SHOWCASE.md  → versioned Markdown in project repository
 Phase 4: Publish      → SHOWCASE.md + feedback + research → showcase via API
 Phase 5: Present      → modern blocks with glassmorphism, scroll-reveal, 3D-tilt
@@ -88,53 +88,18 @@ Every claim must have a `file:line` evidence reference.
 
 ## Phase 2: Screenshots
 
-### 2a. Start the Application
+Run `/lt-showroom:showroom:screenshot` (path or repository URL). The command is slash-only, so a caller that cannot
+run it (another command, such as `take-ticket` on a showcase ticket) follows its Steps 1 and 2 itself, spawns the
+`lt-showroom:screenshot-generator` agent in the foreground with the Step 3 prompt, and finishes with Step 4. The agent:
 
-Check for Docker Compose first — it is the preferred startup method:
+1. clones the project into `~/.lt-showroom/<slug>/checkout`, so the developer's checkout, database and running stack stay untouched
+2. starts it with a database of its own (`lt ticket start` for lt projects, a `showroom-<slug>` Compose project, or a dev server with a database container of the run), after proving every database URI is local
+3. seeds realistic German demo data (seed script, else API, else UI), never production data
+4. captures each feature with `emulate` at 1440×900 (desktop) and 390×844 @2x (mobile) as WebP viewport screenshots into `~/.lt-showroom/<slug>/screenshots/` and records them in `manifest.json`
+5. falls back, when the project cannot run locally within about 45 minutes, to demo access or public pages of a live system that still matches the repository (read only, data replaced in the DOM), then older screenshots, then a teaser cover with the pending tag `screenshots-ausstehend`
+6. stops exactly what it started, also after an interruption
 
-```bash
-# Option A: Docker Compose (preferred)
-[ -f "docker-compose.yml" ] || [ -f "compose.yaml" ] && docker compose up -d
-
-# Option B: Standalone MongoDB if needed but not in compose
-docker run -d --name showcase-mongo -p 27018:27017 mongo:7
-
-# Option C: npm/pnpm dev server
-pnpm run dev  # or npm run dev
-```
-
-Always use `run_in_background: true` for server processes. Poll for readiness before proceeding.
-
-### 2b. Create Realistic Demo Data
-
-1. Check for a seed script in `package.json`: `seed`, `db:seed`, `demo`, `fixtures`
-2. If a seed script exists: `pnpm run seed`
-3. If no seed script: use Chrome DevTools MCP to create 2-3 realistic records via the UI
-   - Use realistic names, not lorem ipsum
-   - Cover the primary entities of the application
-
-### 2c. Capture Feature Screenshots
-
-For each feature in the analysis report:
-- Navigate to the page that best demonstrates the feature
-- Capture desktop (1440×900) and mobile (390×844) viewports
-- Save to `docs/showcase/screenshots/` in the project directory
-
-Filename convention: `{feature-slug}-desktop.png`, `{feature-slug}-mobile.png`
-
-```bash
-# Ensure the screenshot directory exists
-mkdir -p docs/showcase/screenshots
-```
-
-### 2d. Cleanup
-
-After all screenshots are captured:
-- Stop dev servers: `pkill -f "nuxt dev"` / `pkill -f "next dev"` / `pkill -f "nest start"`
-- Stop Docker containers if started in this session: `docker compose down` or `docker stop showcase-mongo`
-- Verify ports are free: `lsof -ti :<port>`
-
-Full details in `${CLAUDE_SKILL_DIR}/reference/screenshot-workflow.md`.
+Nothing is written into the project repository. Full procedure: `${CLAUDE_SKILL_DIR}/reference/screenshot-workflow.md`.
 
 ---
 
@@ -147,7 +112,7 @@ The file format is defined in `${CLAUDE_SKILL_DIR}/reference/showcase-markdown.m
 **Key requirements:**
 - `version` in frontmatter matches the `package.json` version
 - `analyzed_at` is the ISO date of the analysis
-- Every feature section references at least one screenshot from `docs/showcase/screenshots/`
+- Every feature section names its screenshots (`<feature-slug>-desktop.webp`, `<feature-slug>-mobile.webp` in `~/.lt-showroom/<slug>/screenshots/`)
 - Every feature section cites at least one code evidence reference
 - The file is committed to the project repository as a permanent artifact
 
@@ -179,7 +144,7 @@ Block 1:  tech-stack         — Technology badges from SHOWCASE.md tech stack s
 Block 2:  text "Überblick"   — 3-5 paragraphs from SHOWCASE.md overview section
 Block 3:  feature-grid       — 6-8 features from SHOWCASE.md features section
 Block 4:  text "Architektur" — From SHOWCASE.md architecture section
-Block 5:  screenshot-gallery — Screenshots from docs/showcase/screenshots/
+Block 5:  screenshot-gallery — Screenshots from ~/.lt-showroom/<slug>/screenshots/
 Block 6:  text "Highlights"  — From SHOWCASE.md technical highlights section
 Block 7:  timeline           — Project milestones (if derivable from git or SHOWCASE.md)
 Block 8:  testimonial        — Customer feedback from the company's testimonial source
@@ -300,4 +265,4 @@ Use the modern content blocks the platform renders with:
 - [ ] Technologies array matches tech-stack block
 - [ ] Tags are relevant and searchable
 - [ ] All content is in German (unless project is English-only)
-- [ ] Screenshots captured and saved in `docs/showcase/screenshots/`
+- [ ] Screenshots captured in `~/.lt-showroom/<slug>/screenshots/`: `manifest.json` lists every image; `pendingTag` is set when only the teaser cover exists

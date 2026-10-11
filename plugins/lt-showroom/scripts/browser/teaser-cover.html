@@ -1,0 +1,147 @@
+<!doctype html>
+<!--
+  teaser-cover.html: the last stage of the screenshot fallback chain. Open it via file:// in the
+  Chrome DevTools MCP page with emulate 1440x900x1 and capture a viewport screenshot as WebP.
+
+  Query parameters (all optional except title; text is set via textContent, never as HTML):
+    title     project name as the showcase shows it (the alias when the customer stays anonymous)
+    subtitle  one line: category, industry or what the software does
+    tags      comma-separated technologies, at most 6 are shown
+    accent    brand colour as hex without '#', e.g. 0f766e
+    org       name of the company that built it
+    year      year of the project
+
+  The cover shows no customer logo, no screenshot and no customer name unless it is the title.
+-->
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Teaser</title>
+    <style>
+      :root {
+        --accent: #2563eb;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        color: #f8fafc;
+        background:
+          radial-gradient(circle at 85% 15%, color-mix(in srgb, var(--accent) 55%, transparent) 0, transparent 45%),
+          radial-gradient(circle at 10% 90%, color-mix(in srgb, var(--accent) 35%, transparent) 0, transparent 40%),
+          linear-gradient(135deg, #0b1120 0%, #111827 60%, color-mix(in srgb, var(--accent) 30%, #0b1120) 100%);
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+      }
+      main {
+        width: 100%;
+        padding: 0 9vw;
+      }
+      .eyebrow {
+        /* No text-transform: company names keep their own spelling (e.g. lenne.Tech). */
+        font-size: clamp(14px, 1.4vw, 20px);
+        letter-spacing: 0.06em;
+        color: color-mix(in srgb, var(--accent) 45%, #f8fafc);
+        margin-bottom: 2.2vh;
+      }
+      h1 {
+        font-size: clamp(40px, 6.2vw, 96px);
+        line-height: 1.04;
+        font-weight: 750;
+        letter-spacing: -0.02em;
+        max-width: 18ch;
+        overflow-wrap: anywhere;
+      }
+      .subtitle {
+        margin-top: 2.6vh;
+        font-size: clamp(18px, 1.9vw, 30px);
+        line-height: 1.35;
+        color: #cbd5e1;
+        max-width: 40ch;
+      }
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 4.5vh;
+        padding: 0;
+        list-style: none;
+      }
+      .tags li {
+        font-size: clamp(13px, 1.1vw, 17px);
+        padding: 0.45em 0.95em;
+        border-radius: 999px;
+        border: 1px solid color-mix(in srgb, var(--accent) 60%, #334155);
+        background: color-mix(in srgb, var(--accent) 18%, transparent);
+        color: #e2e8f0;
+      }
+      .bar {
+        width: 72px;
+        height: 6px;
+        border-radius: 3px;
+        background: var(--accent);
+        margin-bottom: 3vh;
+      }
+      footer {
+        position: fixed;
+        left: 9vw;
+        right: 9vw;
+        bottom: 5vh;
+        display: flex;
+        justify-content: space-between;
+        font-size: clamp(12px, 1vw, 15px);
+        color: #94a3b8;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="bar"></div>
+      <p class="eyebrow" id="eyebrow"></p>
+      <h1 id="title"></h1>
+      <p class="subtitle" id="subtitle"></p>
+      <ul class="tags" id="tags"></ul>
+    </main>
+    <footer>
+      <span id="org"></span>
+      <span id="year"></span>
+    </footer>
+    <script>
+      const q = new URLSearchParams(location.search);
+      const text = (id, value) => {
+        const el = document.getElementById(id);
+        if (value) el.textContent = value;
+        else el.remove();
+      };
+      const accent = (q.get('accent') || '').replace(/^#/, '');
+      if (/^[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(accent)) {
+        document.documentElement.style.setProperty('--accent', `#${accent}`);
+      }
+      text('title', q.get('title') || 'Projekt');
+      text('subtitle', q.get('subtitle'));
+      text('eyebrow', q.get('org') ? `Projekt von ${q.get('org')}` : 'Projekt');
+      text('org', q.get('org'));
+      text('year', q.get('year'));
+      const tags = document.getElementById('tags');
+      (q.get('tags') || '')
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean)
+        .slice(0, 6)
+        .forEach((t) => {
+          const li = document.createElement('li');
+          li.textContent = t;
+          tags.appendChild(li);
+        });
+      if (!tags.children.length) tags.remove();
+    </script>
+  </body>
+</html>

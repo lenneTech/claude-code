@@ -1,5 +1,5 @@
 {
-  "description": "Detects analyzable software projects with showcase intent to activate the relevant skills, and re-injects showcase context after compaction",
+  "description": "Detects analyzable software projects with showcase intent to activate the relevant skills, re-injects showcase context after compaction, and cleans up screenshot runs when a session ends",
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -22,6 +22,17 @@
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/post-compact-context.sh\"",
             "timeout": 5,
             "statusMessage": "Re-injecting showroom context"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/sweep-screenshot-sessions.sh\"",
+            "timeout": 2
           }
         ]
       }
