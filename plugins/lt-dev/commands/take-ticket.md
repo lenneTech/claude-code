@@ -298,10 +298,11 @@ If the call fails (permissions, archived issue, etc.), surface the error and ask
 
 **Fires on every path** — for an explicitly passed ID (STEP 1a) exactly as for an auto-picked ticket (STEP 1b). Label the VS Code window tab with the ticket now being worked on, so multi-window setups show at a glance which window handles which ticket. Format: `<PROJECT_CODE>: <ISSUE_IDENTIFIER> <SHORT_DESC>` — e.g. `VST: DEV-123 Login-Fix`.
 
-1. **Derive `<PROJECT_CODE>`** — the issue identifier carries only the team key (usually `DEV-…`), which says nothing about the project. Derive a concise 2–5 uppercase-letter code from the ticket's **Linear project name** (from `get_issue` → project):
-   - Multi-word name → initials, uppercased (`Session Notifier` → `SN`).
-   - Single-word name → first 3–4 letters, uppercased (`VStab` → `VST`, `Showroom` → `SHOW`).
-   - No Linear project on the issue → use the repository folder name instead (same rules).
+1. **Derive `<PROJECT_CODE>`** — the issue identifier carries only the team key (usually `DEV-…`), which says nothing about the project. Derive a short uppercase code, normally 2–5 letters, from the ticket's **Linear project name** (from `get_issue` → project). Separators such as `-`, `–`, `/`, `:` or `|` are not words.
+   - Name contains an acronym word (2–5 letters, all uppercase, e.g. `ABC`) → that word is the code (`ABC - Shop` → `ABC`). Initials would cut it to one letter and make the tab less recognisable than the project name. **Collision check:** call `mcp__plugin_lt-dev_linear__list_projects` with `query: "<acronym>"` and `fields: ["name"]`, and derive the code of every other project returned with these same rules. If another project yields the same code, append the initials of the remaining words: `ABC - Shop` → `ABCS` while `ABC - Webseite` exists (it becomes `ABCW`). If those initials still collide, take the first two letters of the differing word instead (`ABCSH`); a project without remaining words keeps the bare acronym. When the lookup fails, use the bare acronym.
+   - Otherwise, multi-word name → initials, uppercased (`Session Notifier` → `SN`).
+   - Otherwise, single-word name → first 3–4 letters, uppercased (`VStab` → `VST`, `Showroom` → `SHOW`).
+   - No Linear project on the issue → use the repository folder name instead (same rules, without the collision check).
 2. **Derive `<SHORT_DESC>`** — distil the ticket title to 1–3 words (same language as the ticket title). Drop filler like "implementieren", "hinzufügen" when the remaining words still identify the topic.
 3. **Set the title:**
 
