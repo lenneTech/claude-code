@@ -1,6 +1,6 @@
 ---
 description: Submit current work for dev review — creates MR/PR, posts Linear comment, and moves ticket to Dev Review
-argument-hint: "[issue-id] [--unattended]"
+argument-hint: "[issue-id] [--unattended] [--autopilot]"
 allowed-tools: Read, Bash(git:*), Bash(gh pr:*), Bash(glab mr:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), mcp__plugin_lt-dev_linear__*, AskUserQuestion, ListAgents, SendMessage
 disable-model-invocation: false
 ---
@@ -42,6 +42,11 @@ disable-model-invocation: false
 Determine the target issue ID:
 
 **`--unattended`** (set by `/lt-dev:ticket-cycle` after the developer approved the result) removes the routine questions: STEP 1 commits only this session's paths and pushes, STEP 3 posts without the approval preview. Foreign or unattributable paths are held out and named in the summary, never staged. Strip the flag before resolving the issue ID.
+
+**`--autopilot`** (set by `/lt-dev:ticket-cycle --autopilot`) implies `--unattended` and asks nothing at all: a missing
+issue ID or a Linear state with no match ends the command with `PARK: <reason>` as its last line, which the cycle carries
+out ([question table](${CLAUDE_PLUGIN_ROOT}/commands/ticket-cycle.md#every-question-and-its-default)). Strip it like
+`--unattended`.
 
 1. **If `$ARGUMENTS` is provided and non-empty:** Use it directly as the issue ID.
 2. **If no argument:** Auto-detect from the current git branch name:

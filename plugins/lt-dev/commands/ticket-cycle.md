@@ -1,11 +1,18 @@
 ---
-description: Full ticket lifecycle in one command. Auto-pick or take a ticket, settle decisions up front, implement test-driven, review, walk the browser, hand over a developer test package for approval, then MR/PR, CI, merge and Linear status handoff.
-argument-hint: "[issue-id | --project=<name> --team=<name> --status=<list> --base=<branch> --figma=<url> --flows=<path> --grill --no-grill --review --no-review --auto-merge --review-handoff[=<linear-user>] --post-merge-status=<dev-review|qa-testing[=<linear-user>]> --max-deploy-wait=<minutes> --max-pipeline-retries=<n> --no-squash --keep-branch]"
+description: Full ticket lifecycle in one command. Pick or take a ticket, settle decisions up front, implement test-driven, review, walk the browser, get developer approval, then MR/PR, CI, merge and Linear handoff. --autopilot runs it without questions, so /loop works a project ticket by ticket.
+argument-hint: "[issue-id | --project=<name> --team=<name> --status=<list> --base=<branch> --figma=<url> --flows=<path> --grill --no-grill --review --no-review --auto-merge --review-handoff[=<linear-user>] --post-merge-status=<dev-review|qa-testing[=<linear-user>]> --max-deploy-wait=<minutes> --max-pipeline-retries=<n> --no-squash --keep-branch --autopilot]"
 allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, ListAgents, SendMessage, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(wc:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(curl:*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__list_teams, mcp__plugin_lt-dev_linear__list_projects, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__save_issue_label, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__list_users, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_screenshot, Skill
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Ticket Cycle — Full Pick→Implement→Land Orchestrator
+
+> **Invocation policy.** Start this command only when the user asks for it explicitly
+> (`/lt-dev:ticket-cycle`, "arbeite das nächste Ticket ab") **or** when a `/loop` the user started fires it with
+> `--autopilot`. Never start it off your own initiative: it claims a Linear ticket, branches, merges and moves Linear
+> states, all of which the team sees. It is not `disable-model-invocation: true` because that flag also stops a
+> scheduled task from running the command it fires with, and `/loop /lt-dev:ticket-cycle --autopilot` is exactly such
+> a task.
 
 ## When to Use This Command
 
@@ -56,6 +63,129 @@ All flags are optional. The command splits arguments into groups and forwards ea
 | `--max-pipeline-retries=<n>` | `git:ship` | CI retry cap (default 3) |
 | `--no-squash` | `git:ship` | Regular merge instead of squash |
 | `--keep-branch` | `git:ship` | Don't delete the feature branch after merge |
+| `--autopilot` | all four | Runs the whole cycle without a single question, so `/loop` can work a project ticket by ticket while nobody is at the screen. Every question takes the default in [Autopilot](#autopilot---autopilot); what no default can settle is parked or halts the loop |
+
+## Autopilot (`--autopilot`)
+
+```
+/loop /lt-dev:ticket-cycle --autopilot --project=<Linear project> --team=<Linear team>
+```
+
+Use `/loop` without an interval: it paces itself and runs one cycle per iteration, and the marker lines below tell
+it when to stop. Starting the cycle with `--autopilot` is the developer's **standing approval** for everything this
+section defines: no gate waits, and no question is asked anywhere, also not by `take-ticket`, `git:ship`, `dev-submit`
+or a skill they load. The cycle passes `--autopilot` on to each of them (`take-ticket --in-cycle --autopilot`,
+`git:ship --auto-merge --skip-reanalysis --unattended --autopilot`, `dev-submit --unattended --autopilot`).
+
+**Defaults.** The process round (STEP 1a) is `--review --auto-merge --post-merge-status=dev-review`; flags given
+explicitly override each part. `--review-handoff` needs a reviewer (`--review-handoff=<linear-user>`), because nobody
+can answer the picker; without one the run halts before it picks a ticket.
+
+**Never in autopilot:** `AskUserQuestion`; a promotion into a higher base branch (`dev` → `main` and the like; the
+cycle only ever ships its feature branch into the base); bypassing a hook or a quality gate; printing a secret;
+deleting a main branch (`dev`, `test`, `main`, `productive`); anything destructive or irreversible beyond the merge of
+the feature branch; publishing content or raising its visibility; setting a ticket to Done.
+
+### Park or halt
+
+What the defaults cannot settle ends the run one of two ways, and the difference is whose problem it is.
+
+- **Park** when it belongs to the **ticket**: a contradiction in the requirement, a premise that no longer holds, a
+  review finding or a pipeline failure that this change causes, a deploy of this change that fails. The loop goes on
+  with the next ticket.
+- **Halt** when it belongs to the **environment**, because it would hit every ticket alike: missing or expired access
+  (Linear, GitLab or GitHub, the registry, a 1Password unlock), an MCP server or `lt dev` / Docker / Caddy that does not
+  answer, a base branch that is dirty or has diverged, a tree with changes this run cannot account for, a project or
+  team that cannot be resolved, a Linear workflow without the "In Progress" state, a plugin a content ticket needs
+  that is not installed. **The same cause in two tickets in a row is a halt too** (compare with the previous
+  iteration's result line): parking ticket after ticket on one cause would set a whole project to Blocked.
+
+`take-ticket`, `git:ship` and `dev-submit` never park on their own. With `--autopilot` they stop where they would
+otherwise ask and hand back one line, `PARK: <reason>` or `HALT: <reason>`, and the cycle acts on it here, so parking
+always runs the same way.
+
+**Parking (uniform):**
+
+1. Push the work to its feature branch (`git push -u origin <branch>` when it carries commits; never merge it).
+2. Post a comment per [`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md): what
+   stopped the run in plain words, the question as a short decision brief with options and Claude's recommendation,
+   and the branch. The decisions comment and the questions document stay at the state reached.
+3. Set the ticket to **Blocked** and assign it to the user who started the run (`assignee: "me"`).
+4. Check out the base branch, shut the stack down (`lt dev down`, close the browser pages this run opened), delete the
+   STEP 3b session cookies.
+5. Print the result line and end the run.
+
+A failure **after the merge** (a deploy that fails or overruns `--max-deploy-wait`, a Linear state with no match) parks
+without step 1, because the branch is merged and gone: the comment carries the deploy diagnosis, and the ticket goes to
+Blocked, assigned to the starting user.
+
+**Halting** leaves the current ticket as it is (claimed, its branch local) and touches nothing else: no push, no
+comment, no status change. Print the result line naming the ticket and the branch, then `AUTOPILOT: HALT <reason>`, and
+stop; the developer fixes the environment and starts the loop again.
+
+### End of a run
+
+Every run ends with one result line, and the loop reads it:
+
+```
+AUTOPILOT-RESULT: <ISSUE_IDENTIFIER> | <gemergt | Dev Review | geparkt: <Grund> | angehalten: <Grund>> | <MR-URL | Branch | ->
+```
+
+When `take-ticket` finds no candidate and nothing in Blocked that the autopilot may release, the run prints
+`AUTOPILOT: NOTHING-LEFT` instead and ends; `/loop` stops on that line, and on `AUTOPILOT: HALT`.
+
+### Every question and its default
+
+The complete list of the places that ask in this cycle and in the commands it runs. A place not in this list that
+would ask anyway is parked (or halted, when it is environmental), never asked.
+
+| Where | Today | `--autopilot` |
+|---|---|---|
+| ticket-cycle STEP 0: tree carries changes this run cannot account for | user decides | halt |
+| ticket-cycle STEP 0.5: leftover branch whose content is not provably in the base | user decides | leave it untouched; continue from the base when the tree is clean, otherwise halt |
+| ticket-cycle STEP 1a: process round | three questions | defaults above |
+| take-ticket STEP 1b: project or team ambiguous | question | halt (pass `--project` and `--team`) |
+| take-ticket STEP 1b: pick confirmation | question | none: the top candidate of `pick-next-ticket.mjs --repo auto` |
+| take-ticket STEP 1b: tickets of another repository | handover offer (STEP 1c) | not candidates: `--repo auto` drops them, nothing is handed over, no `/cd` |
+| take-ticket STEP 1b: release of a Blocked ticket | question | automatic when `pick-next-ticket.mjs --base auto` reports `autopilot.releasable`: every blocker Done/Canceled, or a code ticket of this repository that Git shows merged into the base; content and other repositories' tickets count only when Done; never without a blocker relation |
+| take-ticket STEP 1b: empty pool | "broader search?" | `AUTOPILOT: NOTHING-LEFT` |
+| take-ticket STEP 1c: content work, publish question | question | never publish: create as a draft with the lowest visibility the platform offers |
+| take-ticket STEP 1c: content work, closing status question | question | Dev Review, never Done |
+| take-ticket STEP 1c: content work naming another workflow than a showcase | question | park |
+| take-ticket STEP 2: extra sources | question | none |
+| take-ticket STEP 3, STEP 5b: ticket claimed in the meantime, or a branch or worktree for it that is not this run's | user decides | take the next candidate |
+| take-ticket STEP 3: no "In Progress" state, assignment fails | question | halt |
+| take-ticket STEP 4: base cannot fast-forward | question | halt |
+| take-ticket STEP 5b: already solved / premise gone | question | park, with the evidence; the autopilot closes no ticket |
+| take-ticket STEP 5b: partly done | grill the remainder | implement what the evidence shows is missing; park when the remainder is unclear |
+| take-ticket STEP 5c: decision round and record | rounds plus confirmation | `grilling-decisions` [autopilot mode](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md#autopilot-mode): Claude settles every open point by its recommendation (ticket before concept documents before code), marks it `[Claude]`, posts the decisions comment; the record counts as confirmed. A blocking contradiction is parked |
+| take-ticket STEP 5c.5: blocking discovery during the implementation | question | park |
+| take-ticket STEP 6c, ticket-cycle Phase B: fix in a repository a live expert session works in | handover question | handover as `SOLVED` without asking (standing approval); its paths stay untouched; park when this ticket cannot go green without that fix |
+| take-ticket STEP 6c: fix in another repository without an expert session | `/cd` request | park |
+| take-ticket STEP 7a, git:ship STEP 4a: frontend without Playwright tests | question | write the E2E tests for the ticket's flows |
+| take-ticket STEP 9b: delta that puts the scope at stake | question | stay with the ticket: record an `Annahme`, never widen; an acceptance criterion that cannot be met is parked |
+| ticket-cycle STEP 2: review question (fallback) | question | review runs |
+| ticket-cycle Phase B: finding `review` could not fix | stop | park |
+| ticket-cycle Phase C: `boot_failed`, `stall_guard_triggered` | stop | park; halt when `lt dev doctor` or Docker is the cause |
+| ticket-cycle STEP 3b: test package and approval | wait for "Getestet, bereitstellen" | build the package, attach it as the document `<ISSUE_IDENTIFIER> — Test-Paket` without local credentials and link it in one sentence of a comment; the approval stands when tests, `check`, review and walk are green; shut the stack down |
+| ticket-cycle STEP 4a: merge strategy | question | `--auto-merge` |
+| ticket-cycle STEP 4b.2: post-merge status | question | `dev-review` |
+| ticket-cycle STEP 4b.2b: QA assignee (only with `--post-merge-status=qa-testing`) | question, then stored | the stored team default, otherwise unassigned |
+| ticket-cycle STEP 4b.3a: no deploy pipeline although a deploy job exists | question | park after the merge |
+| ticket-cycle STEP 4b.3b: deploy job failed or overran its wait | question / stop | park after the merge |
+| ticket-cycle STEP 4b.3c, git:ship STEP 10d, dev-submit STEP 4: Linear state without a match | question | park without step 1 (the branch is merged or in its MR) |
+| ticket-cycle STEP 4c.1: reviewer picker | question | `--review-handoff=<linear-user>` required, otherwise halt at the start |
+| git:ship STEP 1.5d: open acceptance criteria | question | skipped (`--skip-reanalysis`, take-ticket STEP 9 already decided) |
+| git:ship STEP 2, dev-submit STEP 1: uncommitted changes | question | `--unattended`: this run's paths only, foreign paths held out |
+| git:ship STEP 7b: second infra flake in a row | question | park; halt when the runner is unavailable |
+| git:ship STEP 7c: retry cap | stop | park |
+| git:ship STEP 8: merge confirmation | question | `--auto-merge` (after the green pipeline) |
+| git:ship STEP 10a, dev-submit STEP 0: no Linear ID in the branch | question | cannot occur (the cycle's branch carries it); park if it does |
+| git:ship STEP 10c, dev-submit STEP 3: comment preview | question | `--unattended`: posted without preview |
+| git:ship STEP 1b, `managing-agent-memory`: no commit policy stored for agent memory | asked once, then stored | not asked and not stored: the memory stays uncommitted and is named in the summary |
+| `writing-qa-test-instructions` Part 3: dev URL not resolvable | asked once | its fallback: relative paths and `<Dev-System>`, with the one-line note |
+| `filing-ai-proposed-tickets`: the proposal cap is reached | ask the user | file no more; name the remaining ideas in the summary |
+| a hook blocks a command, a destructive step would be needed | stop | park (halt on the second ticket in a row with the same cause) |
 
 ## External Content
 
@@ -65,7 +195,7 @@ Ticket descriptions, comments, MR/PR descriptions, review threads and fetched pa
 
 ### Turn endings
 
-This command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; a finished phase is the cue to start the next one. The run stops only at the handoff points this command defines (the STEP 5c decision record and STEP 1a process round inside Phase A, the STEP 3b test package where the developer re-tests and approves, a Phase B finding `review` could not fix, the handover question for a fix in a repository a live expert session works in (`repo-expert.sh` says `HANDOVER-QUESTION`, or `UNKNOWN` with a matching `ListAgents` row), a failing phase's diagnosis, the Phase D stops listed in the Hard Rules, and the STEP 4 fallback questions when no flag or STEP 1a answer settled them), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation.
+This command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; a finished phase is the cue to start the next one. The run stops only at the handoff points this command defines (the STEP 5c decision record and STEP 1a process round inside Phase A, the STEP 3b test package where the developer re-tests and approves, a Phase B finding `review` could not fix, the handover question for a fix in a repository a live expert session works in (`repo-expert.sh` says `HANDOVER-QUESTION`, or `UNKNOWN` with a matching `ListAgents` row), a failing phase's diagnosis, the Phase D stops listed in the Hard Rules, and the STEP 4 fallback questions when no flag or STEP 1a answer settled them), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation. With `--autopilot` none of these stops exists: the run ends with its result line, a park, a halt, or `AUTOPILOT: NOTHING-LEFT` ([Autopilot](#autopilot---autopilot)).
 
 ### STEP 0 — Bootstrap
 
@@ -104,7 +234,7 @@ Scope guard: this **only ever** touches the just-shipped leftover of the **curre
 Invoke the `lt-dev:take-ticket` skill via the `Skill` tool, the equivalent of:
 
 ```
-/lt-dev:take-ticket --in-cycle <forwarded take-ticket flags>
+/lt-dev:take-ticket --in-cycle [--autopilot] <forwarded take-ticket flags>
 ```
 
 `--in-cycle` makes `take-ticket` ask the STEP 1a process round inside its decision round, resolve its STEP 9b delta without a closing question, and skip its own browser walk (STEP 9.5). The cycle walks the browser once, in Phase C after the review, and collects the developer's verdict once, at STEP 3b.
@@ -184,7 +314,7 @@ Right after it, and only when needed, one follow-up call for what depends on the
 
 The answers are provisional where the result can overrule them, and the overrule is always announced in one line: "QA Testing" still needs STEP 4b.1's frontend-verifiability check after the walk (otherwise "Awaiting Release", as with the flag).
 
-Skipping this round is only right when every answer arrived as a flag. Asking a process question later, in the phase that needs it, stops a run the developer believes is unattended.
+Skipping this round is only right when every answer arrived as a flag, or with `--autopilot`, whose defaults are the answers ([Autopilot](#autopilot---autopilot)). Asking a process question later, in the phase that needs it, stops a run the developer believes is unattended.
 
 ### STEP 2 — Phase B (optional): review
 
@@ -225,7 +355,7 @@ If the skill returns `boot_failed` or `stall_guard_triggered`, surface the diagn
 
 ### STEP 3b — Test-Paket für den Entwickler + Freigabe-Gate
 
-Before anything is deployed, the developer gets the chance to test everything themselves. This step runs on **every** `READY-TO-SHIP` verdict; no flag and no answer skips it. Claude does all the setup, so the developer spends their time on the check itself: the stack is running, the test data exists, and the package tells them in one screen what was asked for and what changed, then walks them through every check with complete links.
+Before anything is deployed, the developer gets the chance to test everything themselves. This step runs on **every** `READY-TO-SHIP` verdict; no flag and no answer skips it, with one exception: with `--autopilot`, the start of the run is the developer's standing approval. The package is still built in full (steps 1 to 3), then attached to the ticket as the document `<ISSUE_IDENTIFIER> — Test-Paket` without the local credentials block (accounts by role and login only, never a password) and linked in one sentence of a comment; the approval stands when tests, `check`, the review and the walk are green, and the stack is shut down before Phase D. Claude does all the setup, so the developer spends their time on the check itself: the stack is running, the test data exists, and the package tells them in one screen what was asked for and what changed, then walks them through every check with complete links.
 
 **No new browser walk here.** The package is assembled from what the cycle already produced: Phase C's `final_list`, `accounts_registry`, `also_fixed`, `out_of_scope_findings`; Phase A's `task_summary`, `implementation_summary`, AC verdicts (`take-ticket` STEP 9a), the STEP 5c decision record and every `Annahme`; the review outcome from Phase B.
 
@@ -455,7 +585,7 @@ The file is per-machine and outside every repository, so a team member's name ne
 **2. Ship invoken.** Call `git:ship` with `--auto-merge --skip-reanalysis` plus any forwarded ship flags:
 
 ```
-/lt-dev:git:ship --auto-merge --skip-reanalysis --unattended <forwarded ship flags>
+/lt-dev:git:ship --auto-merge --skip-reanalysis --unattended [--autopilot] <forwarded ship flags>
 ```
 
 Its STEP 10c pass uses `DEV_TEST_CONTEXT` for the completion comment and `DECISION_RECORD` for the decisions comment, both from STEP 3b as they stand; preconditions still missing appear as "wird nach der Bereitstellung angelegt" until STEP 4b.3c fills them in.
@@ -584,7 +714,7 @@ Capture `REVIEWER` = `{linearUserId, displayName, email}`.
 **2. MR/PR + Linear handoff via `dev-submit`.** Invoke:
 
 ```
-/lt-dev:dev-submit --unattended
+/lt-dev:dev-submit --unattended [--autopilot]
 ```
 
 Right before it, create the missing preconditions from `DEV_TEST_CONTEXT` that the current dev version can already hold, with the STEP 3b session and the rules of `writing-qa-test-instructions` Parts 4 and 5. Preconditions that need the unmerged version are left to the tester, with concrete values. `dev-submit` writes its comment from the completed context and brings the decisions comment to `DECISION_RECORD`.
@@ -739,7 +869,7 @@ If `--review` ran (or the user opted in at STEP 2), include a one-line summary o
 
   The single Accepted residual is a dependency CVE whose full six-step escalation ladder is exhausted and documented. Everything else that stays red stops the cycle: no push, no MR/PR, no merge, branch left local and intact. A red `check` landing on `dev` turns CI red for the whole team, and the next auto-pick then branches off that broken state — which is why this gate sits before the MR and not after it.
 - **The ticket is the order; the comments carry the implementation.** The decisions comment, posted right after the decision round and kept current as [`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md#decisions-and-assumptions-for-the-product-owner) shapes it, carries the developers' decisions and notes and every assumption of Claude, the ones added during the implementation included; it comes before the completion comment because it was the premise. What the ticket already says is not repeated there, and none of it is written into the ticket description. Only the current state is shown, in one decisions comment per ticket: superseded decisions and dropped questions disappear from the comment and the questions document alike. The developer often decides without the product owner; the reviewer and the tester can only check what they can see.
-- **All questions are asked up front; the developer judges the result once.** The cycle asks while the developer is at the screen: the STEP 5c decision round and the STEP 1a process round. From there it runs unattended, and the developer's quality verdict is collected once, at STEP 3b, on a fully prepared stack. A process question asked in the middle of the run, or a second completeness question after `take-ticket` STEP 9, stops a run the developer believes is unattended and is a defect. The only mid-run stops are blocking ones: a contradiction with the decision record, a review finding that could not be fixed, a failed boot, CI or deploy, the questions a failure path in Phase D already defines, and the handover question for a fix in a repository a live expert session works in (`repo-expert.sh` says `HANDOVER-QUESTION`, or `UNKNOWN` with a matching `ListAgents` row), because only the user redistributes work between sessions.
+- **All questions are asked up front; the developer judges the result once.** With `--autopilot` there are no questions at all: every place that asks takes the default in [Autopilot](#autopilot---autopilot), and what no default settles is parked or halts the loop. The cycle asks while the developer is at the screen: the STEP 5c decision round and the STEP 1a process round. From there it runs unattended, and the developer's quality verdict is collected once, at STEP 3b, on a fully prepared stack. A process question asked in the middle of the run, or a second completeness question after `take-ticket` STEP 9, stops a run the developer believes is unattended and is a defect. The only mid-run stops are blocking ones: a contradiction with the decision record, a review finding that could not be fixed, a failed boot, CI or deploy, the questions a failure path in Phase D already defines, and the handover question for a fix in a repository a live expert session works in (`repo-expert.sh` says `HANDOVER-QUESTION`, or `UNKNOWN` with a matching `ListAgents` row), because only the user redistributes work between sessions.
 - **`take-ticket` STEP 9 completing cleanly gates everything after Phase A.** With `--in-cycle` its completeness verdict is not asked but carried: the AC verdicts go into the STEP 3b test package, where each one maps to the steps that show it.
 - **The browser is walked once per iteration, in Phase C, after the review.** `take-ticket --in-cycle` skips its own STEP 9.5 walk; walking before the review and again after it doubles the longest step for no additional evidence.
 - **Defects found anywhere in the cycle are fixed in this ticket, never filed** — in Phase A, by the review, in the browser walk, pre-existing ones included, coordinated through the ledger per `take-ticket` STEP 6c. They surfaced here, and the context to fix them is loaded here. Each sits in its own `Taken-Along:` commit unless it fixes this ticket's own code, so the developer reads the core and the extras apart (STEP 3b).
@@ -747,7 +877,7 @@ If `--review` ran (or the user opted in at STEP 2), include a one-line summary o
 - **Follow-up tickets (improvements and features only) follow `take-ticket` STEP 9a, which owns that rule in full** — when to absorb a finding rather than file it, the parallel-work test that decides it, the `Open` / `Blocked` / project-assigned states a filed one gets, and the carry-to-completion duty for a ticket whose content gets absorbed. Read it there; it is the single source of truth, so a change to the policy is a one-place edit.
 
   **The cycle adds exactly one thing to it: the moment a `Blocked` follow-up becomes takeable.** A follow-up that needed this ticket merged moves from `Blocked` to `Open` once STEP 4b's healthy-dev-deploy verification confirms the merge is actually live — not at merge time, and not at the end of the cycle. Standalone `take-ticket` runs have no such verification, so they release after the merge lands; the cycle waits for the deploy, because a follow-up released against code that merged but never deployed is worked against a stale dev. This release applies to `Blocked` tickets only: a follow-up Claude proposed sits in `Triage` and stays there, because what it is waiting for is a human decision, not a deploy.
-- **Nothing is deployed before the developer could test it (STEP 3b).** Every `READY-TO-SHIP` verdict leads to the test package and the release gate, and STEP 4 is entered only on the developer's explicit "Getestet, bereitstellen". No flag and no earlier answer skips this: the unattended run before it is only acceptable because the developer checks its result here. The package is assembled from what the cycle already produced, so no second browser walk happens.
+- **Nothing is deployed before the developer could test it (STEP 3b).** Every `READY-TO-SHIP` verdict leads to the test package and the release gate, and STEP 4 is entered only on the developer's explicit "Getestet, bereitstellen". The only exception is `--autopilot`: starting the run with it is the developer's standing approval, the package goes to the ticket as a document, and green tests, `check`, review and walk stand in for the approval. No other flag and no earlier answer skips this: the unattended run before it is only acceptable because the developer checks its result here. The package is assembled from what the cycle already produced, so no second browser walk happens.
 - **The developer is asked for approval only on a prepared stack with the full test package on screen (STEP 3b, and likewise on the Phase C `WAITING-FOR-USER` verdict):** (1) test data prepared in the running dev DB (never the `-test` DB), (2) upload sample files generated *if* an upload surface is affected, (3) the Kurzfassung: every requirement in plain words with what changed and the step that shows it, every `Annahme` and every deliberate omission under "Bitte besonders prüfen", one quality line, (4) every account with its literal password, (5) numbered steps grouped by requirement, each with its complete clickable link to a real record, exact action, expected result, and reason, covering every requirement and every `Annahme`, (6) the REVIEW AUF DEV block: the account per role with its private vault link and the record per QA step, or the reason a check could not run. Asking without these six is a contract violation.
 - **The merge strategy is always a stated decision:** a flag, the STEP 1a answer, or (only if neither exists) the STEP 4a question. Those are the only ways `MERGE_STRATEGY` gets a value.
 - **The post-merge Linear state is always a stated decision** on the auto-merge path: `--post-merge-status=…`, the STEP 1a answer, or (only if neither exists) the STEP 4b.2 question. What the gate may offer is decided first, by STEP 4b.1's classification — so the user is never shown a state the ticket cannot reach.

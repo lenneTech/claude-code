@@ -111,14 +111,38 @@ Reach for Read, Grep, Glob, the Linear MCP, and the Figma MCP before you reach f
 
 ## When the user is unreachable
 
-An unclear decision belongs to the user, so a blocking one is never answered on their behalf. Split the open questions instead:
+An unclear decision belongs to the user, so a blocking one is never answered on their behalf (the [autopilot
+mode](#autopilot-mode) is the one exception, because the user handed those decisions over before the run). Split the
+open questions instead:
 
 - **Blocking** (data model, permission behaviour, a missing acceptance criterion, anything that would need rework if guessed wrong): stop and wait.
 - **Non-blocking**: proceed on an explicitly stated assumption and carry it into the summary as an `Annahme`, so the user can overturn it while the context is still fresh.
 
+## Autopilot mode
+
+`/lt-dev:ticket-cycle --autopilot` runs while nobody is at the screen, and its start is the developer's standing
+approval to decide on their behalf. Its decision round (`take-ticket` STEP 5c) runs this loop without a single
+question:
+
+- **Facts, settle-or-ask and the briefs work as always**: what the ticket states clearly is built as written and
+  marked `[Ticket <ID>]`.
+- **Every open decision takes its brief's recommendation**, also the ones [Settle or ask](#settle-or-ask) would send to
+  the user, those with lasting consequences included. The sources rank in this order: the ticket (description, comments
+  that add to the order, linked tickets), then the project's concept documents (the Linear project's documents, a
+  linked concept), then the code and its precedents. Each such entry is an `Annahme` marked `[Claude]`, with its
+  `Beleg:` and one line of the brief's reasoning, so the reviewer sees what was chosen from what.
+- **A blocking contradiction is not decided**: the ticket contradicts itself or another higher-ranked source in a way
+  that a wrong pick would mean rework, or following it literally would break something it does not mention. The round
+  ends there, and the caller parks the ticket with the brief as its question (`ticket-cycle` → Park or halt).
+- **The record counts as confirmed** once the frontier is empty. The decisions comment goes to the ticket as usual, so
+  the product owner can overturn any entry while the work runs; with no question asked there is no questions document.
+
+The same holds for decisions later in the run: a non-blocking gap becomes an `Annahme`, a blocking contradiction parks.
+
 ## Decision record
 
-Close every grilling with a compact record in German, shown to the user for confirmation:
+Close every grilling with a compact record in German, shown to the user for confirmation (in the autopilot mode it is
+posted without the confirmation):
 
 ```
 Entscheidungen
@@ -158,7 +182,7 @@ Mark every entry, including the facts the ticket answered that went into the rec
 
 ## Completion criterion
 
-The frontier is empty, what the ticket states clearly is recorded in its words, every question that reached the user survived the re-check, every unclear decision is answered by the user, every gap you settled carries its `Beleg:`, every assumption is written down and labelled, every entry carries its [source marker](#source-markers) where the record governs someone else's requirement, and the user has confirmed the decision record. Only then does implementation begin.
+The frontier is empty, what the ticket states clearly is recorded in its words, every question that reached the user survived the re-check, every unclear decision is answered by the user, every gap you settled carries its `Beleg:`, every assumption is written down and labelled, every entry carries its [source marker](#source-markers) where the record governs someone else's requirement, and the user has confirmed the decision record (in the [autopilot mode](#autopilot-mode): the frontier is empty and no blocking contradiction is left). Only then does implementation begin.
 
 ## Related Skills & Commands
 

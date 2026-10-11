@@ -60,6 +60,7 @@ Parse `$ARGUMENTS` as a free-form string. Recognise (all optional, all combinabl
 | `--grill` | Force the full STEP 5c decision round, whatever the size signals say |
 | `--no-grill` | Force the light STEP 5c round (only the open questions the requirements map produced). Blocking questions are still asked |
 | `--in-cycle` | Set by `/lt-dev:ticket-cycle` only. STEP 5c also asks the cycle's process round, and STEP 9.5 (the walk plus this command's closing question) is skipped, because the cycle walks the browser once after its review and asks for the developer's approval at its release gate |
+| `--autopilot` | Set by `/lt-dev:ticket-cycle --autopilot` only, together with `--in-cycle`. No question anywhere in this command: see [Autopilot](#autopilot) |
 
 If `$ARGUMENTS` is empty, proceed to **STEP 1**.
 
@@ -68,6 +69,31 @@ If `$ARGUMENTS` is empty, proceed to **STEP 1**.
 ## Turn Endings
 
 Once the STEP 5c decision record is confirmed, this command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; a green step is the cue to start the next one. The run stops only at the handoff points this command defines (the pick confirmation and context question in STEP 1 and 2, the STEP 1c handover question and the wait of up to five minutes for the expert session's answer, the STEP 1c request to move the session with `/cd`, the STEP 1c questions before content is published and the status question that closes content work, a STEP 5b verdict that the ticket is solved or its premise gone, the STEP 5c decision round, a STEP 9b delta that puts the recorded scope at stake, the handover question for a fix in a repository a live expert session works in (`repo-expert.sh` says `HANDOVER-QUESTION`, or `UNKNOWN` with a matching `ListAgents` row) in STEP 6c, the STEP 9.5 closing question, the STEP 10 summary), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation.
+
+With `--autopilot` none of these handoff points exists: the run ends when the cycle continues, or with a `PARK:` / `HALT:` line or `AUTOPILOT: NOTHING-LEFT` ([Autopilot](#autopilot)).
+
+## Autopilot
+
+`/lt-dev:ticket-cycle --autopilot` passes `--autopilot` here. Every place in this command that would ask takes the
+default from the cycle's [question table](${CLAUDE_PLUGIN_ROOT}/commands/ticket-cycle.md#every-question-and-its-default);
+where that default is to park or to halt, print `PARK: <reason>` or `HALT: <reason>` as the last line and end, and the
+cycle carries it out. This command never parks on its own. What only this command does:
+
+- **Pick** with `pick-next-ticket.mjs ... --repo auto` (tickets of other repositories drop out) and no confirmation. On
+  an empty pool, run it again with `--base auto`: the first blocked candidate with `autopilot.releasable: true` (they
+  come in priority order) is taken, with its `autopilot.reason` in the STEP 10 summary; none → print
+  `AUTOPILOT: NOTHING-LEFT` and end.
+- **Without a Linear key** (helper exit 4) apply the same rules on the MCP results: skip a ticket whose `**Repo:**` line
+  names another repository; release a Blocked ticket only through its `blocks` relations, each blocker Done/Canceled, or
+  a code ticket of this repository whose identifier Git shows on the base (`git log origin/<base> -i -F --grep=<ID>`, or
+  a remote branch carrying it whose tip a merge commit on the base brought in; a branch pushed before its first commit
+  is not merged). Content tickets and tickets of other repositories count only when Done.
+- **An explicit ID** naming another repository is not worked: print the result line with
+  `übersprungen: Repository <owner/repo>` and end.
+- **Decision round** in the [autopilot mode](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md#autopilot-mode) of
+  `grilling-decisions`: the record counts as confirmed, and the decisions comment goes to the ticket as usual.
+- **Content work** (STEP 1c): created as a draft with the lowest visibility the platform offers, never published and
+  never made more visible; the walk runs; the ticket goes to Dev Review, never Done.
 
 ## External Content
 
@@ -221,7 +247,7 @@ Query `mcp__plugin_lt-dev_linear__list_issues` once (or twice merged) with the P
   Suche starten (auch `In Progress` / andere Status), (b) ein bestimmtes Ticket
   übernehmen, oder (c) abbrechen?"
 
-**Confirm the pick** via `AskUserQuestion`:
+**Confirm the pick** via `AskUserQuestion` (with `--autopilot`: no confirmation, see [Autopilot](#autopilot)):
 - Show: Identifier, title, priority, **bug-flag** ("Bug" if matched), assignment ("dir zugeordnet" / "nicht zugeordnet"), status, project, 1-line description excerpt
 - Options: "Übernehmen", "Nächstes Ticket vorschlagen" (re-runs the sort skipping this ticket), "Anderes Ticket eingeben", "Abbrechen"
 
@@ -249,7 +275,7 @@ The ticket's description names its target in one line: `**Repo:** \`<owner>/<rep
 
 ## STEP 2 — Optional Context Sources
 
-Even if Figma / flows are not in `$ARGUMENTS`, **ask once** via a single `AskUserQuestion` call with multi-select (or a 4-option single-select if multi-select is wrong tone):
+Skipped with `--autopilot`. Otherwise, even if Figma / flows are not in `$ARGUMENTS`, **ask once** via a single `AskUserQuestion` call with multi-select (or a 4-option single-select if multi-select is wrong tone):
 
 - "Möchtest du zusätzliche Quellen für die Umsetzung mitgeben?"
 - Options:
@@ -448,7 +474,7 @@ Run it via the [`grilling-decisions`](${CLAUDE_PLUGIN_ROOT}/skills/grilling-deci
 
 What the ticket states clearly goes into the record in its words, marked `[Ticket <ID>]`, and is built as written. A gap the code or Figma answers unambiguously goes in as an `Annahme` with its `Beleg:`. Every point where the ticket is imprecise, contradicts itself, or misses a consequence, and every gap that stays unclear, goes to the user in frontier rounds, each question [re-checked against the ticket and the sources](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md#re-check-before-asking) first and sent with its brief.
 
-**4. Decision record.** Close with the skill's decision record (`Entscheidungen`, `Annahmen`, `Außerhalb des Scopes`), every entry with its source marker (`[Ticket <ID>]`, `[Entwickler]` or `[Claude]`, see the skill's [Source markers](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md#source-markers)), every answered question kept with its decision and every gap you settled kept with its `Beleg:`, and let the user confirm it via `AskUserQuestion`: "Passt so, umsetzen (Recommended)" / "Noch etwas anpassen". On the second option, take the correction and run one more round for whatever it reopened. Once confirmed, put the record on the ticket right away, per [`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md#decisions-and-assumptions-for-the-product-owner): post the decisions comment when the record holds an `[Entwickler]` or `[Claude]` entry, and attach the questions document when the round asked anything ([`<ID> — Fragen und Antworten`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md#questions-document)); on a rework ticket, update the ones a previous run left (a decisions comment a colleague posted is not edited but replaced, as the skill describes). The product owner sees the premises while the work runs, and the record survives a `/clear` or a change of session. From here on both are kept at the current state, never appended to; what the ticket already says stays in the ticket.
+**4. Decision record.** Close with the skill's decision record (`Entscheidungen`, `Annahmen`, `Außerhalb des Scopes`), every entry with its source marker (`[Ticket <ID>]`, `[Entwickler]` or `[Claude]`, see the skill's [Source markers](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md#source-markers)), every answered question kept with its decision and every gap you settled kept with its `Beleg:`, and let the user confirm it via `AskUserQuestion`: "Passt so, umsetzen (Recommended)" / "Noch etwas anpassen" (with `--autopilot` the record counts as confirmed, see [Autopilot](#autopilot)). On the second option, take the correction and run one more round for whatever it reopened. Once confirmed, put the record on the ticket right away, per [`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md#decisions-and-assumptions-for-the-product-owner): post the decisions comment when the record holds an `[Entwickler]` or `[Claude]` entry, and attach the questions document when the round asked anything ([`<ID> — Fragen und Antworten`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md#questions-document)); on a rework ticket, update the ones a previous run left (a decisions comment a colleague posted is not edited but replaced, as the skill describes). The product owner sees the premises while the work runs, and the record survives a `/clear` or a change of session. From here on both are kept at the current state, never appended to; what the ticket already says stays in the ticket.
 
 **With `--in-cycle`, the process round follows right here**, while the user is still at the screen: `/lt-dev:ticket-cycle` STEP 1a defines its questions (review, merge strategy, post-merge status). Asking them now, and not at the phase that needs each answer, is what lets the rest of the cycle run unattended. The light round asks it too, even when it had no ticket questions.
 
@@ -793,7 +819,7 @@ Adapt sections that don't apply (e.g. no Figma → no Figma references). Never i
 ## Hard Rules
 
 - **Limit local Playwright runs to new + affected specs to keep TDD loops fast.** Default to `lt dev test -- <spec>` (non-lt projects: `pnpm exec playwright test <spec>`); the full Playwright suite is slow and runs in **CI**. Only run the full local suite when the user explicitly asks.
-- **The branch stays local; the user owns the push.** It leaves the machine when the user runs `/lt-dev:dev-submit` or pushes by hand.
+- **The branch stays local; the user owns the push.** It leaves the machine when the user runs `/lt-dev:dev-submit` or pushes by hand, or, under `/lt-dev:ticket-cycle --autopilot`, when the cycle ships or parks it.
 - **Quality gates run as written.** `--no-verify`, `.skip`, and flake-retries each need an open follow-up note stating why, so a bypass is always visible as a decision someone made.
 - **STEP 5b runs before the first line of code (see STEP 5b for the procedure).** A ticket is a snapshot of the past and the base branch has moved since, so blind execution is not neutral: it can re-introduce something deliberately removed, undo a newer fix, or bolt a second mechanism onto one that already covers the case. The three verdicts that need a human answer go through the `grilling-decisions` skill, with the gathered evidence on the table. What the ticket means today is the user's call.
 - **Defects are always fixed in this ticket, pre-existing ones included, and never filed as tickets (STEP 6c).** They surfaced here, so this ticket carries them, coordinated through the ledger so no two sessions fix the same defect.

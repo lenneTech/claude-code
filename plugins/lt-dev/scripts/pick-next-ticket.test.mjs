@@ -18,7 +18,20 @@ import {
   filterByAssignee,
   rankCandidates,
   analyzeBlocked,
+  repoLineOf,
+  repoNameFromRemote,
+  isContentIssue,
+  repoEligible,
+  filterByRepo,
+  assessAutopilotRelease,
+  mergedInBase,
+  resolveBaseRef,
+  blockedSortKey,
 } from './pick-next-ticket.mjs';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 // Real DevOps/"Entwicklung" workflow states (from list_issue_statuses), trimmed.
 const STATES = [
@@ -273,4 +286,183 @@ test('analyzeBlocked: direction-robust — a "blocks" relation where THIS ticket
   const a = analyzeBlocked(T);
   assert.equal(a.likelyUnblocked, null);
   assert.equal(a.blockers.length, 0);
+});
+
+// ── autopilot: repository routing ────────────────────────────────────────────
+
+test('repoLineOf reads the Repo line: repository with subpath, content work, none', () => {
+  assert.deepEqual(repoLineOf('**Typ:** Task\n\n**Repo:** `lenneTech/claude-code` → `plugins/lt-dev`'), {
+    kind: 'repo',
+    path: 'lenneTech/claude-code',
+    name: 'claude-code',
+  });
+  assert.deepEqual(repoLineOf('**Repo:** — (Inhalt)'), { kind: 'content' });
+  assert.deepEqual(repoLineOf('**Repo:** – (Inhalt)'), { kind: 'content' });
+  assert.equal(repoLineOf('no routing line here'), null);
+  assert.equal(repoLineOf(undefined), null);
+});
+
+test('repoNameFromRemote: ssh, https, owner/name', () => {
+  assert.equal(repoNameFromRemote('git@gitlab.example.com:intern/showroom.git'), 'showroom');
+  assert.equal(repoNameFromRemote('https://github.com/lenneTech/claude-code.git\n'), 'claude-code');
+  assert.equal(repoNameFromRemote('intern/offers'), 'offers');
+});
+
+test('isContentIssue: label Inhalt or a content Repo line', () => {
+  assert.equal(isContentIssue({ labels: { nodes: [{ name: 'Inhalt' }] }, description: '' }), true);
+  assert.equal(isContentIssue({ labels: { nodes: [] }, description: '**Repo:** — (Inhalt)' }), true);
+  assert.equal(isContentIssue({ labels: { nodes: [{ name: 'Bug' }] }, description: '**Repo:** `a/b`' }), false);
+});
+
+test('filterByRepo keeps this repository, unrouted and content tickets; skips foreign ones', () => {
+  const rows = [
+    { identifier: 'DEV-1', description: '**Repo:** `intern/showroom`' },
+    { identifier: 'DEV-2', description: '**Repo:** `lenneTech/claude-code` → `plugins/lt-showroom`' },
+    { identifier: 'DEV-3', description: 'no line' },
+    { identifier: 'DEV-4', description: '**Repo:** — (Inhalt)' },
+    { identifier: 'DEV-5', description: '**Repo:** `intern/Showroom`', labels: { nodes: [] } },
+  ];
+  const { kept, skipped } = filterByRepo(rows, 'showroom');
+  assert.deepEqual(kept.map((r) => r.identifier), ['DEV-1', 'DEV-3', 'DEV-4', 'DEV-5']);
+  assert.deepEqual(skipped, [{ identifier: 'DEV-2', repo: 'lenneTech/claude-code' }]);
+  assert.equal(repoEligible(rows[1], null), true, 'without a repo filter every ticket stays');
+});
+
+// ── autopilot: blocker release ───────────────────────────────────────────────
+
+function autopilotBlocked(identifier, blockers) {
+  return {
+    identifier,
+    relations: { nodes: [] },
+    inverseRelations: {
+      nodes: blockers.map((b) => ({ type: 'blocks', issue: b, relatedIssue: { identifier } })),
+    },
+  };
+}
+const merged = (ids) => (id) => ({ merged: ids.includes(id), evidence: ids.includes(id) ? 'Commit abc auf origin/dev' : 'kein Commit' });
+
+test('autopilot release: never without a blocker relation', () => {
+  const r = assessAutopilotRelease(autopilotBlocked('DEV-10', []), { repoName: 'showroom', isMerged: merged([]) });
+  assert.equal(r.releasable, false);
+  assert.match(r.reason, /Keine Blocker-Relation/);
+});
+
+test('autopilot release: all blockers Done or Canceled', () => {
+  const r = assessAutopilotRelease(
+    autopilotBlocked('DEV-11', [
+      { identifier: 'DEV-1', state: { name: 'Done', type: 'completed' } },
+      { identifier: 'DEV-2', state: { name: 'Canceled', type: 'canceled' } },
+    ]),
+    { repoName: 'showroom', isMerged: merged([]) },
+  );
+  assert.equal(r.releasable, true);
+});
+
+test('autopilot release: a code blocker of this repository counts once Git shows it merged', () => {
+  const blocker = { identifier: 'DEV-3', state: { name: 'Dev Review', type: 'started' }, description: '**Repo:** `intern/showroom`', labels: { nodes: [] } };
+  assert.equal(assessAutopilotRelease(autopilotBlocked('DEV-12', [blocker]), { repoName: 'showroom', isMerged: merged(['DEV-3']) }).releasable, true);
+  assert.equal(assessAutopilotRelease(autopilotBlocked('DEV-12', [blocker]), { repoName: 'showroom', isMerged: merged([]) }).releasable, false);
+});
+
+test('autopilot release: content and foreign-repository blockers count only when Done', () => {
+  const content = { identifier: 'DEV-4', state: { name: 'Dev Review', type: 'started' }, description: '**Repo:** — (Inhalt)', labels: { nodes: [] } };
+  const foreign = { identifier: 'DEV-5', state: { name: 'Dev Review', type: 'started' }, description: '**Repo:** `lenneTech/claude-code`', labels: { nodes: [] } };
+  const c = assessAutopilotRelease(autopilotBlocked('DEV-13', [content]), { repoName: 'showroom', isMerged: merged(['DEV-4']) });
+  assert.equal(c.releasable, false);
+  assert.match(c.reason, /Inhalts-Ticket/);
+  const f = assessAutopilotRelease(autopilotBlocked('DEV-14', [foreign]), { repoName: 'showroom', isMerged: merged(['DEV-5']) });
+  assert.equal(f.releasable, false);
+  assert.match(f.reason, /claude-code/);
+});
+
+test('autopilot release: one open blocker among done ones keeps the ticket blocked', () => {
+  const r = assessAutopilotRelease(
+    autopilotBlocked('DEV-15', [
+      { identifier: 'DEV-6', state: { name: 'Done', type: 'completed' } },
+      { identifier: 'DEV-7', state: { name: 'In Progress', type: 'started' }, description: '', labels: { nodes: [] } },
+    ]),
+    { repoName: 'showroom', isMerged: merged([]) },
+  );
+  assert.equal(r.releasable, false);
+  assert.deepEqual(r.blockers.map((b) => b.ok), [true, false]);
+});
+
+// ── autopilot: merge evidence from Git ───────────────────────────────────────
+
+test('mergedInBase: ticket ID in a base commit or in a merged remote branch, never a prefix match', () => {
+  const tmp = mkdtempSync(path.join(os.tmpdir(), 'pick-merge-'));
+  const g = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  try {
+    const origin = path.join(tmp, 'origin.git');
+    const work = path.join(tmp, 'work');
+    g(tmp, 'init', '-q', '--bare', '-b', 'dev', origin);
+    g(tmp, 'clone', '-q', origin, work);
+    g(work, 'config', 'user.email', 'test@example.com');
+    g(work, 'config', 'user.name', 'Test');
+    g(work, 'checkout', '-q', '-b', 'dev');
+    writeFileSync(path.join(work, 'a.txt'), 'a\n');
+    g(work, 'add', '.');
+    g(work, 'commit', '-q', '-m', 'DEV-3495: MCP-Anmeldung — Consent-Seite');
+    g(work, 'checkout', '-q', '-b', 'feature/dev-77-badge');
+    writeFileSync(path.join(work, 'b.txt'), 'b\n');
+    g(work, 'add', '.');
+    g(work, 'commit', '-q', '-m', 'add badge');
+    g(work, 'checkout', '-q', 'dev');
+    g(work, 'merge', '-q', '--no-ff', '-m', "Merge branch 'feature/dev-77-badge' into 'dev'", 'feature/dev-77-badge');
+    // A merge commit whose message names neither branch nor ticket: only the merged branch tip carries it.
+    g(work, 'checkout', '-q', '-b', 'feature/dev-88-pr');
+    writeFileSync(path.join(work, 'c.txt'), 'c\n');
+    g(work, 'add', '.');
+    g(work, 'commit', '-q', '-m', 'tidy footer');
+    g(work, 'checkout', '-q', 'dev');
+    g(work, 'merge', '-q', '--no-ff', '-m', 'Merge pull request #12', 'feature/dev-88-pr');
+    // A fast-forward leaves no merge commit: nothing on the base proves the branch was merged rather than stale.
+    g(work, 'checkout', '-q', '-b', 'feature/dev-89-ff');
+    writeFileSync(path.join(work, 'd.txt'), 'd\n');
+    g(work, 'add', '.');
+    g(work, 'commit', '-q', '-m', 'tidy header');
+    g(work, 'checkout', '-q', 'dev');
+    g(work, 'merge', '-q', '--ff-only', 'feature/dev-89-ff');
+    // A branch pushed right after `checkout -b`, before its first commit: its tip is a base commit.
+    g(work, 'branch', 'feature/dev-200-checkout-flow', 'dev');
+    g(work, 'push', '-q', 'origin', 'dev', 'feature/dev-77-badge', 'feature/dev-88-pr', 'feature/dev-89-ff', 'feature/dev-200-checkout-flow');
+    g(work, 'fetch', '-q', 'origin');
+
+    const baseRef = resolveBaseRef(work, 'auto');
+    assert.equal(baseRef, 'origin/dev');
+    assert.equal(mergedInBase('DEV-3495', { cwd: work, baseRef }).merged, true);
+    assert.equal(mergedInBase('dev-3495', { cwd: work, baseRef }).merged, true, 'case-insensitive');
+    assert.equal(mergedInBase('DEV-349', { cwd: work, baseRef }).merged, false, 'no prefix match');
+    assert.equal(mergedInBase('DEV-34951', { cwd: work, baseRef }).merged, false);
+    assert.equal(mergedInBase('DEV-77', { cwd: work, baseRef }).merged, true, 'the merge commit names the branch');
+    const branch = mergedInBase('DEV-88', { cwd: work, baseRef });
+    assert.equal(branch.merged, true);
+    assert.match(branch.evidence, /Branch origin\/feature\/dev-88-pr/);
+    assert.equal(mergedInBase('DEV-89', { cwd: work, baseRef }).merged, false, 'a fast-forward is no merge evidence');
+    assert.equal(mergedInBase('DEV-200', { cwd: work, baseRef }).merged, false, 'an empty pushed branch is not merged');
+    assert.equal(mergedInBase('DEV-78', { cwd: work, baseRef }).merged, false);
+    assert.equal(mergedInBase('DEV-1', { cwd: work, baseRef: null }).merged, false);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('blockedSortKey: with the autopilot assessment, releasable comes first, then priority', () => {
+  const mk = (id, priority, releasable, likelyUnblocked) => ({
+    r: { identifier: id, priority, createdAt: '2026-10-01T00:00:00Z' },
+    analysis: { likelyUnblocked },
+    autopilot: releasable === undefined ? undefined : { releasable },
+  });
+  const order = (rows) =>
+    rows
+      .slice()
+      .sort((a, b) => {
+        const ka = blockedSortKey(a), kb = blockedSortKey(b);
+        for (let i = 0; i < ka.length; i++) if (ka[i] !== kb[i]) return ka[i] - kb[i];
+        return 0;
+      })
+      .map((x) => x.r.identifier);
+  // Merged-but-not-Done blocker: likelyUnblocked false, yet releasable — it must outrank an unreleasable Urgent.
+  assert.deepEqual(order([mk('A', 1, false, true), mk('B', 3, true, false), mk('C', 2, true, false)]), ['C', 'B', 'A']);
+  assert.deepEqual(order([mk('A', 3, undefined, false), mk('B', 3, undefined, true)]), ['B', 'A'], 'without --base: likely-unblocked first');
 });

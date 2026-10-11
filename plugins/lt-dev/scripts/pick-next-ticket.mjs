@@ -66,6 +66,20 @@
 //                       primary pool is empty. Such a ticket must NOT be auto-
 //                       picked — the caller surfaces the reason and requires an
 //                       EXPLICIT user release first.
+//   --repo <name|auto>  Autopilot repository filter: drop candidates whose description
+//                       names ANOTHER repository in its `**Repo:**` line. Tickets without
+//                       the line, content tickets (`**Repo:** — (Inhalt)` or label
+//                       `Inhalt`) and tickets naming this repository stay. `auto` reads
+//                       the name from `git remote get-url origin`. Dropped tickets are
+//                       listed in `pool.skippedForeignRepo`.
+//   --base <branch|auto> Autopilot release check for the Blocked column (implies --blocked):
+//                       each blocked candidate gets `autopilot: { releasable, reason }`.
+//                       Releasable only with at least one `blocks` relation, and every
+//                       blocker either Done/Canceled, or a code ticket of THIS repository
+//                       whose merge into the base branch Git shows (a commit on
+//                       origin/<base> naming its identifier, or a merged remote branch
+//                       carrying it). Content tickets and tickets of other repositories
+//                       count only when Done. `auto` = first of dev, develop, main, master.
 //   --json              Emit ONLY the machine-readable JSON block (no human table)
 //
 // ── Output ──────────────────────────────────────────────────────────────────
@@ -256,10 +270,161 @@ export function analyzeBlocked(issue) {
   };
 }
 
-/** Sort key for blocked candidates: likely-unblocked first, then undetermined, then priority, then oldest. */
-function blockedSortKey(c) {
-  const rank = c.analysis.likelyUnblocked === true ? 0 : c.analysis.likelyUnblocked === null ? 1 : 2;
+/**
+ * Sort key for blocked candidates: likely-unblocked first, then undetermined, then priority, then oldest.
+ * With the autopilot assessment (--base), releasable candidates come first instead, so the first
+ * releasable one is also the highest-priority one.
+ */
+export function blockedSortKey(c) {
+  const rank = c.autopilot
+    ? (c.autopilot.releasable ? 0 : 1)
+    : c.analysis.likelyUnblocked === true ? 0 : c.analysis.likelyUnblocked === null ? 1 : 2;
   return [rank, priorityRank(c.r.priority), new Date(c.r.createdAt).getTime()];
+}
+
+// ── autopilot: repository routing + blocker release (exported for unit testing) ──
+
+const REPO_LINE_RE = /\*\*Repo:\*\*\s*(?:`([^`]+)`|[—–-]+\s*\(Inhalt\))/i;
+
+/**
+ * The target a ticket names in its `**Repo:**` line: `{ kind: 'repo', name, path }`, `{ kind: 'content' }`
+ * for `**Repo:** — (Inhalt)`, or null when the description has no such line.
+ */
+export function repoLineOf(description) {
+  const m = REPO_LINE_RE.exec(String(description || ''));
+  if (!m) return null;
+  if (!m[1]) return { kind: 'content' };
+  const path = m[1].trim();
+  return { kind: 'repo', path, name: repoNameFromRemote(path) };
+}
+
+/** Repository name from a remote URL or an `owner/name` path (last segment, no `.git`). */
+export function repoNameFromRemote(remote) {
+  const trimmed = String(remote || '').trim().replace(/[/\\]+$/, '').replace(/\.git$/i, '');
+  return trimmed.split(/[/\\:]/).pop() || '';
+}
+
+/** Content work: label `Inhalt`, or a `**Repo:** — (Inhalt)` line. */
+export function isContentIssue(issue) {
+  const labels = ((issue.labels && issue.labels.nodes) || []).map((l) => String(l.name).toLowerCase());
+  if (labels.includes('inhalt')) return true;
+  const line = repoLineOf(issue.description);
+  return !!(line && line.kind === 'content');
+}
+
+/** Autopilot candidacy: no Repo line, content work, or this repository. */
+export function repoEligible(issue, repoName) {
+  if (!repoName || isContentIssue(issue)) return true;
+  const line = repoLineOf(issue.description);
+  if (!line || line.kind !== 'repo') return true;
+  return line.name.toLowerCase() === String(repoName).toLowerCase();
+}
+
+/** Splits rows into the candidates this repository may take and the ones another repository owns. */
+export function filterByRepo(rows, repoName) {
+  const kept = [];
+  const skipped = [];
+  for (const r of rows) {
+    if (repoEligible(r, repoName)) kept.push(r);
+    else skipped.push({ identifier: r.identifier, repo: repoLineOf(r.description).path });
+  }
+  return { kept, skipped };
+}
+
+function idPattern(identifier) {
+  const esc = String(identifier).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^a-z0-9])${esc}(?![0-9])`, 'i');
+}
+
+function runGit(cwd, args) {
+  try {
+    return execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch {
+    return null;
+  }
+}
+
+/** The ref the base branch is checked against: `origin/<base>` when it exists, else `<base>`. */
+export function resolveBaseRef(cwd, base) {
+  const candidates = base && base !== 'auto' ? [base] : ['dev', 'develop', 'main', 'master'];
+  for (const b of candidates) {
+    for (const ref of [`origin/${b}`, b]) {
+      if (runGit(cwd, ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`]) !== null) return ref;
+    }
+  }
+  return null;
+}
+
+/**
+ * Whether Git shows a ticket merged into the base: a commit on `baseRef` whose message names the
+ * identifier (squash subjects such as `DEV-3495: …`), or a remote branch carrying the identifier in
+ * its name (`feature/dev-3495-…`) whose tip a merge commit on `baseRef` brought in as a non-first
+ * parent. `git branch --merged` is not enough: a branch pushed before its first commit has a base
+ * commit as its tip and counts as merged there while the ticket has no code on the base yet.
+ * Returns `{ merged, evidence }`.
+ */
+export function mergedInBase(identifier, { cwd = process.cwd(), baseRef }) {
+  if (!baseRef) return { merged: false, evidence: 'kein Basis-Branch gefunden' };
+  const re = idPattern(identifier);
+  const log = runGit(cwd, ['log', baseRef, '-i', '-F', `--grep=${identifier}`, '--format=%h%x00%B%x1e']);
+  for (const entry of (log || '').split('\x1e')) {
+    const [hash, body] = entry.split('\x00');
+    if (hash && body && re.test(body)) return { merged: true, evidence: `Commit ${hash.trim()} auf ${baseRef}` };
+  }
+  const mergedTips = new Set();
+  for (const line of (runGit(cwd, ['rev-list', '--merges', '--parents', baseRef]) || '').split('\n')) {
+    for (const parent of line.trim().split(' ').slice(2)) mergedTips.add(parent);
+  }
+  const branches = runGit(cwd, ['for-each-ref', '--format=%(objectname) %(refname:short)', 'refs/remotes']);
+  for (const row of (branches || '').split('\n').map((x) => x.trim()).filter(Boolean)) {
+    const [tip, name] = row.split(' ');
+    if (name && re.test(name) && mergedTips.has(tip)) return { merged: true, evidence: `Branch ${name} in ${baseRef} gemergt` };
+  }
+  return { merged: false, evidence: `kein Commit und kein gemergter Branch zu ${identifier} auf ${baseRef}` };
+}
+
+function blockersOf(issue) {
+  const rels = [
+    ...((issue.relations && issue.relations.nodes) || []),
+    ...((issue.inverseRelations && issue.inverseRelations.nodes) || []),
+  ];
+  const seen = new Set();
+  const out = [];
+  for (const r of rels) {
+    if (r.type !== 'blocks' || !r.issue || !r.relatedIssue) continue;
+    if (r.relatedIssue.identifier !== issue.identifier) continue;
+    if (seen.has(r.issue.identifier)) continue;
+    seen.add(r.issue.identifier);
+    out.push(r.issue);
+  }
+  return out;
+}
+
+/**
+ * Autopilot release of a Blocked ticket (ticket-cycle `--autopilot`): never without a blocker
+ * relation; every blocker Done/Canceled, or a code ticket of this repository that Git shows merged
+ * into the base. `isMerged(identifier)` returns `{ merged, evidence }` (see mergedInBase).
+ */
+export function assessAutopilotRelease(issue, { repoName, isMerged }) {
+  const blockers = blockersOf(issue);
+  if (blockers.length === 0) {
+    return { releasable: false, reason: 'Keine Blocker-Relation hinterlegt: der Autopilot gibt nur über Relationen frei.', blockers: [] };
+  }
+  const DONE = new Set(['completed', 'canceled']);
+  const verdicts = blockers.map((b) => {
+    const state = b.state || {};
+    if (DONE.has(state.type)) return { identifier: b.identifier, ok: true, why: `${state.name || state.type}` };
+    if (isContentIssue(b)) return { identifier: b.identifier, ok: false, why: 'Inhalts-Ticket, zählt nur mit Done' };
+    const line = repoLineOf(b.description);
+    if (line && line.kind === 'repo' && repoName && line.name.toLowerCase() !== String(repoName).toLowerCase()) {
+      return { identifier: b.identifier, ok: false, why: `Repository ${line.path}, zählt nur mit Done` };
+    }
+    const m = isMerged(b.identifier);
+    return { identifier: b.identifier, ok: m.merged, why: m.merged ? `gemergt (${m.evidence})` : `${state.name || 'offen'}, ${m.evidence}` };
+  });
+  const releasable = verdicts.every((v) => v.ok);
+  const reason = verdicts.map((v) => `${v.identifier}: ${v.why}`).join('; ');
+  return { releasable, reason: `${releasable ? 'Freigebbar' : 'Nicht freigebbar'}: ${reason}`, blockers: verdicts };
 }
 
 // ── CLI plumbing ────────────────────────────────────────────────────────────
@@ -268,6 +433,7 @@ function parseArgs(argv) {
   const out = {
     team: null, project: null, status: null, assignee: 'me+null',
     descCount: 3, limit: 250, json: false, help: false, blocked: false,
+    repo: null, base: null,
   };
   const setKV = (k, v) => {
     if (k === 'team') out.team = v;
@@ -276,6 +442,8 @@ function parseArgs(argv) {
     else if (k === 'assignee') out.assignee = v;
     else if (k === 'desc-count') out.descCount = parseInt(v, 10);
     else if (k === 'limit') out.limit = parseInt(v, 10);
+    else if (k === 'repo') out.repo = v;
+    else if (k === 'base') { out.base = v; out.blocked = true; }
     else die(2, `Unknown flag: --${k}`);
   };
   for (let i = 0; i < argv.length; i++) {
@@ -396,7 +564,14 @@ async function run(args, token) {
     resolvedProject = project;
   }
 
-  // Query C — candidate issues, minimal fields only (NO description).
+  // --repo auto → the repository this checkout belongs to.
+  let repoName = null;
+  if (args.repo) {
+    repoName = args.repo === 'auto' ? repoNameFromRemote(runGit(process.cwd(), ['remote', 'get-url', 'origin'])) : args.repo;
+    if (!repoName) die(2, '--repo auto: no `origin` remote in the current directory; pass --repo <name>');
+  }
+
+  // Query C — candidate issues, minimal fields only (description only for the --repo filter).
   const filter = { team: { id: { eq: team.id } }, state: { id: { in: eligibleStates.map((s) => s.id) } } };
   if (resolvedProject) filter.project = { id: { eq: resolvedProject.id } };
   const C = await gql(token, `
@@ -407,12 +582,19 @@ async function run(args, token) {
           state { id name type }
           assignee { id }
           labels(first: 30) { nodes { name } }
-          project { name }
+          project { name }${repoName ? '\n          description' : ''}
         }
       }
     }`, { filter, limit: args.limit });
 
-  const eligibleRows = filterByAssignee(C.issues.nodes, meId, args.assignee);
+  let issueRows = C.issues.nodes;
+  let skippedForeignRepo;
+  if (repoName) {
+    const split = filterByRepo(issueRows, repoName);
+    issueRows = split.kept;
+    skippedForeignRepo = split.skipped;
+  }
+  const eligibleRows = filterByAssignee(issueRows, meId, args.assignee);
   const decorated = rankCandidates(eligibleRows, meId, fixNeededIds);
 
   const pool = {
@@ -425,6 +607,8 @@ async function run(args, token) {
     eligibleStates: eligibleStates.map((s) => ({ name: s.name, type: s.type, fixNeeded: fixNeededIds.has(s.id) })),
     assigneeMode: args.assignee,
     candidateCount: decorated.length,
+    repoFilter: repoName || undefined,
+    skippedForeignRepo,
   };
 
   // Optional (--blocked): surface Blocked-column tickets whose blockers look
@@ -435,6 +619,7 @@ async function run(args, token) {
     blocked = await fetchBlocked(token, {
       team, project: resolvedProject, states: B.team.states.nodes,
       meId, assignee: args.assignee, descCount: args.descCount, limit: args.limit,
+      repoName, base: args.base,
     });
   }
 
@@ -476,13 +661,16 @@ async function run(args, token) {
  * likely-unblocked first. Fetches descriptions for the top N (so the caller can
  * explain the "undetermined" cases without a follow-up call).
  */
-async function fetchBlocked(token, { team, project, states, meId, assignee, descCount, limit }) {
+async function fetchBlocked(token, { team, project, states, meId, assignee, descCount, limit, repoName, base }) {
   const blockedStates = states.filter((s) => s.type !== 'backlog' && isBlockedName(s.name));
   if (blockedStates.length === 0) return { state: null, candidates: [] };
 
   const filter = { team: { id: { eq: team.id } }, state: { id: { in: blockedStates.map((s) => s.id) } } };
   if (project) filter.project = { id: { eq: project.id } };
-  const relSel = 'nodes { type issue { identifier state { name type } } relatedIssue { identifier state { name type } } }';
+  const blockerSel = base
+    ? 'identifier state { name type } description labels(first: 20) { nodes { name } }'
+    : 'identifier state { name type }';
+  const relSel = `nodes { type issue { ${blockerSel} } relatedIssue { identifier state { name type } } }`;
   const E = await gql(token, `
     query($filter: IssueFilter!, $limit: Int!) {
       issues(filter: $filter, first: $limit) {
@@ -491,12 +679,21 @@ async function fetchBlocked(token, { team, project, states, meId, assignee, desc
           state { id name type }
           assignee { id }
           relations(first: 20) { ${relSel} }
-          inverseRelations(first: 20) { ${relSel} }
+          inverseRelations(first: 20) { ${relSel} }${repoName ? '\n          description labels(first: 30) { nodes { name } }' : ''}
         }
       }
     }`, { filter, limit });
 
-  const analysed = filterByAssignee(E.issues.nodes, meId, assignee).map((r) => ({ r, analysis: analyzeBlocked(r) }));
+  let rows = filterByAssignee(E.issues.nodes, meId, assignee);
+  if (repoName) rows = filterByRepo(rows, repoName).kept;
+  const baseRef = base ? resolveBaseRef(process.cwd(), base) : null;
+  const analysed = rows.map((r) => ({
+    r,
+    analysis: analyzeBlocked(r),
+    autopilot: base
+      ? assessAutopilotRelease(r, { repoName, isMerged: (id) => mergedInBase(id, { baseRef }) })
+      : undefined,
+  }));
   analysed.sort((a, b) => {
     const ka = blockedSortKey(a), kb = blockedSortKey(b);
     for (let i = 0; i < ka.length; i++) if (ka[i] !== kb[i]) return ka[i] - kb[i];
@@ -523,9 +720,10 @@ async function fetchBlocked(token, { team, project, states, meId, assignee, desc
     likelyUnblocked: d.analysis.likelyUnblocked,
     reason: d.analysis.reason,
     blockers: d.analysis.blockers,
+    autopilot: d.autopilot,
     description: d.r.id in descById ? descById[d.r.id] : undefined,
   }));
-  return { state: blockedStates.map((s) => s.name).join('/'), candidates };
+  return { state: blockedStates.map((s) => s.name).join('/'), baseRef: baseRef || undefined, candidates };
 }
 
 function main() {

@@ -84,6 +84,27 @@ Claude Code sessions can list and message each other (v2.1.224+, on by default).
 
 **One setup caveat.** With `crossSessionInbound` unset, Claude Code decides per message from both sessions' permission modes and delivers only when the two match (both bypassing prompts, or both prompting). Mixed in either direction means an approval dialog that expires after `dialogExpiry`, five minutes by default — which is exactly how coordination fails on unattended sessions. Setting `crossSessionInbound: "accept"` in user settings (or via `/config` → "Messages from your other sessions") removes the classification and is the fix; matching permission modes is the workaround when the default has to stay.
 
+## Unattended processing with /loop
+
+```
+/loop /lt-dev:ticket-cycle --autopilot --project=<Linear project> --team=<Linear team>
+```
+
+`--autopilot` runs the whole ticket cycle without a single question, so `/loop` (without an interval, self-paced)
+works a project ticket by ticket while nobody is at the screen. Starting it is your standing approval for its
+defaults: the decision round settles every open point by its recommendation and posts the decisions comment, the run
+reviews, walks the browser, attaches the test package to the ticket as a document, auto-merges after a green pipeline
+and verifies the dev deploy. Tickets of other repositories are skipped; a Blocked ticket is taken once its blockers
+are Done, or merged into the base branch as Git shows.
+
+What no default can settle is **parked**: the work is pushed to its branch, the ticket gets a comment with the question
+and Claude's recommendation, goes to Blocked and is assigned to you. A problem of the environment (expired access, a
+dirty base branch, Docker or an MCP server down, or the same cause twice in a row) **halts** the loop instead of
+parking ticket after ticket. Each run ends with an `AUTOPILOT-RESULT:` line; `AUTOPILOT: NOTHING-LEFT` and
+`AUTOPILOT: HALT <reason>` end the loop. The full list of questions and their defaults is in
+`commands/ticket-cycle.md` → "Autopilot". The autopilot never publishes content, never promotes `dev` into a higher
+branch, never sets a ticket to Done, and never bypasses a hook or gate.
+
 ## Framework consumption modes (nest-server)
 
 lenne.tech api projects can consume `@lenne.tech/nest-server` in one of two modes:
