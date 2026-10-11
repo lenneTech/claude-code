@@ -117,6 +117,13 @@ Two deliberate exceptions:
   until that merge has landed (see the dependency gate in `take-ticket` STEP 9a) — precisely
   because an `Open` ticket is immediately pickable by a parallel session.
 
+**In a project that spans several repositories, every ticket names its repository in its
+description:** `**Repo:** \`<owner>/<repo>\``, or `**Repo:** — (Inhalt)` plus the label `Inhalt` for
+content work without a merge request. A ticket without the line is worked in the repository of the
+session that picks it. `take-ticket` reads the line before it cuts a branch, offers the ticket to a
+live session in the named repository, and implements it there itself when none takes it, after the
+user has moved the session there with `/cd`.
+
 ## Further Reading
 
 The comprehensive guide for the full lenne.tech fullstack ecosystem — covering both the `lt` CLI and this `lt-dev` plugin — is maintained in the CLI repository:

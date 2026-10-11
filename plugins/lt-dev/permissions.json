@@ -1695,6 +1695,14 @@
       "usedBy": [
         "briefing"
       ]
+    },
+    {
+      "pattern": "Bash(sleep:*)",
+      "description": "Background timer that wakes the session when a peer has not answered a ticket handover in time (ticket-cycle runs it through take-ticket)",
+      "usedBy": [
+        "take-ticket",
+        "ticket-cycle"
+      ]
     }
   ]
 }
