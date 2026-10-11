@@ -124,18 +124,28 @@ and `git config credential.helper '!glab auth git-credential'`.
 Everything runs through the TurboOps MCP and the CLI API (details and payloads:
 skill `deploying-to-turboops`):
 
-1. `create_deployment_project` (slug = `<name>`, customer lenne.tech).
-2. Mint a project token: `POST /cli/deployment/tokens` `{project: <id>, name: "gitlab-ci"}` → `plainToken`.
-3. GitLab CI variables: `TURBOOPS_PROJECT` (plain) + `TURBOOPS_TOKEN` (masked, **unprotected**) via `glab variable set`.
+1. `create_deployment_project` (slug = `<name>`, customer lenne.Tech). Its response already carries the project's
+   CI/CD token as `plainToken`, so no separate token has to be minted (verified in two smoke runs on 2026-10-11).
+   Keep it for step 2: it is shown only once.
+2. GitLab CI variables: `TURBOOPS_PROJECT` (plain) + `TURBOOPS_TOKEN` (masked, **unprotected**) via `glab variable set`.
    **`TURBOOPS_PROJECT` is the slug, not the project ID.** `scripts/turboops-guard.sh` compares it with
    `.turboops.json` (which carries the slug) and otherwise aborts `turboops-build`. The abort is correct: the
    images would go into one namespace while the other project would be deployed. The ID from
    `create_deployment_project` is not needed here.
-4. `create_deployment_stage` ×2: `dev` (development, `dev.<domain>`, branch `dev`) + `production` (production, `<domain>`, branch `main`) on the target server; set the branch via `update_stage_settings`.
-5. Upload the compose file: `POST /cli/deployment/projects/<id>/compose` → registers all 3 services on both stages (defuses the single-service trap before the first deploy).
-6. `update_service_domain` per stage: `api` → `api.<stage-domain>` (the app runs on the stage root primary).
-7. Set the stage ENVs **service-scoped** (`update_deployment_envs` with `serviceName`): api = `NODE_ENV` (develop/production), `NSC__BASE_URL`, `NSC__APP_URL`, `NSC__MONGOOSE__URI=mongodb://<stack>_mongo:27017/<db>` (stack-qualified), `NSC__BETTER_AUTH__SECRET`, `NSC__AI__ENCRYPTION_SECRET`, `NSC__EMAIL__SMTP__*`, `NSC__EMAIL__DEFAULT_SENDER__EMAIL`, `SMTP_PORT`; app = `NUXT_PUBLIC_APP_ENV`, `NUXT_API_URL`, `NUXT_PUBLIC_API_URL`, `NUXT_PUBLIC_SITE_URL`, `NUXT_PUBLIC_API_PROXY=false`. The required list comes from the fail-fast guard in `projects/api/src/config.env.ts` (`REQUIRED_DEPLOYED_ENV_VARS`).
-8. `lt deployment create --noConfirm` in the project → commit `.turboops.json`.
+3. `create_deployment_stage` ×2: `dev` (development, `dev.<domain>`, branch `dev`) + `production` (production, `<domain>`, branch `main`) on the target server; set the branch via `update_stage_settings`.
+4. Upload the compose file: `POST /cli/deployment/projects/<id>/compose` → registers all 3 services on both stages (defuses the single-service trap before the first deploy).
+5. `update_service_domain` per stage: `api` → `api.<stage-domain>` (the app runs on the stage root primary).
+6. Set the stage ENVs **service-scoped** (`update_deployment_envs` with `serviceName`): mongo = `MONGO_INITDB_ROOT_USERNAME`, `MONGO_INITDB_ROOT_PASSWORD` (generated per run as hex, e.g. `openssl rand -hex 24`: base64 output, `lt server createSecret` included, contains `/`, and the driver rejects the URI with `Password contains unescaped characters` unless it is percent-encoded); api = `NODE_ENV` (develop/production), `NSC__BASE_URL`, `NSC__APP_URL`, `NSC__MONGOOSE__URI=mongodb://<user>:<password>@<stack>_mongo:27017/<db>?authSource=admin` (stack-qualified, with the credentials `lt deployment create` recommends), `NSC__BETTER_AUTH__SECRET`, `NSC__AI__ENCRYPTION_SECRET`, `NSC__EMAIL__SMTP__*`, `NSC__EMAIL__DEFAULT_SENDER__EMAIL`, `SMTP_PORT`, `SMTP_REQUIRE_TLS`; app = `NUXT_PUBLIC_APP_ENV`, `NUXT_API_URL`, `NUXT_PUBLIC_API_URL`, `NUXT_PUBLIC_SITE_URL`, `NUXT_PUBLIC_API_PROXY=false`. The required list comes from the fail-fast guard in `projects/api/src/config.env.ts` (`REQUIRED_DEPLOYED_ENV_VARS`).
+   - The Mongo root user is created only on an **empty** data directory, so it needs a fresh `<stack>_mongo_data`
+     volume (Phase 7, step 5b removes leftovers of earlier runs). Credentials and URI with `authSource=admin` were
+     tested on both stages on 2026-10-11.
+   - `SMTP_REQUIRE_TLS=false` when the smoke SMTP host offers no STARTTLS: the deployed config demands TLS unless the
+     variable is `false`, and the mail then fails with `Error upgrading connection with STARTTLS: 502 5.5.1` while
+     the sign-up still answers 201.
+   - TurboOps rewrites the host `<stack>_mongo` to the service's real name `<stack>_<hash>-mongo` at deploy time
+     (`printenv` in the api container shows it); the bare stack name does not resolve. Write the URI with
+     `<stack>_mongo` as above.
+7. `lt deployment create --noConfirm` in the project → commit `.turboops.json`.
 
 ### Phase 5 — Baseline deploys + online check
 
@@ -153,6 +163,11 @@ skill `deploying-to-turboops`):
    `git branch main dev && git push -u origin main` → deploy-prod.
 3. **Probe the real URLs after every deploy.** A green `--wait` does not prove reachability (Trap 5): app 200/302, `api.<domain>/health-check` 200, `/meta` commit == CI SHA, cert issuer Let's Encrypt.
 3b. **Sign-up deep check with a run-unique email** (e.g. `smoke-test+<runid>@lenne.tech`): orphaned `<stack>_mongo_data` volumes from earlier runs (see Phase 7, step 5b; they survive stage deletion) are reused by the new stack. A fixed test email then wrongly returns `400 Email already registered`, although the API is healthy.
+    **The 201 does not prove that the mail went out.** The API answers `201` with `emailVerificationRequired: true`
+    before nodemailer has sent anything. After the sign-up, check the api service logs for `Failed to send`
+    (`docker service logs <stack>_<hash>-api` through `exec_in_container`, service name from
+    `docker service ls --filter name=<stack>`) or the inbox. Observed 2026-10-11: 201 on the sign-up while the mail
+    failed with a STARTTLS 502 (see Phase 4, step 6).
 4. 404 + `TRAEFIK DEFAULT CERT` ⇒ a server with its own Traefik: run the label pass from `deploying-to-turboops` Trap 5, and repeat it after **every** further deploy.
 
 ### Phase 6 — MR rounds (× `--rounds`)
@@ -173,11 +188,14 @@ Per round:
    [merge_requests, dev, main]`, so pushing a feature branch creates no pipeline at all.
    The one to wait for is the `merge_request_event` pipeline on
    `refs/merge-requests/<iid>/head`, which `pipelines?ref=<branch>` never returns
-   (verified 2026-09-28):
+   (verified 2026-09-28). Count only pipelines with `source == "merge_request_event"`:
+   for an MR from `dev` (step 4) the same endpoint also lists the `dev` branch pipeline,
+   which would end the wait too early (observed 2026-10-11):
 
    ```bash
    for i in $(seq 1 30); do
-     n=$(glab api "projects/<id>/merge_requests/<iid>/pipelines" | node -e "…length…")
+     n=$(glab api "projects/<id>/merge_requests/<iid>/pipelines" \
+       | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>console.log(JSON.parse(d).filter(p=>p.source==="merge_request_event").length))')
      [ "$n" != "0" ] && break; sleep 5
    done
    glab mr merge <iid> --auto-merge --remove-source-branch --yes
@@ -188,7 +206,14 @@ Per round:
    the ungated case. (A 405 `Method Not Allowed` on a direct merge, by contrast, is a
    good sign: it means the project enforces a green pipeline before merging.)
 3. Wait for the dev pipeline → label pass if needed → online check: marker via `curl -s https://dev.<domain>/ | grep SMOKE-R<n>` + `/meta` commit == new SHA.
-4. MR `dev` → `main`, auto-merge, wait for deploy-prod → label pass if needed → same online check on `<domain>`.
+4. MR `dev` → `main`: **never with `--remove-source-branch`, and switch the project default off before merging.**
+   The GitLab project default "Delete source branch by default" sets `force_remove_source_branch=true` on the MR, and
+   the merge would delete `dev`. Check the field and set it to `false` first:
+   ```bash
+   GITLAB_HOST=<gitlab-host> glab api --method PUT "projects/<id>/merge_requests/<iid>" -f remove_source_branch=false
+   ```
+   Then auto-merge (same pipeline wait as in step 2, filtered on `merge_request_event`), wait for deploy-prod → label
+   pass if needed → same online check on `<domain>`.
 
 ### Phase 7 — Cleanup (complete, in this order)
 
@@ -198,19 +223,28 @@ Per round:
    GitLab renames the project to `<name>-deletion_scheduled-<id>` and keeps it during the
    delay period; `glab repo view <group>/<name>` then returns 404 and suggests success. The
    run on 2026-08-22 left such a project behind, and it was only noticed on the next day
-   during a recount. So always remove it permanently, then search for leftovers:
+   during a recount. So always remove it permanently, then search for leftovers. GitLab renames
+   asynchronously: right after `glab repo delete` the permanent DELETE answers `404 Not Found` while
+   `projects?search=` already lists the renamed project (two of three runs on 2026-10-11), and
+   `202 Accepted` follows 10 to 30 seconds later. So repeat it until it is accepted, and only then search:
    ```bash
-   GITLAB_HOST=<gitlab-host> glab api --method DELETE \
-     "projects/<id>?permanently_remove=true&full_path=<group>/<name>-deletion_scheduled-<id>"
+   for i in $(seq 1 12); do
+     GITLAB_HOST=<gitlab-host> glab api --method DELETE \
+       "projects/<id>?permanently_remove=true&full_path=<group>/<name>-deletion_scheduled-<id>" \
+       && echo "accepted after attempt $i" && break
+     sleep 10
+   done
    # Check — must return 0 hits, including from EARLIER runs:
    GITLAB_HOST=<gitlab-host> glab api "projects?search=<name>"
    ```
+   No `accepted` after two minutes is a failed cleanup step: read the last answer and report it, never move on
+   to the search as if the project were gone.
    The search belongs in every run, not only for the current one: a project scheduled for
    deletion by an earlier run otherwise blocks the name and stays unnoticed.
 4. Local: `lt dev down` in the project, `lt dev test down` (if anything is left), delete the project folder, check the registry entry (`~/.lenneTech/projects.json`; `lt dev down` removes the Caddy block; clean orphaned entries via `lt dev prune`/registry check).
 5. Local Mongo: `lt dev prune --noConfirm` also removes orphaned smoke-test DBs (reserved `lt-smoke-test` prefix) automatically since CLI 1.38.0; the same sweep also runs on every `lt dev up` of any project. Direct drop commands may be blocked by a hook policy. In that case do not work around it; prune is the canonical way.
 5b. Server volumes: orphaned `<stack>_mongo_data` volumes remain after stage deletion and are reused by the next run. That is a data leak between runs, and the reason a fixed test email wrongly returns `400 Email already registered`. **They can be deleted through the TurboOps MCP, without SSH** (verified 2026-08-23): `exec_in_container` in a container with the Docker CLI and a read-write socket (on a deploy.party server the task container of the `deploy-party_api` service: pass its ID or full `deploy-party_api.1.<task>` name from `list_server_containers`, since the bare service name answers `No such container`), with `allowWrite: true` and `confirmHostname: <server-IP>`. Pass **the IP, not the server name**; a server name is rejected with "confirmHostname mismatch". First list with `volume ls --filter name=<name>`, then run `volume rm` on the two stack volumes. An earlier version of this document claimed this was blocked by a blocklist and required SSH. That is not (or no longer) true: the command is classified as `needs-write` and runs with `allowWrite`. SSH remains the fallback when the MCP is unreachable.
-6. `turbo logout` is not needed (the user login stays); the minted project token dies with the project.
+6. `turbo logout` is not needed (the user login stays); the project's CI/CD token dies with the project.
 7. Final check: all four stage URLs must return 404/default cert again, `glab repo view` 404, the TurboOps project list without `<name>`, no `<name>` DBs, no `$SMOKE_DIR/<name>`.
 
 ### Phase 8 — Report

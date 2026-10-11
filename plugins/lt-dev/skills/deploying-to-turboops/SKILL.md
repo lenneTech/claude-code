@@ -125,6 +125,20 @@ Consequences, none of which look like a configuration problem:
 Do not conclude from "the API is up and returns data" that the URI is correct.
 That inference is exactly what the bare host survives on.
 
+**At deploy time TurboOps rewrites `<stack>_mongo` to the service's real name**
+`<stack>_<hash>-mongo` (`printenv NSC__MONGOOSE__URI` in the api container shows the
+rewritten host; the bare stack name does not resolve via DNS). Keep writing
+`<stack>_mongo` in the stage env; the hash is stable per stage across deploys.
+
+**Credentials:** `lt deployment create` recommends a URI with credentials,
+`mongodb://<user>:<password>@<stack>_mongo:27017/<db>?authSource=admin`, together with
+service-scoped `MONGO_INITDB_ROOT_USERNAME` / `MONGO_INITDB_ROOT_PASSWORD` on `mongo`
+(tested on a dev and a production stage on 2026-10-11). Generate the password as hex (`openssl rand -hex 24`):
+base64 output, `lt server createSecret` included, contains `/`, and the driver rejects the URI with
+`Password contains unescaped characters` unless it is percent-encoded. The root user is only created on
+an empty data directory, so a stage that already has a `<stack>_mongo_data` volume needs
+the user created by hand or a fresh volume.
+
 ## Step-by-Step: First Go-Live
 
 Follow these in order. Steps that must happen in the TurboOps web UI or via DNS
@@ -166,8 +180,11 @@ In GitLab → **Settings → CI/CD → Variables**, add:
 | `TURBOOPS_PROJECT` | `<slug>` | plain |
 | `TURBOOPS_TOKEN` | deploy token (see below) | **Masked**, **Protected = false** |
 
-- **`TURBOOPS_TOKEN` can be minted WITHOUT the web UI** (verified 2026-07 in the
-  lt-smoke-test run). After a `turbo login` (browser flow — needs an active
+- **A project created through the MCP brings its token along.** `create_deployment_project`
+  returns the project's CI/CD token as `plainToken` in its response (verified in two smoke
+  runs on 2026-10-11). It is shown once: put it straight into `TURBOOPS_TOKEN`.
+- **For an existing project, `TURBOOPS_TOKEN` can be minted WITHOUT the web UI** (verified
+  2026-07 in the lt-smoke-test run). After a `turbo login` (browser flow — needs an active
   turbo-ops.de session), the CLI API mints a project token:
 
   ```bash

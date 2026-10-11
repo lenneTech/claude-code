@@ -78,18 +78,25 @@ stack's MongoDB over the shared overlay, so the api boots healthy and serves
 data while its own database stays empty. See "MongoDB URI" above for the full
 failure picture.
 
-**Verify it, do not assume it** (a green stage proves nothing here):
+**Verify it, do not assume it** (a green stage proves nothing here). The swarm services are named
+`<stack>_<hash>-<svc>`, and TurboOps rewrites `<stack>_mongo` in the URI to `<stack>_<hash>-mongo`
+at deploy time, so take the names from the running containers:
 
 ```bash
+API=$(docker ps -q -f name=<stack>_ | xargs docker inspect -f '{{.ID}} {{.Name}}' | awk '/-api\./{print $1; exit}')
+MONGO=$(docker ps -q -f name=<stack>_ | xargs docker inspect -f '{{.ID}} {{.Name}}' | awk '/-mongo\./{print $1; exit}')
+
 # 1. Which mongo does the api actually reach?
-docker exec $(docker ps -q -f name=<stack>_api | head -1) getent hosts mongo
-docker exec $(docker ps -q -f name=<stack>_api | head -1) getent hosts <stack>_mongo
-#    Two different IPs, and the URI uses the short name → you are on a foreign DB.
+docker exec "$API" printenv NSC__MONGOOSE__URI          # the host TurboOps wrote
+docker exec "$API" getent hosts mongo
+docker exec "$API" getent hosts <host from the URI>
+#    The URI uses the short name, or the two resolve to different IPs → you are on a foreign DB.
 
 # 2. The decisive check — is YOUR mongo actually being used?
-docker exec $(docker ps -q -f name=<stack>_mongo | head -1) \
+docker exec "$MONGO" \
   mongosh --quiet --eval 'db.adminCommand({listDatabases:1}).databases.forEach(d=>print(d.name))'
 #    Only admin/config/local = your database is empty and the data is elsewhere.
+#    (With root credentials set, add -u <user> -p <password> --authenticationDatabase admin.)
 ```
 
 TurboOps rejects bare DB hosts and isolates bare-named DB services from the shared
@@ -139,10 +146,13 @@ to the path nobody reads.
 **Workaround (per deploy — labels are wiped by every `docker stack deploy`):**
 add the deploy.party-style labels directly to the swarm services, via a
 container that has the docker CLI + RW socket (on a deploy.party server:
-`deploy-party_api`):
+`deploy-party_api`). The services are named `<stack>_<hash>-<svc>`
+(e.g. `lt-smoke-test-dev_3dc1e254-api`), not `<stack>_app`: a `docker service update <stack>_app`
+hits nothing. Take the names from `docker service ls --filter name=<stack>`; the hash stays the
+same per stage across deploys and runs (verified 2026-10-11).
 
 ```
-docker service update <stack>_app -d \
+docker service update <stack>_<hash>-app -d \
   --label-add traefik.enable=true \
   --label-add traefik.constraint-label=traefik-public \
   --label-add traefik.docker.network=traefik-public \
@@ -157,7 +167,7 @@ docker service update <stack>_app -d \
   --label-add 'traefik.http.services.<name>.loadbalancer.passhostheader=true'
 ```
 
-(same for `<stack>_api` with `api.<domain>`). Notes: use `Host("…")` with double
+(same for `<stack>_<hash>-api` with `api.<domain>`). Notes: use `Host("…")` with double
 quotes — backticks die in the SSH/exec shell layer; the TurboOps-prepared stack
 already attaches services to `traefik-public`, so no network change is needed;
 Let's Encrypt issues the cert within seconds once the router exists.
