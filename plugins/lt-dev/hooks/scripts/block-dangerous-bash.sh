@@ -50,7 +50,16 @@ while IFS= read -r stmt; do
 done <<< "$(printf '%s\n' "$COMMAND" | tr -d "\"'" | tr '[:upper:]' '[:lower:]' | tr ';|&' '\n\n\n')"
 
 # ── Git destruction ──
-echo "$COMMAND" | grep -qE 'git\s+push\s+.*(--force|-f).*\s+(main|master)\b|git\s+push\s+.*\s+(main|master)\s+.*(--force|-f)' \
+# The force flag must be a whole token: `--force…` or a short-flag cluster containing f (-f, -uf).
+# Matched as a bare substring, `-f` also hit --follow-tags and blocked the release recipe's push.
+# A token ends at any character that cannot continue a flag, not only at whitespace: in
+# `--force; echo`, `(cd x && git push origin main -f)`, `bash -c "… --force"` or PowerShell's
+# `{ … --force}` the flag is followed by a separator, a bracket or a quote, and the substring rule
+# denied every one of them. Checked per statement with quotes and escapes dropped, as the
+# PowerShell rule above does, so a flag in a later command cannot pair with this push.
+FORCE_FLAG='(--force[a-z-]*(=[^[:space:]]*)?|-[a-zA-Z]*f[a-zA-Z]*)'
+FLAG_END='([^a-zA-Z0-9_-]|$)'
+printf '%s\n' "$COMMAND" | tr -d "\"'\\\\\`" | tr ';|&()<>' '\n\n\n\n\n\n\n' | grep -qE "git[[:space:]]+push[[:space:]]+(.*[[:space:]])?${FORCE_FLAG}[[:space:]]+(.*[[:space:]])?(main|master)\b|git[[:space:]]+push[[:space:]]+(.*[[:space:]])?(main|master)[[:space:]]+(.*[[:space:]])?${FORCE_FLAG}${FLAG_END}" \
   && deny "Blocked: Force push to main/master is not allowed. Use --force-with-lease on feature branches."
 
 echo "$COMMAND" | grep -qE 'git\s+reset\s+--hard\s*$' \

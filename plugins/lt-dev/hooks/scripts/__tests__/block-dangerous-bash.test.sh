@@ -49,8 +49,28 @@ echo "Bash tool"
 expect deny  "$(run_hook Bash 'rm -rf /')"   'rm -rf / is denied'
 expect allow "$(run_hook Bash 'git status')" 'a harmless command is allowed'
 
+echo "Bash tool: force push to main/master"
+expect deny  "$(run_hook Bash 'git push -f origin main')"                     '-f before the branch'
+expect deny  "$(run_hook Bash 'git push origin main --force')"                '--force after the branch'
+expect deny  "$(run_hook Bash 'git push --force-with-lease origin master')"   '--force-with-lease to master'
+expect deny  "$(run_hook Bash 'git push -uf origin main')"                    'f inside a bundled short-flag cluster'
+# `-f` used to match as a substring, so any long option starting with f tripped the rule. The
+# lt-monorepo release recipe's own `git push --follow-tags origin main` was refused that way.
+expect allow "$(run_hook Bash 'git push --follow-tags origin main')"          '--follow-tags before the branch'
+expect allow "$(run_hook Bash 'git push origin main --follow-tags')"          '--follow-tags after the branch'
+expect allow "$(run_hook Bash 'git push --force-with-lease origin feature/x')" 'force-with-lease on a feature branch'
+# A token boundary is more than whitespace. The substring rule denied each of these, and a
+# whitespace-only boundary let them through.
+expect deny  "$(run_hook Bash 'git push origin main --force; echo done')"      'a separator right after the flag'
+expect deny  "$(run_hook Bash '(cd repo && git push origin main -f)')"         'a closing parenthesis right after the flag'
+expect deny  "$(run_hook Bash 'bash -c "git push origin main --force"')"       'a closing quote right after the flag'
+expect deny  "$(run_hook Bash 'git push "--force" origin main')"               'a quoted flag'
+expect allow "$(run_hook Bash 'git push origin main --follow-tags;')"          '--follow-tags followed by a separator'
+expect allow "$(run_hook Bash 'git push origin main && rm -rf dist')"          'a flag of the next command is not a push flag'
+
 echo "PowerShell tool: the shared rules apply"
 expect deny  "$(run_hook PowerShell 'git push --force origin main')" 'force push to main is denied'
+expect deny  "$(run_hook PowerShell 'if ($ok) { git push origin main --force}')" 'a closing brace right after the flag'
 expect deny  "$(run_hook PowerShell 'docker system prune -a')"       'docker system prune -a is denied'
 expect allow "$(run_hook PowerShell 'Get-ChildItem -Recurse src')"   'a harmless command is allowed'
 
@@ -66,6 +86,7 @@ expect allow "$(run_hook PowerShell 'Get-ChildItem -Recurse C:\; Remove-Item .\t
 
 echo "without jq (grep/sed fallback)"
 expect deny  "$(run_hook_nojq PowerShell 'git push -f origin main')"                  'force push is denied'
+expect deny  "$(run_hook_nojq Bash 'bash -c "git push origin main --force"')"         'escaped quotes around a force push'
 expect deny  "$(run_hook_nojq PowerShell 'Remove-Item -Recurse -Force C:\')"          'drive root behind a JSON-escaped backslash'
 expect allow "$(run_hook_nojq PowerShell 'Remove-Item -Recurse -Force C:\work\dist')" 'a Windows project path is allowed'
 expect deny  "$(run_hook_nojq Bash 'echo "x" && rm -rf ~')"                           'escaped quotes do not hide rm -rf ~'

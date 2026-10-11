@@ -127,10 +127,14 @@ Part of the [`maintaining-lt-stack`](SKILL.md) skill. Where a step says "see the
    agent — but that is the exact false negative `ssh-add -l` produces here, and on
    2026-09-04 the functional check reported `ssh … push normally` with two keys in
    the 1Password agent. A force-push guard on `--follow-tags` is the other
-   candidate and is equally unproven: there is no deny rule and no push hook in
-   `~/.claude/settings.json`, so it would have to be the built-in harness
-   protection. The two-step push worked at v2.25.0 and v2.25.1 — use it, and leave
-   the cause open instead of repeating a guess.
+   candidate, and that guard did exist: lt-dev's own `block-dangerous-bash.sh`
+   matched `-f` as a substring and denied a typed `git push --follow-tags origin
+   main` as a force push (measured 2026-10-09 on the lt-monorepo v3.15.1 release;
+   fixed since, the flag must now be a whole token). Whether it caused v2.25.0 is
+   still open: the hook reads only the command typed into the tool, so it can deny
+   a direct `git push --follow-tags`, but not the push inside `pnpm run release`.
+   The two-step push worked at v2.25.0 and v2.25.1 — use it, and leave the cause
+   open instead of repeating a guess.
 5. **Then stop — the GitHub release makes itself.** A workflow reacts to the tag
    push and creates the release. A follow-up `gh release create vX.Y.Z` fails with
    `HTTP 422: Release.tag_name already exists` — within seconds and reliably, so it
