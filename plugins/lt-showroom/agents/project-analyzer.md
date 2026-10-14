@@ -44,7 +44,7 @@ Extract the product's main capabilities:
 - Identify user-facing features by endpoint groups and module names
 - Apply heuristics from the `analyzing-projects` skill `feature-extraction.md`
 - Note any multi-tenancy, role-based access, or subscription tiers
-- For each feature: record name, description, evidence (`file:line`), icon (Lucide icon name, e.g. `lucide:brain-circuit`, `lucide:shield`, `lucide:database`), and the best page to demonstrate it
+- For each feature: record name, description, evidence (`file:line`), icon (Lucide icon in the form `i-lucide-<name>`, e.g. `i-lucide-brain-circuit`, `i-lucide-shield`, `i-lucide-database`), and the best page to demonstrate it
 
 ### 4. API Surface
 
@@ -129,6 +129,8 @@ The report includes:
 - Feature list with name, description, evidence, icon (Lucide icon name for feature-grid display), and screenshot candidate page
 - `startupInfo` block
 - `pagesInventory` list
+- `projectFacts` block: year, duration, platforms and the number of commit authors as proposals for the showcase key
+  facts (`analyzing-projects` skill → "Project Facts"); no outcomes, those come from the user
 
 If `SHOWCASE.md` creation was requested:
 - Write the file to the project root (or `docs/showcase/SHOWCASE.md` for monorepos)

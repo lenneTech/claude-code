@@ -140,30 +140,28 @@ Interim status goes in the same message as your next tool call, so the work keep
 - Network check on live pages: requests other than GET, if any
 - Cleanup: the `cleanup` report, `leftovers` verbatim
 
-## GridFS Upload Flow
+## Upload Flow
 
-After capturing, the screenshots can be uploaded to GridFS via the showroom API before they are used in showcases.
+Capturing ends with the files in `~/.lt-showroom/<slug>/screenshots/`. The upload belongs to the caller that builds the
+showcase (`/lt-showroom:showroom:create` Step 6); when a caller asks this agent to upload, follow it:
 
-### Upload Process
-
-For each screenshot file in `~/.lt-showroom/<slug>/screenshots/`:
-
-1. **Upload to GridFS** via the file upload endpoint:
+1. **One ticket per file**: `create_upload_ticket` returns an `uploadUrl` that accepts exactly one multipart POST
+   within 15 minutes and needs no session.
    ```bash
-   curl -s -b /tmp/showroom-cookies.txt -X POST https://api.showroom.lenne.tech/files/upload \
-     -F "file=@$HOME/.lt-showroom/<slug>/screenshots/{filename}.webp"
+   curl -s -F "file=@$HOME/.lt-showroom/<slug>/screenshots/{filename}.webp" -F "device=desktop" "<uploadUrl>"
    ```
-   The response contains the `fileId` (GridFS ObjectId) of the uploaded file.
-
-2. **Store the fileId** in the appropriate location on the showcase:
-   - **Feature screenshots**: Use the `fileId` in `custom-html` blocks via `<img src='/api/files/id/{fileId}'>`
-   - **Gallery screenshots**: Add a `ScreenshotRef` object (`{ fileId, caption, device, order }`) to the showcase's `screenshots` array
-   - **Teaser image**: Set the `fileId` of the best overview screenshot as `teaserImageFileId` on the showcase
-
-3. **Set teaserImageFileId**: Upload the first overview screenshot (typically `overview-desktop.webp`) and set its `fileId` as the showcase's `teaserImageFileId`. This image is displayed on showcase cards and as the hero background.
+   The answer is `{ fileId, width, height, device, bytes, deduplicated }`. The server stores the image as WebP; the
+   same image uploaded again returns the same `fileId`. `device` (`desktop`, `tablet`, `mobile`) is optional and
+   otherwise derived from the aspect ratio. Without MCP, `POST /files/upload/ticket` with a signed-in session issues
+   the same ticket.
+2. **Reference the `fileId` in content blocks**, sent with `update_showcase`: an `image` block (`content.fileId`), a
+   `gallery` block (`content.fileIds[]`) or a `screenshot-gallery` block (`content.screenshots[].fileId`).
+3. **Teaser image**: the `fileId` of the best overview screenshot (typically `overview-desktop.webp`) becomes the
+   showcase's `teaserImageFileId`, shown on showcase cards and in the hero. MCP cannot set it; use
+   `PATCH /showcases/{id}` with `{ "teaserImageFileId": "<fileId>" }`.
 
 ### File URL Format
 
-Uploaded files are served at: `/api/files/id/{fileId}`
-
-Always use the `/api/` prefix in image URLs within `custom-html` blocks. Without it, the Vite dev proxy will not forward the request to the API server and images will be broken.
+Block file fields take the `fileId`, never a URL. Only inside `custom-html` an image needs a URL:
+`<api-origin>/files/id/<fileId>`, where `<api-origin>` is the ticket's `uploadUrl` up to `/files/`. A relative `/api/...`
+path works only behind a local dev proxy and leaves the image blank on the deployed page.

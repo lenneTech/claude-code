@@ -26,8 +26,23 @@ technologies:             # All significant technologies — quote the list
   - TypeScript
 category: "Web App"       # Web App | Mobile | Desktop App | Backend | Library | IoT
 customer: "Kundenname"    # Company or person that commissioned the project
+# Key facts for the showcase hero, all optional:
+year: 2025                # Year of the project (1990-2100)
+duration: "6 Monate"      # Free text, max. 40 characters
+team_size: 4              # People on the project team, confirmed by the user (1-100)
+platforms: [web, ios]     # Any of web, ios, android, desktop
+outcomes:                 # Real, publishable result numbers only; max. 6, each max. 120 characters
+  - "-70 % Bearbeitungszeit"
 ---
 ```
+
+### Key Facts
+
+`year`, `duration`, `team_size`, `platforms` and `outcomes` become the showcase's `year`, `duration`, `teamSize`,
+`platforms` and `outcomes`. Derive the first four from the code (first and last commit, deployment targets such as a
+web build, Capacitor or native apps, Electron or Tauri) and let the user confirm them: commit authors are not the
+project team. Outcomes come from the user or a published source, never from an estimate; leave them out rather than
+invent one. The facts are public on every showcase, also an anonymous one, so none may identify the customer.
 
 ### Versioning Rules
 

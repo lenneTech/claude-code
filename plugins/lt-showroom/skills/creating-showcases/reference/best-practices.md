@@ -33,14 +33,18 @@ Each feature is:
 - Present in SHOWCASE.md with a `file:line` evidence reference
 - Title: 3-5 words, action-oriented ("Echtzeit-Matching" not "Matching-Funktion")
 - Description: 1-2 specific sentences explaining what it does and how
-- Icon: Use lucide icon names (e.g., "lucide:zap", "lucide:shield", "lucide:database")
+- Icon: an Iconify name from the Lucide set (`i-lucide-zap`, `i-lucide-shield-check`, `i-lucide-database`)
+- Count: with more than two features the first two render large and the rest in rows of three, so 8 (or 11) fill
+  every row
 
-### Tech-Stack Block
+### Technologies
 
+- Set them as the showcase's `technologies` field, not as a `tech-stack` block: the page hero shows the field with
+  logos and the PDF header as tags, while the public page leaves a `tech-stack` block out
 - Include all significant technologies from `package.json` / manifest files
-- Group by category: Frontend, Backend, Datenbank, Infrastruktur, Testing
-- Include version-defining technologies (e.g., "NestJS 11" not just "NestJS")
 - Only list technologies present in the SHOWCASE.md `technologies` frontmatter
+- Write the plain product name (`NestJS`, `Nuxt`, `MongoDB`): the hero finds a logo by the exact name, so `NestJS 11`
+  shows a letter placeholder. Versions belong in the text blocks
 
 ### Screenshots
 
@@ -72,22 +76,23 @@ Match using the `customer` field from SHOWCASE.md frontmatter.
 
 ## Recommended Block Structure
 
-### Standard Showcase (10-16 blocks)
+The page frames the blocks on its own: the hero shows title, description, teaser image, the key facts (`year`,
+`duration`, `teamSize`, `platforms`, `outcomes`) and the `technologies` field, and the page ends with "Interesse geweckt?" and a "Termin vereinbaren" button to the booking link (the showcase's
+`meetingUrl`, otherwise the company setting). The public page leaves `cta` and `tech-stack` blocks out, so none of the
+structures below has one.
+
+### Standard Showcase (8-14 blocks)
 
 ```
-1.  text "Überblick"        — 3-5 paragraphs: What, Why, Who, How
-2.  tech-stack              — Technology badges (from SHOWCASE.md)
-3.  feature-grid            — Compact icon overview of all features (6-8 items)
-4.  custom-html "Feature 1" — Screenshot left + description right
-5.  custom-html "Feature 2" — Description left + screenshot right
-6.  custom-html "Feature 3" — Screenshot left + description right
-7.  custom-html "Feature 4" — Description left + screenshot right
-    ... (one custom-html per feature with screenshot)
-N-4. text "Architektur"     — Module structure, patterns, data flow
-N-3. screenshot-gallery     — Additional screenshots not tied to specific features
-N-2. testimonial            — Customer feedback (if available)
-N-1. text "Ergebnis"        — Impact, metrics, adoption
-N.   cta                    — "Termin vereinbaren" → meeting URL
+1.   text "Überblick"         — 3-5 paragraphs: What, Why, Who, How
+2.   feature-grid "Features"  — Compact icon overview of all features (6-8 items)
+3.   custom-html <Feature 1>  — Screenshot left + description right
+4.   custom-html <Feature 2>  — Description left + screenshot right
+     ... (one custom-html per feature with screenshot, alternating)
+N-3. text "Architektur"       — Module structure, patterns, data flow
+N-2. screenshot-gallery       — Additional screenshots not tied to specific features
+N-1. testimonial              — Customer feedback (if available)
+N.   text "Ergebnis"          — Impact, metrics, adoption
 ```
 
 The `feature-grid` gives visitors a quick scannable overview of all capabilities with icons. Each feature is then presented in detail via a `custom-html` block with an accompanying screenshot. The `screenshot-gallery` at the end collects any additional screenshots (e.g., overview pages, mobile views) that are not tied to a specific feature.
@@ -95,35 +100,36 @@ The `feature-grid` gives visitors a quick scannable overview of all capabilities
 ### Library/Framework Showcase
 
 ```
-1.  tech-stack
-2.  text "Überblick"    — What the library does, why it exists
-3.  feature-grid        — 6-8 core capabilities
-4.  text "API"          — Key API surface, usage examples
-5.  text "Architektur"  — Internal architecture, extension points
-6.  text "Ecosystem"    — Integration with other tools, community
-7.  cta
+1.  text "Überblick"    — What the library does, why it exists
+2.  feature-grid        — 6-8 core capabilities
+3.  text "API"          — Key API surface, usage examples
+4.  text "Architektur"  — Internal architecture, extension points
+5.  text "Ecosystem"    — Integration with other tools, community
 ```
 
 ### Backend-Only Showcase (no UI)
 
 ```
-1.  tech-stack
-2.  text "Überblick"
-3.  feature-grid
-4.  text "API-Design"   — Endpoints, data models, authentication
-5.  text "Architektur"
-6.  testimonial
-7.  cta
+1.  text "Überblick"
+2.  feature-grid
+3.  text "API-Design"   — Endpoints, data models, authentication
+4.  text "Architektur"
+5.  testimonial
 ```
 
+Optional blocks where the material exists: `timeline` (project phases), `team`, `faq`, `video`, `reference` (a link
+to the live product or a related project).
+
 ## Content Block JSON Examples
+
+`order` is the block's index in the `contentBlocks` array (here: overview first, feature grid second).
 
 ### Text Block (HTML formatted)
 ```json
 {
   "type": "text",
   "title": "Projektübersicht",
-  "order": 1,
+  "order": 0,
   "visible": true,
   "showInToc": true,
   "content": {
@@ -132,22 +138,28 @@ The `feature-grid` gives visitors a quick scannable overview of all capabilities
 }
 ```
 
+`text` keeps only basic formatting: `p`, `br`, `strong`, `em`, `u`, lists, `h2`-`h4`, links, `blockquote`, `span`.
+Images, tables and inline styles need `custom-html`. A `<strong>` that starts with a number and one or two words
+(`<strong>40+ Module</strong>`) renders the number large in the accent color, a good fit for key figures.
+
 ### Feature-Grid Block
 ```json
 {
   "type": "feature-grid",
   "title": "Features",
-  "order": 2,
+  "order": 1,
   "visible": true,
   "showInToc": true,
   "content": {
     "features": [
-      {"title": "KI-Vektor-Matching", "description": "Semantisches Profil-Matching über Qdrant-Vektordatenbank — findet relevante Verbindungen jenseits einfacher Keyword-Suche.", "icon": "lucide:brain"},
-      {"title": "Deutsches NLP", "description": "spaCy-basierte Substantiv-Extraktion und Komposita-Splitting für präzise Analyse deutscher Fachtexte.", "icon": "lucide:languages"},
-      {"title": "Echtzeit-Chat", "description": "GraphQL-Subscriptions ermöglichen sofortige Kommunikation zwischen vernetzten Partnern.", "icon": "lucide:message-circle"},
-      {"title": "Veranstaltungskalender", "description": "Regionale Events entdecken, erstellen und teilen — öffentlich zugänglich ohne Registrierung.", "icon": "lucide:calendar"},
-      {"title": "Push-Benachrichtigungen", "description": "Web-Push-Notifications für neue Matches, Nachrichten und relevante Veranstaltungen.", "icon": "lucide:bell"},
-      {"title": "Sentry-Monitoring", "description": "Client- und serverseitige Fehlerüberwachung für hohe Verfügbarkeit und schnelle Problemlösung.", "icon": "lucide:activity"}
+      {"title": "KI-Vektor-Matching", "description": "Semantisches Profil-Matching über Qdrant-Vektordatenbank — findet relevante Verbindungen jenseits einfacher Keyword-Suche.", "icon": "i-lucide-brain"},
+      {"title": "Deutsches NLP", "description": "spaCy-basierte Substantiv-Extraktion und Komposita-Splitting für präzise Analyse deutscher Fachtexte.", "icon": "i-lucide-languages"},
+      {"title": "Echtzeit-Chat", "description": "GraphQL-Subscriptions ermöglichen sofortige Kommunikation zwischen vernetzten Partnern.", "icon": "i-lucide-message-circle"},
+      {"title": "Veranstaltungskalender", "description": "Regionale Events entdecken, erstellen und teilen — öffentlich zugänglich ohne Registrierung.", "icon": "i-lucide-calendar-days"},
+      {"title": "Push-Benachrichtigungen", "description": "Web-Push-Notifications für neue Matches, Nachrichten und relevante Veranstaltungen.", "icon": "i-lucide-bell-ring"},
+      {"title": "Sentry-Monitoring", "description": "Client- und serverseitige Fehlerüberwachung für hohe Verfügbarkeit und schnelle Problemlösung.", "icon": "i-lucide-activity"},
+      {"title": "Rollen und Rechte", "description": "Getrennte Sichten für Unternehmen, Institutionen und Fachkräfte, serverseitig geprüft.", "icon": "i-lucide-shield-check"},
+      {"title": "Semantische Suche", "description": "Freitextsuche über Profile und Events, sortiert nach inhaltlicher Nähe statt Stichworttreffern.", "icon": "i-lucide-search"}
     ]
   }
 }
@@ -158,54 +170,74 @@ The `feature-grid` gives visitors a quick scannable overview of all capabilities
 {
   "type": "testimonial",
   "title": "Kundenfeedback",
-  "order": 7,
+  "order": 9,
   "visible": true,
   "showInToc": false,
   "content": {
     "quote": "<the quote, copied character for character from the raw HTML of the company's references page>",
     "author": "Max Mustermann",
+    "role": "Geschäftsführer",
     "company": "Beispielkunde"
   }
 }
 ```
 
+`role` and `company` are optional; the page shows them below the name as `role · company`.
+
 ## Feature-Screenshot Layout (custom-html)
 
-The most effective way to present features is a **2-column layout with screenshot + description**, alternating sides. Use `custom-html` blocks for this:
+The most effective way to present features is a **2-column layout with screenshot + description**, alternating sides.
+Use one `custom-html` block per feature:
 
 **Even features (image left, text right):**
 ```json
 {
   "type": "custom-html",
-  "title": "Feature: Name",
+  "title": "Echtzeit-Matching",
+  "order": 2,
   "visible": true,
-  "showInToc": true,
+  "showInToc": false,
   "content": {
-    "html": "<div style='display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:center'><div><img src='/api/files/id/{fileId}' alt='Screenshot' style='width:100%;border-radius:1rem;border:1px solid rgba(255,255,255,0.1)'/></div><div><h3 style='color:#ff611e;font-size:1.5rem;margin-bottom:0.5rem'>Feature Name</h3><p style='color:rgba(255,255,255,0.7);line-height:1.6'>Detailed description from SHOWCASE.md...</p></div></div>"
+    "html": "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2rem;align-items:center'><img src='https://api.showroom.example/files/id/<fileId>' alt='Matching-Vorschläge mit Trefferquote' style='width:100%;border-radius:1rem;border:1px solid var(--sr-border)'/><div><p style='font-size:1.25rem;font-weight:600;color:var(--sr-text);margin-bottom:0.75rem'>Passende Partner in Sekunden</p><p style='color:var(--sr-text-secondary);line-height:1.7'>Detailed description from SHOWCASE.md...</p></div></div>"
   }
 }
 ```
 
-**Odd features (text left, image right):**
-```json
-{
-  "type": "custom-html",
-  "title": "Feature: Name",
-  "content": {
-    "html": "<div style='display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:center'><div><h3 style='color:#ff611e;font-size:1.5rem;margin-bottom:0.5rem'>Feature Name</h3><p style='color:rgba(255,255,255,0.7);line-height:1.6'>Description...</p></div><div><img src='/api/files/id/{fileId}' alt='Screenshot' style='width:100%;border-radius:1rem;border:1px solid rgba(255,255,255,0.1)'/></div></div>"
-  }
-}
-```
+**Odd features (text left, image right):** the same block with the text `<div>` before the `<img>`.
 
-**Mobile fallback:** Add `@media(max-width:768px){grid-template-columns:1fr}` or use `style='display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))'` for responsive behavior.
+What the platform does with this HTML decides how to write it:
 
-**Image URLs:** Use `/api/files/id/{fileId}` with the `/api/` prefix. Without it, the Vite dev proxy won't forward the request to the API server and images will be broken.
+- **Title.** The page shows the block title verbatim as the section label, the PDF as the section heading. Use the
+  feature name, with no prefix such as `Feature:` (it would appear on the page), and do not repeat it as a heading
+  inside the HTML. `showInToc: false` keeps the table of contents to the main sections.
+- **Image URL.** Write it absolute: `<api-origin>/files/id/<fileId>`, where `<api-origin>` is the upload ticket's
+  `uploadUrl` up to `/files/` (for showroom.lenne.tech: `https://api.showroom.lenne.tech`). A relative
+  `/api/files/id/…` path resolves against the page's own host, which serves no files, and the image stays blank.
+- **PDF.** The PDF export does not embed absolute image URLs from `custom-html`; it shows them as broken images. When
+  the PDF matters, show the screenshot in an `image` or `screenshot-gallery` block instead.
+- **Colors.** The page has a light and a dark mode. Use its theme variables instead of fixed colors:
+  `var(--sr-text)` for headings, `var(--sr-text-secondary)` for body text, `var(--sr-text-muted)`,
+  `var(--sr-border)`, `var(--sr-surface)` for a subtle background, `var(--color-brand-400)` for the accent. White text
+  disappears in light mode.
+- **Typography.** `custom-html` gets none of the page's prose styles: headings and paragraphs render at body size and
+  without spacing unless the HTML styles them.
+- **Responsive layout.** `<style>` tags are removed and an inline style cannot hold `@media`, so the grid itself has to
+  adapt: `grid-template-columns:repeat(auto-fit,minmax(300px,1fr))` stacks the columns on narrow screens.
+- **Inline styles over classes.** A Tailwind class works only where the platform's own pages already use the same
+  class; inline styles always work. A `style` attribute containing `url(` or `data:` is dropped as a whole, so
+  background images are not possible.
+- **Lightbox.** Every image opens in the lightbox, with its `alt` as caption; write the `alt` as one.
+- **File lifetime.** Image URLs inside `custom-html` do not count as a file reference. When the same file also sits in
+  a block file field (`image`, `screenshot-gallery`) and an update removes it there, the file is deleted and the
+  `custom-html` image breaks.
 
-**Showcase description:** Plain text, not HTML. The description is rendered via `{{ showcase.description }}` (text interpolation), not `v-html`. If you accidentally save HTML in the description, strip it before saving.
+**Showcase description:** Plain text, not HTML: the hero renders it as text and strips the tags of older entries, so
+markup only costs formatting. Two or three sentences; the detail belongs in the blocks.
 
-**DOMPurify:** The `custom-html` block type uses a permissive sanitizer (`sanitizeRich`) that allows `img`, `div`, `style`, and layout tags. Other block types (like `text`) use a strict sanitizer that strips everything except basic formatting. Never put images in `text` blocks — use `custom-html` for any content with images or complex layouts.
-
-Use `custom-html` blocks for detailed feature presentations (one per feature with screenshot). The `feature-grid` block complements this as a compact overview at the top, and the `screenshot-gallery` collects additional screenshots not tied to a specific feature.
+**Key facts:** `year`, `duration`, `teamSize` and `platforms` come from the analysis (first and last commit, the
+deployment targets) and are confirmed by the user, because commit authors are not the project team. `outcomes` holds
+only real, publishable numbers ("-70 % Bearbeitungszeit"), never an estimate; without one, leave the list empty. Every
+viewer of the showcase sees the facts, also when the customer is anonymous, so no outcome may identify the customer.
 
 ## Anti-Patterns
 
@@ -217,3 +249,4 @@ Use `custom-html` blocks for detailed feature presentations (one per feature wit
 - **Copy-paste from README** — Rewrite for the audience; READMEs are for developers, showcases are for prospects.
 - **English in German showcases** — Keep consistent; translate technical descriptions.
 - **Outdated SHOWCASE.md** — Version must match `package.json`. Run `/lt-showroom:showroom:update` when the project changes.
+- **A `cta` or `tech-stack` block** — The public page leaves both out: it ends with its own booking button and its hero shows the `technologies` field.

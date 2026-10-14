@@ -15,9 +15,12 @@ In a Claude Code session:
 
 | Server | Type | Purpose |
 |--------|------|---------|
-| `showroom-api` | http | Showcase CRUD, screenshot upload, analytics, company context and knowledge base |
+| `showroom-api` | http | Showcases (create, edit, activate, archive), screenshot upload, prospects, analytics, company context, knowledge base, global blocks, company settings (admins only), candidate register of the project search |
 
-The server signs in through OAuth in the browser on first use.
+The server signs in through OAuth in the browser on first use. The grant covers `showcases:read` and
+`showcases:write` for the editorial team, plus `settings:write`, which only `update_settings` needs and only admins can
+use; the consent page names it "Einstellungen ändern (nur Admins)". A connection granted without it answers
+`update_settings` with `Insufficient scope (insufficient_scope)`: reconnect it once through `/mcp`.
 
 ### Browser automation via `lt-dev`
 
@@ -34,7 +37,8 @@ The plugin carries no company data of its own. Showcases are written from what `
 - **Company settings** — company name, logo and the meeting booking link every showcase's call to action uses
 - **Knowledge base** — company, services, team and past projects; a `portfolio` entry holding customer testimonials or linking to the page that publishes them, whose quotes are copied word for word
 
-When a showcase needs something the account lacks, the workflows ask and offer to store the answer.
+When a showcase needs something the account lacks, the workflows ask and offer to store the answer: knowledge entries
+for every editor, company name, logo and booking link through `update_settings` for admins.
 
 ## Skills
 
@@ -90,4 +94,4 @@ Tests: `node --test plugins/lt-showroom/scripts/__tests__/*.test.mjs` (dependenc
 ## Reference
 
 - [showroom.lenne.tech](https://showroom.lenne.tech) — The showcase platform
-- [lenne.tech](https://lenne.tech) — lenne.tech GmbH
+- [lenne.tech](https://lenne.tech) — lenne.Tech GmbH

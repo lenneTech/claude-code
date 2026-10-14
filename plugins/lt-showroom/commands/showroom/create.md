@@ -50,14 +50,17 @@ Verify that `SHOWCASE.md` exists. If not, suggest running `/lt-showroom:showroom
 ### Step 2: Read SHOWCASE.md
 
 Parse the full SHOWCASE.md file:
-- Extract frontmatter (version, project, technologies, category, customer)
+- Extract frontmatter (version, project, technologies, category, customer, and the key facts `year`, `duration`,
+  `team_size`, `platforms`, `outcomes` where present)
 - Extract all sections (overview, tech stack, features, architecture, highlights, results)
 - Note which screenshots exist: `~/.lt-showroom/<slug>/manifest.json` lists every image; its `pendingTag` (set when only the teaser cover exists) goes into the showcase's `tags`
 
 ### Step 3: Load Company Context and Customer Feedback
 
 Call `get_showroom_context`. It returns the company settings (name, logo, meeting booking URL), the knowledge base
-and the platform's global blocks; write the showcase from that context.
+and the platform's global blocks; write the showcase from that context. When a company setting is empty, ask the user
+for it and offer to store it with `update_settings` (admins only; the `creating-showcases` skill covers its fields and
+errors).
 
 Then find where the company publishes its customer testimonials, in this order: the organization's own conventions
 (a skill from its internal plugin, or its CLAUDE.md), a knowledge base entry in category `portfolio` that holds the
@@ -91,8 +94,21 @@ Before creating the showcase, ask:
 > 1. Is there a live URL or landing page for this project? (optional)
 > 2. Any additional links? (app store, documentation, press article)
 > 3. Any specific aspects you want highlighted?
+> 4. Who may see it: `public` (anyone), `invited` (recipients of a prospect link), `internal` (the team, default) or
+>    `confidential` (the editorial team only)?
+> 5. May the customer be named (`named`, `named_in_selections`, `anonymous`)? For public and named: where does the
+>    customer's reference consent come from? Did the customer object to publication?
+> 6. Key facts for the hero: year <year>, duration <duration>, team <n> people, platforms <list> (from SHOWCASE.md or
+>    the analysis): correct? Is there a measured result that may be published, e.g. "-70 % Bearbeitungszeit"?
 
-Use the answers to enrich the showcase content.
+Use the answers to enrich the showcase content. Questions 4 and 5 decide the release in Step 8; without an answer the
+showcase stays `internal` and `anonymous`. Question 6 settles the key facts: every viewer sees them, also on an
+anonymous showcase, so an outcome never identifies the customer, and without a real number `outcomes` stays empty.
+Write confirmed facts back into the SHOWCASE.md frontmatter.
+
+Look the project up in the candidate register of the project search: `list_candidates` with the project or repository
+name as `search`. A match goes into Step 8 as `candidateId`. When the match is `ignored`, show its `reason` and ask
+before going on.
 
 ### Step 5: Web Research
 
@@ -101,27 +117,39 @@ Use WebSearch to find public information about the project or customer:
 - Look for press releases, case study posts, or mentions
 - Note any metrics or outcomes that can be included in the results section
 
-### Step 6: Build Content Blocks (8-12 blocks)
+### Step 6: Upload Screenshots
 
-Create content blocks in this order using the `creating-showcases` skill:
+The blocks reference the uploaded files by `fileId`, so upload first. For each image listed in
+`~/.lt-showroom/<slug>/manifest.json`:
+
+1. `create_upload_ticket` (one ticket per file, single use, valid 15 minutes; without MCP:
+   `POST /files/upload/ticket` with a signed-in session)
+2. Upload the file to the returned `uploadUrl`, with the device from the manifest:
+   ```bash
+   curl -s -F "file=@$HOME/.lt-showroom/<slug>/screenshots/<file>.webp" -F "device=<desktop|mobile>" "<uploadUrl>"
+   ```
+3. Keep the answer's `fileId` per file for the blocks; the same image uploaded again returns the same `fileId`
+
+### Step 7: Build Content Blocks (8-12 blocks)
+
+Create content blocks in this order using the `creating-showcases` skill (field reference:
+`reference/content-blocks.md`). The array order is the display order; set `order` to the index.
 
 **Block 1: text "Projektübersicht"**
 - Content from SHOWCASE.md "Überblick" section
 - Minimum 3 paragraphs, HTML formatted
 - Written in German
 
-**Block 2: tech-stack**
-- List all technologies from SHOWCASE.md frontmatter `technologies` list
-- Group by category: Backend, Frontend, Datenbank, Infrastruktur, Sprache
+**Block 2: feature-grid**
+- Compact icon overview of all features (8 items; 5, 8 or 11 fill every row)
+- Each with title (3-5 words), description (1-2 sentences), an `i-lucide-<name>` icon
 
-**Block 3: feature-grid**
-- Compact icon overview of all features (6-8 items)
-- Each with title (3-5 words), description (1-2 sentences), lucide icon
-
-**Block 4-N: custom-html "Feature X"** (one per feature)
+**Block 3-N: custom-html, one per feature, titled with the feature name**
 - Detailed feature description with screenshot
 - Alternate layout: even blocks have image left + text right, odd blocks have text left + image right
-- Upload screenshot to GridFS, use returned fileId in `<img src='/api/files/id/{fileId}'>`
+- Image URL `<api-origin>/files/id/<fileId>`, where `<api-origin>` is the ticket's `uploadUrl` up to `/files/`; a
+  relative `/api/...` path works only behind a local dev proxy. `best-practices.md` → "Feature-Screenshot Layout"
+  has the styling rules and the PDF caveat for these URLs
 
 **Block N+1: text "Architektur"**
 - Content from SHOWCASE.md "Architektur" section
@@ -129,64 +157,68 @@ Create content blocks in this order using the `creating-showcases` skill:
 
 **Block N+2: screenshot-gallery**
 - Additional screenshots not tied to specific features (overview pages, mobile views)
-- Upload screenshots to GridFS, store as `ScreenshotRef` objects with fileId, caption, device, order
+- `content.screenshots: [{ "fileId": "...", "caption": "..." }]` in display order
 
 **Block N+3: testimonial** (if the company's testimonial source has a match for this customer)
-- Customer quote, author name, company
+- Customer quote (verbatim), author name, role, company
 
 **Block N+4: text "Ergebnis"**
 - Content from SHOWCASE.md "Ergebnis" section
 - 1-2 paragraphs about outcomes and impact
+- A live URL from Step 4 goes here as a link, or into a `reference` block's `url`
 
-**Block N+5: cta**
-- Button: "Termin vereinbaren"
-- URL: the meeting booking URL from the company settings (`get_showroom_context`); ask the user when it is empty
-- Optional secondary button: "Live Demo" (if live URL was provided)
+No `tech-stack` and no `cta` block: the public page leaves both out. The technologies go into the showcase's
+`technologies` field (Step 8), and the page ends with its own "Termin vereinbaren" button for the booking link.
 
-### Step 7: Upload Screenshots
+### Step 8: Create, Release and Activate
 
-For each screenshot listed in `~/.lt-showroom/<slug>/manifest.json`:
-1. Upload via showroom API: `POST /files/upload`
-2. Associate the returned `fileId` with the screenshot-gallery block
-3. Tag each upload with viewport metadata (desktop/mobile)
-
-### Step 8: Create Showcase via API
-
-```bash
-# Auth
-curl -s -c /tmp/showroom-cookies.txt -X POST https://api.showroom.lenne.tech/iam/sign-in/email \
-  -H 'Content-Type: application/json' -d '{"email":"...","password":"..."}'
-
-# Create with all content blocks
-curl -s -b /tmp/showroom-cookies.txt -X POST https://api.showroom.lenne.tech/showcases \
-  -H 'Content-Type: application/json' -d '{
-    "title": "<project name from SHOWCASE.md>",
-    "description": "<2-3 sentence summary from overview>",
-    "category": "<category from frontmatter>",
-    "customerName": "<contact person>",
-    "customerCompany": "<company from frontmatter>",
-    "technologies": ["<all technologies from frontmatter>"],
-    "tags": ["<relevant tags>"],
-    "contentBlocks": [...]
-  }'
-
-# Publish
-curl -s -b /tmp/showroom-cookies.txt -X POST https://api.showroom.lenne.tech/showcases/{id}/publish
-```
+1. **Create** with `create_showcase`: `title`, `description` (2-3 sentences from the overview, plain text without
+   HTML), `category`, `customerName`, `customerCompany`, `technologies` (all from the frontmatter), the confirmed key
+   facts `year`, `duration`, `teamSize`, `platforms`, `outcomes`, `tags` (plus the manifest's
+   `pendingTag`), `audiences` when known, `contentBlocks`, and `candidateId` when Step 4 found one. With
+   `candidateId`, the answer lists `pendingPresets`: presets of the candidate a new showcase does not take on its own.
+   Raise each with the user. The showcase starts as `draft`, `internal` and `anonymous`, whatever was sent.
+2. **Release** with `update_showcase`, as Step 4 settled it: `clearance`, `customerNaming`, and
+   `customer.referenceConsent: { "source": "..." }` for public and named, or `customer.publicationVeto: true`. The
+   server refuses public with named without a consent, and anything above `internal` with a veto (`422`, reason in
+   plain words).
+3. **Teaser image**: MCP cannot set `teaserImageFileId`. Set it with `PATCH /showcases/{id}` (REST session as shown
+   below) to the `fileId` of the overview screenshot, or leave it to the user in the Showroom editor.
+4. **Activate** with `publish_showcase`. That sets the status to `active`; who sees it is decided by the clearance
+   alone, so an `internal` showcase is now visible to the team, not to the public.
 
 `meetingUrl` is left out on purpose: the showcase then uses the booking link from the company settings. Pass it only
 when this one showcase needs a different link.
+
+Without MCP, the same over REST with a session (the cookie is bound to the host it was issued for):
+
+```bash
+curl -s -c /tmp/showroom-cookies.txt -X POST https://api.showroom.lenne.tech/iam/sign-in/email \
+  -H 'Content-Type: application/json' -d '{"email":"...","password":"..."}'
+
+curl -s -b /tmp/showroom-cookies.txt -X POST https://api.showroom.lenne.tech/showcases \
+  -H 'Content-Type: application/json' -d '{ "title": "...", "description": "...", "contentBlocks": [...] }'
+
+curl -s -b /tmp/showroom-cookies.txt -X PATCH https://api.showroom.lenne.tech/showcases/{id} \
+  -H 'Content-Type: application/json' \
+  -d '{ "clearance": "...", "customerNaming": "...", "teaserImageFileId": "<fileId>" }'
+
+curl -s -b /tmp/showroom-cookies.txt -X POST https://api.showroom.lenne.tech/showcases/{id}/publish
+```
 
 ### Step 9: Report Result
 
 Display the result:
 
 ```
-Showcase created and published: {title}
-  ID:          {id}
-  URL:         https://showroom.lenne.tech/showcase/{slug}
-  Status:      published
-  Blocks:      {count} content blocks
-  Screenshots: {count} uploaded
+Showcase created and activated: {title}
+  ID:           {id}
+  URL:          https://showroom.lenne.tech/projects/{slug}   (without login only when active and public)
+  Status:       active
+  Clearance:    {clearance}
+  Naming:       {customerNaming}
+  Blocks:       {count} content blocks
+  Screenshots:  {count} uploaded
   Technologies: {technologies}
+  Open presets: {pendingPresets not yet decided, if any}
 ```

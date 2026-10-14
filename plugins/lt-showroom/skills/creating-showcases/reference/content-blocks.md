@@ -1,262 +1,356 @@
 # Content Block Types Reference
 
-All supported content block types for showcases. Each block has:
+Every block type the Showroom platform accepts, with exactly the fields its showcase page reads. Each block has:
 
 ```typescript
 {
-  type: string;        // Block type identifier
-  title?: string;      // Display title (shown in navigation)
-  content: object;     // Type-specific content (see below)
-  order: number;       // Sort position (0-based, ascending)
-  visible: boolean;    // Whether block is rendered
+  type: string;            // one of the types below
+  content: object;         // type-specific, see below
+  title?: string | null;   // section label above the block and table-of-contents entry
+  order?: number;          // 0-based; set it to the block's index in the array
+  visible?: boolean;       // default true; false hides the block on the page and in the PDF
+  showInToc?: boolean;     // default true; table-of-contents entry (only with a title)
 }
 ```
+
+The server validates strictly: an unknown block type, an unknown envelope field or an unknown `content` field is
+refused by name, so a misspelled field fails instead of rendering empty. `?` marks an optional field below.
+
+**Rules that hold for every type:**
+
+- **Display order is the array order.** The page and the admin preview show the blocks as they stand in
+  `contentBlocks`; the PDF sorts them by `order`. Send the blocks in display order with `order` equal to the index, as
+  the platform's own editor does, and both agree.
+- **The title is shown verbatim** as a small uppercase label above the block, for every type except `divider`. With
+  `showInToc` not `false` it is also an entry in the table of contents, which the page shows when the showcase's
+  `showTableOfContents` is on. A block without a title has neither.
+- **Plain-text fields show markup literally.** Only `text.html` and `custom-html.html` take HTML.
+- **File fields take a file id** (`fileId`, `fileIds`, `logoFileId`, `avatarFileId`): the `fileId` an upload answers
+  with, never a URL.
+- **Two types do not appear on the public showcase page:** `cta` (the page ends with its own booking button from the
+  showcase's `meetingUrl`, which falls back to the company setting) and `tech-stack` (the page hero shows the
+  showcase's `technologies` field). Both still show in the admin preview and the PDF. A showcase therefore needs
+  neither block.
+
+The fixed labels the page adds (button texts such as "Ansehen") are German.
 
 ---
 
 ## 1. `text` — Rich Text
 
 ```json
-{ "html": "<p>Rich text content with <strong>formatting</strong></p>" }
+{ "html": "<h3>Das Problem</h3><p>Rich text with <strong>20+ Module</strong> and <a href=\"https://example.com\">links</a>.</p>" }
 ```
 
-HTML from a rich-text editor. Supports headings, bold, italic, links, lists, blockquotes.
+| Field | Required | Shown as |
+|-------|----------|----------|
+| `html` | yes | Prose with the platform's typography |
+
+Allowed tags: `p`, `br`, `strong`, `em`, `u`, `ul`, `ol`, `li`, `h2`, `h3`, `h4`, `a`, `blockquote`, `span`; allowed
+attributes: `href`, `target`, `rel`, `class`. Everything else (images, tables, `h1`, inline styles) is removed. A
+`<strong>` that starts with a number followed by one or two words (`<strong>20+ Module</strong>`) renders the number
+large in the accent color.
 
 ---
 
 ## 2. `image` — Single Image
 
 ```json
-{ "fileId": "gridfs-file-id", "alt": "Description", "caption": "Optional caption" }
+{ "fileId": "<file id>", "alt": "Dashboard mit Tagesübersicht", "caption": "Optional caption below the image" }
 ```
 
-References an uploaded image via GridFS file ID.
+| Field | Required | Shown as |
+|-------|----------|----------|
+| `fileId` | yes | The image, centered, at most 500 px high; a click opens the lightbox |
+| `alt` | no | Alternative text (falls back to the block title) |
+| `caption` | no | Plain text below the image and in the lightbox |
 
 ---
 
 ## 3. `gallery` — Image Gallery
 
 ```json
-{ "fileIds": ["file-id-1", "file-id-2", "file-id-3"] }
+{ "fileIds": ["<file id>", "<file id>", "<file id>"] }
 ```
 
-Multiple images displayed as a gallery grid.
+| Field | Required | Shown as |
+|-------|----------|----------|
+| `fileIds` | yes | Images in two or three masonry columns, cropped to 16:9, opening in the lightbox |
+
+No captions; for captioned images use `screenshot-gallery`.
 
 ---
 
-## 4. `video` — Embedded Video
-
-```json
-{ "provider": "youtube", "url": "https://www.youtube.com/watch?v=..." }
-```
-
-Provider: `youtube` or `vimeo`. URL is the full video URL.
-
----
-
-## 5. `cta` — Call to Action
-
-```json
-{
-  "buttonLabel": "View live demo",
-  "buttonUrl": "https://...",
-  "secondaryLabel": "View source",
-  "secondaryUrl": "https://github.com/...",
-  "text": "<p>Optional text above buttons</p>"
-}
-```
-
-Primary action button with optional secondary button and descriptive text.
-
----
-
-## 6. `divider` — Horizontal Separator
-
-```json
-{}
-```
-
-Visual separator between sections.
-
----
-
-## 7. `tech-stack` — Technology Badges
-
-```json
-{
-  "technologies": [
-    { "name": "NestJS", "category": "backend" },
-    { "name": "Nuxt 4", "category": "frontend" },
-    { "name": "MongoDB", "category": "database" },
-    { "name": "TypeScript", "category": "language" },
-    { "name": "Tailwind CSS", "category": "styling" },
-    { "name": "Docker", "category": "infrastructure" }
-  ]
-}
-```
-
-Renders technology badges with icons. Categories: `language`, `frontend`, `backend`, `database`, `infrastructure`, `testing`, `styling`, `other`.
-
----
-
-## 8. `feature-grid` — Feature Grid
-
-```json
-{
-  "features": [
-    {
-      "icon": "heroicons:shield-check",
-      "title": "Role-based Access Control",
-      "description": "Fine-grained permissions with admin, user, and guest roles."
-    },
-    {
-      "icon": "heroicons:bolt",
-      "title": "Real-time Updates",
-      "description": "WebSocket-powered live notifications and data sync."
-    }
-  ]
-}
-```
-
-Grid of feature cards with Heroicons, titles, and descriptions. Use 3-6 items for best layout.
-
----
-
-## 9. `screenshot-gallery` — Screenshot Gallery
+## 4. `screenshot-gallery` — Screenshot Gallery
 
 ```json
 {
   "screenshots": [
-    { "fileId": "gridfs-id", "caption": "Dashboard overview", "device": "desktop", "order": 0 },
-    { "fileId": "gridfs-id", "caption": "Mobile navigation", "device": "mobile", "order": 1 }
+    { "fileId": "<file id>", "caption": "Dashboard mit Tagesübersicht" },
+    { "fileId": "<file id>", "caption": "Mobile Navigation" }
   ]
 }
 ```
 
-Displays a gallery of uploaded screenshots. Each entry is a `ScreenshotRef` object (see below). Screenshots must be uploaded to GridFS first; use the returned file ID as `fileId`.
-
-### `ScreenshotRef` Structure
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `fileId` | string | yes | GridFS file ID from the file upload endpoint |
-| `caption` | string | no | Caption text displayed below the screenshot |
-| `device` | string | no | Viewport type: `desktop` (default), `tablet`, or `mobile` |
-| `order` | number | no | Display order (0-based ascending) |
-
-Screenshots are served via `/api/files/id/{fileId}`. The same `ScreenshotRef` structure is used in the showcase model's top-level `screenshots` array.
+| Field | Required | Shown as |
+|-------|----------|----------|
+| `screenshots[].fileId` | yes | Screenshot in one or two columns, full width, opening in the lightbox |
+| `screenshots[].caption` | no | Plain text below the screenshot and in the lightbox |
+| `screenshots[].device` | no | Accepted (`desktop`, `tablet`, `mobile`), not displayed |
+| `screenshots[].order` | no | Accepted, not used: the array order is the display order |
 
 ---
 
-## 10. `timeline` — Project Timeline
+## 5. `video` — Embedded Video
 
 ```json
-{
-  "items": [
-    { "date": "2024-Q1", "title": "MVP Launch", "description": "Initial release with core features." },
-    { "date": "2024-Q3", "title": "Mobile App", "description": "Native iOS and Android apps released." }
-  ]
-}
+{ "url": "https://www.youtube.com/watch?v=VIDEO_ID" }
 ```
 
-Visual timeline for project milestones or development phases.
+| Field | Required | Shown as |
+|-------|----------|----------|
+| `url` | yes | Embedded 16:9 player |
+| `provider` | no | Accepted (`youtube`, `vimeo`), not used: the provider is read from the URL |
+
+The embed works for `https://www.youtube.com/watch?v=<id>`, `https://youtu.be/<id>` and `https://vimeo.com/<number>`.
+Other forms (`/shorts/`, `/embed/`, `player.vimeo.com`) render an empty frame. The PDF shows the URL as text.
 
 ---
 
-## 11. `team` — Team Members
+## 6. `cta` — Call to Action
+
+```json
+{ "text": "Sentence above the button, plain text", "buttonLabel": "Live-Demo öffnen", "buttonUrl": "https://example.com" }
+```
+
+| Field | Required | Shown as |
+|-------|----------|----------|
+| `text` | no | Plain text above the button |
+| `buttonLabel` | no | Button text (default "Mehr erfahren") |
+| `buttonUrl` | no | Button target: `https://…`, `mailto:…` or a path starting with `/`; without it there is no button |
+
+The block title is its heading. **Not shown on the public showcase page**, see the rules above.
+
+---
+
+## 7. `divider` — Separator
+
+```json
+{ "style": "line" }
+```
+
+| Field | Required | Shown as |
+|-------|----------|----------|
+| `style` | no | `line` (default), `dots` (• • •) or `space` (empty gap) |
+
+A divider never shows its title.
+
+---
+
+## 8. `team` — Team Members
 
 ```json
 {
   "members": [
-    {
-      "name": "Jane Doe",
-      "role": "Lead Developer",
-      "avatarFileId": "gridfs-file-id",
-      "linkedin": "https://linkedin.com/in/..."
-    }
+    { "name": "Erika Musterfrau", "role": "Lead Developer", "bio": "Short description, plain text", "avatarFileId": "<file id>" }
   ]
 }
 ```
 
-Team cards with avatar, name, role, and optional LinkedIn link.
+| Field | Required | Shown as |
+|-------|----------|----------|
+| `members[].name` | yes | Name |
+| `members[].role` | no | Role below the name |
+| `members[].bio` | no | Short text below the role |
+| `members[].avatarFileId` | no | Round photo; without it a placeholder icon |
 
 ---
 
-## 12. `testimonial` — Customer Quote
+## 9. `testimonial` — Customer Quote
 
 ```json
-{
-  "quote": "This tool transformed how we manage our projects.",
-  "author": "John Smith",
-  "role": "CTO at Acme Corp",
-  "avatarFileId": "gridfs-file-id"
-}
+{ "quote": "<quote, verbatim>", "author": "Max Mustermann", "role": "Geschäftsführer", "company": "Beispielkunde" }
 ```
 
-Highlighted customer or stakeholder quote.
+| Field | Required | Shown as |
+|-------|----------|----------|
+| `quote` | yes | Large quote text |
+| `author` | no | Name below the quote |
+| `role` | no | Below the name, as `role · company` |
+| `company` | no | Below the name, as `role · company` |
+
+All fields are plain text; the quotation mark is drawn by the page.
 
 ---
 
-## 13. `faq` — Frequently Asked Questions
+## 10. `timeline` — Milestones
 
 ```json
 {
   "items": [
-    { "question": "Is this open source?", "answer": "Yes, under the MIT license." },
-    { "question": "What databases are supported?", "answer": "MongoDB and PostgreSQL." }
+    { "date": "Q1 2026", "title": "MVP Launch", "description": "Initial release with core features." },
+    { "date": "Q3 2026", "title": "Mobile App", "description": "iOS and Android apps released." }
   ]
 }
 ```
 
-Expandable FAQ accordion.
+| Field | Required | Shown as |
+|-------|----------|----------|
+| `items[].title` | yes | Milestone name |
+| `items[].date` | no | Free text above the title |
+| `items[].description` | no | Plain text below the title |
+
+The milestones run horizontally and scroll sideways when they do not fit.
 
 ---
 
-## 14. `pricing-table` — Pricing Tiers
+## 11. `faq` — Questions and Answers
 
 ```json
 {
-  "tiers": [
-    {
-      "name": "Starter",
-      "price": "Free",
-      "features": ["Up to 3 projects", "Community support"],
-      "cta": { "label": "Get started", "url": "https://..." }
-    },
-    {
-      "name": "Pro",
-      "price": "€49/month",
-      "highlighted": true,
-      "features": ["Unlimited projects", "Priority support", "Analytics"],
-      "cta": { "label": "Start free trial", "url": "https://..." }
-    }
+  "items": [
+    { "question": "Läuft die Plattform auch mobil?", "answer": "Ja, alle Ansichten sind für Smartphones optimiert." }
   ]
 }
 ```
 
-Pricing tier cards. Set `highlighted: true` for the recommended plan.
+| Field | Required | Shown as |
+|-------|----------|----------|
+| `items[].question` | yes | Accordion header, plain text |
+| `items[].answer` | yes | Accordion body, plain text |
 
 ---
 
-## 15. `custom-html` — Raw HTML
+## 12. `reference` — Customer or Project Card
 
 ```json
-{ "html": "<div class=\"custom\">...</div>" }
+{ "company": "Beispielkunde", "description": "What was built, plain text", "logoFileId": "<file id>", "url": "https://example.com" }
 ```
 
-Custom HTML block for special layouts. Tailwind CSS classes are available.
+| Field | Required | Shown as |
+|-------|----------|----------|
+| `company` | yes | Card heading |
+| `description` | no | Plain text below the heading |
+| `logoFileId` | no | Logo on the left; without it a building icon |
+| `url` | no | "Ansehen" button opening the link in a new tab; without it there is no button |
 
 ---
 
-## 16. `reference` — Similar Project / Case Study Reference
+## 13. `custom-html` — Free-form HTML
+
+```json
+{ "html": "<div style=\"display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2rem\">…</div>" }
+```
+
+| Field | Required | Shown as |
+|-------|----------|----------|
+| `html` | yes | The sanitized HTML, without the platform's typography |
+
+Allowed tags: `p`, `br`, `strong`, `em`, `u`, `ul`, `ol`, `li`, `h1`-`h6`, `a`, `blockquote`, `span`, `div`, `img`,
+`figure`, `figcaption`, `table`, `thead`, `tbody`, `tr`, `th`, `td`, `code`, `pre`, `hr`, `section`, `article`,
+`header`, `footer`, `nav`, `aside`. Allowed attributes: `href`, `target`, `rel`, `class`, `style`, `src`, `alt`,
+`width`, `height`, `loading`, `id`, `role`, `aria-label`, `colspan`, `rowspan`. Scripts, event handlers, `<style>`,
+`<iframe>`, `<video>` and `<svg>` are removed; a `style` attribute containing `url(` or `data:` is removed as a whole.
+Every image opens in the lightbox, with its `alt` as caption.
+
+Image URLs, theming and layout for this block: `best-practices.md` → "Feature-Screenshot Layout (custom-html)".
+
+---
+
+## 14. `pricing-table` — Packages
 
 ```json
 {
-  "title": "Similar Project",
-  "url": "https://showroom.lenne.tech/showcase/other-project",
-  "description": "A related project that shares architectural patterns.",
-  "imageFileId": "gridfs-file-id"
+  "plans": [
+    { "name": "Basis", "price": "ab 4.900 €", "features": ["Bis zu 3 Standorte", "E-Mail-Support"] },
+    { "name": "Pro", "price": "ab 9.900 € / Jahr", "features": ["Unbegrenzte Standorte", "Telefon-Support"], "highlighted": true }
+  ]
 }
 ```
 
-Link to a related showcase or external case study.
+| Field | Required | Shown as |
+|-------|----------|----------|
+| `plans[].name` | yes | Package name |
+| `plans[].price` | no | Price as written, free text including currency and unit |
+| `plans[].features` | no | Bullet list with check marks |
+| `plans[].highlighted` | no | Emphasized card; with a booking link it gets a "Jetzt anfragen" button to it |
+| `currency` | no | Accepted, not displayed: put the unit into `price` |
+
+---
+
+## 15. `tech-stack` — Technology Chips
+
+```json
+{
+  "technologies": [
+    { "name": "NestJS", "category": "Backend", "version": "11", "icon": "i-simple-icons-nestjs", "description": "Shown in a dialog on click" }
+  ]
+}
+```
+
+| Field | Required | Shown as |
+|-------|----------|----------|
+| `technologies[].name` | yes | Chip text |
+| `technologies[].category` | no | Muted suffix in the chip (no grouping) |
+| `technologies[].description` | no | Makes the chip clickable; the dialog shows it |
+| `technologies[].icon` | no | Iconify name, shown in the dialog only |
+| `technologies[].version` | no | Shown in the dialog only |
+
+**Not shown on the public showcase page**: technologies belong in the showcase's `technologies` field, which the
+page hero and the PDF header show.
+
+---
+
+## 16. `feature-grid` — Feature Cards
+
+```json
+{
+  "features": [
+    { "icon": "i-lucide-shield-check", "title": "Rollenbasierte Rechte", "description": "Fein abgestufte Rechte für Admins, Nutzer und Gäste." },
+    { "icon": "i-lucide-zap", "title": "Echtzeit-Updates", "description": "Änderungen erscheinen sofort bei allen Beteiligten." }
+  ]
+}
+```
+
+| Field | Required | Shown as |
+|-------|----------|----------|
+| `features[].title` | yes | Card heading |
+| `features[].description` | no | One or two sentences, plain text |
+| `features[].icon` | no | Iconify name, e.g. `i-lucide-zap` |
+
+With more than two features the first two become a row of two large cards and the rest flow, on wide screens, in
+rows of three, so 5, 8 or 11 features fill every row. The cards tilt slightly and glow on hover. Lucide
+(`i-lucide-…`) and Simple Icons (`i-simple-icons-…`) are served by the platform; icons from other Iconify collections
+load from the public Iconify API at runtime.
+
+---
+
+## 17. `global-ref` — Global Block Set
+
+```json
+{ "globalId": "<id from list_globals>", "version": null }
+```
+
+| Field | Required | Meaning |
+|-------|----------|---------|
+| `globalId` | yes | The reusable block set (`list_globals`, `get_global`) |
+| `version` | no | Version number to show; omitted or `null` follows the current version |
+
+The page has no renderer for this type: the server replaces the reference with the set's blocks before delivery, at
+the reference's position. A hidden reference stays hidden with all its blocks; a reference that cannot be resolved
+is left out of the public page.
+
+---
+
+## Saving and Updating Blocks
+
+- **`contentBlocks` replaces the whole list** on every update; send the complete array.
+- **`get_showcase` returns `global-ref` blocks already resolved** into the set's blocks. Sending that array back
+  stores a frozen copy instead of the reference. When the showcase uses global blocks, take the stored array from
+  REST `GET /showcases/{id}` instead, or put the `global-ref` blocks back in place of the resolved ones.
+- **`fileId` and `fileIds` carry over.** A block with the same `order` and `type` as a stored block keeps the stored
+  `fileId` / `fileIds` when the new block leaves them out or empty; `null` removes them. A block that changes what it
+  shows at a position therefore sends a real file id or `null`.
+- **Unreferenced files are deleted.** A file the update removed from a block file field is deleted from storage
+  unless another file field still references it (a block of any showcase or global set, a teaser image, a knowledge
+  entry). Image URLs inside `custom-html` do not count as a reference.

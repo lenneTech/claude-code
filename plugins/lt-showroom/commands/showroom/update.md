@@ -134,16 +134,27 @@ Update only affected sections:
 - Update `analyzed_at` to today
 - Add/update feature sections
 - Update tech stack if dependencies changed
+- Update the key facts where the code moved them (`duration` of a running project, a new platform), confirmed by
+  the user; a new outcome only with a real, publishable number
 - Add changelog entry
 
 ### Step 8: Screenshots for New/Changed Features
 
 Only capture screenshots for features that were added or whose pages changed. Skip unchanged features entirely.
+Upload them as `/lt-showroom:showroom:create` Step 6 does (one `create_upload_ticket` per file) and keep each `fileId`.
 
 ### Step 9: Update Showcase via API
 
-Prefer the `showroom-api` MCP tools. Without them, sign in to the production API first, since the session cookie is
-bound to that host:
+Prefer the `showroom-api` MCP tools. `contentBlocks` in an update replaces all blocks, so send the complete array
+with the affected blocks changed and every other block as it was. Take that array from REST `GET /showcases/{id}`:
+`get_showcase` returns `global-ref` blocks already resolved, and sending them back stores a frozen copy instead of the
+reference. `fileId`/`fileIds` carry over between blocks with the same `order` and `type` (`null` clears them), and a
+file no block references any more is deleted (the `creating-showcases` skill, `reference/content-blocks.md` → "Saving and Updating Blocks").
+
+Status, clearance and customer naming stay untouched unless the user asks; an update is no reason to open a showcase
+further.
+
+Without MCP, sign in to the production API first, since the session cookie is bound to that host:
 
 ```bash
 curl -s -c /tmp/showroom-cookies.txt -X POST https://api.showroom.lenne.tech/iam/sign-in/email \

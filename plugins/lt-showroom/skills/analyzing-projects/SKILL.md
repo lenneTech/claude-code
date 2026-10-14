@@ -109,6 +109,22 @@ pagesInventory:
     feature: "Project Management"
 ```
 
+### Project Facts
+
+The showcase hero shows year, duration, team size, platforms and outcomes. Derive the first ones from the repository
+and mark them as proposals, since the user confirms them:
+
+```
+projectFacts:
+  year: 2025                 # year of the last substantial commit (git log)
+  duration: "8 Monate"       # first to last commit; "seit 2022" for a project still running
+  platforms: [web, android]  # web build; Capacitor/React Native/native folders → ios/android; Electron/Tauri → desktop
+  contributors: 3            # distinct commit authors: a hint for teamSize, not the team itself
+  evidence: ["git log --reverse --format=%cs | head -1", "capacitor.config.ts:1"]
+```
+
+Outcomes (measured results) are never derived from code; leave them to the user.
+
 ## Execution Protocol
 
 1. **Discover** — Read manifest files to detect tech stack (`${CLAUDE_SKILL_DIR}/reference/framework-detection.md`)
@@ -137,6 +153,7 @@ The report includes:
 - Feature list with evidence and screenshot candidates
 - `startupInfo` block
 - `pagesInventory` list
+- `projectFacts` block (proposals for the showcase key facts)
 
 Source references use the format: `path/to/file.ts:42`
 
