@@ -1041,6 +1041,24 @@
       ]
     },
     {
+      "pattern": "Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs:*)",
+      "description": "Run the deterministic AI model check (inventory, provider catalog, lifecycle, capability probes, benchmark summary) in plugins/lt-dev/scripts/ai-models.mjs",
+      "usedBy": [
+        "ai-model-review",
+        "maintaining-ai-models",
+        "backend-reviewer"
+      ]
+    },
+    {
+      "pattern": "Bash(node \"${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs\":*)",
+      "description": "The same AI model check with the placeholder quoted, the form the plugin instructs so a home path with spaces survives",
+      "usedBy": [
+        "ai-model-review",
+        "maintaining-ai-models",
+        "backend-reviewer"
+      ]
+    },
+    {
       "pattern": "Bash(node:*)",
       "description": "Run node for JSON parsing fallback and small helper computations",
       "usedBy": [
@@ -1048,7 +1066,8 @@
         "code-reviewer",
         "branch-rebaser",
         "running-check-script",
-        "check"
+        "check",
+        "ai-model-review"
       ]
     },
     {

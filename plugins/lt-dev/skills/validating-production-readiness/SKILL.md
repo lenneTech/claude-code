@@ -104,6 +104,7 @@ The k6 results from the `running-load-tests-with-k6` skill feed directly into th
 | Connection pool not exhausted | Mongoose log shows < 80% of `maxPoolSize` at peak | Major |
 | Timeouts everywhere | All HTTP / DB calls have explicit timeouts (no infinite waits) | Major |
 | Idempotency keys on critical writes | Payment / email / external write endpoints have idempotency-key handling | Major |
+| AI models current (projects calling LLMs) | `ai-models.mjs check` (`maintaining-ai-models` skill) reports no model missing from the provider catalog and no shutdown within 90 days, or each such finding has a ticket; the scheduled CI check is set up | Critical for a missing model, Major otherwise |
 
 ### Pillar 7 — Deployment Hygiene
 

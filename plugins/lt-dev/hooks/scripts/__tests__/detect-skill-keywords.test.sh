@@ -99,6 +99,9 @@ expect_skill validating-changes-in-browser 'verify the change in the browser'
 expect_skill checking-upstream-first 'Ich bau mir dafür einen Workaround um den MailService'
 expect_skill checking-upstream-first 'monkey-patch the library so the header survives'
 expect_skill checking-upstream-first 'Wir bauen uns den Upload selbst'
+expect_skill maintaining-ai-models 'Prüf mal, ob unsere KI-Modelle noch aktuell sind'
+expect_skill maintaining-ai-models 'mittwald schaltet ein LLM-Modell ab, was nehmen wir?'
+expect_skill maintaining-ai-models 'which AI model should the summary use now'
 
 echo "near misses and unrelated prompts stay silent"
 for p in 'what time is it' 'Erklär mir den Unterschied zwischen TCP und UDP' \
@@ -107,7 +110,8 @@ for p in 'what time is it' 'Erklär mir den Unterschied zwischen TCP und UDP' \
          'Füg ein Feld für die Rechnungsnummer hinzu' 'fix the failing unit test in user.service' \
          'deploy the docs to the wiki' 'patch the version in package.json' \
          'the job queue retries three times' 'run pnpm run check' 'where is the stack trace' \
-         'check the slope of the chart' 'release notes for the customer'; do
+         'check the slope of the chart' 'release notes for the customer' \
+         'add a field to the user model' 'the Mongoose model is deprecated'; do
   expect_silent "$p"
 done
 

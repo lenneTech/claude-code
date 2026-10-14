@@ -524,6 +524,28 @@ grep -rn "readFileSync\|writeFileSync\|execSync" src/server/
 | 1-2 await-in-loop patterns | 70-85% |
 | Sync operations in async context | <70% |
 
+### Phase 6b: AI Model Calls (conditional — skip when the diff touches no model ID, LLM call or call parameter)
+
+A model change breaks nothing visibly: a withdrawn ID fails or is silently redirected, and a
+reasoning model that spends `max_tokens` on thinking returns an empty answer with
+`finish_reason: length`. When the diff adds an LLM call or changes a model ID, `max_tokens`,
+`reasoning_effort` or `temperature`:
+
+- [ ] The model is offered and not announced for shutdown: with `.ai-models.json` present,
+      `node "${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs" check`. Without the provider key the
+      catalog step reports exit 3 while the lifecycle still runs; without network,
+      `check --offline` covers adapter drift only
+- [ ] The adapter (`.ai-models.json`) declares the changed usage and model, so the
+      scheduled check covers it
+- [ ] The budget covers reasoning plus answer for reasoning models, or reasoning is switched off
+      with the parameter the provider's gateway honours (`ai-models.mjs probe`), not only the one
+      its docs name
+- [ ] A model swap names its measurement (margin and date next to the pin)
+
+**Severity:** a model the provider no longer offers, or a budget that leaves the answer empty, is
+High: the feature fails silently. A missing adapter entry or measurement note is Medium. Details:
+`maintaining-ai-models` skill.
+
 ### Phase 7: Test Coverage (Static Analysis Only)
 
 **Note:** Test execution is handled by `test-reviewer`. This phase only validates test file existence and coverage patterns statically.
