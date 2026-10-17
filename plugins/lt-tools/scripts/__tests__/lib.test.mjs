@@ -12,6 +12,7 @@ import { createUrlMapper, isCacheBusterQuery, relativeHref, siteHostsFor, stripT
 import { existsSync } from 'node:fs';
 import { addressAllowed, isPrivateAddress } from '../lib/net-guard.mjs';
 import { listZip, verifyZip, zipDirectory } from '../lib/zip.mjs';
+import { launchChrome } from '../lib/cdp.mjs';
 import { classicScriptTag, isInside, parseRobots, parseSitemap, robotsAllows, stripLocalSri } from '../mirror-site.mjs';
 
 const mapper = createUrlMapper(siteHostsFor('https://www.example.com/'));
@@ -220,4 +221,11 @@ test('zip archives round-trip with valid checksums', () => {
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('a browser that exits at once is reported as exited, not as a missing DevTools port', async () => {
+  // node rejects Chrome's flags and exits; a slow start and a crash used to read the same.
+  const started = Date.now();
+  await assert.rejects(launchChrome({ chromePath: process.execPath }), /Chrome exited \(\d+\) before opening a DevTools port/);
+  assert.ok(Date.now() - started < 10000, 'an exited browser is reported without waiting for the deadline');
 });

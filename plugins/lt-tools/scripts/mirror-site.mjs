@@ -398,14 +398,30 @@ function runEsbuildOnce(args, { cwd, input } = {}) {
 }
 
 /**
- * Runs esbuild through npx, retrying once: two npx processes that fill an empty npx cache
- * at the same time collide (TAR_ENTRY_ERROR, spawn sh ENOENT) and the second attempt succeeds.
+ * Whether esbuild itself ran and rejected the input. Its diagnostics carry an `[ERROR]` marker
+ * (`✘ [ERROR]`, `X [ERROR]` on Windows); npm and spawn failures never do.
+ */
+export function esbuildRejected(stderr) {
+  return /\[ERROR\]/.test(stderr);
+}
+
+/**
+ * Runs esbuild through npx, retrying twice with a growing, jittered pause: npx processes that
+ * fill an empty npx cache at the same time collide (TAR_ENTRY_ERROR, spawn sh ENOENT). One retry
+ * was not always enough: on 2026-10-14 both lt-tools test files, started in parallel by
+ * `node --test`, failed their esbuild check on ubuntu-latest while the next run of the same
+ * commit passed. A build esbuild rejects is returned at once: it fails the same way on every
+ * attempt, and a Shopify theme rejects dozens of import-map modules plus inline modules on every
+ * page, where the pauses made the mirror 2.7 times slower.
  */
 function runEsbuild(args, opts = {}) {
-  const first = runEsbuildOnce(args, opts);
-  if (first.ok) return first;
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500 + Math.floor(Math.random() * 1000));
-  return runEsbuildOnce(args, opts);
+  let result = runEsbuildOnce(args, opts);
+  for (const pauseMs of [1500, 4000]) {
+    if (result.ok || esbuildRejected(result.stderr)) return result;
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, pauseMs + Math.floor(Math.random() * 1000));
+    result = runEsbuildOnce(args, opts);
+  }
+  return result;
 }
 
 export function esbuildAvailable() {

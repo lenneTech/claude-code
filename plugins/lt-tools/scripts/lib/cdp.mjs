@@ -126,11 +126,16 @@ export async function launchChrome({ chromePath, extraArgs = [] } = {}) {
     { stdio: 'ignore' },
   );
   const portFile = path.join(profile, 'DevToolsActivePort');
-  const deadline = Date.now() + 20000;
+  // 40 s, not 20: a cold headless start on a slow windows-latest runner used up 20 s on
+  // 2026-10-14 (Plugin CI run 38569489103) while the same test passed on the next run.
+  const deadline = Date.now() + 40000;
   while (!existsSync(portFile) || readFileSync(portFile, 'utf8').split('\n').length < 2) {
-    if (Date.now() > deadline || child.exitCode !== null) {
+    if (child.exitCode !== null || child.signalCode !== null) {
+      throw new Error(`Chrome exited (${child.exitCode ?? child.signalCode}) before opening a DevTools port`);
+    }
+    if (Date.now() > deadline) {
       child.kill();
-      throw new Error('Chrome did not open a DevTools port');
+      throw new Error('Chrome did not open a DevTools port within 40 s');
     }
     await new Promise((r) => setTimeout(r, 100));
   }

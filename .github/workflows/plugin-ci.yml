@@ -66,6 +66,14 @@ jobs:
             if [ "$rc" -ne 0 ]; then echo "::error file=$t::test failed"; fail=1; fi
           done < "$logs/list"
           exit "$fail"
+      # The lt-tools tests fetch esbuild through npx, and `node --test` starts their files in
+      # parallel: npx processes filling an empty cache at once collide. Filling it once here, with
+      # the scripts' own call and version, takes the race out of the test step (2026-10-14: both
+      # esbuild checks failed on ubuntu-latest, the next run of the same commit passed).
+      - name: Warm the npx cache for esbuild
+        if: ${{ !cancelled() }}
+        run: |
+          node -e "import('./plugins/lt-tools/scripts/mirror-site.mjs').then((m) => process.exit(m.esbuildAvailable() ? 0 : 1))"
       - name: Node tests
         if: ${{ !cancelled() }}
         run: node --test $(find plugins -name '*.test.mjs' -not -path '*/node_modules/*' | sort)

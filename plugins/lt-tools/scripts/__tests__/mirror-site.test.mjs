@@ -14,7 +14,7 @@ import dns from 'node:dns';
 import { after, before, mock, test } from 'node:test';
 import http from 'node:http';
 import { gzipSync } from 'node:zlib';
-import { esbuildAvailable, mirrorSite } from '../mirror-site.mjs';
+import { esbuildAvailable, esbuildRejected, mirrorSite } from '../mirror-site.mjs';
 import { listZip } from '../lib/zip.mjs';
 import { startFixtureServer } from './fixture-site.mjs';
 
@@ -277,6 +277,54 @@ test('npx never reads configuration the mirrored site planted in the backup', { 
     assert.ok(r.bundled.some((b) => b.entry === 'js/m.js'), JSON.stringify(r.bundleFailures));
   } finally {
     await new Promise((r) => registry.close(r));
+    await new Promise((r) => site.close(r));
+  }
+});
+
+test('esbuildRejected tells a build esbuild rejects from an npx failure worth retrying', () => {
+  assert.ok(esbuildRejected('✘ [ERROR] Could not resolve "@theme/utils"'));
+  assert.ok(esbuildRejected('X [ERROR] Top-level await is currently not supported with the "iife" output format'));
+  assert.ok(!esbuildRejected('npm error code TAR_ENTRY_ERROR'));
+  assert.ok(!esbuildRejected('npm error code ETARGET\nnpm error notarget No matching version found for esbuild@0.0.0.'));
+  assert.ok(!esbuildRejected('Error: spawnSync sh ENOENT'));
+});
+
+test('a module esbuild rejects is reported without the retry pauses', { skip: skipBundle, timeout: 120000 }, async () => {
+  // Import-map specifiers and top-level await (Shopify's default theme has both on every page)
+  // fail on every attempt. Retried like an npx failure, each one waited at least 5.5 s. The page
+  // sits in a folder, as in the evil fixture, so its inline module keeps a resolvable import.
+  const site = http.createServer((req, res) => {
+    if (req.url === '/shop/') {
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+      res.end('<!doctype html><html><head><title>T</title></head><body><h1>T</h1><script type="module" src="/js/theme.js"></script><script type="module">import { ok } from "/js/ok.js"; await Promise.resolve(ok);</script></body></html>');
+    } else if (req.url === '/js/theme.js') {
+      res.writeHead(200, { 'content-type': 'text/javascript' });
+      res.end('import { x } from "@theme/utils";\ndocument.title = x;\n');
+    } else if (req.url === '/js/ok.js') {
+      res.writeHead(200, { 'content-type': 'text/javascript' });
+      res.end('export const ok = 1;\n');
+    } else {
+      res.writeHead(404);
+      res.end();
+    }
+  });
+  await new Promise((r) => site.listen(0, '127.0.0.1', r));
+  try {
+    let start = Date.now();
+    assert.ok(esbuildAvailable(), 'esbuild is required for this test');
+    const oneRun = Date.now() - start;
+    start = Date.now();
+    const r = await mirrorSite(options({ url: `http://127.0.0.1:${site.address().port}/shop/`, out: path.join(tmp, 'rejected'), zip: false }));
+    const elapsed = Date.now() - start;
+    const entry = r.bundleFailures.find((f) => f.entry === 'js/theme.js');
+    const inline = r.bundleFailures.find((f) => f.entry === 'shop/index.html (inline module)');
+    assert.ok(entry && esbuildRejected(entry.error), JSON.stringify(r.bundleFailures));
+    assert.ok(inline && esbuildRejected(inline.error), JSON.stringify(r.bundleFailures));
+    // The availability check, two rejected builds and the crawl; retried, the two failures alone
+    // would wait at least 11 s.
+    assert.ok(elapsed < 3 * oneRun + 4000, `${elapsed} ms for two rejected builds, one esbuild run takes ${oneRun} ms`);
+  } finally {
+    site.closeAllConnections?.();
     await new Promise((r) => site.close(r));
   }
 });
