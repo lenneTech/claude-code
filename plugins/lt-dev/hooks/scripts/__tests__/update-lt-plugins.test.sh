@@ -52,6 +52,10 @@ for needle in 'lt-dev@lenneTech 8.25.1' 'lt-dev Auto-Update' 'Folgende Claude Co
   case "$CTX" in *"$needle"*) pass "context contains: $needle" ;; *) fail "context contains: $needle" ;; esac
 done
 [ ! -e "$DATA/update-notification.txt" ] && pass "the notification is consumed" || fail "the notification is consumed"
+# Only a person can run /reload-plugins (the Skill tool does not reach it), so the notice asks the
+# user to type it instead of telling Claude to run it (observed 2026-10-18).
+case "$CTX" in *'Tippe `/reload-plugins` ein'*) pass "the info block asks the user to type /reload-plugins" ;; *) fail "the info block asks the user to type /reload-plugins" ;; esac
+case "$CTX" in *'run the slash command'*) fail "Claude is not told to run /reload-plugins itself" ;; *) pass "Claude is not told to run /reload-plugins itself" ;; esac
 
 echo "wording at normal volume"
 for loud in 'ACTION REQUIRED' 'MUST' 'CRITICAL' 'IMPORTANT'; do

@@ -38,14 +38,14 @@ So that the user learns about the update before the work starts, the first reply
    - <plugin name>: <alte version> → <neue version>
    - …
 
-   Sie stehen nach dem nächsten Befehl bzw. nach Aufruf von `/reload-plugins` zur Verfügung.
+   Tippe `/reload-plugins` ein, damit sie in dieser Session aktiv werden. Neue Sessions starten direkt mit den neuen Versionen.
    ---
 
    The plugin list comes from the diff above. Each diff line reads
    `< <name>@<owner> <version> <sha>` (removed) or `> <name>@<owner> <version> <sha>` (added).
    A removed and an added line with the same `<name>@<owner>` form one entry, `name: oldVersion → newVersion`; a plugin with only an added line is a fresh install, shown as `name: neu installiert (version)`.
 
-After the info block, run the slash command `/reload-plugins`, which activates the updated plugins in the current session without a restart. Then continue with the user's request as usual.
+Claude cannot run `/reload-plugins` itself: the Skill tool reaches only a few built-in commands, and this is not one of them, so the info block asks the user to type it. After the info block, continue with the user's request as usual.
 EOF
   full=$(printf '%s\n\n%s\n' "$body" "$instruction")
   if command -v jq >/dev/null 2>&1; then
