@@ -60,8 +60,15 @@ echo "global install behind a linked directory (fnm per-shell bin)"
 unix_layout "$TMP_ROOT/real" "$PIN"
 mkdir -p "$TMP_ROOT/b"
 ln -s "$TMP_ROOT/real/bin" "$TMP_ROOT/b/bin"
-out=$(run_launcher "$TMP_ROOT/b")
-case "$out" in GLOBAL*) pass "the global binary runs" ;; *) fail "the global binary runs (got: $out)" ;; esac
+# Git Bash on Windows copies instead of linking unless the runner allows native symlinks, and
+# a copied bin/ has no lib/ beside it. Observed 2026-10-18: windows-latest passed this case on
+# one run of a commit and failed it on the next. The case is about a link, so it needs one.
+if [ -L "$TMP_ROOT/b/bin" ]; then
+  out=$(run_launcher "$TMP_ROOT/b")
+  case "$out" in GLOBAL*) pass "the global binary runs" ;; *) fail "the global binary runs (got: $out)" ;; esac
+else
+  echo "  - skipped: ln -s made a copy here, not a link"
+fi
 
 echo "older global install"
 unix_layout "$TMP_ROOT/c" "1.4.0"

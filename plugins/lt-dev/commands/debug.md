@@ -1,7 +1,7 @@
 ---
 description: Adversarial debugging with competing hypotheses using Agent Teams - multiple investigators challenge each other to find root cause (requires CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1)
 argument-hint: "[bug-description or issue-id]"
-allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), Agent, AskUserQuestion, ListAgents, SendMessage, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__get_document, mcp__plugin_lt-dev_linear__list_documents, mcp__plugin_lt-dev_linear__get_attachment, mcp__plugin_lt-dev_linear__extract_images, Bash(curl:*), Bash(node -e:*)
+allowed-tools: Read, Grep, Glob, Bash(git:*), Bash(echo:*), Agent, AskUserQuestion, ListAgents, SendMessage, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__get_document, mcp__plugin_lt-dev_linear__list_documents, mcp__plugin_lt-dev_linear__get_attachment, mcp__plugin_lt-dev_linear__extract_images, Bash(curl:*), Bash(node -e:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh":*)
 disable-model-invocation: true
 ---
 

@@ -181,9 +181,9 @@ claude-code/
 │   │   │   ├── hooks.json    # Hook definitions
 │   │   │   └── scripts/      # Hook handler scripts (.sh, .ts) with __tests__/
 │   │   ├── scripts/          # Plugin helper scripts referenced by commands/agents/skills
-│   │   │                     # (e.g. discover-check-scripts.sh); permissions.json grants them through
-│   │   │                     # Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), which matches only with the
-│   │   │                     # placeholder replaced by the absolute install path (the lt CLI copies it verbatim)
+│   │   │                     # (e.g. discover-check-scripts.sh); commands grant each one by exact name per
+│   │   │                     # turn (Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh:*)), never
+│   │   │                     # scripts/* — a `*` in a path also matches ../ (house rule 24c)
 │   │   ├── skills/           # Context-aware expertise (SKILL.md + references)
 │   │   ├── evals/            # `claude plugin eval` suite (results/ is git-ignored): trigger/, quality/, agent/ cases;
 │   │   │                     # selftest/ proves each judge rubric (selftest.mjs sync|verify), compare-arms.mjs
@@ -252,7 +252,8 @@ Defines Bash command patterns that can be auto-approved without user confirmatio
   broad tools such as `curl`, `node`, `docker run`, `git push`, `rm`, `cp`, `mv` are granted per turn through a
   command's `allowed-tools` instead (house rule 24c)
 - `:*` is a trailing wildcard only at the very end; a colon elsewhere is literal, so `test\:e2e` and `scripts/:*` never
-  match. Settings rules do not expand `${CLAUDE_PLUGIN_ROOT}`
+  match. Settings rules do not expand `${CLAUDE_PLUGIN_ROOT}`, and a `*` in a script path also matches `../`, so
+  `permissions.json` holds no rule for plugin scripts; commands grant each script by exact name per turn
 - A pattern that is narrowed or dropped moves to the top-level `formerPatterns` array; the lt CLI removes each one
   once from existing settings. Never list a pattern another plugin still ships, and never an internal host or address
   (this repo is public; such a rule is removed by hand)

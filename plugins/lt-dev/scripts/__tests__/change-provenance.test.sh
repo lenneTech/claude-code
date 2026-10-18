@@ -92,10 +92,20 @@ if ! skip_on_windows "pre-session classification"; then
 fi
 
 # --- a path written during the session ------------------------------------
+# The script derives the session start as NOW minus the process age in whole seconds, so it can
+# land up to a second late; a file written in the session's first second then reads as older.
+# Writing it two seconds in keeps the case about classification, not about that rounding.
+# Observed 2026-10-18: ubuntu-latest classified other.txt as pre-session on the v8.27.0 tag run.
+sleep 2
 echo "written now" > "$REPO/other.txt"
 if ! skip_on_windows "in-session classification"; then
   out="$(run CLAUDE_PID="$SESSION_PID")"
-  assert_contains "$out" "in-session" "classifies a freshly written path as in-session"
+  if printf '%s\n' "$out" | grep -qE '^in-session +M +other\.txt'; then
+    PASS=$((PASS + 1)); echo "  ✓ classifies a freshly written path as in-session"
+  else
+    FAIL=$((FAIL + 1)); echo "  ✗ classifies a freshly written path as in-session"
+    echo "    actual: $out"
+  fi
   assert_contains "$out" "in-session=1" "counts the in-session path separately"
 fi
 

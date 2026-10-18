@@ -159,8 +159,13 @@ ignore it silently.
     `cp`, `mv`, `gh api` writes) are granted per turn through a command's `allowed-tools`, never globally; a substring
     rule such as `Bash(curl *host*)` is no narrowing, because curl takes several URLs and data files. Syntax per
     `permissions.md`: `:*` is a trailing wildcard only at the end; `\:` is a literal backslash, and `x/:*` needs a
-    space after the slash, so both never match. Settings do not expand `${CLAUDE_PLUGIN_ROOT}`; such a rule matches
-    only with the placeholder replaced by the absolute install path. `lt claude plugins` copies patterns verbatim, so
+    space after the slash, so both never match. Settings do not expand `${CLAUDE_PLUGIN_ROOT}`, and resolving it to a
+    path with a `*` (for the version folder or the script) is no fix: Claude Code does not normalise paths, so
+    `Bash(bash <cache>/lt-dev/*/scripts/*)` approved `bash <cache>/lt-dev/x/scripts/../../../dev/stdin`, any code
+    (measured 2026-10-18 for bash and node). So `permissions.json` holds no `${CLAUDE_PLUGIN_ROOT}` rule at all, and
+    commands grant each plugin script by exact name per turn (`Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/x.sh:*)` and
+    the quoted form), which Claude Code fills with the exact root and which refuses the `../` detour (measured).
+    `lt claude plugins` copies patterns verbatim, so
     a rule narrowed or dropped here goes into the file's `formerPatterns` array, from which the CLI removes it once
     from existing settings (decided 2026-10-18; internal patterns live only in the private marketplace's own files,
     and a former rule naming an internal host is removed by hand, never listed here). A narrowed global rule makes the

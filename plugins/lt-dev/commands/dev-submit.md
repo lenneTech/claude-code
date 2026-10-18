@@ -1,7 +1,7 @@
 ---
 description: Submit current work for dev review — creates MR/PR, posts Linear comment, and moves ticket to Dev Review
 argument-hint: "[issue-id] [--unattended] [--autopilot]"
-allowed-tools: Read, Bash(git:*), Bash(gh pr:*), Bash(glab mr:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), mcp__plugin_lt-dev_linear__*, AskUserQuestion, ListAgents, SendMessage, Bash(curl:*)
+allowed-tools: Read, Bash(git:*), Bash(gh pr:*), Bash(glab mr:*), mcp__plugin_lt-dev_linear__*, AskUserQuestion, ListAgents, SendMessage, Bash(curl:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/find-vault-logins.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/find-vault-logins.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh":*)
 disable-model-invocation: false
 ---
 

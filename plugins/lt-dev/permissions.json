@@ -1,7 +1,9 @@
 {
   "$schema": "./permissions.schema.json",
-  "description": "Bash permissions the lt CLI copies verbatim into the user settings for auto-approval. A rule narrowed or dropped here moves to formerPatterns, from which the CLI removes it once from existing settings. A trailing ':*' equals a trailing ' *' and is recognised only at the end of a pattern; a colon anywhere else, escaped or not, is a literal character. Settings rules do not expand ${CLAUDE_PLUGIN_ROOT}, so a rule that contains it matches only with the placeholder replaced by the absolute plugin install path. Every rule applies in every project, so a pattern names the narrow command its description states; broad tools (curl, node, docker run, git push) are granted per turn through a command's allowed-tools instead.",
+  "description": "Bash permissions the lt CLI copies verbatim into the user settings for auto-approval. A rule narrowed or dropped here moves to formerPatterns, from which the CLI removes it once from existing settings. A trailing ':*' equals a trailing ' *' and is recognised only at the end of a pattern; a colon anywhere else, escaped or not, is a literal character. Every rule applies in every project, so a pattern names the narrow command its description states; broad tools (curl, node, docker run, git push) are granted per turn through a command's allowed-tools instead. Plugin helper scripts are not listed: settings do not expand ${CLAUDE_PLUGIN_ROOT}, and a '*' in a script path also matches '../', so a wildcard script rule approves any code; commands grant each script by exact name per turn.",
   "formerPatterns": [
+    "Bash(bash \"${CLAUDE_PLUGIN_ROOT}/scripts/*)",
+    "Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*)",
     "Bash(cp:*)",
     "Bash(curl:*)",
     "Bash(docker compose:*)",
@@ -14,6 +16,8 @@
     "Bash(git remote:*)",
     "Bash(git tag:*)",
     "Bash(mv:*)",
+    "Bash(node \"${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs\":*)",
+    "Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs:*)",
     "Bash(node:*)",
     "Bash(npm run test\\:e2e:*)",
     "Bash(pkill:*)",
@@ -994,82 +998,6 @@
         "running-check-script",
         "check",
         "briefing"
-      ]
-    },
-    {
-      "pattern": "Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*)",
-      "description": "Run plugin helper bash scripts in plugins/lt-dev/scripts/ (e.g. discover-check-scripts.sh) — narrowly scoped to prevent arbitrary shell execution",
-      "usedBy": [
-        "review",
-        "code-reviewer",
-        "branch-rebaser",
-        "running-check-script",
-        "check",
-        "peers",
-        "coordinating-peer-sessions",
-        "contributing-to-lt-framework",
-        "maintaining-lt-stack",
-        "maintain-stack",
-        "publish",
-        "npm-package-maintainer",
-        "take-ticket",
-        "ticket-cycle",
-        "debug",
-        "git:ship",
-        "rebasing-branches",
-        "dev-submit",
-        "cleaning-up-disk-space",
-        "writing-qa-test-instructions",
-        "briefing",
-        "plugin:check",
-        "checking-upstream-first"
-      ]
-    },
-    {
-      "pattern": "Bash(bash \"${CLAUDE_PLUGIN_ROOT}/scripts/*)",
-      "description": "Run the same plugin helper scripts with the placeholder quoted (bash \"${CLAUDE_PLUGIN_ROOT}/scripts/x.sh\"), the form the plugin instructs so a home path with spaces survives. Bash rules match the literal command text, so the unquoted pattern does not cover it",
-      "usedBy": [
-        "review",
-        "code-reviewer",
-        "branch-rebaser",
-        "running-check-script",
-        "check",
-        "peers",
-        "coordinating-peer-sessions",
-        "contributing-to-lt-framework",
-        "maintaining-lt-stack",
-        "maintain-stack",
-        "publish",
-        "npm-package-maintainer",
-        "take-ticket",
-        "ticket-cycle",
-        "debug",
-        "git:ship",
-        "rebasing-branches",
-        "dev-submit",
-        "cleaning-up-disk-space",
-        "writing-qa-test-instructions",
-        "briefing",
-        "plugin:check",
-        "checking-upstream-first"
-      ]
-    },
-    {
-      "pattern": "Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs:*)",
-      "description": "Run the deterministic AI model check (inventory, provider catalog, lifecycle, capability probes, benchmark summary) in plugins/lt-dev/scripts/ai-models.mjs",
-      "usedBy": [
-        "ai-model-review",
-        "maintaining-ai-models",
-        "backend-reviewer"
-      ]
-    },
-    {
-      "pattern": "Bash(node \"${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs\":*)",
-      "description": "The same AI model check with the placeholder quoted, the form the plugin instructs so a home path with spaces survives",
-      "usedBy": [
-        "ai-model-review",
-        "maintaining-ai-models",
-        "backend-reviewer"
       ]
     },
     {

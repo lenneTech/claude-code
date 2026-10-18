@@ -1,7 +1,7 @@
 ---
 description: Save a website with all pages and assets as an offline copy that opens from file://, verify it against the live site in headless Chrome, and optionally zip it
 argument-hint: "<url> [--zip] [--out <dir>] [--external-assets] [--max-pages <n>]"
-allowed-tools: Read, AskUserQuestion, Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/*)
+allowed-tools: Read, AskUserQuestion, Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/compare-site.mjs:*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/compare-site.mjs":*), Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/mirror-site.mjs:*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/mirror-site.mjs":*)
 disable-model-invocation: true
 ---
 

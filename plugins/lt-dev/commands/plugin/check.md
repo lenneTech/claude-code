@@ -1,6 +1,6 @@
 ---
 description: Verify plugin elements against best practices
-allowed-tools: Read, Glob, Grep, Bash(find:*), Bash(cat:*), Bash(ls:*), Bash(grep:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), AskUserQuestion, WebFetch, Write, Edit
+allowed-tools: Read, Glob, Grep, Bash(find:*), Bash(cat:*), Bash(ls:*), Bash(grep:*), AskUserQuestion, WebFetch, Write, Edit, Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/context-budget.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/context-budget.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/rule-invariants.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/rule-invariants.sh":*)
 disable-model-invocation: false
 ---
 

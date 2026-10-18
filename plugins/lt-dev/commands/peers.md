@@ -1,6 +1,6 @@
 ---
 description: Show what other Claude Code sessions are doing on this machine, plus the open claims and recorded diagnoses for this repository
-allowed-tools: ListAgents, Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(git status:*), Bash(git branch:*), Bash(git worktree:*)
+allowed-tools: ListAgents, Bash(git status:*), Bash(git branch:*), Bash(git worktree:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh":*)
 disable-model-invocation: true
 ---
 

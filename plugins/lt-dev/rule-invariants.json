@@ -118,6 +118,23 @@
         "commands/*.md",
         "commands/*/*.md"
       ]
+    },
+    {
+      "name": "a `*` in a plugin script path also matches ../ and approves any code (house rule 24c: grant each script by exact name)",
+      "pattern": "CLAUDE_PLUGIN_ROOT\\}\"?/scripts/\\*",
+      "files": [
+        "commands/*.md",
+        "commands/*/*.md",
+        "skills/*/SKILL.md",
+        "agents/*.md"
+      ]
+    },
+    {
+      "name": "permissions.json holds no ${CLAUDE_PLUGIN_ROOT} rule: settings do not expand it, and a resolved path needs a wildcard that also matches ../ (house rule 24c)",
+      "pattern": "\"pattern\": \".*CLAUDE_PLUGIN_ROOT",
+      "files": [
+        "permissions.json"
+      ]
     }
   ],
   "contracts": [

@@ -49,7 +49,7 @@ The CLI automatically:
 }
 ```
 
-If the file already exists, merge the `allow` entries with your existing permissions. See `plugins/lt-dev/permissions.json` for the current list of required permissions. Settings rules do not expand `${CLAUDE_PLUGIN_ROOT}`: in patterns that contain it, replace the placeholder with the absolute install path that `echo ~/.claude/plugins/cache/lenne-tech/<plugin>` prints, followed by `/*` in place of the version folder so the rule survives updates. A rule that starts with `~` or keeps the placeholder never matches, because Claude runs the scripts by their absolute path.
+If the file already exists, merge the `allow` entries with your existing permissions. See `plugins/lt-dev/permissions.json` for the current list of required permissions. Plugin helper scripts are not in `permissions.json`: settings do not expand `${CLAUDE_PLUGIN_ROOT}`, and a `*` in a script path also matches `../`, so a rule such as `Bash(bash <plugin dir>/*/scripts/*)` would approve `bash <plugin dir>/x/scripts/../../../dev/stdin`, that is, any code. The commands that run these scripts grant each one by exact name for their own turn; do not add a wildcard rule for them by hand.
 
 ## Plugins
 

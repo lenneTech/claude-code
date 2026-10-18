@@ -1,6 +1,6 @@
 {
   "$schema": "./permissions.schema.json",
-  "description": "Bash permissions for the showroom plugin. Covers source code analysis, project startup for screenshots, and API health checks.",
+  "description": "Bash permissions for the showroom plugin: source code analysis, installing and starting the analysed project through its own package scripts, and read-only checks. Starting extra containers (docker run), curl against the stack and the screenshot-session script are granted per turn by /lt-showroom:showroom:screenshot.",
   "formerPatterns": [
     "Bash(cp *.env*)",
     "Bash(curl *api.showroom.lenne.tech*)",
@@ -9,6 +9,8 @@
     "Bash(docker run:*)",
     "Bash(docker stop:*)",
     "Bash(mongosh:*)",
+    "Bash(node \"${CLAUDE_PLUGIN_ROOT}/scripts/*)",
+    "Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/*)",
     "Bash(pip install:*)",
     "Bash(pkill:*)"
   ],
@@ -247,26 +249,6 @@
       "usedBy": [
         "screenshot-generator",
         "showroom:screenshot"
-      ]
-    },
-    {
-      "pattern": "Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/*)",
-      "description": "Run the plugin scripts (screenshot-session.mjs: work folder, session record, database check, manifest, cleanup)",
-      "usedBy": [
-        "screenshot-generator",
-        "showroom:screenshot",
-        "showroom:create",
-        "creating-showcases"
-      ]
-    },
-    {
-      "pattern": "Bash(node \"${CLAUDE_PLUGIN_ROOT}/scripts/*)",
-      "description": "The same scripts with the placeholder quoted, the form the plugin uses so a home path with spaces survives. Bash rules match the literal command text, so the unquoted pattern does not cover it",
-      "usedBy": [
-        "screenshot-generator",
-        "showroom:screenshot",
-        "showroom:create",
-        "creating-showcases"
       ]
     },
     {
