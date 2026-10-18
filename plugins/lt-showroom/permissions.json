@@ -1,6 +1,17 @@
 {
   "$schema": "./permissions.schema.json",
   "description": "Bash permissions for the showroom plugin. Covers source code analysis, project startup for screenshots, and API health checks.",
+  "formerPatterns": [
+    "Bash(cp *.env*)",
+    "Bash(curl *api.showroom.lenne.tech*)",
+    "Bash(curl *localhost*)",
+    "Bash(docker rm:*)",
+    "Bash(docker run:*)",
+    "Bash(docker stop:*)",
+    "Bash(mongosh:*)",
+    "Bash(pip install:*)",
+    "Bash(pkill:*)"
+  ],
   "permissions": [
     {
       "pattern": "Bash(git log:*)",

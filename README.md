@@ -199,7 +199,7 @@ The script updates `plugin.json` + `package.json`, creates commit, tag and pushe
 
 ### Permissions Configuration
 
-The file `plugins/lt-dev/permissions.json` lists the narrow Bash commands the skills and agents run without a prompt. The lenne.Tech CLI copies it into `~/.claude/settings.json` during installation, where every rule applies in every project. It only appends rules: a rule the plugin no longer lists stays in your settings until you remove it. Broad tools (`curl`, `node`, `docker run`/`exec`, `git push`, `rm`, `cp`, `mv`) are not listed; the commands that need them grant them for their own turn through `allowed-tools`.
+The file `plugins/lt-dev/permissions.json` lists the narrow Bash commands the skills and agents run without a prompt. The lenne.Tech CLI copies it into `~/.claude/settings.json` during installation, where every rule applies in every project. A rule the plugin narrowed or dropped is listed in the file's `formerPatterns` array, and the CLI removes it once from your settings; a rule you add again by hand afterwards stays. Broad tools (`curl`, `node`, `docker run`/`exec`, `git push`, `rm`, `cp`, `mv`) are not listed; the commands that need them grant them for their own turn through `allowed-tools`.
 
 **Important:** When adding or modifying skills that use new CLI commands, update `permissions.json` accordingly, with a pattern no broader than its description:
 

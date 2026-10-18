@@ -160,9 +160,10 @@ ignore it silently.
     rule such as `Bash(curl *host*)` is no narrowing, because curl takes several URLs and data files. Syntax per
     `permissions.md`: `:*` is a trailing wildcard only at the end; `\:` is a literal backslash, and `x/:*` needs a
     space after the slash, so both never match. Settings do not expand `${CLAUDE_PLUGIN_ROOT}`; such a rule matches
-    only with the placeholder replaced by the absolute install path. `lt claude plugins` copies patterns verbatim and
-    only appends, so narrowing a rule here reaches fresh installs only; existing settings keep the old rule until it
-    is removed by hand or the CLI learns to drop rules a plugin no longer lists. A narrowed global rule makes the
+    only with the placeholder replaced by the absolute install path. `lt claude plugins` copies patterns verbatim, so
+    a rule narrowed or dropped here goes into the file's `formerPatterns` array, from which the CLI removes it once
+    from existing settings (decided 2026-10-18; internal patterns live only in the private marketplace's own files,
+    and a former rule naming an internal host is removed by hand, never listed here). A narrowed global rule makes the
     commands that relied on it add a per-turn grant (a command's grant reaches the foreground agents it spawns,
     measured by probe 2026-10-18). Observed 2026-10-18: `Bash(rm:*)`, `Bash(curl:*)`,
     `Bash(docker:*)` and eight more approved far beyond their descriptions, four `\:` rules and eight placeholder rules

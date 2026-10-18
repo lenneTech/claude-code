@@ -129,6 +129,7 @@ Compare against fetched documentation:
 - [ ] `usedBy` arrays include all skills/agents using each pattern
 - [ ] No orphaned patterns (patterns without valid usedBy references)
 - [ ] Patterns are well-formed: a `:*` wildcard only at the very end (`Bash(pnpm run test:*)`), no `\:`, no `/:*`
+- [ ] A pattern removed from `permissions` is listed in `formerPatterns` (the lt CLI removes it once from existing settings), unless another plugin still ships it or it names an internal host
 
 **Check against skills:**
 ```bash

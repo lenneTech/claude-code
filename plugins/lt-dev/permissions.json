@@ -1,6 +1,27 @@
 {
   "$schema": "./permissions.schema.json",
-  "description": "Bash permissions the lt CLI copies verbatim into the user settings for auto-approval; it only appends, so a rule removed here stays in existing settings until removed by hand. A trailing ':*' equals a trailing ' *' and is recognised only at the end of a pattern; a colon anywhere else, escaped or not, is a literal character. Settings rules do not expand ${CLAUDE_PLUGIN_ROOT}, so a rule that contains it matches only with the placeholder replaced by the absolute plugin install path. Every rule applies in every project, so a pattern names the narrow command its description states; broad tools (curl, node, docker run, git push) are granted per turn through a command's allowed-tools instead.",
+  "description": "Bash permissions the lt CLI copies verbatim into the user settings for auto-approval. A rule narrowed or dropped here moves to formerPatterns, from which the CLI removes it once from existing settings. A trailing ':*' equals a trailing ' *' and is recognised only at the end of a pattern; a colon anywhere else, escaped or not, is a literal character. Settings rules do not expand ${CLAUDE_PLUGIN_ROOT}, so a rule that contains it matches only with the placeholder replaced by the absolute plugin install path. Every rule applies in every project, so a pattern names the narrow command its description states; broad tools (curl, node, docker run, git push) are granted per turn through a command's allowed-tools instead.",
+  "formerPatterns": [
+    "Bash(cp:*)",
+    "Bash(curl:*)",
+    "Bash(docker compose:*)",
+    "Bash(docker exec:*)",
+    "Bash(docker volume:*)",
+    "Bash(docker-compose:*)",
+    "Bash(docker:*)",
+    "Bash(gh api:*)",
+    "Bash(git push:*)",
+    "Bash(git remote:*)",
+    "Bash(git tag:*)",
+    "Bash(mv:*)",
+    "Bash(node:*)",
+    "Bash(npm run test\\:e2e:*)",
+    "Bash(pkill:*)",
+    "Bash(pnpm run bench\\:ai:*)",
+    "Bash(pnpm run test\\:e2e:*)",
+    "Bash(rm:*)",
+    "Bash(yarn run test\\:e2e:*)"
+  ],
   "permissions": [
     {
       "pattern": "Bash(npm test:*)",

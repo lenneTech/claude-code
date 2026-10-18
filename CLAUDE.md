@@ -251,6 +251,9 @@ Defines Bash command patterns that can be auto-approved without user confirmatio
   command's `allowed-tools` instead (house rule 24c)
 - `:*` is a trailing wildcard only at the very end; a colon elsewhere is literal, so `test\:e2e` and `scripts/:*` never
   match. Settings rules do not expand `${CLAUDE_PLUGIN_ROOT}`
+- A pattern that is narrowed or dropped moves to the top-level `formerPatterns` array; the lt CLI removes each one
+  once from existing settings. Never list a pattern another plugin still ships, and never an internal host or address
+  (this repo is public; such a rule is removed by hand)
 - Keep descriptions clear and concise
 
 **Validation:** Use `permissions.schema.json` for IDE autocompletion and validation. Reference it via `"$schema": "./permissions.schema.json"` in permissions.json.
