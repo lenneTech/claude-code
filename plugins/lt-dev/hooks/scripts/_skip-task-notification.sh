@@ -12,9 +12,16 @@
 # both plugins' keyword detectors, and one that contained "demo" switched lt-offers
 # to its demo-stage instruction although no user had asked for the demo stage.
 #
+# Messages from other Claude sessions on this machine arrive the same way, wrapped in a
+# <cross-session-message from="..."> block. Observed 2026-10-18: two peer reports about
+# the lt CLI and nest-server fired the lt-cli, plugin-dev, offers ("use offers-api,
+# production") and showroom detectors on words in the report, although the user had
+# asked for none of it.
+#
 # Identical copies live in each lt-* plugin (lt-dev, lt-offers, lt-showroom):
 # plugins run in isolation and cannot source each other's helpers.
 
 case "${PROMPT:-}" in
   *"<task-notification>"*) exit 0 ;;
+  *"<cross-session-message"*) exit 0 ;;
 esac

@@ -1,7 +1,7 @@
 ---
 description: Execute IMPLEMENTATION_PLAN.md completely
 argument-hint: "[plan-file]"
-allowed-tools: Read, Write, Edit, Glob, Grep, Agent, Bash(docker:*), Bash(docker-compose:*), Bash(pnpm run:*), Bash(npm run:*), Bash(yarn run:*), Bash(git:*), Bash(curl:*), mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__evaluate_script, mcp__plugin_lt-dev_chrome-devtools__take_snapshot, mcp__plugin_lt-dev_chrome-devtools__fill, mcp__plugin_lt-dev_chrome-devtools__click, mcp__plugin_lt-dev_chrome-devtools__list_console_messages, mcp__plugin_lt-dev_chrome-devtools__list_network_requests, AskUserQuestion
+allowed-tools: Read, Write, Edit, Glob, Grep, Agent, Bash(docker:*), Bash(docker-compose:*), Bash(pnpm run:*), Bash(npm run:*), Bash(yarn run:*), Bash(git:*), Bash(curl:*), mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__evaluate_script, mcp__plugin_lt-dev_chrome-devtools__take_snapshot, mcp__plugin_lt-dev_chrome-devtools__fill, mcp__plugin_lt-dev_chrome-devtools__click, mcp__plugin_lt-dev_chrome-devtools__list_console_messages, mcp__plugin_lt-dev_chrome-devtools__list_network_requests, AskUserQuestion, Skill(lt-dev:backend:sec-review)
 disable-model-invocation: true
 ---
 
@@ -164,7 +164,7 @@ Role:     admin
 - All bugs found during testing are fixed
 - App works end-to-end (login → use features → logout)
 
-**After all criteria met:** Ask the user: "Soll ich eine PR erstellen?" — If yes, create PR with `gh pr create`, then suggest running `/review` for a final PR-level check.
+**After all criteria met:** Ask the user: "Soll ich eine PR erstellen?" — If yes, create PR with `gh pr create`, then suggest running `/code-review <PR number>` (alias `/review`) for a final generic correctness check of the PR.
 
 Start the implementation and carry it through to completed browser testing.
 

@@ -1,7 +1,7 @@
 ---
 description: Code review of what the current diff changed. Reports only proven Critical and High defects, plus security risks with a demonstrated attack path, and fixes them automatically, running the check script with auto-fix. Anything below that bar is dropped.
 argument-hint: "[issue-id] [--base=main]"
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Bash(jq:*), Bash(cat:*), Bash(ls:*), Bash(test:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), Agent, Skill, AskUserQuestion, ListAgents, SendMessage, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__save_issue_label, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Bash(jq:*), Bash(cat:*), Bash(ls:*), Bash(test:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), Agent, Skill(security-review), AskUserQuestion, ListAgents, SendMessage, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__save_issue_label, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document, Bash(curl:*), Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs:*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs":*)
 disable-model-invocation: false
 ---
 
@@ -134,7 +134,7 @@ exceed the ticket's scope.
 
 | Command | Purpose |
 |---------|---------|
-| `/review [PR]` | Claude Code built-in: generic PR-level review (no lt-stack awareness) |
+| `/code-review [pr#]` (alias `/review`) | Claude Code bundled skill: generic correctness review of the current diff or a PR (no lt-stack awareness) |
 | `/security-review` | Claude Code built-in: generic security review of branch diff — **used internally in Phase 3A as cross-check** |
 | `/simplify [focus]` | Claude Code built-in skill: reviews recently changed files AND auto-applies fixes — use BEFORE review, not as part of it |
 | `/autofix-pr [prompt]` | Claude Code built-in: cloud session that watches the PR and pushes fixes for CI failures / review comments |

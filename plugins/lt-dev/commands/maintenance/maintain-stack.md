@@ -1,7 +1,7 @@
 ---
 description: Fully automated maintenance and release of all lt base repos in dependency order, gated by the full fullstack smoke test. Every finding is fixed in the base repo that caused it and re-released until the stack is clean. Leaves no test artifacts.
 argument-hint: '[--only=<repo,repo>] [--skip-smoke-test] [--smoke-rounds=1] [--release-as=patch|minor|major] [--dry-run]'
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, Skill, SendMessage, ToolSearch
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, Skill(lt-dev:fullstack:smoke-test), Skill(lt-dev:maintenance:maintain), Skill(lt-dev:git:commit-message), SendMessage, ToolSearch
 disable-model-invocation: true
 ---
 

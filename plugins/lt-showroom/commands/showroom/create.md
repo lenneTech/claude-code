@@ -130,6 +130,12 @@ The blocks reference the uploaded files by `fileId`, so upload first. For each i
    ```
 3. Keep the answer's `fileId` per file for the blocks; the same image uploaded again returns the same `fileId`
 
+When showroom-api is unavailable (no `mcp__plugin_lt-showroom_showroom-api__*` tool in this command's tool list), this
+step still uploads: the manifest lists the same files `screenshot-generator` returns when it reports
+`showroom-api unavailable: platform screenshots and upload skipped`, and each goes up through
+`POST /files/upload/ticket` with a signed-in session and the `curl` call above. Without a session, leave the upload to
+the user: list each file with its device, and build image blocks only for files that carry a `fileId`.
+
 ### Step 7: Build Content Blocks (8-12 blocks)
 
 Create content blocks in this order using the `creating-showcases` skill (field reference:

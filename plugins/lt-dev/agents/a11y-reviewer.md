@@ -48,7 +48,7 @@ The checklists below still describe *what to look at* and *how to judge severity
 
 - **Base branch**: Branch to diff against (default: `main`)
 - **Changed files**: List of changed frontend files
-- **App URL**: Dev server URL. Under `lt dev up`: `https://<slug>.localhost` (read from the "Active lt-dev project" context block injected at the top of the prompt). Without `lt dev`: `http://localhost:3001`.
+- **App URL**: Dev server URL. Under `lt dev`: the `App:` line of the "Active lt-dev project" context block, which lt-dev agents receive at the start of their context (`https://<slug>.localhost`). Without the block, resolve it as Phase 0 step 3 describes. Without `lt dev`: `http://localhost:3001`.
 
 ---
 
@@ -84,9 +84,15 @@ Generate report
 
 2. **Map changed files to routes** — check `app/pages/` to determine which URLs to visit
 
-3. **Check dev server availability** — try the lt-dev URL first (read the slug from the "Active lt-dev project" context block), fall back to `localhost:3001`:
+3. **Check dev server availability** — resolve the App URL in this order, then probe it:
+   - The `App:` line of the "Active lt-dev project" context block at the start of your context.
+   - No block: when the project has the `lt dev` layout (a `projects/api/` or `projects/app/` directory, or at the root
+     `src/config.env.ts` or `nest-cli.json` (API) or `nuxt.config.ts` (app)), run `lt dev status`; for a registered
+     project it prints the App and API URLs.
+   - `http://localhost:3001` only when `lt dev` does not serve the project (no such layout, or `lt dev status` prints
+     "Not registered").
    ```bash
-   APP_URL="${APP_URL_FROM_CONTEXT_BLOCK:-http://localhost:3001}"   # e.g. https://crm.localhost
+   APP_URL="<resolved App URL>"   # e.g. https://crm.localhost or http://localhost:3001
    curl -sk -o /dev/null -w "%{http_code}" --connect-timeout 2 "$APP_URL" 2>/dev/null || echo "UNAVAILABLE"
    ```
    - HTTP 200/301/302 → dev server is running, browser phases and Lighthouse audit enabled

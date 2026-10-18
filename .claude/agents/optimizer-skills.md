@@ -2,7 +2,6 @@
 name: optimizer-skills
 description: Specialized agent for optimizing Claude Code skills. Expert in SKILL.md structure, YAML frontmatter, trigger keywords, skill auto-detection, and prompt quality for the current default model.
 model: inherit
-effort: high
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 

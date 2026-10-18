@@ -1,6 +1,6 @@
 ---
 description: Recurring model review — deterministic check of catalog, announced shutdowns and capabilities, then inventory, research, measurement against the project's own benchmark, and adoption of the confirmed winners
-allowed-tools: Bash(pnpm run bench\:ai:*), Bash(npm run bench:ai:*), Bash(yarn run bench\:ai:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(git:*), Bash(curl:*), Bash(jq:*), Bash(node:*), Bash(grep:*), Bash(ls:*), Bash(cat:*), Bash(test:*), Read, Grep, Glob, Write, Edit, WebFetch, WebSearch, AskUserQuestion, Skill
+allowed-tools: Bash(pnpm run bench:ai:*), Bash(npm run bench:ai:*), Bash(yarn run bench:ai:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(git:*), Bash(curl:*), Bash(jq:*), Bash(node:*), Bash(grep:*), Bash(ls:*), Bash(cat:*), Bash(test:*), Read, Grep, Glob, Write, Edit, WebFetch, WebSearch, AskUserQuestion
 argument-hint: "[--quick] [--probe] [--usage=<list>] [--dry-run] [--no-research] [--repeat=<n>]"
 disable-model-invocation: true
 ---

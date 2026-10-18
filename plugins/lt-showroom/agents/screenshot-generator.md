@@ -20,7 +20,11 @@ starts is gone at the end. The images and their manifest stay in `~/.lt-showroom
 > - **`showroom-api`** (optional): reading the screenshots of an existing showcase for fallback stage 3, and the
 >   upload described below.
 >
-> Both must be configured in the user's session.
+> `chrome-devtools` must be configured in the user's session; without it nothing can be captured.
+> `showroom-api` counts as unavailable when the spawn prompt says `showroom-api: unavailable` or when no
+> `mcp__plugin_lt-showroom_showroom-api__*` tool is in your tool list (a subagent is not told when a server failed to
+> connect). Then stage 3 uses local older screenshots only, uploads are left to the caller (return the file list), and
+> the report carries the line `showroom-api unavailable: platform screenshots and upload skipped`.
 
 ## Paths
 
@@ -112,7 +116,8 @@ Always capture `overview` on both devices.
 When the local route fails or the budget is spent: `node "$S" cleanup <slug> --keep-checkout`, then compare the live
 system with the clone (routes, distinctive texts, framework fingerprint, version marker) and record
 `liveCheck.*` with `manifest meta`. Only a matching live system is used, in this order: demo access (credentials from
-the caller or the project notes, never guessed), public pages, then older screenshots, then the teaser cover with
+the caller or the project notes, never guessed), public pages, then older screenshots (local ones only while
+`showroom-api` is unavailable), then the teaser cover with
 `manifest meta <slug> pendingTag=screenshots-ausstehend`. Take the highest stage per feature.
 
 On a live system: read only (navigate, scroll, open tabs, log in with demo access), never submit, save, send, delete or
@@ -139,6 +144,8 @@ Interim status goes in the same message as your next tool call, so the work keep
 - Features without an image, and why
 - Network check on live pages: requests other than GET, if any
 - Cleanup: the `cleanup` report, `leftovers` verbatim
+- When `showroom-api` is unavailable: the line `showroom-api unavailable: platform screenshots and upload skipped`
+  and the list of image files the caller uploads
 
 ## Upload Flow
 
@@ -152,8 +159,7 @@ showcase (`/lt-showroom:showroom:create` Step 6); when a caller asks this agent 
    ```
    The answer is `{ fileId, width, height, device, bytes, deduplicated }`. The server stores the image as WebP; the
    same image uploaded again returns the same `fileId`. `device` (`desktop`, `tablet`, `mobile`) is optional and
-   otherwise derived from the aspect ratio. Without MCP, `POST /files/upload/ticket` with a signed-in session issues
-   the same ticket.
+   otherwise derived from the aspect ratio. Without MCP, return the file list to the caller, which uploads.
 2. **Reference the `fileId` in content blocks**, sent with `update_showcase`: an `image` block (`content.fileId`), a
    `gallery` block (`content.fileIds[]`) or a `screenshot-gallery` block (`content.screenshots[].fileId`).
 3. **Teaser image**: the `fileId` of the best overview screenshot (typically `overview-desktop.webp`) becomes the

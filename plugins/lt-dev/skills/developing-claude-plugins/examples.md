@@ -258,7 +258,7 @@ Automatic formatting hook that runs after file writes.
 ```
 
 **How it works:**
-- `matcher` is a string tested against the tool name, so `"Edit|Write"` selects both file-writing tools.
+- `matcher` is a string tested against the tool name on tool events, so `"Edit|Write"` selects both file-writing tools. `UserPromptSubmit` has no matcher support, which is why its entry carries none.
 - `if` sits on each hook object and filters by path in permission-rule syntax. It holds exactly one rule, so each tool gets its own handler (`Write(...)` and `Edit(...)`). `src/**` matches only the `src` directory at the working-directory root; use `**/src/**` for any depth.
 - The command reads the event JSON from stdin and extracts `tool_input.file_path` with `jq`. Claude Code exports no file-path environment variable to hooks.
 

@@ -1,7 +1,7 @@
 ---
 description: Comprehensive fullstack update -- updates backend and frontend frameworks (mode-aware for npm/vendor), applies migrations, updates all packages, syncs CLAUDE.md, and validates everything
 argument-hint: "[--dry-run] [--skip-backend] [--skip-frontend] [--skip-packages]"
-allowed-tools: Read, Grep, Glob, Bash(npm run:*), Bash(pnpm run:*), Bash(yarn run:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(rm:*), Write, Edit, Agent, AskUserQuestion, WebFetch, Skill, SendMessage
+allowed-tools: Read, Grep, Glob, Bash(npm run:*), Bash(pnpm run:*), Bash(yarn run:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(rm:*), Write, Edit, Agent, AskUserQuestion, WebFetch, Skill(lt-dev:fullstack:sync-claude-md), SendMessage, Bash(node -e:*), Bash(rm -rf /tmp/nest-server-*), Bash(rm -rf /tmp/nuxt-extensions-*)
 disable-model-invocation: true
 ---
 

@@ -87,7 +87,7 @@ Relay new live signals to the running agent with `SendMessage` as they appear.
 P=plugins
 grep -rEoc '\b(MUST|NEVER|ALWAYS|CRITICAL|IMPORTANT)\b' $P --include='*.md' | awk -F: '$2>0{print $2, $1}' | sort -rn | head -12
 grep -rnE 'TodoWrite|TaskCreate|SlashCommand' $P | wc -l
-grep -rnE '^effort: *(max|xhigh)' $P
+grep -rnE '^effort:' $P .claude/agents .claude/commands   # any pin needs an Effort policy note (house rule 10)
 grep -rniE 'think step by step|think (hard|harder|carefully)|ultrathink|<scratchpad>' $P --include='*.md'
 grep -rnE 'claude-3|3-5-sonnet|3-5-haiku' $P
 grep -rnE '^isolation:' $P/*/agents

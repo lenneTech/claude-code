@@ -1,6 +1,6 @@
 {
   "$schema": "./permissions.schema.json",
-  "description": "Bash permissions for auto-approval. Patterns support wildcards: ':*' matches any suffix.",
+  "description": "Bash permissions the lt CLI copies verbatim into the user settings for auto-approval; it only appends, so a rule removed here stays in existing settings until removed by hand. A trailing ':*' equals a trailing ' *' and is recognised only at the end of a pattern; a colon anywhere else, escaped or not, is a literal character. Settings rules do not expand ${CLAUDE_PLUGIN_ROOT}, so a rule that contains it matches only with the placeholder replaced by the absolute plugin install path. Every rule applies in every project, so a pattern names the narrow command its description states; broad tools (curl, node, docker run, git push) are granted per turn through a command's allowed-tools instead.",
   "permissions": [
     {
       "pattern": "Bash(npm test:*)",
@@ -44,15 +44,17 @@
       ]
     },
     {
-      "pattern": "Bash(npm run test\\:e2e:*)",
+      "pattern": "Bash(npm run test:e2e:*)",
       "description": "Run end-to-end tests",
       "usedBy": [
-        "generating-nest-servers",
-        "building-stories-with-tdd",
-        "developing-lt-frontend",
-        "review",
         "branch-rebaser",
-        "coordinating-agent-teams"
+        "building-stories-with-tdd",
+        "coordinating-agent-teams",
+        "developing-lt-frontend",
+        "generating-nest-servers",
+        "production-ready",
+        "review",
+        "take-ticket"
       ]
     },
     {
@@ -374,15 +376,17 @@
       ]
     },
     {
-      "pattern": "Bash(pnpm run test\\:e2e:*)",
+      "pattern": "Bash(pnpm run test:e2e:*)",
       "description": "Run end-to-end tests via pnpm",
       "usedBy": [
-        "generating-nest-servers",
-        "building-stories-with-tdd",
-        "developing-lt-frontend",
-        "review",
         "branch-rebaser",
-        "coordinating-agent-teams"
+        "building-stories-with-tdd",
+        "coordinating-agent-teams",
+        "developing-lt-frontend",
+        "generating-nest-servers",
+        "production-ready",
+        "review",
+        "take-ticket"
       ]
     },
     {
@@ -484,7 +488,7 @@
       ]
     },
     {
-      "pattern": "Bash(pnpm run bench\\:ai:*)",
+      "pattern": "Bash(pnpm run bench:ai:*)",
       "description": "Run the project's AI model benchmark (spends provider tokens; opt-in, never part of `test`)",
       "usedBy": [
         "ai-model-review"
@@ -679,15 +683,17 @@
       ]
     },
     {
-      "pattern": "Bash(yarn run test\\:e2e:*)",
+      "pattern": "Bash(yarn run test:e2e:*)",
       "description": "Run end-to-end tests via yarn",
       "usedBy": [
-        "generating-nest-servers",
-        "building-stories-with-tdd",
-        "developing-lt-frontend",
-        "review",
         "branch-rebaser",
-        "coordinating-agent-teams"
+        "building-stories-with-tdd",
+        "coordinating-agent-teams",
+        "developing-lt-frontend",
+        "generating-nest-servers",
+        "production-ready",
+        "review",
+        "take-ticket"
       ]
     },
     {
@@ -949,19 +955,6 @@
       ]
     },
     {
-      "pattern": "Bash(gh api:*)",
-      "description": "Access GitHub API via gh CLI for migration guides and changelogs",
-      "usedBy": [
-        "nest-server-updating",
-        "fullstack-updater",
-        "vendor-mode-converter-frontend",
-        "nuxt-extensions-core-updater",
-        "checking-upstream-first",
-        "ticket-cycle",
-        "maintaining-lt-stack"
-      ]
-    },
-    {
       "pattern": "Bash(gh search:*)",
       "description": "Search base-repo content on GitHub when checking whether upstream already solved a problem",
       "usedBy": [
@@ -1059,18 +1052,6 @@
       ]
     },
     {
-      "pattern": "Bash(node:*)",
-      "description": "Run node for JSON parsing fallback and small helper computations",
-      "usedBy": [
-        "review",
-        "code-reviewer",
-        "branch-rebaser",
-        "running-check-script",
-        "check",
-        "ai-model-review"
-      ]
-    },
-    {
       "pattern": "Bash(git clone:*)",
       "description": "Clone repositories for comparison",
       "usedBy": [
@@ -1115,14 +1096,6 @@
         "nuxt-extensions-core-updater",
         "nuxt-extensions-core-contributor",
         "briefing"
-      ]
-    },
-    {
-      "pattern": "Bash(git tag:*)",
-      "description": "List git tags for version comparison",
-      "usedBy": [
-        "fullstack-updater",
-        "nuxt-extensions-core-updater"
       ]
     },
     {
@@ -1179,13 +1152,6 @@
       ]
     },
     {
-      "pattern": "Bash(git push:*)",
-      "description": "Push changes to remote (includes force push with lease)",
-      "usedBy": [
-        "branch-rebaser"
-      ]
-    },
-    {
       "pattern": "Bash(git stash:*)",
       "description": "Stash and restore working changes",
       "usedBy": [
@@ -1198,13 +1164,6 @@
       "usedBy": [
         "branch-rebaser",
         "briefing"
-      ]
-    },
-    {
-      "pattern": "Bash(git remote:*)",
-      "description": "Inspect remote repository configuration",
-      "usedBy": [
-        "branch-rebaser"
       ]
     },
     {
@@ -1298,17 +1257,6 @@
       ]
     },
     {
-      "pattern": "Bash(docker compose:*)",
-      "description": "Run docker compose commands",
-      "usedBy": [
-        "devops",
-        "devops-reviewer",
-        "validating-ci-pipelines-locally",
-        "production-readiness-orchestrator",
-        "production-ready"
-      ]
-    },
-    {
       "pattern": "Bash(docker build:*)",
       "description": "Build Docker images",
       "usedBy": [
@@ -1321,13 +1269,6 @@
       "usedBy": [
         "devops",
         "devops-reviewer"
-      ]
-    },
-    {
-      "pattern": "Bash(docker volume:*)",
-      "description": "Manage Docker volumes",
-      "usedBy": [
-        "devops"
       ]
     },
     {
@@ -1347,40 +1288,11 @@
       ]
     },
     {
-      "pattern": "Bash(docker exec:*)",
-      "description": "Execute commands in Docker containers",
-      "usedBy": [
-        "devops"
-      ]
-    },
-    {
       "pattern": "Bash(docker images:*)",
       "description": "List Docker images",
       "usedBy": [
         "devops",
         "devops-reviewer"
-      ]
-    },
-    {
-      "pattern": "Bash(curl:*)",
-      "description": "Check dev server availability for browser-based reviews, health-check probes, k6 load tests, Swagger discovery, and backend smoke-pass requests during browser validation, the signed PUT that uploads a Linear issue attachment, and the sign-in and record queries that check a deployed dev stage for QA test data",
-      "usedBy": [
-        "ux-reviewer",
-        "a11y-reviewer",
-        "frontend-reviewer",
-        "performance-reviewer",
-        "running-load-tests-with-k6",
-        "validating-production-readiness",
-        "production-readiness-orchestrator",
-        "production-ready",
-        "validating-changes-in-browser",
-        "checking-upstream-first",
-        "ticket-cycle",
-        "writing-linear-comments",
-        "writing-qa-test-instructions",
-        "git:ship",
-        "dev-submit",
-        "briefing"
       ]
     },
     {
@@ -1489,20 +1401,6 @@
       ]
     },
     {
-      "pattern": "Bash(pkill:*)",
-      "description": "Terminate background dev servers and watchers to enforce the dev-server lifecycle contract",
-      "usedBy": [
-        "managing-dev-servers",
-        "contributing-to-lt-framework",
-        "building-stories-with-tdd",
-        "developing-lt-frontend",
-        "generating-nest-servers",
-        "production-readiness-orchestrator",
-        "production-ready",
-        "validating-changes-in-browser"
-      ]
-    },
-    {
       "pattern": "Bash(pgrep:*)",
       "description": "Check whether a background dev server is still running before reporting completion",
       "usedBy": [
@@ -1570,27 +1468,6 @@
       ]
     },
     {
-      "pattern": "Bash(docker:*)",
-      "description": "General Docker invocations (pull, run, info, network, version) for CI reproduction and load test scaffolding",
-      "usedBy": [
-        "validating-ci-pipelines-locally",
-        "running-load-tests-with-k6",
-        "production-readiness-orchestrator",
-        "production-ready",
-        "devops",
-        "devops-reviewer"
-      ]
-    },
-    {
-      "pattern": "Bash(docker-compose:*)",
-      "description": "Older docker-compose v1 binary for legacy projects without docker compose plugin",
-      "usedBy": [
-        "validating-ci-pipelines-locally",
-        "production-readiness-orchestrator",
-        "production-ready"
-      ]
-    },
-    {
       "pattern": "Bash(yq:*)",
       "description": "Parse YAML files (.gitlab-ci.yml, .github/workflows/*.yml, docker-compose.yml) for job and stage discovery",
       "usedBy": [
@@ -1607,7 +1484,11 @@
         "running-load-tests-with-k6",
         "production-readiness-orchestrator",
         "production-ready",
-        "validating-changes-in-browser"
+        "validating-changes-in-browser",
+        "a11y-reviewer",
+        "ux-reviewer",
+        "performance-reviewer",
+        "frontend-dev"
       ]
     },
     {
@@ -1664,28 +1545,19 @@
       ]
     },
     {
-      "pattern": "Bash(cp:*)",
-      "description": "Copy artefacts between CI job runs and persist k6 baselines",
+      "pattern": "Bash(cp tests/k6/results/* tests/k6/baselines/*)",
+      "description": "Persist a k6 result as the module baseline",
       "usedBy": [
-        "running-load-tests-with-k6",
-        "validating-ci-pipelines-locally",
+        "performance-reviewer",
         "production-readiness-orchestrator",
-        "production-ready"
+        "production-ready",
+        "running-load-tests-with-k6",
+        "validating-ci-pipelines-locally"
       ]
     },
     {
-      "pattern": "Bash(mv:*)",
-      "description": "Move artefacts during CI reproduction and load-test baseline rotation",
-      "usedBy": [
-        "validating-ci-pipelines-locally",
-        "running-load-tests-with-k6",
-        "production-readiness-orchestrator",
-        "production-ready"
-      ]
-    },
-    {
-      "pattern": "Bash(rm:*)",
-      "description": "Clean up scratch artefacts under tmp/ci-local/ between iterations",
+      "pattern": "Bash(rm -rf tmp/ci-local/*)",
+      "description": "Clean up scratch artefacts under tmp/ci-local/ between CI reproduction iterations",
       "usedBy": [
         "validating-ci-pipelines-locally",
         "production-readiness-orchestrator",
@@ -1721,6 +1593,289 @@
       "usedBy": [
         "take-ticket",
         "ticket-cycle"
+      ]
+    },
+    {
+      "pattern": "Bash(pkill -f \"nuxt dev\")",
+      "description": "Terminate a background dev server or watcher started earlier, per the dev-server lifecycle contract",
+      "usedBy": [
+        "managing-dev-servers",
+        "contributing-to-lt-framework",
+        "building-stories-with-tdd",
+        "developing-lt-frontend",
+        "generating-nest-servers",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "validating-changes-in-browser"
+      ]
+    },
+    {
+      "pattern": "Bash(pkill -f \"nest start\")",
+      "description": "Terminate a background dev server or watcher started earlier, per the dev-server lifecycle contract",
+      "usedBy": [
+        "managing-dev-servers",
+        "contributing-to-lt-framework",
+        "building-stories-with-tdd",
+        "developing-lt-frontend",
+        "generating-nest-servers",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "validating-changes-in-browser"
+      ]
+    },
+    {
+      "pattern": "Bash(pkill -f \"build --watch\")",
+      "description": "Terminate a background dev server or watcher started earlier, per the dev-server lifecycle contract",
+      "usedBy": [
+        "managing-dev-servers",
+        "contributing-to-lt-framework",
+        "building-stories-with-tdd",
+        "developing-lt-frontend",
+        "generating-nest-servers",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "validating-changes-in-browser"
+      ]
+    },
+    {
+      "pattern": "Bash(pkill -f \"pnpm build --watch\")",
+      "description": "Terminate a background dev server or watcher started earlier, per the dev-server lifecycle contract",
+      "usedBy": [
+        "managing-dev-servers",
+        "contributing-to-lt-framework",
+        "building-stories-with-tdd",
+        "developing-lt-frontend",
+        "generating-nest-servers",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "validating-changes-in-browser"
+      ]
+    },
+    {
+      "pattern": "Bash(npm run bench:ai:*)",
+      "description": "Run the project's AI model benchmark (spends provider tokens; opt-in, never part of `test`)",
+      "usedBy": [
+        "ai-model-review"
+      ]
+    },
+    {
+      "pattern": "Bash(yarn run bench:ai:*)",
+      "description": "Run the project's AI model benchmark (spends provider tokens; opt-in, never part of `test`)",
+      "usedBy": [
+        "ai-model-review"
+      ]
+    },
+    {
+      "pattern": "Bash(docker info:*)",
+      "description": "Read-only Docker checks and image pulls for CI reproduction and load-test scaffolding; docker run and docker exec are granted per turn by the commands that need them",
+      "usedBy": [
+        "validating-ci-pipelines-locally",
+        "running-load-tests-with-k6",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "devops",
+        "devops-reviewer"
+      ]
+    },
+    {
+      "pattern": "Bash(docker version:*)",
+      "description": "Read-only Docker checks and image pulls for CI reproduction and load-test scaffolding; docker run and docker exec are granted per turn by the commands that need them",
+      "usedBy": [
+        "validating-ci-pipelines-locally",
+        "running-load-tests-with-k6",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "devops",
+        "devops-reviewer"
+      ]
+    },
+    {
+      "pattern": "Bash(docker pull:*)",
+      "description": "Read-only Docker checks and image pulls for CI reproduction and load-test scaffolding; docker run and docker exec are granted per turn by the commands that need them",
+      "usedBy": [
+        "validating-ci-pipelines-locally",
+        "running-load-tests-with-k6",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "devops",
+        "devops-reviewer"
+      ]
+    },
+    {
+      "pattern": "Bash(docker network ls:*)",
+      "description": "Read-only Docker checks and image pulls for CI reproduction and load-test scaffolding; docker run and docker exec are granted per turn by the commands that need them",
+      "usedBy": [
+        "validating-ci-pipelines-locally",
+        "running-load-tests-with-k6",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "devops",
+        "devops-reviewer"
+      ]
+    },
+    {
+      "pattern": "Bash(git remote -v)",
+      "description": "Read the configured remotes (setting or adding a remote needs a prompt)",
+      "usedBy": [
+        "branch-rebaser"
+      ]
+    },
+    {
+      "pattern": "Bash(git remote get-url:*)",
+      "description": "Read the configured remotes (setting or adding a remote needs a prompt)",
+      "usedBy": [
+        "branch-rebaser"
+      ]
+    },
+    {
+      "pattern": "Bash(git tag --sort=-v:refname)",
+      "description": "List tags (creating or deleting a tag needs a prompt)",
+      "usedBy": [
+        "fullstack-updater",
+        "nuxt-extensions-core-updater"
+      ]
+    },
+    {
+      "pattern": "Bash(git tag -l:*)",
+      "description": "List tags (creating or deleting a tag needs a prompt)",
+      "usedBy": [
+        "fullstack-updater",
+        "nuxt-extensions-core-updater"
+      ]
+    },
+    {
+      "pattern": "Bash(git tag --list:*)",
+      "description": "List tags (creating or deleting a tag needs a prompt)",
+      "usedBy": [
+        "fullstack-updater",
+        "nuxt-extensions-core-updater"
+      ]
+    },
+    {
+      "pattern": "Bash(docker compose ps:*)",
+      "description": "Run and inspect the project's own compose stack; docker compose exec/run and -f with another file are granted per turn by the commands that need them",
+      "usedBy": [
+        "devops",
+        "devops-reviewer",
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
+    },
+    {
+      "pattern": "Bash(docker compose logs:*)",
+      "description": "Run and inspect the project's own compose stack; docker compose exec/run and -f with another file are granted per turn by the commands that need them",
+      "usedBy": [
+        "devops",
+        "devops-reviewer",
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
+    },
+    {
+      "pattern": "Bash(docker compose config:*)",
+      "description": "Run and inspect the project's own compose stack; docker compose exec/run and -f with another file are granted per turn by the commands that need them",
+      "usedBy": [
+        "devops",
+        "devops-reviewer",
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
+    },
+    {
+      "pattern": "Bash(docker compose up:*)",
+      "description": "Run and inspect the project's own compose stack; docker compose exec/run and -f with another file are granted per turn by the commands that need them",
+      "usedBy": [
+        "devops",
+        "devops-reviewer",
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
+    },
+    {
+      "pattern": "Bash(docker compose down:*)",
+      "description": "Run and inspect the project's own compose stack; docker compose exec/run and -f with another file are granted per turn by the commands that need them",
+      "usedBy": [
+        "devops",
+        "devops-reviewer",
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
+    },
+    {
+      "pattern": "Bash(docker compose restart:*)",
+      "description": "Run and inspect the project's own compose stack; docker compose exec/run and -f with another file are granted per turn by the commands that need them",
+      "usedBy": [
+        "devops",
+        "devops-reviewer",
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
+    },
+    {
+      "pattern": "Bash(docker compose build:*)",
+      "description": "Run and inspect the project's own compose stack; docker compose exec/run and -f with another file are granted per turn by the commands that need them",
+      "usedBy": [
+        "devops",
+        "devops-reviewer",
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
+    },
+    {
+      "pattern": "Bash(docker-compose ps:*)",
+      "description": "The same compose subcommands for projects on the legacy docker-compose binary",
+      "usedBy": [
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
+    },
+    {
+      "pattern": "Bash(docker-compose logs:*)",
+      "description": "The same compose subcommands for projects on the legacy docker-compose binary",
+      "usedBy": [
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
+    },
+    {
+      "pattern": "Bash(docker-compose up:*)",
+      "description": "The same compose subcommands for projects on the legacy docker-compose binary",
+      "usedBy": [
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
+    },
+    {
+      "pattern": "Bash(docker-compose down:*)",
+      "description": "The same compose subcommands for projects on the legacy docker-compose binary",
+      "usedBy": [
+        "validating-ci-pipelines-locally",
+        "production-readiness-orchestrator",
+        "production-ready"
+      ]
+    },
+    {
+      "pattern": "Bash(docker volume ls:*)",
+      "description": "List and inspect Docker volumes (removing one needs a prompt)",
+      "usedBy": [
+        "devops"
+      ]
+    },
+    {
+      "pattern": "Bash(docker volume inspect:*)",
+      "description": "List and inspect Docker volumes (removing one needs a prompt)",
+      "usedBy": [
+        "devops"
       ]
     }
   ]

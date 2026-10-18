@@ -67,12 +67,14 @@ When in doubt between "indirectly" and "no frontend path", walk. A walk that fin
 
 Follow the [managing-dev-servers](${CLAUDE_PLUGIN_ROOT}/skills/managing-dev-servers/SKILL.md) decision tree. Short version:
 
-- If the prompt contains an "Active lt-dev project" block with `session: yes` → already running, use the URLs from the block.
-- If the block says `session: no` → run `lt dev up` and wait until `https://<slug>.localhost` answers 200 OK.
-- If the block says "lt-Stack project detected — not yet migrated" → run `lt dev init` first (idempotent — also chains `lt dev install` if needed), then `lt dev up`.
-- If no block is injected → non-lt project. Start the project's documented dev server via `run_in_background: true` (e.g. `pnpm dev`) and `pkill` it at the end. Use the documented localhost ports.
+The `detect-lt-dev` hook injects the block on every prompt in the main session and at the start of every lt-dev agent.
 
-**Never start `pnpm dev` / `pnpm start` directly when an lt-dev context block is present** — that bypasses Caddy and re-introduces cross-wiring risk.
+- If the prompt contains an "Active lt-dev project" block with `session: yes` → already running, use the URLs from the block.
+- If the block says `session: no`, or it is the "lt-dev ticket worktree … stack not up yet" block → run `lt dev up` and wait until `https://<slug>.localhost` answers 200 OK.
+- If the block says "lt-Stack project detected — not yet migrated" → when the repo has the layout `lt dev` serves (a `projects/api/` or `projects/app/` directory, or at the root `src/config.env.ts` or `nest-cli.json` (API) or `nuxt.config.ts` (app)), run `lt dev init` first (idempotent — also chains `lt dev install` if needed), then `lt dev up`. Without that layout (a library, the lt CLI, a plugin repo) the block is a misdetection: continue as with no block.
+- If no block is injected → a project `lt dev` does not serve. Start the project's documented dev server via `run_in_background: true` (e.g. `pnpm dev`) and `pkill` it at the end. Use the documented localhost ports. Exception: in a subagent that is not an lt-dev agent the block never arrives, so check yourself what the hook checks: the layout above plus lt evidence (an `lt.config.json`, an `@lenne.tech/*` dependency in `package.json` or `projects/api|app/package.json`, or a root package named `@lenne.tech/*` or after an lt starter). With both, run `lt dev status`: a registered project prints its URLs (run `lt dev up` when it reports no active session), "Not registered" → `lt dev init`, then `lt dev up`.
+
+**Never start `pnpm dev` / `pnpm start` directly in a project `lt dev` serves** — that bypasses Caddy and re-introduces cross-wiring risk.
 
 If the boot fails (port collision, missing CA trust, DB not running): run `lt dev doctor` and resolve before continuing. Do NOT walk the list against a half-broken stack.
 

@@ -27,7 +27,7 @@ emit_context() {
   IFS= read -r -d '' instruction <<'EOF' || true
 lt-dev plugin auto-update report
 
-The lt-dev background updater installed newer versions of the Claude Code plugins listed in the diff above. The user does not know about the update yet, and the new versions become active in this session only after a plugin reload.
+The lt-dev background updater installed newer versions of the Claude Code plugins listed above. The user does not know about the update yet, and the new versions become active in this session only after a plugin reload.
 
 So that the user learns about the update before the work starts, the first reply of this session begins with a short info block in German (German whatever the conversation language, because this notice has one fixed wording for the whole team):
 
@@ -41,9 +41,7 @@ So that the user learns about the update before the work starts, the first reply
    Tippe `/reload-plugins` ein, damit sie in dieser Session aktiv werden. Neue Sessions starten direkt mit den neuen Versionen.
    ---
 
-   The plugin list comes from the diff above. Each diff line reads
-   `< <name>@<owner> <version> <sha>` (removed) or `> <name>@<owner> <version> <sha>` (added).
-   A removed and an added line with the same `<name>@<owner>` form one entry, `name: oldVersion → newVersion`; a plugin with only an added line is a fresh install, shown as `name: neu installiert (version)`.
+   The list items are the lines above, copied as they stand: each line is one plugin, already paired (`name@owner: old → new`, `neu installiert`, `entfernt`), and a final `… weitere` line counts plugins left out.
 
 Claude cannot run `/reload-plugins` itself: the Skill tool reaches only a few built-in commands, and this is not one of them, so the info block asks the user to type it. After the info block, continue with the user's request as usual.
 EOF

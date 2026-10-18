@@ -1,6 +1,6 @@
 ---
 name: creating-showcases
-description: 'Creates, updates, and manages showcases on the Showroom platform (showroom.lenne.tech). Implements a 5-phase workflow: (1) project analysis, (2) screenshot capture from a throwaway clone with demo data and a fallback chain, (3) SHOWCASE.md creation as single source of truth in the project repository, (4) showcase creation via API using SHOWCASE.md + the account''s company context and customer testimonials + web research, (5) interactive presentation with modern content blocks. Uses MCP tools (showroom-api) or REST API for CRUD operations. Activates when creating, editing, managing showcases, portfolio entries, or the Showroom platform. NOT for developing the Showroom platform itself.'
+description: 'Creates, updates and manages showcases and portfolio entries on the Showroom platform (showroom.lenne.tech): SHOWCASE.md as the source of truth in the project repository, screenshots from a throwaway clone with demo data, publishing through the showroom-api MCP tools with the account''s company context and testimonials. Activates on "Showcase", "Showroom", "Portfolio-Eintrag", SHOWCASE.md, showroom.lenne.tech or /lt-showroom:showroom:create. NOT for a project analysis without a showcase (use analyzing-projects). NOT for developing the Showroom platform itself.'
 ---
 
 # Creating Showcases on the Showroom Platform

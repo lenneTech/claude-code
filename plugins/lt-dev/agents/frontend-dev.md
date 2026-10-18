@@ -57,7 +57,7 @@ When fixing a bug, error, or security vulnerability:
 Before writing any code:
 
 1. Verify `~/api-client/types.gen.ts` and `~/api-client/sdk.gen.ts` exist
-2. If missing: **stop** and ask the user whether the API is running (under `lt dev up`: `https://api.<slug>.localhost`; fallback: `http://localhost:3000`), then run `pnpm run generate-types`
+2. If missing: **stop** and ask the user whether the API is running (under `lt dev`: the `API:` line of the "Active lt-dev project" context block at the start of your context, or `lt dev status` when the block is missing in a project with the `lt dev` layout; `http://localhost:3000` only when `lt dev` does not serve the project), then run `pnpm run generate-types`
 3. Manual DTO interfaces are not an acceptable workaround; wait for the generated types
 
 ## Informed-Trade-off Pattern (Frontend Instances)

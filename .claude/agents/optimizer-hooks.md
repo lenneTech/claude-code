@@ -2,7 +2,6 @@
 name: optimizer-hooks
 description: Specialized agent for optimizing Claude Code hooks. Expert in hooks.json structure, event types and which of them can inject context, matchers and the if field, script handlers, hook tests, and false-positive analysis of prompt detectors.
 model: inherit
-effort: high
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 

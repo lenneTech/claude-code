@@ -6,6 +6,11 @@ disable-model-invocation: false
 
 # Generate Commit Message
 
+> **Invocation policy.** `disable-model-invocation` stays `false` because `/lt-dev:publish`
+> invokes this command through the `Skill` tool to word the release commit message. Start it
+> only when the user asks for it or a command invokes it as a documented step; it reads the
+> diff and proposes text, the commit itself stays with the user or the caller.
+
 ## When to Use This Command
 
 - After making changes and before committing

@@ -247,11 +247,11 @@ hooks/
 **Fields:**
 | Field | Type | Description |
 |-------|------|-------------|
-| `matcher` | string | Tested against the tool name: `"Write"`, `"Write\|Edit"`, or omit for all |
-| `type` | string | `"command"` (shell), `"http"`, `"prompt"` (LLM evaluation) or `"agent"` (agentic verifier) |
+| `matcher` | string | Filters a per-event field: the tool name on tool events (`"Write"`, `"Write\|Edit"`), the source on `SessionStart` (`startup`, `resume`, `clear`, `compact`, `fork`), the agent type on `SubagentStart` / `SubagentStop`; omit for all. Ignored on events without matcher support (`UserPromptSubmit`, `Stop`) |
+| `type` | string | `"command"` (shell), `"http"`, `"mcp_tool"` (MCP server tool), `"prompt"` (LLM evaluation) or `"agent"` (agentic verifier) |
 | `command` | string | Shell command (for type="command"); receives the event data as JSON on stdin |
-| `if` | string | Optional, on the hook object: permission-rule filter such as `"Edit(**/*.ts)"` or `"Bash(git *)"` |
-| `timeout` | number | Seconds before timeout (default: 60, optional) |
+| `if` | string | Optional, on the hook object: permission-rule filter such as `"Edit(**/*.ts)"` or `"Bash(git *)"`. Tool events only; on any other event a hook with `if` never runs |
+| `timeout` | number | Optional, seconds before cancelling. Defaults: 600 for `command` / `http` / `mcp_tool` (30 on `UserPromptSubmit`), 30 for `prompt`, 60 for `agent` |
 
 **Events:**
 - `PreToolUse` - Before a tool executes
@@ -266,6 +266,8 @@ hooks/
 - `TeammateIdle` - Agent Teams: teammate waiting for work
 - `TaskCompleted` - Agent Teams: task finished
 - `PreCompact` - Before context compaction
+
+The full list, with which events deliver `additionalContext`, is in [reference.md](${CLAUDE_SKILL_DIR}/reference.md#event-types-for-hooks).
 
 ---
 

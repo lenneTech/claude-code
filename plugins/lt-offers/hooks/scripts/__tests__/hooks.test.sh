@@ -109,6 +109,9 @@ assert_contains "$(detect "$OFFERS" '/lt-offers:create-offer für Muster-Kunde')
 echo "detect-offers-project.sh: system-generated turns"
 assert_silent "$(detect "$OFFERS" "$NOTE")" "task-notification turn is ignored"
 assert_silent "$(HOOK_PATH="$NOJQ_BIN" detect "$OFFERS" "$NOTE")" "task-notification turn is ignored without jq"
+PEER='<cross-session-message from="uds:/tmp/cc-socks/1.sock" from-name="cli-f0" from-mode="bypass">READY: the Angebot demo flow and offers permissions work.</cross-session-message>'
+assert_silent "$(detect "$OFFERS" "$PEER")" "peer session message is ignored"
+assert_silent "$(HOOK_PATH="$NOJQ_BIN" detect "$OFFERS" "$PEER")" "peer session message is ignored without jq"
 
 echo "detect-offers-project.sh: marketplace self-references"
 assert_silent "$(detect "$OTHER" 'bump the lt-offers version')" "plugin name alone does not fire"

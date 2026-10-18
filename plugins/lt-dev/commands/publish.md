@@ -1,7 +1,7 @@
 ---
 description: Publish the current (or a named) lt base repo as a new version, optionally maintaining dependencies first, then update and release its downstream base repos (nest-server-starter, nuxt-base-starter). Smoke test opt-in via --smoke-test.
 argument-hint: '[nest-server|nuxt-extensions|lt-monorepo|cli|nuxt-base-starter|nest-server-starter|claude-code|claude-code-internal] [--release-as=patch|minor|major] [--skip-downstream] [--maintenance|--skip-maintenance] [--smoke-test] [--dry-run]'
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, Skill, ToolSearch
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, Skill(lt-dev:git:commit-message), Skill(lt-dev:plugin:check), Skill(lt-dev:maintenance:maintain), Skill(lt-dev:fullstack:smoke-test), ToolSearch
 disable-model-invocation: true
 ---
 

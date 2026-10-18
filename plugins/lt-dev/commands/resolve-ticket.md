@@ -1,7 +1,7 @@
 ---
 description: Resolve a Linear ticket or story file with TDD-based implementation
 argument-hint: "[issue-id | story-file]"
-allowed-tools: Agent, Read, Grep, Glob, Bash(git:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, AskUserQuestion, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__get_document, mcp__plugin_lt-dev_linear__list_documents, mcp__plugin_lt-dev_linear__get_attachment, mcp__plugin_lt-dev_linear__extract_images
+allowed-tools: Agent, Read, Grep, Glob, Bash(git:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, AskUserQuestion, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__get_document, mcp__plugin_lt-dev_linear__list_documents, mcp__plugin_lt-dev_linear__get_attachment, mcp__plugin_lt-dev_linear__extract_images, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__save_issue_label, mcp__plugin_lt-dev_linear__list_projects
 disable-model-invocation: false
 ---
 
@@ -33,7 +33,7 @@ disable-model-invocation: false
 | `/lt-dev:create-task` | Create a technical task |
 | `/lt-dev:create-bug` | Create a bug report |
 | `/lt-dev:review` | Code review after implementation: proven Critical/High defects, fixed automatically |
-| `/review` | Claude Code built-in: PR-level review after PR creation |
+| `/code-review` (alias `/review`) | Claude Code bundled skill: generic correctness review of the PR after its creation (no lt-stack awareness) |
 | `/lt-dev:linear-comment` | Generate testing comment for the issue |
 | `/lt-dev:dev-submit` | Submit work for review (MR/PR + comment + status update) |
 | `/lt-dev:backend:sec-review` | Security review of code changes |

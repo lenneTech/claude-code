@@ -68,7 +68,6 @@ if [ "$TOOL" = "Edit" ]; then
 
   # Use node for the substitution. Node is robust against any UTF-8, newlines,
   # quotes, and backslashes in the strings.
-  # Node is already an allowed bash pattern in this plugin's permissions.json.
   if ! command -v node &>/dev/null; then
     exit 0
   fi

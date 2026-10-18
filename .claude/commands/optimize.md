@@ -1,8 +1,7 @@
 ---
 description: Optimize this marketplace against the current Claude Code documentation and default model, with optional secondary sources
 argument-hint: "[--update-cache|--skip-cache] [secondary-sources...]"
-allowed-tools: Read, Write, Edit, Glob, Grep, Agent, SendMessage, Skill, AskUserQuestion, WebFetch, Bash(bun .claude/scripts/:*), Bash(claude plugin validate:*), Bash(git:*), Bash(ls:*), Bash(wc:*), Bash(find:*), Bash(jq:*), Bash(awk:*), Bash(sed:*), Bash(grep:*), Bash(bash scripts/:*), Bash(bash plugins/:*), Bash(node --test:*), Bash(npm view:*), Bash(curl -s:*)
-effort: high
+allowed-tools: Read, Write, Edit, Glob, Grep, Agent, SendMessage, AskUserQuestion, WebFetch, Bash(bun .claude/scripts/*), Bash(claude plugin validate:*), Bash(git:*), Bash(ls:*), Bash(wc:*), Bash(find:*), Bash(jq:*), Bash(awk:*), Bash(sed:*), Bash(grep:*), Bash(bash scripts/*), Bash(bash plugins/*), Bash(node --test:*), Bash(npm view:*), Bash(curl -s:*)
 disable-model-invocation: true
 ---
 

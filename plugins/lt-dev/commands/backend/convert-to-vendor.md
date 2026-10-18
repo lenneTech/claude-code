@@ -1,7 +1,7 @@
 ---
 description: Convert an existing npm-mode API project to vendor mode with automatic migration guide application. Detects version gap and applies all breaking-change migrations.
 argument-hint: "[--dry-run] [--target-version vX.Y.Z]"
-allowed-tools: Agent
+allowed-tools: Agent, Bash(node -e:*)
 disable-model-invocation: true
 ---
 

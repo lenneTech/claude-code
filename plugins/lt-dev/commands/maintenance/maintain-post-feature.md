@@ -1,6 +1,6 @@
 ---
 description: Post-feature npm maintenance and dependency optimization
-allowed-tools: Agent
+allowed-tools: Agent, Bash(node -e:*)
 disable-model-invocation: true
 ---
 

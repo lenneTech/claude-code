@@ -1,6 +1,6 @@
 ---
 description: Pre-release npm maintenance - zero-risk patches only
-allowed-tools: Agent
+allowed-tools: Agent, Bash(node -e:*)
 disable-model-invocation: true
 ---
 

@@ -91,30 +91,42 @@ success=1
 
   if [ "$success" -eq 1 ]; then
     manifest="$HOME/.claude/plugins/installed_plugins.json"
-    before_snapshot=""
+    before_json=""
     if command -v jq >/dev/null 2>&1 && [ -f "$manifest" ]; then
-      before_snapshot=$(jq -r '
-        .plugins // {}
-        | to_entries[]
-        | "\(.key) \(.value[0].version // "?") \(.value[0].gitCommitSha // "")"
-      ' "$manifest" 2>/dev/null | sort)
+      before_json=$(jq -c '.plugins // {}' "$manifest" 2>/dev/null)
     fi
 
     echo "Running: lt claude plugins"
     if lt claude plugins; then
-      if [ -n "$before_snapshot" ] && [ -f "$manifest" ]; then
-        after_snapshot=$(jq -r '
-          .plugins // {}
-          | to_entries[]
-          | "\(.key) \(.value[0].version // "?") \(.value[0].gitCommitSha // "")"
-        ' "$manifest" 2>/dev/null | sort)
-        if [ "$before_snapshot" != "$after_snapshot" ]; then
-          diff_lines=$(diff <(printf '%s\n' "$before_snapshot") <(printf '%s\n' "$after_snapshot") \
-            | grep -E '^[<>]' | head -n 20)
+      if [ -n "$before_json" ] && [ -f "$manifest" ]; then
+        # One line per changed plugin, paired by key, so nobody has to reassemble the report
+        # from a line diff. Observed 2026-10-18: `diff | head -n 20` on 11 updated plugins cut
+        # the last two added lines, and the notice showed two updated plugins as removed.
+        # The snapshot goes in on stdin rather than as an argument (Windows caps a command
+        # line at 32 K). The list is capped below the 10,000-character context limit, and the
+        # last line counts what the cap left out.
+        changes=$(printf '%s' "$before_json" | jq -r --slurpfile now "$manifest" --argjson max 40 '
+          def install: if type == "array" then .[0] else . end;
+          def short: (. // "?") | .[0:7];
+          . as $before
+          | ($now[0].plugins // {}) as $after
+          | [ ([$before, $after] | map(keys) | add | unique)[] as $k
+              | ($before[$k] // null | install) as $o
+              | ($after[$k] // null | install) as $n
+              | if $o == null then "\($k): neu installiert (\($n.version // "?"))"
+                elif $n == null then "\($k): entfernt (war \($o.version // "?"))"
+                elif $o.version != $n.version then "\($k): \($o.version // "?") → \($n.version // "?")"
+                elif $o.gitCommitSha != $n.gitCommitSha
+                  then "\($k): \($o.version // "?") (\($o.gitCommitSha | short) → \($n.gitCommitSha | short))"
+                else empty end ]
+          | if length > $max then .[0:$max] + ["… \(length - $max) weitere Plugins nicht aufgeführt"] else . end
+          | .[] | "    " + .
+        ' 2>/dev/null)
+        if [ -n "$changes" ]; then
           notifications+=("- Claude Code plugins updated:")
-          while IFS= read -r diff_line; do
-            [ -n "$diff_line" ] && notifications+=("    $diff_line")
-          done <<< "$diff_lines"
+          while IFS= read -r change_line; do
+            [ -n "$change_line" ] && notifications+=("$change_line")
+          done <<< "$changes"
         fi
       fi
     else

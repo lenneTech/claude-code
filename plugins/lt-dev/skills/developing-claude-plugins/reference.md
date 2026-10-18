@@ -131,8 +131,9 @@ skills: string            # Optional. Comma-separated skill names, preloaded int
 ```
 
 - Top-level key `hooks` holds an object keyed by event name (`PreToolUse`, `PostToolUse`, `UserPromptSubmit`, ...).
-- `matcher` is always a string tested against the tool name (`"Edit|Write"`); omit it to match every tool.
-- Path or argument filtering uses the optional `if` field on the individual hook object, in permission-rule syntax (`"Edit(**/*.ts)"`, `"Bash(git *)"`). It holds exactly one rule; to cover both tools, add a `Write(...)` handler next to the `Edit(...)` one.
+- `matcher` is a string that filters a per-event field: the tool name on tool events (`"Edit|Write"`), the source on `SessionStart` (`startup`, `resume`, `clear`, `compact`, `fork`), the agent type on `SubagentStart` / `SubagentStop` (`^my-plugin:` for plugin agents). Omit it to match everything; events without matcher support (`UserPromptSubmit`, `Stop`) ignore it.
+- Path or argument filtering uses the optional `if` field on the individual hook object, in permission-rule syntax (`"Edit(**/*.ts)"`, `"Bash(git *)"`). It holds exactly one rule; to cover both tools, add a `Write(...)` handler next to the `Edit(...)` one. `if` is evaluated on tool events only (`PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, `PermissionDenied`); on any other event a hook with `if` never runs.
+- `type` is `"command"`, `"http"`, `"mcp_tool"`, `"prompt"` or `"agent"`. `timeout` is in seconds and defaults to 600 for `command` / `http` / `mcp_tool` (30 on `UserPromptSubmit`), 30 for `prompt` and 60 for `agent`.
 - A command hook receives the event data as JSON on stdin (for example `tool_input.file_path`); read it with `jq`. There is no `CLAUDE_FILE_PATH` environment variable.
 
 ---

@@ -55,6 +55,11 @@ ignore it silently.
    invoke through `Skill` adds that its report returns to the caller, which carries on — otherwise the embedded run's
    report stops the outer one. Reason: the default model ends long multi-part turns with text-only progress reports,
    which stops an unattended run (`prompting-claude-opus-5-5.md`, "Unattended agentic runs").
+8a. **A command that calls a skill or command with its own `allowed-tools` grants it by name**: `Skill(lt-dev:<name>)`
+   in the caller's `allowed-tools`, never `Skill(lt-dev:*)` and never a Skill rule in `permissions.json`. Measured
+   2026-10-18 (headless probes): the Skill permission gate fires exactly for targets that carry `allowed-tools`, so
+   `/lt-dev:vibe:build` was denied its `sec-review` call; a wildcard would also open `git:ship`, whose grants include
+   `git push`, without a prompt.
 
 ## Agents
 
@@ -64,7 +69,9 @@ ignore it silently.
    a lower effort level is chosen only when a measurement that can detect a quality difference (correctness,
    security logic, completeness, not just convention presence) shows the same or better quality. Per-token price
    never decides. The project-level optimizer agents follow the same rule.
-10. **Effort is pinned only where a measurement shows it adds quality, and today nothing in lt-dev is pinned.**
+10. **Effort is pinned only where a measurement shows it adds quality, and today nothing in this marketplace is
+    pinned** — every plugin and the project-level optimizer agents and `/optimize` included (unmeasured pins removed
+    2026-10-18: `lt-showroom/project-analyzer` `medium`, the six optimizer agents and `/optimize` `high`).
     Without a pin an element runs at the session's level, which follows each model's default (Opus 5.5: `medium`) and
     which the developer can raise for a hard task; a pin overrides the session in both directions (it also caps a
     developer who chose `xhigh`). Measured 2026-09-25 on Opus 5.5 with `plugins/lt-dev/evals/agent/*`, 4-5 runs per
@@ -107,9 +114,22 @@ ignore it silently.
 18. **`UserPromptSubmit` also fires on system-generated turns.** Background task notifications arrive as prompts
     containing `<task-notification>`; topical detectors exit on them and strip this marketplace's own plugin names
     before keyword matching. Observed 2026-09-24: every subagent notification that mentioned `plugins/lt-offers`
-    fired the offers detector, one of them in "demo stage" mode.
+    fired the offers detector, one of them in "demo stage" mode. Messages from other sessions arrive the same way,
+    wrapped in `<cross-session-message from="...">`, and are skipped by the same shared guard
+    (`_skip-task-notification.sh`, identical in every lt-* plugin). Observed 2026-10-18: two peer reports fired the
+    lt-cli, plugin-dev, offers and showroom detectors.
 19. **`detect-lt-dev.sh` deliberately runs on every turn** without keyword guards; its project-identity context is
-    needed after compaction and on notification turns alike.
+    needed after compaction and on notification turns alike. It also runs on `SubagentStart` for `^lt-dev:` agents,
+    because the dev-server skills and the browser reviewers read their URLs from that block and a subagent never sees
+    `UserPromptSubmit` context. A repo counts as an lt project only with the layout `lt dev init` accepts
+    (`projects/api|app`, or `src/config.env.ts` / `nest-cli.json` / `nuxt.config.ts` at the root) plus lt evidence;
+    the layout list is pinned in `rule-invariants.json`. Observed 2026-10-18: the `@lenne.tech/*` package-name marker
+    alone told this marketplace, the lt CLI and nuxt-extensions to run `lt dev init` on every prompt (15 of 95 local
+    repos), which `lt dev init` refuses for all of them.
+19a. **Reports a hook builds for Claude are never cut silently.** A list that is capped says how many entries it
+    omitted, and paired data (old and new version) is paired in the script, not left to the model. Observed
+    2026-10-18: `diff | head -n 20` cut the auto-update report of 11 plugins, and the two cut `>` lines made Claude
+    announce two successful updates as removals.
 20. **The `if` field belongs on the hook object** next to `type`/`command`, not on the matcher group (measured).
 21. **Every hook fix ships with a regression test** in the plugin's `__tests__/`, run the way CI runs it.
 
@@ -123,6 +143,33 @@ ignore it silently.
     `https://ui.nuxt.com/mcp` replaced it.
 24. **Plugin-bundled tool names are `mcp__plugin_<plugin>_<server>__<tool>`**; the unscoped form grants nothing.
     Figma runs through the official `figma` plugin (`mcp__plugin_figma_figma__*`).
+24a. **A `CONNECT_TIMEOUT` on an OAuth HTTP server is diagnosed from Claude Code's own MCP logs before the config is
+    blamed** (`mcp-logs-plugin-<plugin>-<server>/` in the Claude CLI cache directory, one JSONL per connect). No
+    `.mcp.json` field changes token refresh. Observed 2026-10-18: twelve sessions started within 1.2 s with expired
+    tokens, queued on the shared refresh lock and hit the 60 s timer; the offers and showroom OAuth providers answered a
+    dead refresh token with HTTP 500 instead of 400 `invalid_grant`, so the client never dropped it. Fixes belong in the
+    platform repos and upstream, not in the plugin.
+24b. **The chrome-devtools launcher uses a global binary only when its version equals the pin.** Observed
+    2026-10-18: 54 of 55 connects ran a global 1.4.0 against a pin of 1.10.1.
+
+## Permissions
+
+24c. **`permissions.json` lands in the user's global settings and applies in every project**, so each pattern names
+    the narrow command its description states. Broad tools (`curl`, `node`, `docker run`/`exec`, `git push`, `rm`,
+    `cp`, `mv`, `gh api` writes) are granted per turn through a command's `allowed-tools`, never globally; a substring
+    rule such as `Bash(curl *host*)` is no narrowing, because curl takes several URLs and data files. Syntax per
+    `permissions.md`: `:*` is a trailing wildcard only at the end; `\:` is a literal backslash, and `x/:*` needs a
+    space after the slash, so both never match. Settings do not expand `${CLAUDE_PLUGIN_ROOT}`; such a rule matches
+    only with the placeholder replaced by the absolute install path. `lt claude plugins` copies patterns verbatim and
+    only appends, so narrowing a rule here reaches fresh installs only; existing settings keep the old rule until it
+    is removed by hand or the CLI learns to drop rules a plugin no longer lists. A narrowed global rule makes the
+    commands that relied on it add a per-turn grant (a command's grant reaches the foreground agents it spawns,
+    measured by probe 2026-10-18). Observed 2026-10-18: `Bash(rm:*)`, `Bash(curl:*)`,
+    `Bash(docker:*)` and eight more approved far beyond their descriptions, four `\:` rules and eight placeholder rules
+    never matched.
+24d. **lt-showroom and lt-tools declare no `dependencies` on lt-dev.** Their use of lt-dev's chrome-devtools server is
+    optional, and a declared dependency disables the dependent plugin whenever lt-dev is missing or off
+    (`plugins-troubleshooting.md`); the READMEs state the optional use instead.
 
 ## Writing
 

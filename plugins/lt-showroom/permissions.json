@@ -174,24 +174,6 @@
       ]
     },
     {
-      "pattern": "Bash(curl *api.showroom.lenne.tech*)",
-      "description": "Health-check the showroom API",
-      "usedBy": [
-        "creating-showcases",
-        "showroom:create",
-        "showroom:update"
-      ]
-    },
-    {
-      "pattern": "Bash(docker run:*)",
-      "description": "Start the database container of a screenshot run (recorded in session.json and removed by cleanup)",
-      "usedBy": [
-        "creating-showcases",
-        "screenshot-generator",
-        "showroom:screenshot"
-      ]
-    },
-    {
       "pattern": "Bash(mkdir -p docs/showcase*)",
       "description": "Create the docs/showcase/ folder for a monorepo SHOWCASE.md",
       "usedBy": [
@@ -217,22 +199,6 @@
       ]
     },
     {
-      "pattern": "Bash(mongosh:*)",
-      "description": "Check MongoDB connectivity and status",
-      "usedBy": [
-        "screenshot-generator",
-        "showroom:screenshot"
-      ]
-    },
-    {
-      "pattern": "Bash(pip install:*)",
-      "description": "Install Python dependencies for ML services",
-      "usedBy": [
-        "screenshot-generator",
-        "showroom:screenshot"
-      ]
-    },
-    {
       "pattern": "Bash(uvicorn:*)",
       "description": "Start Python FastAPI services",
       "usedBy": [
@@ -241,16 +207,7 @@
       ]
     },
     {
-      "pattern": "Bash(curl *localhost*)",
-      "description": "Health check and API calls to local services",
-      "usedBy": [
-        "screenshot-generator",
-        "showroom:screenshot",
-        "showroom:create"
-      ]
-    },
-    {
-      "pattern": "Bash(cp *.env*)",
+      "pattern": "Bash(cp .env.example .env)",
       "description": "Copy .env.example to .env for project setup",
       "usedBy": [
         "screenshot-generator",

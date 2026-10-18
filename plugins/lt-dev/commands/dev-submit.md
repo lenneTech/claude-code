@@ -1,7 +1,7 @@
 ---
 description: Submit current work for dev review — creates MR/PR, posts Linear comment, and moves ticket to Dev Review
 argument-hint: "[issue-id] [--unattended] [--autopilot]"
-allowed-tools: Read, Bash(git:*), Bash(gh pr:*), Bash(glab mr:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), mcp__plugin_lt-dev_linear__*, AskUserQuestion, ListAgents, SendMessage
+allowed-tools: Read, Bash(git:*), Bash(gh pr:*), Bash(glab mr:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/*), mcp__plugin_lt-dev_linear__*, AskUserQuestion, ListAgents, SendMessage, Bash(curl:*)
 disable-model-invocation: false
 ---
 
@@ -32,6 +32,10 @@ disable-model-invocation: false
 | `/lt-dev:resolve-ticket` | Full ticket resolution (implementation + tests + review) |
 | `/lt-dev:review` | Code review before submitting |
 | [`writing-qa-test-instructions`](${CLAUDE_PLUGIN_ROOT}/skills/writing-qa-test-instructions/SKILL.md) skill | Testability classification + German QA test instructions for the Linear comment (STEP 3) |
+
+## Turn Endings
+
+This command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes go in the same message as the next tool call; a finished step is the cue to start the next one. The run stops only at the handoff points this command defines (the STEP 0 question for a missing issue ID, the STEP 1 commit choice and push confirmation and the STEP 3 comment approval outside `--unattended`, the STEP 4 question when no review state matches, the STEP 5 summary; when `/lt-dev:ticket-cycle` invoked this command, its result returns to that caller, which carries on), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation. With `--autopilot` nothing is asked: the routine questions take their `--unattended` default, and a missing issue ID or an unmatched state ends the command with a `PARK:` line.
 
 ---
 

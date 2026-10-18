@@ -185,6 +185,19 @@
         ]
       }
     ],
+    "SubagentStart": [
+      {
+        "matcher": "^lt-dev:",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/detect-lt-dev.sh\" SubagentStart",
+            "timeout": 5,
+            "statusMessage": "Passing lt-dev project context to the agent"
+          }
+        ]
+      }
+    ],
     "StopFailure": [
       {
         "hooks": [

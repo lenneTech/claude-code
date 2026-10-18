@@ -120,6 +120,17 @@ assert_silent "$(run_hook detect-nest-server.sh "$NEST" "$NOTE")" "nest-server i
 assert_silent "$(run_hook detect-nuxt.sh "$NUXT" "$NOTE")" "nuxt ignores a notification turn"
 assert_silent "$(HOOK_PATH="$NOJQ_BIN" run_hook detect-plugin-dev.sh "$MARKET" "$NOTE")" "notification turn is ignored without jq"
 
+# Messages from other sessions on this machine arrive wrapped the same way (2026-10-18).
+PEER="<cross-session-message from=\"uds:/tmp/cc-socks/1.sock\" from-name=\"cli-f0\" from-mode=\"bypass\">READY: ${NOTE_RESULT}</cross-session-message>"
+echo "peer session messages (<cross-session-message>)"
+assert_silent "$(run_hook detect-plugin-dev.sh "$MARKET" "$PEER")" "plugin-dev ignores a peer message"
+assert_silent "$(run_hook detect-security-context.sh "$WEB" "$PEER")" "security-context ignores a peer message"
+assert_silent "$(run_hook detect-npm-maintenance.sh "$WEB" "$PEER")" "npm-maintenance ignores a peer message"
+assert_silent "$(HOOK_PATH="$LT_BIN:$PATH" run_hook detect-lt-cli.sh "$WEB" "$PEER")" "lt-cli ignores a peer message"
+assert_silent "$(run_hook detect-nest-server.sh "$NEST" "$PEER")" "nest-server ignores a peer message"
+assert_silent "$(run_hook detect-nuxt.sh "$NUXT" "$PEER")" "nuxt ignores a peer message"
+assert_silent "$(HOOK_PATH="$NOJQ_BIN" run_hook detect-plugin-dev.sh "$MARKET" "$PEER")" "peer message is ignored without jq"
+
 echo "plugin-dev: genuine plugin-dev prompts fire"
 for p in 'add a new skill' 'fix the hook' 'SKILL.md frontmatter' 'plugin.json' 'create a command' \
          'Erstelle einen neuen Hook' 'Passe den Agent an' 'den Hook anpassen' 'the hook does not fire' \

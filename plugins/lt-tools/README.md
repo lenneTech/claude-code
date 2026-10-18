@@ -20,6 +20,9 @@ Or with the lenne.tech CLI: `lt claude plugins lt-tools`.
 - Node.js ≥ 22 (the scripts have no npm dependencies)
 - Google Chrome or Chromium for the website comparison (auto-detected; `CHROME_PATH` overrides)
 - npx access on the first mirror run: it fetches esbuild for bundling JavaScript modules
+- Optional: the `lt-dev` plugin from the same marketplace, whose `chrome-devtools` MCP server allows manual inspection
+  of the copy beyond the comparison report. Mirroring and comparison work without it, so lt-tools declares no
+  dependency on lt-dev.
 
 ## Commands
 

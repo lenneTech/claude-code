@@ -2,7 +2,6 @@
 name: optimizer-mcp
 description: Specialized agent for optimizing Claude Code MCP server configurations. Expert in .mcp.json structure, server types (stdio, http, sse), launchers, live handshake verification, and plugin-scoped MCP tool names.
 model: inherit
-effort: high
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 

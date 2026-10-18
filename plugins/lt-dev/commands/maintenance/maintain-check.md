@@ -1,6 +1,6 @@
 ---
 description: Dry-run npm package analysis without changes
-allowed-tools: Agent
+allowed-tools: Agent, Bash(node -e:*)
 disable-model-invocation: true
 ---
 

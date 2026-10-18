@@ -1,7 +1,7 @@
 ---
 description: Update @lenne.tech/nest-server with automated migration and validation. Auto-detects vendored projects and delegates to nest-server-core-updater if applicable.
 argument-hint: "[--dry-run] [--target-version X.Y.Z] [--skip-packages] [path]"
-allowed-tools: Agent
+allowed-tools: Agent, Bash(gh api:*)
 disable-model-invocation: true
 ---
 

@@ -21,7 +21,7 @@ disable-model-invocation: true
 | `/lt-dev:git:commit-message` | Generate commit message suggestions |
 | `/lt-dev:git:create-request` | Create MR/PR directly |
 | `/lt-dev:dev-submit` | Full submission workflow (MR/PR + Linear comment + status) |
-| `/review` | Claude Code built-in: PR-level review (after PR creation) |
+| `/code-review` (alias `/review`) | Claude Code bundled skill: generic correctness review of the PR after its creation (no lt-stack awareness) |
 
 ---
 
@@ -80,4 +80,4 @@ Resolve the tool with `command -v pbcopy || command -v wl-copy || command -v xcl
 
 ---
 
-After the description is presented, suggest: "After creating the PR, run `/review` for an automated PR-level review."
+After the description is presented, suggest: "After creating the PR, run `/code-review <PR number>` (alias `/review`) for a generic correctness review of the PR."

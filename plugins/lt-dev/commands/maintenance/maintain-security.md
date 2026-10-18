@@ -1,6 +1,6 @@
 ---
 description: Security-only npm updates for vulnerable packages
-allowed-tools: Agent
+allowed-tools: Agent, Bash(node -e:*)
 disable-model-invocation: true
 ---
 

@@ -165,6 +165,9 @@ assert_silent "$(analyzable "$TMP_ROOT" 'create a showcase for this project')" "
 echo "system-generated turns"
 assert_silent "$(analyzable "$APP" "$NOTE")" "detect-analyzable-project: task-notification turn is ignored"
 assert_silent "$(HOOK_PATH="$NOJQ_BIN" analyzable "$APP" "$NOTE")" "detect-analyzable-project: ignored without jq"
+PEER='<cross-session-message from="uds:/tmp/cc-socks/1.sock" from-name="nest-server-dc" from-mode="bypass">READY: the showroom showcase screenshots and portfolio analysis work.</cross-session-message>'
+assert_silent "$(analyzable "$APP" "$PEER")" "detect-analyzable-project: peer session message is ignored"
+assert_silent "$(HOOK_PATH="$NOJQ_BIN" analyzable "$APP" "$PEER")" "detect-analyzable-project: peer message ignored without jq"
 
 echo "marketplace self-references"
 assert_silent "$(analyzable "$APP" 'bump the lt-showroom version')" "detect-analyzable-project: plugin name alone does not fire"

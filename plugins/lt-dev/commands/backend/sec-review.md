@@ -6,6 +6,11 @@ disable-model-invocation: false
 
 # Security Review
 
+> **Invocation policy.** `disable-model-invocation` stays `false` because `/lt-dev:vibe:build`
+> and `/lt-dev:vibe:build-plan` invoke this command through the `Skill` tool in their Phase 6
+> security review. Start it only when the user asks for it or a command invokes it as a
+> documented step.
+
 ## When to Use This Command
 
 - After implementing new endpoints or modifying existing ones

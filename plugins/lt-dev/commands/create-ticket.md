@@ -1,7 +1,7 @@
 ---
 description: Create a Linear ticket (Story, Task, or Bug) with guided workflow
 argument-hint: "[ticket-idea]"
-allowed-tools: AskUserQuestion, Read, Glob, Skill
+allowed-tools: AskUserQuestion, Read, Glob, Skill(lt-dev:create-story), Skill(lt-dev:create-task), Skill(lt-dev:create-bug)
 disable-model-invocation: true
 ---
 

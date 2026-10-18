@@ -1,7 +1,7 @@
 ---
 description: End-to-end smoke test of the lt stack. Creates a vendor-mode fullstack project, validates it locally, deploys it through GitLab and TurboOps (dev and production), verifies both stages online, fixes errors in the base repos and cleans up everything.
 argument-hint: '[--name=<name>] [--domain=<smoke-domain>] [--group=<gitlab-group>] [--server=<turboops-server>] [--rounds=1] [--keep] [--skip-deploy] [--skip-cleanup]'
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, Skill, ToolSearch
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, ToolSearch
 disable-model-invocation: false
 ---
 

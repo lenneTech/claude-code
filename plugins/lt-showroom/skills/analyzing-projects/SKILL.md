@@ -1,6 +1,6 @@
 ---
 name: analyzing-projects
-description: 'Analyzes software projects to extract technology stack, architecture, features, API surface, testing strategy, UI/UX patterns, security measures, and performance optimizations. Produces structured, evidence-based reports where every claim is backed by a source code reference. Also detects how the application is started (scripts, Docker, database requirements) and enumerates all pages and views for screenshot planning. Outputs a structured report that feeds directly into SHOWCASE.md creation and screenshot automation. Activates when analyzing a project for showroom showcases, portfolio entries, project documentation, or when a user asks what a project does or how it is built. NOT for creating or publishing showcases (use creating-showcases). NOT for platform development (use generating-nest-servers).'
+description: 'Analyzes a software project for a showroom showcase or portfolio entry: technology stack, architecture, features, API surface, testing, UI/UX, security and performance, every claim backed by a source file reference, plus how the application starts (scripts, Docker, database) and which pages to screenshot. The report feeds SHOWCASE.md and screenshot automation. Activates when a project is analyzed for showroom.lenne.tech, a showcase, a portfolio entry or SHOWCASE.md, and on /lt-showroom:showroom:analyze. NOT for everyday questions about the codebase being worked on. NOT for creating or publishing showcases (use creating-showcases). NOT for platform development (use generating-nest-servers).'
 ---
 
 # Analyzing Software Projects
@@ -10,9 +10,11 @@ This skill enables Claude Code to perform deep, evidence-based analysis of softw
 ## When to Use This Skill
 
 - User asks to analyze a project for a showcase or portfolio entry
-- User wants to understand what a codebase does or how it is structured
+- User wants a project's purpose and structure written up for a showcase, a portfolio entry or SHOWCASE.md
 - Running `/lt-showroom:showroom:analyze`, `/lt-showroom:showroom:create`, or `/lt-showroom:showroom:update` commands
-- User asks about a project's technology stack, features, or architecture
+- User asks for a project's technology stack, features, or architecture as material for showroom.lenne.tech
+
+Everyday questions about the codebase being worked on (what a module does, how a flow is built) are ordinary code reading, not this skill.
 
 ## Skill Boundaries
 

@@ -1,20 +1,22 @@
 # lt-dev Plugin
 
-lenne.tech Development Skills, Commands and Hooks for Claude Code - Frontend (Nuxt 4), Backend (NestJS), TDD and CLI Tools.
+lenne.Tech Development Skills, Commands and Hooks for Claude Code - Frontend (Nuxt 4), Backend (NestJS), TDD and CLI Tools.
 
 ## Installation
 
 ```bash
-claude plugins install lt-dev --marketplace lenne-tech
+/plugin marketplace add lenneTech/claude-code
+/plugin install lt-dev@lenne-tech
 ```
 
 ## Recommended Plugins
 
-These plugins are **optional** but enhance the experience when working with this plugin:
+These plugins enhance the experience when working with this plugin:
 
 | Plugin | Marketplace | Purpose | Install Command |
 |--------|-------------|---------|-----------------|
-| `typescript-lsp` | claude-plugins-official | TypeScript language server for better code intelligence | `claude plugins install typescript-lsp --marketplace claude-plugins-official` |
+| `typescript-lsp` | claude-plugins-official | TypeScript language server for better code intelligence (optional) | `claude plugin install typescript-lsp@claude-plugins-official` |
+| `figma` | claude-plugins-official | Required companion for the Figma commands (`/lt-dev:frontend:figma-init`, `/lt-dev:frontend:figma-research`, `/lt-dev:frontend:figma-to-code`) and the `--figma=<url>` flag of `take-ticket` / `ticket-cycle`; everything else works without it | `claude plugin install figma@claude-plugins-official` |
 
 ## Features
 
@@ -53,7 +55,7 @@ These plugins are **optional** but enhance the experience when working with this
 
 ## Chrome DevTools MCP — Canary auto-detection
 
-The `chrome-devtools` MCP server is launched via `scripts/chrome-devtools-mcp-launcher.sh`. On macOS the launcher checks for Google Chrome Canary in `/Applications/`, `~/Applications/`, and via `mdfind` on the bundle identifier `com.google.Chrome.canary`. If Canary is present, it appends `--channel=canary` so the automated browser shows up with the yellow Canary icon in the window switcher and is clearly distinguishable from the developer's daily-driver Chrome. Without Canary (or on non-macOS systems) the launcher behaves exactly like the previous static invocation — stable Chrome, no extra flags.
+The `chrome-devtools` MCP server is launched via `scripts/chrome-devtools-mcp-launcher.sh`. On macOS the launcher checks for Google Chrome Canary in `/Applications/`, `~/Applications/`, and via `mdfind` on the bundle identifier `com.google.Chrome.canary`. If Canary is present, it appends `--channel=canary` so the automated browser shows up with the yellow Canary icon in the window switcher and is clearly distinguishable from the developer's daily-driver Chrome. Without Canary (or on non-macOS systems) it starts stable Chrome with no extra flags. A globally installed `chrome-devtools-mcp` is used only when it is at the pinned version; any other version, or none, starts the pin through `npx`.
 
 Override the auto-detection with the `CHROME_MCP_CHANNEL` environment variable:
 

@@ -126,6 +126,7 @@ fi
 echo "system turns, slash commands, headless runs and the plugin's own names never fire"
 NOTE='<task-notification><task-id>a1</task-id><status>completed</status><result>rebased onto dev, ran the k6 load test, disk is full, workaround added</result></task-notification>'
 expect_silent "$NOTE"
+expect_silent '<cross-session-message from="uds:/tmp/cc-socks/1.sock" from-name="cli-f0">READY: rebased onto dev, ran the k6 load test, disk is full, workaround added</cross-session-message>'
 expect_silent '/lt-dev:git:rebase onto dev'
 expect_silent 'tighten the description of plugins/lt-dev/skills/rebasing-branches/SKILL.md'
 expect_silent 'the running-load-tests-with-k6 and cleaning-up-disk-space skills need shorter descriptions'

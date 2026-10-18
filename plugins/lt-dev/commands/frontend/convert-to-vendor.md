@@ -1,7 +1,7 @@
 ---
 description: Convert an existing npm-mode frontend project to vendor mode for @lenne.tech/nuxt-extensions with automatic changelog application.
 argument-hint: "[--dry-run] [--target-version X.Y.Z]"
-allowed-tools: Agent
+allowed-tools: Agent, Bash(node -e:*), Bash(gh api:*)
 disable-model-invocation: true
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: creating-concepts
-description: 'Creates and edits concept folders (Konzeptmappen) on the Offers platform: protected, designed documents that hand the results of a workshop or concept phase to a customer, published under konzept.lenne.tech (demo: demo-konzept.lenne.tech). Turns workshop notes, transcripts and whiteboard photos into sources, proposes an outline, builds blocks and theme, links the folder to the offer it is based on, and prepares the sharing text. Keeps internal notes in sources, never in a visible or hidden block. Activates on "Konzeptmappe", "Workshop-Ergebnisse aufbereiten", konzept.lenne.tech, or /lt-offers:offers:concept. NOT for offers, quotations or pricing (use creating-offers).'
+description: 'Creates and edits concept folders (Konzeptmappen) on the Offers platform: protected, designed documents that hand the results of a workshop or concept phase to a customer, published under konzept.lenne.tech (demo: demo-konzept.lenne.tech). Turns workshop notes, transcripts and whiteboard photos into sources, proposes an outline, builds blocks and theme, links the folder to the offer it is based on, and prepares the sharing text. Activates on "Konzeptmappe", "Workshop-Ergebnisse aufbereiten", konzept.lenne.tech, or /lt-offers:offers:concept. NOT for offers, quotations or pricing (use creating-offers).'
 ---
 
 # Creating Concept Folders (Konzeptmappen)

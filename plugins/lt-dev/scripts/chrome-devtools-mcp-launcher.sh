@@ -7,11 +7,16 @@
 # Startup strategy (fastest first) — keeps connect time far below Claude Code's
 # 30s MCP startup timeout (npx with @latest was measured at 3-22s because every
 # start does an npm-registry roundtrip to resolve "latest"):
-#   1. Globally installed binary (`npm i -g chrome-devtools-mcp`) — <1s, no
-#      npm/npx wrapper chain, so signals reach the server process directly.
+#   1. Globally installed binary (`npm i -g chrome-devtools-mcp@<pin>`) — <1s, no
+#      npm/npx wrapper chain, so signals reach the server process directly. Used
+#      only when its version equals CHROME_MCP_PINNED_VERSION: a global install
+#      never updates itself, so an older one would shadow every pin bump and miss
+#      tools the plugin calls. Observed 2026-10-18: a machine with a global 1.4.0
+#      ran that version while the pin said 1.10.1.
 #   2. `npx` with an EXACT pinned version — served from the local npx cache
-#      without a registry roundtrip. Bump CHROME_MCP_PINNED_VERSION when a new
-#      release should roll out to machines without a global install.
+#      without a registry roundtrip. Bump CHROME_MCP_PINNED_VERSION to roll out a
+#      release; update-lt-plugins-background.sh reads this line to pre-warm the
+#      npx cache, so keep its format.
 #
 # Crash resilience: Claude Code never auto-reconnects stdio MCP servers
 # (github.com/anthropics/claude-code issue #43177) — a dead server means manual
@@ -37,7 +42,7 @@
 
 set -eu
 
-CHROME_MCP_PINNED_VERSION="${CHROME_MCP_VERSION:-1.10.1}"
+CHROME_MCP_PINNED_VERSION="${CHROME_MCP_VERSION:-1.11.0}"
 
 # ensure_node_on_path — make `npx`/`node` resolvable before we exec npx.
 #
@@ -175,6 +180,49 @@ run_supervised() {
   done
 }
 
+# global_mcp_version — version of the globally installed chrome-devtools-mcp, read from
+# the package.json of the package its binary belongs to, without starting node. npm on
+# macOS/Linux links bin/chrome-devtools-mcp into lib/node_modules/chrome-devtools-mcp/
+# (often through further links, e.g. fnm's per-shell directories), so the link chain is
+# followed and then walked up to the package root. npm on Windows writes a shim script
+# next to node_modules/ instead of a link. Prints nothing when no version can be read.
+global_mcp_version() {
+  _gv_cmd="$(command -v chrome-devtools-mcp 2>/dev/null)" || return 0
+  _gv_path="$_gv_cmd"
+  _gv_hops=0
+  while [ -L "$_gv_path" ] && [ "$_gv_hops" -lt 20 ]; do
+    _gv_target="$(readlink "$_gv_path" 2>/dev/null)" || break
+    case "$_gv_target" in
+      /*) _gv_path="$_gv_target" ;;
+      *) _gv_path="$(dirname "$_gv_path")/$_gv_target" ;;
+    esac
+    _gv_hops=$((_gv_hops + 1))
+  done
+  _gv_dir="$(dirname "$_gv_path")"
+  _gv_bin="$(dirname "$_gv_cmd")"
+  _gv_candidates=""
+  for _ in 1 2 3 4 5 6; do
+    _gv_candidates="$_gv_candidates
+$_gv_dir/package.json"
+    _gv_dir="$_gv_dir/.."
+  done
+  _gv_candidates="$_gv_candidates
+$_gv_bin/node_modules/chrome-devtools-mcp/package.json
+$_gv_bin/../lib/node_modules/chrome-devtools-mcp/package.json"
+  _gv_old_ifs="$IFS"
+  IFS='
+'
+  for _gv_pkg in $_gv_candidates; do
+    if [ -f "$_gv_pkg" ] && grep -q '"name"[[:space:]]*:[[:space:]]*"chrome-devtools-mcp"' "$_gv_pkg" 2>/dev/null; then
+      IFS="$_gv_old_ifs"
+      sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$_gv_pkg" 2>/dev/null | head -n 1
+      return 0
+    fi
+  done
+  IFS="$_gv_old_ifs"
+  return 0
+}
+
 ensure_node_on_path || true
 
 channel="$(resolve_channel)"
@@ -182,12 +230,17 @@ if [ "$channel" = "canary" ]; then
   set -- --channel=canary "$@"
 fi
 
-# Fast path: globally installed binary (no npm/npx wrapper chain).
+# Fast path: globally installed binary (no npm/npx wrapper chain), at the pinned version only.
 if command -v chrome-devtools-mcp >/dev/null 2>&1; then
-  if [ "${CHROME_MCP_SUPERVISE:-1}" = "0" ]; then
-    exec chrome-devtools-mcp "$@"
+  global_version="$(global_mcp_version)"
+  if [ "$global_version" = "$CHROME_MCP_PINNED_VERSION" ]; then
+    if [ "${CHROME_MCP_SUPERVISE:-1}" = "0" ]; then
+      exec chrome-devtools-mcp "$@"
+    fi
+    run_supervised chrome-devtools-mcp "$@"
   fi
-  run_supervised chrome-devtools-mcp "$@"
+  printf 'chrome-devtools-mcp-launcher: global chrome-devtools-mcp is %s, the pin is %s; starting the pinned version through npx. For the fast path: npm i -g chrome-devtools-mcp@%s\n' \
+    "${global_version:-of unknown version}" "$CHROME_MCP_PINNED_VERSION" "$CHROME_MCP_PINNED_VERSION" >&2
 fi
 
 if ! command -v npx >/dev/null 2>&1; then
@@ -201,5 +254,5 @@ fi
 # Fallback: exact pinned version resolves from the local npx cache without a
 # registry roundtrip (unlike @latest). First-ever run still downloads once.
 # Not supervised: killing the npx wrapper chain reliably is messy; the global
-# install above is the recommended, resilient path (npm i -g chrome-devtools-mcp).
+# install above is the recommended, resilient path (npm i -g chrome-devtools-mcp@<pin>).
 exec npx -y "chrome-devtools-mcp@${CHROME_MCP_PINNED_VERSION}" "$@"

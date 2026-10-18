@@ -50,6 +50,39 @@
         "commands/take-ticket.md",
         "commands/resolve-ticket.md"
       ]
+    },
+    {
+      "name": "the detect-lt-dev block headings the dev-server skills and browser reviewers switch on",
+      "phrase": "lt-Stack project detected — not yet migrated",
+      "files": [
+        "hooks/scripts/detect-lt-dev.sh",
+        "skills/managing-dev-servers/SKILL.md",
+        "skills/validating-changes-in-browser/SKILL.md"
+      ]
+    },
+    {
+      "name": "the detect-lt-dev block that carries the lt dev URLs, read by the skills and the browser reviewers",
+      "phrase": "Active lt-dev project",
+      "files": [
+        "hooks/scripts/detect-lt-dev.sh",
+        "skills/managing-dev-servers/SKILL.md",
+        "skills/validating-changes-in-browser/SKILL.md",
+        "agents/a11y-reviewer.md",
+        "agents/ux-reviewer.md",
+        "agents/performance-reviewer.md",
+        "agents/frontend-dev.md"
+      ]
+    },
+    {
+      "name": "the layout lt dev init accepts; has_dev_layout() in hooks/scripts/detect-lt-dev.sh checks the same files",
+      "phrase": "`src/config.env.ts` or `nest-cli.json` (API) or `nuxt.config.ts` (app)",
+      "files": [
+        "skills/managing-dev-servers/SKILL.md",
+        "skills/validating-changes-in-browser/SKILL.md",
+        "agents/a11y-reviewer.md",
+        "agents/ux-reviewer.md",
+        "agents/performance-reviewer.md"
+      ]
     }
   ],
   "forbidden": [
@@ -76,6 +109,14 @@
         "agents/*.md",
         "skills/*/SKILL.md",
         "skills/*/reference/*.md"
+      ]
+    },
+    {
+      "name": "a bare Skill or Skill(lt-dev:*) grant approves every command call, git:ship included (house rule 8a: grant called commands by name)",
+      "pattern": "^allowed-tools:.*[ ,]Skill( *,|\\s*$)|Skill\\(lt-dev:\\*\\)",
+      "files": [
+        "commands/*.md",
+        "commands/*/*.md"
       ]
     }
   ],

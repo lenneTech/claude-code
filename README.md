@@ -49,7 +49,7 @@ The CLI automatically:
 }
 ```
 
-If the file already exists, merge the `allow` entries with your existing permissions. See `plugins/lt-dev/permissions.json` for the current list of required permissions.
+If the file already exists, merge the `allow` entries with your existing permissions. See `plugins/lt-dev/permissions.json` for the current list of required permissions. Settings rules do not expand `${CLAUDE_PLUGIN_ROOT}`: in patterns that contain it, replace the placeholder with the absolute install path that `echo ~/.claude/plugins/cache/lenne-tech/<plugin>` prints, followed by `/*` in place of the version folder so the rule survives updates. A rule that starts with `~` or keeps the placeholder never matches, because Claude runs the scripts by their absolute path.
 
 ## Plugins
 
@@ -91,57 +91,57 @@ General-purpose tools: `/lt-tools:save-website` saves a complete website as an o
 ### Commands (36)
 
 **Root:**
-- `/create-ticket` - Create Linear Ticket (Story, Task, or Bug)
-- `/create-story` - Create User Story for TDD (German)
-- `/create-task` - Create Technical Task
-- `/create-bug` - Create Bug Report
-- `/resolve-ticket` - Resolve ticket end-to-end with TDD
-- `/review` - Comprehensive code review across 9 review domains
-- `/debug` - Adversarial debugging with competing hypotheses using Agent Teams
-- `/comment` - Generate and post testing comment on Linear issue
-- `/skill-optimize` - Validate and optimize Claude Skills
+- `/lt-dev:create-ticket` - Create Linear Ticket (Story, Task, or Bug)
+- `/lt-dev:create-story` - Create User Story for TDD (German)
+- `/lt-dev:create-task` - Create Technical Task
+- `/lt-dev:create-bug` - Create Bug Report
+- `/lt-dev:resolve-ticket` - Resolve ticket end-to-end with TDD
+- `/lt-dev:review` - Comprehensive code review across 9 review domains
+- `/lt-dev:debug` - Adversarial debugging with competing hypotheses using Agent Teams
+- `/lt-dev:linear-comment` - Generate and post testing comment on Linear issue
+- `/lt-dev:skill-optimize` - Validate and optimize Claude Skills
 
 **Plugin (`/plugin/`):**
-- `/plugin:element` - Create new plugin elements (skills, commands, agents, hooks)
-- `/plugin:check` - Verify elements against best practices (use after /clear)
+- `/lt-dev:plugin:element` - Create new plugin elements (skills, commands, agents, hooks)
+- `/lt-dev:plugin:check` - Verify elements against best practices (use after /clear)
 
 **Backend (`/backend/`):**
-- `/backend:update-nest-server` - Update @lenne.tech/nest-server with automated migration
-- `/backend:update-nest-server-core` - Adopt upstream changes into a vendored nest-server core
-- `/backend:contribute-nest-server-core` - Prepare vendored-core changes as upstream PRs
-- `/backend:convert-to-vendor` / `/backend:convert-to-npm` - Switch framework mode
-- `/backend:ai-model-review` - Recurring per-usage AI model review (inventory → research → measure → adopt)
-- `/backend:sec-audit` - OWASP security audit for dependencies, config, and code
-- `/backend:sec-review` - Perform security review
-- `/backend:code-cleanup` - Clean up and optimize code
-- `/backend:test-generate` - Generate tests
+- `/lt-dev:backend:update-nest-server` - Update @lenne.tech/nest-server with automated migration
+- `/lt-dev:backend:update-nest-server-core` - Adopt upstream changes into a vendored nest-server core
+- `/lt-dev:backend:contribute-nest-server-core` - Prepare vendored-core changes as upstream PRs
+- `/lt-dev:backend:convert-to-vendor` / `/lt-dev:backend:convert-to-npm` - Switch framework mode
+- `/lt-dev:backend:ai-model-review` - Recurring per-usage AI model review (inventory → research → measure → adopt)
+- `/lt-dev:backend:sec-audit` - OWASP security audit for dependencies, config, and code
+- `/lt-dev:backend:sec-review` - Perform security review
+- `/lt-dev:backend:code-cleanup` - Clean up and optimize code
+- `/lt-dev:backend:test-generate` - Generate tests
 
 **Frontend (`/frontend/`):**
-- `/frontend:env-migrate` - Migrate environment configuration
+- `/lt-dev:frontend:env-migrate` - Migrate environment configuration
 
 **Fullstack (`/fullstack/`):**
-- `/fullstack:update` - Sync fullstack project with latest starter templates
+- `/lt-dev:fullstack:update` - Sync fullstack project with latest starter templates
 
 **Docker (`/docker/`):**
-- `/docker:gen-setup` - Generate Docker development & production setup
+- `/lt-dev:docker:gen-setup` - Generate Docker development & production setup
 
 **Git (`/git/`):**
-- `/git:commit-message` - Generate commit message
-- `/git:mr-description` - Create Merge Request description (`--clipboard` copies it)
-- `/git:rebase` - Rebase current branch onto dev/develop
-- `/git:rebase-mrs` - Batch rebase for open MRs/PRs
+- `/lt-dev:git:commit-message` - Generate commit message
+- `/lt-dev:git:mr-description` - Create Merge Request description (`--clipboard` copies it)
+- `/lt-dev:git:rebase` - Rebase current branch onto dev/develop
+- `/lt-dev:git:rebase-mrs` - Batch rebase for open MRs/PRs
 
 **Vibe (`/vibe/`):**
-- `/vibe:plan` - Create implementation plan from SPEC.md
-- `/vibe:build` - Execute IMPLEMENTATION_PLAN.md
-- `/vibe:build-plan` - Plan + Build in one step
+- `/lt-dev:vibe:plan` - Create implementation plan from SPEC.md
+- `/lt-dev:vibe:build` - Execute IMPLEMENTATION_PLAN.md
+- `/lt-dev:vibe:build-plan` - Plan + Build in one step
 
 **Maintenance (`/maintenance/`):**
-- `/maintain` - Full npm package maintenance (remove unused, optimize, update)
-- `/maintain-check` - Dry-run analysis without changes
-- `/maintain-security` - Security-only updates (npm audit fixes)
-- `/maintain-pre-release` - Conservative patch-only updates before release
-- `/maintain-post-feature` - Cleanup after feature development
+- `/lt-dev:maintenance:maintain` - Full npm package maintenance (remove unused, optimize, update)
+- `/lt-dev:maintenance:maintain-check` - Dry-run analysis without changes
+- `/lt-dev:maintenance:maintain-security` - Security-only updates (npm audit fixes)
+- `/lt-dev:maintenance:maintain-pre-release` - Conservative patch-only updates before release
+- `/lt-dev:maintenance:maintain-post-feature` - Cleanup after feature development
 
 ### Hooks (9)
 
@@ -199,9 +199,9 @@ The script updates `plugin.json` + `package.json`, creates commit, tag and pushe
 
 ### Permissions Configuration
 
-The file `plugins/lt-dev/permissions.json` defines all Bash permissions required by the skills. The lenne.tech CLI reads this file during installation and automatically configures the permissions in `~/.claude/settings.json`.
+The file `plugins/lt-dev/permissions.json` lists the narrow Bash commands the skills and agents run without a prompt. The lenne.Tech CLI copies it into `~/.claude/settings.json` during installation, where every rule applies in every project. It only appends rules: a rule the plugin no longer lists stays in your settings until you remove it. Broad tools (`curl`, `node`, `docker run`/`exec`, `git push`, `rm`, `cp`, `mv`) are not listed; the commands that need them grant them for their own turn through `allowed-tools`.
 
-**Important:** When adding or modifying skills that use new CLI commands, update `permissions.json` accordingly:
+**Important:** When adding or modifying skills that use new CLI commands, update `permissions.json` accordingly, with a pattern no broader than its description:
 
 ```json
 {

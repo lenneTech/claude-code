@@ -1,7 +1,7 @@
 ---
 description: Sync the vendored @lenne.tech/nest-server core from upstream into a project that keeps the framework in src/core/
 argument-hint: "[--dry-run] [--target X.Y.Z] [--ref <git-sha-or-branch>] [--force]"
-allowed-tools: Agent
+allowed-tools: Agent, Bash(rm -rf /tmp/nest-server-*)
 disable-model-invocation: true
 ---
 

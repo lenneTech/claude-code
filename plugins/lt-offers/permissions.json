@@ -1,11 +1,5 @@
 {
   "$schema": "./permissions.schema.json",
-  "description": "Bash permissions for the lt-offers plugin. Minimal permissions since most work goes through MCP tools.",
-  "permissions": [
-    {
-      "pattern": "Bash(curl *api.angebote.lenne.tech*)",
-      "description": "Health-check the offers API",
-      "usedBy": ["creating-offers"]
-    }
-  ]
+  "description": "Bash permissions for the lt-offers plugin. Empty on purpose: all offer work goes through the offers-api MCP tools, and a substring rule such as Bash(curl *host*) would also approve a curl that sends any file to any other URL.",
+  "permissions": []
 }

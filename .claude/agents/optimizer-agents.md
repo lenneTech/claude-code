@@ -2,7 +2,6 @@
 name: optimizer-agents
 description: Specialized agent for optimizing Claude Code sub-agents. Expert in agent frontmatter, the fields plugin agents honor, tool restrictions, effort and model choice, worktree isolation, and autonomous task design.
 model: inherit
-effort: high
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 
@@ -36,7 +35,7 @@ Read `.claude/skills/marketplace-optimizer/agent-protocol.md` (modes, evidence, 
 
 ## Analysis Checklist
 
-1. **Frontmatter** — `name` matches the file; `description` says WHAT the agent handles; `model: inherit` (house rule 9); `effort` per house rule 10; `maxTurns` only on iterative agents (house rule 11); no fields plugin agents ignore.
+1. **Frontmatter** — `name` matches the file; `description` says WHAT the agent handles; `model: inherit` (house rule 9); `effort` absent unless an "Effort policy" note names the agent-case measurement (house rule 10); `maxTurns` only on iterative agents (house rule 11); no fields plugin agents ignore.
 2. **Tools** — every entry exists in `tools-reference.md`; no task-tracking tool the default model lacks, and no body mandating one (house rule 13); MCP tools correctly scoped; `skills:` entries exist.
 3. **Isolation** — no static `isolation: worktree` (house rule 15); bodies that expect the caller's branch do not assume a worktree.
 4. **Teams** — no teammate definition relies on a plugin agent type (house rule 16).

@@ -1,7 +1,7 @@
 ---
 description: Sync the vendored @lenne.tech/nuxt-extensions core from upstream into a project that keeps the frontend module in app/core/
 argument-hint: "[--dry-run] [--target X.Y.Z] [--ref <git-sha-or-branch>] [--force]"
-allowed-tools: Agent
+allowed-tools: Agent, Bash(rm -rf /tmp/nuxt-extensions-*), Bash(gh api:*)
 disable-model-invocation: true
 ---
 

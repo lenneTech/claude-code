@@ -50,7 +50,7 @@ Received from the `/lt-dev:review` command:
 - **Base branch**: Branch to diff against (default: `main`)
 - **Changed files**: List of all changed files from the diff
 - **Project type**: Backend / Frontend / Fullstack
-- **API URL**: Backend URL if available — used for k6 load tests. Under `lt dev up`: `https://api.<slug>.localhost` (from the "Active lt-dev project" context block); fallback: `http://localhost:3000`.
+- **API URL**: Backend URL if available — used for k6 load tests. Under `lt dev`: the `API:` line of the "Active lt-dev project" context block, which lt-dev agents receive at the start of their context (`https://api.<slug>.localhost`). Without the block, resolve it as Phase 0 step 4 describes. Without `lt dev`: `http://localhost:3000`.
 
 ---
 
@@ -114,11 +114,16 @@ ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
    grep -r "nuxt-build-cache\|analyze\|webpack-bundle-analyzer\|rollup-plugin-visualizer" nuxt.config.* package.json 2>/dev/null
    ```
 
-4. **Detect running backend** (for k6) — try the lt-dev URL first if a slug context block was injected, otherwise fall back to `localhost:3000`:
+4. **Detect running backend** (for k6) — resolve the API URL in this order, then probe it:
+   - The `API:` line of the "Active lt-dev project" context block at the start of your context.
+   - No block: when the project has the `lt dev` layout (a `projects/api/` or `projects/app/` directory, or at the root
+     `src/config.env.ts` or `nest-cli.json` (API) or `nuxt.config.ts` (app)), run `lt dev status`; for a registered
+     project it prints the App and API URLs.
+   - `http://localhost:3000` only when `lt dev` does not serve the project (no such layout, or `lt dev status` prints
+     "Not registered").
    ```bash
-   curl -sk -o /dev/null -w "%{http_code}" --max-time 2 "https://api.${LT_DEV_SLUG:-_none}.localhost" 2>/dev/null \
-     || curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 2>/dev/null \
-     || echo "no backend"
+   API_URL="<resolved API URL>"   # e.g. https://api.crm.localhost or http://localhost:3000
+   curl -sk -o /dev/null -w "%{http_code}" --max-time 2 "$API_URL" 2>/dev/null || echo "no backend"
    ```
 
 5. **Skip phases** not relevant to the project type (e.g., skip frontend phases for backend-only changes)

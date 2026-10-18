@@ -167,31 +167,37 @@ claude-code/
 │       └── optimize.md       # /optimize command
 ├── .claude-plugin/
 │   └── marketplace.json      # Marketplace definition
+├── .github/workflows/        # plugin-ci.yml (validate, tests, budgets, invariants), secrets-guard.yml (scanner backstop)
+├── .githooks/                # pre-commit + pre-push secret/client-data guard (enable with scripts/install-hooks.sh)
+├── scripts/                  # Repository scripts: bump-version.ts (release), install-hooks.sh, scan-secrets.sh,
+│                             # __tests__/ (scanner self-test)
 ├── plugins/
-│   └── lt-dev/               # Main plugin
-│       ├── .claude-plugin/
-│       │   └── plugin.json   # Plugin manifest
-│       ├── agents/           # Autonomous agents (.md files)
-│       ├── commands/         # Slash commands (.md files, can be nested)
-│       ├── hooks/            # Event hooks
-│       │   ├── hooks.json    # Hook definitions
-│       │   └── scripts/      # Hook handler scripts (.sh, .ts)
-│       ├── scripts/          # Plugin helper scripts referenced by commands/agents/skills
-│       │                     # (e.g. discover-check-scripts.sh) — narrow Bash permission
-│       │                     # pattern: Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*)
-│       ├── skills/           # Context-aware expertise (SKILL.md + references)
-│       ├── evals/            # `claude plugin eval` suite (results/ is git-ignored): trigger/, quality/, agent/ cases;
-│       │                     # selftest/ proves each judge rubric (selftest.mjs sync|verify), compare-arms.mjs
-│       │                     # compares a main and a candidate run for paired A/B measurements
-│       ├── context-budget.json  # Accepted always-on size (skill listing, agents, hook context), gated by scripts/context-budget.mjs
-│       ├── rule-invariants.json # Rules kept in several files (sections, phrases, report contracts), checked by scripts/rule-invariants.mjs
-│       ├── permissions.json  # Bash permission patterns for auto-approval
-│       ├── permissions.schema.json  # JSON Schema for permissions validation
-│       └── .mcp.json         # MCP server dependencies
-│   ├── lt-offers/ · lt-showroom/   # Offer and showcase platforms (MCP-backed); lt-showroom also ships
-│   │                             # screenshot-session.mjs + browser helpers with a node --test suite in scripts/
+│   ├── lt-dev/               # Main plugin
+│   │   ├── .claude-plugin/
+│   │   │   └── plugin.json   # Plugin manifest
+│   │   ├── agents/           # Autonomous agents (.md files)
+│   │   ├── commands/         # Slash commands (.md files, can be nested)
+│   │   ├── hooks/            # Event hooks
+│   │   │   ├── hooks.json    # Hook definitions
+│   │   │   └── scripts/      # Hook handler scripts (.sh, .ts) with __tests__/
+│   │   ├── scripts/          # Plugin helper scripts referenced by commands/agents/skills
+│   │   │                     # (e.g. discover-check-scripts.sh); permissions.json grants them through
+│   │   │                     # Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*), which matches only with the
+│   │   │                     # placeholder replaced by the absolute install path (the lt CLI copies it verbatim)
+│   │   ├── skills/           # Context-aware expertise (SKILL.md + references)
+│   │   ├── evals/            # `claude plugin eval` suite (results/ is git-ignored): trigger/, quality/, agent/ cases;
+│   │   │                     # selftest/ proves each judge rubric (selftest.mjs sync|verify), compare-arms.mjs
+│   │   │                     # compares a main and a candidate run for paired A/B measurements
+│   │   ├── context-budget.json  # Accepted always-on size (skill listing, agents, hook context), gated by scripts/context-budget.mjs
+│   │   ├── rule-invariants.json # Rules kept in several files (sections, phrases, report contracts), checked by scripts/rule-invariants.mjs
+│   │   ├── permissions.json  # Bash permission patterns for auto-approval
+│   │   ├── permissions.schema.json  # JSON Schema for permissions validation
+│   │   └── .mcp.json         # MCP server dependencies
+│   ├── lt-offers/ · lt-showroom/   # Offer and showcase platforms (MCP-backed), each with hooks/ (topic detectors)
+│   │                             # and context-budget.json; lt-showroom also ships screenshot-session.mjs +
+│   │                             # browser helpers with a node --test suite in scripts/
 │   └── lt-tools/             # General-purpose tools (website mirror + comparison):
-│                             # skills/ + commands/ + dependency-free Node scripts with
+│                             # skills/ + commands/ + context-budget.json + dependency-free Node scripts with
 │                             # node --test suites in scripts/__tests__/
 ```
 
@@ -239,7 +245,12 @@ Defines Bash command patterns that can be auto-approved without user confirmatio
 
 **Rules:**
 - Always add `usedBy` array with skill/agent names that need the permission
-- Use wildcard patterns (`:*`) for flexible matching
+- The lt CLI copies every pattern into the user's global `~/.claude/settings.json`, so it applies in every project.
+  A pattern names the narrow command its description states (`Bash(pnpm run test:*)`, `Bash(rm -rf tmp/ci-local/*)`);
+  broad tools such as `curl`, `node`, `docker run`, `git push`, `rm`, `cp`, `mv` are granted per turn through a
+  command's `allowed-tools` instead (house rule 24c)
+- `:*` is a trailing wildcard only at the very end; a colon elsewhere is literal, so `test\:e2e` and `scripts/:*` never
+  match. Settings rules do not expand `${CLAUDE_PLUGIN_ROOT}`
 - Keep descriptions clear and concise
 
 **Validation:** Use `permissions.schema.json` for IDE autocompletion and validation. Reference it via `"$schema": "./permissions.schema.json"` in permissions.json.
@@ -254,13 +265,13 @@ Defines MCP (Model Context Protocol) servers required by the plugin.
 **Current servers:**
 | Server | Type | Used By |
 |--------|------|---------|
-| `chrome-devtools` | stdio | validating-changes-in-browser, developing-lt-frontend, building-stories-with-tdd, managing-dev-servers, vibe commands, frontend-reviewer, ux-reviewer, a11y-reviewer, frontend-dev agent (browser testing & debugging) |
-| `linear` | http | take-ticket, ticket-cycle, resolve-ticket, spec-to-tasks, create-story, create-ticket (indirectly, through create-story / create-task / create-bug), create-task, create-bug, review, debug, interview, linear-comment, dev-submit, git:ship, rebasing-branches, branch-rebaser, backend-reviewer, code-reviewer, frontend-reviewer, writing-linear-comments, filing-ai-proposed-tickets (issue tracking, project management, issue documents for long-form detail) |
+| `chrome-devtools` | stdio | validating-changes-in-browser, developing-lt-frontend, building-stories-with-tdd, managing-dev-servers, vibe commands, frontend-reviewer, ux-reviewer, a11y-reviewer, frontend-dev agent (browser testing & debugging); across plugins the lt-showroom screenshot-generator agent and the lt-tools saving-websites-locally skill (optional, needs lt-dev installed) |
+| `linear` | http | briefing, take-ticket, ticket-cycle, resolve-ticket, spec-to-tasks, create-story, create-ticket (indirectly, through create-story / create-task / create-bug), create-task, create-bug, review, debug, interview, linear-comment, dev-submit, git:ship, rebasing-branches, branch-rebaser, backend-reviewer, code-reviewer, frontend-reviewer, writing-linear-comments, filing-ai-proposed-tickets (issue tracking, project management, issue documents for long-form detail) |
 | `nuxt-ui-remote` | http | developing-lt-frontend, figma-to-code, frontend-dev agent, an offers schema sync in the internal marketplace (Nuxt UI component reference from the official endpoint `https://ui.nuxt.com/mcp`) |
 
 **Tool naming:** a plugin-bundled server's callable tool name is `mcp__plugin_<plugin>_<server>__<tool>` — e.g. `mcp__plugin_lt-dev_chrome-devtools__take_snapshot`. The unscoped form (`mcp__chrome-devtools__…`) never matches for a bundled server, so an `allowed-tools` entry written that way silently grants nothing.
 
-**Pin stdio server versions.** A stdio server started through npx names an exact version, never `@latest`: resolving "latest" costs an npm-registry roundtrip on every start (measured 3-22s) against Claude Code's 30s MCP startup timeout, so a slow network becomes a server that never comes up. It also runs through a launcher script that sources `scripts/lib/ensure-node-path.sh` first, because Claude Code starts MCP servers with a minimal PATH that misses fnm/nvm/volta/asdf/mise. `chrome-devtools` is the model: its launcher has a global-binary fast path plus a pinned npx fallback. `linear` and `nuxt-ui-remote` are HTTP endpoints and need no launcher.
+**Pin stdio server versions.** A stdio server started through npx names an exact version, never `@latest`: resolving "latest" costs an npm-registry roundtrip on every start (measured 3-22s) against Claude Code's 30s MCP startup timeout, so a slow network becomes a server that never comes up. It also runs through a launcher script that sources `scripts/lib/ensure-node-path.sh` first, because Claude Code starts MCP servers with a minimal PATH that misses fnm/nvm/volta/asdf/mise. `chrome-devtools` is the model: its launcher uses a globally installed binary only when that binary is at the pinned version, and otherwise starts the pin through npx (house rule 24b). `linear` and `nuxt-ui-remote` are HTTP endpoints and need no launcher.
 
 **Prove a server speaks MCP before shipping it.** Run its exact launch command and send an `initialize` plus `tools/list`; every tool name the plugin references must appear in the reply. Observed 2026-09-24: `nuxt-ui-remote` pointed at the npm package `nuxt-ui-mcp@1.0.1`, whose `bin` file has no shebang (the shell ran it, `import` resolved to ImageMagick) and which only serves HTTP on port 3000 — sessions reported `CONNECTION_CLOSED`, while the official endpoint `https://ui.nuxt.com/mcp` answered with the tools the plugin needs.
 
@@ -459,7 +470,7 @@ Run `/lt-dev:plugin:check` periodically or before releases to verify:
 - [ ] All referenced scripts in `hooks/scripts/` exist
 - [ ] Hook matchers are correctly configured
 - [ ] Context-injecting hooks run on an event that delivers context (house rule 17: SessionStart, SubagentStart, PostModelSwitch, UserPromptSubmit, UserPromptExpansion, PreToolUse, PostToolUse, PostToolUseFailure, PostToolBatch; Stop/SubagentStop as feedback); rules a subagent needs go through SubagentStart, because SessionStart context never reaches one
-- [ ] UserPromptSubmit detectors stay quiet on `<task-notification>` turns; hook tests pass as CI runs them
+- [ ] UserPromptSubmit detectors stay quiet on `<task-notification>` and `<cross-session-message>` turns; hook tests pass as CI runs them
 - [ ] A skill named by no detector and loaded by no command has a row in `detect-skill-keywords.sh` when its trigger words are distinctive, or a trigger-eval case
 
 ### MCP
@@ -468,6 +479,7 @@ Run `/lt-dev:plugin:check` periodically or before releases to verify:
 ### Configuration Files
 - [ ] **permissions.json**: All Bash patterns used by skills/agents are listed
 - [ ] **permissions.json**: `usedBy` arrays are complete and accurate
+- [ ] **permissions.json**: no pattern approves more than its description states, no `\:` and no `/:*` (house rule 24c)
 - [ ] **.mcp.json**: All required MCP servers are configured
 - [ ] **plugin.json**: Version is updated before release
 

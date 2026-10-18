@@ -33,14 +33,15 @@ hook_env() {
     LT_DEV_REGISTRY_PATH="$TMP_ROOT/none.json" "$@"
 }
 
-# $1 = case id, $2 = script, $3 = payload written before stdin stays open (may be "").
+# $1 = case id, $2 = script, $3 = payload written before stdin stays open (may be ""),
+# $4 = optional argument for the script.
 # Writes "<seconds>" to $TMP_ROOT/$1.time and the hook's stdout to $TMP_ROOT/$1.out.
 # The writer (a backgrounded sleep) is killed as soon as the hook exits, so the test
 # itself never waits the 30 s. No mkfifo: Git Bash does not need to support FIFOs.
 open_stdin_case() {
   local id="$1" script="$2" data="$3" pidf="$TMP_ROOT/$1.wpid" start=$SECONDS
   { printf '%s' "$data"; sleep 30 & echo $! > "$pidf"; wait; } 2>/dev/null |
-    { hook_env "$BASH" "$SCRIPT_DIR/$script" > "$TMP_ROOT/$id.out" 2>/dev/null
+    { hook_env "$BASH" "$SCRIPT_DIR/$script" ${4:+"$4"} > "$TMP_ROOT/$id.out" 2>/dev/null
       while [ ! -s "$pidf" ]; do sleep 0; done
       kill "$(cat "$pidf")" 2>/dev/null; }
   echo $((SECONDS - start)) > "$TMP_ROOT/$id.time"
@@ -60,6 +61,8 @@ for entry in $SCRIPTS; do
 done
 # A complete payload without EOF: bash 4+ keeps the partial read, so the guard still acts.
 open_stdin_case "bashdata" block-dangerous-bash.sh "$BASH_CMD" &
+# detect-lt-dev.sh reads the payload only in its SubagentStart mode.
+open_stdin_case "subagent" detect-lt-dev.sh "" SubagentStart &
 wait
 
 i=0
@@ -68,6 +71,8 @@ for entry in $SCRIPTS; do
   t=$(cat "$TMP_ROOT/empty$i.time" 2>/dev/null || echo 99)
   if [ "$t" -le "$LIMIT" ]; then pass "${entry%%:*} returns without EOF (${t}s)"; else fail "${entry%%:*} returned after ${t}s"; fi
 done
+t=$(cat "$TMP_ROOT/subagent.time" 2>/dev/null || echo 99)
+if [ "$t" -le "$LIMIT" ]; then pass "detect-lt-dev.sh SubagentStart returns without EOF (${t}s)"; else fail "detect-lt-dev.sh SubagentStart returned after ${t}s"; fi
 t=$(cat "$TMP_ROOT/bashdata.time" 2>/dev/null || echo 99)
 if [ "$t" -le "$LIMIT" ]; then pass "a payload without EOF returns (${t}s)"; else fail "a payload without EOF returned after ${t}s"; fi
 if [ "${BASH_VERSINFO[0]}" -ge 4 ]; then

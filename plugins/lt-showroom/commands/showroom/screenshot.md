@@ -1,7 +1,7 @@
 ---
 description: Capture feature screenshots of a project from a throwaway clone with demo data (desktop + mobile, WebP) into ~/.lt-showroom/<slug>/screenshots/, with a fallback chain when the project cannot run locally; writes nothing into the project
 argument-hint: "[project-path | repository-url] [--ref <branch>] [--cleanup] | --name <project> [--live <url>]"
-allowed-tools: Read, Grep, Glob, Skill, Agent, AskUserQuestion, Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(ls:*), mcp__plugin_lt-showroom_showroom-api__*
+allowed-tools: Read, Grep, Glob, Agent, AskUserQuestion, Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/*), Bash(ls:*), mcp__plugin_lt-showroom_showroom-api__*, Bash(docker run -d --name showroom-*), Bash(curl -sL:*)
 disable-model-invocation: true
 ---
 
@@ -87,10 +87,15 @@ session that ends while the agent still captures runs its `SessionEnd` hook, whi
 Observed 2026-10-11 in a headless run: the command spawned the agent in the background, ended its turn, the session
 exited after 11 minutes, and the hook removed the clone and stack after 11 of 20 images.
 
+Before spawning, look for any `mcp__plugin_lt-showroom_showroom-api__*` tool in this command's own tool list and write
+the result into the prompt: `showroom-api: available` when one is there, otherwise `showroom-api: unavailable` (the
+agent is not told when the server failed to connect, so this line is how it learns).
+
 Prompt:
 
 ```
 Capture feature screenshots for <source> (slug <slug>).
+showroom-api: <available | unavailable>
 Branch: <--ref value, or "default branch of the remote">
 Features and pages: <feature slug → page path, one per line; always include overview>
 SHOWCASE.md: <path, or "none">
@@ -120,6 +125,7 @@ Screenshots: <count> in ~/.lt-showroom/<slug>/screenshots/  (commit <short-sha> 
 Route: local | fallback (<stage per feature>)
 Live check: <verdict and evidence, or "not needed">
 Pending tag: screenshots-ausstehend (only when the teaser cover was used)
+showroom-api: available | unavailable (platform screenshots and upload skipped; files listed for upload)
 Cleanup: complete | leftovers: <list with commands>
 
 overview-desktop.webp   1440x900   local

@@ -2,7 +2,6 @@
 name: optimizer-marketplace
 description: General marketplace optimizer agent. Expert in plugin structure, marketplace.json, plugin dependencies and relevance, cross-references between elements, plugin.json manifests, permissions.json, documentation coverage, and Claude Code features from the changelog delta. Also runs the final verification pass over applied changes.
 model: inherit
-effort: high
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 

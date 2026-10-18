@@ -6,6 +6,11 @@ disable-model-invocation: false
 
 # Plugin Best Practice Check
 
+> **Invocation policy.** `disable-model-invocation` stays `false` because `/lt-dev:publish`
+> invokes this command through the `Skill` tool as the release gate for the marketplace repos
+> when elements were added or restructured. Start it only when the user asks for it or a
+> command invokes it as a documented step; its fixes run only after the Step 6 question.
+
 Analyze and optimize plugin elements against current Claude Code best practices. Use this command after `/clear`, context summarization, or when you want to ensure elements are up-to-date and consistent.
 
 ## When to Use This Command
@@ -118,10 +123,12 @@ Compare against fetched documentation:
 ### 4.6 Configuration Files
 
 **permissions.json:**
-- [ ] All Bash patterns used by skills/agents are listed
+- [ ] The narrow, low-risk Bash patterns skills/agents use are listed (package-manager scripts, read-only git/docker checks, plugin helper scripts)
+- [ ] Broad tools are NOT listed: `curl`, `node`, `docker run`/`exec`, `git push`, `rm`, `cp`, `mv` and write-capable API clients reach Claude through a command's `allowed-tools`, per turn. The lt CLI copies `permissions.json` into the user's global settings, where a rule applies in every project
+- [ ] No pattern approves more than its description states
 - [ ] `usedBy` arrays include all skills/agents using each pattern
 - [ ] No orphaned patterns (patterns without valid usedBy references)
-- [ ] Patterns follow correct format: `Bash(command:*)`
+- [ ] Patterns are well-formed: a `:*` wildcard only at the very end (`Bash(pnpm run test:*)`), no `\:`, no `/:*`
 
 **Check against skills:**
 ```bash
@@ -179,6 +186,7 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/rule-invariants.sh" <plugin-dir>
 - `FAIL identical section …`: one copy of a shared section differs; the message names the odd file. Bring it back in line, or change every copy.
 - `FAIL phrase …`: a load-bearing phrase was reworded in one file. Reword every listed copy the same way, or update the config when the change is deliberate.
 - `FAIL forbidden …` / `FAIL contract …`: a consumer still relies on a section its provider no longer writes, or a provider dropped a term its consumers parse. Fix the consumer (or the provider) before anything else: this is the failure that left `/lt-dev:production-ready` searching for a catalog `/lt-dev:review` had stopped writing.
+- No `rule-invariants.json` in `<plugin-dir>`: the plugin keeps no shared rules; skip the script (it exits with `cannot read … rule-invariants.json`) and report `n/a`.
 
 Plugin CI runs the same check.
 

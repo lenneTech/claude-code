@@ -24,6 +24,10 @@ Fetches the latest CLAUDE.md files from lenne.tech starter repositories and inte
 | `lenneTech/nuxt-base-starter` → `nuxt-base-template/CLAUDE.md` | `main` | `./projects/app/CLAUDE.md` |
 | `lenneTech/nest-server` → `CLAUDE.md` | `develop` | `./projects/api/CLAUDE.md` |
 
+## Turn Endings
+
+The run stops at the handoff points this command defines: the Phase 4 question for a file without a clear section structure, the confirmation before each merged result is written, and the Phase 5 report. When `/lt-dev:fullstack:update-all` invoked this command, the report returns to that caller, which carries on with the rest of its Phase 6.
+
 ## Execution
 
 ### Phase 1: Detect Project Structure
