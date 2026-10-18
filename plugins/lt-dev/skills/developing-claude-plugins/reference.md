@@ -162,18 +162,21 @@ Available tools that can be specified in agent `tools` field:
 
 ## Event Types for Hooks
 
-| Event | Trigger | Use Case |
-|-------|---------|----------|
-| `PreToolUse` | Before tool execution | Validation, input modification |
-| `PostToolUse` | After tool execution | Cleanup, notifications |
-| `UserPromptSubmit` | User sends message | Context injection |
-| `Notification` | System notification | Alerting |
-| `Stop` | Main agent finishes | Cleanup, summary |
-| `SubagentStop` | Subagent finishes | Result processing |
-| `SessionStart` | Session begins | Environment setup |
-| `SessionEnd` | Session ends | Cleanup |
-| `PreCompact` | Before compacting | Context preservation |
-| `PermissionRequest` | Permission dialog | Auto-approve/deny |
+| Event | Trigger | Use Case | `additionalContext` |
+|-------|---------|----------|---------------------|
+| `PreToolUse` | Before tool execution | Validation, input modification | With the tool result |
+| `PostToolUse` | After tool execution | Cleanup, notifications, hints about the result | With the tool result |
+| `UserPromptSubmit` | User sends message | Topic context for this turn | With the prompt |
+| `Notification` | System notification | Alerting | No |
+| `Stop` | Main agent finishes | Cleanup, summary, "run the tests first" | As feedback that continues the turn |
+| `SubagentStart` | Subagent starts, resumes, or a teammate takes a message | Rules a subagent must follow; matcher on the agent type (`^my-plugin:` for plugin agents) | At the subagent's start |
+| `SubagentStop` | Subagent finishes | Result processing | As feedback that keeps it running |
+| `SessionStart` | Session begins, resumes, `/clear`, compaction | Environment setup, project rules | At the start, main thread only |
+| `SessionEnd` | Session ends | Cleanup | No |
+| `PreCompact` | Before compacting | Context preservation | No |
+| `PermissionRequest` | Permission dialog | Auto-approve/deny | No |
+
+`SessionStart` context never reaches a subagent: a rule every agent must follow needs `SubagentStart` as well. The JSON is `{"hookSpecificOutput": {"hookEventName": "<Event>", "additionalContext": "..."}}`, capped at 10,000 characters.
 
 ---
 

@@ -770,6 +770,8 @@ Ablauf
 - Freigabe: durch Entwickler nach eigenem Test
 - Ungeplante Rückfragen: <anzahl + Anlass | "keine">
 - Nicht committet (fremde Änderungen): <pfade | "keine">
+- Nicht geprüft: <was nicht laufen oder nicht verifiziert werden konnte, je mit Grund | "nichts">
+- Risiken: <was Reviewer und QA wissen müssen | "keine">
 
 Branch
 - Feature: <FEATURE_BRANCH>  (lokal gelöscht / behalten)
@@ -830,6 +832,8 @@ Ablauf
 - Freigabe: durch Entwickler nach eigenem Test
 - Ungeplante Rückfragen: <anzahl + Anlass | "keine">
 - Nicht committet (fremde Änderungen): <pfade | "keine">
+- Nicht geprüft: <was nicht laufen oder nicht verifiziert werden konnte, je mit Grund | "nichts">
+- Risiken: <was Reviewer und QA wissen müssen | "keine">
 
 Branch
 - Feature: <FEATURE_BRANCH>  (lokal noch vorhanden, nicht gemergt)

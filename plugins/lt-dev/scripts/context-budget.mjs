@@ -26,6 +26,9 @@
 //   agents   every agent: name + description
 //   slash    commands and skills with `disable-model-invocation: true`, reported
 //            for information only (they appear in the / menu, not in the listing)
+//   hook     files under hooks/context/ that a SessionStart or SubagentStart hook
+//            injects as additionalContext: paid at every session start in the
+//            projects the hook targets, and again at every subagent start
 //
 // A per-entry cap applies as well: Claude Code cuts description + when_to_use at
 // 1,536 characters (`skillListingMaxDescChars`), so a longer entry loses its tail.
@@ -172,10 +175,17 @@ export function collect(pluginDir) {
     }
   }
 
-  return { plugin, entries };
+  const hookContextDir = join(pluginDir, 'hooks', 'context');
+  const hookContext = listMarkdown(hookContextDir).map((file) => ({
+    name: relative(pluginDir, file).split(sep).join('/'),
+    file,
+    chars: readFileSync(file, 'utf8').length,
+  }));
+
+  return { plugin, entries, hookContext };
 }
 
-export function summarize(entries) {
+export function summarize(entries, hookContext = []) {
   const sum = (list) => list.reduce((s, e) => s + e.chars, 0);
   const listing = entries.filter((e) => e.kind !== 'agent' && !e.slashOnly);
   const agents = entries.filter((e) => e.kind === 'agent');
@@ -190,6 +200,8 @@ export function summarize(entries) {
     slashOnlyChars: sum(slash),
     slashOnlyEntries: slash.length,
     overCap: entries.filter((e) => e.kind !== 'agent' && e.descChars > ENTRY_CAP).map((e) => e.name),
+    hookContextChars: hookContext.reduce((s, e) => s + e.chars, 0),
+    hookContextFiles: hookContext.length,
   };
 }
 
@@ -207,6 +219,7 @@ export function writeBaseline(pluginDir, totals) {
       'Accepted always-on size of this plugin, in characters. Checked by scripts/context-budget.mjs --check in Plugin CI and /lt-dev:plugin:check. Raise it only on purpose, with --update in the same change that grows a description.',
     listingChars: totals.listingChars,
     agentChars: totals.agentChars,
+    hookContextChars: totals.hookContextChars ?? 0,
   };
   writeFileSync(join(pluginDir, BASELINE_FILE), `${JSON.stringify(data, null, 2)}\n`);
   return data;
@@ -229,6 +242,16 @@ export function compare(totals, baseline) {
     if (typeof base !== 'number') problems.push(`${BASELINE_FILE} has no numeric ${key}`);
     else if (now > base) problems.push(`${label} grew: ${now} chars, baseline ${base} (+${now - base})`);
     else if (now < base) hints.push(`${label} shrank: ${now} chars, baseline ${base} (−${base - now}); lock it in with --update`);
+  }
+  // Hook-injected context: gated once a baseline names it; a plugin without such files needs none.
+  const hookNow = totals.hookContextChars ?? 0;
+  const hookBase = baseline.hookContextChars;
+  if (typeof hookBase !== 'number') {
+    if (hookNow > 0) problems.push(`${BASELINE_FILE} has no numeric hookContextChars for ${hookNow} chars of hook context`);
+  } else if (hookNow > hookBase) {
+    problems.push(`hook-injected context grew: ${hookNow} chars, baseline ${hookBase} (+${hookNow - hookBase})`);
+  } else if (hookNow < hookBase) {
+    hints.push(`hook-injected context shrank: ${hookNow} chars, baseline ${hookBase} (−${hookBase - hookNow}); lock it in with --update`);
   }
   for (const name of totals.overCap) problems.push(`${name}: description + when_to_use exceed ${ENTRY_CAP} chars and get cut`);
   return { ok: problems.length === 0, problems, hints };
@@ -259,7 +282,13 @@ function report({ plugin, entries, totals, baseline, verdict, details, top }) {
   );
   lines.push(`  agents    ${pad(totals.agentChars, 7)} chars  ${totals.agentEntries} agents`);
   lines.push(`  slash     ${pad(totals.slashOnlyChars, 7)} chars  ${totals.slashOnlyEntries} slash-only, not in the listing (info)`);
-  if (baseline) lines.push(`  baseline  listing ${baseline.listingChars} · agents ${baseline.agentChars}`);
+  if (totals.hookContextFiles) {
+    lines.push(`  hook      ${pad(totals.hookContextChars, 7)} chars  ${totals.hookContextFiles} file(s) under hooks/context/, injected at session and subagent start`);
+  }
+  if (baseline) {
+    const hook = typeof baseline.hookContextChars === 'number' ? ` · hook ${baseline.hookContextChars}` : '';
+    lines.push(`  baseline  listing ${baseline.listingChars} · agents ${baseline.agentChars}${hook}`);
+  }
   if (details) {
     lines.push(
       details.skipped
@@ -310,8 +339,8 @@ export function main(argv) {
     console.error(`context-budget: ${err.message}`);
     return 2;
   }
-  const { plugin, entries } = collected;
-  const totals = summarize(entries);
+  const { plugin, entries, hookContext } = collected;
+  const totals = summarize(entries, hookContext);
 
   if (flags.has('--update')) writeBaseline(pluginDir, totals);
   const baseline = readBaseline(pluginDir);

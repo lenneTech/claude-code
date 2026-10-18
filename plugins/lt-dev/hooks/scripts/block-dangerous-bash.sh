@@ -11,7 +11,10 @@
 
 [ "${CLAUDE_SKIP_DANGEROUS_BASH_CHECK:-0}" = "1" ] && exit 0
 
-INPUT=$(cat)
+# Read hook input from stdin, time-limited (see _read-stdin.sh)
+. "${0%/*}/_read-stdin.sh"
+read_hook_input 2
+INPUT=$HOOK_INPUT
 
 # Extract the command with a jq-free fallback, matching protect-files.sh and the
 # circuit-breaker scripts. This blocklist is the one hook where an unavailable jq

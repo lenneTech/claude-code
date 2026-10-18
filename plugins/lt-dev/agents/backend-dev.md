@@ -137,7 +137,7 @@ See `generating-nest-servers` skill → `reference/configuration.md` for all pro
 
 ### 5. Report
 
-Your final message is the report the caller acts on. Write it when every phase is done or a named blocker stops you. Interim status goes in the same message as your next tool call, so the work keeps moving.
+Your final message is the report the caller acts on. Write it when every phase is done or a named blocker stops you. Interim status goes in the same message as your next tool call, so the work keeps moving. End it with two lines: `Not checked:` names what you could not run or verify, with the reason, and `Risks:` names what the caller must know before relying on the change, or `none`.
 
 ## Type System Rules (zero tolerance)
 

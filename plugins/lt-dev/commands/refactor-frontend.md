@@ -333,9 +333,9 @@ Max 2 review-fix cycles. If Critical/High persist, stop and report to the user.
 
 1. **Every section below is required** — Executive Summary, Batch Summary, Verification, Code Review, File Lists, Detailed Reports, Next Steps.
 2. **Section "Detailed Teammate Reports" contains the verbatim full output of every batch teammate** (`shared-foundation` + each `refactor-<batch>`), unsummarized, each wrapped in a `<details>` block.
-3. **Section "Code Review Output" embeds the full `/lt-dev:review` output** (Executive Summary + Action Roadmap + Catalog + per-reviewer reports), not just the dimension table. Wrap in `<details>` if very long.
-4. **Action Roadmap** — derive from review findings + verification failures, prioritized: 🔴 Critical → 🟠 High → 🟡 Medium → 🟢 Low.
-5. **No-Loss Guarantee:** Every finding in the embedded `/lt-dev:review` output appears in the Action Roadmap below. Cross-check counts before finalizing.
+3. **Section "Code Review Output" embeds the full `/lt-dev:review` report** verbatim: its verdict and change summary, findings table, "Geprüft und in Ordnung", "Nicht berichtet", "Nicht geprüft", check pipeline and the collapsed audit trail of reviewer reports. Wrap in `<details>` if very long.
+4. **Action Roadmap** — derive from the review findings that stayed open (the review fixes the rest itself), the review's "Nicht geprüft" lines and the verification failures, prioritized: 🔴 Critical → 🟠 High → 🟡 Medium → 🟢 Low.
+5. **No-Loss Guarantee:** Every finding the embedded `/lt-dev:review` report left open, and every line of its "Nicht geprüft" section, appears in the Action Roadmap below. Cross-check counts before finalizing.
 6. **No Placeholders:** Replace every `N`, `X min`, and `[...]` in the template with concrete values. Empty buckets say "None".
 
 ```
@@ -431,7 +431,7 @@ After printing the report, **ask via `AskUserQuestion`** which option to execute
 <details>
 <summary>📋 /lt-dev:review — full unified report</summary>
 
-[Paste the COMPLETE output of `/lt-dev:review` from the "Code Review (MANDATORY)" step here, verbatim — including Executive Summary, Action Roadmap, Consolidated Remediation Catalog, all per-reviewer reports, and Recommended Commands.]
+[Paste the COMPLETE output of `/lt-dev:review` from the "Code Review (MANDATORY)" step here, verbatim: verdict and change summary, findings table, "Geprüft und in Ordnung", "Nicht berichtet", "Nicht geprüft", check pipeline, the Phase 6 result block and the audit trail of reviewer reports.]
 
 </details>
 ```

@@ -114,6 +114,13 @@ SLUG=$(slug_for "$ROOT")
 TICKET=""
 if [ -f "$ROOT/.lt-dev/ticket" ]; then
   TICKET=$(tr -d '[:space:]' < "$ROOT/.lt-dev/ticket" 2>/dev/null)
+  # The marker is a file in the worktree and its content reaches Claude verbatim. A ticket
+  # id (DEV-1234) uses letters, digits and . _ - only; anything else, or more than 64
+  # characters, is not a ticket id and is ignored.
+  case "$TICKET" in
+    *[!A-Za-z0-9._-]*) TICKET="" ;;
+  esac
+  [ ${#TICKET} -gt 64 ] && TICKET=""
   [ -n "$TICKET" ] && SLUG="${SLUG}-${TICKET}"
 fi
 

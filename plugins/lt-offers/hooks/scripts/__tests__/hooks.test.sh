@@ -211,6 +211,25 @@ assert_contains "$(HOOK_PATH="$NOJQ_BIN" detect "$OTHER" "$(printf 'Kunde: "A"\n
 echo "detect-offers-project.sh: prompt source"
 assert_silent "$(printf '{"hook_event_name":"UserPromptSubmit","prompt":""}' | EXTRA_PROMPT_ENV='erstelle ein Angebot auf der demo' run_script detect-offers-project.sh "$OFFERS")" "CLAUDE_USER_PROMPT is not read"
 
+# A stdin whose writer stays alive for 30 s: the hook must still exit within a few seconds.
+# Observed in another plugin on Windows: a wrapper swallowed EOF, and an unbounded
+# `$(cat)` held each hook until its timeout while a UserPromptSubmit hook blocks the model.
+# The writer is killed as soon as the hook exits, so the test never waits the 30 s.
+# $1 = script, $2 = project dir, $3 = payload written before stdin stays open.
+# Prints the seconds the hook took.
+open_stdin_seconds() {
+  local pidf="$TMP_ROOT/writer.$$.$RANDOM" start=$SECONDS
+  { printf '%s' "$3"; sleep 30 & echo $! > "$pidf"; wait; } 2>/dev/null |
+    { run_script "$1" "$2" > /dev/null
+      while [ ! -s "$pidf" ]; do sleep 0; done
+      kill "$(cat "$pidf")" 2>/dev/null; }
+  echo $((SECONDS - start))
+}
+
+echo "stdin that never closes"
+T=$(open_stdin_seconds detect-offers-project.sh "$OTHER" "$(prompt_payload 'erstelle ein Angebot')")
+if [ "$T" -le 6 ]; then pass "detect-offers-project.sh returns while stdin stays open (${T}s)"; else fail "detect-offers-project.sh waited ${T}s on an open stdin"; fi
+
 echo ""
 echo "─────────────────────────────────────────"
 echo "Total: $((PASS + FAIL)) | Passed: $PASS | Failed: $FAIL"

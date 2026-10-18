@@ -199,15 +199,19 @@ This phase is orchestrated by the command directly because sub-agents cannot inv
 Loop with `iteration = 1`:
 
 1. Invoke the `lt-dev:review` skill via the `Skill` tool with arguments `--base=<base-branch>`. Capture the resulting report.
-2. Parse the report for blockers:
-   - Any `❌` / `BLOCK` markers in the unified report
-   - Any per-reviewer `Critical` or `High`-severity findings still open after Phase 6 of `/lt-dev:review`
-   - Any unresolved blockers in the `Action Roadmap`
-3. **If clean** (no blockers): record the result and proceed to Phase 6.
-4. **If not clean:** read the `Remediation Catalog` from `/lt-dev:review` and apply the proposed fixes by editing the relevant files (use Read + Edit). Apply only the **non-controversial** items (lint/format/type fixes, missing tests, missing docs that the reviewer drafted) — defer architectural recommendations (`needs-human`) to the final report.
-5. Increment `iteration`. If `iteration > --max-iterations`, stop with verdict `STALLED` and surface the remaining blockers as needs-human in the consolidated report. Otherwise re-run from step 1.
+2. Read the outcome from the sections `/lt-dev:review` actually writes (its Phase 5 report and Phase 6 closing block). It fixes every surviving finding itself, so there is no catalog to work through here:
+   - the `**Ergebnis:**` line: "Keine Critical- oder High-Findings" or "N Findings behoben"
+   - the `## Ergebnis` block of its Phase 6: what was fixed, whether `check` is green after the fixes, which findings were handed back to another session, and any open scope question
+   - an unresolved blocker under "Check-Pipeline", and every line under "Nicht geprüft"
+3. **If clean** (no Critical/High finding left open, `check` green after the fixes): record the result, carry the "Nicht geprüft" lines into the final report, and proceed to Phase 6.
+4. **If not clean:** what stayed open is something the review could not fix on its own, and running it again on the same tree would only repeat it (a second `SOLVED` to the same peer, the same scope question). Resolve each open item once, then decide:
+   - a scope question: ask the user once and apply the answer
+   - a finding handed back to another session: wait for that session's `LANDED`, or record it as `needs-human`
+   - a red `check` after the review's fixes: leave the loop and continue with Phase 6, whose loop owns it
+   - anything else that only a human can settle: record it as `needs-human` in the final report
+5. **Re-run from step 1 only when the tree changed since the last review** (an applied scope answer, a peer's fix that landed), so the review verifies the new state. Without a change, leave the loop with what step 4 recorded and continue with Phase 6. Increment `iteration` on every re-run; if `iteration > --max-iterations`, stop with verdict `STALLED` and surface the remaining blockers as needs-human in the consolidated report.
 
-The expectation: review → apply → review → apply, converging to clean within the iteration cap.
+The expectation: one review that fixes what it can, one round of resolving what it left open, and a second review only on a changed tree.
 
 If the `Skill` tool is not available in this runtime, fall back to spawning the same reviewers directly via `Agent` (mirror the parallel pattern from `/lt-dev:review` Phase 3A/3B). This is a degraded mode — record it in the final report.
 

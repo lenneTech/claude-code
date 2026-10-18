@@ -73,7 +73,9 @@ ignore it silently.
     planning from a spec (`/lt-dev:vibe:plan`, `medium` vs `xhigh`). `medium` matched the higher level every time;
     the higher level took 1.3 to more than 3 times as long, and 3 of 4 `xhigh` planning runs passed 25 minutes
     without finishing. So every agent and command runs unpinned, gates included (`review`, `production-ready`,
-    `maintain-stack`, `smoke-test`, whose own runs cannot be evaluated and follow the work they consist of). Re-pin
+    `maintain-stack`, `smoke-test`, whose full runs cannot be evaluated and follow the work they consist of;
+    `review` is measurable through its small-diff path, which `evals/agent/code-review-blast-radius-agent`
+    drives, so a change to `review.md` is compared there). Re-pin
     only with an `agent` case that shows the gain, and note the measurement in an "Effort policy" note; re-run the
     cases when the default model changes, because levels do not mean the same across models. A case where both
     levels score 1.0 cannot show a gain, so a new case needs defects or requirements that leave headroom.
@@ -93,9 +95,15 @@ ignore it silently.
 
 ## Hooks
 
-17. **Only `UserPromptSubmit`, `UserPromptExpansion`, `SessionStart` and `PostModelSwitch` inject context.**
-    Re-injection after compaction runs on `SessionStart` with matcher `compact`. Observed 2026-09-24: `PostCompact`
-    context hooks in all three plugins had never reached Claude.
+17. **Context reaches Claude only from events that deliver it, and `SessionStart` context never reaches a
+    subagent.** `hookSpecificOutput.additionalContext` is honoured on `SessionStart`, `SubagentStart` and
+    `PostModelSwitch` ("Context only"), on `UserPromptSubmit`, `UserPromptExpansion`, `PreToolUse`, `PostToolUse`,
+    `PostToolUseFailure` and `PostToolBatch`, and as non-error feedback on `Stop` / `SubagentStop` (`hooks.md`,
+    decision-control table). Topic detectors stay on `UserPromptSubmit`; rules a subagent must follow go through
+    `SubagentStart` with a matcher on the plugin-scoped agent type (`^lt-dev:`). Re-injection after compaction runs
+    on `SessionStart` with matcher `compact`. Observed 2026-09-24: `PostCompact` context hooks in all three plugins
+    had never reached Claude. Corrected 2026-10-17: this rule had named only four events, which hid `SubagentStart`
+    as the way to give lt-dev agents a rule the main session gets.
 18. **`UserPromptSubmit` also fires on system-generated turns.** Background task notifications arrive as prompts
     containing `<task-notification>`; topical detectors exit on them and strip this marketplace's own plugin names
     before keyword matching. Observed 2026-09-24: every subagent notification that mentioned `plugins/lt-offers`
@@ -162,3 +170,32 @@ ignore it silently.
     from `evals/quality/nuxt-landing-custom-design` traces, and re-run that case when the list or the default model
     changes. With Nuxt UI page components alone (`nuxt-landing-design`) none of these patterns appear, so the list
     targets custom Tailwind only.
+
+## Measurement and shared rules
+
+36. **A change to rule text every session or agent loads is measured against the current version, not only against
+    no plugin.** The `Δ` of `claude plugin eval` says what lt-dev adds over the bare model; it cannot say whether a
+    rewording beats the wording it replaces, and a comparison with an older run mixes in Claude Code and model drift.
+    So the candidate (working tree) runs against the current version (a clean `git worktree add <scratch> HEAD`, no
+    commit needed) on the same cases, the same `--model` and at least five runs per arm: one case where the change
+    should help, and one existing case it could break. One change at a time where the cost allows; a bundle that
+    wins is shipped as a bundle and says so. A candidate that does not win is not shipped and goes into the "Not
+    shipped" table of `plugins/lt-dev/evals/README.md` with its numbers, so nobody proposes it again unmeasured.
+    Every `llm`-graded rubric passes its self-test (a good reference passes, a bad one fails) before its numbers
+    count. Reason: the Ponytail plugin (`github.com/dietrichgebert/ponytail`, `benchmarks/results/`) measured eight
+    edits to its rules that all scored at or below the current text, several worse, while each looked like an
+    improvement; piling on counter-instructions made models overthink. Text that does not move the number is cost
+    without effect.
+37. **A rule that lives in several files is pinned in `plugins/lt-dev/rule-invariants.json`.** A section shared by
+    several agents (the reviewers' reporting bar), a load-bearing phrase repeated across commands, and the report
+    sections other commands parse from `/lt-dev:review` are listed there; Plugin CI and `/lt-dev:plugin:check` run
+    `scripts/rule-invariants.mjs`, so one copy cannot change alone. Observed 2026-10-17: `/lt-dev:production-ready`
+    and `/lt-dev:refactor-frontend` still parsed a "Remediation Catalog" that `/lt-dev:review` had stopped writing,
+    and the follow-up policy filed a dependent follow-up as `Blocked` in `take-ticket` but only noted it in
+    `resolve-ticket`. A rule injected into every session or agent is rule text under house rule 36 and counts against
+    `hookContextChars` in `context-budget.json`. Measured 2026-10-17 (Opus 5.5, 5 runs per arm): Ponytail-style
+    change rules injected at `SessionStart` and `SubagentStart` (a reuse ladder, "grep every caller of the function
+    you change, then fix the root cause once in the shared code"), the same caller rule in the dev agents, and a
+    blast-radius step in `/lt-dev:review` scored exactly like main on three target and three guard cases, because
+    lt-dev on Opus 5.5 already fixes the shared helper, reuses the existing component and finds the broken caller.
+    They were not shipped (evals README, "Not shipped").

@@ -19,12 +19,15 @@ cd "$ROOT" || exit 2
 # ---- Zu prüfende Dateien bestimmen (bash-3.2-kompatibel, ohne mapfile) ---------
 mode="${1:---staged}"
 RANGE="${2:-HEAD~1..HEAD}"
+# NUL-getrennt: ohne -z setzt git Namen mit Umlauten oder Zeilenumbruch in Anführungszeichen
+# ("Kunden\303\274bersicht.txt"), `[[ -f ]]` fand die Datei nicht, und sie wurde von keiner
+# Prüfung gelesen (Review 2026-10-18).
 list_files() {
   case "$mode" in
-    --staged) git diff --cached --name-only --diff-filter=ACMR ;;
-    --range)  git diff --name-only --diff-filter=ACMR "${2:-HEAD~1..HEAD}" ;;
-    --all)    git ls-files ;;
-    *)        printf '%s\n' "$@" ;;
+    --staged) git diff --cached --name-only -z --diff-filter=ACMR ;;
+    --range)  git diff --name-only -z --diff-filter=ACMR "${2:-HEAD~1..HEAD}" ;;
+    --all)    git ls-files -z ;;
+    *)        printf '%s\0' "$@" ;;
   esac
 }
 
@@ -33,7 +36,7 @@ is_excluded() {
   case "$1" in
     scripts/scan-secrets.sh|scripts/__tests__/scan-secrets.test.sh|.githooks/*|.github/workflows/secrets-guard.yml) return 0 ;;  # Scanner, seine Tests (erfundene Namen) und Hooks
     .claude/docs-cache/*) return 0 ;;  # extern gecachte Anthropic-Doku (Beispielwerte)
-    *.env.example|*.example|*.lock|*.png|*.jpg|*.jpeg|*.gif|*.pdf|*.ico|*.woff*) return 0 ;;
+    *.env.example|*.example|*.lock|*.png|*.jpg|*.jpeg|*.gif|*.webp|*.avif|*.pdf|*.ico|*.woff*|*.mp4|*.webm|*.mov) return 0 ;;  # Binärformate: nur über die Endung
     node_modules/*|*/node_modules/*) return 0 ;;
   esac
   # optionale Allowlist (eine Glob/Pfad pro Zeile)
@@ -78,11 +81,19 @@ if [[ -r "$DENYLIST" ]]; then
   [[ -z "$DENY_RE" ]] && DENY_RE=$(grep -vE '^[[:space:]]*(#|$)' "$DENYLIST" | paste -sd'|' -)
 fi
 
-while IFS= read -r f; do
+while IFS= read -r -d '' f; do
   [[ -z "$f" || ! -f "$f" ]] && continue
+  # Ein Name wie `-f` oder `-` wäre für grep eine Option bzw. stdin (die Dateiliste selbst).
+  [[ "$f" == -* ]] && f="./$f"
   is_excluded "$f" && continue
-  # Binär überspringen
-  if file "$f" | grep -qiE 'binary|executable'; then continue; fi
+  # Keine Binär-Ausnahme: bekannte Binärformate schließt is_excluded über die Endung aus, alles
+  # andere wird gelesen, und jede Inhaltsprüfung liest mit -a (Binärdaten als Text). Muster aus
+  # reinem ASCII laufen mit LC_ALL=C: BSD-grep, -tr und -cut brechen in einer UTF-8-Locale an
+  # ungültigen Bytes ab, und eine Binärdatei hat fast immer welche. Zwei Ausnahmen
+  # davor haben jeweils eine Lücke gerissen (Vorfälle 2026-10-17/18): `file … executable` übersprang
+  # jedes Skript mit Shebang (ein glpat-Token in einer .py lief im internen Repo durch Hooks und CI),
+  # und `grep -I` übersprang jede Datei mit NUL-Byte, darunter eine .env in UTF-16 (PowerShell 5.1),
+  # ein .tar mit privatem Schlüssel und eine SQLite-Datei mit Token.
 
   base="$(basename "$f")"
 
@@ -93,7 +104,7 @@ while IFS= read -r f; do
   fi
 
   # 2) Private Keys
-  if grep -qE -- '-----BEGIN [A-Z ]*PRIVATE KEY-----' "$f"; then
+  if LC_ALL=C grep -aqE -- '-----BEGIN [A-Z ]*PRIVATE KEY-----' "$f"; then
     report "$f" "Enthält einen privaten Schlüssel."
   fi
 
@@ -110,13 +121,17 @@ while IFS= read -r f; do
   #
   #     Anlass: am 2026-08-23 gab ein `git credential fill` beim Debuggen ein echtes glpat- aus.
   #     Es landete in keiner Datei, aber der Guard hätte es auch nicht bemerkt, wenn doch.
-  if grep -oE '(glpat|glrt|gloas|glptt|glagent|glimt|glsoat|glcbt|glft|gldt)-[A-Za-z0-9_.-]{20,}' "$f" | grep -q .; then
+  #
+  #     Existenzprüfungen sind `grep -aqE`, nie `grep -o … | grep -q .`: unter `set -o pipefail`
+  #     endet die Pipe mit 141, sobald `grep -q` früh schließt, und bei vielen Treffern (gemessen:
+  #     1.500 Token in einer Datei) meldete der Check nichts.
+  if LC_ALL=C grep -aqE '(glpat|glrt|gloas|glptt|glagent|glimt|glsoat|glcbt|glft|gldt)-[A-Za-z0-9_.-]{20,}' "$f"; then
     report "$f" "Enthält ein GitLab-Token (Provider-Präfix + Wert)."
   fi
-  if grep -oE '(gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,})' "$f" | grep -q .; then
+  if LC_ALL=C grep -aqE '(gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,})' "$f"; then
     report "$f" "Enthält ein GitHub-Token (Provider-Präfix + Wert)."
   fi
-  if grep -oE '(npm_[A-Za-z0-9]{30,}|xox[baprs]-[A-Za-z0-9-]{20,}|sk-(ant-)?[A-Za-z0-9_-]{30,})' "$f" | grep -q .; then
+  if LC_ALL=C grep -aqE '(npm_[A-Za-z0-9]{30,}|xox[baprs]-[A-Za-z0-9-]{20,}|sk-(ant-)?[A-Za-z0-9_-]{30,})' "$f"; then
     report "$f" "Enthält ein npm-, Slack- oder AI-Provider-Token (Provider-Präfix + Wert)."
   fi
 
@@ -126,26 +141,32 @@ while IFS= read -r f; do
     # 3) Secret-/Token-Zuweisung mit QUOTIERTEM Literal (kein Code-Verweis wie
     #    process.env.X oder keys.secret, kein Platzhalter). Unquotierte Secrets in
     #    .env fängt Check 1 (Dateiname); rohe 32-Hex-Tokens fängt Check 4.
-    if grep -inE '(API_?KEY|API_?TOKEN|SECRET|PASSWORD|PASSWD|AUTH_?TOKEN|ACCESS_?TOKEN|PRIVATE_?KEY|CLOCKODO_API_KEY)[[:space:]]*[:=][[:space:]]*["'"'"'][A-Za-z0-9/+_.-]{16,}' "$f" \
-        | grep -viE "$PLACEHOLDER|process\.env|import\.meta|\.env\.|getenv" | head -1 | grep -q .; then
+    # Ausgabe statt Exit-Status: `head -1` schließt die Pipe früh, und unter pipefail zählte sonst
+    # das 141 des ersten grep. NUL wird vorher zum Zeilenende: sonst steht ein Secret aus einem
+    # .tar in derselben Zeile wie dessen Kopf, und dessen `0000000` traf den Platzhalter `000000`.
+    secret_hit=$(LC_ALL=C tr '\000' '\n' < "$f" \
+        | LC_ALL=C grep -aiE '(API_?KEY|API_?TOKEN|SECRET|PASSWORD|PASSWD|AUTH_?TOKEN|ACCESS_?TOKEN|PRIVATE_?KEY|CLOCKODO_API_KEY)[[:space:]]*[:=][[:space:]]*["'"'"'][A-Za-z0-9/+_.-]{16,}' \
+        | LC_ALL=C grep -aviE "$PLACEHOLDER|process\.env|import\.meta|\.env\.|getenv" | head -1)
+    if [[ -n "$secret_hit" ]]; then
       report "$f" "Sieht aus wie ein echter Secret/Token-Wert (quotiertes Literal, kein Platzhalter)."
     fi
     # 4) Freistehende 32-Hex-Tokens (z. B. Clockodo-API-Key = 32 hex). Genau 32,
     #    von Nicht-Hex umgeben → schließt 40-stellige Git-SHAs aus.
-    if grep -oE '(^|[^0-9a-zA-Z])[0-9a-f]{32}([^0-9a-zA-Z]|$)' "$f" | grep -q .; then
+    if LC_ALL=C grep -aqE '(^|[^0-9a-zA-Z])[0-9a-f]{32}([^0-9a-zA-Z]|$)' "$f"; then
       report "$f" "Enthält einen 32-stelligen Hex-Token (mögliches API-Secret, z. B. Clockodo)."
     fi
   fi
 
   # 5) Lokale Benutzerpfade (PII)
-  if grep -oE '/Users/[A-Za-z0-9._-]+/' "$f" | grep -qvE '/Users/(runner|user|example)/'; then
+  users_hit=$(LC_ALL=C grep -aoE '/Users/[A-Za-z0-9._-]+/' "$f" | LC_ALL=C grep -vE '/Users/(runner|user|example)/' | head -1)
+  if [[ -n "$users_hit" ]]; then
     report "$f" "Enthält einen lokalen /Users/<name>/-Pfad (PII/Umgebung)."
   fi
 
   # 6) Kunden-Roster: ≥3 Firmennamen mit deutscher Rechtsform in EINER Stammdaten-Datei.
   #    Nur .json (echte Roster sind Daten, nicht Doku). Anonyme Beispiele OHNE Rechtsform.
   if [[ "$f" == *.json ]]; then
-    hits=$(grep -oE '( GmbH| mbH| GbR| AG"| SE"| KG"| UG"|e\.? ?V\.?|Stiftung)' "$f" 2>/dev/null | wc -l | tr -d ' ')
+    hits=$(LC_ALL=C grep -aoE '( GmbH| mbH| GbR| AG"| SE"| KG"| UG"|e\.? ?V\.?|Stiftung)' "$f" 2>/dev/null | wc -l | tr -d ' ')
     if [[ "${hits:-0}" -ge 3 ]]; then
       report "$f" "Sieht aus wie echte Kundendaten ($hits Firmennamen mit Rechtsform). Nur anonymisierte Beispiele (ohne Rechtsform) committen."
     fi
@@ -153,7 +174,9 @@ while IFS= read -r f; do
 
   # 7) Interne Namens-Sperrliste: echte Kunden-/Projektnamen, auch ohne Rechtsform.
   if [[ -n "$DENY_RE" ]]; then
-    hit=$(grep -niwE "$DENY_RE" "$f" 2>/dev/null | head -1 | cut -d: -f1)
+    # grep in der Locale des Nutzers (Namen mit Umlaut, -i), cut in C: das BSD-cut bricht an einem
+    # ungültigen UTF-8-Byte der Trefferzeile ab, und der Name lief durch (Review 2026-10-18).
+    hit=$(grep -aniwE "$DENY_RE" "$f" 2>/dev/null | head -1 | LC_ALL=C cut -d: -f1)
     if [[ -n "$hit" ]]; then
       report "$f:$hit" "Enthält einen Eintrag der internen Sperrliste (echter Kunde/Projekt oder interne Infrastruktur). Anonymisieren (z. B. Beispielkunde, ABC-123, shop) bzw. Platzhalter wie <gitlab-host>, <server-ip> verwenden."
     fi
@@ -213,8 +236,10 @@ name_candidates() {
 check_new_names() {
   local base diff_out file="" lineno=0 line tok
   case "$mode" in
-    --staged) base=HEAD; diff_out=$(git diff --cached -U0 --diff-filter=ACMR) ;;
-    --range)  base="${RANGE%%..*}"; diff_out=$(git diff -U0 --diff-filter=ACMR "$RANGE") ;;
+    # core.quotepath=off: sonst steht ein Name mit Umlaut als `+++ "b/…\303\274…"` im Kopf, passt
+    # nicht auf `+++ b/` und seine Zeilen landen bei der vorherigen Datei oder fallen weg.
+    --staged) base=HEAD; diff_out=$(git -c core.quotepath=off diff --cached -U0 --diff-filter=ACMR) ;;
+    --range)  base="${RANGE%%..*}"; diff_out=$(git -c core.quotepath=off diff -U0 --diff-filter=ACMR "$RANGE") ;;
     *) return 0 ;;
   esac
   git rev-parse -q --verify "$base^{commit}" >/dev/null || return 0

@@ -52,6 +52,16 @@ All Claude Code best practices are cached locally in `.claude/docs-cache/*.md`. 
 | `discover-plugins.md` | How users install and manage plugins |
 | `plugins-security.md` | What a plugin can do on a user's machine; how users review it |
 | `plugins-troubleshooting.md` | Plugin error messages by stage |
+| `mods-overview.md` | Mods: what a mod adds, installing one, trust, turning mods off, where mods run, comparison with settings hooks, skills and MCP |
+| `mods-create.md` | Writing a mod by asking Claude or by hand; the reload, validate and test loop |
+| `mods-reference.md` | Mods reference: hooks module files, events and their return values, mods API methods, render sites, elements per app, limits, settings |
+| `mods-interface.md` | Drawing panes and the band above the prompt, changing what Claude Code already draws, input, state |
+| `mods-gallery.md` | Interface elements with sample code |
+| `mods-events.md` | Observing, rewriting or answering tool calls, prompts and turns; the order mods run in, including where settings hooks run |
+| `mods-api.md` | Commands, tools, model calls, timers, messages between sessions, files, processes and network |
+| `mods-test.md` | `claude plugin test`: firing events, stubs, mocks, drawing tests |
+| `mods-troubleshoot.md` | Why a mod does nothing, refusal messages, debug log |
+| `mods-admin.md` | Managed-settings controls for mods, the built-in `sec-default` guard, policy mods |
 | **Sessions, parallelism, configuration** | |
 | `agent-teams.md` | Agent Teams coordination, messaging, hooks, and best practices |
 | `cross-session-messaging.md` | Messaging between independent sessions: `ListAgents`/`SendMessage`, inbound controls, `notify_when_idle`, the inbox socket **(primary source)** |
@@ -170,8 +180,11 @@ claude-code/
 │       │                     # (e.g. discover-check-scripts.sh) — narrow Bash permission
 │       │                     # pattern: Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*)
 │       ├── skills/           # Context-aware expertise (SKILL.md + references)
-│       ├── evals/            # `claude plugin eval` suite: trigger/ and quality/ cases (results/ is git-ignored)
-│       ├── context-budget.json  # Accepted always-on size (skill listing, agents), gated by scripts/context-budget.mjs
+│       ├── evals/            # `claude plugin eval` suite (results/ is git-ignored): trigger/, quality/, agent/ cases;
+│       │                     # selftest/ proves each judge rubric (selftest.mjs sync|verify), compare-arms.mjs
+│       │                     # compares a main and a candidate run for paired A/B measurements
+│       ├── context-budget.json  # Accepted always-on size (skill listing, agents, hook context), gated by scripts/context-budget.mjs
+│       ├── rule-invariants.json # Rules kept in several files (sections, phrases, report contracts), checked by scripts/rule-invariants.mjs
 │       ├── permissions.json  # Bash permission patterns for auto-approval
 │       ├── permissions.schema.json  # JSON Schema for permissions validation
 │       └── .mcp.json         # MCP server dependencies
@@ -423,6 +436,7 @@ Run `/lt-dev:plugin:check` periodically or before releases to verify:
 - [ ] "Related Skills" sections are present and accurate
 - [ ] Descriptions include trigger terms for auto-detection; skills only commands load have a one-line description
 - [ ] `node plugins/lt-dev/scripts/context-budget.mjs plugins/lt-dev --check` passes; growth only with a deliberate `--update` (house rule 4)
+- [ ] `node plugins/lt-dev/scripts/rule-invariants.mjs plugins/lt-dev` passes: every copy of a shared rule and every report section another command parses is in line (house rule 37)
 
 ### Commands
 - [ ] All commands have `description` in frontmatter
@@ -444,7 +458,7 @@ Run `/lt-dev:plugin:check` periodically or before releases to verify:
 - [ ] hooks.json is valid JSON
 - [ ] All referenced scripts in `hooks/scripts/` exist
 - [ ] Hook matchers are correctly configured
-- [ ] Context-injecting hooks run on an event that delivers context (UserPromptSubmit, UserPromptExpansion, SessionStart, PostModelSwitch)
+- [ ] Context-injecting hooks run on an event that delivers context (house rule 17: SessionStart, SubagentStart, PostModelSwitch, UserPromptSubmit, UserPromptExpansion, PreToolUse, PostToolUse, PostToolUseFailure, PostToolBatch; Stop/SubagentStop as feedback); rules a subagent needs go through SubagentStart, because SessionStart context never reaches one
 - [ ] UserPromptSubmit detectors stay quiet on `<task-notification>` turns; hook tests pass as CI runs them
 - [ ] A skill named by no detector and loaded by no command has a row in `detect-skill-keywords.sh` when its trigger words are distinctive, or a trigger-eval case
 
@@ -466,6 +480,8 @@ Run `/lt-dev:plugin:check` periodically or before releases to verify:
 ### Measurement
 - [ ] `plugins/lt-dev/evals` trigger suite passes on the default model (see its README); quality suite `Δ` did not drop
 - [ ] An effort pin that changes is backed by an `agent`-case run at both levels (house rule 10)
+- [ ] A change to rule text that every session or agent loads (injected hook context, the reviewers' bar, agent prompts) won a paired run against the current version on a target case and a case it could break; a loser is in the evals README's "Not shipped" table (house rule 36)
+- [ ] After a rubric change, `selftest.mjs sync`, the `selftest` cases and `selftest.mjs verify` confirm every verdict before judge-scored numbers are compared
 
 ### Documentation
 - [ ] **CLAUDE.md**: Repository structure matches actual layout

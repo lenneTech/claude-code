@@ -89,6 +89,18 @@ jobs:
             node plugins/lt-dev/scripts/context-budget.mjs "$(dirname "$baseline")" --check --top 5 || fail=1
           done
           exit "$fail"
+      # Rules that live in several files (the reviewers' reporting bar, the follow-up policy, the
+      # report sections other commands parse) may only change in every copy at once: a plugin
+      # with a rule-invariants.json fails here when one copy drifts.
+      - name: Rule invariants
+        if: ${{ !cancelled() }}
+        run: |
+          fail=0
+          for config in plugins/*/rule-invariants.json; do
+            [ -f "$config" ] || continue
+            node plugins/lt-dev/scripts/rule-invariants.mjs "$(dirname "$config")" || fail=1
+          done
+          exit "$fail"
       - name: Validate plugin manifests
         if: ${{ !cancelled() }}
         run: |

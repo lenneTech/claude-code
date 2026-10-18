@@ -10,7 +10,9 @@
 # Claude Code sends its stdout only to the debug log, so context printed there never
 # reaches Claude. SessionStart adds hookSpecificOutput.additionalContext to the context.
 
-INPUT=$(cat)
+. "${0%/*}/_read-stdin.sh"
+read_hook_input 2
+INPUT=$HOOK_INPUT
 
 # ── Extract source and cwd with jq fallback ──
 if command -v jq >/dev/null 2>&1; then

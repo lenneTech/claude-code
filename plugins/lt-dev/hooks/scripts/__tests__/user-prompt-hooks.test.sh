@@ -150,6 +150,19 @@ case "$(uname -s 2>/dev/null)" in
     touch "$VNUXT/nuxt.config.ts"
     echo '# @lenne.tech/nuxt-extensions (vendored)' > "$VNUXT/app/core/VENDOR.md"
     assert_json_context "$(run_hook detect-nuxt.sh "$VNUXT" 'tweak the dashboard component')" "$VNUXT/app/core/" "nuxt: backslash in the vendor path stays valid JSON"
+
+    # npm mode: the node_modules path went into the JSON unescaped, so a `"` in a folder
+    # name made the output invalid and Claude Code dropped the context silently.
+    QNEST="$TMP_ROOT/my \"quoted\" dir/nest"
+    mkdir -p "$QNEST/node_modules/@lenne.tech/nest-server/src"
+    echo '{"dependencies":{"@lenne.tech/nest-server":"11.0.0"}}' > "$QNEST/package.json"
+    assert_json_context "$(run_hook detect-nest-server.sh "$QNEST" 'add a service')" "$QNEST/node_modules/@lenne.tech/nest-server/" "nest-server: quote in the npm-mode path stays valid JSON"
+    assert_json_context "$(HOOK_PATH="$NOJQ_BIN" run_hook detect-nest-server.sh "$QNEST" 'add a service')" "$QNEST/node_modules/@lenne.tech/nest-server/" "nest-server without jq: quote in the npm-mode path stays valid JSON"
+
+    QNUXT="$TMP_ROOT/my \"quoted\" dir/nuxt"
+    mkdir -p "$QNUXT/app/components" "$QNUXT/node_modules/@lenne.tech/nuxt-extensions/dist"
+    touch "$QNUXT/nuxt.config.ts"
+    assert_json_context "$(run_hook detect-nuxt.sh "$QNUXT" 'tweak the dashboard component')" "$QNUXT/node_modules/@lenne.tech/nuxt-extensions/" "nuxt: quote in the npm-mode path stays valid JSON"
     ;;
 esac
 

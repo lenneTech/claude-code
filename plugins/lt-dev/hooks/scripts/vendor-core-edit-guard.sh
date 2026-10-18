@@ -20,7 +20,10 @@
 
 [ -n "${LT_SKIP_VENDOR_CORE_GUARD:-}" ] && exit 0
 
-INPUT=$(cat)
+# Read hook input from stdin, time-limited (see _read-stdin.sh)
+. "${0%/*}/_read-stdin.sh"
+read_hook_input 2
+INPUT=$HOOK_INPUT
 
 # ── Extract file_path from JSON input ──
 if command -v jq &>/dev/null; then

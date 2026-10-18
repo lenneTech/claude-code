@@ -79,7 +79,8 @@ itself failed (no key, no network, invalid adapter).
 | `empty-answer` | A one-word request came back without text (probe) | Check reasoning against the budget; with `model-missing` alongside, the model is on its way out |
 | `shutdown-announced` | Provider announced a date | Measure candidates in time; the date is a deadline, not a suggestion |
 | `test-phase` | No shutdown notice guaranteed | Fine for trials; production usages want Stable or LTS |
-| `capability-missing`, `probe-*-failed` | The model no longer does what the usage needs | Urgent for vision, embeddings or a failing basic call |
+| `capability-missing`, `probe-*-failed` | The model no longer does what the usage needs | Urgent for vision, OCR, embeddings or a failing basic call |
+| `unknown-need` | A `needs` entry nothing checks (a typo, or a capability without a probe) | Fix the word in the adapter; `ocr` for document OCR, `vision` for questions about an image |
 | `budget-eaten-by-reasoning` | Empty answer at a small `max_tokens` | Check the usage's budget against reasoning plus answer, or switch reasoning off |
 | `adapter-*`, `code-*`, `runtime-*` | Adapter, code and running system disagree | Fix the adapter, or find out who changed the running system |
 | `candidate` (information) | Available, unused model | Candidate for the next measurement |

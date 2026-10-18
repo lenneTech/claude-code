@@ -173,7 +173,38 @@ test('writeBaseline keeps only the gated totals and an explanation', () => {
   const root = fixture();
   try {
     const data = writeBaseline(root, { listingChars: 1, agentChars: 2, overCap: [] });
-    assert.deepEqual(Object.keys(data), ['$comment', 'listingChars', 'agentChars']);
+    assert.deepEqual(Object.keys(data), ['$comment', 'listingChars', 'agentChars', 'hookContextChars']);
+    assert.equal(data.hookContextChars, 0);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('hook-injected context under hooks/context/ is measured and gated once a baseline names it', () => {
+  const root = fixture();
+  try {
+    write(root, 'hooks/context/rules.md', '0123456789');
+    const { entries, hookContext } = collect(root);
+    const totals = summarize(entries, hookContext);
+    assert.equal(totals.hookContextChars, 10);
+    assert.equal(totals.hookContextFiles, 1);
+    // the listing is unaffected by hook context files
+    assert.equal(totals.listingChars, summarize(entries).listingChars);
+
+    const base = { listingChars: totals.listingChars, agentChars: totals.agentChars };
+    const unnamed = compare(totals, base);
+    assert.equal(unnamed.ok, false);
+    assert.match(unnamed.problems[0], /no numeric hookContextChars for 10 chars/);
+
+    assert.equal(compare(totals, { ...base, hookContextChars: 10 }).ok, true);
+    const grew = compare(totals, { ...base, hookContextChars: 9 });
+    assert.equal(grew.ok, false);
+    assert.match(grew.problems[0], /hook-injected context grew: 10 chars, baseline 9/);
+    assert.match(compare(totals, { ...base, hookContextChars: 20 }).hints[0], /hook-injected context shrank/);
+
+    // a plugin without hook context needs no baseline entry for it
+    const plain = summarize(entries);
+    assert.equal(compare(plain, base).ok, true);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

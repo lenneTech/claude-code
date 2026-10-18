@@ -8,8 +8,10 @@
 # Claude Code sends its stdout only to the debug log, so context printed there never
 # reaches Claude. SessionStart adds plain-text stdout to Claude's context.
 
-# Read hook input from stdin
-INPUT=$(cat)
+# Read hook input from stdin, time-limited (see _read-stdin.sh)
+. "${0%/*}/_read-stdin.sh"
+read_hook_input 2
+INPUT=$HOOK_INPUT
 
 # Extract fields from JSON (jq with fallback to grep/sed). SessionStart input carries
 # `source` ("startup" | "resume" | "clear" | "compact" | "fork").
@@ -48,10 +50,17 @@ fi
 for dir in "$PROJECT_DIR" "$PROJECT_DIR/projects/api" "$PROJECT_DIR/packages/api"; do
   if [ -f "$dir/package.json" ]; then
     if grep -q "@lenne.tech/nest-server" "$dir/package.json"; then
-      VERSION=$(grep -oE '"@lenne.tech/nest-server"[[:space:]]*:[[:space:]]*"[^"]*"' "$dir/package.json" | head -1 | grep -o '[0-9][^"]*' || echo "unknown")
+      VERSION=$(grep -oE '"@lenne.tech/nest-server"[[:space:]]*:[[:space:]]*"[^"]*"' "$dir/package.json" | head -1 | grep -o '[0-9][^"]*')
+      # The version string comes from a file in the repository and reaches Claude verbatim.
+      # Only a plain semver (digits, letters, . + -, at most 40 characters) is passed on;
+      # anything else (a range, a protocol, injected text) leaves the version out.
+      case "$VERSION" in
+        ''|*[!0-9A-Za-z.+-]*) VERSION_TEXT="" ;;
+        *) [ ${#VERSION} -le 40 ] && VERSION_TEXT=" v${VERSION}" || VERSION_TEXT="" ;;
+      esac
       REL_DIR="${dir#$PROJECT_DIR/}"
       [ "$REL_DIR" = "$dir" ] && REL_DIR="."
-      CONTEXT_LINES+=("Backend: NestJS with @lenne.tech/nest-server v${VERSION} (${REL_DIR})")
+      CONTEXT_LINES+=("Backend: NestJS with @lenne.tech/nest-server${VERSION_TEXT} (${REL_DIR})")
       break
     fi
   fi
@@ -88,6 +97,13 @@ fi
 
 # Detect git branch
 BRANCH=$(git -C "$PROJECT_DIR" branch --show-current 2>/dev/null || true)
+# git allows quotes, angle brackets, `$`, backticks and more in branch names, and the name
+# reaches Claude verbatim. Only letters, digits and / . _ - (at most 100 characters) pass;
+# any other branch name is left out of the context.
+case "$BRANCH" in
+  *[!A-Za-z0-9/._-]*) BRANCH="" ;;
+esac
+[ ${#BRANCH} -gt 100 ] && BRANCH=""
 if [ -n "$BRANCH" ]; then
   CONTEXT_LINES+=("Branch: ${BRANCH}")
 fi

@@ -77,9 +77,12 @@ find_nest_server_path() {
 }
 
 # Paths are written into a hand-built JSON string. A Windows path such as C:\Users\…
-# would put `\U` into it, an invalid JSON escape, so backslashes and quotes are escaped.
+# would put `\U` into it, an invalid JSON escape, and a `"` or a control character in a
+# folder name ends the string early, so Claude Code drops the whole context silently.
+# Control characters are removed, backslashes and quotes escaped. Every path goes
+# through here, the npm-mode one as well as the vendored one.
 json_escape() {
-  printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+  printf '%s' "$1" | tr -d '\000-\037' | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
 }
 
 emit_context() {
@@ -96,7 +99,7 @@ emit_context() {
     fi
   else
     local ns_path
-    ns_path=$(find_nest_server_path)
+    ns_path=$(json_escape "$(find_nest_server_path)")
     if [ -n "$ns_path" ]; then
       framework_hint=" Framework source: ${ns_path}/. Key files: CLAUDE.md, FRAMEWORK-API.md, src/core.module.ts, src/core/common/interfaces/server-options.interface.ts, src/core/common/services/crud.service.ts. ALWAYS read source before guessing."
     fi

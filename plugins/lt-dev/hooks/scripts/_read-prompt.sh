@@ -9,9 +9,14 @@
 # jq is preferred. Without it (Git Bash on Windows ships none), the JSON string is
 # extracted escape-aware and unescaped, the same way block-dangerous-bash.sh does.
 
+# The read is time-limited (_read-stdin.sh): a stdin that never closes would otherwise
+# hold the hook, and with it the model, until the hooks.json timeout.
+
 PROMPT=""
-if [ ! -t 0 ]; then
-  _hook_input=$(cat)
+. "${0%/*}/_read-stdin.sh"
+read_hook_input 2
+if [ -n "$HOOK_INPUT" ]; then
+  _hook_input=$HOOK_INPUT
   if command -v jq >/dev/null 2>&1; then
     PROMPT=$(printf '%s' "$_hook_input" | jq -r '.prompt // empty' 2>/dev/null)
   else

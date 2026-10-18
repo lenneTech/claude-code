@@ -13,7 +13,10 @@
 # or an absent state directory are all fine: exit 0 either way, since a
 # cleanup hook must never interfere with the session it runs in.
 
-INPUT=$(cat 2>/dev/null || echo '')
+# Time-limited read (see _read-stdin.sh); 1 s matches this hook's shortest timeout.
+. "${0%/*}/_read-stdin.sh"
+read_hook_input 1
+INPUT=$HOOK_INPUT
 
 if command -v jq &>/dev/null; then
   SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty' 2>/dev/null)

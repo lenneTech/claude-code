@@ -1,0 +1,111 @@
+{
+  "$comment": "Rules that live in more than one file. Checked by scripts/rule-invariants.mjs in Plugin CI and /lt-dev:plugin:check. When a rule changes on purpose, change every copy listed here in the same edit, or this config.",
+  "identicalSections": [
+    {
+      "name": "Reporting Bar of the reviewer agents",
+      "heading": "## Reporting Bar",
+      "files": [
+        "agents/*-reviewer.md"
+      ]
+    }
+  ],
+  "phrases": [
+    {
+      "name": "broken callers are in the review's scope, in the command and in the reviewers' bar",
+      "phrase": "untouched caller",
+      "files": [
+        "commands/review.md",
+        "agents/code-reviewer.md"
+      ]
+    },
+    {
+      "name": "closing line of a change report (English)",
+      "phrase": "Not checked:",
+      "files": [
+        "agents/backend-dev.md",
+        "agents/frontend-dev.md",
+        "skills/building-stories-with-tdd/SKILL.md"
+      ]
+    },
+    {
+      "name": "closing line of a change report (German)",
+      "phrase": "Nicht geprüft:",
+      "files": [
+        "commands/take-ticket.md",
+        "commands/ticket-cycle.md"
+      ]
+    },
+    {
+      "name": "follow-up dependency gate",
+      "phrase": "follow-up that needs this ticket merged goes to `Blocked`, not `Open`",
+      "files": [
+        "commands/take-ticket.md",
+        "commands/resolve-ticket.md"
+      ]
+    },
+    {
+      "name": "follow-ups are filed, not only noted",
+      "phrase": "a ticket that exists only in prose is lost",
+      "files": [
+        "commands/take-ticket.md",
+        "commands/resolve-ticket.md"
+      ]
+    }
+  ],
+  "forbidden": [
+    {
+      "name": "review sections /lt-dev:review no longer writes",
+      "pattern": "Remediation Catalog|Action Roadmap",
+      "files": [
+        "commands/production-ready.md"
+      ]
+    },
+    {
+      "name": "review catalog /lt-dev:review no longer writes",
+      "pattern": "Remediation Catalog",
+      "files": [
+        "commands/refactor-frontend.md"
+      ]
+    },
+    {
+      "name": "the retired consolidated review catalog",
+      "pattern": "Consolidated (Remediation )?Catalog",
+      "files": [
+        "commands/*.md",
+        "commands/*/*.md",
+        "agents/*.md",
+        "skills/*/SKILL.md",
+        "skills/*/reference/*.md"
+      ]
+    }
+  ],
+  "contracts": [
+    {
+      "name": "/lt-dev:review report sections",
+      "provider": "commands/review.md",
+      "consumers": [
+        "commands/production-ready.md",
+        "commands/refactor-frontend.md"
+      ],
+      "terms": [
+        "**Ergebnis:**",
+        "**Änderung:**",
+        "### Geprüft und in Ordnung",
+        "### Nicht berichtet",
+        "### Nicht geprüft",
+        "### Check-Pipeline",
+        "## Ergebnis"
+      ]
+    },
+    {
+      "name": "small-diff path of /lt-dev:review, which the blast-radius eval case drives",
+      "provider": "commands/review.md",
+      "consumers": [
+        "evals/agent/code-review-blast-radius-agent/fixture.sh"
+      ],
+      "terms": [
+        "**< 20 changed lines AND <= 2 changed files**"
+      ]
+    }
+  ]
+}

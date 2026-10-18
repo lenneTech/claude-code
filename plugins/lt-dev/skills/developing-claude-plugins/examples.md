@@ -247,7 +247,7 @@ Automatic formatting hook that runs after file writes.
         "hooks": [
           {
             "type": "command",
-            "command": "echo '{\"hookSpecificOutput\":{\"additionalContext\":\"Remember: All code must follow TypeScript strict mode\"}}'",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"Remember: All code must follow TypeScript strict mode\"}}'",
             "timeout": 5
           }
         ]

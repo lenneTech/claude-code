@@ -14,7 +14,10 @@
 #
 # Fail-open: on any unexpected error, allow the operation.
 
-INPUT=$(cat)
+# Read hook input from stdin, time-limited (see _read-stdin.sh)
+. "${0%/*}/_read-stdin.sh"
+read_hook_input 2
+INPUT=$HOOK_INPUT
 
 # ── Extract file_path from JSON input ──
 if command -v jq &>/dev/null; then

@@ -784,6 +784,8 @@ Für den Review wichtig
 - Umfang (STEP 9c): Kern <n> Dateien, +<x>/−<y> · Mitgenommen <m> (je: was, warum, vorbestehender Fehler | Verbesserung) · im Audit entfernt: <liste | "nichts">
 - Getrennt lesen: `git log -p --invert-grep --grep='^Taken-Along:' origin/<BASE>..HEAD` (Kern) und `git log -p --grep='^Taken-Along:' origin/<BASE>..HEAD` (Mitgenommen)
 - Bewusst NICHT umgesetzt: <liste, falls scope-cut>
+- Nicht geprüft: <was nicht laufen oder nicht verifiziert werden konnte, je mit Grund, oder "nichts">
+- Risiken: <was ein Reviewer wissen muss, bevor er freigibt, oder "keine">
 - Empfohlene Manual-Smoke-Tests: <1-3 schritte>
 
 Browser-Walk (aus STEP 9.5; mit `--in-cycle` entfällt der Block, der Cycle läuft ihn in Phase C)

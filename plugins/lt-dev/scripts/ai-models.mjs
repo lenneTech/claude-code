@@ -363,7 +363,24 @@ export function daysUntil(isoDate, today = new Date()) {
   return Math.round((Date.UTC(y, m - 1, d) - t) / 86_400_000);
 }
 
-const NEED_TO_CAP = { embeddings: 'embeddings', tools: 'tools', vision: 'vision' };
+// An OCR model is not a vision model: the catalog lists GLM-OCR with `ocr` only, and a usage that
+// declares `vision` for it is flagged on purpose (observed 2026-10-17 on a document-OCR usage).
+const NEED_TO_CAP = { embeddings: 'embeddings', ocr: 'ocr', tools: 'tools', vision: 'vision' };
+
+/** The needs the probes and the catalog comparison understand; `max-images:<n>` is the one pattern. */
+export const KNOWN_NEEDS = ['embeddings', 'json', 'ocr', 'reasoning-off', 'tools', 'vision'];
+
+/** A need nobody checks is silent: a typo or an unknown word gets an action finding. */
+export function unknownNeeds(adapter) {
+  const findings = [];
+  for (const u of adapter.usages ?? []) {
+    for (const need of u.needs ?? []) {
+      if (KNOWN_NEEDS.includes(need) || /^max-images:\d+$/.test(need)) continue;
+      findings.push(finding(1, 'unknown-need', u.id, `usage ${u.id}: need "${need}" is not checked by anything (known: ${KNOWN_NEEDS.join(', ')}, max-images:<n>)`, { model: u.model }));
+    }
+  }
+  return findings;
+}
 
 export function compareLifecycle(adapter, docs, { today = new Date(), urgentDays = 90 } = {}) {
   const findings = [];
@@ -431,8 +448,8 @@ export async function fetchMittwaldDocs({ since } = {}) {
 
 // ── Probes ───────────────────────────────────────────────────────────────────
 
-/** A minimal PNG: left half red, right half blue. Built in-process, no files. */
-export function twoColourPng(width = 64, height = 32) {
+/** Encodes RGB pixel rows (one Buffer of width*3 bytes per row) as a PNG. */
+function encodePng(width, height, pixelRows) {
   const crcTable = Array.from({ length: 256 }, (_, n) => {
     let c = n;
     for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
@@ -455,18 +472,72 @@ export function twoColourPng(width = 64, height = 32) {
   ihdr.writeUInt32BE(width, 0);
   ihdr.writeUInt32BE(height, 4);
   ihdr.set([8, 2, 0, 0, 0], 8);
-  const rows = [];
-  for (let y = 0; y < height; y++) {
-    const row = [0];
-    for (let x = 0; x < width; x++) row.push(...(x < width / 2 ? [220, 20, 20] : [20, 20, 220]));
-    rows.push(Buffer.from(row));
-  }
+  // Filter byte 0 (none) in front of every row.
+  const rows = pixelRows.map((r) => Buffer.concat([Buffer.from([0]), r]));
   return Buffer.concat([
     Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
     chunk('IHDR', ihdr),
     chunk('IDAT', deflateSync(Buffer.concat(rows))),
     chunk('IEND', Buffer.alloc(0)),
   ]);
+}
+
+/** A minimal PNG: left half red, right half blue. Built in-process, no files. */
+export function twoColourPng(width = 64, height = 32) {
+  const rows = [];
+  for (let y = 0; y < height; y++) {
+    const row = [];
+    for (let x = 0; x < width; x++) row.push(...(x < width / 2 ? [220, 20, 20] : [20, 20, 220]));
+    rows.push(Buffer.from(row));
+  }
+  return encodePng(width, height, rows);
+}
+
+// 5x7 bitmap glyphs, enough for the OCR probe text. '#' is ink.
+const GLYPHS = {
+  ' ': ['     ', '     ', '     ', '     ', '     ', '     ', '     '],
+  0: [' ### ', '#   #', '#  ##', '# # #', '##  #', '#   #', ' ### '],
+  1: ['  #  ', ' ##  ', '  #  ', '  #  ', '  #  ', '  #  ', ' ### '],
+  2: [' ### ', '#   #', '    #', '   # ', '  #  ', ' #   ', '#####'],
+  3: ['#####', '   # ', '  #  ', '   # ', '    #', '#   #', ' ### '],
+  4: ['   # ', '  ## ', ' # # ', '#  # ', '#####', '   # ', '   # '],
+  5: ['#####', '#    ', '#### ', '    #', '    #', '#   #', ' ### '],
+  6: ['  ## ', ' #   ', '#    ', '#### ', '#   #', '#   #', ' ### '],
+  7: ['#####', '    #', '   # ', '  #  ', ' #   ', ' #   ', ' #   '],
+  8: [' ### ', '#   #', '#   #', ' ### ', '#   #', '#   #', ' ### '],
+  9: [' ### ', '#   #', '#   #', ' ####', '    #', '   # ', ' ##  '],
+  C: [' ### ', '#   #', '#    ', '#    ', '#    ', '#   #', ' ### '],
+  O: [' ### ', '#   #', '#   #', '#   #', '#   #', '#   #', ' ### '],
+  R: ['#### ', '#   #', '#   #', '#### ', '# #  ', '#  # ', '#   #'],
+};
+
+/** The text the OCR probe renders. Not a well-known number, so a model cannot guess it. */
+export const OCR_PROBE_TEXT = 'OCR 3852';
+
+/** Black text on white, rendered from GLYPHS at `scale` pixels per dot, with a margin. */
+export function textPng(text, scale = 6) {
+  const chars = [...text.toUpperCase()].map((ch) => {
+    if (!GLYPHS[ch]) throw new Error(`textPng: no glyph for "${ch}"`);
+    return GLYPHS[ch];
+  });
+  const margin = 2 * scale;
+  const cellW = 6 * scale; // 5 dots plus one dot of spacing
+  const width = margin * 2 + chars.length * cellW;
+  const height = margin * 2 + 7 * scale;
+  const rows = [];
+  for (let y = 0; y < height; y++) {
+    const row = Buffer.alloc(width * 3, 255);
+    const gy = Math.floor((y - margin) / scale);
+    if (gy >= 0 && gy < 7) {
+      for (let x = margin; x < width - margin; x++) {
+        const ci = Math.floor((x - margin) / cellW);
+        const gx = Math.floor(((x - margin) % cellW) / scale);
+        if (gx < 5 && chars[ci][gy][gx] === '#') row.fill(0, x * 3, x * 3 + 3);
+      }
+    }
+    rows.push(row);
+  }
+  return encodePng(width, height, rows);
 }
 
 function reasoningOf(message, usage) {
@@ -523,6 +594,18 @@ const PROBES = {
     ], { maxTokens: 512, params: ctx.usage.params }));
     const answer = r.json?.choices?.[0]?.message?.content ?? '';
     return { answer: answer.slice(0, 40), ms: r.ms, ok: /\bred\b|\brot\b/i.test(answer), status: r.status };
+  },
+  async ocr(ctx) {
+    // A document-OCR model transcribes; it does not answer questions about the picture, so the
+    // vision probe's colour question does not fit it.
+    const img = `data:image/png;base64,${textPng(OCR_PROBE_TEXT).toString('base64')}`;
+    const r = await ctx.chat(chatBody(ctx.usage.model, [
+      { text: 'Transcribe the text in this image exactly.', type: 'text' },
+      { image_url: { url: img }, type: 'image_url' },
+    ], { maxTokens: 512, params: ctx.usage.params }));
+    const answer = r.json?.choices?.[0]?.message?.content ?? '';
+    const digits = OCR_PROBE_TEXT.replace(/\D/g, '');
+    return { answer: answer.slice(0, 60), ms: r.ms, ok: r.status < 400 && answer.replace(/\s/g, '').includes(digits), status: r.status };
   },
   async 'reasoning-off'(ctx) {
     const effort = ctx.usage.params?.reasoningEffort ?? 'none';
@@ -632,7 +715,7 @@ export function judgeProbes(usage, results) {
     } else if (name === 'budget' && r.emptyOnLength) {
       findings.push(finding(1, 'budget-eaten-by-reasoning', usage.id, `usage ${usage.id}: at a small max_tokens the answer comes back EMPTY (reasoning consumed the budget) — check the usage's maxTokens against reasoning plus answer`, { model: usage.model }));
     } else if (!r.ok && !r.skipped) {
-      const urgent = ['basic', 'embeddings', 'vision'].includes(name);
+      const urgent = ['basic', 'embeddings', 'ocr', 'vision'].includes(name);
       findings.push(finding(urgent ? 2 : 1, `probe-${name}-failed`, usage.id, `usage ${usage.id}: probe ${name} failed (${JSON.stringify(r).slice(0, 160)})`, { model: usage.model }));
     }
   }
@@ -867,7 +950,7 @@ export function fingerprintOf(report) {
 }
 
 export async function runCheck(adapter, root, opts = {}) {
-  const findings = [];
+  const findings = [...unknownNeeds(adapter)];
   const catalogs = {};
   if (!opts.offline) {
     for (const p of adapter.providers) {
@@ -961,14 +1044,17 @@ export function blockingDuplicate(issues) {
 export async function fileTicket(report, { dryRun, team }) {
   const { description, title } = ticketContent(report);
   if (dryRun) return { dryRun: true, payload: { description, team, title } };
+  // Every connection names its size: without `first` Linear counts its default of 50 per level, and
+  // teams × states × labels(250) came to complexity 18,305 against a limit of 10,000, so every real
+  // ticket run failed (observed 2026-10-18; --dry-run sends no query and never showed it).
   const t = await linear(
-    'query($key:String!){teams(filter:{key:{eq:$key}}){nodes{id states{nodes{id type name}} labels(first:250){nodes{id name}}}}}',
+    'query($key:String!){teams(first:1,filter:{key:{eq:$key}}){nodes{id states(first:50){nodes{id type name}} labels(first:250){nodes{id name}}}}}',
     { key: team },
   );
   const teamNode = t.teams.nodes[0];
   if (!teamNode) throw new Error(`Linear team ${team} not found`);
   const dup = await linear(
-    'query($team:String!,$fp:String!){issues(filter:{team:{key:{eq:$team}},description:{contains:$fp}}){nodes{identifier url state{type name}}}}',
+    'query($team:String!,$fp:String!){issues(first:50,filter:{team:{key:{eq:$team}},description:{contains:$fp}}){nodes{identifier url state{type name}}}}',
     { fp: report.fingerprint, team },
   );
   const blocking = blockingDuplicate(dup.issues.nodes);

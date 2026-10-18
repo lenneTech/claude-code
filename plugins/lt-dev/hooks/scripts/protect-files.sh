@@ -14,7 +14,10 @@
 
 [ "${CLAUDE_SKIP_FILE_PROTECTION:-0}" = "1" ] && exit 0
 
-INPUT=$(cat)
+# Read hook input from stdin, time-limited (see _read-stdin.sh)
+. "${0%/*}/_read-stdin.sh"
+read_hook_input 2
+INPUT=$HOOK_INPUT
 
 # ── Extract file_path from JSON input ──
 if command -v jq &>/dev/null; then
@@ -99,7 +102,12 @@ if [ -f "$PROTECT_FILE" ]; then
     [ -z "$pattern" ] && continue
 
     if matches_pattern "$REL_PATH" "$pattern"; then
-      deny "Protected file: '${REL_PATH}' matches project protection pattern '${pattern}' (from .claude-protect). This file requires explicit user confirmation to modify."
+      # The pattern comes from a file in the repository and is shown to Claude in the
+      # reason: control characters are removed and the text capped at 120 characters,
+      # so a crafted line cannot carry a multi-line message into the session.
+      shown=$(printf '%s' "$pattern" | tr -d '\000-\037\177')
+      [ ${#shown} -gt 120 ] && shown="${shown:0:120}..."
+      deny "Protected file: '${REL_PATH}' matches project protection pattern '${shown}' (from .claude-protect). This file requires explicit user confirmation to modify."
       exit 0
     fi
   done < "$PROTECT_FILE"

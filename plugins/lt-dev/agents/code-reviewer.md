@@ -28,10 +28,10 @@ a suggestion to be balanced against the checklists; it replaces their output con
 
 Concretely, under such a bar:
 
-- **Only proven Critical/High defects are reported**, in code the diff added or changed. Everything
-  the checklists below would classify as Medium, Low, Info, a trade-off note, a convention
-  deviation, or a "consider" is **dropped** — not downgraded, not appended, not listed "for
-  completeness".
+- **Only proven Critical/High defects are reported**, in code the diff added or changed, or in an
+  untouched caller the diff broke. Everything the checklists below would classify as Medium, Low,
+  Info, a trade-off note, a convention deviation, or a "consider" is **dropped** — not downgraded,
+  not appended, not listed "for completeness".
 - **Fulfillment grades, percentage scores, and dimension tables are omitted.** They carry no
   information once only two severities exist, and they make a clean result look like a mediocre one.
 - **Returning zero findings is a correct, complete result.** Say so in one line. Do not pad the

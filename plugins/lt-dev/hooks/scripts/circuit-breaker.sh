@@ -15,7 +15,10 @@
 
 [ "${CLAUDE_SKIP_CIRCUIT_BREAKER:-0}" = "1" ] && exit 0
 
-INPUT=$(cat)
+# Read hook input from stdin, time-limited (see _read-stdin.sh)
+. "${0%/*}/_read-stdin.sh"
+read_hook_input 2
+INPUT=$HOOK_INPUT
 
 # ── Extract fields from JSON input ──
 if command -v jq &>/dev/null; then

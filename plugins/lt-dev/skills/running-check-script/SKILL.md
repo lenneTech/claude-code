@@ -198,7 +198,7 @@ Only after a project has STALLED (and, for audit findings, only after the escala
 | Vulnerable dependency where the full ladder has been tried and no patched version exists (verified against the REGISTRY's version list, not the advisory's claim) | **Accepted Residual** — document with package name, advisory ID, ladder steps tried, why each failed, evidence of unfixability. NOT a blocker. |
 | Vulnerable dependency where a patched version exists but the consumer provably cannot use it (Step 6 tried in both directions, the breakage measured, the path outside the production closure) | **Accepted Residual, with a shorter leash** — same documentation plus the consumer's name and the measured error, and it is re-examined on every run rather than treated as settled. |
 | Vulnerable dependency where the ladder has NOT been fully tried | **Critical blocker** — the loop is not allowed to terminate until the ladder is exhausted. |
-| Any other residual (typecheck, lint, build, test, import, etc.) | **Critical blocker** — add to Remediation Catalog with Critical priority. |
+| Any other residual (typecheck, lint, build, test, import, etc.) | **Critical blocker** — report it as a Critical finding in the caller's report (in `/lt-dev:review`: a row of its findings table). |
 
 ### Step 6 — Bypass policy (hard rules)
 
@@ -397,7 +397,7 @@ Both modes share the green case and split on the red one:
 |---|---|---|
 | All projects GREEN | Continue | Continue |
 | Only Accepted Residuals (exhausted-ladder dependency CVEs) | Continue | Continue, residuals named in the summary |
-| Any Unresolved blocker | Continue the workflow so the user still gets the rest of the review; list the blockers in the Consolidated Remediation Catalog with Critical priority and surface them in the header status | **Stop.** Nothing is pushed, no MR/PR is created, nothing is merged |
+| Any Unresolved blocker | Continue the workflow so the user still gets the rest of the review; list the blockers as Critical findings in the caller's report and surface them in its verdict line | **Stop.** Nothing is pushed, no MR/PR is created, nothing is merged |
 
 **What a Blocking caller does on red:** print which project failed, which errors remain, which fixes were attempted, and which approaches Step 3 already ruled out — then stop and hand it to the user. The branch stays local and intact, so nothing is lost and the work can resume the moment the cause is understood.
 

@@ -379,6 +379,8 @@ When all tests pass, provide comprehensive report including:
 - Security review (auth/authz, validation, data exposure, ownership, injection prevention, errors, security tests)
 - Files modified (with changes description)
 - `/lt-dev:review` results (general security scan findings)
+- Not checked: what could not be run or verified, with the reason
+- Risks: what a reviewer must know before approving, or "none"
 - Next steps (recommendations)
 
 ## Common Patterns

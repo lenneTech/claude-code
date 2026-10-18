@@ -18,12 +18,18 @@ emit_context() {
   local body instruction full
   body=$(cat "$LT_PLUGINS_NOTIFICATION_FILE")
   rm -f "$LT_PLUGINS_NOTIFICATION_FILE"
-  instruction=$(cat <<'EOF'
-ACTION REQUIRED — lt-dev plugin auto-update report.
+  # Factual wording at normal volume: additionalContext framed as an out-of-band system
+  # command ("ACTION REQUIRED ... you MUST") can trigger Claude's prompt-injection
+  # defenses, and Claude then shows the text to the user instead of acting on it
+  # (hooks reference, "Add context for Claude"). `read` from a heredoc rather than
+  # $(cat <<'EOF'): bash 3.2 parses quotes inside a heredoc nested in $(...), so a single
+  # apostrophe in the text is a syntax error there.
+  IFS= read -r -d '' instruction <<'EOF' || true
+lt-dev plugin auto-update report
 
-The lt-dev background updater detected new plugin versions and applied them. Before processing the user's request, you MUST do BOTH of the following, in this exact order:
+The lt-dev background updater installed newer versions of the Claude Code plugins listed in the diff above. The user does not know about the update yet, and the new versions become active in this session only after a plugin reload.
 
-1. Output a short German info block to the user (always in German, regardless of conversation language). Use this exact format:
+So that the user learns about the update before the work starts, the first reply of this session begins with a short info block in German (German whatever the conversation language, because this notice has one fixed wording for the whole team):
 
    ---
    ℹ️ **lt-dev Auto-Update**
@@ -35,15 +41,12 @@ The lt-dev background updater detected new plugin versions and applied them. Bef
    Sie stehen nach dem nächsten Befehl bzw. nach Aufruf von `/reload-plugins` zur Verfügung.
    ---
 
-   Parse the plugin list from the report above. Each diff line looks like
+   The plugin list comes from the diff above. Each diff line reads
    `< <name>@<owner> <version> <sha>` (removed) or `> <name>@<owner> <version> <sha>` (added).
-   Pair removed/added entries by `<name>@<owner>` and render them as `name: oldVersion → newVersion`. If a plugin only has an added line (fresh install), render it as `name: neu installiert (version)`.
+   A removed and an added line with the same `<name>@<owner>` form one entry, `name: oldVersion → newVersion`; a plugin with only an added line is a fresh install, shown as `name: neu installiert (version)`.
 
-2. Then invoke the slash command `/reload-plugins` so the updated plugins become active in the CURRENT session — the user does NOT need to restart Claude Code.
-
-After both steps are done, continue with the user's original request normally.
+After the info block, run the slash command `/reload-plugins`, which activates the updated plugins in the current session without a restart. Then continue with the user's request as usual.
 EOF
-)
   full=$(printf '%s\n\n%s\n' "$body" "$instruction")
   if command -v jq >/dev/null 2>&1; then
     jq -n --arg ctx "$full" '{

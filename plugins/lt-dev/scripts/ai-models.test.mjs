@@ -39,7 +39,11 @@ import {
   summarize,
   summaryMarkdown,
   ticketContent,
+  KNOWN_NEEDS,
+  OCR_PROBE_TEXT,
+  textPng,
   twoColourPng,
+  unknownNeeds,
   validateAdapter,
   valueEqual,
 } from './ai-models.mjs';
@@ -450,4 +454,96 @@ test('CLI: a missing adapter is a configuration error (exit 3)', () => {
     code = e.status;
   }
   assert.equal(code, 3);
+});
+
+// Regression for a document-OCR usage (observed 2026-10-17): GLM-OCR is listed with `ocr`, not
+// `vision`. `needs: ["vision"]` was reported URGENT, and `needs: ["ocr"]` was checked by nothing.
+test('compareLifecycle maps the ocr need to the ocr capability', () => {
+  const docs = parseMittwaldOverview(OVERVIEW);
+  const usage = (id, model, needs) => ({ id, model, needs, provider: 'mw' });
+  const a = { ...adapter(), usages: [usage('doc-ocr', 'GLM-OCR', ['ocr']), usage('ocr-as-vision', 'GLM-OCR', ['vision']), usage('chat-ocr', 'gpt-oss-120b', ['ocr'])] };
+  const missing = compareLifecycle(a, docs, { today: new Date('2026-10-13T00:00:00Z') })
+    .filter((f) => f.code === 'capability-missing')
+    .map((f) => f.subject)
+    .sort();
+  assert.deepEqual(missing, ['chat-ocr', 'ocr-as-vision']);
+});
+
+test('the ocr need gets its own probe, and a failed one is urgent', () => {
+  assert.deepEqual(probesFor({ needs: ['ocr'] }), ['basic', 'cache', 'ocr']);
+  const f = judgeProbes({ id: 'doc-ocr', model: 'GLM-OCR' }, { ocr: { answer: 'unreadable', ok: false } });
+  assert.deepEqual(f.map((x) => `${x.code}:${x.level}`), ['probe-ocr-failed:2']);
+});
+
+test('textPng renders the OCR probe text as a valid PNG and refuses glyphs it does not have', () => {
+  const png = textPng(OCR_PROBE_TEXT);
+  assert.deepEqual([...png.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+  assert.equal(png.subarray(12, 16).toString(), 'IHDR');
+  // 2 margins of 12 px plus 8 cells of 36 px, 7 dot rows of 6 px plus margins
+  assert.equal(png.readUInt32BE(16), 24 + OCR_PROBE_TEXT.length * 36);
+  assert.equal(png.readUInt32BE(20), 24 + 42);
+  assert.throws(() => textPng('Hello?'), /no glyph/);
+  // the probe text must not be a number a model could guess from memory
+  assert.doesNotMatch(OCR_PROBE_TEXT, /4711|1234|0000/);
+});
+
+test('unknownNeeds flags a need nothing checks and accepts every known one', () => {
+  const a = {
+    ...adapter(),
+    usages: [
+      { id: 'ok', model: 'm', needs: [...KNOWN_NEEDS, 'max-images:4'], provider: 'mw' },
+      { id: 'typo', model: 'm', needs: ['visoin'], provider: 'mw' },
+    ],
+  };
+  const f = unknownNeeds(a);
+  assert.deepEqual(f.map((x) => `${x.code}:${x.level}:${x.subject}`), ['unknown-need:1:typo']);
+  assert.match(f[0].message, /need "visoin" is not checked by anything/);
+});
+
+test('runCheck reports unknown needs offline', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'ai-models-needs-'));
+  const a = { ...adapter(), usages: [{ id: 'typo', model: 'm', needs: ['ocrr'], provider: 'mw' }] };
+  const report = await runCheck(a, root, { noRuntime: true, offline: true });
+  assert.ok(report.findings.some((f) => f.code === 'unknown-need' && f.subject === 'typo'));
+});
+
+// Regression (2026-10-18): the team query had no `first`, Linear counted its default of 50 per
+// connection level and refused it as too complex (18,305 > 10,000), so every real ticket run failed.
+// --dry-run sends no query, so only a stubbed fetch sees the query strings.
+test('fileTicket sends only queries whose connections all name a size', async () => {
+  const unsized = (query) => {
+    const out = [];
+    for (const m of query.matchAll(/(\w+)(?:\(([^()]*)\))?\s*\{\s*nodes\s*\{/g)) {
+      if (!/\bfirst\s*:/.test(m[2] ?? '')) out.push(m[1]);
+    }
+    return out;
+  };
+  const answers = [
+    { teams: { nodes: [{ id: 't1', labels: { nodes: [{ id: 'l1', name: 'KI-Vorschlag' }] }, states: { nodes: [{ id: 's1', name: 'Triage', type: 'triage' }] } }] } },
+    { issues: { nodes: [] } },
+    { issueCreate: { issue: { identifier: 'DEV-1', url: 'https://linear.example.test/DEV-1' } } },
+  ];
+  const queries = [];
+  const realFetch = globalThis.fetch;
+  const realKey = process.env.LINEAR_API_KEY;
+  process.env.LINEAR_API_KEY = 'test-key';
+  globalThis.fetch = async (_url, init) => {
+    const { query } = JSON.parse(init.body);
+    queries.push(query);
+    const missing = unsized(query);
+    const body = missing.length
+      ? { errors: [{ message: `connection without first: ${missing.join(', ')}` }] }
+      : { data: answers[queries.length - 1] };
+    return new Response(JSON.stringify(body), { status: 200 });
+  };
+  try {
+    const r = await fileTicket({ findings: [{ level: 1, message: 'x' }], fingerprint: 'fp', project: 'p' }, { team: 'DEV' });
+    assert.equal(r.created.identifier, 'DEV-1');
+    assert.equal(queries.length, 3);
+    assert.deepEqual(queries.flatMap(unsized), []);
+  } finally {
+    globalThis.fetch = realFetch;
+    if (realKey === undefined) delete process.env.LINEAR_API_KEY;
+    else process.env.LINEAR_API_KEY = realKey;
+  }
 });

@@ -189,6 +189,27 @@ echo "prompt source"
 EMPTY='{"hook_event_name":"UserPromptSubmit","prompt":""}'
 assert_silent "$(printf '%s' "$EMPTY" | EXTRA_PROMPT_ENV='create a showcase' run_script detect-analyzable-project.sh "$APP")" "detect-analyzable-project: CLAUDE_USER_PROMPT is not read"
 
+# A stdin whose writer stays alive for 30 s: the hook must still exit within a few seconds.
+# Observed in another plugin on Windows: a wrapper swallowed EOF, and an unbounded
+# `$(cat)` held each hook until its timeout while a UserPromptSubmit hook blocks the model.
+# The writer is killed as soon as the hook exits, so the test never waits the 30 s.
+# $1 = script, $2 = project dir, $3 = payload written before stdin stays open.
+# Prints the seconds the hook took.
+open_stdin_seconds() {
+  local pidf="$TMP_ROOT/writer.$$.$RANDOM" start=$SECONDS
+  { printf '%s' "$3"; sleep 30 & echo $! > "$pidf"; wait; } 2>/dev/null |
+    { run_script "$1" "$2" > /dev/null
+      while [ ! -s "$pidf" ]; do sleep 0; done
+      kill "$(cat "$pidf")" 2>/dev/null; }
+  echo $((SECONDS - start))
+}
+
+echo "stdin that never closes"
+for s in detect-analyzable-project.sh post-compact-context.sh sweep-screenshot-sessions.sh; do
+  T=$(LT_SHOWROOM_HOME="$TMP_ROOT/no-runs" open_stdin_seconds "$s" "$APP" '{"hook_event_name":"SessionStart","source":"compact"}')
+  if [ "$T" -le 6 ]; then pass "$s returns while stdin stays open (${T}s)"; else fail "$s waited ${T}s on an open stdin"; fi
+done
+
 echo ""
 echo "─────────────────────────────────────────"
 echo "Total: $((PASS + FAIL)) | Passed: $PASS | Failed: $FAIL"

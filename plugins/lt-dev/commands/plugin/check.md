@@ -166,6 +166,22 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/context-budget.sh" <plugin-dir> --check --de
 
 `--details` adds the Always-on figure of `claude plugin details` for reference. It is not the gate: it counts slash-only top-level commands in full and misses commands in subdirectories.
 
+When a plugin keeps text that a `SessionStart` or `SubagentStart` hook injects as `additionalContext` under `hooks/context/`, the report shows it as `hook`. That text is paid at every session start in the projects the hook targets and at every subagent start, so it is gated like the listing (`hookContextChars` in the baseline) and, as rule text every session loads, measured against the current version before it ships.
+
+### 4.7a Rule Invariants
+
+Rules that live in several files drift when one copy is edited alone: the reviewers' reporting bar, the follow-up policy shared by `take-ticket` and `resolve-ticket`, the closing lines of change reports, the report sections other commands parse from `/lt-dev:review`. `<plugin-dir>/rule-invariants.json` lists them; check every copy at once:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/rule-invariants.sh" <plugin-dir>
+```
+
+- `FAIL identical section …`: one copy of a shared section differs; the message names the odd file. Bring it back in line, or change every copy.
+- `FAIL phrase …`: a load-bearing phrase was reworded in one file. Reword every listed copy the same way, or update the config when the change is deliberate.
+- `FAIL forbidden …` / `FAIL contract …`: a consumer still relies on a section its provider no longer writes, or a provider dropped a term its consumers parse. Fix the consumer (or the provider) before anything else: this is the failure that left `/lt-dev:production-ready` searching for a catalog `/lt-dev:review` had stopped writing.
+
+Plugin CI runs the same check.
+
 ### 4.8 Documentation Consistency
 
 **CLAUDE.md:**
@@ -228,7 +244,8 @@ Create a comprehensive report of findings:
 | permissions.json | ✅/⚠️/❌ | [issues if any] |
 | .mcp.json | ✅/⚠️/❌ | [issues if any] |
 | plugin.json | ✅/⚠️/❌ | [issues if any] |
-| context-budget.json | ✅/⚠️/❌ | listing <n> / baseline <n> chars · agents <n> / baseline <n> chars |
+| context-budget.json | ✅/⚠️/❌ | listing <n> / baseline <n> chars · agents <n> / baseline <n> chars · hook <n> / baseline <n> chars |
+| rule-invariants.json | ✅/⚠️/❌ | [violations if any] |
 
 [Detailed issues per config file]
 

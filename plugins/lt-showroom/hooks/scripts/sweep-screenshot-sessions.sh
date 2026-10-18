@@ -13,7 +13,10 @@
 
 set -u
 
-input="$(cat 2>/dev/null || true)"
+# Bounded read: SessionEnd has 1.5 s in total, so a stdin that never closes must not eat it.
+. "${0%/*}/_read-stdin.sh"
+read_hook_input 1
+input=$HOOK_INPUT
 work_root="${LT_SHOWROOM_HOME:-$HOME/.lt-showroom}"
 
 # Nothing to do on the common path: no screenshot run has ever been started here.

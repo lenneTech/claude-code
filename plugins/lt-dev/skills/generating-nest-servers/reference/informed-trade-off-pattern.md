@@ -74,7 +74,7 @@ Severity is a function of **what is actually bypassed**, not the presence of the
 | Opt-out silently bypasses a security measure | **High / Critical** (domain-specific) |
 | Standard path used everywhere | Default — no action |
 
-Findings in the "trade-off" category do not block merges in themselves, but silent security bypasses detected via a trade-off site always escalate into the regular remediation catalog at their true severity.
+Findings in the "trade-off" category do not block merges in themselves, but silent security bypasses detected via a trade-off site are always reported as regular findings at their true severity.
 
 ## Instances of the Pattern
 
@@ -117,9 +117,9 @@ Both `Force` and `Raw` variants return data with the model's hidden/secret field
 
 **Cross-site composition:** a single call site can instantiate multiple trade-offs at once (for example, a service method that injects a foreign Model AND returns `.lean()` results). Each instance must be independently justified, analyzed, and documented — the justifications do not compound. When reviewing, verify each instance against its own rule.
 
-## Consolidated Review Output
+## How `/lt-dev:review` Treats Trade-offs
 
-The `/lt-dev:review` command aggregates trade-off findings from individual reviewers into a single **"Informed Trade-offs"** section, independent of the main remediation catalog. Seven categories are aggregated — matching the `review.md` Consolidated Catalog:
+Reviewers check seven categories of opt-out against their instance rules:
 
 | # | Category | Origin Reviewers | Instance Rule |
 |---|----------|------------------|---------------|
@@ -131,20 +131,15 @@ The `/lt-dev:review` command aggregates trade-off findings from individual revie
 | 6 | **CrudService `*Force`/`*Raw` variants** | `backend-reviewer`, `security-reviewer` (Layer 8), `code-reviewer` (Phase 3) | Rule 15 |
 | 7 | **Frontend trade-offs** | `frontend-reviewer`, `code-reviewer` | `developing-lt-frontend/reference/informed-trade-off-pattern.md` |
 
-Native-driver access (Rules 5-6) is folded into category 5 when it appears in a Service-owned context, otherwise it is reported under the regular Security Native-Driver layer — the compile-time `SafeModel<T>` guard plus the ≥20-char reason requirement make silent native-driver bypass impossible, so it rarely needs its own aggregated row.
+Native-driver access (Rules 5-6) is folded into category 5 when it appears in a Service-owned context, otherwise it is reported under the regular Security Native-Driver layer — the compile-time `SafeModel<T>` guard plus the ≥20-char reason requirement make silent native-driver bypass impossible, so it rarely needs an entry of its own.
 
-Each row in the aggregated section lists:
-- Category (one of the seven above)
-- Origin reviewer
-- File:line of the opt-out site
-- Opt-out used (concrete API call)
-- Documented reason (empty = missing)
-- Analysis performed (empty = missing)
-- Default-path logic bypassed (per the rule's list)
-- Severity (usually Low/Medium; escalations go to the main catalog)
-- Action (migrate, inject Service, hydrate, replicate, field-strip, etc.)
+Under the review's reporting bar a trade-off is judged like any other change:
 
-Silent security bypasses are additionally added to the main Consolidated Remediation Catalog at the appropriate severity — the trade-off section alone never hides a High/Critical finding. Severity escalations for each category:
+- A **documented** opt-out (reason plus analysis in the code comment, as this pattern requires) is a decision, not a finding. When it looked risky, it belongs under "Geprüft und in Ordnung" with the comment as evidence.
+- An **undocumented or unjustified** opt-out is a finding only when it clears the four gates, which in practice means a silent security bypass at the severities listed below. A deprecation-only trade-off stays below the bar.
+- When the author's session explains an opt-out as deliberate, it lands in the report's "Bewusste Abwägungen" section with the reason quoted, and the user decides whether it holds.
+
+In a standalone run without a bar, a reviewer lists every opt-out it found with its category, file:line, the API used, the documented reason and analysis (empty = missing), the bypassed default-path logic, a severity and the action (migrate, inject Service, hydrate, replicate, field-strip). Severity escalations for each category:
 - Category 1-2 (Deprecations): never higher than Medium based on deprecation alone; security gaps from the deprecation go to the domain's regular findings.
 - Category 3 (Foreign `@InjectModel`): silently bypassing a Service security measure = High/Critical.
 - Category 4 (Plain-object responses): unjustified path on a Model with non-trivial overridden `securityCheck` = High.

@@ -18,8 +18,12 @@
 # in isolation and cannot source each other's helpers.
 
 PROMPT=""
-if [ ! -t 0 ]; then
-  _hook_input=$(cat)
+# The read is time-limited (_read-stdin.sh): a stdin that never closes would otherwise
+# hold the hook, and with it the model, until the hooks.json timeout.
+. "${0%/*}/_read-stdin.sh"
+read_hook_input 2
+if [ -n "$HOOK_INPUT" ]; then
+  _hook_input=$HOOK_INPUT
   if command -v jq >/dev/null 2>&1; then
     PROMPT=$(printf '%s' "$_hook_input" | jq -r '.prompt // empty' 2>/dev/null)
   else
