@@ -14,7 +14,7 @@ import dns from 'node:dns';
 import { after, before, mock, test } from 'node:test';
 import http from 'node:http';
 import { gzipSync } from 'node:zlib';
-import { esbuildAvailable, esbuildRejected, mirrorSite } from '../mirror-site.mjs';
+import { esbuildAvailable, esbuildRejected, mirrorSite, runEsbuild } from '../mirror-site.mjs';
 import { listZip } from '../lib/zip.mjs';
 import { startFixtureServer } from './fixture-site.mjs';
 
@@ -289,10 +289,37 @@ test('esbuildRejected tells a build esbuild rejects from an npx failure worth re
   assert.ok(!esbuildRejected('Error: spawnSync sh ENOENT'));
 });
 
-test('a module esbuild rejects is reported without the retry pauses', { skip: skipBundle, timeout: 120000 }, async () => {
+// The retry policy is counted, not timed: a stopwatch over a whole mirror missed its limit by
+// 0.2 s on a loaded windows-latest runner although no build was retried (2026-10-18).
+test('runEsbuild returns a build esbuild rejects at once and retries only npx failures', () => {
+  const rejected = { ok: false, stderr: '✘ [ERROR] Could not resolve "@theme/utils"' };
+  const npxFailure = { ok: false, stderr: 'npm error code TAR_ENTRY_ERROR' };
+  const run = (results) => {
+    const pauses = [];
+    let calls = 0;
+    const result = runEsbuild(['x.js'], {}, { once: () => results[Math.min(calls++, results.length - 1)], pause: (ms) => pauses.push(ms) });
+    return { calls, pauses, result };
+  };
+  const once = run([rejected]);
+  assert.equal(once.calls, 1, 'a rejected build ran once');
+  assert.deepEqual(once.pauses, [], 'a rejected build waits for nothing');
+  assert.equal(once.result, rejected);
+  assert.deepEqual(run([{ ok: true, stderr: '' }]).pauses, []);
+  const recovered = run([npxFailure, { ok: true, stderr: '' }]);
+  assert.equal(recovered.calls, 2);
+  assert.equal(recovered.pauses.length, 1);
+  assert.ok(recovered.pauses[0] >= 1500 && recovered.pauses[0] < 2500, String(recovered.pauses[0]));
+  const persistent = run([npxFailure]);
+  assert.equal(persistent.calls, 3, 'an npx failure is tried three times');
+  assert.equal(persistent.pauses.length, 2);
+  const lateReject = run([npxFailure, rejected]);
+  assert.equal(lateReject.calls, 2, 'a rejection after an npx failure stops the retries');
+});
+
+test('a module esbuild rejects is reported', { skip: skipBundle, timeout: 120000 }, async () => {
   // Import-map specifiers and top-level await (Shopify's default theme has both on every page)
-  // fail on every attempt. Retried like an npx failure, each one waited at least 5.5 s. The page
-  // sits in a folder, as in the evil fixture, so its inline module keeps a resolvable import.
+  // fail on every attempt; that they are not retried is pinned by the runEsbuild test above. The
+  // page sits in a folder, as in the evil fixture, so its inline module keeps a resolvable import.
   const site = http.createServer((req, res) => {
     if (req.url === '/shop/') {
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
@@ -310,19 +337,12 @@ test('a module esbuild rejects is reported without the retry pauses', { skip: sk
   });
   await new Promise((r) => site.listen(0, '127.0.0.1', r));
   try {
-    let start = Date.now();
     assert.ok(esbuildAvailable(), 'esbuild is required for this test');
-    const oneRun = Date.now() - start;
-    start = Date.now();
     const r = await mirrorSite(options({ url: `http://127.0.0.1:${site.address().port}/shop/`, out: path.join(tmp, 'rejected'), zip: false }));
-    const elapsed = Date.now() - start;
     const entry = r.bundleFailures.find((f) => f.entry === 'js/theme.js');
     const inline = r.bundleFailures.find((f) => f.entry === 'shop/index.html (inline module)');
     assert.ok(entry && esbuildRejected(entry.error), JSON.stringify(r.bundleFailures));
     assert.ok(inline && esbuildRejected(inline.error), JSON.stringify(r.bundleFailures));
-    // The availability check, two rejected builds and the crawl; retried, the two failures alone
-    // would wait at least 11 s.
-    assert.ok(elapsed < 3 * oneRun + 4000, `${elapsed} ms for two rejected builds, one esbuild run takes ${oneRun} ms`);
   } finally {
     site.closeAllConnections?.();
     await new Promise((r) => site.close(r));

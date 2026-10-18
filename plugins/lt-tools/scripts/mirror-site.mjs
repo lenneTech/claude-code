@@ -412,16 +412,21 @@ export function esbuildRejected(stderr) {
  * `node --test`, failed their esbuild check on ubuntu-latest while the next run of the same
  * commit passed. A build esbuild rejects is returned at once: it fails the same way on every
  * attempt, and a Shopify theme rejects dozens of import-map modules plus inline modules on every
- * page, where the pauses made the mirror 2.7 times slower.
+ * page, where the pauses made the mirror 2.7 times slower. `once` and `pause` are injectable so
+ * a test can count attempts and pauses instead of timing a whole mirror.
  */
-function runEsbuild(args, opts = {}) {
-  let result = runEsbuildOnce(args, opts);
+export function runEsbuild(args, opts = {}, { once = runEsbuildOnce, pause = pauseSync } = {}) {
+  let result = once(args, opts);
   for (const pauseMs of [1500, 4000]) {
     if (result.ok || esbuildRejected(result.stderr)) return result;
-    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, pauseMs + Math.floor(Math.random() * 1000));
-    result = runEsbuildOnce(args, opts);
+    pause(pauseMs + Math.floor(Math.random() * 1000));
+    result = once(args, opts);
   }
   return result;
+}
+
+function pauseSync(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
 
 export function esbuildAvailable() {
