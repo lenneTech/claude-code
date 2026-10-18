@@ -255,4 +255,14 @@ fi
 # registry roundtrip (unlike @latest). First-ever run still downloads once.
 # Not supervised: killing the npx wrapper chain reliably is messy; the global
 # install above is the recommended, resilient path (npm i -g chrome-devtools-mcp@<pin>).
-exec npx -y "chrome-devtools-mcp@${CHROME_MCP_PINNED_VERSION}" "$@"
+#
+# `--prefix` points npm at an empty folder of our own. Without it npm reads the
+# .npmrc of the working directory, and Claude Code starts this server in the
+# project it opened: a repository carrying `node-options=--require=./x.cjs` would
+# run its code at every session start, with no tool call and no prompt. The
+# folder lives in the user's home, never in a shared temp dir another user could
+# prepare. Observed 2026-10-18 (review of the pin gate): reproduced with a planted
+# .npmrc; with the prefix the planted file does not run and the npx cache is reused.
+npx_prefix="$HOME/.cache/lt-dev/npx-prefix"
+mkdir -p "$npx_prefix" 2>/dev/null || true
+exec npx --prefix "$npx_prefix" -y "chrome-devtools-mcp@${CHROME_MCP_PINNED_VERSION}" "$@"

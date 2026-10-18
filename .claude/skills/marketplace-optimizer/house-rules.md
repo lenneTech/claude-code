@@ -167,7 +167,11 @@ ignore it silently.
     commands that relied on it add a per-turn grant (a command's grant reaches the foreground agents it spawns,
     measured by probe 2026-10-18). Observed 2026-10-18: `Bash(rm:*)`, `Bash(curl:*)`,
     `Bash(docker:*)` and eight more approved far beyond their descriptions, four `\:` rules and eight placeholder rules
-    never matched.
+    never matched. A `*` also matches extra arguments, so a rule for a command with several targets is never narrow:
+    the review of that change measured `Bash(rm -rf tmp/ci-local/*)` deleting `src` in `rm -rf tmp/ci-local/x src`
+    without a prompt, and the rule was dropped. Same review: npx reads the working directory's `.npmrc`, and MCP
+    servers and SessionStart hooks run in the opened project, so every npx call a plugin makes there passes an empty
+    `--prefix` of its own (a planted `node-options=--require=./x.cjs` ran under the launcher before the fix).
 24d. **lt-showroom and lt-tools declare no `dependencies` on lt-dev.** Their use of lt-dev's chrome-devtools server is
     optional, and a declared dependency disables the dependent plugin whenever lt-dev is missing or off
     (`plugins-troubleshooting.md`); the READMEs state the optional use instead.

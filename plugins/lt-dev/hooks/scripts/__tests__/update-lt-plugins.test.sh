@@ -82,8 +82,15 @@ run_background() {
   printf '#!/bin/bash\n[ "$1 $2" = "claude plugins" ] && cp "%s/after.json" "%s/.claude/plugins/installed_plugins.json"\nexit 0\n' \
     "$TMP_ROOT" "$home" > "$fake/lt"
   chmod +x "$fake/npm" "$fake/lt"
-  # A fresh pre-warm stamp keeps the updater from downloading MCP packages.
-  date +%s > "$TMP_ROOT/bgdata/mcp-prewarm.stamp"
+  if [ "${2:-}" = "prewarm" ]; then
+    # No stamp, so the pre-warm runs; the npx stand-in records its arguments.
+    printf '#!/bin/bash\necho "$*" >> "%s/npx-args"\nexit 0\n' "$TMP_ROOT" > "$fake/npx"
+    chmod +x "$fake/npx"
+    rm -f "$TMP_ROOT/npx-args"
+  else
+    # A fresh pre-warm stamp keeps the updater from downloading MCP packages.
+    date +%s > "$TMP_ROOT/bgdata/mcp-prewarm.stamp"
+  fi
   env HOME="$home" CLAUDE_PLUGIN_DATA="$TMP_ROOT/bgdata" PATH="$fake:$PATH" "$BASH" "$BG" < /dev/null > /dev/null 2>&1
   cat "$TMP_ROOT/bgdata/update-notification.txt" 2>/dev/null
 }
@@ -115,6 +122,13 @@ if command -v jq >/dev/null 2>&1; then
   BEFORE='{"version":2,"plugins":{}}'
   NOTE=$(run_background '.plugins = ([range(45)] | map({key: "many-\(. + 100)@market", value: [{version: "1.0.0", gitCommitSha: "e"}]}) | from_entries)')
   case "$NOTE" in *'… 5 weitere Plugins nicht aufgeführt'*) pass "a capped list names how many were left out" ;; *) fail "a capped list names how many were left out"; printf '%s\n' "$NOTE" | tail -3 ;; esac
+
+  # The pre-warm runs in the project directory; npm would read that project's .npmrc
+  # (`node-options=--require=…` runs the repository's code) unless npx gets a prefix of
+  # its own. Observed 2026-10-18.
+  run_background '.' prewarm > /dev/null
+  ARGS=$(cat "$TMP_ROOT/npx-args" 2>/dev/null)
+  case "$ARGS" in *"--prefix $TMP_ROOT/home/.cache/lt-dev/npx-prefix -y chrome-devtools-mcp@"*) pass "the pre-warm runs npx with its own prefix" ;; *) fail "the pre-warm runs npx with its own prefix (got: ${ARGS:-no npx call})" ;; esac
 else
   echo "  - skipped: the updater needs jq to compare manifests"
 fi

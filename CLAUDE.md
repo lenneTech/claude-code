@@ -246,7 +246,9 @@ Defines Bash command patterns that can be auto-approved without user confirmatio
 **Rules:**
 - Always add `usedBy` array with skill/agent names that need the permission
 - The lt CLI copies every pattern into the user's global `~/.claude/settings.json`, so it applies in every project.
-  A pattern names the narrow command its description states (`Bash(pnpm run test:*)`, `Bash(rm -rf tmp/ci-local/*)`);
+  A pattern names the narrow command its description states (`Bash(pnpm run test:*)`, `Bash(cp .env.example .env)`).
+  A `*` also matches extra arguments, so a rule for a command that takes several targets (`rm`, `cp`, `curl`) is never
+  narrow: `Bash(rm -rf tmp/ci-local/*)` also deletes `src` in `rm -rf tmp/ci-local/x src` (measured 2026-10-18);
   broad tools such as `curl`, `node`, `docker run`, `git push`, `rm`, `cp`, `mv` are granted per turn through a
   command's `allowed-tools` instead (house rule 24c)
 - `:*` is a trailing wildcard only at the very end; a colon elsewhere is literal, so `test\:e2e` and `scripts/:*` never

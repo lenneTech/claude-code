@@ -45,6 +45,12 @@ unix_layout() {
 
 echo "pinned version: $PIN"
 
+# npx always gets a prefix of its own in the user's home: without it npm reads the
+# working directory's .npmrc, and the server starts in the project Claude Code opened,
+# so `node-options=--require=./x.cjs` in a repository would run its code (2026-10-18).
+NPX_PREFIX="$TMP_ROOT/home/.cache/lt-dev/npx-prefix"
+NPX_START="NPX --prefix $NPX_PREFIX -y chrome-devtools-mcp@$PIN"
+
 echo "global install at the pin (link chain)"
 unix_layout "$TMP_ROOT/a" "$PIN"
 out=$(run_launcher "$TMP_ROOT/a")
@@ -60,7 +66,7 @@ case "$out" in GLOBAL*) pass "the global binary runs" ;; *) fail "the global bin
 echo "older global install"
 unix_layout "$TMP_ROOT/c" "1.4.0"
 out=$(run_launcher "$TMP_ROOT/c")
-case "$out" in "NPX -y chrome-devtools-mcp@$PIN"*) pass "the pinned version starts through npx" ;; *) fail "the pinned version starts through npx (got: $out)" ;; esac
+case "$out" in "$NPX_START"*) pass "the pinned version starts through npx" ;; *) fail "the pinned version starts through npx (got: $out)" ;; esac
 grep -q "is 1.4.0, the pin is $PIN" "$TMP_ROOT/c/stderr" && pass "stderr names both versions" || fail "stderr names both versions: $(cat "$TMP_ROOT/c/stderr")"
 out=$(run_launcher "$TMP_ROOT/c" CHROME_MCP_VERSION=1.4.0)
 case "$out" in GLOBAL*) pass "CHROME_MCP_VERSION moves the pin to the global version" ;; *) fail "CHROME_MCP_VERSION moves the pin (got: $out)" ;; esac
@@ -76,13 +82,15 @@ echo "global binary without a readable version"
 mkdir -p "$TMP_ROOT/e/bin"
 stub "$TMP_ROOT/e/bin/chrome-devtools-mcp" GLOBAL
 out=$(run_launcher "$TMP_ROOT/e")
-case "$out" in "NPX -y chrome-devtools-mcp@$PIN"*) pass "the pinned version starts through npx" ;; *) fail "the pinned version starts through npx (got: $out)" ;; esac
+case "$out" in "$NPX_START"*) pass "the pinned version starts through npx" ;; *) fail "the pinned version starts through npx (got: $out)" ;; esac
 
 echo "no global install"
 mkdir -p "$TMP_ROOT/f/bin"
 out=$(run_launcher "$TMP_ROOT/f")
-case "$out" in "NPX -y chrome-devtools-mcp@$PIN"*) pass "the pinned version starts through npx" ;; *) fail "the pinned version starts through npx (got: $out)" ;; esac
+case "$out" in "$NPX_START"*) pass "the pinned version starts through npx" ;; *) fail "the pinned version starts through npx (got: $out)" ;; esac
 [ -s "$TMP_ROOT/f/stderr" ] && fail "no version notice without a global install" || pass "no version notice without a global install"
+[ -d "$NPX_PREFIX" ] && pass "the npx prefix folder exists in the user's home" || fail "the npx prefix folder exists in the user's home"
+[ -z "$(ls -A "$NPX_PREFIX" 2>/dev/null)" ] && pass "the npx prefix folder stays empty (no project config inside)" || fail "the npx prefix folder stays empty"
 
 echo ""
 echo "─────────────────────────────────────────"

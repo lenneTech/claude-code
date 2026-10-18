@@ -1577,15 +1577,6 @@
       ]
     },
     {
-      "pattern": "Bash(rm -rf tmp/ci-local/*)",
-      "description": "Clean up scratch artefacts under tmp/ci-local/ between CI reproduction iterations",
-      "usedBy": [
-        "validating-ci-pipelines-locally",
-        "production-readiness-orchestrator",
-        "production-ready"
-      ]
-    },
-    {
       "pattern": "Bash(diff:*)",
       "description": "Compare k6 summary files against baselines for regression detection",
       "usedBy": [

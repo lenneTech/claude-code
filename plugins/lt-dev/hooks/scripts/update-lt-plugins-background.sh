@@ -178,8 +178,13 @@ success=1
     chrome_ver=$(sed -n 's/^CHROME_MCP_PINNED_VERSION="\${CHROME_MCP_VERSION:-\([^}]*\)}"$/\1/p' \
       "$plugin_root/scripts/chrome-devtools-mcp-launcher.sh" 2>/dev/null)
     [ -n "$chrome_ver" ] && prewarm_pkgs="chrome-devtools-mcp@$chrome_ver $prewarm_pkgs"
+    # Same empty prefix as the launcher: this hook runs in the project directory, and
+    # without it npm would read the project's .npmrc (`node-options=--require=…` runs
+    # the repository's code). Observed 2026-10-18, see chrome-devtools-mcp-launcher.sh.
+    npx_prefix="$HOME/.cache/lt-dev/npx-prefix"
+    mkdir -p "$npx_prefix" 2>/dev/null || true
     for pkg in $prewarm_pkgs; do
-      ( npx -y "$pkg" --version >/dev/null 2>&1 ) &
+      ( npx --prefix "$npx_prefix" -y "$pkg" --version >/dev/null 2>&1 ) &
       pw_pid=$!
       ( sleep 120; kill -TERM "$pw_pid" 2>/dev/null; sleep 2; kill -KILL "$pw_pid" 2>/dev/null ) &
       pw_wd=$!
