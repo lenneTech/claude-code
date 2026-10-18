@@ -1,0 +1,17 @@
+{
+  "source": "agent/code-review-subtle-agent",
+  "files": {
+    "REPORT.md": "reference.md"
+  },
+  "lastMessage": "REPORT.md",
+  "description": "good report: all five subtle defects plus missing tests, a legitimate Medium remark, no false alarm",
+  "expect": {
+    "finds-missing-tests": "pass",
+    "finds-owner-comparison": "pass",
+    "finds-owner-takeover": "pass",
+    "finds-pagination-offset": "pass",
+    "finds-regex-injection": "pass",
+    "finds-stock-race": "pass",
+    "no-false-alarms": "pass"
+  }
+}

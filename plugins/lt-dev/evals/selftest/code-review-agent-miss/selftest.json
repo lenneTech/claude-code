@@ -1,0 +1,16 @@
+{
+  "source": "agent/code-review-agent",
+  "files": {
+    "REPORT.md": "reference.md"
+  },
+  "lastMessage": "REPORT.md",
+  "description": "near-miss report: touches every defective spot but names the wrong problem or rates it minor",
+  "expect": {
+    "finds-discount-bug": "fail",
+    "finds-missing-tests": "fail",
+    "finds-nosql-injection": "fail",
+    "finds-public-writes": "fail",
+    "finds-purchase-price-leak": "fail",
+    "no-false-alarms": "pass"
+  }
+}

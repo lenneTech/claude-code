@@ -1,0 +1,17 @@
+{
+  "source": "agent/code-review-subtle-agent",
+  "files": {
+    "REPORT.md": "reference.md"
+  },
+  "lastMessage": "REPORT.md",
+  "description": "every defect found, plus the guarded search reported as public and the capped limit as unbounded, both at Critical or High",
+  "expect": {
+    "finds-missing-tests": "pass",
+    "finds-owner-comparison": "pass",
+    "finds-owner-takeover": "pass",
+    "finds-pagination-offset": "pass",
+    "finds-regex-injection": "pass",
+    "finds-stock-race": "pass",
+    "no-false-alarms": "fail"
+  }
+}

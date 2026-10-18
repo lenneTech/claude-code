@@ -1,0 +1,16 @@
+{
+  "source": "agent/code-review-agent",
+  "files": {
+    "REPORT.md": "reference.md"
+  },
+  "lastMessage": "REPORT.md",
+  "description": "good report: every seeded defect at its severity, one legitimate minor remark, no false alarm",
+  "expect": {
+    "finds-discount-bug": "pass",
+    "finds-missing-tests": "pass",
+    "finds-nosql-injection": "pass",
+    "finds-public-writes": "pass",
+    "finds-purchase-price-leak": "pass",
+    "no-false-alarms": "pass"
+  }
+}

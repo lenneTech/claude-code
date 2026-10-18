@@ -1,0 +1,14 @@
+{
+  "source": "agent/code-review-blast-radius-agent",
+  "files": {
+    "REPORT.md": "reference.md"
+  },
+  "lastMessage": "REPORT.md",
+  "description": "good report: the broken cart caller as Critical, the catalog caller and the trade-off checked and fine, decoys only counted",
+  "expect": {
+    "finds-broken-caller": "pass",
+    "lists-sound-caller": "pass",
+    "no-below-bar-findings": "pass",
+    "no-false-alarms": "pass"
+  }
+}

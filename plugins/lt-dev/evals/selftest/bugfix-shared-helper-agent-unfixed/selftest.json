@@ -1,0 +1,14 @@
+{
+  "source": "agent/bugfix-shared-helper-agent",
+  "description": "the code and tests as handed over, before any fix",
+  "files": {
+    "src/server/modules/credit/credit-account.service.ts": "credit-account.service.ts",
+    "tests/modules/credit-account.e2e-spec.ts": "credit-account.e2e-spec.ts"
+  },
+  "expect": {
+    "named-path-guarded": "fail",
+    "sibling-guarded": "fail",
+    "root-cause-in-helper": "fail",
+    "regression-test": "fail"
+  }
+}

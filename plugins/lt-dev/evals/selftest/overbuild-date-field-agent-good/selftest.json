@@ -1,0 +1,12 @@
+{
+  "source": "agent/overbuild-date-field-agent",
+  "description": "FormDateField reused, nullable schema with a not-in-the-past check, prefilled when editing",
+  "files": {
+    "app/components/Task/TaskForm.vue": "TaskForm.vue"
+  },
+  "expect": {
+    "form-complete": "pass",
+    "reuses-date-field": "pass",
+    "form-stays-small": "pass"
+  }
+}

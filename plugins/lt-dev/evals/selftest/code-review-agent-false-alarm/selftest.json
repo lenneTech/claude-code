@@ -1,0 +1,16 @@
+{
+  "source": "agent/code-review-agent",
+  "files": {
+    "REPORT.md": "reference.md"
+  },
+  "lastMessage": "REPORT.md",
+  "description": "every defect found, plus correct endpoints reported as open at Critical and High",
+  "expect": {
+    "finds-discount-bug": "pass",
+    "finds-missing-tests": "pass",
+    "finds-nosql-injection": "pass",
+    "finds-public-writes": "pass",
+    "finds-purchase-price-leak": "pass",
+    "no-false-alarms": "fail"
+  }
+}

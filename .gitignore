@@ -20,6 +20,12 @@ bun.lockb
 
 # claude plugin eval run output (reports, per-run transcripts)
 plugins/*/evals/results/
+# Judge self-test cases: `node selftest.mjs sync` writes these before each run from selftest.json and the
+# measured rubrics. Only selftest.json and the reference outputs are sources.
+plugins/*/evals/selftest/*/case.yaml
+plugins/*/evals/selftest/*/prompt.md
+plugins/*/evals/selftest/*/fixture.sh
+plugins/*/evals/selftest/*/graders/
 
 # Project-scoped subagent memory (lt-dev reviewers declare `memory: project`). Their notes
 # can describe private repositories and local machines, and this repo is public: keep them

@@ -1,0 +1,12 @@
+{
+  "source": "agent/overbuild-date-field-agent",
+  "description": "hand-built calendar popover, schema rejects null and has no past-date check",
+  "files": {
+    "app/components/Task/TaskForm.vue": "TaskForm.vue"
+  },
+  "expect": {
+    "form-complete": "fail",
+    "reuses-date-field": "fail",
+    "form-stays-small": "fail"
+  }
+}

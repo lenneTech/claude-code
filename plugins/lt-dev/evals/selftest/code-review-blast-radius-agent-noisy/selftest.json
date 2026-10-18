@@ -1,0 +1,14 @@
+{
+  "source": "agent/code-review-blast-radius-agent",
+  "files": {
+    "REPORT.md": "reference.md"
+  },
+  "lastMessage": "REPORT.md",
+  "description": "finds the cart caller but also reports the documented trade-off as High, the deprecated call and the naming nit",
+  "expect": {
+    "finds-broken-caller": "pass",
+    "lists-sound-caller": "pass",
+    "no-below-bar-findings": "fail",
+    "no-false-alarms": "fail"
+  }
+}

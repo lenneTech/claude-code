@@ -1,0 +1,14 @@
+{
+  "source": "agent/bugfix-shared-helper-agent",
+  "description": "balance check only in transfer, the reported path; redeem still overdraws; transfer regression test",
+  "files": {
+    "src/server/modules/credit/credit-account.service.ts": "credit-account.service.ts",
+    "tests/modules/credit-account.e2e-spec.ts": "credit-account.e2e-spec.ts"
+  },
+  "expect": {
+    "named-path-guarded": "pass",
+    "sibling-guarded": "fail",
+    "root-cause-in-helper": "fail",
+    "regression-test": "pass"
+  }
+}

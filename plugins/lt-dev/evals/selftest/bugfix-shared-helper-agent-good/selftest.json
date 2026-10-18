@@ -1,0 +1,14 @@
+{
+  "source": "agent/bugfix-shared-helper-agent",
+  "description": "guard once in the shared debit (atomic conditional update), regression tests for transfer and redeem",
+  "files": {
+    "src/server/modules/credit/credit-account.service.ts": "credit-account.service.ts",
+    "tests/modules/credit-account.e2e-spec.ts": "credit-account.e2e-spec.ts"
+  },
+  "expect": {
+    "named-path-guarded": "pass",
+    "sibling-guarded": "pass",
+    "root-cause-in-helper": "pass",
+    "regression-test": "pass"
+  }
+}

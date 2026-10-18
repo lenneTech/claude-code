@@ -1,0 +1,14 @@
+{
+  "source": "agent/code-review-blast-radius-agent",
+  "files": {
+    "REPORT.md": "reference.md"
+  },
+  "lastMessage": "REPORT.md",
+  "description": "clean verdict that drops the cart caller as outside the diff and never mentions the catalog",
+  "expect": {
+    "finds-broken-caller": "fail",
+    "lists-sound-caller": "fail",
+    "no-below-bar-findings": "pass",
+    "no-false-alarms": "pass"
+  }
+}

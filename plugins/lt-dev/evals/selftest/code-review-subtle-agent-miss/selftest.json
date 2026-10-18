@@ -1,0 +1,17 @@
+{
+  "source": "agent/code-review-subtle-agent",
+  "files": {
+    "REPORT.md": "reference.md"
+  },
+  "lastMessage": "REPORT.md",
+  "description": "near-miss report: looks at every defective line but names validation, performance or style instead of the defect",
+  "expect": {
+    "finds-missing-tests": "fail",
+    "finds-owner-comparison": "fail",
+    "finds-owner-takeover": "fail",
+    "finds-pagination-offset": "fail",
+    "finds-regex-injection": "fail",
+    "finds-stock-race": "fail",
+    "no-false-alarms": "pass"
+  }
+}
