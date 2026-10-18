@@ -1,7 +1,7 @@
 # Recommend your plugin from your CLI
 
 > **Source:** https://code.claude.com/docs/en/plugins/cli-hints.md
-> **Generated:** 2026-09-25T11:44:16.749Z
+> **Generated:** 2026-10-17T14:11:31.540Z
 
 ---
 
@@ -74,11 +74,11 @@ The tag must occupy its own line; Claude Code ignores a tag embedded mid-line.
 
 The tag takes three attributes, all required:
 
-| Attribute | Description                                       |
-| :-------- | :------------------------------------------------ |
-| `v`       | Protocol version. `1` is the only supported value |
-| `type`    | Hint kind. `plugin` is the only supported value   |
-| `value`   | Plugin identifier in `name@marketplace` form      |
+| Attribute | Description |
+| :- | :- |
+| `v` | Protocol version. `1` is the only supported value |
+| `type` | Hint kind. `plugin` is the only supported value |
+| `value` | Plugin identifier in `name@marketplace` form |
 
 Values may be double-quoted or unquoted; an unquoted value can't contain whitespace.
 
@@ -124,5 +124,5 @@ The dialog names the first word of the shell command Claude ran, so users can sp
 
 ## Next steps
 
-* [Publish and distribute a plugin](https://code.claude.com/docs/en/plugins/publish): the routes into each marketplace, including the official marketplace, which the hint requires
+* [Publish and distribute a plugin](https://code.claude.com/docs/en/plugins/publish): the routes for distributing a plugin, including the official marketplace, which the hint requires
 * [Plugin commands reference](https://code.claude.com/docs/en/plugins/cli-reference#plugin-install): the shell command that installs the same plugin outside a session

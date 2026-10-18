@@ -1,7 +1,7 @@
 # Create a marketplace
 
 > **Source:** https://code.claude.com/docs/en/plugins/create-marketplace.md
-> **Generated:** 2026-09-25T11:44:24.670Z
+> **Generated:** 2026-10-17T14:11:31.596Z
 
 ---
 
@@ -16,7 +16,7 @@ Create your own marketplace when you want a group you choose, such as your team 
   These cases are covered on other pages:
 
   * **Sharing one plugin with a few people**: send them the plugin's directory or a `.zip` of it. See [Share a plugin without a marketplace](https://code.claude.com/docs/en/plugins/publish#share-a-plugin-without-a-marketplace).
-  * **Offering a plugin to everyone**: submit it to Anthropic's community marketplace. See [Submit to the community marketplace](https://code.claude.com/docs/en/plugins/publish#submit-to-the-community-marketplace).
+  * **Offering a plugin to everyone**: submit it to Anthropic's directory. See [Submit to Anthropic's directory](https://code.claude.com/docs/en/plugins/publish#submit-to-anthropics-directory).
   * **Using a plugin yourself**: load it with `--plugin-dir` or save it in your skills directory. See [Develop without a marketplace](https://code.claude.com/docs/en/plugins/create#develop-without-a-marketplace).
 </Note>
 
@@ -124,13 +124,11 @@ You need a plugin to list. The example uses `my-first-plugin` from [Create your 
 
 Every plugin you distribute is one object in the `plugins` array of `marketplace.json`. To add a second plugin, add a second object. These fields cover most entries:
 
-* `name`: the identifier people type before `@` when they install. It can't contain spaces.
+* `name`: the identifier people type before `@` when they install. [Plugin entries](https://code.claude.com/docs/en/plugins/marketplace-reference#plugin-entries) gives the characters a name can use.
 * `source`: where Claude Code fetches the plugin from. Write a relative path string for a plugin inside the marketplace directory, as in [the walkthrough](#create-a-marketplace), or a source object for a plugin outside it. See [Choose a plugin source](#choose-a-plugin-source).
 * `description`: the line people see next to the plugin when they browse your marketplace in `/plugin`.
 
-For the full field list, see [Plugin entries](https://code.claude.com/docs/en/plugins/marketplace-reference#plugin-entries).
-
-An entry can also set any [`plugin.json`](https://code.claude.com/docs/en/plugins/manifest-reference) field. For when an entry's `plugin.json` fields apply to a plugin that has its own `plugin.json`, see [Entry and plugin.json](https://code.claude.com/docs/en/plugins/marketplace-reference#entry-and-plugin-json).
+For the full field list, see [Plugin entries](https://code.claude.com/docs/en/plugins/marketplace-reference#plugin-entries), which also covers the [`plugin.json`](https://code.claude.com/docs/en/plugins/manifest-reference) fields an entry can set and when they apply.
 
 ## Rules for plugin entries
 
@@ -158,11 +156,11 @@ When the two names differ and someone installs by the manifest name, Claude Code
 
 Each plugin entry in `marketplace.json` has a `source` that tells Claude Code where to fetch that one plugin. Pick the source by where the plugin's files are stored. The table lists the sources most marketplace owners use.
 
-| Source        | Use it when                                                               | Minimal `source` value                                                                    |
-| :------------ | :------------------------------------------------------------------------ | :---------------------------------------------------------------------------------------- |
-| Relative path | The plugin's files are inside the marketplace directory itself            | `"./plugins/my-first-plugin"`                                                             |
-| `github`      | The plugin is a GitHub repository of its own                              | `{ "source": "github", "repo": "your-org/my-first-plugin" }`                              |
-| `git-subdir`  | The plugin is a subdirectory of some other repository, such as a monorepo | `{ "source": "git-subdir", "url": "your-org/monorepo", "path": "tools/my-first-plugin" }` |
+| Source | Use it when | Minimal `source` value |
+| :- | :- | :- |
+| Relative path | The plugin's files are inside the marketplace directory itself | `"./plugins/my-first-plugin"` |
+| `github` | The plugin is a GitHub repository of its own | `{ "source": "github", "repo": "your-org/my-first-plugin" }` |
+| `git-subdir` | The plugin is a subdirectory of some other repository, such as a monorepo | `{ "source": "git-subdir", "url": "your-org/monorepo", "path": "tools/my-first-plugin" }` |
 
 In a `git-subdir` source, `url` takes a git URL or an `owner/repo` GitHub shorthand.
 
@@ -185,7 +183,7 @@ As you add plugins, run `claude plugin validate ./my-marketplace` in your shell 
 
 * JSON syntax errors, as `json: Invalid JSON syntax: <reason>`
 * Missing required fields, such as `owner: Invalid input`
-* A marketplace name with spaces, non-ASCII characters, or a form that imitates an official Anthropic marketplace, such as `claude-official`
+* A marketplace or plugin name that breaks the naming rules in the [marketplace reference](https://code.claude.com/docs/en/plugins/marketplace-reference#top-level-fields)
 * A relative `source` that contains `..`
 * Unknown fields at the top level or in a plugin entry, as warnings
 * Problems in the `plugin.json` of each relative-path plugin, as `plugins[N] plugin.json → <field>: <message>`

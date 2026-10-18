@@ -1,7 +1,7 @@
 # Plugins overview
 
 > **Source:** https://code.claude.com/docs/en/plugins/overview.md
-> **Generated:** 2026-09-25T11:44:23.894Z
+> **Generated:** 2026-10-17T14:11:31.574Z
 
 ---
 
@@ -11,10 +11,14 @@
 A Claude Code plugin is a directory of skills, agents, hooks, MCP servers, or other components that Claude Code installs and loads as one unit. Most plugins come from a marketplace, which is a catalog that lists plugins and where to fetch each one. You can also load a plugin from a folder someone gives you, or [build your own](https://code.claude.com/docs/en/plugins/create).
 
 <Note>
-  If you use claude.ai chat or Cowork and not Claude Code, see [Plugins on claude.ai and in Cowork](https://claude.com/docs/plugins/overview).
+  These cases are covered on other pages:
+
+  * **You use claude.ai chat or Cowork and not Claude Code**: see [Plugins on claude.ai and in Cowork](https://claude.com/docs/plugins/overview)
+  * **You built an MCP server and want it in Anthropic's directory**: see [Publish to the directory](https://claude.com/docs/directory/publish)
+  * **You want Claude Code inside VS Code or a JetBrains IDE**: that's the VS Code extension or the JetBrains plugin, not a Claude Code plugin. See [Use Claude Code in VS Code](https://code.claude.com/docs/en/vs-code) or [JetBrains IDEs](https://code.claude.com/docs/en/jetbrains)
 </Note>
 
-To try a plugin now, run `/plugin` in a Claude Code terminal session and install one from the **Discover** tab, which lists the plugins from Anthropic's official marketplace and any marketplace you've added. From there:
+To try a plugin now, run `/plugin` in a Claude Code terminal session and install one from the **Discover** tab, which lists the plugins from your marketplaces. From there:
 
 * [Install and manage plugins](https://code.claude.com/docs/en/plugins/install): the full install steps, scopes, and other surfaces
 * [Create a plugin](https://code.claude.com/docs/en/plugins/create): build your own
@@ -27,9 +31,10 @@ A plugin is a directory of components, usually with a manifest. The manifest, a 
 * [**Skills**](https://code.claude.com/docs/en/plugins/components#skills): `SKILL.md` instructions Claude loads when relevant, and that you can also run as a command
 * [**Agents**](https://code.claude.com/docs/en/plugins/components#agents): subagent definitions Claude can delegate to
 * [**Hooks**](https://code.claude.com/docs/en/plugins/components#hooks): commands Claude Code runs at points in its lifecycle, such as after every edit
+* [**A hooks module**](https://code.claude.com/docs/en/plugins/mods/overview): hooks written as JavaScript functions, which can also draw panes and add commands. A plugin that has one is called a mod. Some mods are [built into Claude Code](https://code.claude.com/docs/en/plugins/mods/overview#mods-built-into-claude-code).
 * [**MCP servers**](https://code.claude.com/docs/en/plugins/components#mcp-servers): tool servers Claude Code connects to while the plugin is enabled
 
-This diagram shows a plugin named `my-plugin` that holds one of each of those components, and what you get from each file once the plugin loads.
+This diagram shows a plugin named `my-plugin` that holds a skill, an agent, hooks, and an MCP server, and what you get from each file once the plugin loads.
 
 <img src="https://mintcdn.com/claude-code/2Q_GtOEovg5qaBem/images/plugin-directory.svg?fit=max&auto=format&n=2Q_GtOEovg5qaBem&q=85&s=f623b64e82713b830e48174f0a922888" className="dark:hidden" alt="Diagram in two columns joined by five straight arrows. Left, the directory of a plugin named my-plugin, holding a manifest at .claude-plugin/plugin.json, skills/review/SKILL.md, agents/reviewer.md, hooks/hooks.json, .mcp.json, and other components. Right, what each file gives you in your session: the manifest sets the plugin name, my-plugin; the skill runs as /my-plugin:review; the agent file is a subagent Claude can delegate to; the hooks file holds hooks that run on lifecycle events; and .mcp.json adds an MCP server that gives Claude tools." width="760" height="336" data-path="images/plugin-directory.svg" />
 
@@ -65,7 +70,7 @@ A marketplace is a repository or directory with a `.claude-plugin/marketplace.js
   A plugin marketplace isn't [Claude Marketplace](https://claude.com/marketplace). Claude Marketplace is the website at claude.com/marketplace where you browse plugins, connectors, partner products, and service partners. It isn't a marketplace you add with `/plugin marketplace add`.
 </Note>
 
-Claude Code adds Anthropic's official marketplace the first time you start an interactive terminal session, unless a [managed policy](https://code.claude.com/docs/en/plugins/org#allow-the-official-marketplace-and-your-own) blocks it. Claude Code adds no other marketplace on its own, including Anthropic's community and demo marketplaces. To distinguish the three Anthropic marketplaces, read [Anthropic's marketplaces](https://code.claude.com/docs/en/plugins/anthropic-marketplaces). To see what the official one lists, open the **Discover** tab of `/plugin` in a session or browse [Claude Marketplace](https://claude.com/marketplace/plugins).
+Claude Code adds Anthropic's official marketplace the first time you start an interactive terminal session, unless a [managed policy](https://code.claude.com/docs/en/plugins/org#allow-the-official-marketplace-and-your-own) blocks it. Claude Code doesn't add Anthropic's community and demo marketplaces on its own. To distinguish the three Anthropic marketplaces, read [Anthropic's marketplaces](https://code.claude.com/docs/en/plugins/anthropic-marketplaces). To see what the official one lists, open the **Discover** tab of `/plugin` in a session or browse [Claude Marketplace](https://claude.com/marketplace/plugins).
 
 This diagram shows the path from a marketplace to your session. A marketplace lists a plugin, you install that plugin, and Claude Code loads its components.
 
@@ -110,7 +115,7 @@ A plugin you install at user scope in the terminal, the desktop app's local sess
 A cloud session, including one in the browser at claude.ai/code, doesn't load the plugins in your local settings. For install steps in the terminal, VS Code, and the desktop app, and for what a cloud session loads, see [Install a plugin](https://code.claude.com/docs/en/plugins/install#install-a-plugin).
 
 <Note>
-  The same plugin format also installs on claude.ai and in Cowork, where a different set of components loads. For those surfaces, see [Plugins on claude.ai and in Cowork](https://claude.com/docs/plugins/overview) on claude.com.
+  The same plugin format also installs on claude.ai and in Cowork, where a different set of components loads. For those surfaces, see [Plugins on claude.ai and in Cowork](https://claude.com/docs/plugins/overview) on claude.com and its [component support table](https://claude.com/docs/plugins/platform-support#compare-component-support-by-app).
 </Note>
 
 ## Next steps
@@ -121,7 +126,7 @@ To build your own, [Create a plugin](https://code.claude.com/docs/en/plugins/cre
 
 Once you've installed or built a plugin, these pages cover what comes next:
 
-* **Share what you built**: [Publish and distribute a plugin](https://code.claude.com/docs/en/plugins/publish)
+* **Share what you built**: [Publish and distribute a plugin](https://code.claude.com/docs/en/plugins/publish), through your own marketplace or [Anthropic's directory](https://code.claude.com/docs/en/plugins/publish#submit-to-anthropics-directory)
 * **Check whether it works and is used**: [Test plugins with evals](https://code.claude.com/docs/en/plugin-evals) and [Measure plugin cost and usage](https://code.claude.com/docs/en/plugins/measure)
 * **Run a marketplace for your team**: [Create a marketplace](https://code.claude.com/docs/en/plugins/create-marketplace), then [Host and maintain a marketplace](https://code.claude.com/docs/en/plugins/host-marketplace)
 * **Set plugin policy for an organization**: [Manage plugins for your organization](https://code.claude.com/docs/en/plugins/org)

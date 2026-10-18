@@ -1,7 +1,7 @@
 # Plugin dependencies
 
 > **Source:** https://code.claude.com/docs/en/plugins/dependencies.md
-> **Generated:** 2026-09-25T11:44:16.755Z
+> **Generated:** 2026-10-17T14:11:31.505Z
 
 ---
 
@@ -47,11 +47,11 @@ An entry can be a string: the plugin name alone, such as `"audit-logger"` in thi
 
 To set a version constraint, use an object with these fields, each a string:
 
-| Field         | Description                                                                                                                                                                                                                                                                                      |
-| :------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`        | The dependency's plugin name, as it appears in its marketplace entry. Claude Code looks it up in the same marketplace as the declaring plugin unless you set `marketplace`. Required.                                                                                                            |
-| `version`     | A [semantic-version range](https://github.com/npm/node-semver#ranges) such as `~2.1.0`, `^2.0`, `>=1.4`, or `=2.1.0`. The dependency installs at the highest git tag that satisfies this range, so the dependency's maintainer must [tag releases](#tag-plugin-releases-for-version-resolution). |
-| `marketplace` | A different marketplace to resolve `name` in. An allowlist controls cross-marketplace dependencies, described in [Depend on a plugin from another marketplace](#depend-on-a-plugin-from-another-marketplace).                                                                                    |
+| Field | Description |
+| :- | :- |
+| `name` | The dependency's plugin name, as it appears in its marketplace entry. Claude Code looks it up in the same marketplace as the declaring plugin unless you set `marketplace`. Required. |
+| `version` | A [semantic-version range](https://github.com/npm/node-semver#ranges) such as `~2.1.0`, `^2.0`, `>=1.4`, or `=2.1.0`. The dependency installs at the highest git tag that satisfies this range, so the dependency's maintainer must [tag releases](#tag-plugin-releases-for-version-resolution). |
+| `marketplace` | A different marketplace to resolve `name` in. An allowlist controls cross-marketplace dependencies, described in [Depend on a plugin from another marketplace](#depend-on-a-plugin-from-another-marketplace). |
 
 A range doesn't match pre-release versions such as `2.0.0-beta.1` unless you opt in with a pre-release suffix such as `^2.0.0-0`.
 
@@ -193,7 +193,7 @@ When a user installs a plugin that declares `{ "name": "secrets-vault", "version
 * **Plugin with its own repository**: the install fails with a message containing `Dependency "secrets-vault@your-marketplace" has no git tag satisfying`.
 * **Plugin referenced by a relative path**: the install uses the marketplace's current copy instead, and the constraint is checked when the plugin loads. If that copy is outside the range, the dependent plugin stays disabled and `claude plugin list` shows `Requires "secrets-vault@your-marketplace" ~2.1.0, installed 3.0.0`.
 
-For a plugin the marketplace references by a relative path, a marketplace you added as a local folder path also resolves constraints against that folder's git tags, when the folder is a git repository. This requires Claude Code v2.1.196 or later. A local folder that isn't a git repository has no tags, so Claude Code installs the dependency from the folder's current contents instead.
+For a plugin the marketplace references by a relative path, a marketplace you added as a local folder path also resolves constraints against that folder's git tags, when the folder is a git repository. A local folder that isn't a git repository has no tags, so Claude Code installs the dependency from the folder's current contents instead.
 
 ### Confirm the resolved version
 
@@ -207,15 +207,26 @@ If you force-move a tag to a different commit, the next install fetches that com
 
 When several installed plugins constrain the same dependency, the dependency resolves to the highest version that satisfies all of their ranges. Common combinations resolve like this:
 
-| Plugin A requires | Plugin B requires | Result                                                                                                                          |
-| :---------------- | :---------------- | :------------------------------------------------------------------------------------------------------------------------------ |
-| `^2.0`            | `>=2.1`           | One install at the highest `2.x` tag at or above `2.1.0`. Both plugins load.                                                    |
-| `~2.1`            | `~3.0`            | Installing plugin B fails with a `has conflicting version requirements` message. Plugin A and the dependency stay as they were. |
-| `=2.1.0`          | none              | The dependency stays at `2.1.0`. Auto-update skips newer versions while plugin A is installed.                                  |
+| Plugin A requires | Plugin B requires | Result |
+| :- | :- | :- |
+| `^2.0` | `>=2.1` | One install at the highest `2.x` tag at or above `2.1.0`. Both plugins load. |
+| `~2.1` | `~3.0` | Installing plugin B fails with a `has conflicting version requirements` message. Plugin A and the dependency stay as they were. |
+| `=2.1.0` | none | The dependency stays at `2.1.0`. Auto-update skips newer versions while plugin A is installed. |
 
 Auto-update fetches a constrained dependency at the highest git tag that satisfies every installed plugin's range, rather than at the marketplace's latest version. If the installed plugins' ranges don't overlap, auto-update leaves that dependency at its current version, and the `/plugin` **Errors** tab shows an entry naming the constraining plugin. If they overlap but no tag falls in the range, auto-update fetches the marketplace's current copy and skips the update when that copy's `version` falls outside any installed plugin's range.
 
 When a user uninstalls the last plugin that constrains a dependency, the dependency is no longer constrained to a version range and resumes tracking its marketplace entry on the next update.
+
+### Dependencies when your plugin loads from claude.ai
+
+When a user turns your plugin on for their claude.ai account, Claude Code loads it as `<name>@synced`, [with no marketplace](https://code.claude.com/docs/en/plugins/loading#synced-plugins). For that copy of your plugin, Claude Code counts a dependency entry that names a marketplace as met when the user has either of these:
+
+* **The dependency from its marketplace**: installed from the marketplace your entry names, and enabled. Claude Code checks a `version` range in your entry against the installed copy's version.
+* **A claude.ai plugin of the same name**: enabled from their claude.ai account. Claude Code checks a `version` range in your entry against that plugin's `version`, and a plugin that states no `version` passes the check.
+
+If you tell users to turn your plugin on from claude.ai, tell them to turn the dependency on there too, or to install it from its marketplace.
+
+A claude.ai plugin meets the entry only when your plugin also loads from claude.ai.
 
 ## See also
 

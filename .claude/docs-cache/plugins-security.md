@@ -1,7 +1,7 @@
 # Plugin security and trust
 
 > **Source:** https://code.claude.com/docs/en/plugins/security.md
-> **Generated:** 2026-09-25T11:44:16.765Z
+> **Generated:** 2026-10-17T14:11:31.558Z
 
 ---
 
@@ -29,6 +29,8 @@ Start with [what a plugin can do](#understand-what-a-plugin-can-do) and [which m
 A plugin can carry content that runs code on your machine with your user privileges and content that enters Claude's context as instructions, so [review a plugin before you install it](#review-a-plugin-before-you-install). Here's what an installed plugin can do:
 
 * **Hooks**: a plugin's [hooks](https://code.claude.com/docs/en/hooks) run as shell commands at points in Claude Code's lifecycle, such as before or after a tool call.
+* **Monitors**: a plugin's [monitors](https://code.claude.com/docs/en/plugins/components#monitors) run as background shell commands that Claude Code starts on its own when the session starts, when you reload plugins, or the first time a named skill runs.
+* **Mods**: a plugin's [mod](https://code.claude.com/docs/en/plugins/mods/overview) runs JavaScript inside Claude Code with your permissions. To list what a mod does before you install it, see [Decide whether to trust a mod](https://code.claude.com/docs/en/plugins/mods/overview#decide-whether-to-trust-a-mod).
 * **MCP and LSP servers**: Claude Code connects to the [MCP servers](https://code.claude.com/docs/en/mcp) an enabled plugin declares and gives Claude their tools. A stdio MCP server runs as a process that Claude Code starts on your machine. Claude Code also starts the language servers the plugin declares.
 * **`bin/` directory**: Claude Code adds each enabled plugin's `bin/` directory to the `PATH` of the Bash tool's shell, so Claude's Bash commands can run any executable there.
 * **Skills, commands, and agents**: these enter Claude's context as instructions, so they influence what Claude does with the tools it already has.
@@ -36,8 +38,8 @@ A plugin can carry content that runs code on your machine with your user privile
 
 Claude Code's [permission rules](https://code.claude.com/docs/en/permissions) and [sandbox](https://code.claude.com/docs/en/sandboxing) cover the tool calls Claude makes, not the code a plugin runs by itself:
 
-* **Hooks and server processes**: command hooks execute shell commands with your full user permissions. Claude Code runs hooks and MCP servers outside the sandbox.
-* **Claude's tool calls**: a call to one of the plugin's MCP tools, and a Bash command that runs an executable from the plugin's `bin/`, are tool calls, so your permission rules apply to them.
+* **Hooks, monitors, and server processes**: command hooks and monitors are shell commands that run with your full user permissions. Claude Code runs hooks, monitors, MCP servers, LSP servers, and the processes a [mod](https://code.claude.com/docs/en/plugins/mods/overview#what-a-mod-can-reach) starts outside the sandbox.
+* **Claude's tool calls**: a call to one of the plugin's MCP tools, and a Bash command that runs an executable from the plugin's `bin/`, are tool calls, so your permission rules apply to them. For what a mod can do to a tool call, see [Decide whether to trust a mod](https://code.claude.com/docs/en/plugins/mods/overview#decide-whether-to-trust-a-mod).
 
 Installing a plugin also enables it, unless its manifest or marketplace entry sets [`defaultEnabled: false`](https://code.claude.com/docs/en/plugins/install#choose-an-install-scope) and you haven't enabled it yourself.
 
@@ -51,11 +53,11 @@ A marketplace's name places it in one of three tiers: official, community, or th
 
 The table lists which names fall in each tier:
 
-| Tier        | Which marketplaces                                                                               |
-| :---------- | :----------------------------------------------------------------------------------------------- |
-| Official    | The [official marketplace names](#official-marketplace-names), such as `claude-plugins-official` |
-| Community   | `claude-community`, `claude-plugins-community`, and `healthcare`                                 |
-| Third-party | Every other marketplace                                                                          |
+| Tier | Which marketplaces |
+| :- | :- |
+| Official | The [official marketplace names](#official-marketplace-names), such as `claude-plugins-official` |
+| Community | `claude-community`, `claude-plugins-community`, and `healthcare` |
+| Third-party | Every other marketplace |
 
 Where the `claude-community` catalog pins a plugin to a commit SHA, which it does for nearly every entry, Claude Code refuses to install a different commit.
 
@@ -112,7 +114,7 @@ After you install a plugin, run `claude plugin details <plugin name>` in your sh
 
 In your shell, run [`claude plugin uninstall <plugin>`](https://code.claude.com/docs/en/plugins/cli-reference#plugin-uninstall) with the `--scope` you installed it at. Then check what the uninstall removed and what it left:
 
-* **Persistent data**: when that was the last scope the plugin was installed at, uninstalling also deletes the plugin's persistent data directory, unless you pass `--keep-data`.
+* **Persistent data**: by default, when that was the last scope the plugin was installed at, uninstalling also deletes the plugin's persistent data directory. For `--keep-data` and the other cases where it stays, see [plugin uninstall](https://code.claude.com/docs/en/plugins/cli-reference#plugin-uninstall).
 * **Cached files**: the plugin's files stay on disk under `~/.claude/plugins/cache/` for 14 days before a [background sweep removes them](https://code.claude.com/docs/en/plugins/loading#cleanup-of-previous-versions). After you uninstall your last plugin, orphaned directories stay until you install another. To delete the files now, remove the plugin's directory under `~/.claude/plugins/cache/<marketplace>/<plugin>/` yourself.
 * **The marketplace**: if you don't trust the marketplace's owner either, [remove the marketplace](https://code.claude.com/docs/en/plugins/install#manage-marketplaces) too, which uninstalls every plugin you installed from it.
 

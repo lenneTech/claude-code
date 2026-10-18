@@ -1,7 +1,7 @@
 # Debug your configuration
 
 > **Source:** https://code.claude.com/docs/en/debug-your-config.md
-> **Generated:** 2026-09-25T11:44:16.747Z
+> **Generated:** 2026-10-17T14:11:31.551Z
 
 ---
 
@@ -18,18 +18,18 @@ The `/context` command shows everything occupying the context window for the cur
 
 For detail on a specific category, follow up with the dedicated command:
 
-| Command          | Shows                                                                                                                                                                                                                                        |
-| :--------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/memory`        | Memory file locations across user and project scopes with the option to open each in your editor, plus access to the auto memory folder and the auto memory toggle                                                                           |
-| `/skills`        | Available skills from project, user, and plugin sources                                                                                                                                                                                      |
-| `/hooks`         | Active hook configurations                                                                                                                                                                                                                   |
-| `/mcp`           | Connected MCP servers and their status                                                                                                                                                                                                       |
-| `/permissions`   | Resolved allow and deny rules currently in effect                                                                                                                                                                                            |
-| `/doctor`        | Setup checkup: installation health, invalid settings files, unused extensions, duplicate [subagent](https://code.claude.com/docs/en/sub-agents) names in the same directory, and checked-in `CLAUDE.md` content Claude can derive from the codebase, with proposed fixes |
-| `/debug [issue]` | Enables debug logging for the session and prompts Claude to diagnose using the log output and settings paths                                                                                                                                 |
-| `/status`        | Active settings sources, including whether managed settings are in effect                                                                                                                                                                    |
+| Command | Shows |
+| :- | :- |
+| `/memory` | Memory file locations across user and project scopes with the option to open each in your editor, plus access to the auto memory folder and the auto memory toggle |
+| `/skills` | Available skills from project, user, and plugin sources |
+| `/hooks` | Active hook configurations |
+| `/mcp` | Connected MCP servers and their status |
+| `/permissions` | Resolved allow and deny rules currently in effect |
+| `/doctor` | Setup checkup: installation health, invalid settings files, unused extensions, duplicate [subagent](https://code.claude.com/docs/en/sub-agents) names in the same directory, and checked-in `CLAUDE.md` content Claude can derive from the codebase, with proposed fixes |
+| `/debug [issue]` | Enables debug logging for the session and prompts Claude to diagnose using the log output and settings paths |
+| `/status` | Active settings sources, including whether managed settings are in effect |
 
-If a memory file is missing from the `/context` breakdown, check its location against [how CLAUDE.md files load](https://code.claude.com/docs/en/memory#how-claude-md-files-load). Subdirectory `CLAUDE.md` files load on demand when Claude reads a file in that directory with the Read tool, not at session start.
+If a memory file is missing from the `/context` breakdown, check its location against [how CLAUDE.md files load](https://code.claude.com/docs/en/memory#how-claude-md-files-load). Subdirectory `CLAUDE.md` files load on demand rather than at session start, so they don't appear in that breakdown.
 
 If `/context` confirms the file loaded but Claude still isn't following a particular instruction, the issue is likely how the instruction is written rather than whether it loaded. CLAUDE.md works well for the kinds of guidance you'd give a new teammate, such as project conventions, build commands, and where files belong.
 
@@ -59,13 +59,15 @@ For configuration locations and scope rules, see [MCP](https://code.claude.com/d
 
 ## Check hooks
 
-Run `/hooks` to list every hook registered for the current session, grouped by event. If a hook you defined doesn't appear, it isn't being read: hooks go under the `"hooks"` key in a settings file, not in a standalone file.
+Run `/hooks` to list every hook registered for the current session, grouped by event. If a hook you defined doesn't appear, Claude Code didn't load it. Check for these causes:
+
+* The hook is defined in a standalone file. Hooks go under the `"hooks"` key in a [settings file](https://code.claude.com/docs/en/settings#settings-files).
+* The `matcher` value is an array instead of a single string. Claude Code lists the entry as an invalid setting when you start an interactive session and in `claude doctor`. If the array is under `PreToolUse` or `PermissionRequest`, none of that file's other hooks load either.
 
 If the hook appears but doesn't fire, the matcher is the usual cause. Check it for these mistakes:
 
 * The `matcher` field is a single string that uses `|` to match multiple tool names, for example `"Edit|Write"`. A `,` separator is equivalent, so `"Edit,Write"` matches the same tools. Before v2.1.191, a comma fell through to regex evaluation and the matcher never matched, so use `|` if you aren't on v2.1.191 yet.
 * A misspelled tool name produces a matcher that matches nothing, so the hook fails silently.
-* An array value is a schema error: Claude Code shows a settings error notice and rejects the whole user, project, or local settings file, `claude doctor` reports the validation failure, and no hook from that file appears in `/hooks`. In [managed settings](https://code.claude.com/docs/en/managed-settings), Claude Code drops the whole `hooks` key from the file that contains the array, so none of that file's hooks apply. The file's other settings still apply, and `claude doctor` lists the dropped key.
 
 When you edit `settings.json`, the change takes effect in the running session after a brief file-stability delay, even if you create the file or the project's `.claude/` folder itself after the session started. You don't need to restart. Before v2.1.257, Claude Code didn't detect edits in a `.claude/` folder created after the session started.
 
@@ -75,44 +77,97 @@ If `/hooks` shows the hook but it still does not fire, the next step is to watch
 
 ## Test against a clean configuration
 
-Start with [`claude --safe-mode`](https://code.claude.com/docs/en/cli-reference#cli-flags), which launches a session with all customizations disabled, including `CLAUDE.md`, skills, plugins, hooks, MCP servers, and custom commands and agents. Authentication, model selection, built-in tools, and permissions work normally. If the problem disappears in safe mode, one of those surfaces is the cause; use the targeted checks above to find which. Safe mode still applies managed hooks and settings policy from your organization. Managed plugins, skills, CLAUDE.md, and MCP servers are turned off.
+Start with [`claude --safe-mode`](https://code.claude.com/docs/en/cli-reference#cli-flags), which launches a session with your customizations disabled, including:
 
-If the problem persists in safe mode, or your settings themselves are suspect, compare against a session that loads nothing from your usual setup. Point [`CLAUDE_CONFIG_DIR`](https://code.claude.com/docs/en/env-vars) at an empty directory to bypass everything under `~/.claude`, and launch from a directory that has no `.claude` folder, `.mcp.json`, or `CLAUDE.md` so project configuration is also skipped.
+* `CLAUDE.md`
+* Skills, plugins, and hooks
+* MCP servers
+* Custom commands and agents
+* Custom output styles
+* Custom keybindings
 
-```bash theme={null}
-cd /tmp && CLAUDE_CONFIG_DIR=/tmp/claude-clean claude
-```
+Authentication, model selection, built-in tools, and permissions work normally. If the problem disappears in safe mode, you've narrowed the cause to one of the items you turned off. To find it, use the check for that item, such as [See what loaded into context](#see-what-loaded-into-context), [Check MCP servers](#check-mcp-servers), or [Check hooks](#check-hooks).
 
-The clean session has no user or project settings, hooks, MCP servers, plugins, or memory. On the first launch, expect the first-run setup screens, starting with theme selection. If you see them, the clean configuration directory is in effect. Later launches with the same directory skip these screens because Claude Code saves onboarding state there.
+Safe mode still applies managed hooks and settings policy from your organization. Managed plugins, skills, `CLAUDE.md`, and MCP servers are turned off.
 
-* Managed settings still apply if your organization deploys them. Claude Code reads MDM profiles, registry policy, and `managed-settings.json` from locations outside the configuration directory, and [fetches server-managed settings](https://code.claude.com/docs/en/server-managed-settings#fetch-and-caching-behavior) again for the clean session once it has credentials
-* You'll be prompted to log in again
+If the problem persists in safe mode, or your settings themselves are suspect, start a session with none of your own configuration and check whether the problem follows.
 
-If the problem disappears here, the cause is somewhere in your real `~/.claude` or project `.claude` files. Reintroduce them one at a time, by copying files into the temporary directory or by launching from your project, to find which one. If it persists in the clean session, the cause is outside your user and project configuration. Run `/status` to check whether managed settings are in effect, look for [environment variables](https://code.claude.com/docs/en/env-vars) that affect Claude Code, then see [Troubleshooting](https://code.claude.com/docs/en/troubleshooting).
+<Steps>
+  <Step title="Create an empty directory and change into it">
+    In your shell, with no Claude Code session running, create the directory and move into it:
+
+    <Tabs>
+      <Tab title="Bash or Zsh">
+        ```bash theme={null}
+        mkdir -p ~/claude-clean/empty && cd ~/claude-clean/empty
+        ```
+      </Tab>
+
+      <Tab title="PowerShell">
+        ```powershell theme={null}
+        New-Item -ItemType Directory -Force "$HOME/claude-clean/empty" | Out-Null
+        Set-Location "$HOME/claude-clean/empty"
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Start Claude Code with a clean configuration directory">
+    From the same shell, set [`CLAUDE_CONFIG_DIR`](https://code.claude.com/docs/en/env-vars) to a fresh directory in place of `~/.claude`, and pass [`--setting-sources user`](https://code.claude.com/docs/en/cli-reference#cli-flags) to turn off project configuration such as `.claude/settings.json`, `CLAUDE.md`, and `.mcp.json`:
+
+    <Tabs>
+      <Tab title="Bash or Zsh">
+        The variable applies to this one launch.
+
+        ```bash theme={null}
+        CLAUDE_CONFIG_DIR=~/claude-clean/config claude --setting-sources user
+        ```
+      </Tab>
+
+      <Tab title="PowerShell">
+        The variable stays set for the rest of this PowerShell session, so later `claude` launches in the same window keep using the clean directory. To return to your usual directory, run `Remove-Item Env:CLAUDE_CONFIG_DIR` before the next launch.
+
+        ```powershell theme={null}
+        $env:CLAUDE_CONFIG_DIR = "$HOME/claude-clean/config"
+        claude --setting-sources user
+        ```
+      </Tab>
+    </Tabs>
+
+    On the first launch, you go through the first-run setup screens again, a sign that the clean configuration directory is in effect. Managed settings still apply, and [connectors](https://code.claude.com/docs/en/mcp#use-mcp-servers-from-claude-ai) still load if you log in with a claude.ai account.
+  </Step>
+
+  <Step title="Reproduce the problem">
+    Repeat what triggered the problem in the clean session:
+
+    * **Problem gone**: the cause is in your user or project configuration. Copy `~/.claude.json` and the files in `~/.claude` into `~/claude-clean/config` one at a time. If none brings the problem back, go to your project directory in the same shell and start Claude Code without `--setting-sources user`. In Bash or Zsh, run `CLAUDE_CONFIG_DIR=~/claude-clean/config claude`. In PowerShell, the variable is still set, so run `claude`.
+    * **Problem persists**: the cause is outside your user and project configuration. Run `/status` in the session to check for managed settings, check your shell for [environment variables](https://code.claude.com/docs/en/env-vars), then see [Troubleshooting](https://code.claude.com/docs/en/troubleshooting).
+  </Step>
+</Steps>
 
 ## Check common causes
 
 Most configuration surprises trace back to a small set of location and syntax rules. Check these before assuming a bug:
 
-| Symptom                                                              | Cause                                                                                                                                                                                                                                        | Fix                                                                                                                                                                                                                                                                                                                             |
-| :------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Hook never fires                                                     | `matcher` is a JSON array instead of a string                                                                                                                                                                                                | Use a single string with `\|` to match multiple tools, for example `"Edit\|Write"`. See [matcher patterns](https://code.claude.com/docs/en/hooks#matcher-patterns).                                                                                                                                                                                         |
-| Hook never fires                                                     | `matcher` uses `,` as a separator on a version before v2.1.191                                                                                                                                                                               | Claude Code v2.1.191 or later treats `,` as a list separator like `\|`. Earlier versions evaluate a comma as a literal character, so `"Edit,Write"` matches nothing. Use `\|` instead, or upgrade Claude Code.                                                                                                                  |
-| Hook never fires                                                     | `matcher` value is lowercase, for example `"bash"`                                                                                                                                                                                           | Matching is case-sensitive. Tool names are capitalized: `Bash`, `Edit`, `Write`, `Read`.                                                                                                                                                                                                                                        |
-| Hook never fires                                                     | Hooks are defined in a standalone file instead of `settings.json`                                                                                                                                                                            | There is no standalone hooks file for project or user config. Define hooks under the `"hooks"` key in `settings.json`. Only [plugins](https://code.claude.com/docs/en/plugins/components#hooks) load a separate `hooks/hooks.json`. See [hook configuration](https://code.claude.com/docs/en/hooks).                                                                                    |
-| Permissions, hooks, or env set globally are ignored                  | Configuration was added to `~/.claude.json`                                                                                                                                                                                                  | `~/.claude.json` holds app state and UI toggles. `permissions`, `hooks`, and `env` belong in `~/.claude/settings.json`. These are two different files.                                                                                                                                                                          |
-| A `settings.json` value seems ignored                                | The same key is set in `settings.local.json`                                                                                                                                                                                                 | `settings.local.json` overrides `settings.json`, and both override `~/.claude/settings.json`. See [settings precedence](https://code.claude.com/docs/en/settings#settings-precedence).                                                                                                                                                                      |
-| Skill doesn't appear in `/skills`                                    | Skill file is at `.claude/skills/name.md` instead of in a folder                                                                                                                                                                             | Use a folder with `SKILL.md` inside: `.claude/skills/name/SKILL.md`.                                                                                                                                                                                                                                                            |
-| Skill appears in `/skills` but Claude never invokes it               | Skill has `disable-model-invocation: true` in its frontmatter, or its description doesn't match how you phrase the request                                                                                                                   | Check the badge in `/skills`: a "user-only" label means Claude won't trigger it on its own. See [skill invocation](https://code.claude.com/docs/en/skills).                                                                                                                                                                                                 |
-| Subdirectory `CLAUDE.md` instructions seem ignored                   | Subdirectory files load on demand, not at session start                                                                                                                                                                                      | They load when Claude reads a file in that directory with the Read tool, not at launch and not when writing or creating files there. See [how CLAUDE.md files load](https://code.claude.com/docs/en/memory#how-claude-md-files-load).                                                                                                                       |
-| Subagent ignores `CLAUDE.md` instructions                            | The built-in Explore and Plan agents skip `CLAUDE.md`. A custom subagent loads it the same way the main conversation does, unless its definition sets [`omitClaudeMd`](https://code.claude.com/docs/en/sub-agents#supported-frontmatter-fields)                          | For Explore or Plan, restate the instruction in your delegating prompt. For a subagent that sets `omitClaudeMd`, remove the field. For any other custom subagent, put critical instructions in the agent file body, which becomes the agent's system prompt. See [what loads at startup](https://code.claude.com/docs/en/sub-agents#what-loads-at-startup). |
-| Cleanup logic never runs at session end                              | No `SessionEnd` hook configured                                                                                                                                                                                                              | Add a `SessionEnd` hook in `settings.json`. See the [hook events list](https://code.claude.com/docs/en/hooks#hook-events).                                                                                                                                                                                                                                  |
-| MCP servers in `.mcp.json` never load                                | File is under `.claude/`, or its servers sit under a top-level `servers` key, as in VS Code's `mcp.json`, instead of `mcpServers`                                                                                                            | Project MCP config goes at the repository root as `.mcp.json`, not inside `.claude/`, with servers under the `mcpServers` key. See [MCP configuration](https://code.claude.com/docs/en/mcp).                                                                                                                                                                |
-| MCP servers added under `mcpServers` in `settings.json` never appear | `settings.json` does not read an `mcpServers` key                                                                                                                                                                                            | Define project servers in `.mcp.json` at the repository root, or run `claude mcp add --scope user` for user-scoped servers. See [MCP configuration](https://code.claude.com/docs/en/mcp).                                                                                                                                                                   |
-| Project MCP server added but doesn't appear                          | The one-time approval prompt was dismissed                                                                                                                                                                                                   | Project-scoped servers require approval. Run `/mcp` to see status and approve.                                                                                                                                                                                                                                                  |
-| MCP server fails to start from some directories                      | `command` or `args` uses a relative file path                                                                                                                                                                                                | Use absolute paths for local scripts. Executables on your `PATH` like `npx` or `uvx` work as-is.                                                                                                                                                                                                                                |
-| MCP server starts without expected environment variables             | The server's config entry doesn't set them, and they aren't in the environment Claude Code passes to stdio servers: its own environment, minus the [variables it strips from subprocesses](https://code.claude.com/docs/en/monitoring-usage#administrator-configuration) | Set per-server `env` inside the server's `.mcp.json` entry, which doesn't depend on the launch environment or workspace trust.                                                                                                                                                                                                  |
-| `Bash(rm *)` deny rule doesn't block `/bin/rm` or `find -delete`     | Bash rules match the literal command string, not the underlying executable; see [what a Bash rule doesn't match](https://code.claude.com/docs/en/permissions#bash-rule-limits)                                                                                           | Use a [PreToolUse hook](https://code.claude.com/docs/en/hooks-guide) or the [sandbox](https://code.claude.com/docs/en/sandboxing) for a hard guarantee.                                                                                                                                                                                                                                 |
+| Symptom | Cause | Fix |
+| :- | :- | :- |
+| Hook never fires | `matcher` is a JSON array instead of a string | Use a single string with `\|` to match multiple tools, for example `"Edit\|Write"`. See [matcher patterns](https://code.claude.com/docs/en/hooks#matcher-patterns). |
+| Hook never fires | `matcher` uses `,` as a separator on a version before v2.1.191 | Claude Code v2.1.191 or later treats `,` as a list separator like `\|`. Earlier versions evaluate a comma as a literal character, so `"Edit,Write"` matches nothing. Use `\|` instead, or upgrade Claude Code. |
+| Hook never fires | `matcher` value is lowercase, for example `"bash"` | Matching is case-sensitive. Tool names are capitalized: `Bash`, `Edit`, `Write`, `Read`. |
+| Hook never fires | Hooks are defined in a standalone file instead of `settings.json` | There is no standalone hooks file for project or user config. Define hooks under the `"hooks"` key in `settings.json`. Only [plugins](https://code.claude.com/docs/en/plugins/components#hooks) load a separate `hooks/hooks.json`. See [hook configuration](https://code.claude.com/docs/en/hooks). |
+| Permissions or hooks set globally are ignored | Configuration was added to `~/.claude.json` | `~/.claude.json` holds app state and UI toggles. `permissions`, `hooks`, and `env` belong in `~/.claude/settings.json`. These are two different files. |
+| A `settings.json` value seems ignored | The same key is set in `settings.local.json` | `settings.local.json` overrides `settings.json`, and both override `~/.claude/settings.json`. See [settings precedence](https://code.claude.com/docs/en/settings#settings-precedence). |
+| Skill doesn't appear in `/skills` | Skill file is at `.claude/skills/name.md` instead of in a folder | Use a folder with `SKILL.md` inside: `.claude/skills/name/SKILL.md`. |
+| Skill appears in `/skills` but Claude never invokes it | Skill has `disable-model-invocation: true` in its frontmatter, or its description doesn't match how you phrase the request | Check the badge in `/skills`: a "user-only" label means Claude won't trigger it on its own. See [skill invocation](https://code.claude.com/docs/en/skills). |
+| Subdirectory `CLAUDE.md` instructions seem ignored | Subdirectory files load on demand, not at session start | To load a subdirectory's `CLAUDE.md`, ask Claude to read another file in that subdirectory. See [when subdirectory files load](https://code.claude.com/docs/en/memory#how-claude-md-files-load). |
+| Subagent ignores `CLAUDE.md` instructions | The built-in Explore and Plan agents skip `CLAUDE.md` at startup. A custom subagent loads it the same way the main conversation does, unless it has [`omitClaudeMd`](https://code.claude.com/docs/en/sub-agents#supported-frontmatter-fields) set in its definition | For Explore or Plan, restate the instruction in your delegating prompt. For a subagent that sets `omitClaudeMd`, remove the field. For any other custom subagent, put critical instructions in the agent file body, which becomes the agent's system prompt. See [what loads at startup](https://code.claude.com/docs/en/sub-agents#what-loads-at-startup). |
+| Cleanup logic never runs at session end | No `SessionEnd` hook configured | Add a `SessionEnd` hook in `settings.json`. See the [hook events list](https://code.claude.com/docs/en/hooks#hook-events). |
+| MCP servers in `.mcp.json` never load | File is under `.claude/`, or its servers sit under a top-level `servers` key, as in VS Code's `mcp.json`, instead of `mcpServers` | Project MCP config goes at the repository root as `.mcp.json`, not inside `.claude/`, with servers under the `mcpServers` key. See [MCP configuration](https://code.claude.com/docs/en/mcp). |
+| MCP servers added under `mcpServers` in `settings.json` never appear | `settings.json` does not read an `mcpServers` key | Define project servers in `.mcp.json` at the repository root, or run `claude mcp add --scope user` for user-scoped servers. See [MCP configuration](https://code.claude.com/docs/en/mcp). |
+| Project MCP server added but doesn't appear | The one-time approval prompt was dismissed | Project-scoped servers require approval. Run `/mcp` to see status and approve. |
+| MCP server fails to start from some directories | `command` or `args` uses a relative file path | Use absolute paths for local scripts. Executables on your `PATH` like `npx` or `uvx` work as-is. |
+| MCP server starts without expected environment variables | The server's config entry doesn't set them, and they aren't in the environment Claude Code passes to stdio servers: its own environment, minus the [variables it strips from subprocesses](https://code.claude.com/docs/en/monitoring-usage#administrator-configuration) | Set per-server `env` inside the server's `.mcp.json` entry, which doesn't depend on the launch environment or workspace trust. |
+| `Bash(rm *)` deny rule doesn't block `/bin/rm` or `find -delete` | Bash rules match the literal command string, not the underlying executable; see [what a Bash rule doesn't match](https://code.claude.com/docs/en/permissions#bash-rule-limits) | Use a [PreToolUse hook](https://code.claude.com/docs/en/hooks-guide) or the [sandbox](https://code.claude.com/docs/en/sandboxing) for a hard guarantee. |
 
 ## Related resources
 

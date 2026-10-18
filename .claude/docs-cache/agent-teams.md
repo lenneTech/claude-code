@@ -1,7 +1,7 @@
 # Orchestrate teams of Claude Code sessions
 
 > **Source:** https://code.claude.com/docs/en/agent-teams.md
-> **Generated:** 2026-09-25T11:44:16.746Z
+> **Generated:** 2026-10-17T14:11:31.564Z
 
 ---
 
@@ -37,13 +37,13 @@ Both agent teams and [subagents](https://code.claude.com/docs/en/sub-agents) let
   <img src="https://mintcdn.com/claude-code/nsvRFSDNfpSU5nT7/images/subagents-vs-agent-teams-dark.png?fit=max&auto=format&n=nsvRFSDNfpSU5nT7&q=85&s=d573a037540f2ada6a9ae7d8285b46fd" className="hidden dark:block" alt="Diagram comparing subagent and agent team architectures. Subagents are spawned by the main agent, do work, and report results back. Agent teams coordinate through a shared task list, with teammates communicating directly with each other." width="4245" height="1615" data-path="images/subagents-vs-agent-teams-dark.png" />
 </Frame>
 
-|                   | Subagents                                                                                                                                           | Agent teams                                                                                                                                   |
-| :---------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Context**       | Own context window; results return to the caller                                                                                                    | Own context window; fully independent                                                                                                         |
-| **Communication** | Return a result to the caller. Subagents that Claude named when it spawned them can also [message each other](https://code.claude.com/docs/en/sub-agents#what-loads-at-startup) | Teammates message each other directly                                                                                                         |
-| **Coordination**  | Main agent manages all work                                                                                                                         | Self-coordination through messages, plus a shared task list for [agents that have the Task tools](https://code.claude.com/docs/en/tools-reference#task-tool-availability) |
-| **Best for**      | Focused tasks where only the result matters                                                                                                         | Complex work requiring discussion and collaboration                                                                                           |
-| **Token cost**    | Lower: results summarized back to main context                                                                                                      | Higher: each teammate is a separate Claude instance                                                                                           |
+| | Subagents | Agent teams |
+| :- | :- | :- |
+| **Context** | Own context window; results return to the caller | Own context window; fully independent |
+| **Communication** | Return a result to the caller. Subagents that Claude named when it spawned them can also [message each other](https://code.claude.com/docs/en/sub-agents#what-loads-at-startup) | Teammates message each other directly |
+| **Coordination** | Main agent manages all work | Self-coordination through messages, plus a shared task list for [agents that have the Task tools](https://code.claude.com/docs/en/tools-reference#task-tool-availability) |
+| **Best for** | Focused tasks where only the result matters | Complex work requiring discussion and collaboration |
+| **Token cost** | Lower: results summarized back to main context | Higher: each teammate is a separate Claude instance |
 
 Use subagents when you need quick, focused workers that report back. Use agent teams when teammates need to share findings, challenge each other, and coordinate on their own.
 
@@ -85,7 +85,7 @@ The lead's terminal lists teammates in the agent panel below the prompt input. F
 * **Enter**: open the selected teammate's transcript and message it directly
 * **Escape**: clear the selection. While you're viewing a teammate's transcript, Escape interrupts that teammate's current turn
 
-As of v2.1.199, an idle teammate's row stays in the panel while any teammate or subagent is still working, so you can select it to review its transcript or send it more work. Once every agent in the panel is idle, idle rows hide after 30 seconds and reappear on the teammate's next turn; the teammate stays running and addressable while hidden. In v2.1.181 through v2.1.198, an idle row hid 30 seconds after its own turn ended, even while other teammates were still working; idle rows are not hidden on versions before v2.1.181.
+An idle teammate's row stays in the panel while any teammate or subagent is still working, so you can select it to review its transcript or send it more work. Once every agent in the panel is idle, idle rows hide after 30 seconds and reappear on the teammate's next turn; the teammate stays running and addressable while hidden.
 
 When more than three teammates are idle at once, the rows beyond the first three collapse into a single row that counts the collapsed teammates, such as `2 idle agents` when five are idle. Select it and press Enter to expand the collapsed rows, or press Esc to collapse them again. Working teammates, failed teammates, and the teammate you're viewing always keep their own rows.
 
@@ -147,6 +147,8 @@ Claude Code picks each teammate's model from the first of these that applies:
 3. [`CLAUDE_CODE_SUBAGENT_MODEL`](https://code.claude.com/docs/en/model-config#environment-variables), when it's set to anything other than `inherit`.
 4. The lead's current model.
 
+If an installed [mod](https://code.claude.com/docs/en/plugins/mods/overview) sets a model in its [`agent.spawn`](https://code.claude.com/docs/en/plugins/mods/reference#subagents) hook, Claude Code uses that model in place of the first source.
+
 If you set [`CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`](https://code.claude.com/docs/en/sub-agents#run-every-subagent-on-one-model), the first two sources don't apply. Claude Code picks every teammate's model from `CLAUDE_CODE_SUBAGENT_MODEL` when it's set to anything other than `inherit`, and from the lead's current model otherwise. Requires Claude Code v2.1.257 or later.
 
 Before v2.1.251, `CLAUDE_CODE_SUBAGENT_MODEL` came first in this order.
@@ -160,7 +162,7 @@ Claude Code checks the model it selects for a teammate against your organization
 * **Family alias such as `opus`**: On the Anthropic API and Claude Platform on AWS, Claude Code runs the teammate on the newest version of that family the allowlist permits. On providers with provider-specific model IDs, where the [substitution doesn't operate](https://code.claude.com/docs/en/model-config#restrict-model-selection), a blocked alias falls back like any other blocked value per the next bullet
 * **Any other blocked value, including a family alias on providers where the substitution doesn't operate, or one whose family has no permitted version**: Claude Code runs the teammate on the lead's model instead. If you set `CLAUDE_CODE_SUBAGENT_MODEL`, Claude Code tries that model first, under these same rules
 
-Teammates inherit the lead's [effort level](https://code.claude.com/docs/en/model-config#adjust-effort-level). In split-pane mode this applies from v2.1.186; earlier versions did not pass the lead's session effort to split-pane teammates.
+By default, teammates inherit the lead's [effort level](https://code.claude.com/docs/en/model-config#adjust-effort-level). In split-pane mode this applies from v2.1.186; earlier versions did not pass the lead's session effort to split-pane teammates.
 
 ### Have teammates plan before implementing
 
@@ -179,9 +181,12 @@ Each teammate is a full, independent Claude Code session. You can message any te
 * **In-process mode**: use the up and down arrow keys in the agent panel to select a teammate, then press Enter to view its session and type to send it a message. Press `x` on a selected teammate to stop it. Press Ctrl+T to toggle the task list.
 * **Split-pane mode**: click into a teammate's pane to interact with their session directly. Each teammate has a full view of their own terminal.
 
-While you're viewing an in-process teammate, plain text and [skills](https://code.claude.com/docs/en/skills) go to that teammate, but built-in commands still run in the lead's session.
+While you're viewing an in-process teammate, plain text and [skills](https://code.claude.com/docs/en/skills) go to that teammate, and built-in commands go to the lead's session, with these safeguards:
 
-A teammate's model and fast mode are fixed when it spawns, so `/model` and `/fast` only change the lead's settings. As of v2.1.199, typing either command while viewing a teammate shows a notice that the change applies to the lead; earlier versions applied it to the lead with no indication. `/effort` still applies to the viewed teammate's later turns, because teammates follow the lead's [effort level](https://code.claude.com/docs/en/model-config#adjust-effort-level).
+* `/compact`, `/clear`, and `/rewind` act on the lead's conversation, so Claude Code asks you to confirm before running one of them from this view.
+* `/model` and `/fast` set the lead's model and fast mode, not the teammate's, so they don't run from this view. A notice tells you why.
+
+A teammate's model and fast mode are fixed when it spawns.
 
 ### Assign and claim tasks
 
@@ -206,7 +211,7 @@ Ask the researcher teammate to shut down
 
 The lead sends a shutdown request. The teammate can approve, exiting gracefully, or reject with an explanation.
 
-The team's shared directories are cleaned up automatically when the session ends, so there's no separate cleanup step. See [Architecture](#architecture) for which directories are removed and which persist for resumed sessions.
+The team's shared directories are cleaned up automatically when the session ends, so there's no separate cleanup step. See [Architecture](#architecture) for which directories are removed and which stay on disk.
 
 ### Enforce quality gates with hooks
 
@@ -230,14 +235,14 @@ Claude also names ordinary subagents on its own so it can message them later. Th
 
 An agent team consists of:
 
-| Component     | Role                                                                    |
-| :------------ | :---------------------------------------------------------------------- |
+| Component | Role |
+| :- | :- |
 | **Team lead** | The main Claude Code session that spawns teammates and coordinates work |
-| **Teammates** | Separate Claude Code instances that each work on assigned tasks         |
-| **Task list** | Shared list of work items that teammates claim and complete             |
-| **Mailbox**   | Messaging system for communication between agents                       |
+| **Teammates** | Separate Claude Code instances that each work on assigned tasks |
+| **Task list** | Shared list of work items that teammates claim and complete |
+| **Mailbox** | Messaging system for communication between agents |
 
-Each agent's mailbox is a JSON file at `~/.claude/teams/{team-name}/inboxes/{agent-name}.json`. Claude Code validates every entry when it reads a mailbox file. Entries that don't match the message format are reported as errors and removed from the file; the valid messages are still delivered. Before v2.1.207, a single malformed mailbox entry caused a repeated error every second and blocked delivery for that mailbox until you deleted the file manually.
+Each agent's mailbox is a JSON file at `~/.claude/teams/{team-name}/inboxes/{agent-name}.json`. Claude Code validates every entry when it reads a mailbox file. Entries that don't match the message format are reported as errors and removed from the file; the valid messages are still delivered.
 
 Claude Code reports a message as sent only when the write to the recipient's mailbox file succeeds, whether the message is plain text or a structured protocol message such as a plan approval or shutdown request. When the write fails, for example because the disk is full or the mailbox directory isn't writable, the sending agent receives an error and nothing is sent. See [Failed to write to a teammate's inbox](https://code.claude.com/docs/en/errors#failed-to-write-to-a-teammate-inbox) for the error messages and recovery steps.
 
@@ -245,10 +250,10 @@ Claude Code manages task dependencies automatically: when a teammate completes a
 
 Teams and tasks are stored locally under a session-derived name. The name is `session-` followed by the first eight characters of the session ID:
 
-* **Team config**: `~/.claude/teams/{team-name}/config.json`
-* **Task list**: `~/.claude/tasks/{team-name}/`
+* **Team config**: `~/.claude/teams/{team-name}/config.json`. Claude Code removes the team config directory when the session ends.
+* **Task list**: `~/.claude/tasks/{team-name}/`. This directory stays on disk after the session ends. To change [how long Claude Code keeps it](https://code.claude.com/docs/en/claude-directory#cleaned-up-automatically), set [`cleanupPeriodDays`](https://code.claude.com/docs/en/settings-reference#cleanupperioddays).
 
-Claude Code generates both of these automatically at session startup and updates them as teammates join, go idle, or leave. The team config directory is removed when the session ends. The task list directory persists locally and is never uploaded, so resumed sessions keep their tasks. Retention is governed by the same [`cleanupPeriodDays`](https://code.claude.com/docs/en/settings-reference#cleanupperioddays) you already control for session transcripts, following the [retention sweep rules](https://code.claude.com/docs/en/claude-directory#cleaned-up-automatically).
+Claude Code generates both of these automatically at session startup and updates them as teammates join, go idle, or leave.
 
 The team config holds runtime state such as session IDs and tmux pane IDs, so don't edit it by hand or pre-author it: your changes are overwritten on the next state update.
 
@@ -260,7 +265,7 @@ There is no project-level equivalent of the team config. A file like `.claude/te
 
 ### Use subagent definitions for teammates
 
-When spawning a teammate in either display mode, you can reference a [subagent](https://code.claude.com/docs/en/sub-agents) type from the project, user, or managed [subagent scope](https://code.claude.com/docs/en/sub-agents#choose-the-subagent-scope). This lets you define a role once, such as a security-reviewer or test-runner, and reuse it both as a delegated subagent and as an agent team teammate.
+When spawning a teammate in either display mode, you can reference a [subagent](https://code.claude.com/docs/en/sub-agents) type from the project, user, managed, or plugin [subagent scope](https://code.claude.com/docs/en/sub-agents#choose-the-subagent-scope). This lets you define a role once, such as a security-reviewer or test-runner, and reuse it both as a delegated subagent and as an agent team teammate.
 
 To use a subagent definition, name it when you ask Claude to spawn the teammate:
 
@@ -272,6 +277,9 @@ Claude Code reads the subagent definition you named and applies these parts of i
 
 * **`tools`**: Claude Code limits the teammate to the tools in the definition's `tools` list. For an in-process teammate, Claude Code adds `SendMessage` to that list, and in a [session that has the Task tools](https://code.claude.com/docs/en/tools-reference#task-tool-availability) it adds `TaskCreate`, `TaskGet`, `TaskList`, and `TaskUpdate` too.
 * **`model`**: Claude Code uses the definition's `model` in either display mode when your spawn prompt doesn't name one. See [how Claude Code picks a teammate's model](#specify-teammates-and-models).
+* **`disallowedTools`**: for an in-process teammate, Claude Code removes the tools in the definition's `disallowedTools` from the teammate's set. `SendMessage` and the Task tools it adds stay available even when the list names them.
+* **`effort`**: for an in-process teammate, Claude Code applies the definition's [`effort`](https://code.claude.com/docs/en/sub-agents#supported-frontmatter-fields) under the [frontmatter effort rules](https://code.claude.com/docs/en/model-config#set-the-effort-level).
+* **`autoCompactWindow`**: for an in-process teammate, Claude Code applies the definition's [`autoCompactWindow`](https://code.claude.com/docs/en/sub-agents#supported-frontmatter-fields) under [that field's rules](https://code.claude.com/docs/en/sub-agents#subagent-auto-compact-window). A split-pane teammate ignores the field. Requires Claude Code v2.1.296 or later.
 * **Body**: for an in-process teammate, Claude Code appends the definition's body to its default system prompt as additional instructions. For a split-pane teammate, Claude Code uses the body in place of its default system prompt.
 * **`skills`**: Claude Code doesn't apply the definition's `skills` to a teammate in either display mode. The teammate loads skills from your project and user settings.
 * **`mcpServers`**: for a split-pane teammate, Claude Code applies the definition's `mcpServers` under the [rules for that field](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent), which cover a session started with `--agent` as well. An in-process teammate ignores the field and loads MCP servers from your project and user settings.
@@ -297,7 +305,9 @@ In [auto mode](https://code.claude.com/docs/en/permission-modes#eliminate-prompt
 
 ### Context and communication
 
-Each teammate has its own context window. When spawned, a teammate loads the same project context as a regular session: CLAUDE.md, MCP servers, and skills. It also receives the spawn prompt from the lead. The lead's conversation history does not carry over.
+Each teammate has its own context window. When spawned, a teammate loads the same project context as a regular session: CLAUDE.md, MCP servers, and skills. If you start the lead with [`--setting-sources`](https://code.claude.com/docs/en/cli-reference#cli-flags), teammates load from the same restricted list of sources. Before v2.1.281, [split-pane](#choose-a-display-mode) teammates loaded every settings source.
+
+A teammate also receives the spawn prompt from the lead. The lead's conversation history does not carry over.
 
 **How teammates share information:**
 

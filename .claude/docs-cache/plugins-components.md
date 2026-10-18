@@ -1,7 +1,7 @@
 # Add components to a plugin
 
 > **Source:** https://code.claude.com/docs/en/plugins/components.md
-> **Generated:** 2026-09-25T11:44:16.716Z
+> **Generated:** 2026-10-17T14:11:31.536Z
 
 ---
 
@@ -414,7 +414,7 @@ After you add a component, run `/reload-plugins` in a running session or start a
 
   * **Building your first plugin**: start with [Create a plugin](https://code.claude.com/docs/en/plugins/create)
   * **Installing someone else's plugin**: see [Install plugins](https://code.claude.com/docs/en/plugins/install)
-  * **Your plugin's users are on claude.ai or in Cowork**: a different set of components loads there. See [Plugins on claude.ai and in Cowork](https://claude.com/docs/plugins/overview)
+  * **Your plugin's users are on claude.ai or in Cowork**: a different set of components loads there. See [Plugin structure and testing](https://claude.com/docs/plugins/build) and the [component support table](https://claude.com/docs/plugins/platform-support#compare-component-support-by-app)
 </Note>
 
 ## Explore the plugin directory
@@ -435,7 +435,7 @@ Each file is the smallest valid example of its format, there to show the shape r
 
 <PluginExplorer>
   <Piece id="manifest">
-    The [manifest](https://code.claude.com/docs/en/plugins/manifest-reference) is the `plugin.json` file in a plugin's `.claude-plugin/` directory. It contains the plugin's metadata and the `userConfig` values that Claude Code prompts the user for. Only `name` is required. In this one, `description` is the text users see for the plugin in `/plugin`, and `version` keeps users on that version until you change it:
+    The [manifest](https://code.claude.com/docs/en/plugins/manifest-reference) is the `plugin.json` file in a plugin's `.claude-plugin/` directory. It contains the plugin's metadata and the `userConfig` values that Claude Code prompts the user for. Claude Code loads a plugin without one. Inside the file, only `name` is required. In this one, `description` is the text users see for the plugin in `/plugin`, and `version` keeps users on that version until you change it:
 
     ```json theme={null}
     {
@@ -507,7 +507,7 @@ Each file is the smallest valid example of its format, there to show the shape r
   </Piece>
 
   <Piece id="monitors">
-    A monitor is a shell command that Claude Code starts in the background when the session starts and keeps running until it ends, using the [Monitor tool](https://code.claude.com/docs/en/tools-reference#monitor-tool). What it prints reaches Claude as notifications. A `when` field can instead start it the first time a named skill runs. This one tails an error log:
+    A monitor is a shell command that Claude Code starts in the background when the session starts and keeps running until it ends. What it prints reaches Claude as notifications. A `when` field can instead start it the first time a named skill runs. This one tails an error log:
 
     ```json theme={null}
     [
@@ -671,6 +671,8 @@ You can also place skills outside the default `skills/` directory:
 
 To include instructions in a plugin, write them as a skill. Claude Code doesn't load a `CLAUDE.md` at the plugin root, and `claude plugin validate` warns `CLAUDE.md at the plugin root is not loaded as project context`.
 
+If a rule must hold every time, such as [blocking edits to protected files](https://code.claude.com/docs/en/hooks-guide#block-edits-to-protected-files), add it to the plugin as a [hook](#hooks) rather than a skill. To choose between the two, see the Hook vs Skill tab under [Compare similar features](https://code.claude.com/docs/en/features-overview#compare-similar-features).
+
 For frontmatter fields and supporting files, see [Skills](https://code.claude.com/docs/en/skills).
 
 ### Commands
@@ -721,7 +723,7 @@ model: sonnet
 You are a security reviewer. Read the changed files and report injection, authentication, and secrets-handling risks.
 ```
 
-This agent is named `my-plugin:security-reviewer`, and the user can [invoke it explicitly](https://code.claude.com/docs/en/sub-agents#invoke-subagents-explicitly) with `@agent-my-plugin:security-reviewer`. The name form is `<plugin>:<name>`, where `<name>` comes from the frontmatter, or from the file name when there is none.
+This agent is named `my-plugin:security-reviewer`, and the user can [invoke it explicitly](https://code.claude.com/docs/en/sub-agents#invoke-subagents-explicitly) with `@agent-my-plugin:security-reviewer`. The name form is `<plugin>:<name>`, where `<name>` comes from the frontmatter `name` field, or from the file name when that field is missing.
 
 The `agents` manifest key replaces the `agents/` scan.
 
@@ -736,7 +738,7 @@ You can put plugin agent files in subfolders of `agents/`. Claude Code [loads th
 
 A plugin agent's frontmatter follows these rules:
 
-* **Supported fields**: `name`, `description`, `model`, `effort`, `maxTurns`, `tools`, `disallowedTools`, `skills`, `memory`, `background`, `omitClaudeMd`, `isolation`, `color`, and the `cacheTtl` key of `experimental`. The only valid `isolation` value is `"worktree"`. See [supported frontmatter fields](https://code.claude.com/docs/en/sub-agents#supported-frontmatter-fields) for what each one does
+* **Supported fields**: `name`, `description`, `model`, `effort`, `maxTurns`, `autoCompactWindow`, `tools`, `disallowedTools`, `skills`, `memory`, `background`, `omitClaudeMd`, `isolation`, `color`, and the `cacheTtl` key of `experimental`. The only valid `isolation` value is `"worktree"`. See [supported frontmatter fields](https://code.claude.com/docs/en/sub-agents#supported-frontmatter-fields) for what each one does
 * **Ignored fields**: `permissionMode`, `hooks`, `mcpServers`, and `initialPrompt`. An agent file can't add hooks or MCP servers on its own, so add those as plugin [hooks](#hooks) and [MCP servers](#mcp-servers) instead
 * **Frontmatter that doesn't parse**: the agent still loads with every field ignored. It's named after the file, and its description reads `Agent from my-plugin plugin`. Run [`claude plugin validate`](https://code.claude.com/docs/en/plugins/cli-reference#plugin-validate) in your shell to find these files
 
@@ -771,6 +773,10 @@ Save the script at `scripts/format.sh` and make it executable.
 Load the plugin and ask Claude to edit a file. A `PostToolUse` hook that exits 0 shows nothing in the transcript, so confirm it ran with [debug logging](https://code.claude.com/docs/en/hooks#debug-hooks) or by what the script itself changes.
 
 Hooks in `hooks/hooks.json` and in the `hooks` manifest key both load. For every event and its payload, see [Hook events](https://code.claude.com/docs/en/hooks#hook-events).
+
+When another enabled plugin has the same name, one of the two registers its `hooks/hooks.json` hooks and the other's are left out. See [Hooks when two enabled plugins share a name](https://code.claude.com/docs/en/plugins/loading#hooks-when-two-enabled-plugins-share-a-name) for which one, and for the note in `/plugin` that tells you.
+
+To write hooks as JavaScript functions that run inside Claude Code and can draw in its interface, list a module file under a `modules` key in the same `hooks/hooks.json`. A plugin with one is a mod. See [Create a mod](https://code.claude.com/docs/en/plugins/mods/create).
 
 #### When plugin hooks fire
 
@@ -813,7 +819,7 @@ The `mcpServers` manifest key takes an inline server map, a path to a JSON file,
 
 #### Reach users on claude.ai and Cowork
 
-A local stdio server, such as the `db` server under [MCP servers](#mcp-servers), runs in Claude Code and in a Cowork session that runs on your machine in the Claude Desktop app, but not on claude.ai. To reach users there too, reference a remote server by its `https://` URL, which claude.ai and Cowork offer to the user as a connector.
+A local stdio server, such as the `db` server under [MCP servers](#mcp-servers), runs in Claude Code and in a Cowork session that runs on your machine in the Claude Desktop app, but not on claude.ai. To reach users there too, reference a remote server by its `https://` URL, which claude.ai and Cowork offer to the user as a connector, as [Bundle an MCP connector with its skill](https://claude.com/docs/plugins/build#bundle-an-mcp-connector-with-its-skill) shows.
 
 #### Server names, tool names, and reloads
 
@@ -836,6 +842,13 @@ The `mcpServers` key also accepts a packaged server as an [MCPB file](https://gi
 ```
 
 The server takes its name from the `name` in the bundle's manifest.
+
+A bundle's own manifest can declare settings the server needs from the user in a `user_config` block. A bundled server with a required setting that has no saved value doesn't start. The `/plugin` **Errors** tab shows `Bundled MCP server "<name>" was not started: it needs configuration`.
+
+Users supply the values in one of two ways:
+
+* **In `/plugin`**: select the plugin on the **Installed** tab and choose **Configure**
+* **At install, from the shell**: pass [`--config <server>.<key>=<value>`](https://code.claude.com/docs/en/plugins/cli-reference#plugin-install) to `claude plugin install`. Requires Claude Code v2.1.285 or later, and works only for a bundle packaged inside the plugin.
 
 For transports and authentication, see [MCP](https://code.claude.com/docs/en/mcp#plugin-provided-mcp-servers).
 
@@ -885,7 +898,7 @@ Make it executable with `chmod +x bin/hello-plugin` and load the plugin. When yo
 
 Plugin `bin/` directories come after the user's own `PATH` entries, so a plugin can't shadow `git`, `ls`, or another system command.
 
-claude.ai and Cowork don't install a plugin that has a top-level `bin/` directory, including one you [distribute through claude.ai organization settings](https://code.claude.com/docs/en/plugins/host-marketplace#distribute-through-organization-settings).
+claude.ai and Cowork don't install a plugin that has a top-level `bin/` directory, including one you [distribute through claude.ai organization settings](https://claude.com/docs/plugins/org-sync#keep-executables-out-of-the-top-level-bin-directory).
 
 ### Default settings
 
@@ -915,10 +928,10 @@ For the `subagentStatusLine` shape, see [subagent status lines](https://code.cla
 
 A plugin can include color themes and output styles. Both appear in the same pickers as the user's own. For either one, setting the manifest key replaces the folder scan.
 
-| Component    | Save as                   | Format                                                                                                                      | Appears in                            | Manifest key          |
-| :----------- | :------------------------ | :-------------------------------------------------------------------------------------------------------------------------- | :------------------------------------ | :-------------------- |
-| Theme        | `themes/<slug>.json`      | The [custom theme file](https://code.claude.com/docs/en/terminal-config#create-a-custom-theme) format users write in `~/.claude/themes/`                | `/theme`, under the file's `name`     | `experimental.themes` |
-| Output style | `output-styles/<name>.md` | The [custom output style](https://code.claude.com/docs/en/output-styles#create-a-custom-output-style) format, with `name` and `description` frontmatter | `/output-style`, as `<plugin>:<name>` | `outputStyles`        |
+| Component | Save as | Format | Appears in | Manifest key |
+| :- | :- | :- | :- | :- |
+| Theme | `themes/<slug>.json` | The [custom theme file](https://code.claude.com/docs/en/terminal-config#create-a-custom-theme) format users write in `~/.claude/themes/` | `/theme`, under the file's `name` | `experimental.themes` |
+| Output style | `output-styles/<name>.md` | The [custom output style](https://code.claude.com/docs/en/output-styles#create-a-custom-output-style) format, with `name` and `description` frontmatter | `/output-style`, as `<plugin>:<name>` | `outputStyles` |
 
 Plugin themes are read-only, so when a user edits one in `/theme`, the edit is saved as a copy in their own themes directory.
 
@@ -983,11 +996,11 @@ A monitor is a shell command that runs in the background for the whole session. 
 ]
 ```
 
-The command runs in a shell, in the working directory the session started in.
+The command runs in a shell, in the session's current working directory. It runs with your full user permissions and outside the [sandbox](https://code.claude.com/docs/en/sandboxing).
 
 A monitor's command is limited in where it starts and what it can reference:
 
-* **Interactive sessions only**: plugin monitors start in an interactive session and never in non-interactive mode with the `-p` flag. They also start only where the [Monitor tool](https://code.claude.com/docs/en/tools-reference#monitor-tool) is available
+* **Interactive sessions only**: plugin monitors start in an interactive session and never in non-interactive mode with the `-p` flag. They also don't start in sessions where the API provider or telemetry settings make the [Monitor tool](https://code.claude.com/docs/en/tools-reference#monitor-tool) unavailable
 * **No user configuration**: `command` gets the [path variables](#path-variables-and-persistent-data) and `${ENV_VAR}` from the environment, but never `${user_config.*}`. A monitor that references one doesn't start, and monitor processes don't receive `CLAUDE_PLUGIN_OPTION_<KEY>` either
 * **Disabling mid-session**: if you disable a plugin mid-session, Claude Code doesn't stop monitors that are already running. They stop when the session ends
 
@@ -1026,7 +1039,7 @@ This manifest asks for an endpoint and a token:
 
 ### When the configuration dialog appears
 
-The dialog appears only in the interactive `/plugin` interface. It opens for any option that isn't set yet when the user does any of the following:
+The dialog is part of the interactive `/plugin` interface. When the user does any of the following, it opens for any option that isn't set yet:
 
 * Installs the plugin in `/plugin`
 * Runs `/plugin install <plugin>@<marketplace>` inside a session
@@ -1034,7 +1047,11 @@ The dialog appears only in the interactive `/plugin` interface. It opens for any
 
 To open the same dialog at any time, the user runs `/plugin configure <plugin>@<marketplace>`.
 
-The `claude plugin install` shell command never prompts for `userConfig` values. To set values from the shell, pass each one as `--config KEY=VALUE`. When options remain unset, the command prints a `userConfig options not yet set` line that names both ways to set them. [The `userConfig` dialog never appears](https://code.claude.com/docs/en/plugins/troubleshooting#the-userconfig-dialog-never-appears) quotes the line.
+The VS Code extension's [Manage plugins dialog](https://code.claude.com/docs/en/vs-code#install-plugins) asks for unset options as a form after an install, and a gear icon on the plugin's row opens the form again with every option.
+
+The `claude plugin install` shell command never prompts for `userConfig` values. To set values from the shell, pass each one as `--config KEY=VALUE` when you install, or pipe a JSON object to [`claude plugin configure --values-stdin`](https://code.claude.com/docs/en/plugins/cli-reference#plugin-configure) afterward.
+
+When options remain unset, `claude plugin install` prints a `userConfig options not yet set` line. For the line's exact text, see [The `userConfig` dialog never appears](https://code.claude.com/docs/en/plugins/troubleshooting#the-userconfig-dialog-never-appears).
 
 For the option fields, where each value is stored, how a component references a saved value, and which fields reject `${user_config.*}`, see [User configuration](https://code.claude.com/docs/en/plugins/manifest-reference#user-configuration).
 

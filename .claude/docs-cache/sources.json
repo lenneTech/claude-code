@@ -2,8 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "Central configuration for Claude Code documentation sources. All sources are cached locally and updated when Claude Code version changes.",
   "cache": {
-    "claudeCodeVersion": "2.1.282",
-    "lastUpdated": "2026-09-25T11:44:24.820Z",
+    "claudeCodeVersion": "2.1.302",
+    "lastUpdated": "2026-10-17T14:16:09.983Z",
     "updateBehavior": "auto"
   },
   "updateBehaviorOptions": {
@@ -40,6 +40,7 @@
       "legal-and-compliance",
       "data-usage",
       "zero-data-retention",
+      "hipaa-setup",
       "analytics",
       "monitoring-usage",
       "network-config",
@@ -95,6 +96,7 @@
       "server-managed-settings",
       "managed-mcp",
       "auto-mode-config",
+      "auto-mode-classifier-billing",
       "security",
       "settings-example",
       "fast-mode",
@@ -484,6 +486,66 @@
       "url": "https://code.claude.com/docs/en/plugins/security.md",
       "type": "md",
       "description": "What a plugin can do on a user's machine, and how users review and trust one"
+    },
+    {
+      "name": "mods-overview",
+      "url": "https://code.claude.com/docs/en/plugins/mods/overview.md",
+      "type": "md",
+      "description": "Mods overview: panes, commands and tool call rules a mod adds to Claude Code, how to make or install one, and where mods run"
+    },
+    {
+      "name": "mods-create",
+      "url": "https://code.claude.com/docs/en/plugins/mods/create.md",
+      "type": "md",
+      "description": "Creating a mod by description or by hand (a tool-call counter plus a command), and the reload and validate loop"
+    },
+    {
+      "name": "mods-reference",
+      "url": "https://code.claude.com/docs/en/plugins/mods/reference.md",
+      "type": "md",
+      "description": "Mods reference: hooks module layout, events, mods API methods, render sites, elements by surface, limits and settings"
+    },
+    {
+      "name": "mods-interface",
+      "url": "https://code.claude.com/docs/en/plugins/mods/interface.md",
+      "type": "md",
+      "description": "Drawing panes, the band above the prompt, buttons and text fields from a mod; handling presses and input; state between redraws and sessions"
+    },
+    {
+      "name": "mods-gallery",
+      "url": "https://code.claude.com/docs/en/plugins/mods/gallery.md",
+      "type": "md",
+      "description": "Interface elements a mod can draw (text, buttons, fields, Markdown, code, diffs) with sample code"
+    },
+    {
+      "name": "mods-events",
+      "url": "https://code.claude.com/docs/en/plugins/mods/events.md",
+      "type": "md",
+      "description": "Handling events from a mod: observing, rewriting or answering tool calls, prompts and turns, event filters, coexisting with other mods"
+    },
+    {
+      "name": "mods-api",
+      "url": "https://code.claude.com/docs/en/plugins/mods/api.md",
+      "type": "md",
+      "description": "The mods API: adding commands and tools, calling a model, timers, messaging other sessions, file and network access"
+    },
+    {
+      "name": "mods-test",
+      "url": "https://code.claude.com/docs/en/plugins/mods/test.md",
+      "type": "md",
+      "description": "Automated tests for a mod that fire events, stub Claude Code's answers and press buttons, without a session, sign-in or network"
+    },
+    {
+      "name": "mods-troubleshoot",
+      "url": "https://code.claude.com/docs/en/plugins/mods/troubleshoot.md",
+      "type": "md",
+      "description": "Why a mod does nothing: symptoms and messages mapped to causes, refusal messages, the debug log"
+    },
+    {
+      "name": "mods-admin",
+      "url": "https://code.claude.com/docs/en/plugins/mods/admin.md",
+      "type": "md",
+      "description": "Managing mods for an organization with managed settings: stopping user-installed mods, allowing only your own, reviewing a mod, enforcing policy with a mod"
     }
   ]
 }

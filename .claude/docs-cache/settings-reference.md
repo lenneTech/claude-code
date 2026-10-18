@@ -1,7 +1,7 @@
 # All settings
 
 > **Source:** https://code.claude.com/docs/en/settings-reference.md
-> **Generated:** 2026-09-25T11:44:16.781Z
+> **Generated:** 2026-10-17T14:11:31.593Z
 
 ---
 
@@ -582,246 +582,260 @@ Every key below links to its entry. Scope lists the [files](https://code.claude.
 <ReferenceFilter
   noun="settings"
   placeholder="Filter settings by key or purpose"
-  facetOrder={{ scope: ["Any file", "User, local, or managed", "User or managed", "Managed", "Global config"] }}
+  facetOrder={{ scope: ["Any file", "User, local, or managed", "User or managed", "User", "Managed", "Global config"] }}
   columnHelp={{
 topic: "The section of this page that holds the entry. Use Sort by to group the table by topic.",
 scope: "Which settings files can set the key: user (~/.claude/settings.json), project (.claude/settings.json), local (.claude/settings.local.json), or managed (deployed by your organization). Global config keys are in ~/.claude.json instead.",
 }}
 />
 
-| Key                                                                                                   | Description                                                                                                                                                                                                                 | Topic                              | Scope                   |
-| :---------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------- | :---------------------- |
-| [`advisorModel`](#advisormodel)                                                                       | Pick which model answers when Claude asks the [advisor tool](https://code.claude.com/docs/en/advisor)                                                                                                                                                   | Model and responses                | Any file                |
-| [`agent`](#agent)                                                                                     | Start every session as a named [subagent](https://code.claude.com/docs/en/sub-agents) with its prompt, tools, and model                                                                                                                                 | Agents, sessions, and worktrees    | Any file                |
-| [`agentPushNotifEnabled`](#agentpushnotifenabled)                                                     | Let Claude send a [push notification to your phone](https://code.claude.com/docs/en/remote-control#mobile-push-notifications) when it decides to                                                                                                        | Remote, desktop, and notifications | Any file                |
-| [`allowAllClaudeAiMcps`](#allowallclaudeaimcps)                                                       | Load the [claude.ai connectors](https://code.claude.com/docs/en/mcp) Claude Code fetches itself alongside a deployed [`managed-mcp.json`](https://code.claude.com/docs/en/managed-mcp#exclusive-control-with-managed-mcp-json)                                                      | MCP                                | Managed                 |
-| [`allowedChannelPlugins`](#allowedchannelplugins)                                                     | Replace the default allowlist of [channel plugins](https://code.claude.com/docs/en/channels#restrict-which-channel-plugins-can-run) that can push messages                                                                                              | Plugins and skills                 | Managed                 |
-| [`allowedHttpHookUrls`](#allowedhttphookurls)                                                         | Limit which URLs [HTTP hooks](https://code.claude.com/docs/en/hooks) can target                                                                                                                                                                         | Hooks and automation               | Any file                |
-| [`allowedMcpServers`](#allowedmcpservers)                                                             | Allowlist which [MCP servers](https://code.claude.com/docs/en/mcp) users can add                                                                                                                                                                        | MCP                                | Any file                |
-| [`allowManagedHooksOnly`](#allowmanagedhooksonly)                                                     | Run only the [hooks](https://code.claude.com/docs/en/hooks) your organization deploys                                                                                                                                                                   | Hooks and automation               | Managed                 |
-| [`allowManagedMcpServersOnly`](#allowmanagedmcpserversonly)                                           | Make the managed [MCP](https://code.claude.com/docs/en/mcp) allowlist the only one that applies                                                                                                                                                         | MCP                                | Managed                 |
-| [`allowManagedPermissionRulesOnly`](#allowmanagedpermissionrulesonly)                                 | Make [managed settings](https://code.claude.com/docs/en/managed-settings) the only settings source of [permission rules](https://code.claude.com/docs/en/permissions#managed-settings)                                                                                              | Permission settings                | Managed                 |
-| [`alwaysThinkingEnabled`](#alwaysthinkingenabled)                                                     | Turn [extended thinking](https://code.claude.com/docs/en/model-config#extended-thinking) off for every session                                                                                                                                          | Model and responses                | Any file                |
-| [`apiKeyHelper`](#apikeyhelper)                                                                       | Generate the [API credential](https://code.claude.com/docs/en/authentication#credential-management) with your own command                                                                                                                               | Authentication and providers       | Any file                |
-| [`askUserQuestionTimeout`](#askuserquestiontimeout)                                                   | Let an unanswered question [auto-continue](https://code.claude.com/docs/en/tools-reference#question-auto-continue-timeout) after idle time                                                                                                              | Interface and terminal             | User or managed         |
-| [`attribution`](#attribution)                                                                         | Customize the attribution Claude Code adds to commits and pull requests                                                                                                                                                     | Git and attribution                | Any file                |
-| [`attribution.commit`](#attribution-commit)                                                           | Change or hide the trailer Claude Code adds to commits                                                                                                                                                                      | Git and attribution                | Any file                |
-| [`attribution.pr`](#attribution-pr)                                                                   | Change or hide the attribution line in pull request descriptions                                                                                                                                                            | Git and attribution                | Any file                |
-| [`attribution.sessionUrl`](#attribution-sessionurl)                                                   | Omit the claude.ai session link from [cloud](https://code.claude.com/docs/en/claude-code-on-the-web) and [Remote Control](https://code.claude.com/docs/en/remote-control) commits                                                                                                   | Git and attribution                | Any file                |
-| [`autoCompactEnabled`](#autocompactenabled)                                                           | Turn [automatic compaction](https://code.claude.com/docs/en/context-window) off or on                                                                                                                                                                   | Memory and context                 | Any file                |
-| [`autoCompactWindow`](#autocompactwindow)                                                             | Set how full the context gets before Claude Code [compacts](https://code.claude.com/docs/en/context-window)                                                                                                                                             | Memory and context                 | Any file                |
-| [`autoConnectIde`](#autoconnectide)                                                                   | Connect to a running [VS Code](https://code.claude.com/docs/en/vs-code) or [JetBrains](https://code.claude.com/docs/en/jetbrains#from-external-terminals) IDE automatically from an external terminal                                                                               | Global config settings             | Global config           |
-| [`autoContinueAtUsageLimit`](#autocontinueatusagelimit)                                               | Wait in the open session and [continue the task automatically](https://code.claude.com/docs/en/interactive-mode#wait-for-a-usage-limit-to-reset) after a claude.ai usage limit resets                                                                   | Interface and terminal             | User or managed         |
-| [`autoInstallIdeExtension`](#autoinstallideextension)                                                 | Turn off automatic install of the [IDE extension](https://code.claude.com/docs/en/vs-code#install-the-extension) from a VS Code terminal                                                                                                                | Global config settings             | Global config           |
-| [`autoMemoryDirectory`](#automemorydirectory)                                                         | Store [auto memory](https://code.claude.com/docs/en/memory#auto-memory) in a directory you choose                                                                                                                                                       | Memory and context                 | Any file                |
-| [`autoMemoryEnabled`](#automemoryenabled)                                                             | Turn [auto memory](https://code.claude.com/docs/en/memory#auto-memory) off or on                                                                                                                                                                        | Memory and context                 | Any file                |
-| [`autoMode`](#automode)                                                                               | Add your own allow and deny rules to the [auto mode](https://code.claude.com/docs/en/permission-modes#eliminate-prompts-with-auto-mode) classifier                                                                                                      | Permission settings                | User or managed         |
-| [`autoMode.classifyAllShell`](#automode-classifyallshell)                                             | Send every shell command through the [auto mode classifier](https://code.claude.com/docs/en/permission-modes#what-the-classifier-blocks-by-default), even ones a narrow allow rule matches                                                              | Permission settings                | User or managed         |
-| [`autoScrollEnabled`](#autoscrollenabled)                                                             | [Follow new output](https://code.claude.com/docs/en/fullscreen#auto-follow) to the bottom in fullscreen rendering                                                                                                                                       | Interface and terminal             | Any file                |
-| [`autoUpdatesChannel`](#autoupdateschannel)                                                           | Follow the stable [release channel](https://code.claude.com/docs/en/setup#configure-release-channel) instead of latest                                                                                                                                  | Updates and versioning             | Any file                |
-| [`availableModels`](#availablemodels)                                                                 | [Restrict which models](https://code.claude.com/docs/en/model-config#restrict-model-selection) people can pick                                                                                                                                          | Model and responses                | Any file                |
-| [`awaySummaryEnabled`](#awaysummaryenabled)                                                           | Turn off the [session recap](https://code.claude.com/docs/en/interactive-mode#session-recap) shown when you come back to the terminal                                                                                                                   | Remote, desktop, and notifications | Any file                |
-| [`awsAuthRefresh`](#awsauthrefresh)                                                                   | Refresh expired [Bedrock credentials](https://code.claude.com/docs/en/amazon-bedrock#advanced-credential-configuration) in `.aws` with your own command                                                                                                 | Authentication and providers       | Any file                |
-| [`awsCredentialExport`](#awscredentialexport)                                                         | Supply [Bedrock credentials](https://code.claude.com/docs/en/amazon-bedrock#advanced-credential-configuration) as JSON from your own command                                                                                                            | Authentication and providers       | Any file                |
-| [`axScreenReader`](#axscreenreader)                                                                   | Render [screen-reader friendly output](https://code.claude.com/docs/en/accessibility)                                                                                                                                                                   | Interface and terminal             | Any file                |
-| [`bashEditDiffEnabled`](#basheditdiffenabled)                                                         | Record the [files that changed while a Bash command ran](https://code.claude.com/docs/en/hooks#bash) in every permission mode                                                                                                                           | Interface and terminal             | User or managed         |
-| [`bashOutputMaxChars`](#bashoutputmaxchars)                                                           | Set how much of a successful command's [output](https://code.claude.com/docs/en/tools-reference#output-limits) Claude receives inline                                                                                                                   | Memory and context                 | Any file                |
-| [`blockedMarketplaces`](#blockedmarketplaces)                                                         | Block [plugin marketplace](https://code.claude.com/docs/en/plugins/overview) sources for your organization                                                                                                                                              | Plugins and skills                 | Managed                 |
-| [`browserExternalPageTools`](#browserexternalpagetools)                                               | Keep Claude's tools off external pages in the [desktop](https://code.claude.com/docs/en/desktop) Browser pane                                                                                                                                           | Tools                              | Managed                 |
-| [`channelsEnabled`](#channelsenabled)                                                                 | Allow [channels](https://code.claude.com/docs/en/channels#enable-channels-for-your-organization) for your organization                                                                                                                                  | Plugins and skills                 | Managed                 |
-| [`claudeMd`](#claudemd)                                                                               | Inject organization-wide [CLAUDE.md](https://code.claude.com/docs/en/memory#deploy-organization-wide-claude-md) instructions from managed settings                                                                                                      | Memory and context                 | Managed                 |
-| [`claudeMdExcludes`](#claudemdexcludes)                                                               | Skip specific [CLAUDE.md](https://code.claude.com/docs/en/memory#exclude-specific-claude-md-files) files when memory loads                                                                                                                              | Memory and context                 | Any file                |
-| [`cleanupPeriodDays`](#cleanupperioddays)                                                             | Choose how many days Claude Code keeps [transcripts](https://code.claude.com/docs/en/data-usage#data-retention) before deleting them                                                                                                                    | Privacy and telemetry              | Any file                |
-| [`companyAnnouncements`](#companyannouncements)                                                       | Show your organization's announcements at startup                                                                                                                                                                           | Interface and terminal             | Any file                |
-| [`copyOnSelect`](#copyonselect)                                                                       | Turn off automatic copying of text you select with the mouse in [fullscreen rendering](https://code.claude.com/docs/en/fullscreen#use-the-mouse) and agent view                                                                                         | Global config settings             | Global config           |
-| [`crossSessionInbound`](#crosssessioninbound)                                                         | Choose whether Claude Code delivers [messages from your other sessions](https://code.claude.com/docs/en/cross-session-messaging#control-inbound-messages), shows a notice without delivering them, or refuses them                                      | Agents, sessions, and worktrees    | Any file                |
-| [`defaultShell`](#defaultshell)                                                                       | Choose whether Bash or PowerShell runs the shell commands you type with the [`!` prefix](https://code.claude.com/docs/en/interactive-mode#shell-mode-with-prefix)                                                                                       | Interface and terminal             | Any file                |
-| [`deniedMcpServers`](#deniedmcpservers)                                                               | Block specific [MCP servers](https://code.claude.com/docs/en/mcp) by URL, command, or name                                                                                                                                                              | MCP                                | Any file                |
-| [`desktopSessionCleanupPeriodDays`](#desktopsessioncleanupperioddays)                                 | Set an age limit in days for [Claude Desktop and Cowork transcripts](https://code.claude.com/docs/en/claude-directory#cleaned-up-automatically)                                                                                                         | Privacy and telemetry              | User or managed         |
-| [`dialogExpiry`](#dialogexpiry)                                                                       | Set how long Claude Code waits for [Remote Control](https://code.claude.com/docs/en/remote-control) or an SDK host to answer a forwarded dialog before it cancels the dialog                                                                            | Interface and terminal             | User or managed         |
-| [`diffTool`](#difftool)                                                                               | Choose whether Claude's proposed file changes open in the [VS Code](https://code.claude.com/docs/en/vs-code) or [JetBrains](https://code.claude.com/docs/en/jetbrains#features) diff viewer or stay in the terminal                                                                 | Global config settings             | Global config           |
-| [`disableAgentView`](#disableagentview)                                                               | Turn off background agents and [agent view](https://code.claude.com/docs/en/agent-view)                                                                                                                                                                 | Agents, sessions, and worktrees    | Any file                |
-| [`disableAllHooks`](#disableallhooks)                                                                 | Turn off [hooks](https://code.claude.com/docs/en/hooks), a custom [status line](https://code.claude.com/docs/en/statusline), and a custom [`@` file suggestion](https://code.claude.com/docs/en/interactive-mode#quick-commands) command at once                                                                | Hooks and automation               | Any file                |
-| [`disableArtifact`](#disableartifact)                                                                 | Deprecated; use `enableArtifact` to turn the [Artifact tool](https://code.claude.com/docs/en/artifacts) off                                                                                                                                             | Remote, desktop, and notifications | Any file                |
-| [`disableAutoMode`](#disableautomode)                                                                 | Remove [auto mode](https://code.claude.com/docs/en/permission-modes#eliminate-prompts-with-auto-mode) from the permission mode cycle                                                                                                                    | Permission settings                | Any file                |
-| [`disableBrowserExternalNavigation`](#disablebrowserexternalnavigation)                               | Limit the [desktop](https://code.claude.com/docs/en/desktop) Browser pane to localhost for people and Claude                                                                                                                                            | Tools                              | Managed                 |
-| [`disableBundledSkills`](#disablebundledskills)                                                       | Turn off the [skills](https://code.claude.com/docs/en/skills#bundled-skills) and [workflows](https://code.claude.com/docs/en/workflows) included with Claude Code                                                                                                                   | Plugins and skills                 | Any file                |
-| [`disableClaudeAiConnectors`](#disableclaudeaiconnectors)                                             | Turn off [claude.ai connectors](https://code.claude.com/docs/en/mcp#disable-claude-ai-connectors) so Claude Code doesn't fetch them                                                                                                                     | MCP                                | Any file                |
-| [`disableCommandPluginSources`](#disablecommandpluginsources)                                         | Block [plugins](https://code.claude.com/docs/en/plugins/overview) that install by running a marketplace-declared command                                                                                                                                | Plugins and skills                 | Managed                 |
-| [`disableDeepLinkRegistration`](#disabledeeplinkregistration)                                         | Stop Claude Code from registering the [`claude-cli://` handler](https://code.claude.com/docs/en/deep-links)                                                                                                                                             | Remote, desktop, and notifications | Any file                |
-| [`disableDesktopLocalSessions`](#disabledesktoplocalsessions)                                         | Turn off [Desktop Code sessions](https://code.claude.com/docs/en/desktop#local-sessions-on-managed-devices) that run on the device, leaving SSH to other hosts and cloud                                                                                | Remote, desktop, and notifications | Managed                 |
-| [`disabledMcpjsonServers`](#disabledmcpjsonservers)                                                   | Reject specific servers from a project's [`.mcp.json`](https://code.claude.com/docs/en/mcp#project-scope)                                                                                                                                               | MCP                                | Any file                |
-| [`disableMobileSimulatorTools`](#disablemobilesimulatortools)                                         | Block Claude's tools in the [desktop](https://code.claude.com/docs/en/desktop) iOS Simulator pane                                                                                                                                                       | Tools                              | Managed                 |
-| [`disableRemoteControl`](#disableremotecontrol)                                                       | Turn off [Remote Control](https://code.claude.com/docs/en/remote-control) everywhere it can start                                                                                                                                                       | Remote, desktop, and notifications | Any file                |
-| [`disableSideloadFlags`](#disablesideloadflags)                                                       | Reject the CLI flags that sideload [plugins](https://code.claude.com/docs/en/plugins/overview), [subagents](https://code.claude.com/docs/en/sub-agents), and [MCP servers](https://code.claude.com/docs/en/mcp)                                                                                                 | Enterprise and managed settings    | Managed                 |
-| [`disableSkillShellExecution`](#disableskillshellexecution)                                           | Stop [skills](https://code.claude.com/docs/en/skills) and custom commands from running inline shell                                                                                                                                                     | Plugins and skills                 | Any file                |
-| [`disableWorkflows`](#disableworkflows)                                                               | Turn [dynamic workflows](https://code.claude.com/docs/en/workflows) off for everyone; use `enableWorkflows` for yourself                                                                                                                                | Hooks and automation               | Any file                |
-| [`editorMode`](#editormode)                                                                           | Use [vim key bindings](https://code.claude.com/docs/en/interactive-mode#vim-editor-mode) in the input prompt                                                                                                                                            | Interface and terminal             | Any file                |
-| [`effortLevel`](#effortlevel)                                                                         | Set a default [effort level](https://code.claude.com/docs/en/model-config#adjust-effort-level) for models without a saved level of their own                                                                                                            | Model and responses                | Any file                |
-| [`emojiCompletionEnabled`](#emojicompletionenabled)                                                   | Turn off [`:shortcode:` emoji suggestions and replacement](https://code.claude.com/docs/en/interactive-mode#emoji-shortcodes) in the prompt input                                                                                                       | Interface and terminal             | Any file                |
-| [`enableAllProjectMcpServers`](#enableallprojectmcpservers)                                           | Approve every server in project [`.mcp.json`](https://code.claude.com/docs/en/mcp#project-server-approvals-and-workspace-trust) files without a prompt                                                                                                  | MCP                                | Any file                |
-| [`enableArtifact`](#enableartifact)                                                                   | Turn the [Artifact tool](https://code.claude.com/docs/en/artifacts) off with a `false` in any file; no file can turn it back on                                                                                                                         | Remote, desktop, and notifications | Any file                |
-| [`enabledMcpjsonServers`](#enabledmcpjsonservers)                                                     | Approve specific servers from a project's [`.mcp.json`](https://code.claude.com/docs/en/mcp#project-server-approvals-and-workspace-trust)                                                                                                               | MCP                                | Any file                |
-| [`enabledPlugins`](#enabledplugins)                                                                   | Turn individual [plugins](https://code.claude.com/docs/en/plugins/overview) on or off per scope                                                                                                                                                         | Plugins and skills                 | Any file                |
-| [`enableWorkflows`](#enableworkflows)                                                                 | Turn [dynamic workflows](https://code.claude.com/docs/en/workflows) on or off against your plan's default                                                                                                                                               | Hooks and automation               | Any file                |
-| [`enforceAvailableModels`](#enforceavailablemodels)                                                   | Keep the [`/model` Default choice](https://code.claude.com/docs/en/model-config#enforce-the-allowlist-for-the-default-model) inside your `availableModels` allowlist                                                                                    | Model and responses                | Any file                |
-| [`env`](#env)                                                                                         | Set [environment variables](https://code.claude.com/docs/en/env-vars#in-settings-files) for every session and its subprocesses                                                                                                                          | Memory and context                 | Any file                |
-| [`externalEditorContext`](#externaleditorcontext)                                                     | Show Claude's last response as comments when you press [Ctrl+G](https://code.claude.com/docs/en/interactive-mode#general-controls) to edit                                                                                                              | Global config settings             | Global config           |
-| [`extraKnownMarketplaces`](#extraknownmarketplaces)                                                   | Register [marketplaces](https://code.claude.com/docs/en/plugins/overview) for a repository or an organization                                                                                                                                           | Plugins and skills                 | Any file                |
-| [`fallbackModel`](#fallbackmodel)                                                                     | Name [backup models](https://code.claude.com/docs/en/model-config#fallback-model-chains) for when the primary is overloaded                                                                                                                             | Model and responses                | Any file                |
-| [`fastMode`](#fastmode)                                                                               | Turn [fast mode](https://code.claude.com/docs/en/fast-mode) on for sessions where it's available                                                                                                                                                        | Model and responses                | Any file                |
-| [`fastModePerSessionOptIn`](#fastmodepersessionoptin)                                                 | Require people to turn [fast mode](https://code.claude.com/docs/en/fast-mode) on each session                                                                                                                                                           | Model and responses                | Any file                |
-| [`feedbackDrafts`](#feedbackdrafts)                                                                   | Control whether Claude queues [feedback drafts](https://code.claude.com/docs/en/tools-reference#sendfeedback-tool-behavior) for you to review                                                                                                           | Privacy and telemetry              | User or managed         |
-| [`feedbackSurveyRate`](#feedbacksurveyrate)                                                           | Change how often the [session quality survey](https://code.claude.com/docs/en/data-usage#session-quality-surveys) appears                                                                                                                               | Privacy and telemetry              | Any file                |
-| [`fileCheckpointingEnabled`](#filecheckpointingenabled)                                               | Turn off or on the file snapshots that [`/rewind`](https://code.claude.com/docs/en/checkpointing) restores                                                                                                                                              | Memory and context                 | Any file                |
-| [`fileSuggestion`](#filesuggestion)                                                                   | Supply [`@` file autocomplete](https://code.claude.com/docs/en/interactive-mode#quick-commands) from your own command                                                                                                                                   | Interface and terminal             | Any file                |
-| [`footerLinksRegexes`](#footerlinksregexes)                                                           | Make issue or review IDs in output into [clickable links](https://code.claude.com/docs/en/statusline#clickable-links) below the input box                                                                                                               | Interface and terminal             | User or managed         |
-| [`forceLoginGatewayUrl`](#forcelogingatewayurl)                                                       | Set the [gateway URL](https://code.claude.com/docs/en/claude-apps-gateway#set-the-gateway-url) the login screen connects to                                                                                                                             | Authentication and providers       | Managed                 |
-| [`forceLoginMethod`](#forceloginmethod)                                                               | [Restrict login](https://code.claude.com/docs/en/authentication#restrict-login-to-your-organization) to claude.ai, Claude Console, or a [cloud gateway](https://code.claude.com/docs/en/claude-apps-gateway)                                                                        | Authentication and providers       | Any file                |
-| [`forceLoginOrgUUID`](#forceloginorguuid)                                                             | [Pin claude.ai logins to your organization](https://code.claude.com/docs/en/authentication#restrict-login-to-your-organization); only a managed source enforces it                                                                                      | Authentication and providers       | Any file                |
-| [`forceRemoteSettingsRefresh`](#forceremotesettingsrefresh)                                           | Block startup until [server-managed settings](https://code.claude.com/docs/en/server-managed-settings) are freshly fetched                                                                                                                              | Enterprise and managed settings    | Managed                 |
-| [`gatewayInternalNetworks`](#gatewayinternalnetworks)                                                 | Let `/login` reach a [cloud gateway](https://code.claude.com/docs/en/claude-apps-gateway#allow-a-gateway-on-public-address-space-you-own) on public IPv4 space your organization uses internally                                                        | Authentication and providers       | Managed                 |
-| [`gcpAuthRefresh`](#gcpauthrefresh)                                                                   | Refresh [Google Cloud credentials](https://code.claude.com/docs/en/google-vertex-ai#advanced-credential-configuration) with your own command                                                                                                            | Authentication and providers       | Any file                |
-| [`hooks`](#hooks)                                                                                     | Run your own commands as [hooks](https://code.claude.com/docs/en/hooks) at points in Claude Code's lifecycle                                                                                                                                            | Hooks and automation               | Any file                |
-| [`httpHookAllowedEnvVars`](#httphookallowedenvvars)                                                   | Limit which env vars [HTTP hooks](https://code.claude.com/docs/en/hooks) can put in headers                                                                                                                                                             | Hooks and automation               | Any file                |
-| [`includeCoAuthoredBy`](#includecoauthoredby)                                                         | Deprecated; use `attribution` to hide or change commit and PR attribution                                                                                                                                                   | Git and attribution                | Any file                |
-| [`includeGitInstructions`](#includegitinstructions)                                                   | Remove the built-in commit and PR instructions from Claude's context                                                                                                                                                        | Git and attribution                | Any file                |
-| [`inputNeededNotifEnabled`](#inputneedednotifenabled)                                                 | Get a [push notification](https://code.claude.com/docs/en/remote-control#mobile-push-notifications) when Claude is waiting on you                                                                                                                       | Remote, desktop, and notifications | Any file                |
-| [`isolatePeerMachines`](#isolatepeermachines)                                                         | Ask you before Claude [messages one of your sessions on another machine](https://code.claude.com/docs/en/cross-session-messaging#require-approval-for-cross-machine-messages)                                                                           | Agents, sessions, and worktrees    | Any file                |
-| [`keybindingFlavor`](#keybindingflavor)                                                               | Deprecated and has no effect; the word-editing shortcuts always [follow readline conventions](https://code.claude.com/docs/en/interactive-mode#make-ctrl-w-delete-back-to-whitespace)                                                                   | Interface and terminal             | Any file                |
-| [`language`](#language)                                                                               | Have Claude respond in a language other than English                                                                                                                                                                        | Model and responses                | Any file                |
-| [`managedMcpServers`](#managedmcpservers)                                                             | Provide remote [MCP servers](https://code.claude.com/docs/en/managed-mcp#provide-servers-through-managed-settings) to every user alongside the ones they add                                                                                            | MCP                                | Managed                 |
-| [`managedSourcesBehavior`](#managedsourcesbehavior)                                                   | Compose every [managed source](https://code.claude.com/docs/en/managed-settings#how-claude-code-combines-managed-sources) you deploy instead of using the highest-priority one alone                                                                    | Enterprise and managed settings    | Managed                 |
-| [`maxEffortLevel`](#maxeffortlevel)                                                                   | Cap the [effort level](https://code.claude.com/docs/en/model-config#adjust-effort-level) for every model or per model, on every provider                                                                                                                | Model and responses                | Any file                |
-| [`minimumVersion`](#minimumversion)                                                                   | Keep [auto-updates](https://code.claude.com/docs/en/setup#pin-a-minimum-version) from installing anything below a version                                                                                                                               | Updates and versioning             | Any file                |
-| [`model`](#model)                                                                                     | Change the [model](https://code.claude.com/docs/en/model-config#set-a-default-model-for-new-sessions) Claude Code starts with                                                                                                                           | Model and responses                | Any file                |
-| [`modelOverrides`](#modeloverrides)                                                                   | [Map model IDs](https://code.claude.com/docs/en/model-config#override-model-ids-per-version) to your provider's IDs, such as Bedrock ARNs                                                                                                               | Model and responses                | Any file                |
-| [`modelPicker`](#modelpicker)                                                                         | Choose which models the [`/model` picker](https://code.claude.com/docs/en/model-config#available-models) lists, in your own order and with your own labels                                                                                              | Model and responses                | User or managed         |
-| [`modelPricing`](#modelpricing)                                                                       | Report spend at your organization's contracted rates instead of list price                                                                                                                                                  | Model and responses                | Managed                 |
-| [`modelSettings`](#modelsettings)                                                                     | Keep a saved [effort level](https://code.claude.com/docs/en/model-config#adjust-effort-level) per model, or cap one model's effort                                                                                                                      | Model and responses                | Any file                |
-| [`otelHeadersHelper`](#otelheadershelper)                                                             | Generate rotating [OpenTelemetry](https://code.claude.com/docs/en/monitoring-usage#dynamic-headers) headers with your own command                                                                                                                       | Authentication and providers       | Any file                |
-| [`outputStyle`](#outputstyle)                                                                         | Change Claude's role, tone, and output format with an [output style](https://code.claude.com/docs/en/output-styles)                                                                                                                                     | Model and responses                | Any file                |
-| [`parentSettingsBehavior`](#parentsettingsbehavior)                                                   | Apply or drop restrictions an [SDK or IDE host](https://code.claude.com/docs/en/managed-settings#let-an-embedding-host-add-policy) passes when you deploy [managed settings](https://code.claude.com/docs/en/managed-settings)                                                      | Enterprise and managed settings    | Managed                 |
-| [`permissionExplainerEnabled`](#permissionexplainerenabled)                                           | Removed in v2.1.257, together with the `Ctrl+E` command explanation on shell permission prompts                                                                                                                             | Global config settings             | Global config           |
-| [`permissions`](#permissions)                                                                         | Set allow, ask, and deny rules and the starting [permission mode](https://code.claude.com/docs/en/permission-modes)                                                                                                                                     | Permission settings                | Any file                |
-| [`permissions.additionalDirectories`](#permissions-additionaldirectories)                             | Give Claude file access to [directories outside the current one](https://code.claude.com/docs/en/permissions#working-directories)                                                                                                                       | Permission settings                | Any file                |
-| [`permissions.allow`](#permissions-allow)                                                             | Approve listed [tool uses](https://code.claude.com/docs/en/permissions#permission-rule-syntax) without a prompt                                                                                                                                         | Permission settings                | Any file                |
-| [`permissions.ask`](#permissions-ask)                                                                 | Always prompt before listed [tool uses](https://code.claude.com/docs/en/permissions#permission-rule-syntax)                                                                                                                                             | Permission settings                | Any file                |
-| [`permissions.blockReadsOutsideWorkingDirectories`](#permissions-blockreadsoutsideworkingdirectories) | Make the file tools refuse reads outside the [working directories](https://code.claude.com/docs/en/permissions#working-directories) in every permission mode                                                                                            | Permission settings                | Any file                |
-| [`permissions.defaultMode`](#permissions-defaultmode)                                                 | Set the [permission mode](https://code.claude.com/docs/en/permission-modes#which-mode-a-session-starts-in) new sessions start in                                                                                                                        | Permission settings                | Any file                |
-| [`permissions.deny`](#permissions-deny)                                                               | Block listed [tool uses](https://code.claude.com/docs/en/permissions#permission-rule-syntax), including reads of files that hold secrets                                                                                                                | Permission settings                | Any file                |
-| [`permissions.disableBypassPermissionsMode`](#permissions-disablebypasspermissionsmode)               | Prevent anyone from entering [bypassPermissions mode](https://code.claude.com/docs/en/permission-modes#skip-all-checks-with-bypasspermissions-mode)                                                                                                     | Permission settings                | Any file                |
-| [`plansDirectory`](#plansdirectory)                                                                   | Choose where [plan mode](https://code.claude.com/docs/en/permission-modes#analyze-before-you-edit-with-plan-mode) writes plan files                                                                                                                     | Memory and context                 | Any file                |
-| [`pluginConfigs`](#pluginconfigs)                                                                     | Store the answers you gave a [plugin](https://code.claude.com/docs/en/plugins/overview)'s configuration dialog                                                                                                                                          | Plugins and skills                 | User or managed         |
-| [`pluginSuggestionMarketplaces`](#pluginsuggestionmarketplaces)                                       | Choose which [marketplaces](https://code.claude.com/docs/en/plugins/org#restrict-what-users-can-install) can surface plugin install suggestions in `/plugin`                                                                                            | Plugins and skills                 | Managed                 |
-| [`pluginTrustMessage`](#plugintrustmessage)                                                           | Add your own text to the [plugin](https://code.claude.com/docs/en/plugins/overview) trust warning                                                                                                                                                       | Plugins and skills                 | Managed                 |
-| [`policyHelper`](#policyhelper)                                                                       | Run an executable that computes [managed settings](https://code.claude.com/docs/en/managed-settings#compute-the-policy-with-a-helper-program) at startup                                                                                                | Enterprise and managed settings    | Managed                 |
-| [`policyHelper.path`](#policyhelper-path)                                                             | Name the [helper executable](https://code.claude.com/docs/en/managed-settings#compute-the-policy-with-a-helper-program) Claude Code runs                                                                                                                | Enterprise and managed settings    | Managed                 |
-| [`policyHelper.refreshIntervalMs`](#policyhelper-refreshintervalms)                                   | Re-run the [helper](https://code.claude.com/docs/en/managed-settings#compute-the-policy-with-a-helper-program) in the background on an interval                                                                                                         | Enterprise and managed settings    | Managed                 |
-| [`policyHelper.timeoutMs`](#policyhelper-timeoutms)                                                   | Set how long Claude Code waits for the [helper](https://code.claude.com/docs/en/managed-settings#compute-the-policy-with-a-helper-program)                                                                                                              | Enterprise and managed settings    | Managed                 |
-| [`preferredNotifChannel`](#preferrednotifchannel)                                                     | Choose a [terminal bell or desktop notification](https://code.claude.com/docs/en/terminal-config#get-a-terminal-bell-or-notification) for task completion                                                                                               | Remote, desktop, and notifications | Any file                |
-| [`prefersReducedMotion`](#prefersreducedmotion)                                                       | [Reduce or turn off](https://code.claude.com/docs/en/accessibility#accessibility-settings) spinner, shimmer, and flash animations                                                                                                                       | Interface and terminal             | Any file                |
-| [`processWrapper`](#processwrapper)                                                                   | Run Claude Code's background processes through a [corporate launcher](https://code.claude.com/docs/en/corporate-launcher) on macOS and Linux                                                                                                            | Agents, sessions, and worktrees    | User or managed         |
-| [`promptCacheTtl`](#promptcachettl)                                                                   | Choose the [prompt cache lifetime](https://code.claude.com/docs/en/prompt-caching#cache-lifetime) for the main conversation                                                                                                                             | Model and responses                | Any file                |
-| [`promptSuggestionEnabled`](#promptsuggestionenabled)                                                 | Hide the grayed-out [prompt suggestions](https://code.claude.com/docs/en/interactive-mode#prompt-suggestions) in the input box                                                                                                                          | Interface and terminal             | Any file                |
-| [`prUrlTemplate`](#prurltemplate)                                                                     | Point PR links at an internal code-review tool instead of github.com                                                                                                                                                        | Git and attribution                | Any file                |
-| [`remote.defaultEnvironmentId`](#remote-defaultenvironmentid)                                         | Pick the default [cloud environment](https://code.claude.com/docs/en/cloud-environments) for `claude --cloud`; a self-hosted `ccpool_` ID is read only from user and managed settings and `--settings`                                                  | Remote, desktop, and notifications | Any file                |
-| [`remoteControlAtStartup`](#remotecontrolatstartup)                                                   | Connect [Remote Control](https://code.claude.com/docs/en/remote-control#enable-remote-control-for-all-sessions) automatically when a session starts                                                                                                     | Remote, desktop, and notifications | Any file                |
-| [`requiredMaximumVersion`](#requiredmaximumversion)                                                   | [Refuse to start](https://code.claude.com/docs/en/setup#pin-a-minimum-version) on a version newer than your organization allows                                                                                                                         | Updates and versioning             | Managed                 |
-| [`requiredMinimumVersion`](#requiredminimumversion)                                                   | [Refuse to start](https://code.claude.com/docs/en/setup#pin-a-minimum-version) on a version older than your organization requires                                                                                                                       | Updates and versioning             | Managed                 |
-| [`respectGitignore`](#respectgitignore)                                                               | Keep gitignored files out of the [`@` file picker](https://code.claude.com/docs/en/interactive-mode#quick-commands)                                                                                                                                     | Interface and terminal             | Any file                |
-| [`respondToBashCommands`](#respondtobashcommands)                                                     | Stop Claude from responding after a [`!` shell command](https://code.claude.com/docs/en/interactive-mode#shell-mode-with-prefix) runs                                                                                                                   | Interface and terminal             | Any file                |
-| [`sandbox`](#sandbox)                                                                                 | [Isolate Bash commands](https://code.claude.com/docs/en/sandboxing) from your filesystem and network on macOS, Linux, and WSL2                                                                                                                          | Sandbox settings                   | Any file                |
-| [`sandbox.allowAppleEvents`](#sandbox-allowappleevents)                                               | Let [sandboxed](https://code.claude.com/docs/en/sandboxing) commands send Apple Events on macOS                                                                                                                                                         | Sandbox settings                   | User or managed         |
-| [`sandbox.allowUnsandboxedCommands`](#sandbox-allowunsandboxedcommands)                               | Let Claude retry a blocked command outside the [sandbox](https://code.claude.com/docs/en/sandboxing#the-unsandboxed-retry-escape-hatch), or forbid it                                                                                                   | Sandbox settings                   | Any file                |
-| [`sandbox.autoAllowBashIfSandboxed`](#sandbox-autoallowbashifsandboxed)                               | Run [sandboxed](https://code.claude.com/docs/en/sandboxing#auto-allow-mode) commands without a permission prompt                                                                                                                                        | Sandbox settings                   | Any file                |
-| [`sandbox.bwrapPath`](#sandbox-bwrappath)                                                             | Point the [sandbox](https://code.claude.com/docs/en/sandboxing) at a bubblewrap binary outside `PATH`                                                                                                                                                   | Sandbox settings                   | Managed                 |
-| [`sandbox.credentials`](#sandbox-credentials)                                                         | Hide or mask credential files and variables inside the [sandbox](https://code.claude.com/docs/en/sandboxing#protect-credentials)                                                                                                                        | Sandbox settings                   | Any file                |
-| [`sandbox.credentials.allowPlaintextInject`](#sandbox-credentials-allowplaintextinject)               | Let [masked credentials](https://code.claude.com/docs/en/sandboxing#mask-credentials) reach plain HTTP services on trusted test networks                                                                                                                | Sandbox settings                   | User or managed         |
-| [`sandbox.credentials.awsPairs`](#sandbox-credentials-awspairs)                                       | Link custom-named AWS key variables into one credential for [re-signing](https://code.claude.com/docs/en/sandboxing#re-sign-aws-requests)                                                                                                               | Sandbox settings                   | User or managed         |
-| [`sandbox.credentials.envVars`](#sandbox-credentials-envvars)                                         | Unset or mask an environment variable inside the [sandbox](https://code.claude.com/docs/en/sandboxing#mask-environment-variables)                                                                                                                       | Sandbox settings                   | Any file                |
-| [`sandbox.credentials.files`](#sandbox-credentials-files)                                             | Block or mask reads of a credential file inside the [sandbox](https://code.claude.com/docs/en/sandboxing#mask-credential-files)                                                                                                                         | Sandbox settings                   | Any file                |
-| [`sandbox.credentials.sigv4`](#sandbox-credentials-sigv4)                                             | Choose whether streaming, presigned, or [SigV4A AWS requests](https://code.claude.com/docs/en/sandboxing#re-sign-aws-requests) fail or pass through                                                                                                     | Sandbox settings                   | User or managed         |
-| [`sandbox.enabled`](#sandbox-enabled)                                                                 | Turn on [Bash sandboxing](https://code.claude.com/docs/en/sandboxing#get-started) on macOS, Linux, and WSL2                                                                                                                                             | Sandbox settings                   | Any file                |
-| [`sandbox.enableWeakerNestedSandbox`](#sandbox-enableweakernestedsandbox)                             | Run the Linux [sandbox](https://code.claude.com/docs/en/sandboxing) inside an unprivileged container                                                                                                                                                    | Sandbox settings                   | Any file                |
-| [`sandbox.enableWeakerNetworkIsolation`](#sandbox-enableweakernetworkisolation)                       | Let `gh`, `gcloud`, and `terraform` verify TLS behind a MITM proxy inside the [sandbox](https://code.claude.com/docs/en/sandboxing#troubleshooting) on macOS                                                                                            | Sandbox settings                   | Any file                |
-| [`sandbox.excludedCommands`](#sandbox-excludedcommands)                                               | Name commands Claude Code can run outside the [sandbox](https://code.claude.com/docs/en/sandboxing)                                                                                                                                                     | Sandbox settings                   | Any file                |
-| [`sandbox.failIfUnavailable`](#sandbox-failifunavailable)                                             | Refuse to start when the [sandbox](https://code.claude.com/docs/en/sandboxing) can't, instead of running unsandboxed                                                                                                                                    | Sandbox settings                   | Any file                |
-| [`sandbox.filesystem`](#sandbox-filesystem)                                                           | Control which paths [sandboxed](https://code.claude.com/docs/en/sandboxing#filesystem-isolation) commands can read and write                                                                                                                            | Sandbox settings                   | Any file                |
-| [`sandbox.filesystem.allowManagedReadPathsOnly`](#sandbox-filesystem-allowmanagedreadpathsonly)       | Stop developers from re-opening [read paths your organization blocked](https://code.claude.com/docs/en/sandboxing#keep-developers-from-widening-the-policy)                                                                                             | Sandbox settings                   | Managed                 |
-| [`sandbox.filesystem.allowRead`](#sandbox-filesystem-allowread)                                       | Re-open reading inside a region [`denyRead`](#sandbox-filesystem-denyread) blocks                                                                                                                                           | Sandbox settings                   | Any file                |
-| [`sandbox.filesystem.allowWrite`](#sandbox-filesystem-allowwrite)                                     | Add paths [sandboxed](https://code.claude.com/docs/en/sandboxing) commands can write to                                                                                                                                                                 | Sandbox settings                   | Any file                |
-| [`sandbox.filesystem.denyRead`](#sandbox-filesystem-denyread)                                         | Block [sandboxed](https://code.claude.com/docs/en/sandboxing) commands from reading specific paths                                                                                                                                                      | Sandbox settings                   | Any file                |
-| [`sandbox.filesystem.denyWrite`](#sandbox-filesystem-denywrite)                                       | Block [sandboxed](https://code.claude.com/docs/en/sandboxing) commands from writing to specific paths                                                                                                                                                   | Sandbox settings                   | Any file                |
-| [`sandbox.filesystem.disabled`](#sandbox-filesystem-disabled)                                         | [Turn off filesystem isolation](https://code.claude.com/docs/en/sandboxing#disable-filesystem-isolation) while keeping network isolation                                                                                                                | Sandbox settings                   | User or managed         |
-| [`sandbox.ignoreViolations`](#sandbox-ignoreviolations)                                               | Silence violation reports for paths a command is expected to probe                                                                                                                                                          | Sandbox settings                   | Any file                |
-| [`sandbox.network`](#sandbox-network)                                                                 | Control which hosts, ports, and sockets [sandboxed](https://code.claude.com/docs/en/sandboxing#network-isolation) commands reach                                                                                                                        | Sandbox settings                   | Any file                |
-| [`sandbox.network.allowAllUnixSockets`](#sandbox-network-allowallunixsockets)                         | Let [sandboxed](https://code.claude.com/docs/en/sandboxing) commands connect to every Unix socket                                                                                                                                                       | Sandbox settings                   | Any file                |
-| [`sandbox.network.allowedDomains`](#sandbox-network-alloweddomains)                                   | Pre-allow domains so [sandboxed](https://code.claude.com/docs/en/sandboxing) commands don't prompt for them                                                                                                                                             | Sandbox settings                   | Any file                |
-| [`sandbox.network.allowLocalBinding`](#sandbox-network-allowlocalbinding)                             | Let [sandboxed](https://code.claude.com/docs/en/sandboxing) commands bind to localhost ports on macOS                                                                                                                                                   | Sandbox settings                   | Any file                |
-| [`sandbox.network.allowMachLookup`](#sandbox-network-allowmachlookup)                                 | Let macOS [sandboxed](https://code.claude.com/docs/en/sandboxing) tools like the iOS Simulator or Playwright reach their XPC services                                                                                                                   | Sandbox settings                   | Any file                |
-| [`sandbox.network.allowManagedDomainsOnly`](#sandbox-network-allowmanageddomainsonly)                 | Lock the network allowlist to [managed settings](https://code.claude.com/docs/en/sandboxing#keep-developers-from-widening-the-policy)                                                                                                                   | Sandbox settings                   | Managed                 |
-| [`sandbox.network.allowUnixSockets`](#sandbox-network-allowunixsockets)                               | List Unix socket paths [sandboxed](https://code.claude.com/docs/en/sandboxing) commands can use on macOS                                                                                                                                                | Sandbox settings                   | Any file                |
-| [`sandbox.network.deniedDomains`](#sandbox-network-denieddomains)                                     | Block domains for [sandboxed](https://code.claude.com/docs/en/sandboxing) commands, even inside an allowed wildcard                                                                                                                                     | Sandbox settings                   | Any file                |
-| [`sandbox.network.httpProxyPort`](#sandbox-network-httpproxyport)                                     | Route [sandbox](https://code.claude.com/docs/en/sandboxing#custom-proxy-configuration) HTTP traffic through your own proxy                                                                                                                              | Sandbox settings                   | Any file                |
-| [`sandbox.network.socksProxyPort`](#sandbox-network-socksproxyport)                                   | Route [sandbox](https://code.claude.com/docs/en/sandboxing#custom-proxy-configuration) SOCKS traffic through your own proxy                                                                                                                             | Sandbox settings                   | Any file                |
-| [`sandbox.network.strictAllowlist`](#sandbox-network-strictallowlist)                                 | Deny hosts outside the [allowlist](https://code.claude.com/docs/en/sandboxing#network-isolation) instead of prompting                                                                                                                                   | Sandbox settings                   | User or managed         |
-| [`sandbox.network.tlsTerminate`](#sandbox-network-tlsterminate)                                       | Have the [sandbox](https://code.claude.com/docs/en/sandboxing#network-isolation) proxy terminate TLS so it can read HTTPS requests                                                                                                                      | Sandbox settings                   | User or managed         |
-| [`sandbox.ripgrep`](#sandbox-ripgrep)                                                                 | Use your own ripgrep binary inside the [sandbox](https://code.claude.com/docs/en/sandboxing)                                                                                                                                                            | Sandbox settings                   | User or managed         |
-| [`sandbox.socatPath`](#sandbox-socatpath)                                                             | Point the [sandbox](https://code.claude.com/docs/en/sandboxing) proxy at a `socat` binary outside `PATH`                                                                                                                                                | Sandbox settings                   | Managed                 |
-| [`showClearContextOnPlanAccept`](#showclearcontextonplanaccept)                                       | Show a "clear context" option on the [plan accept screen](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan)                                                                                                                   | Interface and terminal             | Any file                |
-| [`showThinkingSummaries`](#showthinkingsummaries)                                                     | See summaries of Claude's [thinking](https://code.claude.com/docs/en/model-config#extended-thinking) instead of a collapsed stub                                                                                                                        | Model and responses                | Any file                |
-| [`showTurnDuration`](#showturnduration)                                                               | Hide the "Cooked for" duration after each response                                                                                                                                                                          | Interface and terminal             | Any file                |
-| [`skillListingBudgetFraction`](#skilllistingbudgetfraction)                                           | Reserve more or less context for the [skill listing](https://code.claude.com/docs/en/skills#skill-descriptions-are-cut-short)                                                                                                                           | Memory and context                 | Any file                |
-| [`skillListingMaxDescChars`](#skilllistingmaxdescchars)                                               | Cap each skill's description length in the [skill listing](https://code.claude.com/docs/en/skills#skill-descriptions-are-cut-short)                                                                                                                     | Memory and context                 | Any file                |
-| [`skillOverrides`](#skilloverrides)                                                                   | [Hide or collapse a skill](https://code.claude.com/docs/en/skills#override-skill-visibility-from-settings) without editing its SKILL.md                                                                                                                 | Plugins and skills                 | Any file                |
-| [`skipAutoPermissionPrompt`](#skipautopermissionprompt)                                               | Skip the one-time notice Claude Code shows when you first enter [auto mode](https://code.claude.com/docs/en/permission-modes#eliminate-prompts-with-auto-mode) yourself rather than through the built-in default                                        | Permission settings                | User or managed         |
-| [`skipDangerousModePermissionPrompt`](#skipdangerousmodepermissionprompt)                             | Skip the confirmation dialog before [bypassPermissions mode](https://code.claude.com/docs/en/permission-modes#skip-all-checks-with-bypasspermissions-mode)                                                                                              | Permission settings                | User, local, or managed |
-| [`skipWebFetchPreflight`](#skipwebfetchpreflight)                                                     | Skip the [WebFetch hostname check](https://code.claude.com/docs/en/tools-reference#webfetch-tool-behavior) when Anthropic is unreachable                                                                                                                | Privacy and telemetry              | Any file                |
-| [`spellcheck`](#spellcheck)                                                                           | Underline misspelled words in the prompt input with a [spell checker](https://code.claude.com/docs/en/interactive-mode#check-spelling-as-you-type) you install                                                                                          | Interface and terminal             | User or managed         |
-| [`spinnerTipsEnabled`](#spinnertipsenabled)                                                           | Hide tips in the spinner while Claude works                                                                                                                                                                                 | Interface and terminal             | Any file                |
-| [`spinnerTipsOverride`](#spinnertipsoverride)                                                         | Add your own tips to the spinner rotation, or replace the built-in tips                                                                                                                                                     | Interface and terminal             | Any file                |
-| [`spinnerVerbs`](#spinnerverbs)                                                                       | Add or replace the verbs shown while a turn runs                                                                                                                                                                            | Interface and terminal             | Any file                |
-| [`sshConfigs`](#sshconfigs)                                                                           | Add [SSH connections](https://code.claude.com/docs/en/desktop#pre-configure-ssh-connections-for-your-team) to the Desktop environment dropdown                                                                                                          | Remote, desktop, and notifications | User or managed         |
-| [`sshHostAllowlist`](#sshhostallowlist)                                                               | Limit which hosts [Desktop SSH sessions](https://code.claude.com/docs/en/desktop#restrict-which-ssh-hosts-users-can-connect-to) can reach                                                                                                               | Remote, desktop, and notifications | Managed                 |
-| [`statusLine`](#statusline)                                                                           | Run your own command to render a [status line](https://code.claude.com/docs/en/statusline) below the prompt                                                                                                                                             | Interface and terminal             | Any file                |
-| [`strictKnownMarketplaces`](#strictknownmarketplaces)                                                 | Allowlist the [marketplace](https://code.claude.com/docs/en/plugins/overview) sources users can add and install from                                                                                                                                    | Plugins and skills                 | Managed                 |
-| [`strictPluginOnlyCustomization`](#strictpluginonlycustomization)                                     | Block [skills](https://code.claude.com/docs/en/skills), [agents](https://code.claude.com/docs/en/sub-agents), [hooks](https://code.claude.com/docs/en/hooks), and [MCP servers](https://code.claude.com/docs/en/mcp) from user and project sources                                                                                          | Plugins and skills                 | Managed                 |
-| [`strictPluginOnlyCustomization.agents`](#strictpluginonlycustomization-agents)                       | Lock [agents](https://code.claude.com/docs/en/sub-agents) to plugin and managed sources                                                                                                                                                                 | Plugins and skills                 | Managed                 |
-| [`strictPluginOnlyCustomization.hooks`](#strictpluginonlycustomization-hooks)                         | Lock [hooks](https://code.claude.com/docs/en/hooks) to plugin and managed sources                                                                                                                                                                       | Plugins and skills                 | Managed                 |
-| [`strictPluginOnlyCustomization.mcp`](#strictpluginonlycustomization-mcp)                             | Lock [MCP servers](https://code.claude.com/docs/en/mcp) to plugin and managed sources                                                                                                                                                                   | Plugins and skills                 | Managed                 |
-| [`strictPluginOnlyCustomization.skills`](#strictpluginonlycustomization-skills)                       | Lock [skills](https://code.claude.com/docs/en/skills) to plugin and managed sources                                                                                                                                                                     | Plugins and skills                 | Managed                 |
-| [`subagentPromptCacheTtl`](#subagentpromptcachettl)                                                   | Choose the [prompt cache lifetime](https://code.claude.com/docs/en/prompt-caching#cache-lifetime) for subagents and other requests outside the main conversation                                                                                        | Model and responses                | Any file                |
-| [`subagentStatusLine`](#subagentstatusline)                                                           | Rewrite rows in the [subagent](https://code.claude.com/docs/en/sub-agents) task display with your own command                                                                                                                                           | Interface and terminal             | Any file                |
-| [`switchModelsOnFlag`](#switchmodelsonflag)                                                           | Switch models automatically or pause when a [safety classifier](https://code.claude.com/docs/en/model-config#ask-before-switching) flags a request                                                                                                      | Model and responses                | Any file                |
-| [`syncClaudeAiPlugins`](#syncclaudeaiplugins)                                                         | Stop loading the [plugins enabled on your claude.ai account](https://code.claude.com/docs/en/plugins/loading#synced-plugins) and stop downloading new ones                                                                                              | Plugins and skills                 | User, local, or managed |
-| [`syncClaudeAiSkills`](#syncclaudeaiskills)                                                           | Stop loading the [skills enabled on your claude.ai account](https://code.claude.com/docs/en/skills#how-synced-skills-behave) and stop downloading new ones                                                                                              | Plugins and skills                 | User, local, or managed |
-| [`syntaxHighlightingDisabled`](#syntaxhighlightingdisabled)                                           | Turn off syntax highlighting in diffs and code blocks                                                                                                                                                                       | Interface and terminal             | Any file                |
-| [`taskOutputMaxChars`](#taskoutputmaxchars)                                                           | Removed in v2.1.277, together with the `TaskOutput` tool it sized                                                                                                                                                           | Memory and context                 | Any file                |
-| [`teammateDefaultModel`](#teammatedefaultmodel)                                                       | Removed in v2.1.234; see [Specify teammates and models](https://code.claude.com/docs/en/agent-teams#specify-teammates-and-models) for how Claude Code picks a teammate's model                                                                          | Global config settings             | Global config           |
-| [`teammateMode`](#teammatemode)                                                                       | Choose how [agent team teammates display](https://code.claude.com/docs/en/agent-teams#choose-a-display-mode)                                                                                                                                            | Agents, sessions, and worktrees    | Any file                |
-| [`terminalProgressBarEnabled`](#terminalprogressbarenabled)                                           | Hide the terminal progress bar in terminals that support it                                                                                                                                                                 | Interface and terminal             | Any file                |
-| [`terminalTitleFromRename`](#terminaltitlefromrename)                                                 | Stop [`/rename`](https://code.claude.com/docs/en/sessions#name-your-sessions) and `--name` from changing the terminal tab title                                                                                                                         | Interface and terminal             | Any file                |
-| [`theme`](#theme)                                                                                     | Pick the interface [color theme](https://code.claude.com/docs/en/terminal-config#match-the-color-theme), built-in or custom                                                                                                                             | Interface and terminal             | Any file                |
-| [`timeFormat`](#timeformat)                                                                           | Show the times in the interface on a 12-hour or 24-hour clock, in UTC, or with a strftime pattern                                                                                                                           | Interface and terminal             | Any file                |
-| [`timeZone`](#timezone)                                                                               | Show the times in the interface in a time zone other than your system's                                                                                                                                                     | Interface and terminal             | Any file                |
-| [`tui`](#tui)                                                                                         | Choose the [fullscreen](https://code.claude.com/docs/en/fullscreen) or classic terminal renderer                                                                                                                                                        | Interface and terminal             | Any file                |
-| [`ultracode`](#ultracode)                                                                             | Have Claude plan a [workflow](https://code.claude.com/docs/en/workflows#let-claude-decide-with-ultracode) for each substantive task without being asked                                                                                                 | Model and responses                | Any file                |
-| [`useAutoModeDuringPlan`](#useautomodeduringplan)                                                     | Let the [auto mode](https://code.claude.com/docs/en/permission-modes#eliminate-prompts-with-auto-mode) classifier review shell commands in [plan mode](https://code.claude.com/docs/en/permission-modes#analyze-before-you-edit-with-plan-mode); set `false` to get prompts instead | Permission settings                | User, local, or managed |
-| [`verbose`](#verbose)                                                                                 | Show [full tool output](https://code.claude.com/docs/en/cli-reference#cli-flags) instead of truncated summaries; `viewMode` takes precedence when both are set                                                                                          | Interface and terminal             | Any file                |
-| [`viewMode`](#viewmode)                                                                               | Start every session in [default, verbose, or focus view](https://code.claude.com/docs/en/cli-reference#cli-flags)                                                                                                                                       | Interface and terminal             | Any file                |
-| [`vimInsertModeRemaps`](#viminsertmoderemaps)                                                         | Map a two-key [INSERT-mode sequence](https://code.claude.com/docs/en/interactive-mode#remap-insert-mode-key-sequences) such as `jj` to Escape                                                                                                           | Interface and terminal             | User or managed         |
-| [`voice`](#voice)                                                                                     | Turn on [voice dictation](https://code.claude.com/docs/en/voice-dictation) and pick hold or tap mode                                                                                                                                                    | Interface and terminal             | Any file                |
-| [`voiceEnabled`](#voiceenabled)                                                                       | Turn on [voice dictation](https://code.claude.com/docs/en/voice-dictation) with the older single-key form                                                                                                                                               | Interface and terminal             | Any file                |
-| [`wheelScrollAccelerationEnabled`](#wheelscrollaccelerationenabled)                                   | Turn off [mouse-wheel acceleration](https://code.claude.com/docs/en/fullscreen#mouse-wheel-scrolling) in fullscreen rendering                                                                                                                           | Interface and terminal             | Any file                |
-| [`workflowKeywordTriggerEnabled`](#workflowkeywordtriggerenabled)                                     | Let the word `ultracode` in a prompt start a [workflow](https://code.claude.com/docs/en/workflows); set `false` to type it without starting one                                                                                                         | Hooks and automation               | Any file                |
-| [`workflowSizeGuideline`](#workflowsizeguideline)                                                     | Set the agent count Claude aims for in [dynamic workflows](https://code.claude.com/docs/en/workflows)                                                                                                                                                   | Hooks and automation               | Any file                |
-| [`worktree`](#worktree)                                                                               | Configure how Claude Code creates git [worktrees](https://code.claude.com/docs/en/worktrees)                                                                                                                                                            | Agents, sessions, and worktrees    | Any file                |
-| [`worktree.baseRef`](#worktree-baseref)                                                               | Branch new [worktrees](https://code.claude.com/docs/en/worktrees) from the remote default branch or your local HEAD                                                                                                                                     | Agents, sessions, and worktrees    | Any file                |
-| [`worktree.bgIsolation`](#worktree-bgisolation)                                                       | Let background sessions edit the working copy without a [worktree](https://code.claude.com/docs/en/worktrees)                                                                                                                                           | Agents, sessions, and worktrees    | Any file                |
-| [`worktree.sparsePaths`](#worktree-sparsepaths)                                                       | Check out only the directories you need in each [worktree](https://code.claude.com/docs/en/worktrees)                                                                                                                                                   | Agents, sessions, and worktrees    | Any file                |
-| [`worktree.symlinkDirectories`](#worktree-symlinkdirectories)                                         | Symlink large directories into each [worktree](https://code.claude.com/docs/en/worktrees) instead of duplicating them                                                                                                                                   | Agents, sessions, and worktrees    | Any file                |
-| [`wslInheritsWindowsSettings`](#wslinheritswindowssettings)                                           | Have WSL read [managed settings](https://code.claude.com/docs/en/managed-settings) from the Windows policy chain                                                                                                                                        | Enterprise and managed settings    | Managed                 |
+| Key | Description | Topic | Scope |
+| :- | :- | :- | :- |
+| [`advisorModel`](#advisormodel) | Pick which model answers when Claude asks the [advisor tool](https://code.claude.com/docs/en/advisor) | Model and responses | Any file |
+| [`agent`](#agent) | Start every session as a named [subagent](https://code.claude.com/docs/en/sub-agents) with its prompt, tools, and model | Agents, sessions, and worktrees | Any file |
+| [`agentPushNotifEnabled`](#agentpushnotifenabled) | Let Claude send a [push notification to your phone](https://code.claude.com/docs/en/remote-control#mobile-push-notifications) when it decides to | Remote, desktop, and notifications | Any file |
+| [`allowAllClaudeAiMcps`](#allowallclaudeaimcps) | Load the [claude.ai connectors](https://code.claude.com/docs/en/mcp) Claude Code fetches itself alongside a deployed [`managed-mcp.json`](https://code.claude.com/docs/en/managed-mcp#exclusive-control-with-managed-mcp-json) | MCP | Managed |
+| [`allowClaudeInChromeWithManagedMcp`](#allowclaudeinchromewithmanagedmcp) | Let the built-in [Claude in Chrome](https://code.claude.com/docs/en/chrome) server run alongside a deployed [`managed-mcp.json`](https://code.claude.com/docs/en/managed-mcp#exclusive-control-with-managed-mcp-json) | MCP | Managed |
+| [`allowedChannelPlugins`](#allowedchannelplugins) | Replace the default allowlist of [channel plugins](https://code.claude.com/docs/en/channels#restrict-which-channel-plugins-can-run) that can push messages | Plugins and skills | Managed |
+| [`allowedHttpHookUrls`](#allowedhttphookurls) | Limit which URLs [HTTP hooks](https://code.claude.com/docs/en/hooks) can target | Hooks and automation | Any file |
+| [`allowedMcpServers`](#allowedmcpservers) | Allowlist which [MCP servers](https://code.claude.com/docs/en/mcp) users can add | MCP | Any file |
+| [`allowedProviders`](#allowedproviders) | Limit which [API providers](https://code.claude.com/docs/en/third-party-integrations) a machine may use | Authentication and providers | Managed |
+| [`allowManagedHooksOnly`](#allowmanagedhooksonly) | Run only the [hooks](https://code.claude.com/docs/en/hooks) your organization deploys | Hooks and automation | Managed |
+| [`allowManagedMcpServersOnly`](#allowmanagedmcpserversonly) | Make the managed [MCP](https://code.claude.com/docs/en/mcp) allowlist the only one that applies | MCP | Managed |
+| [`allowManagedPermissionRulesOnly`](#allowmanagedpermissionrulesonly) | Make [managed settings](https://code.claude.com/docs/en/managed-settings) the only settings source of [permission rules](https://code.claude.com/docs/en/permissions#managed-settings) | Permission settings | Managed |
+| [`alwaysThinkingEnabled`](#alwaysthinkingenabled) | Turn [extended thinking](https://code.claude.com/docs/en/model-config#extended-thinking) off for every session | Model and responses | Any file |
+| [`apiKeyHelper`](#apikeyhelper) | Generate the [API credential](https://code.claude.com/docs/en/authentication#credential-management) with your own command | Authentication and providers | Any file |
+| [`askUserQuestionTimeout`](#askuserquestiontimeout) | Let an unanswered question [auto-continue](https://code.claude.com/docs/en/tools-reference#question-auto-continue-timeout) after idle time | Interface and terminal | User or managed |
+| [`appendPlugins`](#appendplugins) | Run your organization's [mods](https://code.claude.com/docs/en/plugins/mods/admin) after every mod a user installs | Plugins and skills | User or managed |
+| [`attribution`](#attribution) | Customize the attribution Claude Code adds to commits and pull requests | Git and attribution | Any file |
+| [`attribution.commit`](#attribution-commit) | Change or hide the trailer Claude Code adds to commits | Git and attribution | Any file |
+| [`attribution.pr`](#attribution-pr) | Change or hide the attribution line in pull request descriptions | Git and attribution | Any file |
+| [`attribution.sessionUrl`](#attribution-sessionurl) | Omit the claude.ai session link from [cloud](https://code.claude.com/docs/en/claude-code-on-the-web) and [Remote Control](https://code.claude.com/docs/en/remote-control) commits | Git and attribution | Any file |
+| [`autoCompactEnabled`](#autocompactenabled) | Turn [automatic compaction](https://code.claude.com/docs/en/context-window) off or on | Memory and context | Any file |
+| [`autoCompactWindow`](#autocompactwindow) | Set how full the context gets before Claude Code [compacts](https://code.claude.com/docs/en/context-window) | Memory and context | Any file |
+| [`autoConnectIde`](#autoconnectide) | Connect to a running [VS Code](https://code.claude.com/docs/en/vs-code) or [JetBrains](https://code.claude.com/docs/en/jetbrains#from-external-terminals) IDE automatically from an external terminal | Global config settings | Global config |
+| [`autoContinueAtUsageLimit`](#autocontinueatusagelimit) | Wait in the open session and [continue the task automatically](https://code.claude.com/docs/en/interactive-mode#wait-for-a-usage-limit-to-reset) after a claude.ai usage limit resets | Interface and terminal | User or managed |
+| [`autoInstallIdeExtension`](#autoinstallideextension) | Turn off automatic install of the [IDE extension](https://code.claude.com/docs/en/vs-code#install-the-extension) from a VS Code terminal | Global config settings | Global config |
+| [`autoMemoryDirectory`](#automemorydirectory) | Store [auto memory](https://code.claude.com/docs/en/memory#auto-memory) in a directory you choose | Memory and context | Any file |
+| [`autoMemoryEnabled`](#automemoryenabled) | Turn [auto memory](https://code.claude.com/docs/en/memory#auto-memory) off or on | Memory and context | Any file |
+| [`autoMode`](#automode) | Add your own allow and deny rules to the [auto mode](https://code.claude.com/docs/en/permission-modes#eliminate-prompts-with-auto-mode) classifier | Permission settings | User or managed |
+| [`autoMode.classifyAllShell`](#automode-classifyallshell) | Send every shell command through the [auto mode classifier](https://code.claude.com/docs/en/permission-modes#what-the-classifier-blocks-by-default), even ones a narrow allow rule matches | Permission settings | User or managed |
+| [`autoScrollEnabled`](#autoscrollenabled) | [Follow new output](https://code.claude.com/docs/en/fullscreen#auto-follow) to the bottom in fullscreen rendering | Interface and terminal | Any file |
+| [`autoUpdatesChannel`](#autoupdateschannel) | Follow the stable [release channel](https://code.claude.com/docs/en/setup#configure-release-channel) instead of latest | Updates and versioning | Any file |
+| [`availableModels`](#availablemodels) | [Restrict which models](https://code.claude.com/docs/en/model-config#restrict-model-selection) people can pick | Model and responses | Any file |
+| [`availableModelsMatch`](#availablemodelsmatch) | Make each `availableModels` model ID entry [permit only the version it names](https://code.claude.com/docs/en/model-config#block-specific-models-or-versions) | Model and responses | Managed |
+| [`awaySummaryEnabled`](#awaysummaryenabled) | Turn off the [session recap](https://code.claude.com/docs/en/interactive-mode#session-recap) shown when you come back to the terminal | Remote, desktop, and notifications | Any file |
+| [`awsAuthRefresh`](#awsauthrefresh) | Refresh expired [Bedrock credentials](https://code.claude.com/docs/en/amazon-bedrock#advanced-credential-configuration) in `.aws` with your own command | Authentication and providers | Any file |
+| [`awsCredentialExport`](#awscredentialexport) | Supply [Bedrock credentials](https://code.claude.com/docs/en/amazon-bedrock#advanced-credential-configuration) as JSON from your own command | Authentication and providers | Any file |
+| [`axScreenReader`](#axscreenreader) | Render [screen-reader friendly output](https://code.claude.com/docs/en/accessibility) | Interface and terminal | Any file |
+| [`bashEditDiffEnabled`](#basheditdiffenabled) | Record the [files that changed while a Bash command ran](https://code.claude.com/docs/en/hooks#bash) in every permission mode | Interface and terminal | User or managed |
+| [`bashOutputMaxChars`](#bashoutputmaxchars) | Set how much of a successful command's [output](https://code.claude.com/docs/en/tools-reference#output-limits) Claude receives inline | Memory and context | Any file |
+| [`blockedMarketplaces`](#blockedmarketplaces) | Block [plugin marketplace](https://code.claude.com/docs/en/plugins/overview) sources for your organization | Plugins and skills | Managed |
+| [`browserExternalPageTools`](#browserexternalpagetools) | Keep Claude's tools off external pages in the [desktop](https://code.claude.com/docs/en/desktop) Browser pane | Tools | Managed |
+| [`channelsEnabled`](#channelsenabled) | Allow [channels](https://code.claude.com/docs/en/channels#enable-channels-for-your-organization) for your organization | Plugins and skills | Managed |
+| [`claudeInChromeDefaultEnabled`](#claudeinchromedefaultenabled) | Turn on [Chrome integration](https://code.claude.com/docs/en/chrome) when a session starts, in the interactive CLI and the VS Code extension | Global config settings | Global config |
+| [`claudeMd`](#claudemd) | Inject organization-wide [CLAUDE.md](https://code.claude.com/docs/en/memory#deploy-organization-wide-claude-md) instructions from managed settings | Memory and context | Managed |
+| [`claudeMdExcludes`](#claudemdexcludes) | Skip specific [CLAUDE.md](https://code.claude.com/docs/en/memory#exclude-specific-claude-md-files) files when memory loads | Memory and context | Any file |
+| [`cleanupPeriodDays`](#cleanupperioddays) | Choose how many days Claude Code keeps [transcripts](https://code.claude.com/docs/en/data-usage#data-retention) before deleting them | Privacy and telemetry | Any file |
+| [`companyAnnouncements`](#companyannouncements) | Show your organization's announcements at startup | Interface and terminal | Any file |
+| [`copyFullResponse`](#copyfullresponse) | Make [`/copy`](https://code.claude.com/docs/en/commands) copy the full response without showing the picker | Global config settings | Global config |
+| [`copyOnSelect`](#copyonselect) | Turn off automatic copying of text you select with the mouse in [fullscreen rendering](https://code.claude.com/docs/en/fullscreen#use-the-mouse) and agent view | Global config settings | Global config |
+| [`crossSessionInbound`](#crosssessioninbound) | Choose whether Claude Code delivers [messages from your other sessions](https://code.claude.com/docs/en/cross-session-messaging#control-inbound-messages), shows a notice without delivering them, or refuses them | Agents, sessions, and worktrees | Any file |
+| [`defaultShell`](#defaultshell) | Choose whether Bash or PowerShell runs the shell commands you type with the [`!` prefix](https://code.claude.com/docs/en/interactive-mode#shell-mode-with-prefix) | Interface and terminal | Any file |
+| [`defaultToAgentsView`](#defaulttoagentsview) | Open [agent view](https://code.claude.com/docs/en/agent-view) instead of a new conversation when you run `claude` with no arguments | Global config settings | Global config |
+| [`deniedMcpServers`](#deniedmcpservers) | Block specific [MCP servers](https://code.claude.com/docs/en/mcp) by URL, command, or name | MCP | Any file |
+| [`deniedModels`](#deniedmodels) | [Block specific models](https://code.claude.com/docs/en/model-config#block-specific-models-or-versions), even ones `availableModels` permits | Model and responses | Managed |
+| [`desktopSessionCleanupPeriodDays`](#desktopsessioncleanupperioddays) | Set an age limit in days for [Claude Desktop and Cowork transcripts](https://code.claude.com/docs/en/claude-directory#cleaned-up-automatically) | Privacy and telemetry | User or managed |
+| [`dialogExpiry`](#dialogexpiry) | Set how long Claude Code waits for [Remote Control](https://code.claude.com/docs/en/remote-control) or an SDK host to answer a forwarded dialog before it cancels the dialog | Interface and terminal | User or managed |
+| [`diffTool`](#difftool) | Choose whether Claude's proposed file changes open in the [VS Code](https://code.claude.com/docs/en/vs-code) or [JetBrains](https://code.claude.com/docs/en/jetbrains#features) diff viewer or stay in the terminal | Global config settings | Global config |
+| [`disableAgentView`](#disableagentview) | Turn off background agents and [agent view](https://code.claude.com/docs/en/agent-view) | Agents, sessions, and worktrees | Any file |
+| [`disableAllHooks`](#disableallhooks) | Turn off [hooks](https://code.claude.com/docs/en/hooks), a custom [status line](https://code.claude.com/docs/en/statusline), and a custom [`@` file suggestion](https://code.claude.com/docs/en/interactive-mode#quick-commands) command at once | Hooks and automation | Any file |
+| [`disableArtifact`](#disableartifact) | Deprecated; use `enableArtifact` to turn the [Artifact tool](https://code.claude.com/docs/en/artifacts) off | Remote, desktop, and notifications | Any file |
+| [`disableAutoMode`](#disableautomode) | Remove [auto mode](https://code.claude.com/docs/en/permission-modes#eliminate-prompts-with-auto-mode) from the permission mode cycle | Permission settings | Any file |
+| [`disableBrowserExternalNavigation`](#disablebrowserexternalnavigation) | Limit the [desktop](https://code.claude.com/docs/en/desktop) Browser pane to localhost for people and Claude | Tools | Managed |
+| [`disableBundledSkills`](#disablebundledskills) | Turn off the [skills](https://code.claude.com/docs/en/skills#bundled-skills) and [workflows](https://code.claude.com/docs/en/workflows) included with Claude Code | Plugins and skills | Any file |
+| [`disableClaudeAiConnectors`](#disableclaudeaiconnectors) | Turn off [claude.ai connectors](https://code.claude.com/docs/en/mcp#disable-claude-ai-connectors) so Claude Code doesn't fetch them | MCP | Any file |
+| [`disableCommandPluginSources`](#disablecommandpluginsources) | Block [plugins](https://code.claude.com/docs/en/plugins/overview) that install by running a marketplace-declared command | Plugins and skills | Managed |
+| [`disableDeepLinkRegistration`](#disabledeeplinkregistration) | Stop Claude Code from registering the [`claude-cli://` handler](https://code.claude.com/docs/en/deep-links) | Remote, desktop, and notifications | Any file |
+| [`disableDesktopLocalSessions`](#disabledesktoplocalsessions) | Turn off [Desktop Code sessions](https://code.claude.com/docs/en/desktop#local-sessions-on-managed-devices) that run on the device, leaving SSH to other hosts and cloud | Remote, desktop, and notifications | Managed |
+| [`disabledMcpjsonServers`](#disabledmcpjsonservers) | Reject specific servers from a project's [`.mcp.json`](https://code.claude.com/docs/en/mcp#project-scope) | MCP | Any file |
+| [`disableMobileSimulatorTools`](#disablemobilesimulatortools) | Block Claude's tools in the [desktop](https://code.claude.com/docs/en/desktop) iOS Simulator pane | Tools | Managed |
+| [`disableRemoteControl`](#disableremotecontrol) | Turn off [Remote Control](https://code.claude.com/docs/en/remote-control) everywhere it can start | Remote, desktop, and notifications | Any file |
+| [`disableSideloadFlags`](#disablesideloadflags) | Reject the CLI flags that sideload [plugins](https://code.claude.com/docs/en/plugins/overview), [subagents](https://code.claude.com/docs/en/sub-agents), and [MCP servers](https://code.claude.com/docs/en/mcp) | Enterprise and managed settings | Managed |
+| [`disableSkillShellExecution`](#disableskillshellexecution) | Stop [skills](https://code.claude.com/docs/en/skills) and custom commands from running inline shell | Plugins and skills | Any file |
+| [`disableWorkflows`](#disableworkflows) | Turn [dynamic workflows](https://code.claude.com/docs/en/workflows) off for everyone; use `enableWorkflows` for yourself | Hooks and automation | Any file |
+| [`editorMode`](#editormode) | Use [vim key bindings](https://code.claude.com/docs/en/interactive-mode#vim-editor-mode) in the input prompt | Interface and terminal | Any file |
+| [`effortLevel`](#effortlevel) | Set a default [effort level](https://code.claude.com/docs/en/model-config#adjust-effort-level) for models without a saved level of their own | Model and responses | Any file |
+| [`emojiCompletionEnabled`](#emojicompletionenabled) | Turn off [`:shortcode:` emoji suggestions and replacement](https://code.claude.com/docs/en/interactive-mode#emoji-shortcodes) in the prompt input | Interface and terminal | Any file |
+| [`enableAllProjectMcpServers`](#enableallprojectmcpservers) | Approve every server in project [`.mcp.json`](https://code.claude.com/docs/en/mcp#project-server-approvals-and-workspace-trust) files without a prompt | MCP | Any file |
+| [`enableArtifact`](#enableartifact) | Turn the [Artifact tool](https://code.claude.com/docs/en/artifacts) off with a `false` in any file; no file can turn it back on | Remote, desktop, and notifications | Any file |
+| [`enabledMcpjsonServers`](#enabledmcpjsonservers) | Approve specific servers from a project's [`.mcp.json`](https://code.claude.com/docs/en/mcp#project-server-approvals-and-workspace-trust) | MCP | Any file |
+| [`enabledPlugins`](#enabledplugins) | Turn individual [plugins](https://code.claude.com/docs/en/plugins/overview) on or off per scope | Plugins and skills | Any file |
+| [`enableWorkflows`](#enableworkflows) | Turn [dynamic workflows](https://code.claude.com/docs/en/workflows) on or off against your plan's default | Hooks and automation | Any file |
+| [`enforceAvailableModels`](#enforceavailablemodels) | Keep the [`/model` Default choice](https://code.claude.com/docs/en/model-config#enforce-the-allowlist-for-the-default-model) inside your `availableModels` allowlist | Model and responses | Any file |
+| [`env`](#env) | Set [environment variables](https://code.claude.com/docs/en/env-vars#in-settings-files) for every session and its subprocesses | Memory and context | Any file |
+| [`externalEditorContext`](#externaleditorcontext) | Show Claude's last response as comments when you press [Ctrl+G](https://code.claude.com/docs/en/interactive-mode#general-controls) to edit | Global config settings | Global config |
+| [`extraKnownMarketplaces`](#extraknownmarketplaces) | Register [marketplaces](https://code.claude.com/docs/en/plugins/overview) for a repository or an organization | Plugins and skills | Any file |
+| [`fallbackModel`](#fallbackmodel) | Name [backup models](https://code.claude.com/docs/en/model-config#fallback-model-chains) for when the primary is overloaded | Model and responses | Any file |
+| [`fastMode`](#fastmode) | Turn [fast mode](https://code.claude.com/docs/en/fast-mode) on for sessions where it's available | Model and responses | Any file |
+| [`fastModePerSessionOptIn`](#fastmodepersessionoptin) | Require people to turn [fast mode](https://code.claude.com/docs/en/fast-mode) on each session | Model and responses | Any file |
+| [`feedbackDrafts`](#feedbackdrafts) | Control whether Claude queues [feedback drafts](https://code.claude.com/docs/en/tools-reference#sendfeedback-tool-behavior) for you to review | Privacy and telemetry | User or managed |
+| [`feedbackSurveyRate`](#feedbacksurveyrate) | Change how often the [session quality survey](https://code.claude.com/docs/en/data-usage#session-quality-surveys) appears | Privacy and telemetry | Any file |
+| [`fileCheckpointingEnabled`](#filecheckpointingenabled) | Turn off or on the file snapshots that [`/rewind`](https://code.claude.com/docs/en/checkpointing) restores | Memory and context | Any file |
+| [`fileSuggestion`](#filesuggestion) | Supply [`@` file autocomplete](https://code.claude.com/docs/en/interactive-mode#quick-commands) from your own command | Interface and terminal | Any file |
+| [`footerLinksRegexes`](#footerlinksregexes) | Make issue or review IDs in output into [clickable links](https://code.claude.com/docs/en/statusline#clickable-links) below the input box | Interface and terminal | User or managed |
+| [`forceLoginGatewayUrl`](#forcelogingatewayurl) | Set the [gateway URL](https://code.claude.com/docs/en/claude-apps-gateway#set-the-gateway-url) the login screen connects to | Authentication and providers | User or managed |
+| [`forceLoginMethod`](#forceloginmethod) | [Restrict login](https://code.claude.com/docs/en/authentication#restrict-login-to-your-organization) to claude.ai, Claude Console, or a [cloud gateway](https://code.claude.com/docs/en/claude-apps-gateway) | Authentication and providers | Any file |
+| [`forceLoginOrgUUID`](#forceloginorguuid) | [Pin claude.ai logins to your organization](https://code.claude.com/docs/en/authentication#restrict-login-to-your-organization); only a managed source enforces it | Authentication and providers | Any file |
+| [`forceRemoteSettingsRefresh`](#forceremotesettingsrefresh) | Block startup until [server-managed settings](https://code.claude.com/docs/en/server-managed-settings) are freshly fetched | Enterprise and managed settings | Managed |
+| [`gatewayInternalNetworks`](#gatewayinternalnetworks) | Let `/login` reach a [cloud gateway](https://code.claude.com/docs/en/claude-apps-gateway#allow-a-gateway-on-public-address-space-you-own) on public IPv4 space your organization uses internally | Authentication and providers | Managed |
+| [`gcpAuthRefresh`](#gcpauthrefresh) | Refresh [Google Cloud credentials](https://code.claude.com/docs/en/google-vertex-ai#advanced-credential-configuration) with your own command | Authentication and providers | Any file |
+| [`hooks`](#hooks) | Run your own commands as [hooks](https://code.claude.com/docs/en/hooks) at points in Claude Code's lifecycle | Hooks and automation | Any file |
+| [`httpHookAllowedEnvVars`](#httphookallowedenvvars) | Limit which env vars [HTTP hooks](https://code.claude.com/docs/en/hooks) can put in headers | Hooks and automation | Any file |
+| [`idleCompaction`](#idlecompaction) | Stop Claude Code from compacting a long conversation while your terminal session is idle | Memory and context | Any file |
+| [`includeCoAuthoredBy`](#includecoauthoredby) | Deprecated; use `attribution` to hide or change commit and PR attribution | Git and attribution | Any file |
+| [`includeGitInstructions`](#includegitinstructions) | Remove the built-in commit and PR instructions from Claude's context | Git and attribution | Any file |
+| [`inputNeededNotifEnabled`](#inputneedednotifenabled) | Get a [push notification](https://code.claude.com/docs/en/remote-control#mobile-push-notifications) when Claude is waiting on you | Remote, desktop, and notifications | Any file |
+| [`isolatePeerMachines`](#isolatepeermachines) | Ask you before Claude [messages one of your sessions on another machine](https://code.claude.com/docs/en/cross-session-messaging#require-approval-for-cross-machine-messages) | Agents, sessions, and worktrees | Any file |
+| [`keybindingFlavor`](#keybindingflavor) | Deprecated and has no effect; the word-editing shortcuts always [follow readline conventions](https://code.claude.com/docs/en/interactive-mode#make-ctrl-w-delete-back-to-whitespace) | Interface and terminal | Any file |
+| [`language`](#language) | Have Claude respond in a language other than English | Model and responses | Any file |
+| [`leftArrowOpensAgents`](#leftarrowopensagents) | Turn off the `←` shortcut that [backgrounds the session and opens agent view](https://code.claude.com/docs/en/agent-view#switch-sessions-without-leaving-the-terminal) | Global config settings | Global config |
+| [`managedMcpServers`](#managedmcpservers) | Provide remote [MCP servers](https://code.claude.com/docs/en/managed-mcp#provide-servers-through-managed-settings) to every user alongside the ones they add | MCP | Managed |
+| [`managedSourcesBehavior`](#managedsourcesbehavior) | Compose every [managed source](https://code.claude.com/docs/en/managed-settings#how-claude-code-combines-managed-sources) you deploy instead of using the highest-priority one alone | Enterprise and managed settings | Managed |
+| [`maxEffortLevel`](#maxeffortlevel) | Cap the [effort level](https://code.claude.com/docs/en/model-config#adjust-effort-level) for every model or per model, on every provider | Model and responses | Any file |
+| [`maxProseWidth`](#maxprosewidth) | Cap how wide the prose in Claude's responses runs in a wide terminal | Interface and terminal | Any file |
+| [`minimumVersion`](#minimumversion) | Keep [auto-updates](https://code.claude.com/docs/en/setup#pin-a-minimum-version) from installing anything below a version | Updates and versioning | Any file |
+| [`model`](#model) | Change the [model](https://code.claude.com/docs/en/model-config#set-a-default-model-for-new-sessions) Claude Code starts with | Model and responses | Any file |
+| [`modelOverrides`](#modeloverrides) | [Map model IDs](https://code.claude.com/docs/en/model-config#override-model-ids-per-version) to your provider's IDs, such as Bedrock ARNs | Model and responses | Any file |
+| [`modelPicker`](#modelpicker) | Choose which models the [`/model` picker](https://code.claude.com/docs/en/model-config#available-models) lists, in your own order and with your own labels | Model and responses | User or managed |
+| [`modelPricing`](#modelpricing) | Report spend at your organization's contracted rates instead of list price | Model and responses | Managed |
+| [`modelSettings`](#modelsettings) | Keep a saved [effort level](https://code.claude.com/docs/en/model-config#adjust-effort-level) or [auto-compact window](https://code.claude.com/docs/en/model-config#set-the-auto-compact-window) per model, or cap one model's effort | Model and responses | Any file |
+| [`otelHeadersHelper`](#otelheadershelper) | Generate rotating [OpenTelemetry](https://code.claude.com/docs/en/monitoring-usage#dynamic-headers) headers with your own command | Authentication and providers | Any file |
+| [`outputStyle`](#outputstyle) | Change Claude's role, tone, and output format with an [output style](https://code.claude.com/docs/en/output-styles) | Model and responses | Any file |
+| [`parentSettingsBehavior`](#parentsettingsbehavior) | Apply or drop restrictions an [SDK or IDE host](https://code.claude.com/docs/en/managed-settings#let-an-embedding-host-add-policy) passes when you deploy [managed settings](https://code.claude.com/docs/en/managed-settings) | Enterprise and managed settings | Managed |
+| [`permissionExplainerEnabled`](#permissionexplainerenabled) | Removed in v2.1.257, together with the `Ctrl+E` command explanation on shell permission prompts | Global config settings | Global config |
+| [`permissions`](#permissions) | Set allow, ask, and deny rules and the starting [permission mode](https://code.claude.com/docs/en/permission-modes) | Permission settings | Any file |
+| [`permissions.additionalDirectories`](#permissions-additionaldirectories) | Give Claude file access to [directories outside the current one](https://code.claude.com/docs/en/permissions#working-directories) | Permission settings | Any file |
+| [`permissions.allow`](#permissions-allow) | Approve listed [tool uses](https://code.claude.com/docs/en/permissions#permission-rule-syntax) without a prompt | Permission settings | Any file |
+| [`permissions.ask`](#permissions-ask) | Always prompt before listed [tool uses](https://code.claude.com/docs/en/permissions#permission-rule-syntax) | Permission settings | Any file |
+| [`permissions.blockReadsOutsideWorkingDirectories`](#permissions-blockreadsoutsideworkingdirectories) | Make the file tools refuse reads outside the [working directories](https://code.claude.com/docs/en/permissions#working-directories) in every permission mode | Permission settings | Any file |
+| [`permissions.defaultMode`](#permissions-defaultmode) | Set the [permission mode](https://code.claude.com/docs/en/permission-modes#which-mode-a-session-starts-in) new sessions start in | Permission settings | Any file |
+| [`permissions.deny`](#permissions-deny) | Block listed [tool uses](https://code.claude.com/docs/en/permissions#permission-rule-syntax), including reads of files that hold secrets | Permission settings | Any file |
+| [`permissions.disableBypassPermissionsMode`](#permissions-disablebypasspermissionsmode) | Prevent anyone from entering [bypassPermissions mode](https://code.claude.com/docs/en/permission-modes#skip-all-checks-with-bypasspermissions-mode) | Permission settings | Any file |
+| [`plansDirectory`](#plansdirectory) | Choose where [plan mode](https://code.claude.com/docs/en/permission-modes#analyze-before-you-edit-with-plan-mode) writes plan files | Memory and context | Any file |
+| [`pluginConfigs`](#pluginconfigs) | Store the answers you gave a [plugin](https://code.claude.com/docs/en/plugins/overview)'s configuration dialog | Plugins and skills | User or managed |
+| [`pluginSuggestionMarketplaces`](#pluginsuggestionmarketplaces) | Choose which [marketplaces](https://code.claude.com/docs/en/plugins/org#restrict-what-users-can-install) can surface plugin install suggestions in `/plugin` | Plugins and skills | Managed |
+| [`pluginTrustMessage`](#plugintrustmessage) | Add your own text to the [plugin](https://code.claude.com/docs/en/plugins/overview) trust warning | Plugins and skills | Managed |
+| [`policyHelper`](#policyhelper) | Run an executable that computes [managed settings](https://code.claude.com/docs/en/managed-settings#compute-the-policy-with-a-helper-program) at startup | Enterprise and managed settings | Managed |
+| [`policyHelper.path`](#policyhelper-path) | Name the [helper executable](https://code.claude.com/docs/en/managed-settings#compute-the-policy-with-a-helper-program) Claude Code runs | Enterprise and managed settings | Managed |
+| [`policyHelper.refreshIntervalMs`](#policyhelper-refreshintervalms) | Re-run the [helper](https://code.claude.com/docs/en/managed-settings#compute-the-policy-with-a-helper-program) in the background on an interval | Enterprise and managed settings | Managed |
+| [`policyHelper.timeoutMs`](#policyhelper-timeoutms) | Set how long Claude Code waits for the [helper](https://code.claude.com/docs/en/managed-settings#compute-the-policy-with-a-helper-program) | Enterprise and managed settings | Managed |
+| [`preferredNotifChannel`](#preferrednotifchannel) | Choose a [terminal bell or desktop notification](https://code.claude.com/docs/en/terminal-config#get-a-terminal-bell-or-notification) for task completion | Remote, desktop, and notifications | Any file |
+| [`prefersReducedMotion`](#prefersreducedmotion) | [Reduce or turn off](https://code.claude.com/docs/en/accessibility#accessibility-settings) spinner, shimmer, and flash animations | Interface and terminal | Any file |
+| [`prependPlugins`](#prependplugins) | Run your organization's [mods](https://code.claude.com/docs/en/plugins/mods/admin) before every mod a user installs | Plugins and skills | User or managed |
+| [`processWrapper`](#processwrapper) | Run Claude Code's background processes through a [corporate launcher](https://code.claude.com/docs/en/corporate-launcher) on macOS and Linux | Agents, sessions, and worktrees | User or managed |
+| [`promptCacheTtl`](#promptcachettl) | Choose the [prompt cache lifetime](https://code.claude.com/docs/en/prompt-caching#cache-lifetime) for the main conversation | Model and responses | Any file |
+| [`promptSuggestionEnabled`](#promptsuggestionenabled) | Hide the grayed-out [prompt suggestions](https://code.claude.com/docs/en/interactive-mode#prompt-suggestions) in the input box | Interface and terminal | Any file |
+| [`prStatusFooterEnabled`](#prstatusfooterenabled) | Turn off the prompt footer's [PR review status](https://code.claude.com/docs/en/interactive-mode#pr-review-status) badge and the pull request check behind it | Global config settings | Global config |
+| [`prUrlTemplate`](#prurltemplate) | Point PR links at an internal code-review tool instead of github.com | Git and attribution | Any file |
+| [`remote.defaultEnvironmentId`](#remote-defaultenvironmentid) | Pick the default [cloud environment](https://code.claude.com/docs/en/cloud-environments) for `claude --cloud`; a self-hosted `ccpool_` ID is read only from user and managed settings and `--settings` | Remote, desktop, and notifications | Any file |
+| [`remoteControlAtStartup`](#remotecontrolatstartup) | Connect [Remote Control](https://code.claude.com/docs/en/remote-control#enable-remote-control-for-all-sessions) automatically when a session starts | Remote, desktop, and notifications | Any file |
+| [`requiredMaximumVersion`](#requiredmaximumversion) | [Refuse to start](https://code.claude.com/docs/en/setup#pin-a-minimum-version) on a version newer than your organization allows | Updates and versioning | Managed |
+| [`requiredMinimumVersion`](#requiredminimumversion) | [Refuse to start](https://code.claude.com/docs/en/setup#pin-a-minimum-version) on a version older than your organization requires | Updates and versioning | Managed |
+| [`respectGitignore`](#respectgitignore) | Keep gitignored files out of the [`@` file picker](https://code.claude.com/docs/en/interactive-mode#quick-commands) | Interface and terminal | Any file |
+| [`respondToBashCommands`](#respondtobashcommands) | Stop Claude from responding after a [`!` shell command](https://code.claude.com/docs/en/interactive-mode#shell-mode-with-prefix) runs | Interface and terminal | Any file |
+| [`sandbox`](#sandbox) | [Isolate Bash commands](https://code.claude.com/docs/en/sandboxing) from your filesystem and network on macOS, Linux, and WSL2 | Sandbox settings | Any file |
+| [`sandbox.allowAppleEvents`](#sandbox-allowappleevents) | Let [sandboxed](https://code.claude.com/docs/en/sandboxing) commands send Apple Events on macOS | Sandbox settings | User or managed |
+| [`sandbox.allowUnsandboxedCommands`](#sandbox-allowunsandboxedcommands) | Let Claude retry a blocked command outside the [sandbox](https://code.claude.com/docs/en/sandboxing#the-unsandboxed-retry-escape-hatch), or forbid it | Sandbox settings | Any file |
+| [`sandbox.autoAllowBashIfSandboxed`](#sandbox-autoallowbashifsandboxed) | Run [sandboxed](https://code.claude.com/docs/en/sandboxing#auto-allow-mode) commands without a permission prompt | Sandbox settings | Any file |
+| [`sandbox.bwrapPath`](#sandbox-bwrappath) | Point the [sandbox](https://code.claude.com/docs/en/sandboxing) at a bubblewrap binary outside `PATH` | Sandbox settings | Managed |
+| [`sandbox.credentials`](#sandbox-credentials) | Hide or mask credential files and variables inside the [sandbox](https://code.claude.com/docs/en/sandboxing#protect-credentials) | Sandbox settings | Any file |
+| [`sandbox.credentials.allowPlaintextInject`](#sandbox-credentials-allowplaintextinject) | Let [masked credentials](https://code.claude.com/docs/en/sandboxing#mask-credentials) reach plain HTTP services on trusted test networks | Sandbox settings | User or managed |
+| [`sandbox.credentials.awsPairs`](#sandbox-credentials-awspairs) | Link custom-named AWS key variables into one credential for [re-signing](https://code.claude.com/docs/en/sandboxing#re-sign-aws-requests) | Sandbox settings | User or managed |
+| [`sandbox.credentials.envVars`](#sandbox-credentials-envvars) | Unset or mask an environment variable inside the [sandbox](https://code.claude.com/docs/en/sandboxing#mask-environment-variables) | Sandbox settings | Any file |
+| [`sandbox.credentials.files`](#sandbox-credentials-files) | Block or mask reads of a credential file inside the [sandbox](https://code.claude.com/docs/en/sandboxing#mask-credential-files) | Sandbox settings | Any file |
+| [`sandbox.credentials.sigv4`](#sandbox-credentials-sigv4) | Choose whether streaming, presigned, or [SigV4A AWS requests](https://code.claude.com/docs/en/sandboxing#re-sign-aws-requests) fail or pass through | Sandbox settings | User or managed |
+| [`sandbox.enabled`](#sandbox-enabled) | Turn on [Bash sandboxing](https://code.claude.com/docs/en/sandboxing#get-started) on macOS, Linux, and WSL2 | Sandbox settings | Any file |
+| [`sandbox.enableWeakerNestedSandbox`](#sandbox-enableweakernestedsandbox) | Run the Linux [sandbox](https://code.claude.com/docs/en/sandboxing) inside an unprivileged container | Sandbox settings | Any file |
+| [`sandbox.enableWeakerNetworkIsolation`](#sandbox-enableweakernetworkisolation) | Let `gh`, `gcloud`, and `terraform` verify TLS behind a MITM proxy inside the [sandbox](https://code.claude.com/docs/en/sandboxing#go-based-clis-fail-tls-verification-on-macos) on macOS | Sandbox settings | Any file |
+| [`sandbox.excludedCommands`](#sandbox-excludedcommands) | Name commands Claude Code can run outside the [sandbox](https://code.claude.com/docs/en/sandboxing) | Sandbox settings | Any file |
+| [`sandbox.failIfUnavailable`](#sandbox-failifunavailable) | Refuse to start when the [sandbox](https://code.claude.com/docs/en/sandboxing) can't, instead of running unsandboxed | Sandbox settings | Any file |
+| [`sandbox.filesystem`](#sandbox-filesystem) | Control which paths [sandboxed](https://code.claude.com/docs/en/sandboxing#filesystem-isolation) commands can read and write | Sandbox settings | Any file |
+| [`sandbox.filesystem.allowManagedReadPathsOnly`](#sandbox-filesystem-allowmanagedreadpathsonly) | Stop developers from re-opening [read paths your organization blocked](https://code.claude.com/docs/en/sandboxing#keep-developers-from-widening-the-policy) | Sandbox settings | Managed |
+| [`sandbox.filesystem.allowRead`](#sandbox-filesystem-allowread) | Re-open reading inside a region [`denyRead`](#sandbox-filesystem-denyread) blocks | Sandbox settings | Any file |
+| [`sandbox.filesystem.allowWrite`](#sandbox-filesystem-allowwrite) | Add paths [sandboxed](https://code.claude.com/docs/en/sandboxing) commands can write to | Sandbox settings | Any file |
+| [`sandbox.filesystem.denyRead`](#sandbox-filesystem-denyread) | Block [sandboxed](https://code.claude.com/docs/en/sandboxing) commands from reading specific paths | Sandbox settings | Any file |
+| [`sandbox.filesystem.denyWrite`](#sandbox-filesystem-denywrite) | Block [sandboxed](https://code.claude.com/docs/en/sandboxing) commands from writing to specific paths | Sandbox settings | Any file |
+| [`sandbox.filesystem.disabled`](#sandbox-filesystem-disabled) | [Turn off filesystem isolation](https://code.claude.com/docs/en/sandboxing#disable-filesystem-isolation) while keeping network isolation | Sandbox settings | User or managed |
+| [`sandbox.ignoreViolations`](#sandbox-ignoreviolations) | Silence violation reports for paths a command is expected to probe | Sandbox settings | Any file |
+| [`sandbox.network`](#sandbox-network) | Control which hosts, ports, and sockets [sandboxed](https://code.claude.com/docs/en/sandboxing#network-isolation) commands reach | Sandbox settings | Any file |
+| [`sandbox.network.allowAllUnixSockets`](#sandbox-network-allowallunixsockets) | Let [sandboxed](https://code.claude.com/docs/en/sandboxing) commands connect to every Unix socket | Sandbox settings | Any file |
+| [`sandbox.network.allowedDomains`](#sandbox-network-alloweddomains) | Pre-allow domains so [sandboxed](https://code.claude.com/docs/en/sandboxing) commands don't prompt for them | Sandbox settings | Any file |
+| [`sandbox.network.allowLocalBinding`](#sandbox-network-allowlocalbinding) | Let [sandboxed](https://code.claude.com/docs/en/sandboxing) commands listen on network ports and connect to localhost on macOS | Sandbox settings | Any file |
+| [`sandbox.network.allowMachLookup`](#sandbox-network-allowmachlookup) | Let macOS [sandboxed](https://code.claude.com/docs/en/sandboxing) tools like the iOS Simulator or Playwright reach their XPC services | Sandbox settings | Any file |
+| [`sandbox.network.allowManagedDomainsOnly`](#sandbox-network-allowmanageddomainsonly) | Lock the network allowlist to [managed settings](https://code.claude.com/docs/en/sandboxing#keep-developers-from-widening-the-policy) | Sandbox settings | Managed |
+| [`sandbox.network.allowUnixSockets`](#sandbox-network-allowunixsockets) | List Unix socket paths [sandboxed](https://code.claude.com/docs/en/sandboxing) commands can use on macOS | Sandbox settings | Any file |
+| [`sandbox.network.deniedDomains`](#sandbox-network-denieddomains) | Block domains for [sandboxed](https://code.claude.com/docs/en/sandboxing) commands, even inside an allowed wildcard | Sandbox settings | Any file |
+| [`sandbox.network.httpProxyPort`](#sandbox-network-httpproxyport) | Route [sandbox](https://code.claude.com/docs/en/sandboxing#custom-proxy-configuration) HTTP traffic through your own proxy | Sandbox settings | Any file |
+| [`sandbox.network.socksProxyPort`](#sandbox-network-socksproxyport) | Route [sandbox](https://code.claude.com/docs/en/sandboxing#custom-proxy-configuration) SOCKS traffic through your own proxy | Sandbox settings | Any file |
+| [`sandbox.network.strictAllowlist`](#sandbox-network-strictallowlist) | Deny hosts outside the [allowlist](https://code.claude.com/docs/en/sandboxing#network-isolation) instead of prompting | Sandbox settings | User or managed |
+| [`sandbox.network.tlsTerminate`](#sandbox-network-tlsterminate) | Have the [sandbox](https://code.claude.com/docs/en/sandboxing#network-isolation) proxy terminate TLS so it can read HTTPS requests | Sandbox settings | User or managed |
+| [`sandbox.ripgrep`](#sandbox-ripgrep) | Use your own ripgrep binary inside the [sandbox](https://code.claude.com/docs/en/sandboxing) | Sandbox settings | User or managed |
+| [`sandbox.socatPath`](#sandbox-socatpath) | Point the [sandbox](https://code.claude.com/docs/en/sandboxing) proxy at a `socat` binary outside `PATH` | Sandbox settings | Managed |
+| [`showClearContextOnPlanAccept`](#showclearcontextonplanaccept) | Show a "clear context" option on the [plan accept screen](https://code.claude.com/docs/en/permission-modes#review-and-approve-a-plan) | Interface and terminal | Any file |
+| [`showThinkingSummaries`](#showthinkingsummaries) | See summaries of Claude's [thinking](https://code.claude.com/docs/en/model-config#extended-thinking) instead of a collapsed stub | Model and responses | Any file |
+| [`showTurnDuration`](#showturnduration) | Hide the "Cooked for" duration after each response | Interface and terminal | Any file |
+| [`skillListingBudgetFraction`](#skilllistingbudgetfraction) | Reserve more or less context for the [skill listing](https://code.claude.com/docs/en/skills#skill-descriptions-are-cut-short) | Memory and context | Any file |
+| [`skillListingMaxDescChars`](#skilllistingmaxdescchars) | Cap each skill's description length in the [skill listing](https://code.claude.com/docs/en/skills#skill-descriptions-are-cut-short) | Memory and context | Any file |
+| [`skillOverrides`](#skilloverrides) | [Hide or collapse a skill](https://code.claude.com/docs/en/skills#override-skill-visibility-from-settings) without editing its SKILL.md | Plugins and skills | Any file |
+| [`skipAutoPermissionPrompt`](#skipautopermissionprompt) | Skip the one-time notice Claude Code shows when you first enter [auto mode](https://code.claude.com/docs/en/permission-modes#eliminate-prompts-with-auto-mode) yourself rather than through the built-in default | Permission settings | User or managed |
+| [`skipDangerousModePermissionPrompt`](#skipdangerousmodepermissionprompt) | Skip the confirmation dialog before [bypassPermissions mode](https://code.claude.com/docs/en/permission-modes#skip-all-checks-with-bypasspermissions-mode) | Permission settings | User, local, or managed |
+| [`skipWebFetchPreflight`](#skipwebfetchpreflight) | Skip the [WebFetch hostname check](https://code.claude.com/docs/en/tools-reference#webfetch-tool-behavior) when Anthropic is unreachable | Privacy and telemetry | Any file |
+| [`spellcheck`](#spellcheck) | Underline misspelled words in the prompt input with a [spell checker](https://code.claude.com/docs/en/interactive-mode#check-spelling-as-you-type) you install | Interface and terminal | User or managed |
+| [`spinnerTipsEnabled`](#spinnertipsenabled) | Hide tips in the spinner while Claude works | Interface and terminal | Any file |
+| [`spinnerTipsOverride`](#spinnertipsoverride) | Add your own tips to the spinner rotation, or replace the built-in tips | Interface and terminal | Any file |
+| [`spinnerVerbs`](#spinnerverbs) | Add or replace the verbs shown while a turn runs | Interface and terminal | Any file |
+| [`sshConfigs`](#sshconfigs) | Add [SSH connections](https://code.claude.com/docs/en/desktop#pre-configure-ssh-connections-for-your-team) to the Desktop environment dropdown | Remote, desktop, and notifications | User or managed |
+| [`sshHostAllowlist`](#sshhostallowlist) | Limit which hosts [Desktop SSH sessions](https://code.claude.com/docs/en/desktop#restrict-which-ssh-hosts-users-can-connect-to) can reach | Remote, desktop, and notifications | Managed |
+| [`statusLine`](#statusline) | Run your own command to render a [status line](https://code.claude.com/docs/en/statusline) below the prompt | Interface and terminal | Any file |
+| [`strictKnownMarketplaces`](#strictknownmarketplaces) | Allowlist the [marketplace](https://code.claude.com/docs/en/plugins/overview) sources users can add and install from | Plugins and skills | Managed |
+| [`strictPluginOnlyCustomization`](#strictpluginonlycustomization) | Block [skills](https://code.claude.com/docs/en/skills), [agents](https://code.claude.com/docs/en/sub-agents), [hooks](https://code.claude.com/docs/en/hooks), and [MCP servers](https://code.claude.com/docs/en/mcp) from user and project sources | Plugins and skills | Managed |
+| [`strictPluginOnlyCustomization.agents`](#strictpluginonlycustomization-agents) | Lock [agents](https://code.claude.com/docs/en/sub-agents) to plugin and managed sources | Plugins and skills | Managed |
+| [`strictPluginOnlyCustomization.hooks`](#strictpluginonlycustomization-hooks) | Lock [hooks](https://code.claude.com/docs/en/hooks) to plugin and managed sources | Plugins and skills | Managed |
+| [`strictPluginOnlyCustomization.mcp`](#strictpluginonlycustomization-mcp) | Lock [MCP servers](https://code.claude.com/docs/en/mcp) to plugin and managed sources | Plugins and skills | Managed |
+| [`strictPluginOnlyCustomization.skills`](#strictpluginonlycustomization-skills) | Lock [skills](https://code.claude.com/docs/en/skills) to plugin and managed sources | Plugins and skills | Managed |
+| [`subagentPromptCacheTtl`](#subagentpromptcachettl) | Choose the [prompt cache lifetime](https://code.claude.com/docs/en/prompt-caching#cache-lifetime) for subagents and other requests outside the main conversation | Model and responses | Any file |
+| [`subagentStatusLine`](#subagentstatusline) | Rewrite rows in the [subagent](https://code.claude.com/docs/en/sub-agents) task display with your own command | Interface and terminal | Any file |
+| [`switchModelsOnFlag`](#switchmodelsonflag) | Switch models automatically or pause when a [safety classifier](https://code.claude.com/docs/en/model-config#ask-before-switching) flags a request | Model and responses | Any file |
+| [`syncClaudeAiPlugins`](#syncclaudeaiplugins) | Stop loading the [plugins enabled on your claude.ai account](https://code.claude.com/docs/en/plugins/loading#synced-plugins) and stop downloading new ones | Plugins and skills | User, local, or managed |
+| [`syncClaudeAiSkills`](#syncclaudeaiskills) | Stop loading the [skills enabled on your claude.ai account](https://code.claude.com/docs/en/skills#how-synced-skills-behave) and stop downloading new ones | Plugins and skills | User, local, or managed |
+| [`syntaxHighlightingDisabled`](#syntaxhighlightingdisabled) | Turn off syntax highlighting in diffs and code blocks | Interface and terminal | Any file |
+| [`taskOutputMaxChars`](#taskoutputmaxchars) | Removed in v2.1.277, together with the `TaskOutput` tool it sized | Memory and context | Any file |
+| [`teammateDefaultModel`](#teammatedefaultmodel) | Removed in v2.1.234; see [Specify teammates and models](https://code.claude.com/docs/en/agent-teams#specify-teammates-and-models) for how Claude Code picks a teammate's model | Global config settings | Global config |
+| [`teammateMode`](#teammatemode) | Choose how [agent team teammates display](https://code.claude.com/docs/en/agent-teams#choose-a-display-mode) | Agents, sessions, and worktrees | Any file |
+| [`terminalProgressBarEnabled`](#terminalprogressbarenabled) | Hide the terminal progress bar in terminals that support it | Interface and terminal | Any file |
+| [`terminalTitleFromRename`](#terminaltitlefromrename) | Stop [`/rename`](https://code.claude.com/docs/en/sessions#name-your-sessions) and `--name` from changing the terminal tab title | Interface and terminal | Any file |
+| [`theme`](#theme) | Pick the interface [color theme](https://code.claude.com/docs/en/terminal-config#match-the-color-theme), built-in or custom | Interface and terminal | Any file |
+| [`timeFormat`](#timeformat) | Show the times in the interface on a 12-hour or 24-hour clock, in UTC, or with a strftime pattern | Interface and terminal | Any file |
+| [`timeZone`](#timezone) | Show the times in the interface in a time zone other than your system's | Interface and terminal | Any file |
+| [`tui`](#tui) | Choose the [fullscreen](https://code.claude.com/docs/en/fullscreen) or classic terminal renderer | Interface and terminal | Any file |
+| [`ultracode`](#ultracode) | Have Claude plan a [workflow](https://code.claude.com/docs/en/workflows#let-claude-decide-with-ultracode) for each substantive task without being asked | Model and responses | Any file |
+| [`useAutoModeDuringPlan`](#useautomodeduringplan) | Let the [auto mode](https://code.claude.com/docs/en/permission-modes#eliminate-prompts-with-auto-mode) classifier review shell commands in [plan mode](https://code.claude.com/docs/en/permission-modes#analyze-before-you-edit-with-plan-mode); set `false` to get prompts instead | Permission settings | User, local, or managed |
+| [`verbose`](#verbose) | Show [full tool output](https://code.claude.com/docs/en/cli-reference#cli-flags) instead of truncated summaries; `viewMode` takes precedence when both are set | Interface and terminal | Any file |
+| [`viewMode`](#viewmode) | Start every session in [default, verbose, or focus view](https://code.claude.com/docs/en/cli-reference#cli-flags) | Interface and terminal | Any file |
+| [`vimInsertModeRemaps`](#viminsertmoderemaps) | Map a two-key [INSERT-mode sequence](https://code.claude.com/docs/en/interactive-mode#remap-insert-mode-key-sequences) such as `jj` to Escape | Interface and terminal | User or managed |
+| [`voice`](#voice) | Turn on [voice dictation](https://code.claude.com/docs/en/voice-dictation) and pick hold or tap mode | Interface and terminal | Any file |
+| [`voiceEnabled`](#voiceenabled) | Turn on [voice dictation](https://code.claude.com/docs/en/voice-dictation) with the older single-key form | Interface and terminal | Any file |
+| [`wheelScrollAccelerationEnabled`](#wheelscrollaccelerationenabled) | Turn off [mouse-wheel acceleration](https://code.claude.com/docs/en/fullscreen#mouse-wheel-scrolling) in fullscreen rendering | Interface and terminal | Any file |
+| [`workflowKeywordTriggerEnabled`](#workflowkeywordtriggerenabled) | Let the word `ultracode` in a prompt start a [workflow](https://code.claude.com/docs/en/workflows); set `false` to type it without starting one | Hooks and automation | Any file |
+| [`workflowSizeGuideline`](#workflowsizeguideline) | Set the agent count Claude aims for in [dynamic workflows](https://code.claude.com/docs/en/workflows) | Hooks and automation | Any file |
+| [`worktree`](#worktree) | Configure how Claude Code creates git [worktrees](https://code.claude.com/docs/en/worktrees) | Agents, sessions, and worktrees | Any file |
+| [`worktree.baseRef`](#worktree-baseref) | Branch new [worktrees](https://code.claude.com/docs/en/worktrees) from the remote default branch or your local HEAD | Agents, sessions, and worktrees | Any file |
+| [`worktree.bgIsolation`](#worktree-bgisolation) | Let background sessions edit the working copy without a [worktree](https://code.claude.com/docs/en/worktrees) | Agents, sessions, and worktrees | Any file |
+| [`worktree.location`](#worktree-location) | Choose where [Desktop SSH sessions](https://code.claude.com/docs/en/desktop#ssh-sessions) create their worktrees on a remote machine | Agents, sessions, and worktrees | User |
+| [`worktree.sparsePaths`](#worktree-sparsepaths) | Check out only the directories you need in each [worktree](https://code.claude.com/docs/en/worktrees) | Agents, sessions, and worktrees | Any file |
+| [`worktree.symlinkDirectories`](#worktree-symlinkdirectories) | Symlink large directories into each [worktree](https://code.claude.com/docs/en/worktrees) instead of duplicating them | Agents, sessions, and worktrees | Any file |
+| [`wslInheritsWindowsSettings`](#wslinheritswindowssettings) | Have WSL read [managed settings](https://code.claude.com/docs/en/managed-settings) from the Windows policy chain | Enterprise and managed settings | Managed |
 
 ## Model and responses
 
@@ -852,7 +866,7 @@ The key has no effect on providers where the advisor [isn't available](https://c
 
 Turn [extended thinking](https://code.claude.com/docs/en/model-config#extended-thinking) off for every session by setting this to `false`. Thinking is on by default, so `true` changes nothing. Most people set this through `/config` rather than by editing the file.
 
-On models that always think, such as Opus 5.5 and the Fable models, `false` has no effect. On [third-party providers](https://code.claude.com/docs/en/third-party-integrations) Claude Code omits the `thinking` parameter instead of turning thinking off, so adaptive-reasoning models may still think. With thinking turned off on the Anthropic API, Claude Code sends effort `high` instead of a higher level to models it knows [don't accept that combination](https://code.claude.com/docs/en/errors#effort-isnt-available-with-thinking-turned-off), such as Opus 5.
+On models that always think, such as Opus 5.5, Sonnet 5.5, Haiku 5.5, and the Fable models, `false` has no effect. On [third-party providers](https://code.claude.com/docs/en/third-party-integrations) Claude Code omits the `thinking` parameter instead of turning thinking off, so adaptive-reasoning models may still think. With thinking turned off on the Anthropic API, Claude Code sends effort `high` instead of a higher level to models it knows [don't accept that combination](https://code.claude.com/docs/en/errors#effort-isnt-available-with-thinking-turned-off), such as Opus 5.
 
 * **Scope**: [`Any file`](#scopes)
 * **Type**: Boolean
@@ -869,7 +883,7 @@ On models that always think, such as Opus 5.5 and the Fable models, `false` has 
 
 ### `availableModels`
 
-Restrict which models people can select for the main session, [subagents](https://code.claude.com/docs/en/sub-agents), [skills](https://code.claude.com/docs/en/skills), and the [advisor](https://code.claude.com/docs/en/advisor). A managed list constrains `/model`, `--model`, and the `model` key in a developer's own files; a model outside it can't be selected. On its own this doesn't touch the Default option; pair it with [`enforceAvailableModels`](#enforceavailablemodels) for that.
+Restrict which models people can select for the main session, [subagents](https://code.claude.com/docs/en/sub-agents), [skills](https://code.claude.com/docs/en/skills), and the [advisor](https://code.claude.com/docs/en/advisor). A managed list constrains `/model`, `--model`, and the `model` key in a developer's own files; a model outside it can't be selected. With the default prefix matching, this doesn't touch the Default option on its own; pair it with [`enforceAvailableModels`](#enforceavailablemodels) for that.
 
 * **Scope**: [`Any file`](#scopes). Deploy it in managed settings to enforce it for an organization.
 * **Type**: array of model aliases or IDs
@@ -883,7 +897,51 @@ This example lets people select only Sonnet and Haiku models:
 }
 ```
 
-See [Restrict model selection](https://code.claude.com/docs/en/model-config#restrict-model-selection).
+A model ID entry such as `"claude-opus-5"` also permits later versions that extend it, such as Opus 5.5. To block one of those versions, use [`deniedModels`](#deniedmodels). To make each model ID entry permit only the version it names, use [`availableModelsMatch`](#availablemodelsmatch). See [Restrict model selection](https://code.claude.com/docs/en/model-config#restrict-model-selection).
+
+### `availableModelsMatch`
+
+Choose how [`availableModels`](#availablemodels) entries match model IDs. By default a model ID entry also permits later versions that extend it, so `"claude-opus-5"` permits Opus 5.5. With `"exact"`, each model ID entry permits only the version it names, so a newer version of that model stays blocked until you list it. Requires Claude Code v2.1.283 or later.
+
+* **Scope**: [`Managed`](#scopes). Claude Code ignores the key in user, project, and local settings and in `--settings`, with a warning
+* **Type**: string, one of:
+  * `"prefix"`: a model ID entry permits its version and any model ID that extends it with another segment
+  * `"exact"`: a model ID entry permits only the version it names, including that version's dated IDs, so `"claude-opus-5"` permits Opus 5 but not `claude-opus-5-5`. A family alias such as `"opus"` still permits the whole family, and `best`, `opusplan`, and `default` entries are ignored
+* **Default**: `"prefix"`
+
+This example permits Opus 5 and Sonnet 5 and no later release of either:
+
+```json managed-settings.json theme={null}
+{
+  "availableModels": ["claude-opus-5", "claude-sonnet-5"],
+  "availableModelsMatch": "exact"
+}
+```
+
+With `"exact"`, the Default option is also limited to the listed models whenever the list names at least one model or family. See [Block specific models or versions](https://code.claude.com/docs/en/model-config#block-specific-models-or-versions).
+
+### `deniedModels`
+
+Block specific models, with or without an [`availableModels`](#availablemodels) allowlist and even when that list permits them. Claude Code hides a blocked model from the `/model` picker, and the model can't be selected anywhere `availableModels` is enforced. A session on the Default option doesn't run a blocked model either, as [Block specific models or versions](https://code.claude.com/docs/en/model-config#block-specific-models-or-versions) describes. Requires Claude Code v2.1.283 or later.
+
+* **Scope**: [`Managed`](#scopes). Claude Code ignores the key in user, project, and local settings and in `--settings`, with a warning
+* **Type**: array of model aliases or IDs
+  * A family alias such as `"opus"` blocks every model in that family
+  * A model ID such as `"claude-opus-5-5"` blocks that version in every spelling, including dated and provider-specific IDs
+  * A model ID with no minor version, such as `"claude-opus-5"`, also blocks later minor versions such as Opus 5.5. Write `"claude-opus-5-0"` to block Opus 5 alone
+  * `best`, `opusplan`, and `default` entries are ignored
+* **Default**: unset, so no model is blocked
+
+This example permits Opus and Sonnet models and blocks Opus 5.5:
+
+```json managed-settings.json theme={null}
+{
+  "availableModels": ["opus", "sonnet"],
+  "deniedModels": ["claude-opus-5-5"]
+}
+```
+
+See [Block specific models or versions](https://code.claude.com/docs/en/model-config#block-specific-models-or-versions).
 
 ### `effortLevel`
 
@@ -914,14 +972,16 @@ In your user settings file, `~/.claude/settings.json`, this key is the older for
 
 ### `enforceAvailableModels`
 
-The `/model` picker has a **Default** option that resolves to your [organization default model](https://code.claude.com/docs/en/model-config#organization-default-model) when one applies, and otherwise to your account type's default. An [`availableModels`](#availablemodels) allowlist limits the models you can name, but on its own it leaves **Default** alone, so **Default** can still resolve to a model outside the list. This key closes that gap. Requires Claude Code v2.1.175 or later.
+The `/model` picker has a **Default** option, and [`default` model setting](https://code.claude.com/docs/en/model-config#default-model-setting) describes the model it resolves to. An [`availableModels`](#availablemodels) allowlist limits the models you can name, but with the default [prefix matching](#availablemodelsmatch) it doesn't remap your account type's default, so **Default** can still resolve to a model outside the list. This key closes that gap. Requires Claude Code v2.1.175 or later.
 
 When your organization deploys any managed settings, Claude Code reads this key from the managed source alone and ignores it in your other files.
+
+For how this key applies to the startup model checks, see [Amazon Bedrock](https://code.claude.com/docs/en/amazon-bedrock#when-your-organization-enforces-a-model-allowlist) and [Google Cloud's Agent Platform](https://code.claude.com/docs/en/google-vertex-ai#when-your-organization-enforces-a-model-allowlist).
 
 * **Scope**: [`Any file`](#scopes)
 * **Type**: Boolean
   * `true`: when **Default** would resolve to a model outside `availableModels`, Claude Code resolves it to the first available model in the list
-  * `false`: **Default** resolves as usual, even to a model outside `availableModels`
+  * `false`: this key doesn't change how **Default** resolves
 * **Default**: `false`
 
 This example restricts named selections to Sonnet and Haiku models and makes **Default** resolve to the first of them that is available:
@@ -1014,7 +1074,6 @@ Cap the [effort level](https://code.claude.com/docs/en/model-config#adjust-effor
 * **Scope**: [`Any file`](#scopes). Deploy it in managed settings to enforce it for an organization. When several scopes set a cap, the lowest applies, so a cap set in one scope can't be raised from another
 * **Type**: string, one of `"low"`, `"medium"`, `"high"`, `"xhigh"`, or `"max"`. A `"max"` value sets no cap
 * **Default**: unset, so no cap applies
-* **Effect on ultracode**: a cap below `xhigh` makes [ultracode](#ultracode) unavailable on the models the cap applies to
 * **Per-model caps**: add `maxEffortLevel` to a model's [`modelSettings`](#modelsettings) entry. That entry replaces this key for the model only within the settings source that sets both, such as your user settings or one [managed source](https://code.claude.com/docs/en/managed-settings#how-claude-code-combines-managed-sources). Set `"max"` there to exempt the model from that source's cap; Claude Code still applies caps from other sources
 
 This example caps every model at `medium` and exempts Sonnet 4.6:
@@ -1102,10 +1161,12 @@ This example adds two Bedrock deployments after the built-in lineup, under names
 
 The key takes two fields, one for the rows themselves and one for whether they replace the built-in lineup or add to it.
 
-| Field                   | Type                                                                                  | What it does                                                                                                                                                                                                                                                                  |
-| :---------------------- | :------------------------------------------------------------------------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `options`               | array of rows, each with a required `model` and an optional `label` and `description` | The rows the picker shows, in this order, except that a grayed-out row moves to the bottom. Without a `label`, Claude Code titles the row with the built-in name for a model it knows, or the model ID otherwise, and without a `description` it writes a generic second line |
-| `replaceBuiltInOptions` | Boolean, default `false`                                                              | Set it to `true` to show only these rows, **Default**, and a row for the model the session is already using. Leave it unset to add these rows after the built-in lineup                                                                                                       |
+| Field | Type | What it does |
+| :- | :- | :- |
+| `options` | array of rows, each with a required `model` and optional `label`, `description`, and `behavesAs` | The rows the picker shows, in this order, except that a grayed-out row moves to the bottom. Without a `label`, Claude Code titles the row with the built-in name for a model it knows, or the model ID otherwise, and without a `description` it writes a generic second line |
+| `replaceBuiltInOptions` | Boolean, default `false` | Set it to `true` to show only these rows, **Default**, and a row for the model the session is already using. Leave it unset to add these rows after the built-in lineup |
+
+An entry in `options` can also carry an optional `behavesAs` string beside its `model`, which requires v2.1.257 or later. Set it to the ID of a model your Claude Code version already knows, such as `claude-opus-4-8`, on an entry whose `model` is newer than your version. Claude Code then applies that known model's capabilities and effort defaults to the entry instead of treating its model as unknown. The entry's label and the model ID Claude Code sends in requests don't change.
 
 With `replaceBuiltInOptions` on, Claude Code hides every other row: the built-in lineup, the rows it adds for [`availableModels`](#availablemodels) entries, the models [gateway discovery](https://code.claude.com/docs/en/llm-gateway-protocol#model-discovery) found, and [`ANTHROPIC_CUSTOM_MODEL_OPTION`](https://code.claude.com/docs/en/model-config#add-a-custom-model-option). With it off, Claude Code skips a listed model that the built-in lineup already covers. A label changes what the picker shows, not which model Claude Code runs.
 
@@ -1155,10 +1216,10 @@ For the steps, including how to confirm the rates are in effect, see [Report spe
 
 #### Fields for `modelPricing`
 
-| Field        | Type                                                                                                    | What it does                                                                                                                                                                                                        |
-| :----------- | :------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `multiplier` | number greater than 0 and at most 10                                                                    | Scales every cost Claude Code computes, whether or not an `overrides` row covers it. Below 1 is a discount, above 1 a markup                                                                                        |
-| `overrides`  | map of model ID to a rate object with `input`, `output`, `cacheRead`, and `cacheWrite`, each 0 to 10000 | The USD-per-million-token rates for that model, all four required. `cacheWrite` covers both five-minute and one-hour cache writes. See [Which models a row applies to](#which-models-a-modelpricing-row-applies-to) |
+| Field | Type | What it does |
+| :- | :- | :- |
+| `multiplier` | number greater than 0 and at most 10 | Scales every cost Claude Code computes, whether or not an `overrides` row covers it. Below 1 is a discount, above 1 a markup |
+| `overrides` | map of model ID to a rate object with `input`, `output`, `cacheRead`, and `cacheWrite`, each 0 to 10000 | The USD-per-million-token rates for that model, all four required. `cacheWrite` covers both five-minute and one-hour cache writes. See [Which models a row applies to](#which-models-a-modelpricing-row-applies-to) |
 
 Claude Code uses a row's rates exactly as you wrote them, without adding the fast-mode surcharge or the [US-only-inference rate](https://platform.claude.com/docs/en/about-claude/pricing). If you also set `multiplier`, Claude Code applies it on top of the row's rates. Claude Code drops a row with a rate it can't parse, or a `multiplier` it can't parse, and keeps the rest; see [Fix a broken settings file](https://code.claude.com/docs/en/settings#fix-a-broken-settings-file).
 
@@ -1183,7 +1244,10 @@ A model's `effortLevel` here takes precedence over the top-level [`effortLevel`]
 To cap one model's effort rather than set its level, add a [`maxEffortLevel`](#maxeffortlevel) field to that model's entry. The field requires Claude Code v2.1.267 or later.
 
 * **Scope**: [`Any file`](#scopes)
-* **Type**: object mapping a model name to an object with an `effortLevel` field, one of `"low"`, `"medium"`, `"high"`, or `"xhigh"`, a [`maxEffortLevel`](#maxeffortlevel) field, or both
+* **Type**: object mapping a model name to an object with any of these fields:
+  * `effortLevel`: one of `"low"`, `"medium"`, `"high"`, or `"xhigh"`
+  * [`maxEffortLevel`](#maxeffortlevel): the highest effort level the model may run at
+  * `autoCompactWindow`: a number of tokens from `100000` to `1000000`, or `"auto"` for the window tuned for the model. [`/autocompact`](https://code.claude.com/docs/en/model-config#set-the-auto-compact-window) saves here. For that model, the value takes precedence over a top-level [`autoCompactWindow`](#autocompactwindow) in the same settings file. Requires Claude Code v2.1.288 or later
 * **Default**: unset
 
 Claude Code writes each entry under the model's canonical name, such as `claude-opus-5-5`, and matches that model's alias, date-suffixed, `[1m]`, and recognized provider-specific IDs to the same entry.
@@ -1285,11 +1349,11 @@ This key covers the requests [`promptCacheTtl`](#promptcachettl) doesn't, so set
 
 Choose what happens when a [safety classifier flags a request](https://code.claude.com/docs/en/model-config#automatic-model-fallback): switch to the fallback model and continue, or pause so you can choose between switching and editing the prompt.
 
-* **Scope**: [`Any file`](#scopes). Appears in `/config` as **Switch models when a message is flagged**.
+* **Scope**: [`Any file`](#scopes). Appears in `/config` as **Switch models when a message is flagged**, with the options **Switch automatically** and **Ask each time**.
 * **Type**: Boolean
   * `true`: Claude Code switches to the fallback model and continues
   * `false`: in an interactive session Claude Code pauses so you can choose between switching and editing the prompt; where no dialog can show, such as a `-p` run, the flagged request ends as an error
-* **Default**: `true`, switch automatically
+* **Default**: unset. Claude Code switches automatically, though it may [ask first](https://code.claude.com/docs/en/model-config#ask-before-switching) in an interactive session
 
 ```json settings.json theme={null}
 {
@@ -1301,14 +1365,14 @@ See [Ask before switching](https://code.claude.com/docs/en/model-config#ask-befo
 
 ### `ultracode`
 
-Start sessions with [ultracode](https://code.claude.com/docs/en/workflows#let-claude-decide-with-ultracode) on. With it on, Claude plans a workflow for each substantive task instead of waiting for you to ask. Claude plans workflows only when [dynamic workflows](https://code.claude.com/docs/en/workflows) are enabled for you, your model supports `xhigh` effort, and no [effort cap](https://code.claude.com/docs/en/model-config#organization-effort-limits) below `xhigh` applies. Either way, `ultracode: true` runs the session at `xhigh` effort, or at the cap when an effort cap is lower. Claude Code reads this key but never writes it: `/effort ultracode` turns ultracode on for the current session only.
+Start sessions with [ultracode](https://code.claude.com/docs/en/workflows#let-claude-decide-with-ultracode) on. With it on, Claude plans a workflow for each substantive task instead of waiting for you to ask. Claude plans workflows only when [dynamic workflows](https://code.claude.com/docs/en/workflows) are enabled for you and your model supports `xhigh` effort. The key doesn't change the session's effort level: ultracode runs at whichever level the session uses. Claude Code reads this key but never writes it: `/effort ultracode` turns ultracode on for the current session only.
 
 * **Scope**: [`Any file`](#scopes)
 * **Type**: Boolean
-  * `true`: sessions start at `xhigh` effort, with ultracode on when dynamic workflows are enabled for you, your model supports `xhigh`, and no effort cap is below `xhigh`
+  * `true`: sessions start with ultracode on when dynamic workflows are enabled for you and your model supports `xhigh`
   * `false`: sessions start with ultracode off
 * **Default**: unset, so ultracode is off
-* **Per-session overrides**: `/effort ultracode` turns ultracode on for one session without this key. The `--effort ultracode` flag also turns it on for one session and requires Claude Code v2.1.203 or later
+* **Per-session overrides**: `/effort ultracode` turns ultracode on for one session without this key, and `/effort ultracode off` turns it off for one session when this key is `true`. The `--effort ultracode` flag also turns it on for one session, at `xhigh` effort
 
 ```json settings.json theme={null}
 {
@@ -1316,7 +1380,7 @@ Start sessions with [ultracode](https://code.claude.com/docs/en/workflows#let-cl
 }
 ```
 
-Ultracode runs the session at `xhigh` effort and takes precedence over `effortLevel` and [`modelSettings`](#modelsettings) entries. If an [effort cap](https://code.claude.com/docs/en/model-config#organization-effort-limits) below `xhigh` applies to the model, such as a [`maxEffortLevel`](#maxeffortlevel) setting, the session runs at the cap instead and ultracode stays off. Claude then doesn't plan workflows on its own, and `/effort` doesn't offer `ultracode`. An Agent SDK `apply_flag_settings` control request also accepts the key.
+The session's effort level comes from [`effortLevel`](#effortlevel), [`modelSettings`](#modelsettings), and the other [effort sources](https://code.claude.com/docs/en/model-config#adjust-effort-level), and an [effort cap](https://code.claude.com/docs/en/model-config#organization-effort-limits) such as [`maxEffortLevel`](#maxeffortlevel) lowers that level without turning ultracode off. This and the `/effort ultracode off` form require Claude Code v2.1.284 or later. Before v2.1.284, `ultracode: true` ran the session at `xhigh` effort, and an effort cap below `xhigh` kept ultracode off. An Agent SDK `apply_flag_settings` control request also accepts the key.
 
 ## Permission settings
 
@@ -1331,6 +1395,15 @@ When [parent settings from an embedding host](https://code.claude.com/docs/en/ma
 `--disallowedTools` rules and the current session's `deny` and `ask` rules still apply, including after Claude Code reloads settings mid-session. They only restrict, so they can't widen what the managed rules grant. Before v2.1.257, Claude Code dropped those command-line and session rules at the first settings reload.
 
 For what a `!` pattern in a `--disallowedTools` or session rule can carve out, see [Read and Edit rules](https://code.claude.com/docs/en/permissions#read-and-edit).
+
+When you set this key, Claude Code v2.1.282 or later also ignores the [`allowed-tools`](https://code.claude.com/docs/en/skills#pre-approve-tools-for-a-skill) frontmatter in skills and `.claude/commands/` files from these sources:
+
+* A repository's `.claude/` directory
+* Your `~/.claude/skills/` and `~/.claude/commands/` directories, including [skills synced from claude.ai](https://code.claude.com/docs/en/skills#where-synced-skills-load)
+* An `--add-dir` directory
+* [Plugins declared with a `.claude-plugin` manifest](https://code.claude.com/docs/en/plugins/loading#plugins-shared-through-a-repository) inside `~/.claude/skills/` or the project's `.claude/skills/`
+
+Skills from managed settings and bundled skills keep their `allowed-tools`. A skill's `disallowed-tools` still applies. For what a developer sees when Claude Code ignores the field, see [When only managed permission rules apply](https://code.claude.com/docs/en/skills#when-only-managed-permission-rules-apply).
 
 * **Scope**: [`Managed`](#scopes)
 * **Type**: Boolean
@@ -1384,7 +1457,7 @@ Send every Bash and PowerShell command through the auto mode classifier while au
 }
 ```
 
-See [Route all shell commands through the classifier](https://code.claude.com/docs/en/auto-mode-config#route-all-shell-commands-through-the-classifier). Requires Claude Code v2.1.193 or later.
+See [Route all shell commands through the classifier](https://code.claude.com/docs/en/auto-mode-config#route-all-shell-commands-through-the-classifier).
 
 ### `disableAutoMode`
 
@@ -1425,11 +1498,11 @@ The three rule arrays share one syntax; see [Permission rule syntax](#permission
 
 ### `useAutoModeDuringPlan`
 
-Choose whether Claude Code uses the auto mode classifier to review shell commands in plan mode. With the default `true`, the classifier reviews each command during planning when auto mode is available and you see no prompt. Set `false` to get a permission prompt for every command outside the built-in read-only set. Appears in `/config` as **Use auto mode during plan**.
+Choose whether Claude Code uses the auto mode classifier to review shell commands in plan mode. With the default `true`, the classifier reviews each command during planning when auto mode is available and you see no prompt, except for [critical-path removals](https://code.claude.com/docs/en/permission-modes#critical-paths). Set `false` to get a permission prompt for every command outside the built-in read-only set. Appears in `/config` as **Use auto mode during plan**.
 
 * **Scope**: [`User, local, or managed`](#scopes). A repository can't turn it off for you.
 * **Type**: Boolean
-  * `true`: the same as unset; when auto mode is available, the classifier reviews each shell command during planning instead of prompting you for it. A `false` in any of these files still turns it off
+  * `true`: the same as unset; when auto mode is available, the classifier reviews each shell command during planning instead of prompting you for it, except [critical-path removals](https://code.claude.com/docs/en/permission-modes#critical-paths). A `false` in any of these files still turns it off
   * `false`: you get a permission prompt for every command outside the built-in read-only set
 * **Default**: `true`
 
@@ -1466,12 +1539,12 @@ Permission rules follow the format `Tool` or `Tool(specifier)`. Claude Code eval
 
 Each row shows one rule shape and what it matches.
 
-| Rule                           | What it matches                  |
-| :----------------------------- | :------------------------------- |
-| `Bash`                         | Every Bash command               |
-| `Bash(npm run *)`              | Commands starting with `npm run` |
-| `Read(./.env)`                 | Reads of the `.env` file         |
-| `WebFetch(domain:example.com)` | Fetch requests to example.com    |
+| Rule | What it matches |
+| :- | :- |
+| `Bash` | Every Bash command |
+| `Bash(npm run *)` | Commands starting with `npm run` |
+| `Read(./.env)` | Reads of the `.env` file |
+| `WebFetch(domain:example.com)` | Fetch requests to example.com |
 
 For the complete rule syntax, including wildcard behavior, tool-specific patterns for Read, Edit, WebFetch, MCP, and Agent rules, and the security limitations of Bash patterns, see [Permission rule syntax](https://code.claude.com/docs/en/permissions#permission-rule-syntax).
 
@@ -1526,7 +1599,7 @@ Tool names accept glob patterns, so `"*"` denies every tool and `"mcp__*"` denie
 
 Give Claude file access to directories outside the one you started in, as additional [working directories](https://code.claude.com/docs/en/permissions#working-directories). Most `.claude/` configuration is [not discovered](https://code.claude.com/docs/en/permissions#additional-directories-grant-file-access-not-configuration) from these directories.
 
-* **Scope**: [`Any file`](#scopes)
+* **Scope**: [`Any file`](#scopes), with [limits on the sandbox write access](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox) that project and local entries give
 * **Type**: array of directory paths
 * **Default**: unset
 * **Per-session overrides**: `--add-dir` and `/add-dir` add directories for one session alongside this key
@@ -1543,17 +1616,22 @@ Like `allow` rules, entries in a project's `.claude/settings.json` take effect o
 
 ### `permissions.blockReadsOutsideWorkingDirectories`
 
-Stop Claude from reading paths outside the session's [working directories](https://code.claude.com/docs/en/permissions#working-directories) with the Read, Grep, Glob, and LSP tools, in every permission mode including `bypassPermissions`. A Bash command that reads a matching path through a file command Claude Code recognizes, such as `cat`, prompts you even in auto mode and `bypassPermissions` mode. Requires Claude Code v2.1.257 or later.
+Make Claude's file tools refuse reads outside your [working directories](https://code.claude.com/docs/en/permissions#working-directories) in every permission mode, including `bypassPermissions`. Claude Code denies `Read`, `Grep`, `Glob`, and `LSP` calls on those paths and tells Claude to ask you to add the directory with `/add-dir`. Files Claude Code itself needs stay readable, such as your skills, plugins, rules, agents, commands, and the `CLAUDE.md` memory file under `~/.claude/`. Requires Claude Code v2.1.257 or later.
+
+Claude Code doesn't refuse shell commands the same way:
+
+* [Actions no mode auto-approves](https://code.claude.com/docs/en/permission-modes#actions-no-mode-auto-approves) covers when a shell command that reads such a path prompts you
+* [Sandboxed commands under the block](#sandboxed-commands-under-the-block) covers what a sandboxed command can read
 
 A Bash command the shell parser can't trace, such as one that changes directory more than once or runs a subshell, prompts you even in auto mode and `bypassPermissions` mode. The prompt appears even when the command names no path outside the working directories. This prompt doesn't apply when the command runs in the [sandbox](https://code.claude.com/docs/en/sandboxing) and the sandbox enforces the block.
 
 Claude Code also writes `true` here when you choose to block such reads on [auto mode's prompt before the first read outside the working directories](https://code.claude.com/docs/en/permission-modes#first-read-outside-the-working-directories).
 
-* **Scope**: [`Any file`](#scopes). If any settings source sets `true`, the block applies, so a repository's checked-in file can turn the block on for a project but can't lift a block you set.
+* **Scope**: [`Any file`](#scopes). A `true` in any file applies, so a repository can turn the block on for itself but can't lift yours.
 * **Type**: Boolean
-  * `true`: file reads outside the working directories are blocked
-  * `false`: the same as unset; a `true` in any other settings file still blocks
-* **Default**: unset, so reads outside the working directories follow your permission mode and rules
+  * `true`: Claude's file tools refuse reads outside the working directories
+  * `false`: the same as unset; the block still applies if another file sets `true`
+* **Default**: unset, so reads outside the working directories follow your [permission mode](https://code.claude.com/docs/en/permission-modes)
 
 ```json settings.json theme={null}
 {
@@ -1563,25 +1641,49 @@ Claude Code also writes `true` here when you choose to block such reads on [auto
 }
 ```
 
-If only a repository's checked-in settings file adds a directory, the block still applies to reads there. When [`autoMemoryDirectory`](#automemorydirectory) comes from the project's `.claude/settings.json`, or from a `.claude/settings.local.json` [treated as repository-supplied](https://code.claude.com/docs/en/permissions#when-your-local-settings-file-needs-trust), Claude Code loads no [auto memory](https://code.claude.com/docs/en/memory#storage-location) from that directory and saves none to it. Files Claude Code itself needs stay readable, such as your skills, plugins, rules, agents, commands, and the `CLAUDE.md` memory file under `~/.claude/`.
+Directories you add with `--add-dir`, `/add-dir`, or `additionalDirectories` in your user or managed settings count as working directories for the block. Directories added only in repository settings don't count: those in `.claude/settings.json`, and those in `.claude/settings.local.json` unless git reports that file as untracked. In a directory that isn't a git repository, or when git tracks the file, Claude Code treats `.claude/settings.local.json` as repository settings, so put directories you want to keep readable in your user settings instead.
 
-When the [sandbox](https://code.claude.com/docs/en/sandboxing) is on, the block also denies sandboxed commands read access to home directories and mounted-volume roots outside the working directories. A retry that needs approval to [run outside the sandbox](https://code.claude.com/docs/en/sandboxing#the-unsandboxed-retry-escape-hatch) prompts you even in `bypassPermissions` mode. Files a tool reads from your home directory, such as `~/.gitconfig`, are denied with the rest; re-open a specific path with [`sandbox.filesystem.allowRead`](#sandbox-filesystem-allowread) when a tool needs it.
+When [`autoMemoryDirectory`](#automemorydirectory) comes from the project's `.claude/settings.json`, or from a `.claude/settings.local.json` [treated as repository-supplied](https://code.claude.com/docs/en/permissions#when-your-local-settings-file-needs-trust), Claude Code loads no [auto memory](https://code.claude.com/docs/en/memory#storage-location) from that directory and saves none to it.
+
+To lift the block, remove the key from every settings file that sets it, then start a new session.
+
+#### Sandboxed commands under the block
+
+When [sandboxing](https://code.claude.com/docs/en/sandboxing) is on, the block also covers sandboxed commands. Claude Code denies them read access to your home directory and to the other roots that hold user files: `/Users`, `/home`, `/root`, `/Volumes`, `/mnt`, `/media`, `/run/media`, and `/srv`. It then re-opens the working directories, [worktrees](https://code.claude.com/docs/en/worktrees) Claude Code creates in the session, the session temp directory, and the parts of `~/.claude` that commands need, such as skills and plugins. While the block is in force, `allowRead` and `allowWrite` entries from repository settings don't count.
 
 When the session's working directory is a linked [git worktree](https://code.claude.com/docs/en/worktrees), including one Claude Code entered mid-session, the repository's common `.git` directory stays readable and writable to sandboxed commands, so git keeps working there.
 
+In these cases the block doesn't reach sandboxed commands, while Claude's file tools keep enforcing it:
+
+* Filesystem isolation is off through [`sandbox.filesystem.disabled`](#sandbox-filesystem-disabled)
+* [`allowManagedReadPathsOnly`](#sandbox-filesystem-allowmanagedreadpathsonly) is set
+* The path of the directory you started Claude Code in contains a glob character such as `*`, `?`, or `[`
+
+Under the block, Claude Code re-opens your global git configuration files to sandboxed commands so `git` keeps your identity and settings:
+
+* `~/.gitconfig`
+* The `config`, `ignore`, and `attributes` files under `$XDG_CONFIG_HOME/git`, which defaults to `~/.config/git`
+* Files your global git configuration names through `[include]`, `[includeIf]`, `core.excludesFile`, or `core.attributesFile`
+
+Claude Code judges each file separately. When a file lies where a sandboxed command can write, directly or through a symlink, Claude Code doesn't re-open the files it names.
+
+On Linux and WSL2, a configuration file that is a symlink can stay unreadable at its own path, and `git` then runs without it. `~/.git-credentials` and `$XDG_CONFIG_HOME/git/credentials` stay blocked.
+
+If a re-opened file holds a secret, such as an `http.extraHeader` token, add its path to [`sandbox.filesystem.denyRead`](#sandbox-filesystem-denyread). A `denyRead` entry that covers a file always takes precedence over this re-open.
+
 ### `permissions.defaultMode`
 
-Set the [permission mode](https://code.claude.com/docs/en/permission-modes) new sessions start in. When you leave it unset, sessions start in the [built-in default](https://code.claude.com/docs/en/permission-modes#which-mode-a-session-starts-in) for your plan and surface.
+Set the [permission mode](https://code.claude.com/docs/en/permission-modes) new sessions start in. When you leave it unset, sessions start in the [built-in default](https://code.claude.com/docs/en/permission-modes#which-mode-a-session-starts-in) for your surface.
 
 * **Scope**: [`Any file`](#scopes). `auto` and `bypassPermissions` don't take effect from project or local settings, so set them in `~/.claude/settings.json` instead. Before v2.1.257, `bypassPermissions` took effect from any file. For conversations the VS Code extension starts, Claude Code reads only user, managed, and `--settings` values.
 * **Type**: string, one of:
   * `"default"`: Claude Code runs only reads without asking
   * `"acceptEdits"`: Claude Code also runs file edits and common filesystem commands such as `mkdir` and `mv` without asking
   * `"plan"`: Claude Code reads and plans but blocks edits until you approve a plan
-  * `"auto"`: Claude Code runs everything, with background safety checks
-  * `"dontAsk"`: Claude Code auto-denies every call that would otherwise prompt; reads, other actions that need no approval, and pre-approved tools still run
+  * `"auto"`: Claude Code runs without routine prompts; before actions such as shell commands and network requests run, a background classifier checks that they align with your request
+  * `"dontAsk"`: Claude Code auto-denies every call that would otherwise prompt; file reads inside your working directories, other actions that need no approval, and pre-approved tools still run, apart from reads from [network paths](https://code.claude.com/docs/en/permissions#network-paths)
   * `"bypassPermissions"`: Claude Code runs everything without asking
-  * `"manual"`: an alias for `"default"`, in Claude Code v2.1.200 or later
+  * `"manual"`: an alias for `"default"`
 * **Default**: unset
 * **Per-session overrides**: `--permission-mode`, and its equivalent `--dangerously-skip-permissions` for `bypassPermissions`, take precedence over this key for one session
 
@@ -1593,7 +1695,7 @@ Set the [permission mode](https://code.claude.com/docs/en/permission-modes) new 
 }
 ```
 
-Permission rules layer on top of every mode: `deny` rules block in every mode, including `bypassPermissions`. See [Permission modes](https://code.claude.com/docs/en/permission-modes). `manual` names the permission mode labeled Manual in the CLI and the VS Code extension; the alias requires Claude Code v2.1.200 or later. In cloud sessions, Claude Code honors only `acceptEdits`, `plan`, `default`, and `auto` from this key. For conversations the VS Code extension starts, see [which setting the extension reads for the starting permission mode](https://code.claude.com/docs/en/permission-modes#switch-permission-modes).
+Permission rules layer on top of every mode: `deny` rules block in every mode, including `bypassPermissions`. See [Permission modes](https://code.claude.com/docs/en/permission-modes). In cloud sessions, Claude Code honors only `acceptEdits`, `plan`, `default`, and `auto` from this key. For conversations the VS Code extension starts, see [which setting the extension reads for the starting permission mode](https://code.claude.com/docs/en/permission-modes#switch-permission-modes).
 
 ### `permissions.disableBypassPermissionsMode`
 
@@ -1677,13 +1779,13 @@ This turns the sandbox on, skips permission prompts for sandboxed commands, runs
 }
 ```
 
-Claude Code takes a Boolean key's value from the highest-precedence settings scope that sets it, so a managed `enabled` or `failIfUnavailable` overrides anything a developer sets. It merges array keys across every settings scope the session loads, so a developer can append entries; see [Keep developers from widening the policy](https://code.claude.com/docs/en/sandboxing#keep-developers-from-widening-the-policy) for the managed-only locks. To require the sandbox for an organization, see [Enforce sandboxing with managed settings](https://code.claude.com/docs/en/sandboxing#enforce-sandboxing-with-managed-settings).
+When managed settings set a Boolean key such as `enabled` or `failIfUnavailable`, that value overrides anything a developer sets. Claude Code merges array keys across the settings scopes the session loads, so a developer can append entries; see [Keep developers from widening the policy](https://code.claude.com/docs/en/sandboxing#keep-developers-from-widening-the-policy) for the managed-only locks. To require the sandbox for an organization, see [Enforce sandboxing with managed settings](https://code.claude.com/docs/en/sandboxing#enforce-sandboxing-with-managed-settings).
 
 ### `sandbox.enabled`
 
 Turn on [sandboxing](https://code.claude.com/docs/en/sandboxing) for Bash commands. When you pick a mode in the `/sandbox` panel, Claude Code writes this key to `.claude/settings.local.json` for the current project; set it in `~/.claude/settings.json` to sandbox every project.
 
-* **Scope**: [`Any file`](#scopes)
+* **Scope**: [`Any file`](#scopes), with [limits on project and local settings](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox)
 * **Type**: Boolean
   * `true`: Claude Code sandboxes Bash commands
   * `false`: Bash commands run unsandboxed
@@ -1697,16 +1799,18 @@ Turn on [sandboxing](https://code.claude.com/docs/en/sandboxing) for Bash comman
 }
 ```
 
-On Linux and WSL2 the sandbox needs `bubblewrap` and `socat`; see [Set up Linux and WSL2](https://code.claude.com/docs/en/sandboxing#set-up-linux-and-wsl2). When the sandbox can't start, Claude Code shows a warning and runs commands unsandboxed unless you also set [`failIfUnavailable`](#sandbox-failifunavailable).
+On Linux and WSL2 the sandbox needs `bubblewrap` and `socat`; see [Set up Linux and WSL2](https://code.claude.com/docs/en/sandboxing#set-up-linux-and-wsl2). When the sandbox can't start, Claude Code runs commands unsandboxed unless you also set [`failIfUnavailable`](#sandbox-failifunavailable).
 
 ### `sandbox.failIfUnavailable`
 
-Make Claude Code exit with an error at startup when `sandbox.enabled` is `true` but the sandbox can't start, because a dependency is missing or the platform is unsupported. Without it, Claude Code shows a warning and runs commands unsandboxed. Use it in managed settings when your organization requires sandboxing as a hard gate.
+Make Claude Code exit with an error at startup when `sandbox.enabled` is `true` but the sandbox can't start, because a dependency is missing or the platform is unsupported. Without this key, Claude Code runs commands unsandboxed. Managed deployments that require sandboxing as a security gate can use this setting.
 
-* **Scope**: [`Any file`](#scopes)
+On a platform the sandbox doesn't support, Claude Code doesn't start with this key on. See [Enforce sandboxing with managed settings](https://code.claude.com/docs/en/sandboxing#enforce-sandboxing-with-managed-settings).
+
+* **Scope**: [`Any file`](#scopes), with [limits on project and local settings](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox)
 * **Type**: Boolean
   * `true`: Claude Code exits with an error at startup when `sandbox.enabled` is `true` but the sandbox can't start
-  * `false`: Claude Code shows a warning and runs commands unsandboxed
+  * `false`: Claude Code runs commands unsandboxed when the sandbox can't start
 * **Default**: `false`
 
 This makes every managed machine sandbox commands or refuse to start:
@@ -1728,7 +1832,7 @@ Let Claude Code run sandboxed Bash commands without a permission prompt. Command
 
 * **Scope**: [`Any file`](#scopes)
 * **Type**: Boolean
-  * `true`: Claude Code runs sandboxed Bash commands without a permission prompt, subject to `deny` rules and content-scoped `ask` rules; `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` turns auto-allow off
+  * `true`: Claude Code runs sandboxed Bash commands without a permission prompt, except in the cases that [Auto-allow mode](https://code.claude.com/docs/en/sandboxing#auto-allow-mode) describes; `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` turns auto-allow off
   * `false`: sandboxed commands go through the regular permission flow, so your allow rules and permission mode decide. The `/sandbox` **Mode** tab calls this regular permissions mode
 * **Default**: `true`
 
@@ -1743,15 +1847,15 @@ This keeps the sandbox on and sends sandboxed commands through the regular permi
 }
 ```
 
-See [Sandbox modes](https://code.claude.com/docs/en/sandboxing#sandbox-modes) for what auto-allow mode still prompts on and how it behaves in plan mode.
+See [Auto-allow mode](https://code.claude.com/docs/en/sandboxing#auto-allow-mode) for what auto-allow mode still prompts on and how it behaves in plan mode.
 
 ### `sandbox.excludedCommands`
 
-Name commands that Claude Code runs outside the sandbox, such as tools that don't work under it. Each entry uses the same syntax as the content of a `Bash(...)` [permission rule](https://code.claude.com/docs/en/permissions#permission-rule-syntax): an exact command, a prefix such as `docker *`, or a wildcard pattern.
+Name commands that Claude Code runs outside the sandbox, such as tools that don't work under it. Each entry uses the same syntax as the content of a `Bash(...)` [permission rule](https://code.claude.com/docs/en/permissions#permission-rule-syntax): an exact command, a prefix such as `docker *`, or a wildcard pattern. A pattern with no wildcard is an exact match, so `docker` matches only `docker` with no arguments.
 
 Your entries take a Bash call out of the sandbox only when they cover every command in it, and some call shapes stay sandboxed even then. A `docker *` entry alone doesn't take `npm ci && docker build .` out of the sandbox.
 
-* **Scope**: [`Any file`](#scopes)
+* **Scope**: [`Any file`](#scopes), with [limits on project and local settings](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox)
 * **Type**: array of command patterns
 * **Default**: unset, so no command is excluded
 
@@ -1770,19 +1874,22 @@ Claude Code keeps a Bash call sandboxed when it has one of these shapes, among o
 * A command substitution, a subshell, or a control-flow block such as `if` or `for`
 * A redirection, such as `docker build . > build.log`, other than one that only duplicates a file descriptor, as `2>&1` does
 * A command name that comes from a variable
+* A `git clone`, `git init`, `git worktree add`, `git worktree move`, or `git bundle create` with a path argument that is absolute, starts with `~`, or contains a `..` segment
 
-For example, `cd build && docker compose up` stays sandboxed under a `docker *` entry, and adding a `cd` entry doesn't change that.
+For example, `cd build && docker compose up` stays sandboxed under a `docker *` entry, and adding a `cd` entry doesn't change that. Under a `git *` entry, `git clone <url> vendor/lib` runs outside the sandbox, but `git clone <url> ~/tools` stays sandboxed. A clone writes a whole tree of files, possibly executable ones, wherever its destination path points.
 
-Excluded commands still go through the regular permission flow. Exclusion is a convenience, not a security boundary: prefer [`filesystem.allowWrite`](#sandbox-filesystem-allowwrite) when a tool only needs to write somewhere specific. Claude Code merges entries across every settings scope the session loads, and there is no managed-only lock for this list, so keep a managed list narrow.
+Excluded commands still go through the regular permission flow. Exclusion is a convenience, not a security boundary: when a tool only needs to write somewhere specific, [`filesystem.allowWrite`](#sandbox-filesystem-allowwrite) keeps it sandboxed.
+
+Entries from the settings scopes the session loads combine into one list unless the sandbox is [admin-required](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox). While it is, Claude Code ignores entries in `.claude/settings.json` and `.claude/settings.local.json`, so a cloned repository can't take commands out of the sandbox. Entries in managed settings, `--settings`, and your `~/.claude/settings.json` still apply, and no managed-only lock covers this list.
 
 ### `sandbox.allowUnsandboxedCommands`
 
-Let Claude retry a command outside the sandbox with the `dangerouslyDisableSandbox` parameter after the sandbox blocks it. Set it to `false` so Claude Code ignores that parameter completely and every command Claude runs must be sandboxed or appear in [`excludedCommands`](#sandbox-excludedcommands). The `/sandbox` **Overrides** tab shows that state as **Strict sandbox mode**. Use `false` in managed settings for policies that require strict sandboxing.
+Let Claude retry a command outside the sandbox with the `dangerouslyDisableSandbox` parameter after the sandbox blocks it. When it's `false`, Claude Code ignores that parameter. While the sandbox is running, commands Claude runs are then sandboxed unless they match an [`excludedCommands`](#sandbox-excludedcommands) entry. The `/sandbox` **Overrides** tab shows that state as **Strict sandbox mode**. A `false` in managed settings turns on strict sandbox mode for the developers it covers.
 
-* **Scope**: [`Any file`](#scopes)
+* **Scope**: [`Any file`](#scopes), with [a limit on project and local settings](https://code.claude.com/docs/en/sandboxing#turn-off-the-retry-with-strict-sandbox-mode)
 * **Type**: Boolean
   * `true`: Claude can retry a command outside the sandbox with the `dangerouslyDisableSandbox` parameter after the sandbox blocks it
-  * `false`: Claude Code ignores that parameter, so every command Claude runs is sandboxed or appears in `excludedCommands`
+  * `false`: Claude Code ignores that parameter, so while the sandbox is running, commands Claude runs are sandboxed unless they match an `excludedCommands` entry
 * **Default**: `true`
 
 This enforces strict sandbox mode for everyone the managed settings cover:
@@ -1796,13 +1903,15 @@ This enforces strict sandbox mode for everyone the managed settings cover:
 }
 ```
 
-An unsandboxed retry goes through the regular permission flow, with a prompt in Manual mode. See [The unsandboxed retry escape hatch](https://code.claude.com/docs/en/sandboxing#the-unsandboxed-retry-escape-hatch).
+A `false` from managed settings or `--settings` also makes the sandbox [admin-required](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox). A `false` in your user settings holds against a project's `true` but doesn't make the sandbox admin-required. Holding against a project's value requires Claude Code v2.1.285 or later.
 
-To see when commands you type yourself at the [`!` shell-mode prompt](https://code.claude.com/docs/en/interactive-mode#shell-mode-with-prefix) run sandboxed, see [strict sandbox mode](https://code.claude.com/docs/en/sandboxing#the-unsandboxed-retry-escape-hatch).
+Who approves an unsandboxed retry depends on your permission mode and allow rules. See [The unsandboxed retry escape hatch](https://code.claude.com/docs/en/sandboxing#the-unsandboxed-retry-escape-hatch).
+
+To see when commands you type yourself at the [`!` shell-mode prompt](https://code.claude.com/docs/en/interactive-mode#shell-mode-with-prefix) run sandboxed, see [strict sandbox mode](https://code.claude.com/docs/en/sandboxing#turn-off-the-retry-with-strict-sandbox-mode).
 
 ### `sandbox.filesystem`
 
-Control which paths sandboxed commands can read and write. By default they can write to the working directory, the session temp directory, and directories you add with `--add-dir`, `/add-dir`, or `permissions.additionalDirectories`, and can read the rest of the filesystem, including credential files. Widen or narrow that with the four path lists, or switch the filesystem layer off with `disabled`. See [Filesystem isolation](https://code.claude.com/docs/en/sandboxing#filesystem-isolation) for the default boundaries.
+Control which paths sandboxed commands can read and write. By default they can write to the working directory, the per-user temp directory, and directories you add with `--add-dir`, `/add-dir`, or `permissions.additionalDirectories`, and can read the rest of the filesystem, including credential files. Widen or narrow that with the four path lists, or switch the filesystem layer off with `disabled`. See [Filesystem isolation](https://code.claude.com/docs/en/sandboxing#filesystem-isolation) for the default boundaries.
 
 * **Scope**: [`Any file`](#scopes)
 * **Type**: object with `allowWrite`, `denyWrite`, `denyRead`, and `allowRead` arrays, plus the `allowManagedReadPathsOnly` and `disabled` Booleans
@@ -1823,7 +1932,7 @@ This lets sandboxed commands write to a build directory and your kubeconfig, and
 
 Claude Code enforces these lists at the OS sandbox boundary, so they apply to every subprocess a sandboxed command starts, such as `kubectl`, `terraform`, or `npm`. Claude Code adds your [permission rules](https://code.claude.com/docs/en/sandboxing#permission-rules) to the same lists: `Edit` allow and deny rules to `allowWrite` and `denyWrite`, `Read` deny rules to `denyRead`, and `WebFetch(domain:...)` allow and deny rules to the [`network`](#sandbox-network) domain lists.
 
-Unless a managed-only lock is set, Claude Code merges every list across the settings files the session loads. [`allowManagedReadPathsOnly`](#sandbox-filesystem-allowmanagedreadpathsonly) limits `allowRead` to entries from managed settings, and [`allowManagedDomainsOnly`](#sandbox-network-allowmanageddomainsonly) does the same for allowed domains.
+Unless a lock applies, Claude Code merges these lists across the settings files the session loads. [`allowManagedReadPathsOnly`](#sandbox-filesystem-allowmanagedreadpathsonly) limits `allowRead` to entries from managed settings, and [`allowManagedDomainsOnly`](#sandbox-network-allowmanageddomainsonly) does the same for allowed domains. [Repository locks](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox) leave out entries from a repository's settings files.
 
 [Configure sandboxing](https://code.claude.com/docs/en/sandboxing#configure-sandboxing) covers sources you exclude with `--setting-sources`. When you edit a list during a session, Claude Code [applies the change to the running session](https://code.claude.com/docs/en/settings#when-edits-take-effect).
 
@@ -1831,10 +1940,10 @@ Unless a managed-only lock is set, Claude Code merges every list across the sett
 
 Paths in `allowWrite`, `denyWrite`, `denyRead`, `allowRead`, and [`credentials.files`](#sandbox-credentials-files) resolve by their prefix:
 
-| Prefix            | Meaning                                                                                | Example                                                                   |
-| :---------------- | :------------------------------------------------------------------------------------- | :------------------------------------------------------------------------ |
-| `/`               | Absolute path from filesystem root                                                     | `/tmp/build` stays `/tmp/build`                                           |
-| `~/`              | Relative to home directory                                                             | `~/.kube` becomes `$HOME/.kube`                                           |
+| Prefix | Meaning | Example |
+| :- | :- | :- |
+| `/` | Absolute path from filesystem root | `/tmp/build` stays `/tmp/build` |
+| `~/` | Relative to home directory | `~/.kube` becomes `$HOME/.kube` |
 | `./` or no prefix | Relative to the project root for project settings, or to `~/.claude` for user settings | `./output` in `.claude/settings.json` resolves to `<project-root>/output` |
 
 The `//path` prefix for absolute paths also works. If you use single-slash `/path` expecting project-relative resolution, switch to `./path`. This syntax differs from [Read and Edit permission rules](https://code.claude.com/docs/en/permissions#read-and-edit), which use `//path` for absolute and `/path` for project-relative: sandbox filesystem paths use standard conventions, so `/tmp/build` is an absolute path.
@@ -1848,11 +1957,11 @@ Claude Code also removes a trailing `/**`, so `~/build/**` and `~/build` cover t
 
 ### `sandbox.filesystem.allowWrite`
 
-Add paths where sandboxed commands can write, beyond the working directory, the session temp directory, and the directories you've added with `--add-dir`, `/add-dir`, or `permissions.additionalDirectories`. Use it when a subprocess such as `kubectl` or a build tool needs to write outside the project.
+Add paths where sandboxed commands can write, beyond the working directory, the per-user temp directory, and the directories you've added with `--add-dir`, `/add-dir`, or `permissions.additionalDirectories`. Use it when a subprocess such as `kubectl` or a build tool needs to write outside the project.
 
-* **Scope**: [`Any file`](#scopes)
+* **Scope**: [`Any file`](#scopes), with [limits on project and local settings](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox)
 * **Type**: array of path strings, using the [sandbox path prefixes](#sandbox-path-prefixes)
-* **Default**: unset, so sandboxed commands can write to the working directory, the session temp directory, directories you've added with `--add-dir` or `/add-dir`, and directories in [`permissions.additionalDirectories`](#permissions-additionaldirectories)
+* **Default**: unset, so sandboxed commands can write to the working directory, the per-user temp directory, directories you've added with `--add-dir` or `/add-dir`, and directories in [`permissions.additionalDirectories`](#permissions-additionaldirectories)
 
 This lets a build write under `/tmp/build` and lets `kubectl` update your kubeconfig:
 
@@ -1866,7 +1975,7 @@ This lets a build write under `/tmp/build` and lets `kubectl` update your kubeco
 }
 ```
 
-Claude Code merges entries across every settings scope the session loads: user, project, local, and managed paths combine rather than replace each other, and Claude Code adds the paths from your `Edit(...)` allow permission rules. An `allowWrite` entry can't lift a [protected path](https://code.claude.com/docs/en/sandboxing#protected-paths).
+Claude Code merges `allowWrite` entries and the paths from your `Edit(...)` allow permission rules across the settings scopes the session loads, leaving out the ones from repository settings while [`permissions.blockReadsOutsideWorkingDirectories`](#sandboxed-commands-under-the-block) is on. [Repository locks](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox) can leave out a repository's entries too. An `allowWrite` entry can't lift a [protected path](https://code.claude.com/docs/en/sandboxing#protected-paths).
 
 ### `sandbox.filesystem.denyWrite`
 
@@ -1914,7 +2023,7 @@ Claude Code merges entries across every settings scope the session loads, and ad
 
 Re-open reading for specific paths inside a region that [`denyRead`](#sandbox-filesystem-denyread) blocks, to build workspace-only read access. An exact or wildcard `denyRead` entry stays blocked inside a broader `allowRead`, as the [overlap table](https://code.claude.com/docs/en/sandboxing#configure-sandboxing) shows. When a wildcard `denyRead` entry such as `~/**/.env` matches a directory, Claude Code blocks reads of its contents as well. Before v2.1.236 on macOS, Claude Code re-opened the paths a wildcard `denyRead` entry matched wherever a broader `allowRead` entry covered them, and left a matched directory's contents readable.
 
-* **Scope**: [`Any file`](#scopes)
+* **Scope**: [`Any file`](#scopes), with [limits on project and local settings](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox)
 * **Type**: array of path strings, using the [sandbox path prefixes](#sandbox-path-prefixes)
 * **Default**: unset
 
@@ -1931,7 +2040,7 @@ This blocks reads of your home directory except the project itself:
 }
 ```
 
-Claude Code resolves a `.` entry to the project root in project settings and to `~/.claude` in user settings. Claude Code merges entries across every settings file the session loads unless [`allowManagedReadPathsOnly`](#sandbox-filesystem-allowmanagedreadpathsonly) is set.
+Claude Code resolves a `.` entry to the project root in project settings and to `~/.claude` in user settings. Claude Code merges entries across the settings files the session loads unless [`allowManagedReadPathsOnly`](#sandbox-filesystem-allowmanagedreadpathsonly) is set, and leaves out entries from repository settings while [`permissions.blockReadsOutsideWorkingDirectories`](#sandboxed-commands-under-the-block) is on. [Repository locks](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox) can leave out a repository's entries too.
 
 ### `sandbox.filesystem.allowManagedReadPathsOnly`
 
@@ -1940,7 +2049,7 @@ Honor only the [`allowRead`](#sandbox-filesystem-allowread) entries that come fr
 * **Scope**: [`Managed`](#scopes)
 * **Type**: Boolean
   * `true`: Claude Code honors only the `allowRead` entries from managed settings
-  * `false`: `allowRead` entries merge from every settings scope the session loads
+  * `false`: `allowRead` entries from other settings files can merge in
 * **Default**: `false`
 
 This blocks reads of the home directory, re-opens `~/work`, and stops developers from re-opening anything else:
@@ -1991,7 +2100,7 @@ With the layer off, Claude Code doesn't enforce `denyRead` or `credentials.files
 
 Silence sandbox violation reports for paths you expect a command to probe and be refused, such as a tool that checks `/etc/hosts` on startup, so those denials don't show up as violations or in what Claude sees. The sandbox still blocks the access; only the report is suppressed. Keys are substrings to match against the command, with `*` matching every command, and values are substrings of the violation to ignore for that command, such as a filesystem path.
 
-* **Scope**: [`Any file`](#scopes)
+* **Scope**: [`Any file`](#scopes), with [limits on project and local settings](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox)
 * **Type**: object mapping a command substring to an array of violation substrings, usually paths
 * **Default**: unset, so every violation is reported
 
@@ -2009,7 +2118,7 @@ Silence sandbox violation reports for paths you expect a command to probe and be
 
 Run the Linux sandbox inside an unprivileged Docker container, where bubblewrap can't mount a fresh `/proc`. Instead the inner sandbox bind-mounts the container's existing `/proc`, which exposes process information that a fresh mount would hide. This reduces security; use it only when the outer container already provides the isolation you need.
 
-* **Scope**: [`Any file`](#scopes)
+* **Scope**: [`Any file`](#scopes), with [limits on project and local settings](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox)
 * **Type**: Boolean
   * `true`: the inner sandbox bind-mounts the container's existing `/proc` instead of mounting a fresh one
   * `false`: the sandbox mounts a fresh `/proc`, which doesn't work in an unprivileged Docker container
@@ -2024,13 +2133,13 @@ Run the Linux sandbox inside an unprivileged Docker container, where bubblewrap 
 }
 ```
 
-Linux and WSL2 only. See [Bubblewrap fails to start inside a container](https://code.claude.com/docs/en/sandboxing#troubleshooting).
+Linux and WSL2 only. See [Bubblewrap fails to start inside a container](https://code.claude.com/docs/en/sandboxing#bubblewrap-fails-to-start-inside-a-container).
 
 ### `sandbox.enableWeakerNetworkIsolation`
 
 Let sandboxed commands on macOS reach the system TLS trust service, `com.apple.trustd.agent`. Go-based tools such as `gh`, `gcloud`, and `terraform` need it to verify TLS certificates when you use [`network.httpProxyPort`](#sandbox-network-httpproxyport) with a MITM proxy and a custom CA. This reduces security by opening a potential data exfiltration path through the trust service.
 
-* **Scope**: [`Any file`](#scopes)
+* **Scope**: [`Any file`](#scopes), with [limits on project and local settings](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox)
 * **Type**: Boolean
   * `true`: sandboxed commands on macOS can reach `com.apple.trustd.agent`
   * `false`: sandboxed commands on macOS can't reach the system TLS trust service
@@ -2045,7 +2154,7 @@ Let sandboxed commands on macOS reach the system TLS trust service, `com.apple.t
 }
 ```
 
-If you don't use a MITM proxy, list the failing tools in [`excludedCommands`](#sandbox-excludedcommands) instead; see [Go-based CLIs fail TLS verification on macOS](https://code.claude.com/docs/en/sandboxing#troubleshooting).
+If you don't use a MITM proxy, list the failing tools in [`excludedCommands`](#sandbox-excludedcommands) instead; see [Go-based CLIs fail TLS verification on macOS](https://code.claude.com/docs/en/sandboxing#go-based-clis-fail-tls-verification-on-macos).
 
 ### `sandbox.allowAppleEvents`
 
@@ -2153,7 +2262,7 @@ When a managed `sandbox.credentials` entry fails validation, Claude Code keeps p
 
 * An entry in `files` or `envVars` that still has a valid `path` or `name` and a `mode` of `mask` or `deny`, such as one whose `extract` pattern has no capturing group, is degraded to `mode: "deny"` with a warning, so the credential stays blocked, not masked, until you fix the entry. A degraded `files` entry pins [`filesystem.disabled`](https://code.claude.com/docs/en/sandboxing#disable-filesystem-isolation) like an explicit `deny` entry, and the warning notes that its read block isn't enforced if managed settings turn filesystem isolation off.
 * An entry with an unknown `mode` or an invalid `path` or `name` is stripped.
-* Each case warns; whether an entry is degraded or stripped, the remaining valid entries are still enforced, and a wholly invalid `credentials` value is dropped while the rest of `sandbox` still applies.
+* Each case warns; whether an entry is degraded or stripped, the remaining valid entries are still enforced.
 
 Applies in v2.1.191 and later; before v2.1.221, every invalid entry was stripped. For the other managed keys with per-field handling, see [Invalid entries in managed settings](https://code.claude.com/docs/en/managed-settings#invalid-entries-in-managed-settings).
 
@@ -2182,7 +2291,7 @@ This hides your AWS credentials file and masks the `gh` hosts file, substituting
 
 Paths use the same [prefixes](#sandbox-path-prefixes) as the `sandbox.filesystem.*` settings, and Claude Code merges the arrays from every settings scope the session loads. [Protect credentials](https://code.claude.com/docs/en/sandboxing#protect-credentials) covers what still applies from sources you exclude with `--setting-sources`. `mask` entries require Claude Code v2.1.221 or later.
 
-`mask` substitution runs only through the sandbox proxy, so set [`sandbox.network.tlsTerminate`](#sandbox-network-tlsterminate), or [`allowPlaintextInject`](#sandbox-credentials-allowplaintextinject) for plain-HTTP test networks. `mask` applies to a single file, so list each credential file individually. Claude Code accepts but ignores the `mask` fields on a `deny` entry. [Mask credential files](https://code.claude.com/docs/en/sandboxing#mask-credential-files) covers which settings sources are honored and when an entry falls back to `deny`.
+`mask` substitution runs only through the sandbox proxy, so set [`sandbox.network.tlsTerminate`](#sandbox-network-tlsterminate), or [`allowPlaintextInject`](#sandbox-credentials-allowplaintextinject) for plain-HTTP test networks. `mask` applies to a single file, so list each credential file individually. Claude Code accepts but ignores the `mask` fields on a `deny` entry. [Mask credentials](https://code.claude.com/docs/en/sandboxing#mask-credentials) covers which settings sources are honored, and [Mask credential files](https://code.claude.com/docs/en/sandboxing#mask-credential-files) covers when an entry falls back to `deny`.
 
 <span id="sandbox-credentials-files-extract" />
 
@@ -2200,14 +2309,14 @@ Paths use the same [prefixes](#sandbox-path-prefixes) as the `sandbox.filesystem
 
 A `mask` entry accepts these optional fields. Without `extract` or `decode`, Claude Code replaces the entire file content with one sentinel. On macOS with filesystem isolation on, Claude Code applies a `mask` entry as `deny` before `extract` or `decode` runs; see [Mask credential files](https://code.claude.com/docs/en/sandboxing#mask-credential-files).
 
-| Field              | Type                                                                                                               | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| :----------------- | :----------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `extract`          | string, a regular expression with at least one capturing group                                                     | Mask only the text captured by group 1 of each match, so the rest of the file stays parseable. With `decode` also set, Claude Code checks each capture as a possible JWT instead of replacing it outright. Requires v2.1.221 or later                                                                                                                                                                                                                                                                                                                               |
-| `onExtractNoMatch` | `"warn"`, `"deny"`, or `"error"`; default `"warn"`                                                                 | What happens when `extract` or `decode` finds nothing to mask. `warn` leaves the file readable as-is inside the sandbox, `deny` makes it unreadable, and `error` stops sandbox setup until you fix the configuration. Claude Code treats `deny` as `error` when the read block wouldn't be enforced, because you [disable filesystem isolation](https://code.claude.com/docs/en/sandboxing#disable-filesystem-isolation) or a [`sandbox.filesystem.allowRead`](#sandbox-filesystem-allowread) entry re-opens the path. Requires v2.1.221 or later; the `decode` case requires v2.1.224 or later |
-| `decode`           | the string `"jwt"`                                                                                                 | Find JSON Web Tokens (JWTs) in the file, with a built-in pattern or with `extract` when set, verify each candidate, and replace it with a structurally valid fake token, so code inside the sandbox that decodes the token keeps working. When no candidate verifies, `onExtractNoMatch` governs the outcome. Requires v2.1.224 or later                                                                                                                                                                                                                            |
-| `maskClaims`       | array of strings, at least one claim name; requires `decode`                                                       | Mask only the named top-level payload claims inside each verified JWT and rebuild the token around the modified payload, so the other claims stay readable. When no named claim matches, `onExtractNoMatch` governs the outcome. Requires v2.1.224 or later                                                                                                                                                                                                                                                                                                         |
-| `maskDuplicates`   | Boolean, default `false`                                                                                           | Also replace verbatim copies of each masked value elsewhere in the file, such as a secret pasted into a comment. Claude Code matches raw substrings, so reserve it for long, high-entropy secrets. Consulted only when `extract` or `decode` is set. Requires v2.1.221 or later                                                                                                                                                                                                                                                                                     |
-| `injectHosts`      | array of strings, each a host that [`sandbox.network.allowedDomains`](#sandbox-network-alloweddomains) also admits | Narrow the hosts where the sandbox proxy substitutes the real value. When unset, the proxy substitutes it on requests to every host in `sandbox.network.allowedDomains`. Requires v2.1.221 or later                                                                                                                                                                                                                                                                                                                                                                 |
+| Field | Type | What it does |
+| :- | :- | :- |
+| `extract` | string, a regular expression with at least one capturing group | Mask only the text captured by group 1 of each match, so the rest of the file stays parseable. With `decode` also set, Claude Code checks each capture as a possible JWT instead of replacing it outright. Requires v2.1.221 or later |
+| `onExtractNoMatch` | `"warn"`, `"deny"`, or `"error"`; default `"warn"` | What happens when `extract` or `decode` finds nothing to mask. `warn` leaves the file readable as-is inside the sandbox, `deny` makes it unreadable, and `error` stops sandbox setup until you fix the configuration. Claude Code treats `deny` as `error` when the read block wouldn't be enforced, because you [disable filesystem isolation](https://code.claude.com/docs/en/sandboxing#disable-filesystem-isolation) or a [`sandbox.filesystem.allowRead`](#sandbox-filesystem-allowread) entry re-opens the path. Requires v2.1.221 or later; the `decode` case requires v2.1.224 or later |
+| `decode` | the string `"jwt"` | Find JSON Web Tokens (JWTs) in the file, with a built-in pattern or with `extract` when set, verify each candidate, and replace it with a structurally valid fake token, so code inside the sandbox that decodes the token keeps working. When no candidate verifies, `onExtractNoMatch` governs the outcome. Requires v2.1.224 or later |
+| `maskClaims` | array of strings, at least one claim name; requires `decode` | Mask only the named top-level payload claims inside each verified JWT and rebuild the token around the modified payload, so the other claims stay readable. When no named claim matches, `onExtractNoMatch` governs the outcome. Requires v2.1.224 or later |
+| `maskDuplicates` | Boolean, default `false` | Also replace verbatim copies of each masked value elsewhere in the file, such as a secret pasted into a comment. Claude Code matches raw substrings, so reserve it for long, high-entropy secrets. Consulted only when `extract` or `decode` is set. Requires v2.1.221 or later |
+| `injectHosts` | array of strings, each a host that [`sandbox.network.allowedDomains`](#sandbox-network-alloweddomains) also admits | Narrow the hosts where the sandbox proxy substitutes the real value. When unset, the proxy substitutes it on requests to every host in `sandbox.network.allowedDomains`. Requires v2.1.221 or later |
 
 This masks only the `oauth_token` value in the `gh` hosts file, replaces every other copy of it in the file, makes the file unreadable if the pattern matches nothing, and substitutes the real token only on requests to `api.github.com`:
 
@@ -2232,7 +2341,7 @@ This masks only the `oauth_token` value in the `gh` hosts file, replaces every o
 
 ### `sandbox.credentials.envVars`
 
-Protect environment variables from sandboxed commands. With `"mode": "deny"`, Claude Code removes the variable from the environment of sandboxed commands. With `"mode": "mask"`, sandboxed commands see a per-session sentinel value, and the sandbox proxy substitutes the real value on outbound requests to that entry's `injectHosts`, so tools such as `gh` and `npm` keep authenticating without ever holding the real credential. `"mode": "mask"` requires Claude Code v2.1.199 or later.
+Protect environment variables from sandboxed commands. With `"mode": "deny"`, Claude Code removes the variable from the environment of sandboxed commands. With `"mode": "mask"`, sandboxed commands see a per-session sentinel value, and the sandbox proxy substitutes the real value on outbound requests to that entry's `injectHosts`, so tools such as `gh` and `npm` keep authenticating without ever holding the real credential.
 
 * **Scope**: [`Any file`](#scopes). Claude Code drops `mask` entries from project `.claude/settings.json` and local `.claude/settings.local.json`.
 * **Type**: array of objects, each with `name` and a `mode` of `"deny"` or `"mask"`, plus the optional [mask fields for environment variables](#mask-fields-for-environment-variables)
@@ -2253,9 +2362,9 @@ This removes `NPM_TOKEN` from sandboxed commands and masks `GITHUB_TOKEN`, subst
 }
 ```
 
-The `name` must start with a letter or underscore and contain only letters, digits, and underscores. Claude Code merges the arrays from every settings scope the session loads, and applies `deny` when the same variable appears with both modes. [Protect credentials](https://code.claude.com/docs/en/sandboxing#protect-credentials) covers what still applies from sources you exclude with `--setting-sources`. `mask` entries require Claude Code v2.1.199 or later.
+The `name` must start with a letter or underscore and contain only letters, digits, and underscores. Claude Code merges the arrays from every settings scope the session loads, and applies `deny` when the same variable appears with both modes. [Protect credentials](https://code.claude.com/docs/en/sandboxing#protect-credentials) covers what still applies from sources you exclude with `--setting-sources`.
 
-`mask` substitution runs only through the sandbox proxy, so set [`sandbox.network.tlsTerminate`](#sandbox-network-tlsterminate), or [`allowPlaintextInject`](#sandbox-credentials-allowplaintextinject) for plain-HTTP test networks; see [Mask environment variables](https://code.claude.com/docs/en/sandboxing#mask-environment-variables). Claude Code accepts but ignores the `mask` fields on a `deny` entry.
+`mask` substitution runs only through the sandbox proxy, so set [`sandbox.network.tlsTerminate`](#sandbox-network-tlsterminate), or [`allowPlaintextInject`](#sandbox-credentials-allowplaintextinject) for plain-HTTP test networks; see [Mask credentials](https://code.claude.com/docs/en/sandboxing#mask-credentials). Claude Code accepts but ignores the `mask` fields on a `deny` entry.
 
 <span id="sandbox-credentials-envvars-extract" />
 
@@ -2271,13 +2380,13 @@ The `name` must start with a letter or underscore and contain only letters, digi
 
 A `mask` entry accepts these optional fields. Without `extract` or `decode`, Claude Code replaces the entire value with one sentinel. `extract` and `decode` can't be combined on the same entry.
 
-| Field              | Type                                                                                                               | What it does                                                                                                                                                                                                                                                                                                                                                                                      |
-| :----------------- | :----------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `extract`          | string, a regular expression with at least one capturing group                                                     | Mask only the text captured by group 1 of each match, such as the password inside a `DATABASE_URL` connection string, so the rest of the value stays parseable. Requires v2.1.224 or later                                                                                                                                                                                                        |
-| `onExtractNoMatch` | `"warn"`, `"deny"`, or `"error"`; default `"warn"`. On an entry with `decode`, only `"warn"` is accepted           | What happens when `extract` matches nothing. `warn` passes the variable through unmasked, `deny` unsets it inside the sandbox, and `error` stops sandbox setup until you fix the configuration. Requires v2.1.224 or later                                                                                                                                                                        |
-| `decode`           | the string `"jwt"`                                                                                                 | Verify the whole value is a JWT and replace it with a structurally valid fake token, so code inside the sandbox that decodes the token keeps working; the proxy substitutes the whole real token on egress. A value that doesn't verify passes through unmasked with a warning. Requires v2.1.224 or later                                                                                        |
-| `maskClaims`       | array of strings, at least one claim name; requires `decode`                                                       | Mask only the named top-level payload claims inside the decoded JWT and rebuild the token around the modified payload, so the other claims stay readable. When no named claim matches, the variable passes through unmasked with a warning. Requires v2.1.224 or later                                                                                                                            |
-| `injectHosts`      | array of strings, each a host that [`sandbox.network.allowedDomains`](#sandbox-network-alloweddomains) also admits | Narrow the hosts where the sandbox proxy substitutes the real value. When unset, the proxy substitutes it on requests to every host in `sandbox.network.allowedDomains`. Write an IPv6 destination as the bare compressed address, such as `"::1"`, not the bracketed form; see [IPv6 destinations in `injectHosts`](https://code.claude.com/docs/en/sandboxing#ipv6-destinations-in-injecthosts). Requires v2.1.199 or later |
+| Field | Type | What it does |
+| :- | :- | :- |
+| `extract` | string, a regular expression with at least one capturing group | Mask only the text captured by group 1 of each match, such as the password inside a `DATABASE_URL` connection string, so the rest of the value stays parseable. Requires v2.1.224 or later |
+| `onExtractNoMatch` | `"warn"`, `"deny"`, or `"error"`; default `"warn"`. On an entry with `decode`, only `"warn"` is accepted | What happens when `extract` matches nothing. `warn` passes the variable through unmasked, `deny` unsets it inside the sandbox, and `error` stops sandbox setup until you fix the configuration. Requires v2.1.224 or later |
+| `decode` | the string `"jwt"` | Verify the whole value is a JWT and replace it with a structurally valid fake token, so code inside the sandbox that decodes the token keeps working; the proxy substitutes the whole real token on egress. A value that doesn't verify passes through unmasked with a warning. Requires v2.1.224 or later |
+| `maskClaims` | array of strings, at least one claim name; requires `decode` | Mask only the named top-level payload claims inside the decoded JWT and rebuild the token around the modified payload, so the other claims stay readable. When no named claim matches, the variable passes through unmasked with a warning. Requires v2.1.224 or later |
+| `injectHosts` | array of strings, each a host that [`sandbox.network.allowedDomains`](#sandbox-network-alloweddomains) also admits | Narrow the hosts where the sandbox proxy substitutes the real value. When unset, the proxy substitutes it on requests to every host in `sandbox.network.allowedDomains`. Write an IPv6 destination as the bare compressed address, such as `"::1"`, not the bracketed form; see [IPv6 destinations in `injectHosts`](https://code.claude.com/docs/en/sandboxing#ipv6-destinations-in-injecthosts) |
 
 This masks only the password inside `DATABASE_URL`, unsets the variable if the pattern matches nothing, and masks a JWT in `SERVICE_JWT` while leaving every claim except `api_key` readable:
 
@@ -2306,7 +2415,7 @@ This masks only the password inside `DATABASE_URL`, unsets the variable if the p
 
 ### `sandbox.credentials.allowPlaintextInject`
 
-Allow `mask` substitution on plain HTTP requests as well as TLS-terminated HTTPS. On plain HTTP the upstream identity is unverified and the credential travels in cleartext, so leave this off outside trusted test networks. Requires Claude Code v2.1.199 or later.
+Allow `mask` substitution on plain HTTP requests as well as TLS-terminated HTTPS. On plain HTTP the upstream identity is unverified and the credential travels in cleartext, so leave this off outside trusted test networks.
 
 * **Scope**: [`User or managed`](#scopes)
 * **Type**: Boolean
@@ -2323,8 +2432,6 @@ Allow `mask` substitution on plain HTTP requests as well as TLS-terminated HTTPS
   }
 }
 ```
-
-Requires Claude Code v2.1.199 or later.
 
 ### `sandbox.credentials.awsPairs`
 
@@ -2352,7 +2459,11 @@ This links three custom-named variables into one AWS credential for re-signing:
 }
 ```
 
-Each named variable must be a whole-value `mask` entry in [`sandbox.credentials.envVars`](#sandbox-credentials-envvars), without `extract` or `decode`, and can fill only one slot across all pairs.
+Each named variable must be a whole-value `mask` entry in [`sandbox.credentials.envVars`](#sandbox-credentials-envvars), without `extract` or `decode`, and can fill only one slot across all pairs. These rules also apply:
+
+* The proxy re-signs requests on the hosts listed in the access key ID entry's `injectHosts`
+* When `sessionTokenVar` is set, the proxy sends the real token as `x-amz-security-token` on re-signed requests
+* Naming any of the conventional variables in a pair replaces the automatic pairing
 
 ### `sandbox.credentials.sigv4`
 
@@ -2386,7 +2497,7 @@ Control which hosts, ports, and sockets sandboxed commands can reach. The sandbo
 
 * **Scope**: [`Any file`](#scopes). `strictAllowlist`, `allowManagedDomainsOnly`, and `tlsTerminate` are read from fewer sources, as their entries say.
 * **Type**: object with the sub-keys below
-* **Default**: unset, so no domains are pre-allowed and the sandbox prompts for each new host
+* **Default**: unset, so no domains are pre-allowed and your permission mode decides [what happens to each new host](https://code.claude.com/docs/en/sandboxing#hosts-outside-your-allowed-domains)
 
 This pre-allows GitHub and npm, blocks `uploads.github.com`, and lets commands bind to localhost:
 
@@ -2402,13 +2513,13 @@ This pre-allows GitHub and npm, blocks `uploads.github.com`, and lets commands b
 }
 ```
 
-Claude Code merges the array sub-keys across settings scopes and deduplicates them, so a project can add domains to your user list. `WebFetch(domain:...)` allow and deny [permission rules](https://code.claude.com/docs/en/sandboxing#permission-rules) feed the same allow and deny lists.
+Claude Code merges the array sub-keys across settings scopes, so a project can add domains to your user list unless a [repository lock](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox) applies. `WebFetch(domain:...)` allow and deny [permission rules](https://code.claude.com/docs/en/sandboxing#permission-rules) feed the same allow and deny lists.
 
 ### `sandbox.network.allowUnixSockets`
 
 List the Unix socket paths sandboxed commands can connect to on macOS. Claude Code ignores this list on Linux and WSL2, where the seccomp filter can't inspect socket paths; use [`allowAllUnixSockets`](#sandbox-network-allowallunixsockets) there instead.
 
-* **Scope**: [`Any file`](#scopes)
+* **Scope**: [`Any file`](#scopes), with [limits on project and local settings](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox)
 * **Type**: array of strings, each a socket path
 * **Default**: unset, so the macOS sandbox blocks every Unix socket
 
@@ -2428,7 +2539,7 @@ A socket path can grant broad access: allowing `/var/run/docker.sock`, for examp
 
 Let sandboxed commands connect to every Unix socket. On Linux and WSL2, the sandbox's [seccomp filter](https://code.claude.com/docs/en/sandboxing#set-up-linux-and-wsl2) blocks `socket(AF_UNIX, ...)` calls, so this is the only way to permit Unix sockets there. When the filter is missing, which `/sandbox` reports on its Dependencies tab, the sandbox doesn't block Unix-socket calls. See [Set up Linux and WSL2](https://code.claude.com/docs/en/sandboxing#set-up-linux-and-wsl2) for where the filter comes from.
 
-* **Scope**: [`Any file`](#scopes)
+* **Scope**: [`Any file`](#scopes), with [limits on project and local settings](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox)
 * **Type**: Boolean
   * `true`: sandboxed commands can connect to every Unix socket
   * `false`: the sandbox blocks Unix-socket connections: on macOS except the paths in `allowUnixSockets`, and on Linux and WSL2 through the seccomp filter when it's present
@@ -2448,12 +2559,12 @@ On WSL2, `true` also reopens the interop socket that launches Windows binaries s
 
 ### `sandbox.network.allowLocalBinding`
 
-Let sandboxed commands bind to localhost ports on macOS, for example to start a dev server.
+Let sandboxed commands on macOS listen on network ports, for example to start a dev server, and connect to any port on localhost. A command that listens on a non-loopback address accepts connections from other machines. The key has no effect on Linux and WSL2, where each sandboxed command has its own loopback interface. To reach a server on the host from Linux or WSL2, see [A command fails to reach a server on localhost](https://code.claude.com/docs/en/sandboxing#a-command-fails-to-reach-a-server-on-localhost).
 
-* **Scope**: [`Any file`](#scopes)
+* **Scope**: [`Any file`](#scopes), with [limits on project and local settings](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox)
 * **Type**: Boolean
-  * `true`: sandboxed commands can bind to localhost ports on macOS
-  * `false`: sandboxed commands on macOS can't bind to localhost ports
+  * `true`: sandboxed commands on macOS can listen on any local address and connect to any port on localhost
+  * `false`: sandboxed commands on macOS can't listen on a port or connect directly to servers on localhost
 * **Default**: `false`
 
 ```json settings.json theme={null}
@@ -2470,7 +2581,7 @@ Let sandboxed commands bind to localhost ports on macOS, for example to start a 
 
 List additional XPC and Mach service names the macOS sandbox may look up. Tools that communicate over XPC, such as the iOS Simulator or Playwright, need their services listed here.
 
-* **Scope**: [`Any file`](#scopes)
+* **Scope**: [`Any file`](#scopes), with [limits on project and local settings](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox)
 * **Type**: array of strings, each a service name; a single trailing `*` matches a prefix, and `"*"` alone matches every service
 * **Default**: unset
 
@@ -2490,9 +2601,9 @@ This allows every service under the `com.apple.coresimulator.` prefix:
 
 Pre-allow domains for outbound traffic from sandboxed commands, so the sandbox doesn't prompt for them. Wildcards such as `*.example.com` match subdomains, and an optional `:port` suffix limits an entry to one port; an entry without a port matches every port.
 
-* **Scope**: [`Any file`](#scopes). Only managed settings when [`allowManagedDomainsOnly`](#sandbox-network-allowmanageddomainsonly) is set.
+* **Scope**: [`Any file`](#scopes), with [limits on project and local settings](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox). Only managed settings when [`allowManagedDomainsOnly`](#sandbox-network-allowmanageddomainsonly) is set.
 * **Type**: array of strings, each a domain, wildcard pattern, or IP literal, with an optional `:port` suffix
-* **Default**: unset, so the sandbox prompts the first time a command reaches a new host
+* **Default**: unset, so your permission mode decides [what happens to each new host](https://code.claude.com/docs/en/sandboxing#hosts-outside-your-allowed-domains)
 
 This pre-allows GitHub on every port, every npm subdomain, and one API host on port 443 only:
 
@@ -2532,7 +2643,7 @@ An entry written with the trailing dot that marks a fully qualified domain name,
 
 ### `sandbox.network.strictAllowlist`
 
-Deny sandboxed commands access to hosts outside the allowlist instead of prompting for approval. The allowlist is [`allowedDomains`](#sandbox-network-alloweddomains) plus domains from `WebFetch(domain:...)` allow rules, or only the managed settings entries when [`allowManagedDomainsOnly`](#sandbox-network-allowmanageddomainsonly) is set. Requires Claude Code v2.1.219 or later.
+Deny sandboxed commands access to hosts outside the allowlist instead of prompting for approval. The allowlist is [`allowedDomains`](#sandbox-network-alloweddomains) plus domains from `WebFetch(domain:...)` allow rules, or only the managed settings entries when [`allowManagedDomainsOnly`](#sandbox-network-allowmanageddomainsonly) is set. [Locks that apply without an admin-required sandbox](https://code.claude.com/docs/en/sandboxing#locks-that-apply-without-an-admin-required-sandbox) covers a repository's entries. Requires Claude Code v2.1.219 or later.
 
 * **Scope**: [`User or managed`](#scopes). A repository can't turn it on or off.
 * **Type**: Boolean
@@ -2559,7 +2670,7 @@ Lock the network allowlist to what managed settings define. Claude Code then hon
 * **Scope**: [`Managed`](#scopes)
 * **Type**: Boolean
   * `true`: Claude Code honors only `allowedDomains` and `WebFetch(domain:...)` allow rules from managed settings and blocks a non-allowed domain instead of prompting
-  * `false`: domains from user, project, local, and `--settings` settings merge into the allowlist
+  * `false`: domains from other settings files can merge into the allowlist
 * **Default**: `false`
 
 This locks the allowlist to GitHub and npm and ignores any domains developers add:
@@ -2575,13 +2686,15 @@ This locks the allowlist to GitHub and npm and ignores any domains developers ad
 }
 ```
 
+While the key is `true`, the sandbox is [admin-required](https://code.claude.com/docs/en/sandboxing#repository-settings-under-an-admin-required-sandbox), and only managed settings can set a [proxy port](#sandbox-network-httpproxyport).
+
 Denied domains still merge from every source the session loads. See [Keep developers from widening the policy](https://code.claude.com/docs/en/sandboxing#keep-developers-from-widening-the-policy).
 
 ### `sandbox.network.httpProxyPort`
 
-Point the sandbox at your own HTTP proxy instead of the one Claude Code runs. Organizations do this to inspect HTTPS traffic, apply their own filtering rules, or log every request. When unset, Claude Code starts its own proxy for HTTP traffic.
+Point the sandbox at your own HTTP proxy instead of the one Claude Code runs. Organizations do this to inspect HTTPS traffic, apply their own filtering rules, or log requests. Your proxy takes over filtering, and Claude Code stops applying its domain lists and network prompts to traffic sent there. When unset, Claude Code starts its own proxy for HTTP traffic.
 
-* **Scope**: [`Any file`](#scopes)
+* **Scope**: [`Any file`](#scopes), unless [other sandbox settings limit which files can set a port](https://code.claude.com/docs/en/sandboxing#custom-proxy-configuration)
 * **Type**: number, a local TCP port
 * **Default**: unset, so Claude Code runs its own proxy
 
@@ -2599,9 +2712,9 @@ Set [`socksProxyPort`](#sandbox-network-socksproxyport) too if your proxy should
 
 ### `sandbox.network.socksProxyPort`
 
-Point the sandbox at your own SOCKS5 proxy instead of the one Claude Code runs. When unset, Claude Code starts its own proxy for SOCKS traffic.
+Point the sandbox at your own SOCKS5 proxy instead of the one Claude Code runs. Your proxy takes over filtering, and Claude Code stops applying its domain lists and network prompts to traffic sent there. When unset, Claude Code starts its own proxy for SOCKS traffic.
 
-* **Scope**: [`Any file`](#scopes)
+* **Scope**: [`Any file`](#scopes), unless [other sandbox settings limit which files can set a port](https://code.claude.com/docs/en/sandboxing#custom-proxy-configuration)
 * **Type**: number, a local TCP port
 * **Default**: unset, so Claude Code runs its own proxy
 
@@ -2635,7 +2748,7 @@ Make the sandbox proxy terminate TLS so it can read the contents of HTTPS reques
 }
 ```
 
-When more than one honored source sets it, Claude Code uses the value from the highest-precedence source: managed settings, then the `--settings` flag, then user settings. Requires Claude Code v2.1.199 or later.
+When more than one honored source sets it, Claude Code uses the value from the highest-precedence source: managed settings, then the `--settings` flag, then user settings.
 
 <span id="context-and-memory" />
 
@@ -2660,7 +2773,7 @@ Have Claude Code [compact the conversation automatically](https://code.claude.co
 }
 ```
 
-The manual `/compact` command keeps working while auto-compact is off.
+The manual `/compact` command keeps working while auto-compact is off. If you turn auto-compact off, [idle compaction](#idlecompaction) turns off too.
 
 ### `autoCompactWindow`
 
@@ -2677,7 +2790,7 @@ Set how full the context window gets before Claude Code [compacts automatically]
 }
 ```
 
-Set it with the [`/autocompact`](https://code.claude.com/docs/en/commands#all-commands) command, which writes this key to your user settings. [Set the auto-compact window](https://code.claude.com/docs/en/model-config#set-the-auto-compact-window) covers how the command, flag, variable, and setting interact.
+The [`/autocompact`](https://code.claude.com/docs/en/commands#all-commands) command saves a window for the current model under [`modelSettings`](#modelsettings), which takes precedence over this key in the same file for that model. [Set the auto-compact window](https://code.claude.com/docs/en/model-config#set-the-auto-compact-window) covers how the command, flag, variable, and setting interact.
 
 ### `autoMemoryDirectory`
 
@@ -2786,6 +2899,7 @@ This example turns off automatic compaction and routes API requests through a pr
 #### How `env` values interact with your shell
 
 * A value here overwrites the same variable exported in your shell, and when more than one settings file sets a variable, the [highest-precedence](https://code.claude.com/docs/en/settings#settings-precedence) one applies. [Variables Claude Code ignores in `env`](#variables-claude-code-ignores-in-env) lists the exceptions for project and local settings.
+* When the Claude Desktop app or a [self-hosted environment](https://code.claude.com/docs/en/self-hosted-environments) runner starts the session, the launch environment it builds takes precedence instead: Claude Code ignores an `env` value from any settings file for a variable the launch environment already sets. The [debug log](https://code.claude.com/docs/en/debug-your-config) names each ignored variable.
 * To cancel a shell export, set the variable to `""`. Claude Code treats an empty value as unset for provider selection, and subprocesses inherit the empty value.
 * `NO_COLOR` and `FORCE_COLOR` set here reach only subprocesses. To change Claude Code's own interface colors, set them in your shell before launching `claude`.
 * Values here are plain text in the settings file and reach every subprocess Claude Code starts. For an OTLP bearer token that rotates, use [`otelHeadersHelper`](#otelheadershelper); for API credentials, use [`apiKeyHelper`](#apikeyhelper).
@@ -2802,6 +2916,7 @@ This example turns off automatic compaction and routes API requests through a pr
 * Project and local settings can't set variables that a checked-out repository shouldn't control; set those in your shell, user settings, or managed settings instead. Claude Code drops each one, apart from a few values that turn telemetry off, and logs a warning you can see with `claude --debug`. They include:
 
   * Variables that choose where Claude Code stores or writes its own files: `CLAUDE_CONFIG_DIR`, `CLAUDE_CODE_TMPDIR`, and the operating-system directory variables such as `HOME`, `TMPDIR`, `TMP`, `TEMP`, and the `XDG_*` family.
+  * Windows variables that pick the programs and machine-wide configuration for the processes Claude Code starts, such as `SystemRoot`, `ComSpec`, `ProgramData`, `LOCALAPPDATA`, `PATHEXT`, `PSModulePath`, and the `ProgramFiles` family.
   * Variables that export session content: [`OTEL_LOG_RAW_API_BODIES`](https://code.claude.com/docs/en/env-vars#variables) and the detailed beta tracing pair `ENABLE_BETA_TRACING_DETAILED` and `BETA_TRACING_ENDPOINT`.
   * The [OpenTelemetry exporter](https://code.claude.com/docs/en/monitoring-usage) variables that turn telemetry on, choose where it goes, or choose what content it captures:
 
@@ -2817,12 +2932,17 @@ This example turns off automatic compaction and routes API requests through a pr
 
     Ignoring this group in project and local settings requires Claude Code v2.1.282 or later.
   * Variables that change how Claude Code starts or syncs, such as `CLAUDE_CODE_PROCESS_WRAPPER`, `CLAUDE_CODE_SYNC_SKILLS`, `CLAUDE_CODE_SYNC_PLUGINS`, `CLAUDE_CODE_PLUGIN_CACHE_DIR`, and `CLAUDE_CODE_PLUGIN_SEED_DIR`.
+  * Variables that set the timers on an unanswered dialog: [`CLAUDE_CODE_USER_DIALOG_TIMEOUT_MS`, `CLAUDE_AFK_TIMEOUT_MS`, and `CLAUDE_AFK_COUNTDOWN_MS`](https://code.claude.com/docs/en/env-vars#variables).
+  * [`CLAUDE_CODE_DISABLE_ATTACHMENTS`](https://code.claude.com/docs/en/env-vars#variables), which turns off attachment processing.
+  * [`CLAUDE_CODE_DISABLE_FILE_MENTIONS`](https://code.claude.com/docs/en/env-vars#variables), which stops Claude Code from expanding `@` mentions of files and directories.
 
-  Before v2.1.251, project and local settings could also set the variables in this list that choose where Claude Code writes its files or that export session content, except `HOME` and `XDG_CONFIG_HOME`.
+  Before v2.1.251, project and local settings could also set the variables in this list that choose where Claude Code writes its files or that export session content, except `HOME` and `XDG_CONFIG_HOME`. Before v2.1.290, they could also set the dialog timer variables and `CLAUDE_CODE_DISABLE_ATTACHMENTS`.
 * Identity variables that Claude Code's hosting environments own, such as `CLAUDE_CODE_REMOTE` and `CLAUDE_CODE_ACCOUNT_UUID`, are ignored from every file.
 * [`CLAUDE_CODE_MESSAGING_SOCKET` and `CLAUDE_CODE_MESSAGING_TOKEN`](https://code.claude.com/docs/en/env-vars#variables), which Claude Code exports itself, are ignored from every file. Ignoring the socket variable requires Claude Code v2.1.224 or later, and ignoring the token requires v2.1.228 or later.
 * [`CLAUDE_CODE_PROJECT_DIR_NAME`](https://code.claude.com/docs/en/sessions#name-the-project-directory-yourself), which Claude Code reads from the launch environment only, is ignored from every file; requires v2.1.234 or later.
 * [`CLAUDE_CODE_RESTRICTED`](https://code.claude.com/docs/en/env-vars#variables), which Claude Code reads from the launch environment only, is ignored from every file.
+* [`CLAUDE_CODE_DISABLE_POWERSHELL_CMD_RM_DENY`](https://code.claude.com/docs/en/env-vars#variables), which Claude Code reads from the launch environment only, is ignored from every file. The variable requires Claude Code v2.1.283 or later.
+* [`CLAUDE_CODE_DISABLE_DANGEROUS_RM_TIMEOUT`, `CLAUDE_CODE_DISABLE_SUBSTITUTION_RM_PROMPT`, and `CLAUDE_CODE_DISABLE_INLINE_SHELL_RM_PROMPT`](https://code.claude.com/docs/en/env-vars#variables), which Claude Code reads from the launch environment only, are ignored from every file.
 
 ### `fileCheckpointingEnabled`
 
@@ -2843,9 +2963,52 @@ Have Claude Code snapshot files before each edit so [`/rewind`](https://code.cla
 
 In a `-p` run or an Agent SDK session, Claude Code ignores this key. The SDK turns checkpointing on with its `enableFileCheckpointing` option, and a bare `-p` run needs `CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING=true`. See [File checkpointing in the Agent SDK](https://code.claude.com/docs/en/agent-sdk/file-checkpointing).
 
+### `idleCompaction`
+
+Idle compaction [compacts](https://code.claude.com/docs/en/context-window#what-survives-compaction) a long conversation that you've stepped away from, shortly before its prompt cache expires. Your next message then sends a summary instead of the whole conversation. When you come back, the conversation shows `Compacted while idle, before the prompt cache expired`.
+
+Idle compaction is on by default for conversations that meet all of these conditions:
+
+* **Session**: you're in an interactive terminal session
+* **Prompt cache**: the conversation is on the [one-hour prompt cache TTL](https://code.claude.com/docs/en/prompt-caching#which-ttl-each-request-gets)
+* **Feature flags**: Claude Code can [fetch feature flags from Anthropic](https://code.claude.com/docs/en/env-vars#features-that-need-feature-flag-fetching)
+* **Size**: the conversation's context has reached the token threshold, which you can [change](#change-the-idle-compaction-threshold) from its default of 200,000
+* **Idle time**: about 54 minutes have passed since the last request, and your computer is awake at that point
+
+To turn idle compaction off, set this key to `false`.
+
+* **Scope**: [`Any file`](#scopes)
+* **Type**: Boolean
+  * `true`: Claude Code compacts idle conversations that meet the conditions
+  * `false`: Claude Code doesn't compact while your session is idle
+* **Default**: `true`
+* **Per-session overrides**: [`DISABLE_AUTO_COMPACT`](https://code.claude.com/docs/en/env-vars) turns idle compaction off along with auto-compaction
+
+```json settings.json theme={null}
+{
+  "idleCompaction": false
+}
+```
+
+The key requires Claude Code v2.1.290 or later. On an earlier version, which ignores this key, turn off [`autoCompactEnabled`](#autocompactenabled) to stop idle compaction.
+
+#### Change the idle compaction threshold
+
+Set [`CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS`](https://code.claude.com/docs/en/env-vars) to the number of tokens a conversation's context must reach before idle compaction applies to it. Use a positive whole number. Values below `100000` are raised to `100000`, the lowest threshold.
+
+At the default, a conversation on a 200K context window auto-compacts before it reaches 200,000 tokens. This example lowers the threshold to 150,000 so that those conversations qualify:
+
+```json settings.json theme={null}
+{
+  "env": {
+    "CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS": "150000"
+  }
+}
+```
+
 ### `plansDirectory`
 
-Choose where Claude Code stores the plan files it writes in [plan mode](https://code.claude.com/docs/en/permission-modes#analyze-before-you-edit-with-plan-mode). Claude Code resolves the path relative to the project root and keeps the default when the path resolves outside it.
+Choose where Claude Code stores the plan files it writes in [plan mode](https://code.claude.com/docs/en/permission-modes#analyze-before-you-edit-with-plan-mode). Claude Code resolves the path relative to the project root.
 
 * **Scope**: [`Any file`](#scopes)
 * **Type**: string, a path relative to the project root
@@ -2856,6 +3019,11 @@ Choose where Claude Code stores the plan files it writes in [plan mode](https://
   "plansDirectory": "./plans"
 }
 ```
+
+Claude Code stores plans in `~/.claude/plans` instead of the directory you set in cases such as these:
+
+* **Outside the project root**: the path resolves outside the project root, as `"../plans"` does.
+* **Backslash on macOS, Linux, and WSL**: the resolved path contains a backslash, as the Windows-style `"docs\\plans"` does. Write `"docs/plans"`, which works on Windows too.
 
 ### `skillListingBudgetFraction`
 
@@ -2903,7 +3071,7 @@ Change how Claude Code looks and behaves in your terminal: theme, editor mode, s
 
 ### `askUserQuestionTimeout`
 
-Let an unanswered [`AskUserQuestion`](https://code.claude.com/docs/en/tools-reference) dialog auto-continue after a period of idle time, submitting whatever options you had already selected. Set it when you step away and want Claude to continue without you. With the default, questions wait until you answer them. Requires Claude Code v2.1.200 or later.
+Let an unanswered [`AskUserQuestion`](https://code.claude.com/docs/en/tools-reference) dialog auto-continue after a period of idle time, submitting whatever options you had already selected. Set it when you step away and want Claude to continue without you. With the default, questions wait until you answer them. For when the timer pauses or never starts, see [Question auto-continue timeout](https://code.claude.com/docs/en/tools-reference#question-auto-continue-timeout).
 
 * **Scope**: [`User or managed`](#scopes)
 * **Type**: string, one of `"60s"`, `"5m"`, `"10m"`, or `"never"`
@@ -2916,7 +3084,7 @@ Let an unanswered [`AskUserQuestion`](https://code.claude.com/docs/en/tools-refe
 }
 ```
 
-Appears in `/config` as **Question auto-continue timeout**, which writes this key to user settings; Claude Code hides the row while managed settings or the `--settings` flag set the key. Requires Claude Code v2.1.200 or later.
+Appears in `/config` as **Question auto-continue timeout**, which writes this key to user settings; Claude Code hides the row while managed settings or the `--settings` flag set the key.
 
 ### `autoContinueAtUsageLimit`
 
@@ -3156,13 +3324,13 @@ With this configured, when `PROJ-1234` appears in a tool result or in Claude's r
 
 Each entry's URL, label, and badge count are bounded as follows:
 
-| Constraint  | Behavior                                                                                                                                                                                           |
-| :---------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| URL origin  | Captured values are URL-encoded and the constructed URL must share the template's literal origin. A capture can fill a path segment or query value but can't change where the link points          |
-| URL length  | Constructed URLs longer than 2048 characters are dropped                                                                                                                                           |
-| URL scheme  | Must be `https`, `http`, or a recognized editor or workspace deep-link scheme: `vscode`, `vscode-insiders`, `cursor`, `windsurf`, `zed`, `jetbrains`, `idea`, `slack`, `linear`, `notion`, `figma` |
-| Label       | Defaults to the matched text and is truncated to 28 display columns                                                                                                                                |
-| Badge count | At most 5 badges render. The oldest is displaced by newer matches and `/clear` removes them                                                                                                        |
+| Constraint | Behavior |
+| :- | :- |
+| URL origin | Captured values are URL-encoded and the constructed URL must share the template's literal origin. A capture can fill a path segment or query value but can't change where the link points |
+| URL length | Constructed URLs longer than 2048 characters are dropped |
+| URL scheme | Must be `https`, `http`, or a recognized editor or workspace deep-link scheme: `vscode`, `vscode-insiders`, `cursor`, `windsurf`, `zed`, `jetbrains`, `idea`, `slack`, `linear`, `notion`, `figma` |
+| Label | Defaults to the matched text and is truncated to 28 display columns |
+| Badge count | At most 5 badges render. The oldest is displaced by newer matches and `/clear` removes them |
 
 When a turn completes, Claude Code matches each entry's `pattern` regex against the turn output on the main thread, so a slow regex blocks the UI until it finishes. Nested quantifiers such as `(a+)+$` can take exponentially long against certain inputs and freeze the session, so keep each `pattern` linear and avoid nesting `+` or `*`.
 
@@ -3179,6 +3347,20 @@ In v2.1.238 through v2.1.260, setting it to `"readline"` made `Ctrl+W` delete ba
 * **Scope**: [`Any file`](#scopes)
 * **Type**: string, `"classic"` or `"readline"`
 * **Default**: unset
+
+### `maxProseWidth`
+
+Cap the width of the prose in Claude's responses so lines stay readable in a wide terminal. Paragraphs, headings, lists, and blockquotes wrap within this many columns, while tables and code blocks keep the full terminal width. Requires Claude Code v2.1.282 or later.
+
+* **Scope**: [`Any file`](#scopes)
+* **Type**: number of terminal columns, a whole number, minimum `40`. Claude Code ignores any other value
+* **Default**: unset, so prose wraps at the terminal edge
+
+```json settings.json theme={null}
+{
+  "maxProseWidth": 80
+}
+```
 
 ### `prefersReducedMotion`
 
@@ -3313,7 +3495,7 @@ While Claude works, the spinner line rotates through short tips about Claude Cod
 
 ### `spinnerTipsOverride`
 
-Add your own tips to the [spinner tips](#spinnertipsenabled) that Claude Code shows while Claude works, or replace the built-in tips with yours. Claude Code puts your tips in the same rotation as the built-in ones: it picks the tip that has gone unshown the longest, skips tips still in their cooldown, and breaks ties by priority.
+Add your own tips to the [spinner tips](#spinnertipsenabled) that Claude Code shows while Claude works, or replace the built-in tips with yours. Claude Code puts your tips in the same rotation as the built-in ones.
 
 If you set [`spinnerTipsEnabled`](#spinnertipsenabled) to `false`, Claude Code hides all tips, yours included.
 
@@ -3321,16 +3503,16 @@ If you set [`spinnerTipsEnabled`](#spinnertipsenabled) to `false`, Claude Code h
 * **Type**: object with `tips`, `tipsFile`, `label`, and `excludeDefault` fields, each optional
 * **Default**: unset, so Claude Code shows only the built-in tips
 
-Tip objects, `tipsFile`, `label`, and the Scope line's rule that project and local settings contribute plain strings only require Claude Code v2.1.247 or later. On earlier versions, a project or local file's `excludeDefault` applies too.
+Tip objects, `tipsFile`, `label`, and the Scope line's rule that project and local settings contribute plain strings only require Claude Code v2.1.247 or later.
 
 Each `tips` entry is a plain string or an object with these fields:
 
-| Field              | Required | Description                                                                                                                                                                                                |
-| :----------------- | :------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`               | Yes      | Up to 64 letters, digits, `.`, `_`, or `-`. Claude Code keys the tip's show history on it, so the tip's cooldown survives reordering the list. Of two entries with the same id, Claude Code uses the first |
-| `text`             | Yes      | The tip, one line of up to 500 characters. Claude Code strips ANSI escapes and control characters and collapses whitespace                                                                                 |
-| `cooldownSessions` | No       | Sessions Claude Code waits before showing the tip again, `0` to `1000`, default `0`                                                                                                                        |
-| `priority`         | No       | Order among tips that have gone unshown equally long, higher first, `-10` to `10`, default `0`                                                                                                             |
+| Field | Required | Description |
+| :- | :- | :- |
+| `id` | Yes | Up to 64 letters, digits, `.`, `_`, or `-`. Claude Code keys the tip's show history on it, so the tip's cooldown survives reordering the list. Of two entries with the same id, Claude Code uses the first |
+| `text` | Yes | The tip, one line of up to 500 characters. Claude Code strips ANSI escapes and control characters and collapses whitespace |
+| `cooldownSessions` | No | Sessions Claude Code waits before showing the tip again, `0` to `1000`, default `0` |
+| `priority` | No | Order among tips that have gone unshown equally long, higher first, `-10` to `10`, default `0` |
 
 Claude Code reads a plain string as a tip with those defaults and a position-based id, so its show history resets when you reorder the list. Give a tip an `id` to keep its history across edits.
 
@@ -3770,6 +3952,11 @@ Set this key to `false` to leave both out, for example when you use your own git
 }
 ```
 
+If you replace the system prompt in [non-interactive mode](https://code.claude.com/docs/en/headless) or the Agent SDK, the session starts without the snapshot even when this key is `true`:
+
+* **`-p` runs**: you replace the prompt when you pass [`--system-prompt`](https://code.claude.com/docs/en/cli-reference#system-prompt-flags) or `--system-prompt-file`. You also replace it when you run a custom agent with its own prompt, selected with [`--agent`](https://code.claude.com/docs/en/sub-agents#invoke-subagents-explicitly) or the [`agent`](#agent) setting. Outside [bare mode](https://code.claude.com/docs/en/headless#start-faster-with-bare-mode), to keep the snapshot, run without a custom agent and add your instructions with [`--append-system-prompt`](https://code.claude.com/docs/en/cli-reference#system-prompt-flags) instead of replacing the prompt.
+* **[Agent SDK](https://code.claude.com/docs/en/agent-sdk/modifying-system-prompts)**: you replace the prompt with a custom system prompt or a custom main-thread agent. If you set no system prompt, the SDK uses its minimal default and the session starts without the snapshot too. Outside [bare mode](https://code.claude.com/docs/en/headless#start-faster-with-bare-mode), to keep the snapshot, use the `claude_code` preset without a custom `agent`.
+
 ### `prUrlTemplate`
 
 Point the PR links Claude Code renders, in the footer badge and in tool-result summaries, at an internal code-review tool instead of `github.com`. Claude Code substitutes `{host}`, `{owner}`, `{repo}`, `{number}`, and `{url}` from the PR URL. [GitLab merge request](https://code.claude.com/docs/en/interactive-mode#gitlab-merge-requests) links on both surfaces keep their GitLab URL.
@@ -3792,7 +3979,7 @@ Set the attribution text Claude Code adds to git commits, including any trailers
 
 * **Scope**: [`Any file`](#scopes)
 * **Type**: string
-* **Default**: unset, so Claude Code adds `Co-Authored-By: <name> <noreply@anthropic.com>`. The name is the session's active model, such as `Claude Sonnet 5`.
+* **Default**: unset, so Claude Code adds `Co-Authored-By: <name> <noreply@anthropic.com>`. The name is the model in use when the commit is made, such as `Claude Sonnet 5`. When a [subagent](https://code.claude.com/docs/en/sub-agents) makes the commit, the trailer names the subagent's model.
   * When Claude Code recognizes the model as a Claude model but can't confirm its exact version, it writes `Claude` alone.
   * When it can't match the model ID to any Claude model, such as a third-party model served through a custom [`ANTHROPIC_BASE_URL`](https://code.claude.com/docs/en/env-vars), it writes `Claude Code`.
 
@@ -3887,8 +4074,8 @@ Restrict hook execution to hooks your organization deploys.
 When you set it to `true`, Claude Code changes which hooks and hook-like commands load:
 
 * **Managed and SDK hooks run**: hooks from managed settings and hooks the [Agent SDK](https://code.claude.com/docs/en/agent-sdk/overview) registers in process
-* **Force-enabled plugin hooks run**: hooks from plugins your managed settings force-enable through [`enabledPlugins`](#enabledplugins). Claude Code matches on the full `plugin@marketplace` ID, so a plugin with the same name from a different marketplace stays blocked. This lets you distribute vetted hooks through an organization marketplace while blocking everything else
-* **Everything else is blocked**: user, project, and local hooks, hooks from other plugins, and hooks declared in agent frontmatter
+* **Force-enabled plugin hooks run**: hooks from plugins your managed settings force-enable through [`enabledPlugins`](#enabledplugins). Claude Code matches on the full `plugin@marketplace` ID, so a plugin with the same name from a different marketplace stays blocked. This lets you distribute vetted hooks through an organization marketplace while blocking everything else. A [mod](https://code.claude.com/docs/en/plugins/mods/overview) in such a plugin loads only when it [counts as your organization's](https://code.claude.com/docs/en/plugins/mods/admin#install-your-organizations-mods)
+* **Everything else is blocked**: user, project, and local hooks, hooks and mods from other installed plugins, and hooks declared in agent frontmatter. [Mods built into Claude Code](https://code.claude.com/docs/en/plugins/mods/overview#mods-built-into-claude-code) keep running. To block only users' mods, set [`allowManagedModsOnly`](https://code.claude.com/docs/en/plugins/mods/admin#set-options-on-the-built-in-guard) instead.
 * **Command-sourced plugins are disabled**: Claude Code also disables plugins with a [`command` source](https://code.claude.com/docs/en/plugins/marketplace-reference#command-plugin-source), including plugins force-enabled in managed `enabledPlugins`, unless you set [`disableCommandPluginSources`](#disablecommandpluginsources) to `false` explicitly
 * **Marketplace `headersHelper` commands are blocked**: Claude Code also blocks marketplace [`headersHelper` commands](https://code.claude.com/docs/en/plugins/host-marketplace#authenticate-archive-downloads) unless [`disableCommandPluginSources`](#disablecommandpluginsources) is explicitly set to `false`, except for a marketplace that managed settings themselves declare. Requires Claude Code v2.1.238 or later
 * **Status line and file suggestion narrow to managed settings**: Claude Code reads [`statusLine`](https://code.claude.com/docs/en/statusline), [`fileSuggestion`](#filesuggestion), and [`subagentStatusLine`](https://code.claude.com/docs/en/statusline#subagent-status-lines) from managed settings only, following the [status line and file suggestion gates](#status-line-and-file-suggestion-gates)
@@ -3915,6 +4102,13 @@ The reach depends on which file carries the key:
 
 * **In managed settings**: Claude Code disables every configured hook, including managed ones, and keeps running the hooks the [Agent SDK](https://code.claude.com/docs/en/agent-sdk/overview) registers in process
 * **In any other settings file**: Claude Code disables user, project, local, and plugin hooks; managed hooks, Agent SDK hooks, and hooks from plugins force-enabled in managed [`enabledPlugins`](#enabledplugins) keep running
+
+The key also stops [mods](https://code.claude.com/docs/en/plugins/mods/overview), which are plugins whose code registers hooks:
+
+* **In managed settings**: the mods in every installed plugin stop, your organization's included
+* **In any other settings file**: the mods you installed stop, and [your organization's mods](https://code.claude.com/docs/en/plugins/mods/admin#install-your-organizations-mods) keep running
+
+Mods built into Claude Code keep running in both cases. Each has [its own switch](https://code.claude.com/docs/en/plugins/mods/overview#mods-built-into-claude-code).
 
 Keeping Agent SDK hooks running when managed settings set this key requires Claude Code v2.1.242 or later.
 
@@ -4299,16 +4493,16 @@ You can also write this key as `allowedMarketplaces`; [Marketplace key aliases](
 
 Each entry below shows one allowlist entry per source type and the fields it accepts. Most types match exactly; `hostPattern` and `pathPattern` match by regex, and `github` entries can use an [owner wildcard](#owner-wildcards).
 
-| Source        | Example entry                                                                                                                   | Fields                                                                                                                              |
-| :------------ | :------------------------------------------------------------------------------------------------------------------------------ | :---------------------------------------------------------------------------------------------------------------------------------- |
-| `github`      | `{ "source": "github", "repo": "acme-corp/plugins", "ref": "main", "path": "marketplace" }`                                     | `repo` required; `ref` is a branch or tag; `path` is a subdirectory                                                                 |
-| `git`         | `{ "source": "git", "url": "https://gitlab.example.com/tools/plugins.git", "ref": "production" }`                               | `url` required; `ref` and `path` as for `github`                                                                                    |
-| `url`         | `{ "source": "url", "url": "https://plugins.example.com/marketplace.json", "headers": { "Authorization": "Bearer ${TOKEN}" } }` | `url` required; `headers` adds HTTP headers for authenticated access                                                                |
-| `file`        | `{ "source": "file", "path": "/opt/acme-corp/plugins/marketplace.json" }`                                                       | `path` required, the absolute path to a `marketplace.json` file                                                                     |
-| `directory`   | `{ "source": "directory", "path": "/opt/acme-corp/approved-marketplaces" }`                                                     | `path` required, the absolute path to a directory containing `.claude-plugin/marketplace.json`                                      |
-| `hostPattern` | `{ "source": "hostPattern", "hostPattern": "^github\\.example\\.com$" }`                                                        | `hostPattern` required, a regex matched anywhere in the marketplace host; anchor it with `^` and `$` to match the whole host        |
-| `pathPattern` | `{ "source": "pathPattern", "pathPattern": "^/opt/approved/" }`                                                                 | `pathPattern` required, a regex matched anywhere in the `path` of `file` and `directory` sources; start it with `^` to pin a prefix |
-| `skills-dir`  | `{ "source": "skills-dir" }`                                                                                                    | No fields. Opts the `~/.claude/skills/` plugin scan back in                                                                         |
+| Source | Example entry | Fields |
+| :- | :- | :- |
+| `github` | `{ "source": "github", "repo": "acme-corp/plugins", "ref": "main", "path": "marketplace" }` | `repo` required; `ref` is a branch or tag; `path` is a subdirectory |
+| `git` | `{ "source": "git", "url": "https://gitlab.example.com/tools/plugins.git", "ref": "production" }` | `url` required; `ref` and `path` as for `github` |
+| `url` | `{ "source": "url", "url": "https://plugins.example.com/marketplace.json", "headers": { "Authorization": "Bearer ${TOKEN}" } }` | `url` required; `headers` adds HTTP headers for authenticated access |
+| `file` | `{ "source": "file", "path": "/opt/acme-corp/plugins/marketplace.json" }` | `path` required, the absolute path to a `marketplace.json` file |
+| `directory` | `{ "source": "directory", "path": "/opt/acme-corp/approved-marketplaces" }` | `path` required, the absolute path to a directory containing `.claude-plugin/marketplace.json` |
+| `hostPattern` | `{ "source": "hostPattern", "hostPattern": "^github\\.example\\.com$" }` | `hostPattern` required, a regex matched anywhere in the marketplace host; anchor it with `^` and `$` to match the whole host |
+| `pathPattern` | `{ "source": "pathPattern", "pathPattern": "^/opt/approved/" }` | `pathPattern` required, a regex matched anywhere in the `path` of `file` and `directory` sources; start it with `^` to pin a prefix |
+| `skills-dir` | `{ "source": "skills-dir" }` | No fields. Opts the `~/.claude/skills/` plugin scan back in |
 
 Three source types carry rules beyond the table:
 
@@ -4342,12 +4536,12 @@ Only the whole repository-name position can be a wildcard. Claude Code ignores e
 
 The matching rules differ between the two settings:
 
-| Rule                      | `strictKnownMarketplaces`                                                                                                                                             | `blockedMarketplaces`                                                           |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Matching source spellings | `owner/repo` form only. A git URL that clones the same repository doesn't match                                                                                       | Any spelling, including git URLs that resolve to the same github.com repository |
-| Owner case                | Case-sensitive, like exact-entry matching                                                                                                                             | Case-insensitive                                                                |
-| `ref`                     | Follows the exact-entry rules: an entry with a `ref` matches only sources with that exact ref, and an entry without one matches only sources that don't specify a ref | An entry without a `ref` blocks all refs of the repositories it matches         |
-| `path`                    | Looser than the exact-entry rules: an entry with a `path` requires that exact value, while an entry without one matches any path inside the repository                | An entry without a `path` blocks all paths of the repositories it matches       |
+| Rule | `strictKnownMarketplaces` | `blockedMarketplaces` |
+| - | - | - |
+| Matching source spellings | `owner/repo` form only. A git URL that clones the same repository doesn't match | Any spelling, including git URLs that resolve to the same github.com repository |
+| Owner case | Case-sensitive | Case-insensitive |
+| `ref` | Follows the exact-entry rules: an entry with a `ref` matches only sources with that exact ref, and an entry without one matches only sources that don't specify a ref | An entry without a `ref` blocks all refs of the repositories it matches |
+| `path` | Looser than the exact-entry rules: an entry with a `path` requires that exact value, while an entry without one matches any path inside the repository | An entry without a `path` blocks all paths of the repositories it matches |
 
 #### Exact matching
 
@@ -4386,14 +4580,14 @@ On these machines, add the marketplace to [`extraKnownMarketplaces`](#extraknown
 
 The two keys do different jobs. This table compares them:
 
-| Aspect            | `strictKnownMarketplaces`                | `extraKnownMarketplaces`                                                                             |
-| ----------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Purpose           | Organizational policy enforcement        | Team convenience                                                                                     |
-| Settings file     | Managed settings only                    | Any settings file                                                                                    |
-| Behavior          | Blocks non-allowlisted additions         | Registers missing marketplaces                                                                       |
-| When enforced     | Before network and filesystem operations | Immediately from user or managed settings; after the workspace trust dialog for a repository's files |
-| Can be overridden | No, highest precedence                   | Yes, by higher-precedence settings                                                                   |
-| Source format     | Direct source object                     | Named marketplace with a nested `source` object                                                      |
+| Aspect | `strictKnownMarketplaces` | `extraKnownMarketplaces` |
+| - | - | - |
+| Purpose | Organizational policy enforcement | Team convenience |
+| Settings file | Managed settings only | Any settings file |
+| Behavior | Blocks non-allowlisted additions | Registers missing marketplaces |
+| When enforced | Before network and filesystem operations | Immediately from user or managed settings; after the workspace trust dialog for a repository's files |
+| Can be overridden | No, highest precedence | Yes, by higher-precedence settings |
+| Source format | Direct source object | Named marketplace with a nested `source` object |
 
 To both restrict and pre-register a marketplace for all users, set both in `managed-settings.json`:
 
@@ -4432,7 +4626,7 @@ The four sub-key entries below list what each surface blocks and what still load
 
 ### `strictPluginOnlyCustomization.skills`
 
-Lock the `skills` surface. Claude Code stops loading skills from `~/.claude/skills/` and `.claude/skills/`, custom commands from `~/.claude/commands/` and `.claude/commands/`, skills under `--add-dir` directories, and skills synced from your claude.ai account, and keeps loading plugin skills, bundled skills, and skills in the managed policy directory.
+Lock the `skills` surface. Claude Code stops loading skills from `~/.claude/skills/` and `.claude/skills/`, custom commands from `~/.claude/commands/` and `.claude/commands/`, skills and commands under `--add-dir` directories, and skills synced from your claude.ai account. It keeps loading plugin skills, bundled skills, and skills in the managed policy directory.
 
 * **Scope**: [`Managed`](#scopes)
 * **Type**: the string `"skills"` in the [`strictPluginOnlyCustomization`](#strictpluginonlycustomization) array
@@ -4446,7 +4640,7 @@ Lock the `skills` surface. Claude Code stops loading skills from `~/.claude/skil
 
 ### `strictPluginOnlyCustomization.agents`
 
-Lock the `agents` surface. Claude Code stops loading agents from `~/.claude/agents/` and `.claude/agents/`, and keeps loading plugin agents, built-in agents, and agents in the managed policy directory.
+Lock the `agents` surface. Claude Code stops loading agents from `~/.claude/agents/`, `.claude/agents/`, and `--add-dir` directories. It keeps loading plugin agents, built-in agents, and agents in the managed policy directory.
 
 * **Scope**: [`Managed`](#scopes)
 * **Type**: the string `"agents"` in the [`strictPluginOnlyCustomization`](#strictpluginonlycustomization) array
@@ -4560,7 +4754,7 @@ The `source` object takes one of these forms:
 * **`git`**: any git URL, with `url`
 * **`url`**: a direct URL to a `marketplace.json` file, with `url` and optional `headers` and `headersHelper` for authenticated access. `headersHelper` names a command that prints headers whose values are too short-lived to list in `headers`, and requires Claude Code v2.1.238 or later
 * **`file`**: a local path to a `marketplace.json` file, with `path`
-* **`directory`**: a local filesystem path, with `path`, for development only
+* **`directory`**: a local filesystem path, with `path`. Use it for development, or for a marketplace your organization [deploys to each machine](https://code.claude.com/docs/en/plugins/mods/admin#install-your-organizations-mods).
 * **`settings`**: an inline marketplace declared directly in the settings file without a hosted repository, with `name` and `plugins`
 
 The `git` source type works with any git hosting service, including self-hosted GitLab and Bitbucket. Claude Code clones the repository with the same authentication that `git clone` would use on that machine: configured credential helpers or SSH keys. A provider token such as `GITHUB_TOKEN` takes effect through a credential helper that reads it. See [Private repositories](https://code.claude.com/docs/en/plugins/host-marketplace#grant-access-to-a-private-marketplace) for setup details.
@@ -4639,9 +4833,49 @@ This example stores the `api_endpoint` option for the `deployer` plugin from `ac
 }
 ```
 
-Built-in plugins store their options under the same key with an `@builtin` suffix. For example, the [**Project instructions**](https://code.claude.com/docs/en/memory#choose-which-instruction-files-load) setting that controls whether Claude Code reads `AGENTS.md` files is `pluginConfigs["agents-md@builtin"].options.instructionFiles`.
+Built-in plugins store their options under the same key with an `@builtin` suffix. For example, the [**Project instructions**](https://code.claude.com/docs/en/memory#choose-which-instruction-files-load) setting that controls whether Claude Code reads `AGENTS.md` files is `pluginConfigs["cc-plugin-agents-md@builtin"].options.instructionFiles`. Before v2.1.285, the plugin's ID was `agents-md@builtin`. Later versions read an entry under either ID.
 
-Claude Code ignores project and local entries because it substitutes these values into plugin hook, MCP, and LSP configurations, and a cloned repository must not be able to supply them. Before v2.1.207, project and local settings were also read.
+Claude Code ignores project and local entries because it substitutes these values into plugin hook, MCP, and LSP configurations, and a cloned repository must not be able to supply them.
+
+### `prependPlugins`
+
+List the managed plugins whose [mods](https://code.claude.com/docs/en/plugins/mods/overview) run before every mod a user installs, in the listed order. When you set this key in managed settings, name `sec-default@builtin` in the list to keep the built-in guard. In managed settings, Claude Code skips an id whose plugin doesn't count as your organization's. See [Install your organization's mods and set the order](https://code.claude.com/docs/en/plugins/mods/admin#install-your-organizations-mods) for those conditions and for how the two ordering keys work together.
+
+* **Scope**: [`User or managed`](#scopes). Claude Code reads the key from managed settings. It reads the key from user settings only on a machine with no managed settings, for a user who isn't signed in with a Team or Enterprise plan. It ignores the key in project and local settings and in a `--settings` file.
+* **Type**: array of `plugin-name@marketplace-name` strings
+* **Default**: unset
+
+```json managed-settings.json theme={null}
+{
+  "extraKnownMarketplaces": {
+    "acme-tools": {
+      "source": { "source": "directory", "path": "/opt/acme/claude-plugins" }
+    }
+  },
+  "enabledPlugins": { "acme-guard@acme-tools": true },
+  "prependPlugins": ["acme-guard@acme-tools", "sec-default@builtin"]
+}
+```
+
+### `appendPlugins`
+
+List the managed plugins whose [mods](https://code.claude.com/docs/en/plugins/mods/overview) run after every mod a user installs, in the listed order. An id listed in both `prependPlugins` and `appendPlugins` is prepended. In managed settings, Claude Code skips an id whose plugin doesn't [count as your organization's](https://code.claude.com/docs/en/plugins/mods/admin#install-your-organizations-mods).
+
+* **Scope**: [`User or managed`](#scopes). Claude Code reads the key from managed settings. It reads the key from user settings only on a machine with no managed settings, for a user who isn't signed in with a Team or Enterprise plan. It ignores the key in project and local settings and in a `--settings` file.
+* **Type**: array of `plugin-name@marketplace-name` strings
+* **Default**: unset
+
+```json managed-settings.json theme={null}
+{
+  "extraKnownMarketplaces": {
+    "acme-tools": {
+      "source": { "source": "directory", "path": "/opt/acme/claude-plugins" }
+    }
+  },
+  "enabledPlugins": { "acme-audit@acme-tools": true },
+  "appendPlugins": ["acme-audit@acme-tools"]
+}
+```
 
 ## MCP
 
@@ -4665,11 +4899,29 @@ Load the [claude.ai connectors](https://code.claude.com/docs/en/mcp#use-mcp-serv
 
 [`allowedMcpServers`](#allowedmcpservers) and [`deniedMcpServers`](#deniedmcpservers) still apply to the connectors this key loads. Connectors delivered to a [cloud session](https://code.claude.com/docs/en/claude-code-on-the-web) whose host carries a `managed-mcp.json`, such as a self-hosted runner, stay suppressed. See [Allow claude.ai connectors alongside the managed set](https://code.claude.com/docs/en/managed-mcp#allow-claude-ai-connectors-alongside-the-managed-set).
 
+### `allowClaudeInChromeWithManagedMcp`
+
+Let the built-in [Claude in Chrome](https://code.claude.com/docs/en/chrome) server run alongside a deployed `managed-mcp.json`. Without this key, a deployed `managed-mcp.json` blocks Claude in Chrome in terminal sessions. Requires Claude Code v2.1.282 or later.
+
+* **Scope**: [`Managed`](#scopes), from the device's own managed settings only: an MDM-deployed plist or HKLM registry key, or a system `managed-settings.json` file. Claude Code ignores it in server-managed settings, in the user-writable HKCU registry, and in user or project settings.
+* **Type**: Boolean
+  * `true`: the built-in Claude in Chrome server can run alongside a deployed `managed-mcp.json`
+  * `false`: a deployed `managed-mcp.json` blocks Claude in Chrome in terminal sessions
+* **Default**: `false`, so a deployed `managed-mcp.json` blocks Claude in Chrome in terminal sessions
+
+```json managed-settings.json theme={null}
+{
+  "allowClaudeInChromeWithManagedMcp": true
+}
+```
+
+A [`deniedMcpServers`](#deniedmcpservers) entry for `claude-in-chrome` still blocks the server with this key on. See [Allow Claude in Chrome alongside the managed set](https://code.claude.com/docs/en/managed-mcp#allow-claude-in-chrome-alongside-the-managed-set).
+
 ### `allowedMcpServers`
 
-Allowlist the MCP servers people can add. Claude Code blocks any server that doesn't match an entry wherever it's defined, including plugin servers, servers passed with `--mcp-config`, and servers from claude.ai.
+Allowlist the MCP servers people can add. Claude Code blocks any server that doesn't match an entry wherever it's defined, including plugin servers, servers a user passes with `--mcp-config`, and servers from claude.ai.
 
-Built-in servers such as Claude in Chrome, the `ide` server Claude Code connects to in a running [VS Code](https://code.claude.com/docs/en/vs-code#the-built-in-ide-mcp-server) or [JetBrains](https://code.claude.com/docs/en/jetbrains#the-built-in-ide-mcp-server) IDE, and servers the CLI itself configures are exempt from the allowlist, and the denylist still applies to them. In-process `type: "sdk"` servers are exempt from both lists; the [app that started the session](https://code.claude.com/docs/en/mcp#how-connectors-reach-claude-code) registers them.
+Built-in servers such as Claude in Chrome, the `ide` server Claude Code connects to in a running [VS Code](https://code.claude.com/docs/en/vs-code#the-built-in-ide-mcp-server) or [JetBrains](https://code.claude.com/docs/en/jetbrains#the-built-in-ide-mcp-server) IDE, and servers the CLI itself configures are exempt from the allowlist, and the denylist still applies to them. On Claude Code v2.1.268 or later, a [Claude Tag](https://code.claude.com/docs/en/claude-tag) session's Slack tools are also exempt from the allowlist, and the denylist still applies to them. In-process `type: "sdk"` servers are exempt from both lists; the [app that started the session](https://code.claude.com/docs/en/mcp#how-connectors-reach-claude-code) registers them.
 
 Servers your organization delivers are also exempt from the allowlist, and the denylist still applies to them. The exemption covers every [`managedMcpServers`](#managedmcpservers) entry, and any [`managed-mcp.json`](https://code.claude.com/docs/en/managed-mcp#exclusive-control-with-managed-mcp-json) entry whose values use no `${VAR}` expansion. See [How a server is evaluated](https://code.claude.com/docs/en/managed-mcp#how-a-server-is-evaluated) for the full check order. Before v2.1.259, servers from `managed-mcp.json` had to match too.
 
@@ -5022,7 +5274,7 @@ While a sparse worktree exists, git enables `extensions.worktreeConfig` in the r
 
 ### `worktree.bgIsolation`
 
-Choose how [background sessions](https://code.claude.com/docs/en/agent-view#how-file-edits-are-isolated) isolate their file edits. With `"worktree"`, Claude Code blocks `Edit` and `Write` in the main checkout until the session calls `EnterWorktree`; with `"none"`, background jobs edit the working copy directly. Set `"none"` for a repository where git worktrees are impractical.
+Choose how [background sessions](https://code.claude.com/docs/en/agent-view#how-file-edits-are-isolated) isolate their file edits. If you moved a session to the background with `←` or `/background`, that session edits files in place whatever this key says. With `"worktree"`, Claude Code blocks `Edit` and `Write` in the main checkout until the session calls `EnterWorktree`; with `"none"`, background jobs edit the working copy directly. Set `"none"` for a repository where git worktrees are impractical.
 
 * **Scope**: [`Any file`](#scopes)
 * **Type**: string, one of:
@@ -5038,7 +5290,27 @@ Choose how [background sessions](https://code.claude.com/docs/en/agent-view#how-
 }
 ```
 
-Outside a git repository, a [`WorktreeCreate` hook](https://code.claude.com/docs/en/worktrees#non-git-version-control) that fails releases the block so the session can edit the working directory in place; that release requires Claude Code v2.1.203 or later.
+Outside a git repository, a [`WorktreeCreate` hook](https://code.claude.com/docs/en/worktrees#non-git-version-control) that fails releases the block so the session can edit the working directory in place.
+
+### `worktree.location`
+
+Choose the folder on a remote machine where [Desktop SSH sessions](https://code.claude.com/docs/en/desktop#choose-where-ssh-session-worktrees-go) create their worktrees, instead of `<project-root>/.claude/worktrees/`. Only the desktop app reads this key: `--worktree`, the `EnterWorktree` tool, isolated subagents, and background sessions ignore it. Requires Claude Desktop v1.44121.0 or later.
+
+* **Scope**: [`User`](#scopes), in `~/.claude/settings.json` on the remote machine
+* **Type**: string, an absolute path or one that starts with `~/`
+* **Default**: unset, so worktrees go inside the project
+
+This example sets the folder to `~/worktrees`:
+
+```json settings.json theme={null}
+{
+  "worktree": {
+    "location": "~/worktrees"
+  }
+}
+```
+
+A **Worktree folder** set on the SSH connection in Desktop takes precedence. If your organization restricts which folders sessions may use, Desktop keeps worktrees inside the project.
 
 ## Remote, desktop, and notifications
 
@@ -5091,7 +5363,7 @@ Use [`enableArtifact`](#enableartifact) instead to turn off the [Artifact](https
 
 * **Scope**: [`Any file`](#scopes)
 * **Type**: Boolean
-  * `true`: Claude Code turns the Artifact tool off for every session the file applies to, and no other file turns it back on. Before v2.1.242, a higher-precedence file could override a lower file's `true` rather than the key acting as a lock
+  * `true`: Claude Code turns the Artifact tool off for every session the file applies to, and no other file turns it back on
   * `false`: ignored; to leave the tool on, remove the key
 * **Default**: unset, so the tool follows your account's [availability](https://code.claude.com/docs/en/artifacts#availability)
 * **Per-session overrides**: [`CLAUDE_CODE_DISABLE_ARTIFACT`](https://code.claude.com/docs/en/env-vars) set to `1` turns the tool off for one session
@@ -5122,7 +5394,7 @@ Stop Claude Code from registering the `claude-cli://` protocol handler with the 
 
 Turn off Code sessions that run on the device in the [desktop app](https://code.claude.com/docs/en/desktop#local-sessions-on-managed-devices), for deployments where developers should work on remote machines over SSH. In the Code tab, the **Local** environment stays in the environment dropdown but is grayed out and can't be selected, with a tooltip saying your organization turned it off; on Windows the WSL entry is grayed out the same way, though whether WSL sessions run on a managed device at all is [governed separately](https://code.claude.com/docs/en/admin-setup#wsl-sessions-in-claude-code-desktop). New sessions default to the first [SSH connection](https://code.claude.com/docs/en/desktop#ssh-sessions) if one is configured, and the app refuses to start or resume a session on the device, including an SSH connection back to the same machine. SSH sessions to other hosts and cloud sessions are unaffected. The desktop app reads this key; the terminal CLI ignores it. Requires Claude Desktop v1.37937.0 or later.
 
-* **Scope**: [`Managed`](#scopes)
+* **Scope**: [`Managed`](#scopes). By default, the desktop app reads the key from [one managed source](https://code.claude.com/docs/en/managed-settings#how-claude-code-combines-managed-sources).
 * **Type**: Boolean; only the JSON Boolean `true` takes effect
   * `true`: the desktop app offers no on-device Code sessions; existing local sessions stay listed but can't continue
   * `false`: local sessions stay available
@@ -5156,7 +5428,7 @@ Turn off [Remote Control](https://code.claude.com/docs/en/remote-control): Claud
 
 ### `enableArtifact`
 
-Turn off the [Artifact](https://code.claude.com/docs/en/artifacts) tool, which publishes session output as a private web page on claude.ai. When you turn the **Artifacts** row off in `/config`, Claude Code writes this key to your user settings, so you don't usually edit it by hand. Requires Claude Code v2.1.196 or later.
+Turn off the [Artifact](https://code.claude.com/docs/en/artifacts) tool, which publishes session output as a private web page on claude.ai. When you turn the **Artifacts** row off in `/config`, Claude Code writes this key to your user settings, so you don't usually edit it by hand.
 
 * **Scope**: [`Any file`](#scopes). Every file can turn the tool off, and none can turn it back on.
 * **Type**: Boolean
@@ -5170,7 +5442,7 @@ Turn off the [Artifact](https://code.claude.com/docs/en/artifacts) tool, which p
 }
 ```
 
-While a source other than your own user settings keeps the tool turned off, Claude Code hides the **Artifacts** row in `/config`, because turning it on there wouldn't change anything. [Disable artifacts](https://code.claude.com/docs/en/artifacts#disable-artifacts) lists every way to turn the tool off. Before v2.1.242, Claude Code ignored this key in project and local settings, and a file higher in the [precedence stack](https://code.claude.com/docs/en/settings#settings-precedence) could turn the tool back on over a lower file's off.
+While a source other than your own user settings keeps the tool turned off, Claude Code hides the **Artifacts** row in `/config`, because turning it on there wouldn't change anything. [Disable artifacts](https://code.claude.com/docs/en/artifacts#disable-artifacts) lists every way to turn the tool off.
 
 ### `inputNeededNotifEnabled`
 
@@ -5240,7 +5512,7 @@ Connect [Remote Control](https://code.claude.com/docs/en/remote-control) automat
 * **Type**: Boolean
   * `true`: Claude Code connects Remote Control automatically when each interactive session starts
   * `false`: Claude Code waits for `/remote-control`
-* **Default**: unset, so auto-connect follows your organization's admin default when one is set, and otherwise Claude Code's current default
+* **Default**: unset, so the [auto-connect default](https://code.claude.com/docs/en/remote-control#enable-remote-control-for-all-sessions) applies
 * **Per-session overrides**: `--remote-control` turns Remote Control on for one session even when this key is `false`, and no flag turns it off for one session
 
 ```json settings.json theme={null}
@@ -5253,9 +5525,9 @@ Claude Code ignores a `true` from project or local settings, so a repository can
 
 ### `sshConfigs`
 
-Add SSH connections to the [Desktop](https://code.claude.com/docs/en/desktop#pre-configure-ssh-connections-for-your-team) environment dropdown. Administrators use it to distribute shared connections to a team. Connections you define in managed settings show as managed, so users can select them but can't edit or delete them in the app.
+Add SSH connections to the [Desktop](https://code.claude.com/docs/en/desktop#pre-configure-ssh-connections-for-your-team) environment dropdown. Administrators use it to distribute shared connections to a team. Connections you define in managed settings show as managed. Users can select them and [set their own **Worktree folder**](https://code.claude.com/docs/en/desktop#choose-where-ssh-session-worktrees-go) for them, but can't edit anything else or delete them in the app.
 
-* **Scope**: [`User or managed`](#scopes). The desktop app reads this key.
+* **Scope**: [`User or managed`](#scopes). The desktop app reads this key. By default, it reads managed connections from [one managed source](https://code.claude.com/docs/en/managed-settings#how-claude-code-combines-managed-sources).
 * **Type**: array of objects, each with required `id`, `name`, and `sshHost` and optional `sshPort` and `sshIdentityFile`
 * **Default**: unset
 
@@ -5277,7 +5549,7 @@ This example adds one connection named `Dev VM` that connects to `user@dev.examp
 
 Limit the hosts a [Desktop SSH session](https://code.claude.com/docs/en/desktop#restrict-which-ssh-hosts-users-can-connect-to) can connect to. Only the Desktop app reads this key; the CLI doesn't. Patterns are case-insensitive: `*` matches any host, `*.example.com` matches `example.com` and every subdomain, and anything else is an exact match against the hostname after `~/.ssh/config` resolution. An empty array turns SSH sessions off.
 
-* **Scope**: [`Managed`](#scopes)
+* **Scope**: [`Managed`](#scopes). By default, Desktop reads the key from [one managed source](https://code.claude.com/docs/en/managed-settings#how-claude-code-combines-managed-sources).
 * **Type**: array of hostname patterns
 * **Default**: unset, so any host is allowed
 
@@ -5289,11 +5561,56 @@ This example allows `devboxes.example.com` and its subdomains, plus the exact ho
 }
 ```
 
+A value that Desktop can't read as a list of hosts, such as `true` or an object, counts as an empty array until you correct it, except `null`, which counts as unset. Requires Claude Desktop v2.26454.0 or later.
+
+If you set [`managedSourcesBehavior`](#managedsourcesbehavior) to `"merge"` in your highest-ranked source, Desktop combines the lists from every [admin source](https://code.claude.com/docs/en/managed-settings#how-claude-code-combines-managed-sources) and allows a host that matches any of them. If you set an empty array in one source, SSH sessions stay on for the hosts another source lists.
+
 <span id="authentication-and-login" />
 
 ## Authentication and providers
 
 Supply credentials through helper scripts and, for organizations, force a login method or organization. See [Authentication](https://code.claude.com/docs/en/authentication).
+
+### `allowedProviders`
+
+List the services a machine may reach Claude through, such as the Anthropic API, Amazon Bedrock, or an LLM gateway. A session on a provider that isn't listed is refused at startup, at login, and when it next contacts the API, so switching to an unlisted provider mid-session is refused too. The [refusal message](https://code.claude.com/docs/en/errors#managed-settings-dont-allow-this-api-provider) names what selected the provider and the steps to continue. Requires Claude Code v2.1.285 or later.
+
+* **Scope**: [`Managed`](#scopes). A list that the machine's own admin sources set, MDM policies and managed settings files, keeps applying when server-managed settings also deliver one: a session may then use only the providers on both lists, so a server-managed list can narrow what the machine allows but never widen it. Which machine source's `allowedProviders` counts follows [how Claude Code combines managed sources](https://code.claude.com/docs/en/managed-settings#how-claude-code-combines-managed-sources). A list delivered through server-managed settings alone reaches only the sessions that [fetch server-managed settings](https://code.claude.com/docs/en/server-managed-settings#platform-availability).
+* **Type**: array of strings, each one of:
+  * `"anthropic"`: the Anthropic API on Anthropic's own host, through a claude.ai or Console sign-in or an API key. Pair it with [`forceLoginMethod`](#forceloginmethod) or [`forceLoginOrgUUID`](#forceloginorguuid) to also restrict the sign-in
+  * `"bedrock"`: [Amazon Bedrock](https://code.claude.com/docs/en/amazon-bedrock)
+  * `"vertex"`: [Google Cloud's Agent Platform](https://code.claude.com/docs/en/google-vertex-ai), formerly Vertex AI
+  * `"foundry"`: [Microsoft Foundry](https://code.claude.com/docs/en/microsoft-foundry)
+  * `"anthropicAws"`: [Claude Platform on AWS](https://code.claude.com/docs/en/claude-platform-on-aws)
+  * `"mantle"`: the Amazon Bedrock [Mantle endpoint](https://code.claude.com/docs/en/amazon-bedrock#use-the-mantle-endpoint). A session that [runs Mantle alongside the Invoke API](https://code.claude.com/docs/en/amazon-bedrock#run-mantle-alongside-the-invoke-api) uses both providers, so list `"bedrock"` and `"mantle"` together for it
+  * `"customEndpoint"`: the Anthropic API or a cloud provider's API sent to another host, such as an [LLM gateway](https://code.claude.com/docs/en/llm-gateway) named by `ANTHROPIC_BASE_URL` or by a provider's endpoint variable such as `ANTHROPIC_BEDROCK_BASE_URL`. Claude Code admits it only for the exact value a managed [`env`](#env) block pins
+  * `"gateway"`: a [Cloud gateway](https://code.claude.com/docs/en/claude-apps-gateway) sign-in
+* **Default**: unset, so any provider can be used
+
+```json managed-settings.json theme={null}
+{
+  "allowedProviders": ["anthropic", "bedrock"]
+}
+```
+
+Each cloud provider's entry means that provider's own service, including its regional, FIPS, and private endpoints.
+
+An entry Claude Code doesn't recognize as a provider name is dropped and reported, and the rest of the list stays enforced. With an empty list, or one whose every entry is unrecognized, Claude Code refuses every provider and doesn't start on the machine.
+
+#### Endpoints that need a pin in managed `env`
+
+A pin is an endpoint variable's value set in a managed [`env`](#env) block. When a session sends a provider's traffic somewhere other than that provider's own service, Claude Code admits it only if the session's value is the same as the pin. These endpoints need one:
+
+* **`"customEndpoint"` sessions**: the variable that names the host, such as `ANTHROPIC_BASE_URL`
+* **Amazon Bedrock**: the AWS SDK's `AWS_ENDPOINT_URL`, `AWS_ENDPOINT_URL_BEDROCK`, and `AWS_ENDPOINT_URL_BEDROCK_RUNTIME` variables when they point outside Bedrock's own service. The session stays under `"bedrock"` rather than `"customEndpoint"`
+* **A gateway sign-in's URL**: the session stays under `"gateway"`, and [`forceLoginGatewayUrl`](#forcelogingatewayurl) also counts as the pin
+
+Which `env` blocks count as pins depends on where the list is set:
+
+* **An administrator source on the machine sets a list**: only the `env` blocks of the machine's own administrator sources count
+* **Only server-managed settings set a list**: an `env` value in those server-managed settings counts too
+
+The list doesn't judge a cloud provider's credential and tenancy variables or the network path, such as `HTTPS_PROXY` and certificate settings. Set those for the fleet in the managed `env` block.
 
 ### `apiKeyHelper`
 
@@ -5322,6 +5639,8 @@ In interactive sessions, when the command comes from project or local settings, 
 ### `awsAuthRefresh`
 
 Run your own command, such as `aws sso login`, to refresh the credentials in your `.aws` directory when the ones Claude Code has for [Amazon Bedrock](https://code.claude.com/docs/en/amazon-bedrock) stop working. Claude Code checks the current credentials against STS first and runs the command only when that check fails, then reads the refreshed `.aws` directory.
+
+When the check fails at the same time in several Claude Code processes that use the same command and credentials, such as separate terminals or IDE windows, one process runs the command and the rest wait for that run instead of starting their own. A process that has waited 60 seconds with a request pending runs the command itself. To turn this off, set [`CLAUDE_CODE_DISABLE_AUTH_REFRESH_LOCK`](https://code.claude.com/docs/en/env-vars) to `1`.
 
 * **Scope**: [`Any file`](#scopes)
 * **Type**: string, a shell command line
@@ -5355,7 +5674,7 @@ Unlike [`awsAuthRefresh`](#awsauthrefresh), Claude Code always runs this command
 
 Restrict which kind of account people can log in with. Set `"claudeai"` to allow only claude.ai accounts, `"console"` to allow only Claude Console accounts, or `"gateway"` to send people to a [cloud gateway](https://code.claude.com/docs/en/claude-apps-gateway) instead of a first-party login. Administrators set it in managed settings and pair it with [`forceLoginOrgUUID`](#forceloginorguuid) to keep developers' claude.ai logins inside one organization. If you set it to `"claudeai"` or `"console"` in any settings file, Claude Code also stops offering the [keyless Console sign-in](https://code.claude.com/docs/en/authentication#sign-in-without-an-api-key) in the sessions that file applies to.
 
-* **Scope**: [`Any file`](#scopes). Claude Code honors `"gateway"` only from a managed source on the machine: `managed-settings.json`, the macOS plist or Windows HKLM registry, or a policy helper. It treats `"gateway"` as unset in user, project, local, HKCU, and server-managed settings, the same rule as [`forceLoginGatewayUrl`](#forcelogingatewayurl).
+* **Scope**: [`Any file`](#scopes). Claude Code honors `"gateway"` from the same sources as [`forceLoginGatewayUrl`](#forcelogingatewayurl) and treats it as unset everywhere else.
 * **Type**: string, one of:
   * `"claudeai"`: only claude.ai accounts can log in
   * `"console"`: only Claude Console accounts can log in
@@ -5376,9 +5695,9 @@ When a managed source on the machine sets `"gateway"`, Claude Code doesn't use a
 
 Set the gateway URL the `/login` Cloud gateway screen connects to, so people reach your [cloud gateway](https://code.claude.com/docs/en/claude-apps-gateway) without typing its address. The screen has no URL field: with this key set, it shows your gateway URL and connects when the person presses Enter; without it, it tells them to contact their IT administrator.
 
-Either this key or `forceLoginMethod: "gateway"` makes the machine gateway-only, so `/login` opens on the Cloud gateway screen with no login-method picker. See [Administrator policy requires a Cloud gateway sign-in](https://code.claude.com/docs/en/errors#administrator-policy-requires-a-cloud-gateway-sign-in) for what happens to a leftover first-party login or API key. Set both keys so the screen connects instead of showing an error.
+In managed settings, either this key or `forceLoginMethod: "gateway"` makes the machine gateway-only, except for sessions that select a cloud provider with `CLAUDE_CODE_USE_*`. `/login` then opens on the Cloud gateway screen with no login-method picker. See [Administrator policy requires a Cloud gateway sign-in](https://code.claude.com/docs/en/errors#administrator-policy-requires-a-cloud-gateway-sign-in) for what happens to a leftover first-party login or API key. Set both keys so the screen connects instead of showing an error.
 
-* **Scope**: [`Managed`](#scopes). Read only from a source on the machine: `managed-settings.json`, the macOS plist or Windows HKLM registry, or a policy helper. Claude Code ignores it in HKCU and server-managed settings.
+* **Scope**: [`User or managed`](#scopes). Read from a managed source on the machine: `managed-settings.json`, the macOS plist or Windows HKLM registry, or a policy helper. On a machine with none of those, Claude Code v2.1.295 or later also reads it from [user settings](https://code.claude.com/docs/en/claude-apps-gateway#set-the-gateway-url-in-user-settings). Claude Code ignores it in HKCU and server-managed settings.
 * **Type**: string, a full URL including the scheme
 * **Default**: unset, so the Cloud gateway screen shows an error telling people to contact their IT administrator
 
@@ -5406,7 +5725,7 @@ This example accepts logins from either of two organizations without pre-selecti
 }
 ```
 
-If a managed source sets an empty array, or a value Claude Code can't parse, Claude Code blocks every login with a misconfiguration message.
+If a managed source sets an empty array, or a value that isn't a string or an array of strings, users who sign in with an Anthropic account can't start Claude Code or complete a login. They see a message that names `forceLoginOrgUUID` and tells them to contact their administrator. A [`policyHelper`](#policyhelper) that emits a value of the wrong type [fails its run](#helper-failures) instead.
 
 See [Restrict login to your organization](https://code.claude.com/docs/en/authentication#restrict-login-to-your-organization) for how Claude Code treats Claude Console logins, the other login paths, and environment credentials.
 
@@ -5433,6 +5752,8 @@ If an entry is invalid, or the value isn't a list of strings, `/login` names the
 ### `gcpAuthRefresh`
 
 Run your own command to refresh Google Cloud Application Default Credentials when Claude Code finds they've expired or can't be loaded, so [Google Cloud's Agent Platform](https://code.claude.com/docs/en/google-vertex-ai) requests keep working without you re-authenticating by hand.
+
+When several Claude Code processes that use the same command and credentials, such as separate terminals or IDE windows, find them expired at the same time, one process runs the command and the rest wait for that run instead of starting their own. A process that has waited 60 seconds with a request pending runs the command itself. To turn this off, set [`CLAUDE_CODE_DISABLE_AUTH_REFRESH_LOCK`](https://code.claude.com/docs/en/env-vars) to `1`.
 
 * **Scope**: [`Any file`](#scopes)
 * **Type**: string, a shell command line
@@ -5599,7 +5920,7 @@ Control how long Claude Code keeps session data and what it sends. The switches 
 
 ### `cleanupPeriodDays`
 
-Set how many days Claude Code keeps [session transcripts and other application data](https://code.claude.com/docs/en/claude-directory#cleaned-up-automatically) before deleting them. Claude Code runs the deletion as a background sweep after a session starts, as long as it can safely determine the retention period.
+Set how many days Claude Code keeps [session transcripts and other application data](https://code.claude.com/docs/en/claude-directory#cleaned-up-automatically) before deleting them. Claude Code runs the deletion as a background sweep after a session starts, as long as it can safely determine the retention period. The sweep deletes transcripts without showing a message, so a session you haven't used for longer than the retention period no longer appears in the [`/resume`](https://code.claude.com/docs/en/sessions#resume-a-session) picker.
 
 * **Scope**: [`Any file`](#scopes)
 * **Type**: number of days, a whole number, minimum `1`
@@ -5615,7 +5936,7 @@ Setting `0` fails validation, so pick a large value such as `3650` for long rete
 
 ### `desktopSessionCleanupPeriodDays`
 
-Set an age limit in days for the transcripts of sessions you started or most recently continued in Claude Desktop or Cowork. Without this key, Claude Code [keeps those transcripts at any age](https://code.claude.com/docs/en/claude-directory#cleaned-up-automatically). Claude Code deletes each one once it's older than both this limit and [`cleanupPeriodDays`](#cleanupperioddays), so with `cleanupPeriodDays` at its default of 30, a value of `7` still keeps them 30 days. When managed settings set `cleanupPeriodDays`, that period applies instead and this key is ignored. Requires Claude Code v2.1.248 or later.
+Set an age limit in days for the transcripts of sessions you started or most recently continued in Claude Desktop or Cowork. Without this key, Claude Code [keeps those transcripts at any age](https://code.claude.com/docs/en/claude-directory#cleaned-up-automatically). Claude Code deletes each one once it's older than both this limit and [`cleanupPeriodDays`](#cleanupperioddays), so with `cleanupPeriodDays` at its default of 30, a value of `7` still keeps them 30 days. [Cleaned up automatically](https://code.claude.com/docs/en/claude-directory#cleaned-up-automatically) lists the cases where `cleanupPeriodDays` applies instead and Claude Code ignores this key. Requires Claude Code v2.1.248 or later.
 
 * **Scope**: [`User or managed`](#scopes). Claude Code also reads the key from a file you pass with `--settings`, and ignores it in project and local settings.
 * **Type**: number of days, a whole number, minimum `0`
@@ -5690,11 +6011,11 @@ Keys an organization uses to compute, refresh, and combine managed settings. See
 
 ### `disableSideloadFlags`
 
-Reject the `--plugin-dir`, `--plugin-url`, `--agents`, and `--mcp-config` CLI flags at startup, which users could otherwise pass to bypass [`strictKnownMarketplaces`](#strictknownmarketplaces) for a single run. Claude Code exits with an error naming the rejected flags, and applies the same check to surfaces that start the CLI with these flags internally, currently [Cowork](https://code.claude.com/docs/en/desktop) local sessions in the desktop app. In [cloud sessions](https://code.claude.com/docs/en/claude-code-on-the-web), Claude Code drops the MCP servers the server delivered through `--mcp-config`, other than in-process `type: "sdk"` entries, and starts the session. Requires Claude Code v2.1.193 or later.
+Reject the `--plugin-dir`, `--plugin-url`, `--agents`, and `--mcp-config` CLI flags at startup, which users could otherwise pass to bypass [`strictKnownMarketplaces`](#strictknownmarketplaces) for a single run. Claude Code exits with an error naming the rejected flags. In [cloud sessions](https://code.claude.com/docs/en/claude-code-on-the-web), Claude Code instead starts the session and drops every server-delivered `--mcp-config` entry except in-process `type: "sdk"` entries and a [Claude Tag](https://code.claude.com/docs/en/claude-tag) session's Slack tools. Requires Claude Code v2.1.193 or later.
 
 * **Scope**: [`Managed`](#scopes)
 * **Type**: Boolean
-  * `true`: Claude Code rejects `--plugin-dir`, `--plugin-url`, `--agents`, and `--mcp-config` at startup and exits with an error naming them, except that in cloud sessions it drops the MCP servers the server delivered through `--mcp-config`, other than in-process `type: "sdk"` entries, and starts the session
+  * `true`: Claude Code rejects `--plugin-dir`, `--plugin-url`, `--agents`, and `--mcp-config` at startup and exits with an error naming them. In cloud sessions, it instead starts the session and drops every server-delivered `--mcp-config` entry except in-process `type: "sdk"` entries and a Claude Tag session's Slack tools
   * `false`: Claude Code accepts those flags
 * **Default**: `false`
 
@@ -5708,7 +6029,12 @@ Claude Code still accepts a `--mcp-config` whose servers are all in-process `typ
 
 The same check covers plugin folders named in the [`CLAUDE_CODE_PLUGIN_DIRS`](https://code.claude.com/docs/en/env-vars#variables) environment variable, which requires Claude Code v2.1.280 or later. When the variable names a folder, Claude Code exits with the same error, and the error says to unset the variable.
 
-In cloud sessions, Claude Code also ignores server-delivered mid-session MCP updates, the path behind cloud session configuration and SDK `setMcpServers()` calls that reach those sessions. In-process `type: "sdk"` entries stay exempt there too. Before v2.1.239, a server-delivered `--mcp-config` blocked a cloud session from starting.
+In cloud sessions, Claude Code also ignores server-delivered mid-session MCP updates, the path behind cloud session configuration and SDK `setMcpServers()` calls that reach those sessions. In-process `type: "sdk"` entries and a Claude Tag session's Slack tools stay exempt there too. Before v2.1.268, both this drop and the startup drop also removed a Claude Tag session's Slack tools. Before v2.1.239, a server-delivered `--mcp-config` blocked a cloud session from starting.
+
+The desktop app manages some plugins itself, including plugins synced from claude.ai and plugins your organization deploys through the app. If you deploy this key to a device through MDM, OS-level policy, or a managed settings file, the desktop app doesn't pass those plugins to the following sessions on that device:
+
+* **[Code sessions on the user's machine](https://code.claude.com/docs/en/desktop#environment-configuration)**: they also start without the skills enabled for the user's claude.ai account. Plugins that Claude Code installs from marketplaces in your managed settings still load. In [Claude Desktop on 3P](https://claude.com/docs/third-party/claude-desktop/overview), MCP servers from plugins you deploy to the device's `org-plugins` directory stay available too, because the desktop app connects to them itself. Before Claude Desktop v1.37937.0, these sessions failed at startup instead.
+* **[Cowork sessions on the user's machine](https://code.claude.com/docs/en/managed-settings#where-and-when-a-policy-applies)**: the skills inside those plugins and the skills enabled for the user's claude.ai account stay available. In [Claude Desktop on 3P](https://claude.com/docs/third-party/claude-desktop/overview), MCP servers from plugins you deploy to the device's `org-plugins` directory stay available too, because the desktop app connects to them itself. Before Claude Desktop v1.44121.0, these sessions failed at startup instead.
 
 ### `forceRemoteSettingsRefresh`
 
@@ -5752,16 +6078,16 @@ Deliver the key in the highest-priority source you deploy. A machine that never 
 
 Under `"merge"`, Claude Code combines each key by its kind. This table gives the rule for each kind. The restriction allowlist, values-taken-whole, and highest-source-only rows name every key they cover, and the other rows give examples:
 
-| Kind of key                                | How Claude Code combines it                                                                                                                                                                          | Keys                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| :----------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Lists                                      | Combines entries from every source                                                                                                                                                                   | [`permissions.allow`](#permissions-allow), [`sandbox.network.allowedDomains`](#sandbox-network-alloweddomains), and other list keys                                                                                                                                                                                                                                                                                                                                                                                               |
-| Locks                                      | Applies the strictest value any source sets. When no source sets a strict value, applies a looser value only from the highest source                                                                 | [`allowManagedPermissionRulesOnly`](#allowmanagedpermissionrulesonly), [`permissions.disableBypassPermissionsMode`](#permissions-disablebypasspermissionsmode), and other boolean or enum locks                                                                                                                                                                                                                                                                                                                                   |
-| Restriction allowlists                     | Takes the list whole from the highest source that sets it, without adding entries from lower sources. When the highest source doesn't set one, takes it whole from the next source down              | [`availableModels`](#availablemodels), [`allowedMcpServers`](#allowedmcpservers), [`strictKnownMarketplaces`](#strictknownmarketplaces), [`allowedChannelPlugins`](#allowedchannelplugins), and the [`fallbackModel`](#fallbackmodel) chain                                                                                                                                                                                                                                                                                       |
-| Values taken whole                         | Takes the value whole from the highest source that sets it, without combining entries or fields from lower sources. When the highest source doesn't set it, takes it whole from the next source down | [`sandbox.credentials.awsPairs`](#sandbox-credentials-awspairs), [`sandbox.ripgrep`](#sandbox-ripgrep)                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| Provided MCP servers                       | Combines the server names from every source. When two sources set the same name, applies the higher source's whole entry                                                                             | [`managedMcpServers`](#managedmcpservers)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| Read from the highest-priority source only | Reads the key only from the highest-priority source that carries a policy key, so a lower source's value is ignored even when the highest source sets none                                           | [`apiKeyHelper`](#apikeyhelper), [`awsAuthRefresh`](#awsauthrefresh), [`awsCredentialExport`](#awscredentialexport), [`gcpAuthRefresh`](#gcpauthrefresh), [`otelHeadersHelper`](#otelheadershelper), `proxyAuthHelper`, [`forceLoginOrgUUID`](#forceloginorguuid), the `"claudeai"` and `"console"` values of [`forceLoginMethod`](#forceloginmethod), [`parentSettingsBehavior`](#parentsettingsbehavior), [`modelPicker`](#modelpicker), [`policyHelper`](#policyhelper), [`permissions.defaultMode`](#permissions-defaultmode) |
-| `env`                                      | [Merges per variable across admin sources](https://code.claude.com/docs/en/managed-settings#keys-read-from-every-admin-source), under both `"first-wins"` and `"merge"`                                                          | [`env`](#env)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| Every other key                            | Takes the value from the highest source that sets it                                                                                                                                                 | [`cleanupPeriodDays`](#cleanupperioddays), [`model`](#model)                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Kind of key | How Claude Code combines it | Keys |
+| :- | :- | :- |
+| Lists | Combines entries from every source | [`permissions.allow`](#permissions-allow), [`sandbox.network.allowedDomains`](#sandbox-network-alloweddomains), and other list keys |
+| Locks | Applies the strictest value any source sets. When no source sets a strict value, applies a looser value only from the highest source | [`allowManagedPermissionRulesOnly`](#allowmanagedpermissionrulesonly), [`permissions.disableBypassPermissionsMode`](#permissions-disablebypasspermissionsmode), and other boolean or enum locks |
+| Restriction allowlists | Takes the list whole from the highest source that sets it, without adding entries from lower sources. When the highest source doesn't set one, takes it whole from the next source down | [`availableModels`](#availablemodels), [`allowedMcpServers`](#allowedmcpservers), [`allowedProviders`](#allowedproviders), [`strictKnownMarketplaces`](#strictknownmarketplaces), [`allowedChannelPlugins`](#allowedchannelplugins), and the [`fallbackModel`](#fallbackmodel) chain |
+| Values taken whole | Takes the value whole from the highest source that sets it, without combining entries or fields from lower sources. When the highest source doesn't set it, takes it whole from the next source down | [`sandbox.credentials.awsPairs`](#sandbox-credentials-awspairs), [`sandbox.ripgrep`](#sandbox-ripgrep) |
+| Provided MCP servers | Combines the server names from every source. When two sources set the same name, applies the higher source's whole entry | [`managedMcpServers`](#managedmcpservers) |
+| Read from the highest-priority source only | Reads the key only from the highest-priority source that carries a policy key, so a lower source's value is ignored even when the highest source sets none | [`apiKeyHelper`](#apikeyhelper), [`awsAuthRefresh`](#awsauthrefresh), [`awsCredentialExport`](#awscredentialexport), [`gcpAuthRefresh`](#gcpauthrefresh), [`otelHeadersHelper`](#otelheadershelper), `proxyAuthHelper`, [`forceLoginOrgUUID`](#forceloginorguuid), the `"claudeai"` and `"console"` values of [`forceLoginMethod`](#forceloginmethod), [`parentSettingsBehavior`](#parentsettingsbehavior), [`modelPicker`](#modelpicker), [`policyHelper`](#policyhelper), [`permissions.defaultMode`](#permissions-defaultmode) |
+| `env` | [Merges per variable across admin sources](https://code.claude.com/docs/en/managed-settings#keys-read-from-every-admin-source), under both `"first-wins"` and `"merge"` | [`env`](#env) |
+| Every other key | Takes the value from the highest source that sets it | [`cleanupPeriodDays`](#cleanupperioddays), [`model`](#model) |
 
 Taking `sandbox.credentials.awsPairs` and `sandbox.ripgrep` whole requires Claude Code v2.1.257 or later.
 
@@ -5770,6 +6096,7 @@ A few keys add a condition that the table doesn't show:
 * **[`policyHelper`](#policyhelper)**: Claude Code honors it only when the highest source that carries a policy key is an MDM policy or a managed settings file, so under server-managed settings it doesn't apply.
 * **[`modelOverrides`](#modeloverrides)**: pairs with `availableModels`. Claude Code takes `modelOverrides` from the highest source that sets it, unless a higher source sets `availableModels` without `modelOverrides`. In that case it ignores `modelOverrides` from every source.
 * **[`forceLoginGatewayUrl`](#forcelogingatewayurl), [`gatewayInternalNetworks`](#gatewayinternalnetworks), and the `"gateway"` value of [`forceLoginMethod`](#forceloginmethod)**: Claude Code never reads any of them from server-managed settings, so a value there neither applies nor hides one set in an MDM policy or managed settings file. Among the admin sources on the machine, only the highest-ranked one that carries a policy key supplies them, whether or not server-managed settings are also present.
+* **[`allowedProviders`](#allowedproviders)**: after the table's rule, the machine's own list still limits the result, as its entry's Scope note states.
 
 To confirm which sources combined on a machine, run `/status` and [read the `Setting sources` line](https://code.claude.com/docs/en/managed-settings#read-the-source-in-/status).
 
@@ -5911,11 +6238,11 @@ This example re-runs the helper every five minutes:
 
 ### `wslInheritsWindowsSettings`
 
-Have Claude Code on WSL read managed settings from the Windows policy chain, with HKLM and the Windows managed settings file taking priority over `/etc/claude-code` and HKCU below it. While the chain is on, Claude Code reads `/etc/claude-code` only when no managed settings file or drop-in under `C:\Program Files\ClaudeCode\` delivers a [policy key](https://code.claude.com/docs/en/managed-settings#how-claude-code-combines-managed-sources). Set it to extend the policy you already deploy on Windows to WSL sessions on the same machine, so they follow the same rules as host sessions. Claude Code honors it only when set in the HKLM registry key or in a managed settings file or drop-in under `C:\Program Files\ClaudeCode\`, both of which require Windows admin to write.
+Have Claude Code on WSL read managed settings from the Windows policy chain, with HKLM and the Windows managed settings file taking priority over `/etc/claude-code` and HKCU below it. While the chain is on, Claude Code reads `/etc/claude-code` only when [no Windows admin document is present](https://code.claude.com/docs/en/managed-settings#present-admin-documents) in the HKLM registry value or the `C:\Program Files\ClaudeCode\` folder. Set it to extend the policy you already deploy on Windows to WSL sessions on the same machine, so they follow the same rules as host sessions. Claude Code honors it only when set in the HKLM registry key or in a managed settings file or drop-in under `C:\Program Files\ClaudeCode\`, both of which require Windows admin to write.
 
 * **Scope**: [`Managed`](#scopes). In an admin-controlled Windows source.
 * **Type**: Boolean
-  * `true`: Claude Code on WSL reads managed settings from the Windows policy chain, and reads `/etc/claude-code` only when no managed settings file or drop-in under `C:\Program Files\ClaudeCode\` delivers a [policy key](https://code.claude.com/docs/en/managed-settings#how-claude-code-combines-managed-sources)
+  * `true`: Claude Code on WSL reads managed settings from the Windows policy chain, and reads `/etc/claude-code` only when no Windows admin document is present
   * `false`: WSL reads only `/etc/claude-code`
 * **Default**: `false`, so WSL reads only `/etc/claude-code`
 
@@ -5925,7 +6252,9 @@ Have Claude Code on WSL read managed settings from the Windows policy chain, wit
 }
 ```
 
-Once an admin source turns the chain on, HKCU policy joins it on WSL only when HKCU also sets the key to `true`. That copy doesn't turn the chain on by itself. A Windows source that contains only this key doesn't count as a policy source, so a lower-priority source still supplies the policy. This key has no effect on native Windows.
+Once an admin source turns the chain on, HKCU policy joins it on WSL only when HKCU also sets the key to `true`. That copy doesn't turn the chain on by itself. A Windows source that contains only this key, set to `true` or `false`, doesn't count as a policy source, so a lower-priority source still supplies the policy. This key has no effect on native Windows.
+
+Claude Code reads `true` and `false` with or without quotes and reads `null` as removing the key. An admin-controlled Windows source that holds any other value counts as a [present admin document](https://code.claude.com/docs/en/managed-settings#present-admin-documents) with the chain turned on: neither `/etc/claude-code` nor HKCU applies, and a startup warning names the key. An HKLM value or Windows-folder file that exists but can't be read also keeps `/etc/claude-code` from applying whether or not the chain is on. Requires Claude Code v2.1.282 or later.
 
 ## Global config settings
 
@@ -5969,6 +6298,45 @@ Install the Claude Code IDE extension automatically when you run Claude Code fro
 
 Claude Code ignores this key in `settings.json`.
 
+### `claudeInChromeDefaultEnabled`
+
+Start every interactive CLI session with [Chrome integration](https://code.claude.com/docs/en/chrome) on, without passing `--chrome` each time. If you run [`claude remote-control`](https://code.claude.com/docs/en/remote-control), a session it starts for one of your [project](https://code.claude.com/docs/en/claude-projects) threads follows this key too, except in `bypassPermissions` mode. With Claude Code v2.1.287 or later, this key also applies to sessions in the [VS Code extension](https://code.claude.com/docs/en/vs-code#automate-browser-tasks-with-chrome): see [Enable Chrome by default](https://code.claude.com/docs/en/chrome#enable-chrome-by-default).
+
+Running `/chrome` and selecting **Enabled by default** sets this key for you. Appears in `/config` as **Claude in Chrome enabled by default**.
+
+* **Scope**: [`Global config`](#scopes)
+* **Type**: Boolean
+  * `true`: Claude Code turns on Chrome integration when an interactive CLI session starts, as it does when you pass `--chrome`. In the VS Code extension, sessions connect to the browser as they start
+  * `false`: interactive CLI sessions start with Chrome integration off, and Claude Code stops [offering to set it up](https://code.claude.com/docs/en/chrome#install-the-extension-when-claude-asks). Pass `--chrome` to turn it on for one interactive session. In the VS Code extension, a session connects when you type `@browser`, as when the key is unset
+* **Default**: unset, so Chrome integration is off and Claude Code can still offer to set it up
+* **Per-session overrides**: `--chrome` and [`--no-chrome`](https://code.claude.com/docs/en/cli-reference) take precedence over this key for one interactive session
+
+```json ~/.claude.json theme={null}
+{
+  "claudeInChromeDefaultEnabled": true
+}
+```
+
+Claude Code ignores this key in `settings.json`.
+
+### `copyFullResponse`
+
+Make [`/copy`](https://code.claude.com/docs/en/commands) copy the full response every time, without showing the picker. Selecting **Always copy full response** in that picker sets this key to `true`. Appears in `/config` as **Skip the /copy picker**.
+
+* **Scope**: [`Global config`](#scopes)
+* **Type**: Boolean
+  * `true`: `/copy` copies the full response without showing the picker
+  * `false`: when the response contains code blocks or blockquotes, `/copy` shows a picker where you choose one block or the full response
+* **Default**: `false`
+
+```json ~/.claude.json theme={null}
+{
+  "copyFullResponse": true
+}
+```
+
+Claude Code ignores this key in `settings.json`.
+
 ### `copyOnSelect`
 
 Copy text to your clipboard automatically when you finish selecting it with the mouse in [fullscreen rendering](https://code.claude.com/docs/en/fullscreen#use-the-mouse) or [agent view](https://code.claude.com/docs/en/agent-view). Appears in `/config` as **Copy on select** while fullscreen rendering is on.
@@ -5982,6 +6350,24 @@ Copy text to your clipboard automatically when you finish selecting it with the 
 ```json ~/.claude.json theme={null}
 {
   "copyOnSelect": false
+}
+```
+
+Claude Code ignores this key in `settings.json`.
+
+### `defaultToAgentsView`
+
+Open [agent view](https://code.claude.com/docs/en/agent-view) instead of a new conversation when you run `claude` with no arguments. Appears in `/config` as **Open agents view by default** unless agent view is [turned off](#disableagentview).
+
+* **Scope**: [`Global config`](#scopes)
+* **Type**: Boolean
+  * `true`: `claude` with no arguments opens agent view, unless agent view is [turned off](#disableagentview)
+  * `false`: `claude` with no arguments starts a new conversation
+* **Default**: `false`
+
+```json ~/.claude.json theme={null}
+{
+  "defaultToAgentsView": true
 }
 ```
 
@@ -6037,6 +6423,24 @@ Claude Code keeps the last 50 lines of the response and marks the cut with `# �
 
 Claude Code ignores this key in `settings.json`.
 
+### `leftArrowOpensAgents`
+
+Press `←` on an empty prompt to [background the session and open agent view](https://code.claude.com/docs/en/agent-view#switch-sessions-without-leaving-the-terminal). Set this key to `false` to turn the shortcut off. Appears in `/config` as **← opens agents** when agent view is available.
+
+* **Scope**: [`Global config`](#scopes)
+* **Type**: Boolean
+  * `true`: pressing `←` on an empty prompt in a session you started in the terminal backgrounds it and opens agent view
+  * `false`: Claude Code turns the shortcut off; in a session you [attached to from agent view](https://code.claude.com/docs/en/agent-view#attach-to-a-session), `←` on an empty prompt still detaches
+* **Default**: `true`
+
+```json ~/.claude.json theme={null}
+{
+  "leftArrowOpensAgents": false
+}
+```
+
+Claude Code ignores this key in `settings.json`.
+
 ### `permissionExplainerEnabled`
 
 <Warning>
@@ -6048,6 +6452,24 @@ Through v2.1.256, you could press `Ctrl+E` on a Bash or PowerShell permission pr
 * **Scope**: [`Global config`](#scopes). On v2.1.256 and earlier.
 * **Type**: Boolean
 * **Default**: `true`
+
+### `prStatusFooterEnabled`
+
+Show a badge in the prompt footer for the current branch's open pull request or merge request, with a colored underline that shows its [status](https://code.claude.com/docs/en/interactive-mode#pr-review-status). Appears in `/config` as **Show PR status footer**.
+
+* **Scope**: [`Global config`](#scopes)
+* **Type**: Boolean
+  * `true`: the footer shows the badge under the conditions in [PR review status](https://code.claude.com/docs/en/interactive-mode#pr-review-status)
+  * `false`: Claude Code skips the footer's pull request and merge request check and doesn't show that badge. A session you [attached to from agent view](https://code.claude.com/docs/en/agent-view#attach-to-a-session) can still show a plain link to a pull request [linked to it](https://code.claude.com/docs/en/agent-view#pull-request-status)
+* **Default**: `true`
+
+```json ~/.claude.json theme={null}
+{
+  "prStatusFooterEnabled": false
+}
+```
+
+Claude Code ignores this key in `settings.json`.
 
 ### `teammateDefaultModel`
 
