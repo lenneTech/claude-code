@@ -73,7 +73,8 @@ run_script() {
     ${extra[@]+"${extra[@]}"} \
     CLAUDE_PROJECT_DIR="$2" PATH="${HOOK_PATH:-$PATH}" "$BASH" "$SCRIPT_DIR/$1" 2>/dev/null
 }
-analyzable() { prompt_payload "$2" | run_script detect-analyzable-project.sh "$1"; }
+# The payload is built before the pipe starts: hooks read stdin for at most 2 s, and a slow node start on a busy runner made the hook read nothing (windows-latest, v8.27.2 tag run, 2026-10-19).
+analyzable() { local p; p=$(prompt_payload "$2"); printf "%s" "$p" | run_script detect-analyzable-project.sh "$1"; }
 
 # A checkout of the showroom platform itself: no special treatment.
 SHOWROOM="$TMP_ROOT/showroom"

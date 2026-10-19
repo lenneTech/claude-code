@@ -34,8 +34,10 @@ payload() {
 }
 
 # $1 = prompt. Runs the hook the way Claude Code does: payload on stdin, interactive entrypoint.
+# The payload is built before the pipe starts: hooks read stdin for at most 2 s, and a slow node start on a busy runner made the hook read nothing (windows-latest, v8.27.2 tag run, 2026-10-19).
 run_hook() {
-  payload "$1" | env -u CLAUDE_USER_PROMPT CLAUDE_CODE_ENTRYPOINT= LT_PLUGIN_HOOKS_SKIP= \
+  local p; p=$(payload "$1")
+  printf "%s" "$p" | env -u CLAUDE_USER_PROMPT CLAUDE_CODE_ENTRYPOINT= LT_PLUGIN_HOOKS_SKIP= \
     CLAUDE_PROJECT_DIR="$TMP_ROOT" PATH="${HOOK_PATH:-$PATH}" "$BASH" "$HOOK" 2>/dev/null
 }
 
@@ -132,9 +134,9 @@ expect_silent 'tighten the description of plugins/lt-dev/skills/rebasing-branche
 expect_silent 'the running-load-tests-with-k6 and cleaning-up-disk-space skills need shorter descriptions'
 expect_silent 'review evals/trigger/disk-cleanup/prompt.md'
 expect_silent 'lt-dev:validating-production-readiness should keep its NOT boundary'
-OUT=$(payload 'rebase onto dev' | env CLAUDE_CODE_ENTRYPOINT=sdk-cli CLAUDE_PROJECT_DIR="$TMP_ROOT" "$BASH" "$HOOK" 2>/dev/null)
+P=$(payload 'rebase onto dev'); OUT=$(printf '%s' "$P" | env CLAUDE_CODE_ENTRYPOINT=sdk-cli CLAUDE_PROJECT_DIR="$TMP_ROOT" "$BASH" "$HOOK" 2>/dev/null)
 if [ -z "$OUT" ]; then pass "headless (claude -p) stays silent"; else fail "headless (claude -p) stays silent"; fi
-OUT=$(payload 'rebase onto dev' | env CLAUDE_CODE_ENTRYPOINT= LT_PLUGIN_HOOKS_SKIP=1 CLAUDE_PROJECT_DIR="$TMP_ROOT" "$BASH" "$HOOK" 2>/dev/null)
+P=$(payload 'rebase onto dev'); OUT=$(printf '%s' "$P" | env CLAUDE_CODE_ENTRYPOINT= LT_PLUGIN_HOOKS_SKIP=1 CLAUDE_PROJECT_DIR="$TMP_ROOT" "$BASH" "$HOOK" 2>/dev/null)
 if [ -z "$OUT" ]; then pass "LT_PLUGIN_HOOKS_SKIP stays silent"; else fail "LT_PLUGIN_HOOKS_SKIP stays silent"; fi
 
 echo "without jq"

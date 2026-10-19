@@ -50,8 +50,10 @@ payload() {
 
 # $1 = hook script, $2 = project dir, $3 = prompt. CLAUDE_USER_PROMPT is removed on
 # purpose: Claude Code never sets it, so a hook still relying on it must fail here.
+# The payload is built before the pipe starts: hooks read stdin for at most 2 s, and a slow node start on a busy runner made the hook read nothing (windows-latest, v8.27.2 tag run, 2026-10-19).
 run_hook() {
-  payload "$3" | env -u CLAUDE_USER_PROMPT CLAUDE_CODE_ENTRYPOINT= LT_PLUGIN_HOOKS_SKIP= \
+  local p; p=$(payload "$3")
+  printf "%s" "$p" | env -u CLAUDE_USER_PROMPT CLAUDE_CODE_ENTRYPOINT= LT_PLUGIN_HOOKS_SKIP= \
     CLAUDE_PROJECT_DIR="$2" PATH="${HOOK_PATH:-$PATH}" "$BASH" "$SCRIPT_DIR/$1" 2>/dev/null
 }
 

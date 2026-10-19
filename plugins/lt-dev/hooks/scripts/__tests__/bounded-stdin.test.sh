@@ -26,6 +26,10 @@ trap 'rm -rf "$TMP_ROOT"' EXIT
 PROJ="$TMP_ROOT/proj"
 mkdir -p "$PROJ"
 LIMIT=6   # seconds; the read gives up after 2 s, the writer would hold for 30 s
+# Git Bash starts processes several times slower, and the cases run in parallel: on the
+# v8.27.2 tag run (2026-10-19) windows-latest measured 2-7 s for hooks that all returned.
+# 12 s still sits far below the writer's 30 s, so a hook that waits for EOF still fails.
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) LIMIT=12 ;; esac
 
 hook_env() {
   env CLAUDE_CODE_ENTRYPOINT= LT_PLUGIN_HOOKS_SKIP= CLAUDE_PROJECT_DIR="$PROJ" \

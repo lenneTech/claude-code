@@ -30,8 +30,9 @@ payload() {
   node -e 'const [, tool, command] = process.argv; process.stdout.write(JSON.stringify({ tool_name: tool, tool_input: { command } }))' "$1" "$2"
 }
 
-run_hook()      { payload "$1" "$2" | CLAUDE_SKIP_DANGEROUS_BASH_CHECK= bash "$HOOK" 2>/dev/null; }
-run_hook_nojq() { payload "$1" "$2" | CLAUDE_SKIP_DANGEROUS_BASH_CHECK= PATH="$NOJQ_BIN" "$BASH" "$HOOK" 2>/dev/null; }
+# The payload is built before the pipe starts: hooks read stdin for at most 2 s, and a slow node start on a busy runner made the hook read nothing (windows-latest, v8.27.2 tag run, 2026-10-19).
+run_hook()      { local p; p=$(payload "$1" "$2"); printf "%s" "$p" | CLAUDE_SKIP_DANGEROUS_BASH_CHECK= bash "$HOOK" 2>/dev/null; }
+run_hook_nojq() { local p; p=$(payload "$1" "$2"); printf "%s" "$p" | CLAUDE_SKIP_DANGEROUS_BASH_CHECK= PATH="$NOJQ_BIN" "$BASH" "$HOOK" 2>/dev/null; }
 
 expect() {
   # $1 = deny|allow, $2 = hook output, $3 = label
