@@ -159,7 +159,7 @@ Guarantee runnability **before** the review itself. Any error — even one that 
 
 ```bash
 # Permission scanner (if available)
-lt server permissions --failOnWarnings 2>/dev/null
+lt server permissions --failOnWarnings
 # Secrets in diff
 git diff <base>...HEAD | grep -iE "password|secret|api.key|token" | grep "^+"
 # Dangerous patterns

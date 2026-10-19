@@ -5,45 +5,24 @@
     "Bash(cp *.env*)",
     "Bash(curl *api.showroom.lenne.tech*)",
     "Bash(curl *localhost*)",
+    "Bash(cwebp:*)",
+    "Bash(docker compose -p showroom-*)",
+    "Bash(docker ps:*)",
     "Bash(docker rm:*)",
     "Bash(docker run:*)",
     "Bash(docker stop:*)",
+    "Bash(git diff:*)",
+    "Bash(git log:*)",
+    "Bash(git status:*)",
+    "Bash(lsof:*)",
     "Bash(mongosh:*)",
     "Bash(node \"${CLAUDE_PLUGIN_ROOT}/scripts/*)",
     "Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/*)",
+    "Bash(npx lerna:*)",
     "Bash(pip install:*)",
     "Bash(pkill:*)"
   ],
   "permissions": [
-    {
-      "pattern": "Bash(git log:*)",
-      "description": "Read git history for project analysis",
-      "usedBy": [
-        "analyzing-projects",
-        "project-analyzer",
-        "showroom:analyze",
-        "showroom:create",
-        "showroom:update"
-      ]
-    },
-    {
-      "pattern": "Bash(git status:*)",
-      "description": "Check git working tree status for project analysis",
-      "usedBy": [
-        "analyzing-projects",
-        "project-analyzer",
-        "showroom:analyze"
-      ]
-    },
-    {
-      "pattern": "Bash(git diff:*)",
-      "description": "Compare versions for project analysis",
-      "usedBy": [
-        "analyzing-projects",
-        "project-analyzer",
-        "showroom:analyze"
-      ]
-    },
     {
       "pattern": "Bash(npm install:*)",
       "description": "Install npm dependencies before starting project for screenshots",
@@ -180,27 +159,12 @@
       ]
     },
     {
-      "pattern": "Bash(lsof:*)",
-      "description": "Check whether a port is taken before starting a project for screenshots (read only; the owner is never stopped)",
-      "usedBy": [
-        "screenshot-generator"
-      ]
-    },
-    {
       "pattern": "Bash(mkdir -p docs/showcase*)",
       "description": "Create the docs/showcase/ folder for a monorepo SHOWCASE.md",
       "usedBy": [
         "analyzing-projects",
         "project-analyzer",
         "showroom:analyze"
-      ]
-    },
-    {
-      "pattern": "Bash(npx lerna:*)",
-      "description": "Run lerna commands for monorepo projects",
-      "usedBy": [
-        "screenshot-generator",
-        "showroom:screenshot"
       ]
     },
     {
@@ -228,14 +192,6 @@
       ]
     },
     {
-      "pattern": "Bash(docker ps:*)",
-      "description": "Check running Docker containers",
-      "usedBy": [
-        "screenshot-generator",
-        "showroom:screenshot"
-      ]
-    },
-    {
       "pattern": "Bash(npm run migrate:*)",
       "description": "Run database migrations",
       "usedBy": [
@@ -249,14 +205,6 @@
       "usedBy": [
         "screenshot-generator",
         "showroom:screenshot"
-      ]
-    },
-    {
-      "pattern": "Bash(docker compose -p showroom-*)",
-      "description": "Start a screenshot run Compose stack under its own project name (recorded and taken down by cleanup)",
-      "usedBy": [
-        "screenshot-generator",
-        "creating-showcases"
       ]
     },
     {
@@ -284,13 +232,6 @@
     {
       "pattern": "Bash(lt dev doctor:*)",
       "description": "Check that lt dev (Caddy) is set up before choosing the lt route",
-      "usedBy": [
-        "screenshot-generator"
-      ]
-    },
-    {
-      "pattern": "Bash(cwebp:*)",
-      "description": "Convert older PNG screenshots to WebP for the fallback chain",
       "usedBy": [
         "screenshot-generator"
       ]

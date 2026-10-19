@@ -370,19 +370,19 @@ done
 
 #### Step B: Update Discovery
 
-**Use `ncu` (npm-check-updates) instead of `pnpm outdated`** — it shows the actual latest versions, not just those within semver ranges.
+**Use npm-check-updates instead of `pnpm outdated`** — it shows the actual latest versions, not just those within semver ranges. Call it by its package name, `pnpm dlx npm-check-updates`: its binary is named `ncu`, but `pnpm dlx`/`npx`/`yarn dlx` resolve the first word as a package, and the npm package `ncu` is an unrelated project whose own `ncu` binary would run instead (observed 2026-10-18: `pnpm dlx ncu` fetched and executed a third-party scraper).
 
 ```bash
 # Discover all update candidates (use pnpm dlx for no global install required)
-pnpm dlx ncu
+pnpm dlx npm-check-updates
 
 # Or with grouping by update type (recommended)
-pnpm dlx ncu --format group
+pnpm dlx npm-check-updates --format group
 
 # Check only specific target (patch/minor/major)
-pnpm dlx ncu --target patch   # Only patches
-pnpm dlx ncu --target minor   # Patches + minor
-pnpm dlx ncu --target latest  # All updates (default)
+pnpm dlx npm-check-updates --target patch   # Only patches
+pnpm dlx npm-check-updates --target minor   # Patches + minor
+pnpm dlx npm-check-updates --target latest  # All updates (default)
 ```
 
 Group packages into risk categories:
@@ -601,7 +601,7 @@ pnpm run build && pnpm test
 
 ```bash
 # Check if more updates are available
-pnpm dlx ncu
+pnpm dlx npm-check-updates
 
 # If output shows updateable packages:
 # → GO BACK TO PHASE 3 and repeat
@@ -610,8 +610,8 @@ pnpm dlx ncu
 ```
 
 **Keep iterating until**:
-- `pnpm dlx ncu` shows zero updateable packages, or
-- `pnpm dlx ncu` shows only packages blocked by architectural migrations
+- `pnpm dlx npm-check-updates` shows zero updateable packages, or
+- `pnpm dlx npm-check-updates` shows only packages blocked by architectural migrations
 
 ### Phase 8: Final Verification (required)
 
@@ -830,12 +830,12 @@ Before declaring success, verify all of these:
 - [ ] Checked all packages for deprecation notices (`pnpm view <pkg> deprecated`)
 - [ ] Replaced deprecated packages with recommended alternatives
 - [ ] Documented deprecated packages without replacements as risks
-- [ ] Ran `pnpm dlx ncu` to discover all candidates (shows actual latest versions)
+- [ ] Ran `pnpm dlx npm-check-updates` to discover all candidates (shows actual latest versions)
 - [ ] Categorized packages into SAFE/MEDIUM/HIGH RISK
 - [ ] Attempted updates for all categories
 - [ ] Minimized code changes (preferred updates without modifications)
 - [ ] Fixed code strategically when value justified
-- [ ] ITERATED: Ran `pnpm dlx ncu` again after successful updates
+- [ ] ITERATED: Ran `pnpm dlx npm-check-updates` again after successful updates
 - [ ] CONTINUED ITERATING until no more fixable updates
 - [ ] Documented all blocked updates with reasons
 
@@ -856,7 +856,7 @@ Before declaring success, verify all of these:
 - [ ] `pnpm test` passes (all tests green)
 - [ ] `pnpm audit` shows 0 vulnerabilities
 - [ ] Source code changes minimized
-- [ ] Final `pnpm dlx ncu` shows only blockers or empty
+- [ ] Final `pnpm dlx npm-check-updates` shows only blockers or empty
 - [ ] Temporary artifacts (.txt, .log files) cleaned up
 
 ## Key Principles
@@ -870,7 +870,7 @@ Before declaring success, verify all of these:
 7. **Minimize Source Changes**: Prefer updates without modifications
 8. **Security is Non-Negotiable**: Always run `pnpm audit --fix`
 9. **Fix Code Strategically**: Type/API fixes acceptable when justified
-10. **Iterate Until Complete**: Run `pnpm dlx ncu` and continue
+10. **Iterate Until Complete**: Run `pnpm dlx npm-check-updates` and continue
 11. **Git is Recovery Tool**: Use for unfixable updates, not to avoid fixing
 12. **Document Blockers**: Only architectural blockers need documentation
 13. **Batch SAFE**: Group low-risk updates

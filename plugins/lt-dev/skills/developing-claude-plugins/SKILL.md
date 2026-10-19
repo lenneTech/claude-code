@@ -8,6 +8,7 @@ paths:
   - "**/hooks.json"
   - "**/plugin.json"
   - "**/permissions.json"
+allowed-tools: Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/context-budget.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/context-budget.sh":*)
 ---
 
 # Claude Code Plugin & Marketplace Expert

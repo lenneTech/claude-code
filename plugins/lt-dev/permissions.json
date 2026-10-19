@@ -4,27 +4,70 @@
   "formerPatterns": [
     "Bash(bash \"${CLAUDE_PLUGIN_ROOT}/scripts/*)",
     "Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/*)",
+    "Bash(command -v k6:*)",
+    "Bash(command:*)",
     "Bash(cp:*)",
     "Bash(curl:*)",
+    "Bash(diff:*)",
+    "Bash(docker build:*)",
     "Bash(docker compose:*)",
     "Bash(docker exec:*)",
+    "Bash(docker images:*)",
+    "Bash(docker logs:*)",
+    "Bash(docker ps:*)",
     "Bash(docker volume:*)",
     "Bash(docker-compose:*)",
     "Bash(docker:*)",
     "Bash(gh api:*)",
+    "Bash(gh pr:*)",
+    "Bash(gh release:*)",
+    "Bash(gh run:*)",
+    "Bash(git blame:*)",
+    "Bash(git branch:*)",
+    "Bash(git clone:*)",
+    "Bash(git diff:*)",
+    "Bash(git fetch:*)",
+    "Bash(git log:*)",
+    "Bash(git ls-remote:*)",
     "Bash(git push:*)",
+    "Bash(git rebase:*)",
+    "Bash(git remote -v)",
     "Bash(git remote:*)",
+    "Bash(git rev-parse:*)",
+    "Bash(git stash:*)",
+    "Bash(git status:*)",
+    "Bash(git tag --list:*)",
+    "Bash(git tag --sort=-v:refname)",
+    "Bash(git tag -l:*)",
     "Bash(git tag:*)",
+    "Bash(glab ci:*)",
+    "Bash(glab mr:*)",
+    "Bash(k6 run:*)",
+    "Bash(k6:*)",
+    "Bash(lsof:*)",
+    "Bash(lt dev:*)",
+    "Bash(lt frontend:*)",
+    "Bash(lt server:*)",
+    "Bash(lt:*)",
     "Bash(mv:*)",
     "Bash(node \"${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs\":*)",
     "Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs:*)",
     "Bash(node:*)",
     "Bash(npm run test\\:e2e:*)",
+    "Bash(npx ncu:*)",
+    "Bash(npx tsc:*)",
+    "Bash(pgrep:*)",
     "Bash(pkill:*)",
+    "Bash(pnpm dlx ncu:*)",
     "Bash(pnpm run bench\\:ai:*)",
     "Bash(pnpm run test\\:e2e:*)",
     "Bash(rm:*)",
-    "Bash(yarn run test\\:e2e:*)"
+    "Bash(sleep:*)",
+    "Bash(test:*)",
+    "Bash(which:*)",
+    "Bash(yarn dlx ncu:*)",
+    "Bash(yarn run test\\:e2e:*)",
+    "Bash(yq:*)"
   ],
   "permissions": [
     {
@@ -201,14 +244,6 @@
       ]
     },
     {
-      "pattern": "Bash(npx tsc:*)",
-      "description": "Run TypeScript compiler checks",
-      "usedBy": [
-        "backend-dev",
-        "frontend-dev"
-      ]
-    },
-    {
       "pattern": "Bash(pnpm exec tsc:*)",
       "description": "Run TypeScript compiler checks",
       "usedBy": [
@@ -222,33 +257,6 @@
       "usedBy": [
         "backend-dev",
         "frontend-dev"
-      ]
-    },
-    {
-      "pattern": "Bash(lt server:*)",
-      "description": "Execute lt server commands (module, object, addProp, create, permissions)",
-      "usedBy": [
-        "generating-nest-servers",
-        "code-reviewer",
-        "backend-reviewer",
-        "security-reviewer",
-        "sec-audit",
-        "backend-dev"
-      ]
-    },
-    {
-      "pattern": "Bash(lt frontend:*)",
-      "description": "Execute lt frontend CLI commands (convert-mode)",
-      "usedBy": [
-        "vendor-mode-converter-frontend",
-        "nuxt-extensions-core-updater"
-      ]
-    },
-    {
-      "pattern": "Bash(lt:*)",
-      "description": "Execute general lt CLI commands (git, fullstack)",
-      "usedBy": [
-        "using-lt-cli"
       ]
     },
     {
@@ -291,13 +299,6 @@
     {
       "pattern": "Bash(npm uninstall:*)",
       "description": "Uninstall npm packages",
-      "usedBy": [
-        "maintaining-npm-packages"
-      ]
-    },
-    {
-      "pattern": "Bash(npx ncu:*)",
-      "description": "Check for npm package updates using npm-check-updates",
       "usedBy": [
         "maintaining-npm-packages"
       ]
@@ -595,13 +596,6 @@
       ]
     },
     {
-      "pattern": "Bash(pnpm dlx ncu:*)",
-      "description": "Check for package updates via pnpm",
-      "usedBy": [
-        "maintaining-npm-packages"
-      ]
-    },
-    {
       "pattern": "Bash(pnpm run update:*)",
       "description": "Run project update script via pnpm",
       "usedBy": [
@@ -893,13 +887,6 @@
       ]
     },
     {
-      "pattern": "Bash(yarn dlx ncu:*)",
-      "description": "Check for package updates via yarn",
-      "usedBy": [
-        "maintaining-npm-packages"
-      ]
-    },
-    {
       "pattern": "Bash(yarn run update:*)",
       "description": "Run project update script via yarn",
       "usedBy": [
@@ -968,18 +955,6 @@
       ]
     },
     {
-      "pattern": "Bash(gh release:*)",
-      "description": "Access GitHub releases via gh CLI",
-      "usedBy": [
-        "nest-server-updating",
-        "fullstack-updater",
-        "vendor-mode-converter-frontend",
-        "nuxt-extensions-core-updater",
-        "nuxt-extensions-core-contributor",
-        "briefing"
-      ]
-    },
-    {
       "pattern": "Bash(gh search:*)",
       "description": "Search base-repo content on GitHub when checking whether upstream already solved a problem",
       "usedBy": [
@@ -997,63 +972,6 @@
         "maintaining-npm-packages",
         "running-check-script",
         "check",
-        "briefing"
-      ]
-    },
-    {
-      "pattern": "Bash(git clone:*)",
-      "description": "Clone repositories for comparison",
-      "usedBy": [
-        "nest-server-updating",
-        "fullstack-updater",
-        "vendor-mode-converter-frontend",
-        "nuxt-extensions-core-updater",
-        "nuxt-extensions-core-contributor"
-      ]
-    },
-    {
-      "pattern": "Bash(git diff:*)",
-      "description": "Compare versions in repositories",
-      "usedBy": [
-        "fullstack-updater",
-        "review",
-        "debug",
-        "coordinating-agent-teams",
-        "code-reviewer",
-        "test-reviewer",
-        "frontend-reviewer",
-        "backend-reviewer",
-        "ux-reviewer",
-        "docs-reviewer",
-        "a11y-reviewer",
-        "architect",
-        "nuxt-extensions-core-updater",
-        "nuxt-extensions-core-contributor",
-        "briefing"
-      ]
-    },
-    {
-      "pattern": "Bash(git log:*)",
-      "description": "Read git history of repositories",
-      "usedBy": [
-        "fullstack-updater",
-        "review",
-        "debug",
-        "coordinating-agent-teams",
-        "code-reviewer",
-        "architect",
-        "nuxt-extensions-core-updater",
-        "nuxt-extensions-core-contributor",
-        "briefing"
-      ]
-    },
-    {
-      "pattern": "Bash(git fetch:*)",
-      "description": "Fetch latest changes from remote repositories",
-      "usedBy": [
-        "fullstack-updater",
-        "branch-rebaser",
-        "nuxt-extensions-core-updater",
         "briefing"
       ]
     },
@@ -1076,43 +994,10 @@
       ]
     },
     {
-      "pattern": "Bash(git status:*)",
-      "description": "Check git working tree status",
-      "usedBy": [
-        "review",
-        "branch-rebaser",
-        "coordinating-agent-teams",
-        "code-reviewer",
-        "briefing"
-      ]
-    },
-    {
-      "pattern": "Bash(git rebase:*)",
-      "description": "Rebase branches onto target branch",
-      "usedBy": [
-        "branch-rebaser"
-      ]
-    },
-    {
       "pattern": "Bash(git checkout:*)",
       "description": "Checkout git branches",
       "usedBy": [
         "branch-rebaser"
-      ]
-    },
-    {
-      "pattern": "Bash(git stash:*)",
-      "description": "Stash and restore working changes",
-      "usedBy": [
-        "branch-rebaser"
-      ]
-    },
-    {
-      "pattern": "Bash(git branch:*)",
-      "description": "List and manage git branches",
-      "usedBy": [
-        "branch-rebaser",
-        "briefing"
       ]
     },
     {
@@ -1130,51 +1015,6 @@
       ]
     },
     {
-      "pattern": "Bash(gh pr:*)",
-      "description": "GitHub CLI for PR management",
-      "usedBy": [
-        "branch-rebaser",
-        "create-request",
-        "dev-submit",
-        "ship",
-        "take-ticket",
-        "ticket-cycle",
-        "nuxt-extensions-core-contributor",
-        "briefing"
-      ]
-    },
-    {
-      "pattern": "Bash(gh run:*)",
-      "description": "GitHub CLI for inspecting / retrying workflow runs (used during CI-wait + retry loops)",
-      "usedBy": [
-        "ship",
-        "ticket-cycle",
-        "briefing"
-      ]
-    },
-    {
-      "pattern": "Bash(glab mr:*)",
-      "description": "GitLab CLI for MR management",
-      "usedBy": [
-        "branch-rebaser",
-        "create-request",
-        "dev-submit",
-        "ship",
-        "take-ticket",
-        "ticket-cycle",
-        "briefing"
-      ]
-    },
-    {
-      "pattern": "Bash(glab ci:*)",
-      "description": "GitLab CLI for pipeline status / retry / trace (used during CI-wait + retry loops)",
-      "usedBy": [
-        "ship",
-        "ticket-cycle",
-        "briefing"
-      ]
-    },
-    {
       "pattern": "Bash(npx oxlint:*)",
       "description": "Run oxlint for code quality checks",
       "usedBy": [
@@ -1189,27 +1029,12 @@
       ]
     },
     {
-      "pattern": "Bash(git blame:*)",
-      "description": "Show line-by-line commit history for debugging",
-      "usedBy": [
-        "debug",
-        "coordinating-agent-teams"
-      ]
-    },
-    {
       "pattern": "Bash(git worktree:*)",
       "description": "Manage git worktrees for parallel branch operations",
       "usedBy": [
         "branch-rebaser",
         "coordinating-agent-teams",
         "briefing"
-      ]
-    },
-    {
-      "pattern": "Bash(docker build:*)",
-      "description": "Build Docker images",
-      "usedBy": [
-        "devops"
       ]
     },
     {
@@ -1221,63 +1046,10 @@
       ]
     },
     {
-      "pattern": "Bash(docker ps:*)",
-      "description": "List Docker containers",
-      "usedBy": [
-        "devops",
-        "devops-reviewer"
-      ]
-    },
-    {
-      "pattern": "Bash(docker logs:*)",
-      "description": "View Docker container logs",
-      "usedBy": [
-        "devops",
-        "devops-reviewer"
-      ]
-    },
-    {
-      "pattern": "Bash(docker images:*)",
-      "description": "List Docker images",
-      "usedBy": [
-        "devops",
-        "devops-reviewer"
-      ]
-    },
-    {
-      "pattern": "Bash(k6 run:*)",
-      "description": "Run k6 load tests for API performance measurement",
-      "usedBy": [
-        "performance-reviewer",
-        "running-load-tests-with-k6",
-        "production-readiness-orchestrator",
-        "production-ready"
-      ]
-    },
-    {
       "pattern": "Bash(k6 version:*)",
       "description": "Check k6 version availability",
       "usedBy": [
         "performance-reviewer",
-        "running-load-tests-with-k6",
-        "production-readiness-orchestrator",
-        "production-ready"
-      ]
-    },
-    {
-      "pattern": "Bash(command -v k6:*)",
-      "description": "Detect k6 installation",
-      "usedBy": [
-        "performance-reviewer",
-        "running-load-tests-with-k6",
-        "production-readiness-orchestrator",
-        "production-ready"
-      ]
-    },
-    {
-      "pattern": "Bash(k6:*)",
-      "description": "General k6 invocations (smoke / load / soak scenarios with --summary-export and similar flags)",
-      "usedBy": [
         "running-load-tests-with-k6",
         "production-readiness-orchestrator",
         "production-ready"
@@ -1350,28 +1122,6 @@
       ]
     },
     {
-      "pattern": "Bash(pgrep:*)",
-      "description": "Check whether a background dev server is still running before reporting completion",
-      "usedBy": [
-        "managing-dev-servers",
-        "contributing-to-lt-framework",
-        "building-stories-with-tdd",
-        "developing-lt-frontend",
-        "generating-nest-servers",
-        "production-readiness-orchestrator",
-        "production-ready",
-        "validating-changes-in-browser"
-      ]
-    },
-    {
-      "pattern": "Bash(lsof:*)",
-      "description": "Inspect which process holds ports 3000/3001 when diagnosing port collisions",
-      "usedBy": [
-        "managing-dev-servers",
-        "contributing-to-lt-framework"
-      ]
-    },
-    {
       "pattern": "Bash(brew install k6:*)",
       "description": "Install k6 on macOS for load testing",
       "usedBy": [
@@ -1417,30 +1167,6 @@
       ]
     },
     {
-      "pattern": "Bash(yq:*)",
-      "description": "Parse YAML files (.gitlab-ci.yml, .github/workflows/*.yml, docker-compose.yml) for job and stage discovery",
-      "usedBy": [
-        "validating-ci-pipelines-locally",
-        "production-readiness-orchestrator",
-        "production-ready"
-      ]
-    },
-    {
-      "pattern": "Bash(lt dev:*)",
-      "description": "lt-dev parallel project orchestration (Caddy + HTTPS URLs via dedicated LaunchAgent/systemd unit): install/uninstall/migrate/up/down/status/doctor/test/tunnel — for load tests, Playwright runs, CI reproduction, browser validation, and external Cloudflare Quick Tunnel exposure",
-      "usedBy": [
-        "managing-dev-servers",
-        "running-load-tests-with-k6",
-        "production-readiness-orchestrator",
-        "production-ready",
-        "validating-changes-in-browser",
-        "a11y-reviewer",
-        "ux-reviewer",
-        "performance-reviewer",
-        "frontend-dev"
-      ]
-    },
-    {
       "pattern": "Bash(pnpm exec playwright:*)",
       "description": "Run Playwright via pnpm exec when no script alias is defined",
       "usedBy": [
@@ -1448,39 +1174,6 @@
         "building-stories-with-tdd",
         "production-readiness-orchestrator",
         "production-ready"
-      ]
-    },
-    {
-      "pattern": "Bash(command:*)",
-      "description": "Tool availability detection (command -v <tool>) before invoking it",
-      "usedBy": [
-        "running-load-tests-with-k6",
-        "validating-ci-pipelines-locally",
-        "production-readiness-orchestrator",
-        "production-ready"
-      ]
-    },
-    {
-      "pattern": "Bash(which:*)",
-      "description": "Tool path resolution alternative for command -v",
-      "usedBy": [
-        "running-load-tests-with-k6",
-        "validating-ci-pipelines-locally",
-        "production-readiness-orchestrator",
-        "production-ready"
-      ]
-    },
-    {
-      "pattern": "Bash(test:*)",
-      "description": "POSIX test for file/directory existence in detection logic",
-      "usedBy": [
-        "running-load-tests-with-k6",
-        "validating-ci-pipelines-locally",
-        "validating-production-readiness",
-        "production-readiness-orchestrator",
-        "production-ready",
-        "running-check-script",
-        "check"
       ]
     },
     {
@@ -1502,37 +1195,6 @@
         "production-ready",
         "running-load-tests-with-k6",
         "validating-ci-pipelines-locally"
-      ]
-    },
-    {
-      "pattern": "Bash(diff:*)",
-      "description": "Compare k6 summary files against baselines for regression detection",
-      "usedBy": [
-        "running-load-tests-with-k6",
-        "production-readiness-orchestrator",
-        "production-ready"
-      ]
-    },
-    {
-      "pattern": "Bash(git rev-parse:*)",
-      "description": "Resolve the repository root and verify that a ref exists before reading it",
-      "usedBy": [
-        "briefing"
-      ]
-    },
-    {
-      "pattern": "Bash(git ls-remote:*)",
-      "description": "Read tags and branches on the remote to confirm a release or push actually landed (exit code checked, never an empty result taken as absence)",
-      "usedBy": [
-        "briefing"
-      ]
-    },
-    {
-      "pattern": "Bash(sleep:*)",
-      "description": "Background timer that wakes the session when a peer has not answered a ticket handover in time (ticket-cycle runs it through take-ticket)",
-      "usedBy": [
-        "take-ticket",
-        "ticket-cycle"
       ]
     },
     {
@@ -1654,41 +1316,10 @@
       ]
     },
     {
-      "pattern": "Bash(git remote -v)",
-      "description": "Read the configured remotes (setting or adding a remote needs a prompt)",
-      "usedBy": [
-        "branch-rebaser"
-      ]
-    },
-    {
       "pattern": "Bash(git remote get-url:*)",
       "description": "Read the configured remotes (setting or adding a remote needs a prompt)",
       "usedBy": [
         "branch-rebaser"
-      ]
-    },
-    {
-      "pattern": "Bash(git tag --sort=-v:refname)",
-      "description": "List tags (creating or deleting a tag needs a prompt)",
-      "usedBy": [
-        "fullstack-updater",
-        "nuxt-extensions-core-updater"
-      ]
-    },
-    {
-      "pattern": "Bash(git tag -l:*)",
-      "description": "List tags (creating or deleting a tag needs a prompt)",
-      "usedBy": [
-        "fullstack-updater",
-        "nuxt-extensions-core-updater"
-      ]
-    },
-    {
-      "pattern": "Bash(git tag --list:*)",
-      "description": "List tags (creating or deleting a tag needs a prompt)",
-      "usedBy": [
-        "fullstack-updater",
-        "nuxt-extensions-core-updater"
       ]
     },
     {
@@ -1816,6 +1447,1115 @@
       "description": "List and inspect Docker volumes (removing one needs a prompt)",
       "usedBy": [
         "devops"
+      ]
+    },
+    {
+      "pattern": "Skill(lt-dev:coordinating-peer-sessions)",
+      "description": "Load the coordinating-peer-sessions skill without a prompt; its allowed-tools grant only these read-only or local-state plugin scripts by exact name: change-provenance.sh, peer-ledger.sh, repo-expert.sh. A skill with its own allowed-tools is otherwise gated on every load",
+      "usedBy": [
+        "coordinating-peer-sessions"
+      ]
+    },
+    {
+      "pattern": "Skill(lt-dev:running-check-script)",
+      "description": "Load the running-check-script skill without a prompt; its allowed-tools grant only these read-only or local-state plugin scripts by exact name: change-provenance.sh, discover-check-scripts.sh, peer-ledger.sh. A skill with its own allowed-tools is otherwise gated on every load",
+      "usedBy": [
+        "running-check-script"
+      ]
+    },
+    {
+      "pattern": "Skill(lt-dev:rebasing-branches)",
+      "description": "Load the rebasing-branches skill without a prompt; its allowed-tools grant only these read-only or local-state plugin scripts by exact name: change-provenance.sh. A skill with its own allowed-tools is otherwise gated on every load",
+      "usedBy": [
+        "rebasing-branches"
+      ]
+    },
+    {
+      "pattern": "Skill(lt-dev:contributing-to-lt-framework)",
+      "description": "Load the contributing-to-lt-framework skill without a prompt; its allowed-tools grant only these read-only or local-state plugin scripts by exact name: change-provenance.sh, peer-ledger.sh. A skill with its own allowed-tools is otherwise gated on every load",
+      "usedBy": [
+        "contributing-to-lt-framework"
+      ]
+    },
+    {
+      "pattern": "Skill(lt-dev:maintaining-lt-stack)",
+      "description": "Load the maintaining-lt-stack skill without a prompt; its allowed-tools grant only these read-only or local-state plugin scripts by exact name: change-provenance.sh, check-push-channel.sh, peer-ledger.sh. A skill with its own allowed-tools is otherwise gated on every load",
+      "usedBy": [
+        "maintaining-lt-stack"
+      ]
+    },
+    {
+      "pattern": "Skill(lt-dev:developing-claude-plugins)",
+      "description": "Load the developing-claude-plugins skill without a prompt; its allowed-tools grant only these read-only or local-state plugin scripts by exact name: context-budget.sh. A skill with its own allowed-tools is otherwise gated on every load",
+      "usedBy": [
+        "developing-claude-plugins"
+      ]
+    },
+    {
+      "pattern": "Bash(command -v:*)",
+      "description": "Check whether a tool is installed (command -v <tool>); the bare `command` wrapper would run its argument as any program",
+      "usedBy": [
+        "performance-reviewer",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "running-load-tests-with-k6",
+        "validating-ci-pipelines-locally"
+      ]
+    },
+    {
+      "pattern": "Bash(gh pr view:*)",
+      "description": "Read GitHub PR, run and release state; merging, closing, re-running, downloading and publishing are granted per turn by the commands that do them",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "create-request",
+        "dev-submit",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "ship",
+        "take-ticket",
+        "ticket-cycle",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(gh pr list:*)",
+      "description": "Read GitHub PR, run and release state; merging, closing, re-running, downloading and publishing are granted per turn by the commands that do them",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "create-request",
+        "dev-submit",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "ship",
+        "take-ticket",
+        "ticket-cycle",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(gh pr diff:*)",
+      "description": "Read GitHub PR, run and release state; merging, closing, re-running, downloading and publishing are granted per turn by the commands that do them",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "create-request",
+        "dev-submit",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "ship",
+        "take-ticket",
+        "ticket-cycle",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(gh pr checks:*)",
+      "description": "Read GitHub PR, run and release state; merging, closing, re-running, downloading and publishing are granted per turn by the commands that do them",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "create-request",
+        "dev-submit",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "ship",
+        "take-ticket",
+        "ticket-cycle",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(gh run view:*)",
+      "description": "Read GitHub PR, run and release state; merging, closing, re-running, downloading and publishing are granted per turn by the commands that do them",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "create-request",
+        "dev-submit",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "ship",
+        "take-ticket",
+        "ticket-cycle",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(gh run list:*)",
+      "description": "Read GitHub PR, run and release state; merging, closing, re-running, downloading and publishing are granted per turn by the commands that do them",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "create-request",
+        "dev-submit",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "ship",
+        "take-ticket",
+        "ticket-cycle",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(gh run watch:*)",
+      "description": "Read GitHub PR, run and release state; merging, closing, re-running, downloading and publishing are granted per turn by the commands that do them",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "create-request",
+        "dev-submit",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "ship",
+        "take-ticket",
+        "ticket-cycle",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(gh release list:*)",
+      "description": "Read GitHub PR, run and release state; merging, closing, re-running, downloading and publishing are granted per turn by the commands that do them",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "create-request",
+        "dev-submit",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "ship",
+        "take-ticket",
+        "ticket-cycle",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(gh release view:*)",
+      "description": "Read GitHub PR, run and release state; merging, closing, re-running, downloading and publishing are granted per turn by the commands that do them",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "create-request",
+        "dev-submit",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "ship",
+        "take-ticket",
+        "ticket-cycle",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(glab mr view:*)",
+      "description": "Read GitLab MR and pipeline state; merging, approving and triggering pipelines are granted per turn by the commands that do them",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "create-request",
+        "dev-submit",
+        "ship",
+        "take-ticket",
+        "ticket-cycle"
+      ]
+    },
+    {
+      "pattern": "Bash(glab mr list:*)",
+      "description": "Read GitLab MR and pipeline state; merging, approving and triggering pipelines are granted per turn by the commands that do them",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "create-request",
+        "dev-submit",
+        "ship",
+        "take-ticket",
+        "ticket-cycle"
+      ]
+    },
+    {
+      "pattern": "Bash(glab mr diff:*)",
+      "description": "Read GitLab MR and pipeline state; merging, approving and triggering pipelines are granted per turn by the commands that do them",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "create-request",
+        "dev-submit",
+        "ship",
+        "take-ticket",
+        "ticket-cycle"
+      ]
+    },
+    {
+      "pattern": "Bash(glab ci view:*)",
+      "description": "Read GitLab MR and pipeline state; merging, approving and triggering pipelines are granted per turn by the commands that do them",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "create-request",
+        "dev-submit",
+        "ship",
+        "take-ticket",
+        "ticket-cycle"
+      ]
+    },
+    {
+      "pattern": "Bash(glab ci status:*)",
+      "description": "Read GitLab MR and pipeline state; merging, approving and triggering pipelines are granted per turn by the commands that do them",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "create-request",
+        "dev-submit",
+        "ship",
+        "take-ticket",
+        "ticket-cycle"
+      ]
+    },
+    {
+      "pattern": "Bash(glab ci list:*)",
+      "description": "Read GitLab MR and pipeline state; merging, approving and triggering pipelines are granted per turn by the commands that do them",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "create-request",
+        "dev-submit",
+        "ship",
+        "take-ticket",
+        "ticket-cycle"
+      ]
+    },
+    {
+      "pattern": "Bash(git fetch)",
+      "description": "Update remote-tracking refs and fast-forward; exact forms only, because a trailing wildcard also admits --upload-pack=<command>",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(git fetch --prune)",
+      "description": "Update remote-tracking refs and fast-forward; exact forms only, because a trailing wildcard also admits --upload-pack=<command>",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(git fetch origin)",
+      "description": "Update remote-tracking refs and fast-forward; exact forms only, because a trailing wildcard also admits --upload-pack=<command>",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(git fetch --all --prune)",
+      "description": "Update remote-tracking refs and fast-forward; exact forms only, because a trailing wildcard also admits --upload-pack=<command>",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(git pull --ff-only)",
+      "description": "Update remote-tracking refs and fast-forward; exact forms only, because a trailing wildcard also admits --upload-pack=<command>",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(lt server object:*)",
+      "description": "lt CLI scaffolding and the local lt dev stack; secrets, database tools, deployments, lt dev tunnel/prune/install ask",
+      "usedBy": [
+        "a11y-reviewer",
+        "backend-dev",
+        "backend-reviewer",
+        "code-reviewer",
+        "frontend-dev",
+        "generating-nest-servers",
+        "managing-dev-servers",
+        "performance-reviewer",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "running-load-tests-with-k6",
+        "sec-audit",
+        "security-reviewer",
+        "using-lt-cli",
+        "ux-reviewer",
+        "validating-changes-in-browser"
+      ]
+    },
+    {
+      "pattern": "Bash(lt dev up:*)",
+      "description": "lt CLI scaffolding and the local lt dev stack; secrets, database tools, deployments, lt dev tunnel/prune/install ask",
+      "usedBy": [
+        "a11y-reviewer",
+        "backend-dev",
+        "backend-reviewer",
+        "code-reviewer",
+        "frontend-dev",
+        "generating-nest-servers",
+        "managing-dev-servers",
+        "performance-reviewer",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "running-load-tests-with-k6",
+        "sec-audit",
+        "security-reviewer",
+        "using-lt-cli",
+        "ux-reviewer",
+        "validating-changes-in-browser"
+      ]
+    },
+    {
+      "pattern": "Bash(lt dev down:*)",
+      "description": "lt CLI scaffolding and the local lt dev stack; secrets, database tools, deployments, lt dev tunnel/prune/install ask",
+      "usedBy": [
+        "a11y-reviewer",
+        "backend-dev",
+        "backend-reviewer",
+        "code-reviewer",
+        "frontend-dev",
+        "generating-nest-servers",
+        "managing-dev-servers",
+        "performance-reviewer",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "running-load-tests-with-k6",
+        "sec-audit",
+        "security-reviewer",
+        "using-lt-cli",
+        "ux-reviewer",
+        "validating-changes-in-browser"
+      ]
+    },
+    {
+      "pattern": "Bash(lt dev status:*)",
+      "description": "lt CLI scaffolding and the local lt dev stack; secrets, database tools, deployments, lt dev tunnel/prune/install ask",
+      "usedBy": [
+        "a11y-reviewer",
+        "backend-dev",
+        "backend-reviewer",
+        "code-reviewer",
+        "frontend-dev",
+        "generating-nest-servers",
+        "managing-dev-servers",
+        "performance-reviewer",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "running-load-tests-with-k6",
+        "sec-audit",
+        "security-reviewer",
+        "using-lt-cli",
+        "ux-reviewer",
+        "validating-changes-in-browser"
+      ]
+    },
+    {
+      "pattern": "Bash(lt dev doctor:*)",
+      "description": "lt CLI scaffolding and the local lt dev stack; secrets, database tools, deployments, lt dev tunnel/prune/install ask",
+      "usedBy": [
+        "a11y-reviewer",
+        "backend-dev",
+        "backend-reviewer",
+        "code-reviewer",
+        "frontend-dev",
+        "generating-nest-servers",
+        "managing-dev-servers",
+        "performance-reviewer",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "running-load-tests-with-k6",
+        "sec-audit",
+        "security-reviewer",
+        "using-lt-cli",
+        "ux-reviewer",
+        "validating-changes-in-browser"
+      ]
+    },
+    {
+      "pattern": "Bash(lt dev test:*)",
+      "description": "lt CLI scaffolding and the local lt dev stack; secrets, database tools, deployments, lt dev tunnel/prune/install ask",
+      "usedBy": [
+        "a11y-reviewer",
+        "backend-dev",
+        "backend-reviewer",
+        "code-reviewer",
+        "frontend-dev",
+        "generating-nest-servers",
+        "managing-dev-servers",
+        "performance-reviewer",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "running-load-tests-with-k6",
+        "sec-audit",
+        "security-reviewer",
+        "using-lt-cli",
+        "ux-reviewer",
+        "validating-changes-in-browser"
+      ]
+    },
+    {
+      "pattern": "Bash(pnpm exec vitest:*)",
+      "description": "Run the project's own installed test, format, lint and type tools (frequent in reviews and check loops)",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(pnpm exec oxfmt:*)",
+      "description": "Run the project's own installed test, format, lint and type tools (frequent in reviews and check loops)",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(pnpm exec oxlint:*)",
+      "description": "Run the project's own installed test, format, lint and type tools (frequent in reviews and check loops)",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(./node_modules/.bin/vitest:*)",
+      "description": "Run the project's own installed test, format, lint and type tools (frequent in reviews and check loops)",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(./node_modules/.bin/oxfmt:*)",
+      "description": "Run the project's own installed test, format, lint and type tools (frequent in reviews and check loops)",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(./node_modules/.bin/oxlint:*)",
+      "description": "Run the project's own installed test, format, lint and type tools (frequent in reviews and check loops)",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(./node_modules/.bin/tsc:*)",
+      "description": "Run the project's own installed test, format, lint and type tools (frequent in reviews and check loops)",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(npm ls:*)",
+      "description": "Run the project's own installed test, format, lint and type tools (frequent in reviews and check loops)",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(npm run format:check:*)",
+      "description": "Run the project's own format:check script; a script name with a colon is not matched by the run test:* style rules",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(pnpm run format:check:*)",
+      "description": "Run the project's own format:check script; a script name with a colon is not matched by the run test:* style rules",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(yarn run format:check:*)",
+      "description": "Run the project's own format:check script; a script name with a colon is not matched by the run test:* style rules",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(npm run typecheck:tests:*)",
+      "description": "Run the project's own typecheck:tests script; a script name with a colon is not matched by the run test:* style rules",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(pnpm run typecheck:tests:*)",
+      "description": "Run the project's own typecheck:tests script; a script name with a colon is not matched by the run test:* style rules",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(yarn run typecheck:tests:*)",
+      "description": "Run the project's own typecheck:tests script; a script name with a colon is not matched by the run test:* style rules",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(npm run vitest:unit:*)",
+      "description": "Run the project's own vitest:unit script; a script name with a colon is not matched by the run test:* style rules",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(pnpm run vitest:unit:*)",
+      "description": "Run the project's own vitest:unit script; a script name with a colon is not matched by the run test:* style rules",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(yarn run vitest:unit:*)",
+      "description": "Run the project's own vitest:unit script; a script name with a colon is not matched by the run test:* style rules",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(npm run test:unit:*)",
+      "description": "Run the project's own test:unit script; a script name with a colon is not matched by the run test:* style rules",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(pnpm run test:unit:*)",
+      "description": "Run the project's own test:unit script; a script name with a colon is not matched by the run test:* style rules",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(yarn run test:unit:*)",
+      "description": "Run the project's own test:unit script; a script name with a colon is not matched by the run test:* style rules",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(npm run vitest:*)",
+      "description": "Run the project's own vitest script; a script name with a colon is not matched by the run test:* style rules",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(pnpm run vitest:*)",
+      "description": "Run the project's own vitest script; a script name with a colon is not matched by the run test:* style rules",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(yarn run vitest:*)",
+      "description": "Run the project's own vitest script; a script name with a colon is not matched by the run test:* style rules",
+      "usedBy": [
+        "running-check-script",
+        "review",
+        "check"
+      ]
+    },
+    {
+      "pattern": "Bash(npx npm-check-updates)",
+      "description": "List available dependency updates (read-only forms only; -u and the doctor mode, whose --doctorTest/--doctorInstall run any program, ask)",
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
+    },
+    {
+      "pattern": "Bash(npx npm-check-updates --format group)",
+      "description": "List available dependency updates (read-only forms only; -u and the doctor mode, whose --doctorTest/--doctorInstall run any program, ask)",
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
+    },
+    {
+      "pattern": "Bash(npx npm-check-updates --target patch)",
+      "description": "List available dependency updates (read-only forms only; -u and the doctor mode, whose --doctorTest/--doctorInstall run any program, ask)",
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
+    },
+    {
+      "pattern": "Bash(npx npm-check-updates --target minor)",
+      "description": "List available dependency updates (read-only forms only; -u and the doctor mode, whose --doctorTest/--doctorInstall run any program, ask)",
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
+    },
+    {
+      "pattern": "Bash(npx npm-check-updates --target latest)",
+      "description": "List available dependency updates (read-only forms only; -u and the doctor mode, whose --doctorTest/--doctorInstall run any program, ask)",
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
+    },
+    {
+      "pattern": "Bash(pnpm dlx npm-check-updates)",
+      "description": "List available dependency updates (read-only forms only; -u and the doctor mode, whose --doctorTest/--doctorInstall run any program, ask)",
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
+    },
+    {
+      "pattern": "Bash(pnpm dlx npm-check-updates --format group)",
+      "description": "List available dependency updates (read-only forms only; -u and the doctor mode, whose --doctorTest/--doctorInstall run any program, ask)",
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
+    },
+    {
+      "pattern": "Bash(pnpm dlx npm-check-updates --target patch)",
+      "description": "List available dependency updates (read-only forms only; -u and the doctor mode, whose --doctorTest/--doctorInstall run any program, ask)",
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
+    },
+    {
+      "pattern": "Bash(pnpm dlx npm-check-updates --target minor)",
+      "description": "List available dependency updates (read-only forms only; -u and the doctor mode, whose --doctorTest/--doctorInstall run any program, ask)",
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
+    },
+    {
+      "pattern": "Bash(pnpm dlx npm-check-updates --target latest)",
+      "description": "List available dependency updates (read-only forms only; -u and the doctor mode, whose --doctorTest/--doctorInstall run any program, ask)",
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
+    },
+    {
+      "pattern": "Bash(yarn dlx npm-check-updates)",
+      "description": "List available dependency updates (read-only forms only; -u and the doctor mode, whose --doctorTest/--doctorInstall run any program, ask)",
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
+    },
+    {
+      "pattern": "Bash(yarn dlx npm-check-updates --format group)",
+      "description": "List available dependency updates (read-only forms only; -u and the doctor mode, whose --doctorTest/--doctorInstall run any program, ask)",
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
+    },
+    {
+      "pattern": "Bash(yarn dlx npm-check-updates --target patch)",
+      "description": "List available dependency updates (read-only forms only; -u and the doctor mode, whose --doctorTest/--doctorInstall run any program, ask)",
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
+    },
+    {
+      "pattern": "Bash(yarn dlx npm-check-updates --target minor)",
+      "description": "List available dependency updates (read-only forms only; -u and the doctor mode, whose --doctorTest/--doctorInstall run any program, ask)",
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
+    },
+    {
+      "pattern": "Bash(yarn dlx npm-check-updates --target latest)",
+      "description": "List available dependency updates (read-only forms only; -u and the doctor mode, whose --doctorTest/--doctorInstall run any program, ask)",
+      "usedBy": [
+        "maintaining-npm-packages"
+      ]
+    },
+    {
+      "pattern": "Bash(git fetch -q)",
+      "description": "Update remote-tracking refs quietly or with prune; exact forms only, because a trailing wildcard also admits --upload-pack=<command>",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(git fetch --quiet)",
+      "description": "Update remote-tracking refs quietly or with prune; exact forms only, because a trailing wildcard also admits --upload-pack=<command>",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(git fetch -q origin)",
+      "description": "Update remote-tracking refs quietly or with prune; exact forms only, because a trailing wildcard also admits --upload-pack=<command>",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(git fetch --quiet origin)",
+      "description": "Update remote-tracking refs quietly or with prune; exact forms only, because a trailing wildcard also admits --upload-pack=<command>",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(git fetch origin -q)",
+      "description": "Update remote-tracking refs quietly or with prune; exact forms only, because a trailing wildcard also admits --upload-pack=<command>",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(git fetch origin --quiet)",
+      "description": "Update remote-tracking refs quietly or with prune; exact forms only, because a trailing wildcard also admits --upload-pack=<command>",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(git fetch origin --prune)",
+      "description": "Update remote-tracking refs quietly or with prune; exact forms only, because a trailing wildcard also admits --upload-pack=<command>",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(git fetch origin --prune -q)",
+      "description": "Update remote-tracking refs quietly or with prune; exact forms only, because a trailing wildcard also admits --upload-pack=<command>",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(git fetch origin --prune --quiet)",
+      "description": "Update remote-tracking refs quietly or with prune; exact forms only, because a trailing wildcard also admits --upload-pack=<command>",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(git fetch -q --prune origin)",
+      "description": "Update remote-tracking refs quietly or with prune; exact forms only, because a trailing wildcard also admits --upload-pack=<command>",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(git fetch -q origin --prune)",
+      "description": "Update remote-tracking refs quietly or with prune; exact forms only, because a trailing wildcard also admits --upload-pack=<command>",
+      "usedBy": [
+        "branch-rebaser",
+        "briefing",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(git ls-remote --heads origin:*)",
+      "description": "Read branch and ref names on origin; options after the repository argument are not parsed, so --upload-pack cannot follow",
+      "usedBy": [
+        "audit-requests",
+        "branch-rebaser",
+        "briefing",
+        "coordinating-peer-sessions",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "take-ticket",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(git ls-remote origin:*)",
+      "description": "Read branch and ref names on origin; options after the repository argument are not parsed, so --upload-pack cannot follow",
+      "usedBy": [
+        "audit-requests",
+        "branch-rebaser",
+        "briefing",
+        "coordinating-peer-sessions",
+        "fullstack-updater",
+        "nest-server-updating",
+        "nuxt-extensions-core-contributor",
+        "nuxt-extensions-core-updater",
+        "take-ticket",
+        "vendor-mode-converter-frontend"
+      ]
+    },
+    {
+      "pattern": "Bash(lt fullstack update)",
+      "description": "Update the current fullstack project to the current starters (bare form only: --api <dir> writes into any directory; init, add-api, add-app and convert-mode take --copy/--link/branch values and ask)",
+      "usedBy": [
+        "a11y-reviewer",
+        "backend-dev",
+        "backend-reviewer",
+        "code-reviewer",
+        "frontend-dev",
+        "generating-nest-servers",
+        "managing-dev-servers",
+        "performance-reviewer",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "running-load-tests-with-k6",
+        "sec-audit",
+        "security-reviewer",
+        "using-lt-cli",
+        "ux-reviewer",
+        "validating-changes-in-browser"
+      ]
+    },
+    {
+      "pattern": "Bash(lt server permissions)",
+      "description": "Run the permissions scanner in its documented forms (exact: --path loads code from elsewhere and --output can write outside the project)",
+      "usedBy": [
+        "a11y-reviewer",
+        "backend-dev",
+        "backend-reviewer",
+        "code-reviewer",
+        "frontend-dev",
+        "generating-nest-servers",
+        "managing-dev-servers",
+        "performance-reviewer",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "running-load-tests-with-k6",
+        "sec-audit",
+        "security-reviewer",
+        "using-lt-cli",
+        "ux-reviewer",
+        "validating-changes-in-browser"
+      ]
+    },
+    {
+      "pattern": "Bash(lt server permissions --failOnWarnings)",
+      "description": "Run the permissions scanner in its documented forms (exact: --path loads code from elsewhere and --output can write outside the project)",
+      "usedBy": [
+        "a11y-reviewer",
+        "backend-dev",
+        "backend-reviewer",
+        "code-reviewer",
+        "frontend-dev",
+        "generating-nest-servers",
+        "managing-dev-servers",
+        "performance-reviewer",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "running-load-tests-with-k6",
+        "sec-audit",
+        "security-reviewer",
+        "using-lt-cli",
+        "ux-reviewer",
+        "validating-changes-in-browser"
+      ]
+    },
+    {
+      "pattern": "Bash(lt server permissions --format json --output permissions.json)",
+      "description": "Run the permissions scanner in its documented forms (exact: --path loads code from elsewhere and --output can write outside the project)",
+      "usedBy": [
+        "a11y-reviewer",
+        "backend-dev",
+        "backend-reviewer",
+        "code-reviewer",
+        "frontend-dev",
+        "generating-nest-servers",
+        "managing-dev-servers",
+        "performance-reviewer",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "running-load-tests-with-k6",
+        "sec-audit",
+        "security-reviewer",
+        "using-lt-cli",
+        "ux-reviewer",
+        "validating-changes-in-browser"
+      ]
+    },
+    {
+      "pattern": "Bash(lt server permissions --format html --open)",
+      "description": "Run the permissions scanner in its documented forms (exact: --path loads code from elsewhere and --output can write outside the project)",
+      "usedBy": [
+        "a11y-reviewer",
+        "backend-dev",
+        "backend-reviewer",
+        "code-reviewer",
+        "frontend-dev",
+        "generating-nest-servers",
+        "managing-dev-servers",
+        "performance-reviewer",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "running-load-tests-with-k6",
+        "sec-audit",
+        "security-reviewer",
+        "using-lt-cli",
+        "ux-reviewer",
+        "validating-changes-in-browser"
+      ]
+    },
+    {
+      "pattern": "Bash(lt dev init --skip-install:*)",
+      "description": "Register the project with lt dev without installing the system service (a bare first lt dev init also writes a LaunchAgent and starts Caddy, which asks)",
+      "usedBy": [
+        "a11y-reviewer",
+        "backend-dev",
+        "backend-reviewer",
+        "code-reviewer",
+        "frontend-dev",
+        "generating-nest-servers",
+        "managing-dev-servers",
+        "performance-reviewer",
+        "production-readiness-orchestrator",
+        "production-ready",
+        "running-load-tests-with-k6",
+        "sec-audit",
+        "security-reviewer",
+        "using-lt-cli",
+        "ux-reviewer",
+        "validating-changes-in-browser"
       ]
     }
   ]

@@ -1,6 +1,7 @@
 ---
 name: coordinating-peer-sessions
 description: 'Rules for working alongside other Claude Code sessions the user started in parallel: the coordination channels (Linear, Git, the ledger, ListAgents, SendMessage), when to message a peer, and telling this session''s changes from foreign ones. Activates on "peer session", "andere Session", "wer arbeitet gerade woran", "wer hat das geändert", "fremde Änderungen", when ListAgents shows live peers or a message arrives, when a review or ship meets uncommitted work nobody in this session made, or when a change affects a repo a peer consumes. NOT for agent teams this session spawns (use coordinating-agent-teams). NOT for subagents.'
+allowed-tools: Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh":*)
 ---
 
 # Coordinating Peer Sessions

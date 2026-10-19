@@ -37,7 +37,7 @@ This command runs to completion without check-ins. A message without a tool call
 ### Phase 0 — Preflight (hard gate: stop on red)
 
 - `gh auth status` (github.com, repo scope), and the push channel per repo via
-  `bash "${CLAUDE_PLUGIN_ROOT}/scripts/check-push-channel.sh" <repo-root>`
+  `bash "${CLAUDE_PLUGIN_ROOT}/scripts/check-push-channel.sh" [<repo-root>]` (omit the argument inside the repo itself; a `$(pwd)` argument makes Claude Code ask)
   (field 1: `ssh` → push normally, `https` → use the fallback from the skill).
   Do not use `ssh-add -l`: it queries the agent from `$SSH_AUTH_SOCK` and ignores
   the `IdentityAgent` from `~/.ssh/config`. With 1Password setups it is therefore

@@ -1,6 +1,7 @@
 ---
 name: rebasing-branches
 description: 'Rebases feature branches onto the current development branch (dev/develop), resolves conflicts with the Linear ticket context from the branch name, and force-pushes with lease. Activates on "rebase", "branch aktualisieren", "auf dev Stand bringen", "merge conflicts", "Konflikte lösen", "force push". NOT for merge request descriptions (use /lt-dev:git:mr-description). NOT for shipping a finished branch (use /lt-dev:git:ship).'
+allowed-tools: Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh":*)
 ---
 
 # Rebase Workflow Knowledge Base

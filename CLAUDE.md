@@ -254,8 +254,13 @@ Defines Bash command patterns that can be auto-approved without user confirmatio
 - `:*` is a trailing wildcard only at the very end; a colon elsewhere is literal, so `test\:e2e` and `scripts/:*` never
   match. Settings rules do not expand `${CLAUDE_PLUGIN_ROOT}`, and a `*` in a script path also matches `../`, so
   `permissions.json` holds no rule for plugin scripts; commands grant each script by exact name per turn
+- A skill whose `allowed-tools` grant only side-effect-free plugin scripts by exact name gets a named
+  `Skill(lt-dev:<skill>)` rule, so it loads and runs them without a prompt (house rule 8a,
+  `scripts/permissions.test.mjs`). No global rule for commands Claude Code already treats as read-only (`git log`,
+  `git diff` …): a prefix rule only bypasses its flag analysis (`git log --output=<file>` writes any file)
 - A pattern that is narrowed or dropped moves to the top-level `formerPatterns` array; the lt CLI removes each one
-  once from existing settings. Never list a pattern another plugin still ships, and never an internal host or address
+  once from existing settings. The array only grows: a user who updates for the first time after several releases
+  needs every old entry. Never list a pattern another plugin still ships, and never an internal host or address
   (this repo is public; such a rule is removed by hand)
 - Keep descriptions clear and concise
 

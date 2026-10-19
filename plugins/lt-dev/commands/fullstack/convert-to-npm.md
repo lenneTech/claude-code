@@ -40,7 +40,8 @@ as npm dependencies and removes the vendored source trees
 
 1. **Parse arguments**
    - Detect `--skip-backend`, `--skip-frontend`
-   - Extract `--api-version` and `--app-version` if present
+   - Extract `--api-version` and `--app-version` if present. They are this command's own arguments; the CLI calls
+     them `--framework-version` and `--frontend-framework-version`, so pass them under those names
 
 2. **Detect project structure**
    - Locate backend path: `projects/api/` or `packages/api/`
@@ -74,15 +75,15 @@ as npm dependencies and removes the vendored source trees
 7. **Run the CLI conversion**
    - Single fullstack call (preferred when both sides are being reverted):
      ```bash
-     lt fullstack convert-mode --to npm --api-version <v> --app-version <v> --noConfirm
+     lt fullstack convert-mode --to npm --framework-version <v> --frontend-framework-version <v> --noConfirm
      ```
    - With `--skip-backend`:
      ```bash
-     lt fullstack convert-mode --to npm --app-version <v> --skip-api --noConfirm
+     lt fullstack convert-mode --to npm --frontend-framework-version <v> --skip-backend --noConfirm
      ```
    - With `--skip-frontend`:
      ```bash
-     lt fullstack convert-mode --to npm --api-version <v> --skip-app --noConfirm
+     lt fullstack convert-mode --to npm --framework-version <v> --skip-frontend --noConfirm
      ```
 
 8. **Run post-conversion validation**

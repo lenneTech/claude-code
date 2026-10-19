@@ -1,6 +1,7 @@
 ---
 name: contributing-to-lt-framework
 description: 'Guides development on the lenne.tech framework libraries themselves (@lenne.tech/nest-server, @lenne.tech/nuxt-extensions) and testing those changes in a starter via `pnpm link`, with build/watch loop and rollback. Activates on "Grund-Repo", "pnpm link", "test framework locally", or when a bug found in a project belongs in a base repo. NOT for using the frameworks inside a project (use generating-nest-servers or developing-lt-frontend). NOT for vendored cores (use nest-server-core-vendoring or nuxt-extensions-core-vendoring). NOT for version upgrades (use nest-server-updating).'
+allowed-tools: Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh":*)
 ---
 
 # Contributing to the lt Framework

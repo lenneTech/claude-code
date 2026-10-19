@@ -2,6 +2,7 @@
 name: running-check-script
 description: 'Runs the package.json check script (monorepo-aware) and auto-fixes until green, escalating audit findings, whenever work must prove runnability; triggers on "pnpm run check".'
 user-invocable: false
+allowed-tools: Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh":*)
 ---
 
 # Running the `check` Script
@@ -38,7 +39,7 @@ The procedure is identical in both modes. Only what happens with an unresolved e
 Use the dedicated helper script (located in the lt-dev plugin):
 
 ```bash
-bash "${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh" "$(pwd)"
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh"
 ```
 
 Output is TSV, one project per line:

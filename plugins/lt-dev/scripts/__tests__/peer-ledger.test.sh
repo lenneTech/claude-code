@@ -99,6 +99,15 @@ run "$LIVE_PID" note "messy" "$(printf 'line one\tand\ntwo')" >/dev/null
 out="$(run "$LIVE_PID" read)"
 assert_contains "$out" "line one and two" "collapses tabs and newlines instead of corrupting the record"
 
+# Day counts are digits only. Bash arithmetic evaluates `PATH[$(cmd)]` and runs cmd, and skills
+# grant this script by name without a prompt, so an unchecked value was a way to run any
+# command (found in the 2026-10-18 review, proven in Claude Code with a skill-only grant).
+MARK="$TMP_ROOT/injected"
+run "$LIVE_PID" read --notes-days "PATH[\$(touch $MARK)]" >/dev/null
+[ -e "$MARK" ] && { FAIL=$((FAIL + 1)); echo "  ✗ read --notes-days runs no command from its value"; } || { PASS=$((PASS + 1)); echo "  ✓ read --notes-days runs no command from its value"; }
+run "$LIVE_PID" prune --days "now[\$(touch $MARK)]" >/dev/null
+[ -e "$MARK" ] && { FAIL=$((FAIL + 1)); echo "  ✗ prune --days runs no command from its value"; } || { PASS=$((PASS + 1)); echo "  ✓ prune --days runs no command from its value"; }
+
 out="$(run "$LIVE_PID" prune --days 0)"
 assert_contains "$out" "pruned" "prunes old records"
 

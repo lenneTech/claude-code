@@ -20,7 +20,7 @@
       "description": "Patterns this plugin shipped in earlier versions and no longer lists. The lt CLI removes each one once from the user's settings, so a narrowed or dropped rule leaves existing installs too; a rule the user adds again by hand afterwards stays. Never list a pattern another plugin still ships, and never internal host names or addresses: this file is public.",
       "items": {
         "type": "string",
-        "pattern": "^Bash\\(.+\\)$"
+        "pattern": "^(Bash|Skill)\\(.+\\)$"
       },
       "uniqueItems": true
     },
@@ -37,8 +37,8 @@
         "properties": {
           "pattern": {
             "type": "string",
-            "description": "The permission pattern for Claude Code (e.g., 'Bash(npm test:*)')",
-            "pattern": "^Bash\\(.+\\)$"
+            "description": "The permission pattern for Claude Code: a narrow Bash rule (e.g. 'Bash(npm test:*)') or a named Skill rule (e.g. 'Skill(lt-dev:running-check-script)') for a skill whose allowed-tools grant only side-effect-free scripts",
+            "pattern": "^(Bash|Skill)\\(.+\\)$"
           },
           "description": {
             "type": "string",

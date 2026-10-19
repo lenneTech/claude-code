@@ -141,6 +141,9 @@ cmd_read() {
       *) shift ;;
     esac
   done
+  # Digits only: bash arithmetic evaluates a value such as `PATH[$(cmd)]` and runs the
+  # command, and skills grant this script by name without a prompt (2026-10-18 review).
+  case "$notes_days" in ''|*[!0-9]*) notes_days="$NOTES_DAYS_DEFAULT" ;; esac
 
   echo "repo: $LEDGER_ROOT"
   if [ ! -f "$LEDGER_FILE" ]; then
@@ -201,6 +204,8 @@ cmd_prune() {
       *) shift ;;
     esac
   done
+  # Digits only, for the same reason as --notes-days in cmd_read.
+  case "$days" in ''|*[!0-9]*) days="$PRUNE_DAYS_DEFAULT" ;; esac
   [ -f "$LEDGER_FILE" ] || { echo "nothing to prune"; return 0; }
   local cutoff tmp before after
   cutoff=$(( $(date +%s) - days * 86400 ))

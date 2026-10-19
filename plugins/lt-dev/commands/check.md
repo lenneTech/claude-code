@@ -39,7 +39,7 @@ Parse arguments from `$ARGUMENTS`:
 
 **Follow the `running-check-script` skill verbatim** (`plugins/lt-dev/skills/running-check-script/SKILL.md`). The skill is the single source of truth for:
 
-1. **Discovery** — `bash "${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh" "$(pwd)"`
+1. **Discovery** — `bash "${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh"`
 2. **Per-project execution** — run `<pm> run check` in each project directory
 3. **Iterate-until-green auto-fix loop** — no hard iteration cap; terminate on GREEN or STALLED
 4. **Audit-finding fix escalation ladder** — mandatory 6-step ladder before any acceptance

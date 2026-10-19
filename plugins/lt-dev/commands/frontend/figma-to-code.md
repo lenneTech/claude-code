@@ -252,7 +252,7 @@ After all screens are implemented:
 
 1. **Update config** — Mark section status in `figma-project.json`
 2. **Lint** — Run `pnpm run lint:fix` in the frontend project directory
-3. **Type check** — Run `pnpm dlx tsc --noEmit` to verify zero TypeScript errors
+3. **Type check** — Run `pnpm run typecheck` (the starter defines it as `nuxt prepare` plus `vue-tsc --noEmit`); without that script, `pnpm exec vue-tsc --noEmit`. Plain `tsc` does not type-check `.vue` files, so every screen this command builds would pass unchecked, and `pnpm dlx tsc` fetches the deprecated npm package `tsc`. Verify zero TypeScript errors
 4. **Report:**
 
 ```

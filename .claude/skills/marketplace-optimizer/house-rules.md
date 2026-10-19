@@ -56,10 +56,16 @@ ignore it silently.
    report stops the outer one. Reason: the default model ends long multi-part turns with text-only progress reports,
    which stops an unattended run (`prompting-claude-opus-5-5.md`, "Unattended agentic runs").
 8a. **A command that calls a skill or command with its own `allowed-tools` grants it by name**: `Skill(lt-dev:<name>)`
-   in the caller's `allowed-tools`, never `Skill(lt-dev:*)` and never a Skill rule in `permissions.json`. Measured
-   2026-10-18 (headless probes): the Skill permission gate fires exactly for targets that carry `allowed-tools`, so
-   `/lt-dev:vibe:build` was denied its `sec-review` call; a wildcard would also open `git:ship`, whose grants include
-   `git push`, without a prompt.
+   in the caller's `allowed-tools`, never `Skill(lt-dev:*)`. Measured 2026-10-18 (headless probes): the Skill
+   permission gate fires exactly for targets that carry `allowed-tools`, also when the model loads a skill on its own,
+   so `/lt-dev:vibe:build` was denied its `sec-review` call; a wildcard would also open `git:ship`, whose grants
+   include `git push`, without a prompt. A **named** Skill rule in `permissions.json` is allowed for a **skill** (never a
+   command) whose `allowed-tools` grant only side-effect-free plugin scripts by exact name (read-only checks, the local
+   peer ledger): the model then loads it and runs those scripts without a prompt, and everything else still asks.
+   `scripts/permissions.test.mjs` enforces the pairing. A script that writes gets no such rule unless the grant is its
+   `--dry-run` form and the script lets `--dry-run` win over the write flag (agreed with the internal marketplace,
+   2026-10-18). The line behind it, from the maintainer: protect by default, slow nobody down; a prompt is right for a
+   rare or sensitive action, never for a frequent harmless one.
 
 ## Agents
 
@@ -155,7 +161,11 @@ ignore it silently.
 ## Permissions
 
 24c. **`permissions.json` lands in the user's global settings and applies in every project**, so each pattern names
-    the narrow command its description states. Broad tools (`curl`, `node`, `docker run`/`exec`, `git push`, `rm`,
+    the narrow command its description states, and is checked for write- or exec-capable flags it also admits
+    (`git log --output=<file>`, `dig -f`, `curl -d @file`, `kubectl get --raw` twice, `docker compose exec`). Commands
+    Claude Code already runs as read-only without a rule (`ls`, `cat`, `grep`, `find`, read-only forms of `git` …) get
+    no global rule at all: their flag-aware analysis is stricter than any prefix rule, which only bypasses it
+    (`git log:*`, `git diff:*`, `git branch:*`, `git stash:*` and four more were removed 2026-10-18). Broad tools (`curl`, `node`, `docker run`/`exec`, `git push`, `rm`,
     `cp`, `mv`, `gh api` writes) are granted per turn through a command's `allowed-tools`, never globally; a substring
     rule such as `Bash(curl *host*)` is no narrowing, because curl takes several URLs and data files. Syntax per
     `permissions.md`: `:*` is a trailing wildcard only at the end; `\:` is a literal backslash, and `x/:*` needs a
@@ -168,7 +178,9 @@ ignore it silently.
     `lt claude plugins` copies patterns verbatim, so
     a rule narrowed or dropped here goes into the file's `formerPatterns` array, from which the CLI removes it once
     from existing settings (decided 2026-10-18; internal patterns live only in the private marketplace's own files,
-    and a former rule naming an internal host is removed by hand, never listed here). A narrowed global rule makes the
+    and a former rule naming an internal host is removed by hand, never listed here). `formerPatterns` only grows:
+    a user who updates for the first time after several releases needs every entry, because without a ledger entry
+    the CLI knows an old rule only from this list (lt CLI session, 2026-10-18). A narrowed global rule makes the
     commands that relied on it add a per-turn grant (a command's grant reaches the foreground agents it spawns,
     measured by probe 2026-10-18). Observed 2026-10-18: `Bash(rm:*)`, `Bash(curl:*)`,
     `Bash(docker:*)` and eight more approved far beyond their descriptions, four `\:` rules and eight placeholder rules
@@ -177,6 +189,20 @@ ignore it silently.
     without a prompt, and the rule was dropped. Same review: npx reads the working directory's `.npmrc`, and MCP
     servers and SessionStart hooks run in the opened project, so every npx call a plugin makes there passes an empty
     `--prefix` of its own (a planted `node-options=--require=./x.cjs` ran under the launcher before the fix).
+24e. **Practicality comes from auto mode, not from a longer allow list.** Measured 2026-10-18 over 151 real sessions
+    (81.8k Bash calls, classifier calibrated against `claude -p --permission-mode dontAsk` on 150 commands): in Manual
+    mode lt-dev work would prompt 131 times per session (median, p90 533), only 34% of those prompts are fixable by any
+    allow rule (shell variables, `$(…)`, `cd` plus git and paths outside the project always ask), and 23 extra harmless
+    rules moved the median to 127. Auto mode is the built-in starting mode since 2.1.283. So the allow list is cut for
+    auto mode: every rule narrow, because an allow rule skips the classifier; frequent harmless commands (the
+    project's own test, lint and format tools, read-only `gh`/`glab`, the local `lt dev` stack) get a rule to save
+    the classifier round trip; rare or sensitive actions (pushing, merging, publishing, secrets, deleting, foreign
+    network calls) are left to the classifier or a command's per-turn grant. Plugin text avoids constructs that always
+    ask: no `"$(pwd)"` argument where the script defaults to the current directory (four call sites fixed).
+24f. **`npx`/`dlx` take a package name, not a binary name.** `pnpm dlx ncu` fetched the unrelated npm package `ncu`
+    and ran its own `ncu` binary instead of npm-check-updates, and `pnpm dlx tsc` fetches the deprecated package
+    `tsc` instead of the project's TypeScript (both found 2026-10-18). Call fetch-and-run tools by the package name
+    (`pnpm dlx npm-check-updates`) and project tools through `pnpm exec`, and check `npm view <name>` before adding one.
 24d. **lt-showroom and lt-tools declare no `dependencies` on lt-dev.** Their use of lt-dev's chrome-devtools server is
     optional, and a declared dependency disables the dependent plugin whenever lt-dev is missing or off
     (`plugins-troubleshooting.md`); the READMEs state the optional use instead.

@@ -104,7 +104,7 @@ test -d projects/app && echo "frontend"
    - `tmp/ci-local/report.md` (for CI iteration history; safe to ignore if older than 1 day)
 4. **Discover `check` scripts** via the helper:
    ```bash
-   bash "${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh" "$(pwd)"
+   bash "${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh"
    ```
 5. **Record diff scope** for Phase 2 coverage analysis:
    ```bash

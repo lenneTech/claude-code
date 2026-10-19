@@ -110,9 +110,9 @@ application is handled by the respective agents on top of the already-vendored t
 
 | Scope | CLI Invocation |
 |-------|----------------|
-| Full fullstack conversion (both sides) | `lt fullstack convert-mode --to vendor --api-ref <v> --app-ref <v> --noConfirm` |
-| Fullstack conversion, frontend only | `lt fullstack convert-mode --to vendor --skip-api --app-ref <v> --noConfirm` |
-| Fullstack conversion, backend only | `lt fullstack convert-mode --to vendor --skip-app --api-ref <v> --noConfirm` |
+| Full fullstack conversion (both sides) | `lt fullstack convert-mode --to vendor --framework-upstream-branch <v> --frontend-framework-upstream-branch <v> --noConfirm` |
+| Fullstack conversion, frontend only | `lt fullstack convert-mode --to vendor --skip-backend --frontend-framework-upstream-branch <v> --noConfirm` |
+| Fullstack conversion, backend only | `lt fullstack convert-mode --to vendor --skip-frontend --framework-upstream-branch <v> --noConfirm` |
 | Dry-run (any scope) | add `--dry-run` |
 
 The `lt fullstack convert-mode` CLI is preferred over two separate `lt server` /
@@ -128,7 +128,7 @@ and keeps the vendor baseline detection consistent across both sides.
 │  Phase 2: Plan + user approval (unless --dry-run)
 │
 │  Phase 3: Structural conversion — single `lt fullstack convert-mode --to vendor ...` call
-│           (respects --skip-backend / --skip-frontend via --skip-api / --skip-app)
+│           (passes --skip-backend / --skip-frontend through to the CLI unchanged)
 │
 │  Phase 4: Backend migration-guide application via vendor-mode-converter agent
 │           (skipped if --skip-backend; must complete before Phase 5 — generated
@@ -173,9 +173,9 @@ and keeps the vendor baseline detection consistent across both sides.
 
 7. **Phase 3 — Structural conversion via `lt` CLI** (real run only)
    - Run exactly one `lt fullstack convert-mode --to vendor` invocation, built from the resolved state:
-     - Both sides: `lt fullstack convert-mode --to vendor --api-ref <api-target> --app-ref <app-target> --noConfirm`
-     - `--skip-backend`: `lt fullstack convert-mode --to vendor --skip-api --app-ref <app-target> --noConfirm`
-     - `--skip-frontend`: `lt fullstack convert-mode --to vendor --skip-app --api-ref <api-target> --noConfirm`
+     - Both sides: `lt fullstack convert-mode --to vendor --framework-upstream-branch <api-target> --frontend-framework-upstream-branch <app-target> --noConfirm`
+     - `--skip-backend`: `lt fullstack convert-mode --to vendor --skip-backend --frontend-framework-upstream-branch <app-target> --noConfirm`
+     - `--skip-frontend`: `lt fullstack convert-mode --to vendor --skip-frontend --framework-upstream-branch <api-target> --noConfirm`
    - Abort on non-zero exit; suggest `git reset --hard` to roll back
 
 8. **Phase 4 — Backend migration-guide application** (skipped if `--skip-backend`)

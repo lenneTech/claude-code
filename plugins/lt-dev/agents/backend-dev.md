@@ -721,7 +721,7 @@ function fn(a: string, b?: number, c?: string) { }
 # Audit security coverage (MANDATORY after creating modules)
 lt server permissions --failOnWarnings           # CI mode
 lt server permissions --format html --open       # Visual report
-lt server permissions --format json --output p.json  # Machine-readable
+lt server permissions --format json --output permissions.json  # Machine-readable
 ```
 
 Detects: missing `@Restricted`, endpoints without `@Roles`, models without `securityCheck()`, unrestricted fields/methods.

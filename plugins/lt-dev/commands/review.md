@@ -336,7 +336,7 @@ Why every reviewer needs it: a sub-agent cannot message anybody (no lt-dev agent
 
 **Follow the `running-check-script` skill verbatim** (`plugins/lt-dev/skills/running-check-script/SKILL.md`). It defines:
 
-- **Step 1** — Discovery via `bash "${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh" "$(pwd)"`
+- **Step 1** — Discovery via `bash "${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh"`
 - **Step 2** — Per-project `check` execution
 - **Step 3** — Auto-fix loop: iterate until truly GREEN (exit 0), no hard iteration cap, terminate only on GREEN or STALLED (error count no longer decreases)
 - **Step 4** — Audit findings: mandatory 6-step fix escalation ladder before any acceptance

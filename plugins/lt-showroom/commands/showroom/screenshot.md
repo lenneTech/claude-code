@@ -1,7 +1,7 @@
 ---
 description: Capture feature screenshots of a project from a throwaway clone with demo data (desktop + mobile, WebP) into ~/.lt-showroom/<slug>/screenshots/, with a fallback chain when the project cannot run locally; writes nothing into the project
 argument-hint: "[project-path | repository-url] [--ref <branch>] [--cleanup] | --name <project> [--live <url>]"
-allowed-tools: Read, Grep, Glob, Agent, AskUserQuestion, Bash(ls:*), mcp__plugin_lt-showroom_showroom-api__*, Bash(docker run -d --name showroom-*), Bash(curl -sL:*), Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot-session.mjs:*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/screenshot-session.mjs":*)
+allowed-tools: Read, Grep, Glob, Agent, AskUserQuestion, Bash(ls:*), mcp__plugin_lt-showroom_showroom-api__*, Bash(docker run -d --name showroom-*), Bash(curl -sL:*), Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/screenshot-session.mjs:*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/screenshot-session.mjs":*), Bash(docker compose -p showroom-*), Bash(cwebp:*), Bash(npx lerna:*)
 disable-model-invocation: true
 ---
 

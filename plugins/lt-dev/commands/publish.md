@@ -134,7 +134,7 @@ A restart of Claude Code is required — running sessions keep the old version.
 
 1. **Preflight** (skill rules): correct branch (nest-server: `develop`),
    `git pull` current, `gh auth`, and the push channel via
-   `bash "${CLAUDE_PLUGIN_ROOT}/scripts/check-push-channel.sh" <repo-root>` —
+   `bash "${CLAUDE_PLUGIN_ROOT}/scripts/check-push-channel.sh" [<repo-root>]` (omit the argument inside the repo itself; a `$(pwd)` argument makes Claude Code ask) —
    never `ssh-add -l`, which is a permanent false negative on 1Password
    `IdentityAgent` setups (see the skill's Push-channel rule).
    Uncommitted changes in the SOURCE repo are allowed — they are exactly what

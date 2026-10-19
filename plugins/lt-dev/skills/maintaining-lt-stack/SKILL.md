@@ -1,6 +1,7 @@
 ---
 name: maintaining-lt-stack
 description: 'Stack-wide maintenance and releases of the lt base repos ("Grund-Repos"): dependency order (nuxt-extensions to nuxt-base-starter, nest-server to nest-server-starter), the release recipe per repo, and the smoke test as release gate. Activates on "maintain stack", "release all repos", "stack release", "Grund-Repos aktualisieren", and behind /lt-dev:publish. NOT for a single npm package (use maintaining-npm-packages). NOT for nest-server upgrades inside customer projects (use nest-server-updating).'
+allowed-tools: Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/check-push-channel.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/check-push-channel.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh":*)
 ---
 
 # Maintaining the lt Stack (all base repos)
@@ -202,7 +203,7 @@ What does **not** go over messages: which repos exist and in which order they go
 - **Push channel:** ask the script, which decides it functionally:
 
   ```bash
-  bash "${CLAUDE_PLUGIN_ROOT}/scripts/check-push-channel.sh" <repo-root>
+  bash "${CLAUDE_PLUGIN_ROOT}/scripts/check-push-channel.sh" [<repo-root>]   # omit inside the repo; never pass "$(pwd)"
   # -> ssh<TAB>github.com<TAB>authenticated as: Hi kaihaase! …
   # -> https<TAB>github.com<TAB>no SSH authentication (…)
   ```

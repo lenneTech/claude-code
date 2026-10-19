@@ -130,6 +130,8 @@ Compare against fetched documentation:
 - [ ] No orphaned patterns (patterns without valid usedBy references)
 - [ ] Patterns are well-formed: a `:*` wildcard only at the very end (`Bash(pnpm run test:*)`), no `\:`, no `/:*`
 - [ ] A pattern removed from `permissions` is listed in `formerPatterns` (the lt CLI removes it once from existing settings), unless another plugin still ships it or it names an internal host
+- [ ] No pattern admits a write- or exec-capable flag (`--output`, `-f <file>`, `-d @file`, `exec`/`run`), and no pattern covers a command Claude Code already runs as read-only (`git log`, `git diff`, `ls`, `grep` …), because a prefix rule bypasses that flag-aware check
+- [ ] A named `Skill(<plugin>:<skill>)` rule exists only for a skill whose `allowed-tools` grant side-effect-free scripts by exact name; never for a command, never with `*`
 
 **Check against skills:**
 ```bash

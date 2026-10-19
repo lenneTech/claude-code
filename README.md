@@ -197,6 +197,20 @@ bun run version:major "Breaking changes in hook configuration"
 
 The script updates `plugin.json` + `package.json`, creates commit, tag and pushes automatically.
 
+### Recommended permission mode: auto
+
+Work in **auto mode** (the built-in starting mode of interactive sessions since Claude Code 2.1.283; `Shift+Tab` or
+`permissions.defaultMode: "auto"`). A classifier approves routine actions and asks only for risky ones, which is the
+balance these plugins are built for: protected by default, nobody slowed down, a prompt only for a rare or sensitive
+action. Manual (`default`) mode is not practical for agentic work with these plugins, whatever the allow list says:
+measured over 151 real lt-dev sessions, it would ask about 131 times per session (median), and only about a third of
+those prompts could be removed by any allow rule at all, because Claude Code asks for shell constructs such as
+variables, `$(…)` or paths outside the project regardless of rules.
+
+The allow rules below still matter in auto mode: an allow rule resolves an action before the classifier sees it, so
+every rule is kept narrow (it would otherwise skip the safety check), and the frequent harmless ones save the
+classifier round trip.
+
 ### Permissions Configuration
 
 The file `plugins/lt-dev/permissions.json` lists the narrow Bash commands the skills and agents run without a prompt. The lenne.Tech CLI copies it into `~/.claude/settings.json` during installation, where every rule applies in every project. A rule the plugin narrowed or dropped is listed in the file's `formerPatterns` array, and the CLI removes it once from your settings; a rule you add again by hand afterwards stays. Broad tools (`curl`, `node`, `docker run`/`exec`, `git push`, `rm`, `cp`, `mv`) are not listed; the commands that need them grant them for their own turn through `allowed-tools`.
