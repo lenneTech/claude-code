@@ -47,12 +47,33 @@ Traefik mismatch (see `deploying-to-turboops` Trap 5).
 |-------|---------|
 | lt CLI linked globally | `lt --version` |
 | glab authenticated on the team GitLab | `glab auth status --hostname <gitlab-host>` |
-| TurboOps MCP reachable | `list_workspaces` (MCP) |
+| TurboOps MCP reachable — hard prerequisite for Phases 3–7, no substitute | `list_workspaces` (MCP); on failure see "When the TurboOps MCP is missing" below |
 | turbo CLI + login | `turbo whoami` — on "Unauthorized": `turbo login` (browser flow; the user token lands in `~/Library/Preferences/turboops-cli-nodejs/config.json`) |
 | MongoDB running locally | `pgrep mongod` |
 | mongosh installed (needed for DB cleanup) | `which mongosh` — otherwise `brew install mongosh` |
 | Caddy daemon (lt dev) | `curl -s http://localhost:2019/config/` |
 | DNS: apex + wildcard → target server IP | `dig +short <domain>` and `dig +short api.dev.<domain>` — per RFC 4592 a wildcard `*.<domain>` also covers `api.dev.<domain>`, as long as no explicit intermediate record exists |
+
+### When the TurboOps MCP is missing
+
+The `turbo` CLI token is no substitute for the MCP. The TurboOps API accepts it only on its `/cli/*` routes (create
+a project or stage, upload the compose file, mint a project token) and rejects it on every other route with
+`CLI tokens cannot access this endpoint. Use /cli/* endpoints instead.` Without the MCP the run can therefore set no
+stage ENVs and no service domain, cannot reach `exec_in_container` (Traefik label pass, log check, volume cleanup) and
+cannot delete stages or the project. Observed 2026-10-20: the MCP failed at session start with `CONNECT_TIMEOUT`,
+together with other MCP servers, while the TurboOps server itself answered in 0.1 s.
+
+So when `list_workspaces` is missing or fails:
+
+- Run Phases 1–2 anyway; local validation needs no TurboOps.
+- Stop before Phase 3 and ask the user to reconnect the server (`/mcp` → `turboops` → Reconnect), together with the
+  result of Phases 1–2. Continue with Phase 3 once `list_workspaces` answers.
+- Create no GitLab or TurboOps resource before that: a project or stage made through the `/cli/*` routes alone is one
+  this run cannot delete again, and a GitLab repo without its deployment is a leftover nobody needs.
+- The same applies when the MCP drops later in the run: stop at the next MCP step, ask for the reconnect and resume
+  there, instead of working around the step through the CLI API.
+
+With `--skip-deploy` the MCP is not needed.
 
 ### Fixed assignment — record it once instead of asking every run
 
@@ -89,7 +110,7 @@ applies as well, after **every** deploy.
 
 ### Turn endings
 
-This command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; waiting on a pipeline or a deploy means polling again, not reporting, and a base-repo fix is followed by the repeated step. The run stops only at the handoff points this command defines (a Phase 0 prerequisite the run cannot establish itself, such as the `turbo login` browser flow or a missing DNS record, and the Phase 8 report; when an orchestrating command invoked this one, the report returns to that caller, which carries on), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation. Deleting the throwaway resources this run created, and the leftovers of earlier smoke-test runs under the same `<name>` (a `-deletion_scheduled-` GitLab project, orphaned `<stack>_mongo_data` volumes), is part of the job, not such an action — Phase 7 must end with zero hits, earlier runs included.
+This command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; waiting on a pipeline or a deploy means polling again, not reporting, and a base-repo fix is followed by the repeated step. The run stops only at the handoff points this command defines (a Phase 0 prerequisite the run cannot establish itself, such as the `turbo login` browser flow or a missing DNS record, an unreachable TurboOps MCP (after Phase 2, see "When the TurboOps MCP is missing"), and the Phase 8 report; when an orchestrating command invoked this one, the report returns to that caller, which carries on), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation. Deleting the throwaway resources this run created, and the leftovers of earlier smoke-test runs under the same `<name>` (a `-deletion_scheduled-` GitLab project, orphaned `<stack>_mongo_data` volumes), is part of the job, not such an action — Phase 7 must end with zero hits, earlier runs included.
 
 ### Phase 1 — Scaffold (vendor mode)
 
@@ -243,7 +264,7 @@ Per round:
    deletion by an earlier run otherwise blocks the name and stays unnoticed.
 4. Local: `lt dev down` in the project, `lt dev test down` (if anything is left), delete the project folder, check the registry entry (`~/.lenneTech/projects.json`; `lt dev down` removes the Caddy block; clean orphaned entries via `lt dev prune`/registry check).
 5. Local Mongo: `lt dev prune --noConfirm` also removes orphaned smoke-test DBs (reserved `lt-smoke-test` prefix) automatically since CLI 1.38.0; the same sweep also runs on every `lt dev up` of any project. Direct drop commands may be blocked by a hook policy. In that case do not work around it; prune is the canonical way.
-5b. Server volumes: orphaned `<stack>_mongo_data` volumes remain after stage deletion and are reused by the next run. That is a data leak between runs, and the reason a fixed test email wrongly returns `400 Email already registered`. **They can be deleted through the TurboOps MCP, without SSH** (verified 2026-08-23): `exec_in_container` in a container with the Docker CLI and a read-write socket (on a deploy.party server the task container of the `deploy-party_api` service: pass its ID or full `deploy-party_api.1.<task>` name from `list_server_containers`, since the bare service name answers `No such container`), with `allowWrite: true` and `confirmHostname: <server-IP>`. Pass **the IP, not the server name**; a server name is rejected with "confirmHostname mismatch". First list with `volume ls --filter name=<name>`, then run `volume rm` on the two stack volumes. An earlier version of this document claimed this was blocked by a blocklist and required SSH. That is not (or no longer) true: the command is classified as `needs-write` and runs with `allowWrite`. SSH remains the fallback when the MCP is unreachable.
+5b. Server volumes: orphaned `<stack>_mongo_data` volumes remain after stage deletion and are reused by the next run. That is a data leak between runs, and the reason a fixed test email wrongly returns `400 Email already registered`. **They can be deleted through the TurboOps MCP, without SSH** (verified 2026-08-23): `exec_in_container` in a container with the Docker CLI and a read-write socket (on a deploy.party server the task container of the `deploy-party_api` service: pass its ID or full `deploy-party_api.1.<task>` name from `list_server_containers`, since the bare service name answers `No such container`), with `allowWrite: true` and `confirmHostname: <server-IP>`. Pass **the IP, not the server name**; a server name is rejected with "confirmHostname mismatch". First list with `volume ls --filter name=<name>`, then run `volume rm` on the two stack volumes. `exec_in_container` rejects `sh -c …` and every other shell wrapper, so pass one docker command per call instead of chaining them in a shell. An earlier version of this document claimed this was blocked by a blocklist and required SSH. That is not (or no longer) true: the command is classified as `needs-write` and runs with `allowWrite`. SSH remains the fallback when the MCP is unreachable.
 6. `turbo logout` is not needed (the user login stays); the project's CI/CD token dies with the project.
 7. Final check: all four stage URLs must return 404/default cert again, `glab repo view` 404, the TurboOps project list without `<name>`, no `<name>` DBs, no `$SMOKE_DIR/<name>`.
 
