@@ -169,7 +169,7 @@ A divider never shows its title.
 ## 9. `testimonial` — Customer Quote
 
 ```json
-{ "quote": "<quote, verbatim>", "author": "Max Mustermann", "role": "Geschäftsführer", "company": "Beispielkunde" }
+{ "quote": "<quote, verbatim, names as placeholders>", "author": "{{ansprechpartner}}", "role": "Geschäftsführer", "company": "{{kunde}}" }
 ```
 
 | Field | Required | Shown as |
@@ -179,7 +179,9 @@ A divider never shows its title.
 | `role` | no | Below the name, as `role · company` |
 | `company` | no | Below the name, as `role · company` |
 
-All fields are plain text; the quotation mark is drawn by the page.
+All fields are plain text; the quotation mark is drawn by the page. `author` and `company` take the placeholders,
+whose real values (`customer.contactName`, `customer.name`) and aliases (`customer.contactAlias`, `customer.alias`) are
+fields of the showcase; `role` is the contact's function.
 
 ---
 
@@ -253,7 +255,8 @@ Allowed tags: `p`, `br`, `strong`, `em`, `u`, `ul`, `ol`, `li`, `h1`-`h6`, `a`, 
 `<iframe>`, `<video>` and `<svg>` are removed; a `style` attribute containing `url(` or `data:` is removed as a whole.
 Every image opens in the lightbox, with its `alt` as caption.
 
-Image URLs, theming and layout for this block: `best-practices.md` → "Feature-Screenshot Layout (custom-html)".
+Files (relative `/files/id/<fileId>`), theming and layout for this block: `best-practices.md` → "Custom HTML (special
+layouts)". For a feature with screenshots, use `feature-spotlight` (18) instead.
 
 ---
 
@@ -342,12 +345,43 @@ is left out of the public page.
 
 ---
 
+## 18. `feature-spotlight` — Feature with Screenshots
+
+```json
+{
+  "html": "<p>Description with placeholders</p>",
+  "icon": "i-lucide-target",
+  "screenshots": [
+    { "fileId": "<file id>", "device": "desktop", "caption": "…", "showsCustomer": false },
+    { "fileId": "<file id>", "device": "mobile" }
+  ]
+}
+```
+
+| Field | Required | Shown as |
+|-------|----------|----------|
+| `html` | yes | Text beside the screenshots, HTML as in `text` |
+| `icon` | no | Iconify name next to the block title, e.g. `i-lucide-zap` |
+| `screenshots[].fileId` | yes | The image; the first desktop and the first mobile one are shown together |
+| `screenshots[].device` | no | `desktop` (default) and `tablet` in a browser frame, `mobile` in a phone frame |
+| `screenshots[].caption` | no | Caption, plain text |
+| `screenshots[].showsCustomer` | no | Shows the customer (logo, branding): left out where the alias is shown |
+
+The block title is the heading; consecutive spotlights alternate the image side. Writing guidance:
+`best-practices.md` → "Feature Sections (feature-spotlight)".
+
+---
+
 ## Saving and Updating Blocks
 
-- **`contentBlocks` replaces the whole list** on every update; send the complete array.
-- **`get_showcase` returns `global-ref` blocks already resolved** into the set's blocks. Sending that array back
-  stores a frozen copy instead of the reference. When the showcase uses global blocks, take the stored array from
-  REST `GET /showcases/{id}` instead, or put the `global-ref` blocks back in place of the resolved ones.
+- **Every block has an `id`.** `get_showcase` returns the blocks as stored, each with its `id`, texts with their
+  placeholders and a `global-ref` block as a reference (`view: "alias"` or `"real"` returns the resolved page instead,
+  for checking, never for saving).
+- **One block: `upsert_block` and `remove_block`.** `upsert_block` with `block.blockId` replaces that block (`title`,
+  `visible`, `showInToc` stay unless given), without one it inserts a new block at `position` or last; `remove_block`
+  removes one. The other blocks are not sent and stay untouched.
+- **`contentBlocks` replaces the whole list** on every update; send the complete array, each kept block with its `id`
+  (a block without one is a new block).
 - **`fileId` and `fileIds` carry over.** A block with the same `order` and `type` as a stored block keeps the stored
   `fileId` / `fileIds` when the new block leaves them out or empty; `null` removes them. A block that changes what it
   shows at a position therefore sends a real file id or `null`.

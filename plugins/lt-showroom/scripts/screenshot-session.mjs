@@ -5,6 +5,8 @@
 //   checkout/        throwaway clone the project is started from (never the developer's checkout)
 //   screenshots/     the WebP files the run delivers           (kept by cleanup)
 //   manifest.json    one entry per image plus run metadata      (kept by cleanup)
+//   analysis.json    the showcase analysis of the clone, until create/update stores it in the
+//                    Showroom as sourceCodeAnalysis                   (kept by cleanup)
 //   logs/            output of processes started through `run`
 //   session.json     everything the run started, so cleanup can stop exactly that and nothing else
 //
@@ -52,6 +54,14 @@ Session
   elapsed <slug>                             minutes used of the time budget (LT_SHOWROOM_BUDGET_MIN, default 45)
   status [<slug>]                            show open sessions
   verify-source <slug>                       exit 2 if the local checkout given to start changed since then
+  source <slug> [--path <subfolder>]         the showcase \`source\` of the cloned commit (repository without
+                                             credentials, commit, app and plugin version); works after cleanup
+  analysis save <slug>                       store the analysis report (JSON on stdin) as <work>/analysis.json
+  analysis show <slug>                       print it
+  analysis current <slug>                    whether the report's analyzedCommit is still the head of the remote's
+                                             default branch (git without a shell; current: false without a report)
+  changes <slug> --since <commit>            paths changed between <commit> and the clone's HEAD (fetches the
+                                             commit into the shallow clone; exit 4 when the remote lost it)
   cleanup <slug> [--keep-checkout]           stop and remove everything the session recorded
                                              (--keep-checkout: stop the stack, keep the clone and the session)
   sweep [--session <id>] [--detach]          clean sessions whose Claude process is gone (or that belong to <id>)
@@ -72,11 +82,13 @@ Manifest
   manifest remove <slug> <feature> <device>  drop an image that failed the visual check (entry and file)
   manifest meta <slug> <key>=<value>...      set run metadata (pendingTag, liveCheck.*, notes …)
   manifest show <slug>
+  upload <slug> <file> --url <uploadUrl>     upload one manifest image (file name in screenshots/) to a
+                                             create_upload_ticket URL; keeps the answer's fileId in the manifest
 `;
 
 const HOME_DIR = process.env.LT_SHOWROOM_HOME || path.join(os.homedir(), '.lt-showroom');
 const BUDGET_MIN = Number(process.env.LT_SHOWROOM_BUDGET_MIN || 45);
-const KEEP = new Set(['screenshots', 'manifest.json']);
+const KEEP = new Set(['screenshots', 'manifest.json', 'analysis.json']);
 const NO_PUSH_URL = 'no-push://lt-showroom-throwaway-clone';
 const LEVELS = ['local', 'demo-access', 'public', 'legacy', 'teaser'];
 const DB_PORTS = new Set([27017, 27018, 27019, 5432, 3306, 6379, 6380, 5672, 9200, 6333, 6334]);
@@ -108,6 +120,43 @@ export function repoName(source) {
   return last || trimmed;
 }
 
+/**
+ * Provider, URL and project path of a repository remote, as a showcase `source.repositories[]`
+ * entry names it. The URL is the https form the Showroom stores (normalizeRepositoryUrl there):
+ * without credentials, `.git` and an ssh port; a non-default https port stays. A token pasted into
+ * a clone URL must never reach the Showroom. `null` for a local path.
+ */
+export function repositoryFacts(remote) {
+  const value = String(remote ?? '').trim();
+  if (!value || !looksLikeUrl(value)) return null;
+  let host;
+  let port = '';
+  let rawPath;
+  const scp = /^[^\s/@]+@([^\s/:]+):(.+)$/.exec(value);
+  if (scp && !value.includes('://')) {
+    [, host, rawPath] = scp;
+  } else {
+    let url;
+    try {
+      url = new URL(value);
+    } catch {
+      return null;
+    }
+    if (!['http:', 'https:', 'ssh:'].includes(url.protocol)) return null;
+    host = url.hostname;
+    port = url.protocol === 'https:' && url.port ? `:${url.port}` : '';
+    rawPath = decodeURIComponent(url.pathname);
+  }
+  const projectPath = rawPath
+    .replace(/^\/+/, '')
+    .replace(/\/+$/, '')
+    .replace(/\.git$/i, '');
+  if (!host || !projectPath) return null;
+  const h = host.toLowerCase();
+  const provider = h === 'github.com' ? 'github' : h.includes('gitlab') ? 'gitlab' : 'other';
+  return { provider, url: `https://${h}${port}/${projectPath}`, projectPath };
+}
+
 export function slugForSource(source) {
   if (!looksLikeUrl(source) && existsSync(source) && statSync(source).isDirectory()) {
     const origin = git(['-C', source, 'remote', 'get-url', 'origin']);
@@ -135,6 +184,11 @@ export function isLocalHost(host, composeServices = []) {
 /** Masks the password in a connection URI so it can be printed. */
 export function redactUri(uri) {
   return String(uri).replace(/(\/\/[^:/@]+:)[^@/]*@/, '$1***@');
+}
+
+/** A remote URL without its user info, so a token in a clone URL is never written down. */
+export function withoutCredentials(remote) {
+  return String(remote).replace(/^([a-z][a-z0-9+.-]*:\/\/)[^/@]*@/i, '$1');
 }
 
 /**
@@ -544,8 +598,22 @@ function cmdClone(slug, source, flags) {
         committedAt: git(['-C', dest, 'log', '-1', '--format=%cI']),
       };
       saveSession(slug, s);
+      // What `source` reports later, also after cleanup removed the clone: the project's remote
+      // (for a local fallback the checkout's origin, never its path) without credentials, the
+      // remote's default branch and the app version at this commit.
+      const remote = c.local ? git(['-C', source, 'remote', 'get-url', 'origin']) : c.from;
+      const originHead = git(['-C', dest, 'symbolic-ref', '--short', 'refs/remotes/origin/HEAD']);
       const manifest = readJson(manifestFile(slug), { slug, images: [] });
-      Object.assign(manifest, { source: s.source, commit: s.checkout.commit, branch: s.checkout.branch });
+      Object.assign(manifest, {
+        source: s.source,
+        commit: s.checkout.commit,
+        branch: s.checkout.branch,
+        committedAt: s.checkout.committedAt,
+        fromLocalCheckout: c.local,
+        remote: remote ? withoutCredentials(remote) : null,
+        defaultBranch: originHead.replace(/^origin\//, '') || s.checkout.branch,
+        version: readJson(path.join(dest, 'package.json'), {})?.version ?? null,
+      });
       writeJson(manifestFile(slug), manifest);
       out(s.checkout);
       return;
@@ -554,6 +622,128 @@ function cmdClone(slug, source, flags) {
     rmSync(dest, { recursive: true, force: true });
   }
   fail(`clone failed\n  ${errors.join('\n  ')}`);
+}
+
+/**
+ * The showcase `source` (Showroom, DEV-3500) of the commit the last `clone` checked out, read from
+ * the manifest so it still works after cleanup removed the clone. `analyzedAt` is now: run it right
+ * after the analysis. `--path` names the subfolder of a monorepo the showcase is about.
+ */
+function cmdSource(slug, flags) {
+  assertSlug(slug);
+  const manifest = readJson(manifestFile(slug), null);
+  if (!manifest?.commit) fail(`no cloned commit for "${slug}" — run \`clone ${slug} <path-or-url>\` first`);
+  const facts = repositoryFacts(manifest.remote);
+  const plugin = readJson(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '.claude-plugin', 'plugin.json'), {});
+  const repository = facts ? { ...facts, defaultBranch: manifest.defaultBranch || manifest.branch } : null;
+  if (repository && typeof flags.path === 'string' && flags.path) repository.path = flags.path.replace(/^\/+|\/+$/g, '');
+  // `source` goes to the Showroom as it is, and its schema is strict: no null, no extra key.
+  const source = {
+    repositories: repository ? [repository] : [],
+    analyzedCommit: manifest.commit,
+    analyzedAt: new Date().toISOString(),
+  };
+  if (manifest.version) source.analyzedVersion = String(manifest.version);
+  if (plugin.version) source.analyzerVersion = String(plugin.version);
+  out({ source, fromLocalCheckout: manifest.fromLocalCheckout === true });
+}
+
+/**
+ * The paths changed between the analyzed commit (`source.analyzedCommit` of the showcase) and the
+ * clone's HEAD. The clone of a remote is shallow, so the old commit is fetched by its id first.
+ * Exit 4 when the remote no longer has it (history rewritten): the caller analyzes everything.
+ */
+function cmdChanges(slug, flags) {
+  const s = loadSession(slug);
+  const dir = s.checkout?.path;
+  if (!dir || !existsSync(dir)) fail(`no clone for "${slug}" — run \`clone ${slug} <path-or-url>\` first`);
+  const since = String(flags.since ?? '');
+  if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/i.test(since)) fail('changes needs --since <full commit id>');
+  const head = git(['-C', dir, 'rev-parse', 'HEAD']);
+  const has = (sha) => spawnSync('git', ['-C', dir, 'cat-file', '-e', `${sha}^{commit}`]).status === 0;
+  let fetched = false;
+  if (!has(since)) {
+    runQuiet('git', ['-C', dir, 'fetch', '--quiet', '--depth=1', 'origin', since], {
+      env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+      timeout: 300_000,
+    });
+    fetched = true;
+    if (!has(since)) fail(`commit ${since} is not reachable on the remote (history rewritten?)`, 4);
+  }
+  let files = [];
+  if (since.toLowerCase() !== head.toLowerCase()) {
+    // --no-renames: a moved file names its old path as well, so findings citing it get re-analyzed.
+    // A failed or overlong diff is an error, never "unchanged" (the `git` helper returns '' on failure).
+    const r = spawnSync('git', ['-C', dir, 'diff', '--name-only', '--no-renames', since, head], {
+      encoding: 'utf8',
+      maxBuffer: 64 * 1024 * 1024,
+      env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+    });
+    if (r.error || r.status !== 0) fail(`git diff ${since}..${head} failed: ${(r.stderr || r.error?.message || '').trim()}`);
+    files = r.stdout.split('\n').filter(Boolean).sort();
+  }
+  out({ since, head, unchanged: files.length === 0, fetched, files });
+}
+
+/**
+ * The showcase analysis of the clone (`analysis.json`, kept by cleanup). `save` takes the report as
+ * JSON on stdin, so neither the analyzer nor the command needs to write outside the project, and
+ * refuses a report without `source.analyzedCommit`: create and update store it as the showcase's
+ * `sourceCodeAnalysis`, and a report that cannot say which commit it describes is worthless there.
+ */
+function cmdAnalysis(sub, slug) {
+  assertSlug(slug);
+  const file = path.join(workDir(slug), 'analysis.json');
+  if (sub === 'show') {
+    const report = readJson(file, null);
+    if (!report) fail(`no analysis for "${slug}" — run /lt-showroom:showroom:analyze first`);
+    out(report);
+    return;
+  }
+  if (sub === 'current') {
+    // Whether the report still describes the head of the default branch. git runs without a shell:
+    // branch name and URL come from the repository and the Showroom, and a ref name may hold `;`, `|`
+    // or `$`, so they never pass through a command line Claude writes.
+    const report = readJson(file, null);
+    if (!report) return out({ current: false, reason: 'no analysis report' });
+    const analyzedCommit = String(report.source?.analyzedCommit ?? '');
+    const repo = report.source?.repositories?.[0];
+    const manifest = readJson(manifestFile(slug), {});
+    // The report's https URL first: the credential helper answers it at once, while an ssh remote can wait on a
+    // locked agent until the timeout. The manifest's remote covers a report without repository (a local origin).
+    const remote = repo?.url || manifest.remote;
+    const branch = repo?.defaultBranch || manifest.defaultBranch;
+    if (!remote || !branch) return out({ analyzedCommit, current: false, reason: 'no remote to compare with' });
+    const r = spawnSync('git', ['ls-remote', '--', remote, `refs/heads/${branch}`], {
+      encoding: 'utf8',
+      timeout: 60_000,
+      env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+    });
+    if (r.error || r.status !== 0) fail(`git ls-remote ${redactUri(remote)} failed: ${(r.stderr || r.error?.message || '').trim()}`);
+    const head = r.stdout.split('\t')[0].trim() || null;
+    if (!head) return out({ analyzedCommit, branch, head, current: false, reason: 'the branch is not on the remote' });
+    out({ analyzedCommit, branch, head, current: head.toLowerCase() === analyzedCommit.toLowerCase() });
+    return;
+  }
+  if (sub !== 'save') fail('usage: analysis save|show|current <slug>');
+  let report;
+  try {
+    report = JSON.parse(readFileSync(0, 'utf8'));
+  } catch (e) {
+    fail(`analysis save: stdin is no JSON (${e.message})`);
+  }
+  if (!report || typeof report !== 'object' || Array.isArray(report)) fail('analysis save: the report must be a JSON object');
+  if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/i.test(String(report.source?.analyzedCommit ?? ''))) {
+    fail('analysis save: source.analyzedCommit (full commit id from `source`) is missing');
+  }
+  mkdirSync(workDir(slug), { recursive: true });
+  writeJson(file, report);
+  out({
+    slug,
+    scope: report.scope ?? null,
+    features: Array.isArray(report.features) ? report.features.length : 0,
+    analyzedCommit: report.source.analyzedCommit,
+  });
 }
 
 function cmdRun(slug, name, flags) {
@@ -1005,6 +1195,9 @@ function cmdManifest(sub, slug, rest, flags) {
     bytes: statSync(abs).size,
     level: flags.level,
     page: typeof flags.page === 'string' ? flags.page : null,
+    // The commit a local capture shows, kept per image: a later clone (a re-analysis) moves the
+    // manifest's `commit` on, and the showcase's source.screenshotsCommit must name what the images show.
+    commit: flags.level === 'local' ? (readJson(sessionFile(slug), null)?.checkout?.commit ?? null) : null,
     showsCustomerBranding: flags['customer-branding'] === true,
     showsPeople: flags['shows-people'] === true,
     anonymized: flags.anonymized === true,
@@ -1014,6 +1207,56 @@ function cmdManifest(sub, slug, rest, flags) {
   manifest.images.push(entry);
   writeJson(file, manifest);
   out(entry);
+}
+
+/**
+ * Uploads one manifest image to a Showroom upload-ticket URL (`create_upload_ticket`) and keeps the
+ * answer's `fileId` in the manifest entry, so blocks, the teaser and a later update reference it
+ * without uploading again. The file goes from disk to the server; only the server's short JSON answer
+ * is printed, never file content. Only https, or http to this machine for a local Showroom.
+ */
+async function cmdUpload(slug, name, flags) {
+  assertSlug(slug);
+  if (!name || typeof flags.url !== 'string') fail('usage: upload <slug> <file in screenshots/> --url <uploadUrl>');
+  const shots = path.join(workDir(slug), 'screenshots');
+  const abs = path.resolve(shots, name);
+  if (!isInside(shots, abs) || !existsSync(abs)) fail(`${name} is no file in ${shots}`);
+  const key = path.relative(workDir(slug), abs).split(path.sep).join('/');
+  const mfile = manifestFile(slug);
+  const manifest = readJson(mfile, { slug, images: [] });
+  const entry = (manifest.images ?? []).find((e) => e.file === key);
+  if (!entry) fail(`${key} is not in the manifest — only images \`manifest add\` recorded are uploaded`);
+  let url;
+  try {
+    url = new URL(flags.url);
+  } catch {
+    fail('--url is no URL');
+  }
+  if (!(url.protocol === 'https:' || (url.protocol === 'http:' && isLocalHost(url.hostname)))) {
+    fail('--url must be https (plain http only to this machine, for a local Showroom)');
+  }
+  const form = new FormData();
+  form.append('file', new Blob([readFileSync(abs)], { type: 'image/webp' }), path.basename(abs));
+  // A teaser cover has no device; the server then derives one from the aspect ratio.
+  if (entry.device === 'desktop' || entry.device === 'mobile') form.append('device', entry.device);
+  let res;
+  try {
+    res = await fetch(url, { method: 'POST', body: form, signal: AbortSignal.timeout(120_000) });
+  } catch (e) {
+    fail(`upload failed: ${e.message}`);
+  }
+  const text = await res.text();
+  if (!res.ok) fail(`upload refused: HTTP ${res.status} ${text.slice(0, 200)}`);
+  let answer;
+  try {
+    answer = JSON.parse(text);
+  } catch {
+    fail(`upload answer is no JSON: ${text.slice(0, 200)}`);
+  }
+  if (!/^[0-9a-f]{24}$/.test(String(answer?.fileId ?? ''))) fail(`upload answer carries no fileId: ${text.slice(0, 200)}`);
+  Object.assign(entry, { fileId: answer.fileId, uploadOrigin: url.origin, uploadedAt: new Date().toISOString() });
+  writeJson(mfile, manifest);
+  out({ file: key, feature: entry.feature, ...answer, showsCustomer: entry.showsCustomerBranding === true });
 }
 
 // ── main ─────────────────────────────────────────────────────────────────────────────────
@@ -1041,6 +1284,14 @@ function main(argv) {
       return cmdStatus(positional[0]);
     case 'verify-source':
       return cmdVerifySource(positional[0]);
+    case 'source':
+      return cmdSource(positional[0], flags);
+    case 'analysis':
+      return cmdAnalysis(positional[0], positional[1]);
+    case 'changes':
+      return cmdChanges(positional[0], flags);
+    case 'upload':
+      return cmdUpload(positional[0], positional[1], flags);
     case 'cleanup':
       return cmdCleanup(positional[0], flags);
     case 'sweep':

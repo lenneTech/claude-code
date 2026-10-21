@@ -1,16 +1,19 @@
 ---
 name: analyzing-projects
-description: 'Analyzes a software project for a showroom showcase or portfolio entry: technology stack, architecture, features, API surface, testing, UI/UX, security and performance, every claim backed by a source file reference, plus how the application starts (scripts, Docker, database) and which pages to screenshot. The report feeds SHOWCASE.md and screenshot automation. Activates when a project is analyzed for showroom.lenne.tech, a showcase, a portfolio entry or SHOWCASE.md, and on /lt-showroom:showroom:analyze. NOT for everyday questions about the codebase being worked on. NOT for creating or publishing showcases (use creating-showcases). NOT for platform development (use generating-nest-servers).'
+description: 'Analyzes a software project for a showroom showcase or portfolio entry from a throwaway clone: technology stack, features, pages to screenshot, how it starts and project facts, every claim backed by a file reference; architecture, API, testing, security and performance only on request. The report is stored in the Showroom, never in the project. Activates when a project is analyzed for showroom.lenne.tech, a showcase or a portfolio entry, and on /lt-showroom:showroom:analyze. NOT for everyday questions about the codebase being worked on. NOT for creating or publishing showcases (use creating-showcases). NOT for platform development (use generating-nest-servers).'
 ---
 
 # Analyzing Software Projects
 
-This skill enables Claude Code to perform deep, evidence-based analysis of software projects and produce structured reports suitable for SHOWCASE.md creation and showcase publishing on showroom.lenne.tech.
+This skill enables Claude Code to perform evidence-based analysis of software projects and produce the structured
+report a showcase on showroom.lenne.tech is built from. The analysis reads a throwaway clone in
+`~/.lt-showroom/<slug>/checkout`, never the developer's checkout, and nothing is written into the project: the report
+goes to `~/.lt-showroom/<slug>/analysis.json` and from there into the Showroom as the showcase's `sourceCodeAnalysis`.
 
 ## When to Use This Skill
 
 - User asks to analyze a project for a showcase or portfolio entry
-- User wants a project's purpose and structure written up for a showcase, a portfolio entry or SHOWCASE.md
+- User wants a project's purpose and structure written up for a showcase or a portfolio entry
 - Running `/lt-showroom:showroom:analyze`, `/lt-showroom:showroom:create`, or `/lt-showroom:showroom:update` commands
 - User asks for a project's technology stack, features, or architecture as material for showroom.lenne.tech
 
@@ -26,11 +29,18 @@ Everyday questions about the codebase being worked on (what a module does, how a
 ## Related Skills
 
 **Works closely with:**
-- `creating-showcases` — Consumes analysis reports to build SHOWCASE.md and showcase content
+- `creating-showcases` — Builds the showcase from the report and stores the report with it
 
-## Analysis Dimensions
+## Analysis Scope
 
-Every project analysis covers exactly 8 dimensions. Read the full guide in `${CLAUDE_SKILL_DIR}/reference/analysis-dimensions.md`.
+A showcase needs a fraction of what a full code review would collect, so the scope is chosen per run:
+
+| Scope | Covers | When |
+|-------|--------|------|
+| `showcase` (default) | Dimension 1 (technology stack), dimension 3 (features), pages inventory, startup info, project facts | Every showroom command |
+| `full` | Additionally dimensions 2 and 4 to 8 | Only when the user asks for it (`/lt-showroom:showroom:analyze --full`) |
+
+The full guide to all 8 dimensions is in `${CLAUDE_SKILL_DIR}/reference/analysis-dimensions.md`.
 
 | # | Dimension | Purpose |
 |---|-----------|---------|
@@ -43,9 +53,9 @@ Every project analysis covers exactly 8 dimensions. Read the full guide in `${CL
 | 7 | Security Measures | Auth, validation, rate limiting, encryption |
 | 8 | Performance Optimizations | Caching, query optimization, async patterns |
 
-## Additional Analysis (Required for Phase 2+3)
+## Additional Analysis (Both Scopes)
 
-Beyond the 8 dimensions, every analysis also produces:
+Beyond the dimensions, every analysis also produces:
 
 ### Feature List with Evidence
 
@@ -137,6 +147,11 @@ Outcomes (measured results) are never derived from code; leave them to the user.
 6. **Inventory pages** — Enumerate all routes and views
 7. **Compile** — Structure output according to `${CLAUDE_SKILL_DIR}/reference/report-schema.md`
 8. **Validate** — Verify every claim has a `file:line` reference
+9. **Save** — `node "<plugin-root>/scripts/screenshot-session.mjs" analysis save <slug>` with the JSON on stdin; it
+   refuses a report without `source.analyzedCommit`
+
+Steps 2 and 3 cover only the dimensions of the scope: for `showcase`, read what proves a feature, a page or the stack,
+and skip test, security and performance internals.
 
 ## Validation Rules
 
@@ -148,11 +163,13 @@ Outcomes (measured results) are never derived from code; leave them to the user.
 
 ## Output Format
 
-Produce a structured report following `${CLAUDE_SKILL_DIR}/reference/report-schema.md`.
+Produce a structured JSON report following `${CLAUDE_SKILL_DIR}/reference/report-schema.md`, with `scope`, and the
+`source` and `fromLocalCheckout` that `screenshot-session.mjs source <slug>` prints, unchanged, so the report names the
+commit it describes.
 
 The report includes:
-- All 8 analysis dimensions
-- Feature list with evidence and screenshot candidates
+- The dimensions of its scope (`showcase`: technology stack and features; `full`: all 8)
+- Feature list with evidence, icon and screenshot candidate page
 - `startupInfo` block
 - `pagesInventory` list
 - `projectFacts` block (proposals for the showcase key facts)

@@ -72,7 +72,8 @@ write the full path in each call (or set `S=…` within the same call).
 │   ├── overview-mobile.webp
 │   ├── <feature-slug>-desktop.webp
 │   └── <feature-slug>-mobile.webp
-└── manifest.json                one entry per image plus run metadata, kept
+├── manifest.json                one entry per image plus run metadata, kept
+└── analysis.json                the analysis report (`analyze`), kept until create/update stores it in the Showroom
 ```
 
 Nothing is written into the project repository: not the screenshots, not `SHOWCASE.md`, not a `.gitkeep`.
@@ -81,8 +82,8 @@ Nothing is written into the project repository: not the screenshots, not `SHOWCA
 
 - **Source:** a local path, a repository URL, or the current directory. A local checkout is only read, and only to
   find its remote; the run clones from the remote.
-- **What to capture:** the feature list and pages from a `SHOWCASE.md` (in the work folder or the project, read only)
-  or, without one, a page inventory from the `analyzing-projects` skill (`reference/startup-detection.md` and the pages
+- **What to capture:** the feature list and pages from the analysis report (`analysis show <slug>`, or an older
+  `SHOWCASE.md` a project still carries, read only) or, without either, a page inventory from the `analyzing-projects` skill (`reference/startup-detection.md` and the pages
   of the frontend). Always add the overview (landing page or dashboard).
 - **Project notes:** an organization can keep start quirks, live URLs and demo access per project in its own internal
   plugin or the project's `CLAUDE.md`. Read them before starting. They decide more than detection does.

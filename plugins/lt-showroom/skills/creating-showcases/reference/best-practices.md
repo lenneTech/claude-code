@@ -1,13 +1,15 @@
 # Best Practices for Showcase Content
 
-## The SHOWCASE.md-First Principle
+## The Showroom Is the Source of Truth
 
-All showcase content originates from `SHOWCASE.md` in the project repository. This file is:
-- Version-controlled alongside the code
-- The single source of truth for all showcase text, features, and screenshot paths
-- Updated whenever the project version changes
+Everything a showcase is made of lives in the Showroom: the texts and blocks, the repositories it comes from, the
+commit its analysis describes (`source`), the analysis report (`sourceCodeAnalysis`) and the screenshots. The project
+repository stays untouched, a customer's above all; `~/.lt-showroom/<slug>/` only holds what is on its way in.
 
-Never create showcase content on the platform directly without first writing or updating SHOWCASE.md. The showcase on the platform is a *publication* of the SHOWCASE.md content, not a substitute for it.
+- Find before you create: `upsert_showcase` with the repository updates the showcase it already is
+- Edit the stored showcase, not a copy of it: `get_showcase`, then `upsert_block` or `update_showcase`
+- A `SHOWCASE.md` exists only as an export into the organization's own repositories (`--export`), written from the
+  stored showcase
 
 ## Language and Tone
 
@@ -22,7 +24,7 @@ Never create showcase content on the platform directly without first writing or 
 ### Text Blocks (Minimum Quality)
 
 - **Project overview**: 3-5 paragraphs, 200+ words. Cover: What is the project? What problem does it solve? Who uses it? What makes it special? Cite concrete numbers from the analysis.
-- **Architecture overview**: 2-3 paragraphs. Cover: Module structure, key patterns, data flow, deployment architecture
+- **Architecture overview** (only with a report of scope `full`): 2-3 paragraphs. Cover: Module structure, key patterns, data flow, deployment architecture
 - **Technical highlights**: 2-3 paragraphs. Cover: What makes this project technically interesting? Novel solutions, scale, integrations
 - **Results/Impact**: 1-2 paragraphs. Concrete outcomes, metrics, user adoption (if available)
 
@@ -30,7 +32,7 @@ Never create showcase content on the platform directly without first writing or 
 
 Each feature is:
 - Derived from actual code analysis (not assumed)
-- Present in SHOWCASE.md with a `file:line` evidence reference
+- Present in the analysis report with a `file:line` evidence reference
 - Title: 3-5 words, action-oriented ("Echtzeit-Matching" not "Matching-Funktion")
 - Description: 1-2 specific sentences explaining what it does and how
 - Icon: an Iconify name from the Lucide set (`i-lucide-zap`, `i-lucide-shield-check`, `i-lucide-database`)
@@ -42,7 +44,7 @@ Each feature is:
 - Set them as the showcase's `technologies` field, not as a `tech-stack` block: the page hero shows the field with
   logos and the PDF header as tags, while the public page leaves a `tech-stack` block out
 - Include all significant technologies from `package.json` / manifest files
-- Only list technologies present in the SHOWCASE.md `technologies` frontmatter
+- Only list technologies the analysis report found in a manifest
 - Write the plain product name (`NestJS`, `Nuxt`, `MongoDB`): the hero finds a logo by the exact name, so `NestJS 11`
   shows a letter placeholder. Versions belong in the text blocks
 
@@ -65,14 +67,16 @@ Customer quotes come from wherever the company publishes its testimonials, found
 3. **The user** — when neither names a source, ask for it, and offer to store its link as a `portfolio` entry so later
    showcases find it.
 
-Read a references page as raw HTML with `curl`, as `/lt-showroom:showroom:create` Step 3 shows. A summarizing fetch paraphrases
+Read a references page as raw HTML with `curl`, as `/lt-showroom:showroom:create` Step 5 shows. A summarizing fetch paraphrases
 quotes, and many references pages reveal only a few testimonials until a "show more" button is clicked; on pages built
 with Nuxt, Next or similar frameworks the embedded payload in the raw HTML usually holds all of them verbatim.
 
 That source is the only source for names, roles and quotes; this file keeps no copy of them, so nothing here can go
 stale or misquote a customer. A quote whose published original cannot be found is not used.
 
-Match using the `customer` field from SHOWCASE.md frontmatter.
+Match by the customer's name (`customer.name`). In the block the contact becomes `{{ansprechpartner}}` with the
+function as `role`, the company `{{kunde}}`, and a name inside the quote its placeholder: the quote stays verbatim for
+the Showroom team, and a viewer without the names reads the aliases (`SKILL.md` → "Customer Naming").
 
 ## Recommended Block Structure
 
@@ -86,18 +90,22 @@ structures below has one.
 ```
 1.   text "Überblick"         — 3-5 paragraphs: What, Why, Who, How
 2.   feature-grid "Features"  — Compact icon overview of all features (6-8 items)
-3.   custom-html <Feature 1>  — Screenshot left + description right
-4.   custom-html <Feature 2>  — Description left + screenshot right
-     ... (one custom-html per feature with screenshot, alternating)
-N-3. text "Architektur"       — Module structure, patterns, data flow
+3.   feature-spotlight <Feature 1>  — Description, icon, desktop + mobile screenshot
+4.   feature-spotlight <Feature 2>  — The page alternates the image side by itself
+     ... (one feature-spotlight per feature with screenshots)
+N-3. text "Architektur"       — Module structure, patterns, data flow (scope full only)
 N-2. screenshot-gallery       — Additional screenshots not tied to specific features
 N-1. testimonial              — Customer feedback (if available)
 N.   text "Ergebnis"          — Impact, metrics, adoption
 ```
 
-The `feature-grid` gives visitors a quick scannable overview of all capabilities with icons. Each feature is then presented in detail via a `custom-html` block with an accompanying screenshot. The `screenshot-gallery` at the end collects any additional screenshots (e.g., overview pages, mobile views) that are not tied to a specific feature.
+The `feature-grid` gives visitors a quick scannable overview of all capabilities with icons. Each feature is then presented in detail via a `feature-spotlight` block with its screenshots. The `screenshot-gallery` at the end collects any additional screenshots (e.g., overview pages, mobile views) that are not tied to a specific feature.
 
 ### Library/Framework Showcase
+
+The API and architecture blocks below need those parts of the report: analyze with scope `full`
+(`/lt-showroom:showroom:analyze --full`) before `create`, which then reuses that report. The same holds for the
+backend-only structure.
 
 ```
 1.  text "Überblick"    — What the library does, why it exists
@@ -184,37 +192,47 @@ Images, tables and inline styles need `custom-html`. A `<strong>` that starts wi
 
 `role` and `company` are optional; the page shows them below the name as `role · company`.
 
-## Feature-Screenshot Layout (custom-html)
+## Feature Sections (feature-spotlight)
 
-The most effective way to present features is a **2-column layout with screenshot + description**, alternating sides.
-Use one `custom-html` block per feature:
+Present each feature with screenshots in a `feature-spotlight` block: the block title is the heading, the text and an
+icon sit beside the images, the first desktop and the first mobile screenshot are shown together, and consecutive
+spotlights alternate the image side by themselves. Images go by `fileId`, so they work on the page, in the PDF and in
+the anonymous view (an image with `showsCustomer` is left out there).
 
-**Even features (image left, text right):**
 ```json
 {
-  "type": "custom-html",
+  "type": "feature-spotlight",
   "title": "Echtzeit-Matching",
   "order": 2,
   "visible": true,
   "showInToc": false,
   "content": {
-    "html": "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2rem;align-items:center'><img src='https://api.showroom.example/files/id/<fileId>' alt='Matching-Vorschläge mit Trefferquote' style='width:100%;border-radius:1rem;border:1px solid var(--sr-border)'/><div><p style='font-size:1.25rem;font-weight:600;color:var(--sr-text);margin-bottom:0.75rem'>Passende Partner in Sekunden</p><p style='color:var(--sr-text-secondary);line-height:1.7'>Detailed description from SHOWCASE.md...</p></div></div>"
+    "html": "<p>{{projekt}} schlägt passende Partner in Sekunden vor, mit Trefferquote je Kriterium.</p>",
+    "icon": "i-lucide-target",
+    "screenshots": [
+      { "fileId": "<fileId desktop>", "device": "desktop", "caption": "Matching-Vorschläge mit Trefferquote" },
+      { "fileId": "<fileId mobile>", "device": "mobile" }
+    ]
   }
 }
 ```
 
-**Odd features (text left, image right):** the same block with the text `<div>` before the `<img>`.
+- **Title.** The page shows the block title verbatim as the section heading, the PDF too. Use the feature name, with
+  no prefix such as `Feature:`, and do not repeat it inside the HTML. `showInToc: false` keeps the table of contents to
+  the main sections.
+- **Text.** HTML as in a `text` block, with placeholders; one or two paragraphs.
+- **Screenshots.** `fileId`s from the upload (`screenshot-session.mjs upload`), desktop first, each with its `device`;
+  `showsCustomer: true` where the manifest marks customer branding.
 
-What the platform does with this HTML decides how to write it:
+## Custom HTML (special layouts)
 
-- **Title.** The page shows the block title verbatim as the section label, the PDF as the section heading. Use the
-  feature name, with no prefix such as `Feature:` (it would appear on the page), and do not repeat it as a heading
-  inside the HTML. `showInToc: false` keeps the table of contents to the main sections.
-- **Image URL.** Write it absolute: `<api-origin>/files/id/<fileId>`, where `<api-origin>` is the upload ticket's
-  `uploadUrl` up to `/files/` (for showroom.lenne.tech: `https://api.showroom.lenne.tech`). A relative
-  `/api/files/id/…` path resolves against the page's own host, which serves no files, and the image stays blank.
-- **PDF.** The PDF export does not embed absolute image URLs from `custom-html`; it shows them as broken images. When
-  the PDF matters, show the screenshot in an `image` or `screenshot-gallery` block instead.
+`custom-html` is for a layout no block offers. What the platform does with this HTML decides how to write it:
+
+- **Title.** As above: the block title is the section label, not repeated inside the HTML.
+- **Files in Block HTML.** Write a file relative, as `/files/id/<fileId>`, without host and without `/api`. The page
+  and the API point it at the showcase-bound route (files are not public, DEV-3496), and the PDF embeds exactly this
+  form; an absolute URL keeps its host in front of the embedded image and breaks in the PDF. The same holds for
+  `text.html`.
 - **Colors.** The page has a light and a dark mode. Use its theme variables instead of fixed colors:
   `var(--sr-text)` for headings, `var(--sr-text-secondary)` for body text, `var(--sr-text-muted)`,
   `var(--sr-border)`, `var(--sr-surface)` for a subtle background, `var(--color-brand-400)` for the accent. White text
@@ -227,9 +245,8 @@ What the platform does with this HTML decides how to write it:
   class; inline styles always work. A `style` attribute containing `url(` or `data:` is dropped as a whole, so
   background images are not possible.
 - **Lightbox.** Every image opens in the lightbox, with its `alt` as caption; write the `alt` as one.
-- **File lifetime.** Image URLs inside `custom-html` do not count as a file reference. When the same file also sits in
-  a block file field (`image`, `screenshot-gallery`) and an update removes it there, the file is deleted and the
-  `custom-html` image breaks.
+- **File lifetime.** A `/files/id/<fileId>` URL in the HTML counts as a reference of the showcase, like a block file
+  field: the file is served to the showcase's viewers and kept while a block still names it.
 
 **Showcase description:** Plain text, not HTML: the hero renders it as text and strips the tags of older entries, so
 markup only costs formatting. Two or three sentences; the detail belongs in the blocks.
@@ -241,12 +258,13 @@ viewer of the showcase sees the facts, also when the customer is anonymous, so n
 
 ## Anti-Patterns
 
-- **Skipping SHOWCASE.md** — Never publish to the platform without first creating/updating the SHOWCASE.md file in the project
+- **Names in texts** — A customer, project or contact name, a customer domain or a reference URL written out instead of its placeholder; the server refuses it with the place.
+- **Writing into the project** — No `SHOWCASE.md`, screenshot or note in a customer repository; the Showroom holds everything.
 - **One-sentence descriptions** — Every block meets the depth set in "Content Depth Requirements" above.
 - **Generic features** — "Benutzerfreundlich" or "Modern" without specifics tell a prospect nothing; name the concrete capability.
-- **Missing testimonials** — Always check the company's testimonial source before publishing.
+- **Missing testimonials** — Always check the company's testimonial source before saving the showcase.
 - **No screenshots** — A showcase without visuals is incomplete. `/lt-showroom:showroom:screenshot` captures them into `~/.lt-showroom/<slug>/screenshots/`, with a fallback chain for projects that no longer run.
 - **Copy-paste from README** — Rewrite for the audience; READMEs are for developers, showcases are for prospects.
 - **English in German showcases** — Keep consistent; translate technical descriptions.
-- **Outdated SHOWCASE.md** — Version must match `package.json`. Run `/lt-showroom:showroom:update` when the project changes.
+- **An outdated analysis** — When the code moved past `source.analyzedCommit`, run `/lt-showroom:showroom:update`.
 - **A `cta` or `tech-stack` block** — The public page leaves both out: it ends with its own booking button and its hero shows the `technologies` field.

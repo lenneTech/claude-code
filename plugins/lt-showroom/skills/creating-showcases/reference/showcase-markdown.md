@@ -1,6 +1,9 @@
-# SHOWCASE.md Format Specification
+# SHOWCASE.md Export Format
 
-SHOWCASE.md is the **single source of truth** for all showcase content. It lives in the project repository, is version-controlled alongside the code, and drives both the showroom.lenne.tech publication and screenshot automation.
+`SHOWCASE.md` is an **optional export** of a stored showcase into one of the organization's own repositories, for
+readers of that repository. It is never the source of truth (the Showroom is), never read back by a command, and never
+written into a customer's repository. `/lt-showroom:showroom:create --export` and `:update --export` write it from
+`get_showcase`, after asking; the next export overwrites it.
 
 ## File Location
 
@@ -10,322 +13,61 @@ SHOWCASE.md is the **single source of truth** for all showcase content. It lives
 | Monorepo (frontend in `projects/app/`) | `docs/showcase/SHOWCASE.md` |
 | Monorepo (backend in `projects/api/`) | `docs/showcase/SHOWCASE.md` |
 
-## Frontmatter Schema
+## Frontmatter
 
 ```yaml
 ---
-version: "1.0.0"          # MUST match version in package.json (or root package.json for monorepos)
-project: "Projektname"    # Human-readable display name
-analyzed_at: "2026-03-26" # ISO date of last analysis (YYYY-MM-DD)
-source_hash: "abc123def"  # git tree hash of source directory (see below)
-last_commit: "a1b2c3d"    # git commit hash at time of analysis (informational)
-technologies:             # All significant technologies — quote the list
+showcase_id: "6650f0c2a1b2c3d4e5f60789"   # the showcase in the Showroom
+slug: "musterportal"                      # current slug (it follows project.alias)
+editor: "https://showroom.lenne.tech/app/showcases/6650f0c2a1b2c3d4e5f60789"
+exported_at: "2026-03-26"
+analyzed_commit: "4f2a…"                  # source.analyzedCommit, full id
+analyzed_at: "2026-03-26T09:12:00Z"       # source.analyzedAt
+project: "Musterportal"                   # project.name
+category: "web-app"                       # the showcase's category key
+technologies:                             # the showcase's technologies field
   - NestJS
   - Nuxt
   - MongoDB
-  - TypeScript
-category: "Web App"       # Web App | Mobile | Desktop App | Backend | Library | IoT
-customer: "Kundenname"    # Company or person that commissioned the project
-# Key facts for the showcase hero, all optional:
-year: 2025                # Year of the project (1990-2100)
-duration: "6 Monate"      # Free text, max. 40 characters
-team_size: 4              # People on the project team, confirmed by the user (1-100)
-platforms: [web, ios]     # Any of web, ios, android, desktop
-outcomes:                 # Real, publishable result numbers only; max. 6, each max. 120 characters
+year: 2025                                # key facts as stored; leave out what is empty
+duration: "6 Monate"
+team_size: 4
+platforms: [web, ios]
+outcomes:
   - "-70 % Bearbeitungszeit"
 ---
 ```
 
-### Key Facts
+## Body
 
-`year`, `duration`, `team_size`, `platforms` and `outcomes` become the showcase's `year`, `duration`, `teamSize`,
-`platforms` and `outcomes`. Derive the first four from the code (first and last commit, deployment targets such as a
-web build, Capacitor or native apps, Electron or Tauri) and let the user confirm them: commit authors are not the
-project team. Outcomes come from the user or a published source, never from an estimate; leave them out rather than
-invent one. The facts are public on every showcase, also an anonymous one, so none may identify the customer.
-
-### Versioning Rules
-
-- `version` equals the `version` field in `package.json` (or the primary `package.json` in a monorepo)
-- When updating SHOWCASE.md, also increment the project version or align with the current version
-- The `analyzed_at` date reflects when the code analysis was performed, not when the file was last edited
-
-### Technology List
-
-List all significant technologies, not just the primary framework. Include:
-- Primary language (TypeScript, Python, Go)
-- All frameworks (NestJS, Nuxt, Vue)
-- Databases and caches (MongoDB, Redis, PostgreSQL)
-- Infrastructure tools (Docker, Kubernetes, AWS)
-- Key libraries if they define the project character (Qdrant, LangChain, Stripe)
-
-Leave out development tools (ESLint, Prettier, Vitest) unless the project is a developer tool.
-
-## Section Structure
+The text blocks of the showcase in display order, with the placeholders filled with the real values (`get_showcase`
+with `view: "real"`): the export lands in the organization's own repository, which names its own project anyway.
 
 ```markdown
----
-version: "1.2.0"
-project: "Musterportal"
-analyzed_at: "2026-03-26"
-technologies:
-  - NestJS
-  - Nuxt
-  - MongoDB
-  - Qdrant
-  - Python
-category: "Web App"
-customer: "Beispielkunde"
----
-
 # Musterportal
 
-## Überblick
-3-5 Absätze: Was ist das Projekt? Welches Problem löst es? Wer nutzt es? Was macht es besonders?
-Konkrete Zahlen aus der Analyse (Anzahl Module, Endpoints, Seiten).
-
-## Technologie-Stack
-
-| Technologie | Kategorie | Version |
-|-------------|-----------|---------|
-| NestJS      | Backend   | 11.x    |
-| Nuxt        | Frontend  | 3.x     |
-| MongoDB     | Datenbank | 7.x     |
-| Qdrant      | Vektor-DB | 1.x     |
+## Projektübersicht
+<text of the "Projektübersicht" block, as Markdown>
 
 ## Features
+### KI-Vektor-Matching
+<feature-grid entry and the feature's custom-html block, as Markdown>
 
-### Feature 1: KI-Vektor-Matching
-Beschreibung (2-3 Sätze) was das Feature macht und warum es relevant ist.
-
-**Belege:** `src/server/modules/matching/matching.service.ts:42`
-
-![KI-Vektor-Matching Desktop](matching-desktop.webp)
-![KI-Vektor-Matching Mobile](matching-mobile.webp)
-
-### Feature 2: Echtzeit-Chat
-...
+**Belege:** `src/server/modules/matching/matching.service.ts:42` (from the analysis report)
 
 ## Architektur
-Modulstruktur, Patterns, Datenfluss. 2-3 Absätze.
-
-## Technische Highlights
-Was macht das Projekt technisch besonders? Besondere Implementierungen,
-Skalierungsansätze, KI-Integration. 2-3 Absätze.
+<text of the "Architektur" block>
 
 ## Ergebnis
-Impact, Metriken, Adoption. Was wurde erreicht? 1-2 Absätze.
-
-## Changelog
-- v1.2.0 (2026-03-26): Feature X hinzugefügt, Architektur überarbeitet
-- v1.0.0 (2026-01-15): Initiale Analyse
+<text of the "Ergebnis" block>
 ```
 
-## Section Descriptions
+Screenshots are not copied into the repository: name the feature's images by caption only, the Showroom holds the
+files. HTML in blocks becomes Markdown; layout-only markup (grids, inline styles) is dropped.
 
-### Überblick (Overview)
+## Rules
 
-**Purpose:** A prospect should understand the project after reading this section.
-
-**Required content:**
-- What the project is (1 sentence)
-- The problem it solves (1-2 sentences)
-- Who uses it and why (1-2 sentences)
-- What makes it technically or functionally special (1-2 sentences)
-- Concrete numbers: number of modules, endpoints, pages, users (if known)
-
-**Length:** 3-5 paragraphs, minimum 150 words.
-
-### Technologie-Stack (Technology Stack)
-
-A table listing all technologies with their category and version.
-
-Categories: Backend, Frontend, Datenbank, Infrastruktur, Testing, Sprache
-
-Only include technologies that are directly referenced in the analysis evidence. Never list a technology that is not present in `package.json` or a similar manifest.
-
-### Features
-
-One `### Feature N: Name` subsection per feature. Each feature subsection contains:
-
-1. **Description** — 2-3 sentences: what the feature does and why it matters
-2. **Belege** — At least one `file:line` reference to implementing code
-3. **Screenshots** — At least one screenshot, referenced by file name
-
-Screenshot names: `{feature-slug}-{device}.webp` (`desktop` or `mobile`); the files live in `~/.lt-showroom/<slug>/screenshots/`
-
-**Feature naming rules:**
-- Action-oriented: "KI-Vektor-Matching" not "Matching-Funktion"
-- 2-4 words
-- In German (unless the project is English-only)
-
-**Minimum features:** 6. Maximum: 12. Quality over quantity.
-
-### Architektur (Architecture)
-
-Describe the module structure, key architectural patterns, and data flow. Reference specific source files as evidence.
-
-### Technische Highlights (Technical Highlights)
-
-What makes this project technically interesting? This is where novel solutions, complex integrations, and non-obvious engineering decisions are described.
-
-### Ergebnis (Results)
-
-Concrete outcomes: metrics, user adoption, business impact. Use numbers where available. If metrics are unknown, describe the qualitative outcome.
-
-### Changelog
-
-A reverse-chronological list of SHOWCASE.md versions with a brief summary of what changed.
-
-Format: `- vX.Y.Z (YYYY-MM-DD): Description of changes`
-
-## Screenshot References
-
-Screenshots never live in the project repository. `/lt-showroom:showroom:screenshot` writes them to the project's work
-folder, together with a manifest that lists every image:
-
-```
-~/.lt-showroom/<slug>/
-├── screenshots/
-│   ├── overview-desktop.webp          # 1440×900
-│   ├── overview-mobile.webp           # 780×1688 (390×844 at 2x)
-│   ├── {feature-slug}-desktop.webp
-│   ├── {feature-slug}-mobile.webp
-│   └── ...
-└── manifest.json                      # feature, device, size, level, customer branding per image
-```
-
-SHOWCASE.md names each feature's screenshots by **file name only**:
-
-```markdown
-![Feature Name Desktop](feature-name-desktop.webp)
-```
-
-**Workflow order:** `/lt-showroom:showroom:analyze` writes SHOWCASE.md with the file names each feature will have.
-`/lt-showroom:showroom:screenshot` captures them into the work folder and changes nothing in the project.
-`/lt-showroom:showroom:create` resolves the names against `manifest.json`: a name without an entry is a screenshot
-still missing, and the manifest's `pendingTag` marks a project that only has the teaser cover so far.
-
-Screenshots:
-- Show the actual running application (not mockups)
-- Contain realistic demo data (not empty states)
-- Be taken at standard viewports: desktop (1440×900), mobile (390×844)
-
-### Teaser Image (`teaserImageFileId`)
-
-Every showcase should have a teaser image that is displayed on showcase cards in listings and as the hero background. When publishing to the platform:
-
-1. Upload the first overview screenshot (typically `overview-desktop.png`) or a dedicated teaser image to GridFS via the file upload endpoint
-2. Set the returned file ID as `teaserImageFileId` on the showcase object
-3. If no dedicated teaser image exists, use the first feature screenshot as a fallback
-
-The teaser image should be a desktop-viewport screenshot that gives a representative impression of the project at a glance.
-
-## Version Tracking & Change Detection
-
-### Frontmatter Fields for Change Detection
-
-```yaml
-version: "1.0.0"           # package.json version at time of analysis
-source_hash: "abc123def"    # git tree hash of source code
-last_commit: "a1b2c3d"      # commit hash (informational, may change on rebase)
-analyzed_at: "2026-03-26"   # date of analysis
-```
-
-### How to Calculate `source_hash`
-
-The `source_hash` is the **git tree hash** of the source directory. It depends purely on file contents, not on commit history. This means it is **stable across rebases and squashes**.
-
-```bash
-# For monorepos (projects/api + projects/app):
-git rev-parse HEAD:projects 2>/dev/null
-
-# For single-package projects:
-git rev-parse HEAD:src 2>/dev/null
-
-# Fallback (entire repo):
-git rev-parse HEAD^{tree}
-```
-
-### How to Detect Changes
-
-```bash
-# Step 1: Read current values from SHOWCASE.md
-old_version=$(grep "^version:" SHOWCASE.md | head -1 | awk '{print $2}' | tr -d '"')
-old_hash=$(grep "^source_hash:" SHOWCASE.md | head -1 | awk '{print $2}' | tr -d '"')
-
-# Step 2: Read current project state
-new_version=$(node -p "require('./package.json').version" 2>/dev/null)
-new_hash=$(git rev-parse HEAD:projects 2>/dev/null || git rev-parse HEAD:src 2>/dev/null || git rev-parse HEAD^{tree})
-
-# Step 3: Compare
-if [ "$old_hash" = "$new_hash" ]; then
-  echo "NO CHANGES — source code is identical"
-elif [ "$old_version" != "$new_version" ]; then
-  echo "VERSION BUMP — likely a release with significant changes"
-else
-  echo "SOURCE CHANGED — code changed without version bump (bugfix, refactor, etc.)"
-fi
-```
-
-### How to Analyze What Changed
-
-When `source_hash` differs, find exactly what changed:
-
-```bash
-# Get the old tree hash from SHOWCASE.md
-old_hash="abc123def"
-
-# Find the commit that had this tree hash
-old_commit=$(git log --all --format='%H %T' | grep "$old_hash" | head -1 | awk '{print $1}')
-
-# If found: targeted diff
-if [ -n "$old_commit" ]; then
-  git diff --stat "$old_commit"..HEAD -- src/ projects/
-  git diff --name-only "$old_commit"..HEAD -- src/ projects/
-fi
-
-# If not found (tree hash lost after GC): fall back to date-based
-git log --oneline --since="2026-03-26" -- src/ projects/
-```
-
-This approach is efficient: instead of re-analyzing the entire project, only files in the diff need to be re-examined.
-
-### Why `source_hash` is Better Than Commit Hash
-
-| Scenario | Commit Hash | Source Tree Hash |
-|----------|-------------|-----------------|
-| Normal commit | Changes | Changes |
-| Rebase onto main | **Changes** (new hash) | **Stays same** (same content) |
-| Squash merge | **Changes** | **Stays same** |
-| Amend commit message | **Changes** | **Stays same** |
-| Actual code change | Changes | Changes |
-
-The tree hash is the only reliable indicator that source code actually changed.
-
-## Update Workflow
-
-When changes are detected (source_hash differs):
-
-1. **Detect what changed** — Use `git diff --name-only old_commit..HEAD` to find modified files
-2. **Classify changes** — Map changed files to SHOWCASE.md sections:
-   - `package.json` changed → update Technologie-Stack
-   - `src/server/modules/new-feature/` added → add new Feature section
-   - `src/pages/` changed → update Pages Inventory + take new screenshots
-   - Tests changed → update Testing section
-3. **Re-analyze only affected sections** — Don't re-analyze unchanged code
-4. **Take new screenshots** — Only for pages/features that changed
-5. **Update SHOWCASE.md** — Update affected sections, bump `version`, `source_hash`, `analyzed_at`
-6. **Add changelog entry** — Document what was re-analyzed and why
-7. **Re-publish** — Update the showcase via API with changed content blocks
-
-**Rule:** Never re-analyze the entire project when only specific areas changed. Use the diff to target the analysis efficiently.
-
-## Validation Rules
-
-- `version` matches `package.json` — checked at publish time
-- `source_hash` is recalculated at every analysis
-- Every feature has at least one `file:line` evidence reference
-- Every feature should have at least one screenshot in the work folder's `manifest.json` (recommended, not required)
-- The `technologies` list contains every technology in the Technologie-Stack table
-- No placeholder text — all sections must be substantive
+- Written only for the organization's own repositories, never for a customer's
+- Written only after the user confirmed the path
+- Every value comes from the stored showcase or its `sourceCodeAnalysis`; nothing is added that the Showroom does not
+  hold, so the export never drifts from it

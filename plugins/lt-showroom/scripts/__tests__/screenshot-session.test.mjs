@@ -12,7 +12,7 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { after, test } from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   classifyUri,
   composeServiceNames,
@@ -21,6 +21,8 @@ import {
   pidAlive,
   redactUri,
   repoName,
+  repositoryFacts,
+  withoutCredentials,
   scanForUris,
   slugForSource,
   slugify,
@@ -54,7 +56,7 @@ function freshHome() {
 }
 
 /** Runs the CLI asynchronously, so an HTTP server in this process can still answer it. */
-function cli(args, { home, pid = process.pid, session = 'test-session', env = {} } = {}) {
+function cli(args, { home, pid = process.pid, session = 'test-session', env = {}, input } = {}) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [SCRIPT, ...args], {
       env: {
@@ -62,6 +64,9 @@ function cli(args, { home, pid = process.pid, session = 'test-session', env = {}
         LT_SHOWROOM_HOME: home,
         CLAUDE_PID: String(pid),
         CLAUDE_CODE_SESSION_ID: session,
+        // Offline: a fixture origin on github.com or elsewhere is refused at once instead of
+        // contacting the host (and the developer's SSH agent); file:// and local paths still work.
+        GIT_ALLOW_PROTOCOL: 'file',
         TMPDIR: CLI_TMP,
         TEMP: CLI_TMP,
         TMP: CLI_TMP,
@@ -70,6 +75,7 @@ function cli(args, { home, pid = process.pid, session = 'test-session', env = {}
     });
     let stdout = '';
     let stderr = '';
+    child.stdin.end(input ?? '');
     child.stdout.on('data', (d) => (stdout += d));
     child.stderr.on('data', (d) => (stderr += d));
     child.on('close', (code) => resolve({ code, stdout, stderr }));
@@ -140,6 +146,33 @@ test('slug: a local checkout is named after its origin, else after its folder', 
   const without = gitRepo(path.join(TMP, 'Local Folder'));
   assert.equal(slugForSource(withOrigin), 'real-name');
   assert.equal(slugForSource(without), 'local-folder');
+});
+
+test('repositoryFacts: provider, credential-free URL and project path from every remote form', () => {
+  assert.deepEqual(repositoryFacts('https://oauth2:secret-token@gitlab.example.com/kunden/acme/portal.git'), {
+    provider: 'gitlab',
+    url: 'https://gitlab.example.com/kunden/acme/portal',
+    projectPath: 'kunden/acme/portal',
+  });
+  assert.deepEqual(repositoryFacts('git@github.com:Org/Repo.git'), {
+    provider: 'github',
+    url: 'https://github.com/Org/Repo',
+    projectPath: 'Org/Repo',
+  });
+  assert.deepEqual(repositoryFacts('ssh://git@git.example.org:2222/team/app/'), {
+    provider: 'other',
+    url: 'https://git.example.org/team/app',
+    projectPath: 'team/app',
+  });
+  assert.equal(repositoryFacts('/Users/example/code/app'), null, 'a local path names no repository');
+  assert.equal(repositoryFacts(''), null);
+});
+
+test('withoutCredentials: the user info of a remote URL is gone, everything else stays', () => {
+  assert.equal(withoutCredentials('https://deploy:hunter2@gitlab.example.com/a/b.git'), 'https://gitlab.example.com/a/b.git');
+  assert.equal(withoutCredentials('HTTPS://glpat-token@gitlab.example.com/a/b'), 'HTTPS://gitlab.example.com/a/b');
+  assert.equal(withoutCredentials('ssh://git@git.example.org:2222/team/app'), 'ssh://git.example.org:2222/team/app');
+  assert.equal(withoutCredentials('git@github.com:Org/Repo.git'), 'git@github.com:Org/Repo.git', 'the scp form carries no secret');
 });
 
 test('check-db: only this machine and the session Compose services count as local', () => {
@@ -317,9 +350,230 @@ test('clone: an unreachable origin falls back to the local checkout and records 
   assert.notEqual(push.status, 0, 'git push from the clone fails');
   const manifest = JSON.parse(readFileSync(path.join(home, 'clone-src', 'manifest.json'), 'utf8'));
   assert.equal(manifest.commit, head);
+  assert.equal(manifest.remote, 'https://127.0.0.1:9/nowhere/clone-src.git', 'the project remote, not the local path');
+  assert.equal(manifest.defaultBranch, 'main');
   await cli(['cleanup', 'clone-src'], { home });
   assert.ok(!existsSync(path.join(home, 'clone-src', 'checkout')));
   assert.ok(existsSync(path.join(repo, 'README.md')), 'the source checkout is untouched');
+});
+
+test('source: the showcase source of the cloned commit, without credentials, also after cleanup', async () => {
+  const home = freshHome();
+  const repo = gitRepo(path.join(TMP, 'source-src'), {
+    origin: 'https://deploy:hunter2@127.0.0.1:9/kunden/source-src.git',
+  });
+  writeFileSync(path.join(repo, 'package.json'), JSON.stringify({ name: 'source-src', version: '2.4.1' }));
+  spawnSync('git', ['add', '.'], { cwd: repo });
+  spawnSync('git', ['commit', '-q', '-m', 'version'], { cwd: repo });
+  const head = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' }).stdout.trim();
+  await cli(['start', 'source-src', '--source', repo], { home });
+  assert.equal((await cli(['clone', 'source-src', repo], { home })).code, 0);
+  await cli(['cleanup', 'source-src'], { home });
+
+  const r = await cli(['source', 'source-src', '--path', 'projects/app'], { home });
+  assert.equal(r.code, 0, r.stderr);
+  const { source, fromLocalCheckout } = JSON.parse(r.stdout);
+  assert.equal(fromLocalCheckout, true, 'the origin was unreachable, so the local checkout was cloned');
+  assert.deepEqual(Object.keys(source).sort(), ['analyzedAt', 'analyzedCommit', 'analyzedVersion', 'analyzerVersion', 'repositories']);
+  assert.deepEqual(source.repositories, [
+    {
+      provider: 'other',
+      url: 'https://127.0.0.1:9/kunden/source-src',
+      projectPath: 'kunden/source-src',
+      defaultBranch: 'main',
+      path: 'projects/app',
+    },
+  ]);
+  assert.equal(source.analyzedCommit, head);
+  assert.equal(source.analyzedVersion, '2.4.1');
+  const plugin = JSON.parse(readFileSync(path.join(path.dirname(SCRIPT), '..', '.claude-plugin', 'plugin.json'), 'utf8'));
+  assert.equal(source.analyzerVersion, plugin.version);
+  assert.ok(!Number.isNaN(Date.parse(source.analyzedAt)));
+  assert.ok(!r.stdout.includes('hunter2'), 'credentials never reach the output');
+  const manifest = readFileSync(path.join(home, 'source-src', 'manifest.json'), 'utf8');
+  assert.ok(!manifest.includes('hunter2'), 'credentials never reach the manifest either');
+});
+
+test('source: a project without version leaves analyzedVersion out instead of sending null', async () => {
+  const home = freshHome();
+  const repo = gitRepo(path.join(TMP, 'no-version'), { origin: 'git@github.com:Org/no-version.git' });
+  await cli(['start', 'no-version'], { home });
+  await cli(['clone', 'no-version', repo], { home });
+  const { source } = JSON.parse((await cli(['source', 'no-version'], { home })).stdout);
+  assert.ok(!('analyzedVersion' in source));
+  assert.equal(source.repositories[0].provider, 'github');
+  assert.ok(!('path' in source.repositories[0]));
+  await cli(['cleanup', 'no-version'], { home });
+});
+
+test('changes: the paths changed since the analyzed commit, fetched into a shallow clone', async () => {
+  const home = freshHome();
+  const repo = gitRepo(path.join(TMP, 'changes-src'));
+  const g = (...a) => spawnSync('git', a, { cwd: repo, encoding: 'utf8' });
+  g('config', 'uploadpack.allowReachableSHA1InWant', 'true');
+  mkdirSync(path.join(repo, 'src', 'orders'), { recursive: true });
+  writeFileSync(path.join(repo, 'src', 'orders', 'orders.service.ts'), 'export class OrdersService {}\n');
+  g('add', '.');
+  g('commit', '-q', '-m', 'orders module');
+  const analyzed = g('rev-parse', 'HEAD').stdout.trim();
+  mkdirSync(path.join(repo, 'app', 'pages'), { recursive: true });
+  writeFileSync(path.join(repo, 'app', 'pages', 'invoices.vue'), '<template />\n');
+  writeFileSync(path.join(repo, 'README.md'), '# fixture, changed\n');
+  g('mv', 'src/orders', 'src/purchases');
+  g('add', '.');
+  g('commit', '-q', '-m', 'invoices page, orders renamed');
+  await cli(['start', 'changes-src'], { home });
+  const url = pathToFileURL(repo).href;
+  assert.equal((await cli(['clone', 'changes-src', url], { home })).code, 0);
+  const shallow = spawnSync('git', ['rev-parse', '--is-shallow-repository'], { cwd: path.join(home, 'changes-src', 'checkout'), encoding: 'utf8' });
+  assert.equal(shallow.stdout.trim(), 'true', 'the clone of a URL is shallow');
+
+  const r = await cli(['changes', 'changes-src', '--since', analyzed], { home });
+  assert.equal(r.code, 0, r.stderr);
+  const result = JSON.parse(r.stdout);
+  assert.equal(result.since, analyzed);
+  assert.deepEqual(
+    result.files,
+    ['README.md', 'app/pages/invoices.vue', 'src/orders/orders.service.ts', 'src/purchases/orders.service.ts'],
+    'a moved file names its old path too, so findings citing it are re-analyzed',
+  );
+  assert.equal(result.unchanged, false);
+
+  const same = JSON.parse((await cli(['changes', 'changes-src', '--since', result.head], { home })).stdout);
+  assert.equal(same.unchanged, true);
+  assert.deepEqual(same.files, []);
+
+  // A diff that fails is an error, never "unchanged": update would report a stale showcase as current.
+  const broken = await cli(['changes', 'changes-src', '--since', analyzed], {
+    home,
+    env: { GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'diff.orderFile', GIT_CONFIG_VALUE_0: path.join(TMP, 'missing-order-file') },
+  });
+  assert.notEqual(broken.code, 0, broken.stdout);
+  assert.ok(!broken.stdout.includes('"unchanged": true'));
+  await cli(['cleanup', 'changes-src'], { home });
+});
+
+test('changes: a commit the remote no longer has exits 4, so update falls back to a full analysis', async () => {
+  const home = freshHome();
+  const repo = gitRepo(path.join(TMP, 'changes-gone'));
+  await cli(['start', 'changes-gone'], { home });
+  await cli(['clone', 'changes-gone', pathToFileURL(repo).href], { home });
+  const r = await cli(['changes', 'changes-gone', '--since', 'f'.repeat(40)], { home });
+  assert.equal(r.code, 4, r.stdout + r.stderr);
+  assert.match(r.stderr, /not reachable/);
+  assert.equal((await cli(['changes', 'changes-gone', '--since', 'HEAD~1'], { home })).code, 1, 'only a full commit id');
+  await cli(['cleanup', 'changes-gone'], { home });
+});
+
+test('manifest add: a local capture keeps the commit it shows, also after a later clone moves on', async () => {
+  const home = freshHome();
+  const repo = gitRepo(path.join(TMP, 'shot-commit'));
+  const g = (...a) => spawnSync('git', a, { cwd: repo, encoding: 'utf8' });
+  await cli(['start', 'shot-commit'], { home });
+  await cli(['clone', 'shot-commit', repo], { home });
+  const shown = g('rev-parse', 'HEAD').stdout.trim();
+  const shots = path.join(home, 'shot-commit', 'screenshots');
+  writeFileSync(path.join(shots, 'overview-desktop.webp'), webp('VP8 ', 1440, 900));
+  writeFileSync(path.join(shots, 'old.webp'), webp('VP8L', 1200, 3000));
+  const add = (file, level) =>
+    cli(['manifest', 'add', 'shot-commit', '--file', path.join(shots, file), '--feature', file.split('.')[0], '--device', 'desktop', '--level', level], { home });
+  assert.equal((await add('overview-desktop.webp', 'local')).code, 0);
+  assert.equal((await add('old.webp', 'legacy')).code, 0);
+
+  writeFileSync(path.join(repo, 'README.md'), '# moved on\n');
+  g('commit', '-q', '-am', 'later');
+  await cli(['cleanup', 'shot-commit'], { home });
+  await cli(['start', 'shot-commit'], { home });
+  await cli(['clone', 'shot-commit', repo], { home });
+  const m = JSON.parse(readFileSync(path.join(home, 'shot-commit', 'manifest.json'), 'utf8'));
+  assert.notEqual(m.commit, shown, 'the re-analysis clone moved the manifest on');
+  assert.equal(m.images.find((i) => i.level === 'local').commit, shown);
+  assert.equal(m.images.find((i) => i.level === 'legacy').commit, null, 'an older screenshot shows no known commit');
+  await cli(['cleanup', 'shot-commit'], { home });
+});
+
+test('source: refuses without a cloned commit', async () => {
+  const home = freshHome();
+  await cli(['start', 'no-clone'], { home });
+  const r = await cli(['source', 'no-clone'], { home });
+  assert.notEqual(r.code, 0);
+  assert.match(r.stderr, /clone/);
+});
+
+test('analysis save/show: stores the report from stdin and reads it back', async () => {
+  const home = freshHome();
+  const report = {
+    scope: 'showcase',
+    source: { analyzedCommit: 'a'.repeat(40), repositories: [] },
+    features: [{ name: 'Rechnungen', evidence: 'src/invoice.ts:12' }],
+  };
+  const s = await cli(['analysis', 'save', 'stored'], { home, input: JSON.stringify(report) });
+  assert.equal(s.code, 0, s.stderr);
+  assert.deepEqual(JSON.parse(s.stdout), { slug: 'stored', scope: 'showcase', features: 1, analyzedCommit: 'a'.repeat(40) });
+  const r = await cli(['analysis', 'show', 'stored'], { home });
+  assert.equal(r.code, 0, r.stderr);
+  assert.deepEqual(JSON.parse(r.stdout), report);
+});
+
+test('analysis save: refuses what is no report, and show refuses a missing one', async () => {
+  const home = freshHome();
+  assert.notEqual((await cli(['analysis', 'save', 'bad'], { home, input: 'not json' })).code, 0);
+  const noCommit = await cli(['analysis', 'save', 'bad'], { home, input: JSON.stringify({ scope: 'showcase' }) });
+  assert.notEqual(noCommit.code, 0);
+  assert.match(noCommit.stderr, /analyzedCommit/);
+  for (const analyzedCommit of ['abc1234', 'HEAD', `${'a'.repeat(40)}x`]) {
+    const r = await cli(['analysis', 'save', 'bad'], { home, input: JSON.stringify({ source: { analyzedCommit } }) });
+    assert.notEqual(r.code, 0, `${analyzedCommit} is no full commit id`);
+  }
+  assert.ok(!existsSync(path.join(home, 'bad', 'analysis.json')));
+  const show = await cli(['analysis', 'show', 'bad'], { home });
+  assert.notEqual(show.code, 0);
+  assert.match(show.stderr, /no analysis/);
+});
+
+test('cleanup: the analysis report stays with the deliverables', async () => {
+  const home = freshHome();
+  await cli(['start', 'report'], { home });
+  mkdirSync(path.join(home, 'report', 'checkout'));
+  writeFileSync(path.join(home, 'report', 'analysis.json'), '{"scope":"showcase"}');
+  const c = await cli(['cleanup', 'report'], { home });
+  assert.equal(c.code, 0, c.stdout + c.stderr);
+  assert.ok(!existsSync(path.join(home, 'report', 'checkout')));
+  assert.equal(readFileSync(path.join(home, 'report', 'analysis.json'), 'utf8'), '{"scope":"showcase"}');
+});
+
+test('analysis current: compares the report with the default branch without a shell, whatever the branch is called', async () => {
+  const home = freshHome();
+  const repo = gitRepo(path.join(TMP, 'current-src'));
+  const g = (...a) => spawnSync('git', a, { cwd: repo, encoding: 'utf8' });
+  // A valid ref name (git check-ref-format accepts it): pasted into a command line it would run `touch PWNED`.
+  const hostile = 'main;touch${IFS}PWNED|cat';
+  g('branch', '-m', hostile);
+  assert.deepEqual(JSON.parse((await cli(['analysis', 'current', 'current-src'], { home })).stdout), {
+    current: false,
+    reason: 'no analysis report',
+  });
+  await cli(['start', 'current-src'], { home });
+  assert.equal((await cli(['clone', 'current-src', pathToFileURL(repo).href], { home })).code, 0);
+  const { source } = JSON.parse((await cli(['source', 'current-src'], { home })).stdout);
+  await cli(['analysis', 'save', 'current-src'], { home, input: JSON.stringify({ scope: 'showcase', source }) });
+  await cli(['cleanup', 'current-src'], { home });
+
+  const fresh = await cli(['analysis', 'current', 'current-src'], { home });
+  assert.equal(fresh.code, 0, fresh.stderr);
+  assert.deepEqual(JSON.parse(fresh.stdout), {
+    analyzedCommit: source.analyzedCommit,
+    branch: hostile,
+    head: source.analyzedCommit,
+    current: true,
+  });
+
+  writeFileSync(path.join(repo, 'README.md'), '# newer\n');
+  g('commit', '-q', '-am', 'newer');
+  const stale = JSON.parse((await cli(['analysis', 'current', 'current-src'], { home })).stdout);
+  assert.equal(stale.current, false);
+  assert.equal(stale.head, g('rev-parse', 'HEAD').stdout.trim());
+  for (const dir of [process.cwd(), home, repo, CLI_TMP]) assert.ok(!existsSync(path.join(dir, 'PWNED')), `nothing ran in ${dir}`);
 });
 
 test('verify-source: proves the local checkout given to start is unchanged, and notices a change', async () => {
@@ -411,6 +665,152 @@ test('check-db CLI: exit 2 on any remote URI', async () => {
   assert.equal((await cli(['check-db', 'mongodb://127.0.0.1/a'], { home })).code, 0);
   assert.equal((await cli(['check-db', 'mongodb://127.0.0.1/a', 'mongodb://db.example.com/a'], { home })).code, 2);
   assert.equal((await cli(['check-db', 'mongodb://mongo/a', '--compose-services', 'mongo,api'], { home })).code, 0);
+});
+
+/** A one-shot upload endpoint like the Showroom's ticket URL; records what it received. */
+async function uploadServer(status = 200) {
+  const received = [];
+  const server = http.createServer((req, res) => {
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => {
+      received.push({ method: req.method, type: req.headers['content-type'] ?? '', body: Buffer.concat(chunks).toString('latin1') });
+      if (status !== 200) return res.writeHead(status).end('ticket used');
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ fileId: 'b'.repeat(24), width: 1440, height: 900, device: 'desktop', bytes: 30, deduplicated: false }));
+    });
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  return { server, received, url: `http://127.0.0.1:${server.address().port}/files/upload/ticket/abc` };
+}
+
+test('upload: posts one manifest image to the ticket URL and keeps its fileId in the manifest', async () => {
+  const home = freshHome();
+  await cli(['start', 'up'], { home });
+  const shots = path.join(home, 'up', 'screenshots');
+  writeFileSync(path.join(shots, 'overview-desktop.webp'), webp('VP8 ', 1440, 900));
+  await cli(['manifest', 'add', 'up', '--file', path.join(shots, 'overview-desktop.webp'), '--feature', 'overview', '--device', 'desktop', '--level', 'local', '--customer-branding'], { home });
+  const { server, received, url } = await uploadServer();
+  const r = await cli(['upload', 'up', 'overview-desktop.webp', '--url', url], { home });
+  server.close();
+  assert.equal(r.code, 0, r.stderr);
+  const answer = JSON.parse(r.stdout);
+  assert.equal(answer.fileId, 'b'.repeat(24));
+  assert.equal(answer.showsCustomer, true, 'the manifest flag travels with the answer, for showsCustomer');
+  assert.equal(received.length, 1);
+  assert.equal(received[0].method, 'POST');
+  assert.match(received[0].type, /^multipart\/form-data; boundary=/);
+  assert.match(received[0].body, /name="file"; filename="overview-desktop\.webp"/);
+  assert.match(received[0].body, /name="device"\r\n\r\ndesktop/);
+  assert.ok(!r.stdout.includes('RIFF'), 'no file content in the output');
+  const entry = JSON.parse(readFileSync(path.join(home, 'up', 'manifest.json'), 'utf8')).images[0];
+  assert.equal(entry.fileId, 'b'.repeat(24));
+  assert.equal(entry.uploadOrigin, new URL(url).origin);
+  await cli(['cleanup', 'up'], { home });
+});
+
+test('upload: refuses foreign files, plain http to a remote host, and keeps the manifest on a failed upload', async () => {
+  const home = freshHome();
+  await cli(['start', 'up2'], { home });
+  const shots = path.join(home, 'up2', 'screenshots');
+  writeFileSync(path.join(shots, 'a-desktop.webp'), webp('VP8 ', 1440, 900));
+  await cli(['manifest', 'add', 'up2', '--file', path.join(shots, 'a-desktop.webp'), '--feature', 'a', '--device', 'desktop', '--level', 'local'], { home });
+  writeFileSync(path.join(shots, 'stray.webp'), webp('VP8 ', 1440, 900));
+  // A listening server, so the refusal is the manifest guard's and not a failed connection: an image nobody
+  // recorded carries no people or branding flags and must never reach the Showroom.
+  const listening = await uploadServer();
+  const stray = await cli(['upload', 'up2', 'stray.webp', '--url', listening.url], { home });
+  listening.server.close();
+  assert.notEqual(stray.code, 0, 'only images the manifest lists');
+  assert.match(stray.stderr, /not in the manifest/);
+  assert.equal(listening.received.length, 0, 'the stray image never left this machine');
+  assert.notEqual((await cli(['upload', 'up2', '../manifest.json', '--url', 'http://127.0.0.1:9/x'], { home })).code, 0);
+  const plain = await cli(['upload', 'up2', 'a-desktop.webp', '--url', 'http://showroom.example.com/files/upload/ticket/x'], { home });
+  assert.notEqual(plain.code, 0);
+  assert.match(plain.stderr, /https/);
+  const { server, url } = await uploadServer(410);
+  const failed = await cli(['upload', 'up2', 'a-desktop.webp', '--url', url], { home });
+  server.close();
+  assert.notEqual(failed.code, 0);
+  assert.match(failed.stderr, /410/);
+  const entry = JSON.parse(readFileSync(path.join(home, 'up2', 'manifest.json'), 'utf8')).images[0];
+  assert.ok(!('fileId' in entry));
+  await cli(['cleanup', 'up2'], { home });
+});
+
+/** An upload endpoint that answers each request with the next scripted body; records the device sent. */
+async function scriptedServer(bodies) {
+  const received = [];
+  const server = http.createServer((req, res) => {
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => {
+      const body = Buffer.concat(chunks).toString('latin1');
+      received.push({ device: /name="device"\r\n\r\n(\w+)/.exec(body)?.[1] ?? null, body });
+      res.writeHead(200, { 'content-type': 'application/json' }).end(bodies[received.length - 1] ?? '{}');
+    });
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  return { server, received, url: `http://127.0.0.1:${server.address().port}/files/upload/ticket/abc` };
+}
+
+test('upload: the right entry, its device, only a 24-hex fileId, and nothing outside screenshots/', async () => {
+  const home = freshHome();
+  await cli(['start', 'up3'], { home });
+  const shots = path.join(home, 'up3', 'screenshots');
+  const add = async (file, device, w, h, extra = []) => {
+    writeFileSync(path.join(shots, file), webp('VP8 ', w, h));
+    const r = await cli(['manifest', 'add', 'up3', '--file', path.join(shots, file), '--feature', 'overview', '--device', device, '--level', device === 'cover' ? 'legacy' : 'local', ...extra], { home });
+    assert.equal(r.code, 0, r.stderr);
+  };
+  await add('overview-desktop.webp', 'desktop', 1440, 900);
+  await add('overview-mobile.webp', 'mobile', 780, 1688, ['--customer-branding']);
+  await add('overview-cover.webp', 'cover', 1200, 630);
+  const mf = () => JSON.parse(readFileSync(path.join(home, 'up3', 'manifest.json'), 'utf8')).images;
+
+  // An answer without a proper fileId is no upload, whatever the status says.
+  const bad = await scriptedServer(['{}', JSON.stringify({ fileId: `../${'a'.repeat(24)}` }), '<html>login</html>']);
+  const codes = [];
+  for (let i = 0; i < 3; i++) codes.push((await cli(['upload', 'up3', 'overview-desktop.webp', '--url', bad.url], { home })).code);
+  bad.server.close();
+  assert.ok(codes.every((c) => c !== 0), `every answer refused: ${codes}`);
+  assert.ok(mf().every((e) => !('fileId' in e) && !('uploadedAt' in e)), 'a refused answer leaves the manifest alone');
+
+  // Each image goes up with its own device (none for a cover) and keeps its own fileId.
+  const ok = await scriptedServer([JSON.stringify({ fileId: '1'.repeat(24) }), JSON.stringify({ fileId: '2'.repeat(24) })]);
+  const mobile = await cli(['upload', 'up3', 'overview-mobile.webp', '--url', ok.url], { home });
+  const cover = await cli(['upload', 'up3', 'overview-cover.webp', '--url', ok.url], { home });
+  ok.server.close();
+  assert.equal(mobile.code, 0, mobile.stderr);
+  assert.equal(cover.code, 0, cover.stderr);
+  assert.equal(JSON.parse(mobile.stdout).showsCustomer, true);
+  assert.equal(JSON.parse(cover.stdout).showsCustomer, false);
+  assert.deepEqual(ok.received.map((r) => r.device), ['mobile', null]);
+  assert.deepEqual(Object.fromEntries(mf().map((e) => [e.file, e.fileId ?? null])), {
+    'screenshots/overview-desktop.webp': null,
+    'screenshots/overview-mobile.webp': '1'.repeat(24),
+    'screenshots/overview-cover.webp': '2'.repeat(24),
+  });
+
+  // A stored fileId is never reused: the server deletes a file with its showcase or block and then hands out
+  // a new id, so a later run uploads again and keeps the new one (a stale id shows as a blank image).
+  const again = await scriptedServer([JSON.stringify({ fileId: '4'.repeat(24) })]);
+  const second = await cli(['upload', 'up3', 'overview-mobile.webp', '--url', again.url], { home });
+  again.server.close();
+  assert.equal(second.code, 0, second.stderr);
+  assert.equal(again.received.length, 1, 'uploaded again despite the stored fileId');
+  assert.equal(JSON.parse(second.stdout).fileId, '4'.repeat(24));
+  assert.equal(mf().find((e) => e.file === 'screenshots/overview-mobile.webp').fileId, '4'.repeat(24));
+
+  // A manifest entry pointing outside screenshots/ never sends that file anywhere.
+  writeFileSync(path.join(home, 'secret.txt'), 'outside the work folder');
+  await cli(['manifest', 'meta', 'up3', 'images.0.file=../secret.txt'], { home });
+  const outside = await scriptedServer([JSON.stringify({ fileId: '3'.repeat(24) })]);
+  const r = await cli(['upload', 'up3', '../../secret.txt', '--url', outside.url], { home });
+  outside.server.close();
+  assert.notEqual(r.code, 0);
+  assert.equal(outside.received.length, 0, 'nothing left this machine');
+  await cli(['cleanup', 'up3'], { home });
 });
 
 test('wait-http: answers for a local server, refuses remote hosts', async () => {

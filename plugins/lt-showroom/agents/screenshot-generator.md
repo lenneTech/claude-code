@@ -150,24 +150,27 @@ Interim status goes in the same message as your next tool call, so the work keep
 ## Upload Flow
 
 Capturing ends with the files in `~/.lt-showroom/<slug>/screenshots/`. The upload belongs to the caller that builds the
-showcase (`/lt-showroom:showroom:create` Step 6); when a caller asks this agent to upload, follow it:
+showcase (`/lt-showroom:showroom:create` Step 6), because a file no showcase references is cleaned up by the
+platform; when a caller asks this agent to upload, follow it:
 
 1. **One ticket per file**: `create_upload_ticket` returns an `uploadUrl` that accepts exactly one multipart POST
-   within 15 minutes and needs no session.
+   within 15 minutes and needs no session. Upload through the session script, never with an image in the context:
    ```bash
-   curl -s -F "file=@$HOME/.lt-showroom/<slug>/screenshots/{filename}.webp" -F "device=desktop" "<uploadUrl>"
+   node "$S" upload <slug> <file name in screenshots/> --url "<uploadUrl>"
    ```
-   The answer is `{ fileId, width, height, device, bytes, deduplicated }`. The server stores the image as WebP; the
-   same image uploaded again returns the same `fileId`. `device` (`desktop`, `tablet`, `mobile`) is optional and
-   otherwise derived from the aspect ratio. Without MCP, return the file list to the caller, which uploads.
-2. **Reference the `fileId` in content blocks**, sent with `update_showcase`: an `image` block (`content.fileId`), a
-   `gallery` block (`content.fileIds[]`) or a `screenshot-gallery` block (`content.screenshots[].fileId`).
+   It posts the file with the manifest's device and prints `{ fileId, width, height, device, bytes, deduplicated }`
+   plus `showsCustomer`, and keeps the `fileId` in the manifest. The server stores the image as WebP; the same image
+   uploaded again returns the same `fileId`. Without MCP, return the file list to the caller, which uploads.
+2. **Reference the `fileId`**, never a URL, in a `feature-spotlight` or `screenshot-gallery` block
+   (`content.screenshots[].fileId` with its `device`), an `image` block (`content.fileId`), a `gallery` block
+   (`content.fileIds[]`) or the showcase's `screenshots[]`, and set `showsCustomer` where the manifest marks customer
+   branding.
 3. **Teaser image**: the `fileId` of the best overview screenshot (typically `overview-desktop.webp`) becomes the
-   showcase's `teaserImageFileId`, shown on showcase cards and in the hero. MCP cannot set it; use
-   `PATCH /showcases/{id}` with `{ "teaserImageFileId": "<fileId>" }`.
+   showcase's `teaserImageFileId` (with `teaserShowsCustomer` when it shows the customer's branding), shown on
+   showcase cards and in the hero. The caller sets it with `upsert_showcase` or `update_showcase`.
 
-### File URL Format
+### Files in Block HTML
 
-Block file fields take the `fileId`, never a URL. Only inside `custom-html` an image needs a URL:
-`<api-origin>/files/id/<fileId>`, where `<api-origin>` is the ticket's `uploadUrl` up to `/files/`. A relative `/api/...`
-path works only behind a local dev proxy and leaves the image blank on the deployed page.
+Block file fields take the `fileId`, never a URL. Only HTML (`custom-html`, `text.html`) needs a URL, and it is
+relative: `/files/id/<fileId>`. The page and the API point it at the showcase-bound route, and the PDF embeds exactly
+this form; an absolute URL with a host breaks in the PDF.

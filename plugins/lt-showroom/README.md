@@ -1,6 +1,6 @@
 # showroom — Claude Code Plugin
 
-Skills, Commands, and Agents for analyzing software projects and creating showcases on [showroom.lenne.tech](https://showroom.lenne.tech) via MCP tools. Everything company-specific (company name, meeting link, knowledge base, testimonials) comes from the signed-in account, so the plugin works for any company with an account on the platform.
+Skills, Commands, and Agents for analyzing software projects and creating showcases on [showroom.lenne.tech](https://showroom.lenne.tech) via MCP tools. The Showroom is the source of truth: analysis, source commit, screenshots and texts live there, new showcases are drafts (internal, anonymous) with placeholders instead of customer names, and nothing is written into the project repository. Everything company-specific (company name, meeting link, knowledge base, testimonials) comes from the signed-in account, so the plugin works for any company with an account on the platform.
 
 ## Installation
 
@@ -15,7 +15,7 @@ In a Claude Code session:
 
 | Server | Type | Purpose |
 |--------|------|---------|
-| `showroom-api` | http | Showcases (create, edit, activate, archive), screenshot upload, prospects, analytics, company context, knowledge base, global blocks, company settings (admins only), candidate register of the project search |
+| `showroom-api` | http | Showcases (create, upsert by repository, edit single blocks, archive), showcase sources, link check, screenshot upload, selections, analytics, company context, knowledge base, global blocks, company settings (admins only), candidate register of the project search |
 
 The server signs in through OAuth in the browser on first use. The grant covers `showcases:read` and
 `showcases:write` for the editorial team, plus `settings:write`, which only `update_settings` needs and only admins can
@@ -44,47 +44,47 @@ for every editor, company name, logo and booking link through `update_settings` 
 
 ### `analyzing-projects`
 
-Analyzes software projects across 8 dimensions: technology stack, architecture, core features, API surface, testing strategy, UI/UX patterns, security measures, and performance optimizations. Every finding is backed by a `file:line` source reference.
+Analyzes a throwaway clone of a project for a showcase: technology stack, features, pages, startup and project facts (scope `showcase`), or all 8 dimensions on request (scope `full`). Every finding is backed by a `file:line` source reference; the report is stored with the showcase in the Showroom.
 
 Activates automatically when a project analysis is requested alongside showroom keywords.
 
 ### `creating-showcases`
 
-Creates, updates, and manages showcases on showroom.lenne.tech via MCP tools. Transforms project analysis reports into structured content blocks with technology badges, feature grids, screenshot galleries, and architecture overviews.
+Creates, updates, and manages showcases on showroom.lenne.tech via MCP tools. Transforms project analysis reports into structured content blocks with feature grids, screenshot galleries and architecture overviews, written with placeholders (`{{kunde}}`, `{{projekt}}` …) so a viewer without the names reads the aliases.
 
-Activates automatically when showcase-related keywords are detected or a project carries a `SHOWCASE.md`.
+Activates automatically when showcase-related keywords are detected.
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `/lt-showroom:showroom:analyze [path]` | Analyze a project and produce a structured report |
-| `/lt-showroom:showroom:create [path]` | Analyze a project and create a showcase on showroom.lenne.tech |
-| `/lt-showroom:showroom:update [showcase-id]` | Re-analyze a project and update its existing showcase |
+| `/lt-showroom:showroom:analyze [path \| repo-url] [--full]` | Analyze a throwaway clone of the default branch; the report waits in `~/.lt-showroom/<slug>/analysis.json` |
+| `/lt-showroom:showroom:create [path \| repo-url] [--name <project>] [--export]` | Create the showcase as a draft, or update the one the repository already has |
+| `/lt-showroom:showroom:update [path \| repo-url] [--export]` | Re-analyze what changed since the analyzed commit and update the affected blocks |
 | `/lt-showroom:showroom:screenshot [path \| repo-url] [--cleanup]` | Capture feature screenshots (desktop + mobile, WebP) from a throwaway clone with demo data into `~/.lt-showroom/<slug>/screenshots/`; writes nothing into the project |
 
 ## Agents
 
 | Agent | Description |
 |-------|-------------|
-| `project-analyzer` | Deep read-only source code analysis across 8 dimensions |
+| `project-analyzer` | Read-only analysis of the clone, scope `showcase` or `full`, report saved through the session script |
 | `screenshot-generator` | One screenshot run: clone, start with a database of its own, demo data, capture, fallback chain, cleanup of exactly what it started |
 
 ## Hooks
 
 - **detect-analyzable-project** (`UserPromptSubmit`) — Activates when a software project is detected and showroom keywords appear in the prompt
-- **post-compact-context** (`SessionStart`, matcher `compact`) — Re-injects showcase context after compaction when the project carries a `SHOWCASE.md`
+- **post-compact-context** (`SessionStart`, matcher `compact`) — Re-injects showcase context after compaction when the project carries a `SHOWCASE.md` export
 - **sweep-screenshot-sessions** (`SessionEnd`) — Cleans up the screenshot runs the ending session started (detached, because SessionEnd hooks get 1.5 s)
 
 ## Screenshot Runs
 
 Each run works in `~/.lt-showroom/<slug>/` (override with `LT_SHOWROOM_HOME`): a throwaway clone, the process and
-stack record `session.json`, and the deliverables `screenshots/*.webp` and `manifest.json`. The developer's checkout,
-its database and any stack another session runs stay untouched.
+stack record `session.json`, and the deliverables `screenshots/*.webp`, `manifest.json` and the analysis report
+`analysis.json`. The developer's checkout, its database and any stack another session runs stay untouched.
 
 | File | Purpose |
 |------|---------|
-| `scripts/screenshot-session.mjs` | Work folder, clone, process groups, database check, manifest, cleanup of exactly what the run recorded (`node scripts/screenshot-session.mjs help`) |
+| `scripts/screenshot-session.mjs` | Work folder, clone, process groups, database check, manifest, analysis report, the showcase `source` of the cloned commit, the paths changed since an analyzed commit, the upload of an image to an upload-ticket URL (keeping its `fileId`), cleanup of exactly what the run recorded (`node scripts/screenshot-session.mjs help`) |
 | `scripts/browser/prepare-page.js` | Scroll-reveal, hides consent banners and dev overlays, freezes animations before a capture |
 | `scripts/browser/anonymize-dom.js` | Replaces production data in the rendered page only, before a capture on a live system |
 | `scripts/browser/teaser-cover.html` | Branded teaser cover, the last stage of the fallback chain |
