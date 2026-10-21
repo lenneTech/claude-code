@@ -72,10 +72,16 @@ function cli(args, { home, pid = process.pid, session = 'test-session', env = {}
         TMP: CLI_TMP,
         ...env,
       },
+      // stdin is a pipe only when there is input: a command that exits before reading it would otherwise
+      // fail the test with EPIPE (macOS CI, `run`), and without input the script reads an empty stdin.
+      stdio: [input === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
     });
     let stdout = '';
     let stderr = '';
-    child.stdin.end(input ?? '');
+    if (input !== undefined) {
+      child.stdin.on('error', () => {});
+      child.stdin.end(input);
+    }
     child.stdout.on('data', (d) => (stdout += d));
     child.stderr.on('data', (d) => (stderr += d));
     child.on('close', (code) => resolve({ code, stdout, stderr }));
@@ -547,8 +553,9 @@ test('analysis current: compares the report with the default branch without a sh
   const repo = gitRepo(path.join(TMP, 'current-src'));
   const g = (...a) => spawnSync('git', a, { cwd: repo, encoding: 'utf8' });
   // A valid ref name (git check-ref-format accepts it): pasted into a command line it would run `touch PWNED`.
-  const hostile = 'main;touch${IFS}PWNED|cat';
-  g('branch', '-m', hostile);
+  // No `|`: a loose ref is a file under .git/refs, and Windows file names refuse it.
+  const hostile = 'main;touch${IFS}PWNED;true';
+  assert.equal(g('branch', '-m', hostile).status, 0, 'the hostile branch exists, or the test proves nothing');
   assert.deepEqual(JSON.parse((await cli(['analysis', 'current', 'current-src'], { home })).stdout), {
     current: false,
     reason: 'no analysis report',
