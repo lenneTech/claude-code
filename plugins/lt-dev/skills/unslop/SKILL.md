@@ -1,6 +1,6 @@
 ---
 name: unslop
-description: 'Cuts AI tells from any text a human reads (tickets and comments, commit messages, MR/PR descriptions, READMEs, offer copy, skill and command bodies) in English and German, and puts voice back in. Activates whenever prose is written or edited for a human, and on "unslop", "entschwurbeln", "klingt nach KI", "KI-Sprech", "slop". NOT for code identifiers, generated files, or quoted third-party text.'
+description: 'Cuts AI tells from any text a human reads (tickets, comments, commits, MR/PR descriptions, READMEs, offer copy, UI text, skill and command bodies) in English and German, and puts voice back in. Activates whenever prose is written or edited for a human, and on "unslop", "entschwurbeln", "klingt nach KI", "KI-Sprech", "slop". NOT for code identifiers, generated files, or quoted third-party text.'
 ---
 
 # Unslop
@@ -16,6 +16,7 @@ Any time text is written for a human reader, not for a parser. In lt projects th
 - READMEs, migration guides, ADRs, inline code comments
 - QA test instructions and manual re-test handoffs
 - Customer-facing copy: offers (`lt-offers`), showcases (`lt-showroom`), release notes
+- UI text inside code: labels, buttons, placeholders, toasts, error and empty states, confirmation dialogs, email templates, i18n files. It is written in a `.vue` or `.ts` file, but a human reads it, and it is where unspecified text most often comes out with a Gedankenstrich (pattern 39)
 - The body of skills, commands, and agents in this plugin
 - Chat answers to the user
 
@@ -82,7 +83,7 @@ Removing patterns is half the job. Sterile, voiceless writing is just as obvious
 
 ### Style
 
-13. **Em dash overuse.** Avoid em dashes entirely. Use periods or commas only (no parentheses, no en dashes, no hyphen-as-dash substitutes). Em dashes are an AI tell, and reaching for parentheses instead just trades one tell for another. If a thought needs separation, end the sentence or use a comma.
+13. **Em dash overuse.** Avoid em dashes entirely. Use periods or commas (no en dashes, no hyphen-as-dash substitutes). Em dashes are an AI tell, and reaching for parentheses instead just trades one tell for another. If a thought needs separation, end the sentence or use a comma: "Saved, you can close this tab." The only place for parentheses is a short qualifier on a label, see pattern 39. German text follows pattern 39.
 14. **Colon overuse.** Colons are fine before a list or example. Not as mid-sentence connectors. "If you're coming from traditional automation: instead of registering event handlers, you describe conditions" adds nothing with the colon. Rewrite to let the point stand on its own without comparison framing. "Describing when the scheduler should fire works best as plain English." Same meaning, no crutch punctuation.
 15. **Boldface overuse.** Don't bold every proper noun or acronym.
 16. **Inline-header lists.** The tell is a bold label and colon that restates the line: "**Performance:** Performance improved...". Convert those to prose. A bold lead-in that ends in a period, names the item, and is followed by genuinely new detail ("**Schema in TypeScript.** Tables live in one file.") is fine, not a tell.
@@ -124,13 +125,36 @@ Patterns 1 to 31 apply to German too. These are the tells that only show up ther
 35. **Aufzählungs-Konnektoren.** "Darüber hinaus", "Des Weiteren", "Zudem", "Ferner" at the start of every second sentence. Cut most of them. If the order is clear from the content, no connector is needed.
 36. **Zusammenfassungs-Reflex.** "Zusammenfassend lässt sich sagen", "Insgesamt zeigt sich", "Abschließend bleibt festzuhalten", "Die Zukunft bleibt spannend". Cut. A German summary paragraph that repeats the text above adds nothing.
 37. **Höflichkeitsfloskeln.** "Gerne!", "Sehr gute Frage!", "Ich hoffe, das hilft!", "Selbstverständlich!", "Kein Problem!". Answer directly.
-38. **Typografie.** Straight quotes are right in code, commit messages, and identifiers. In German prose „so“ is correct orthography and stays. The em dash "—" is not German punctuation at all: correct German uses a spaced en dash "–", but overusing it is the same tell as pattern 13, so prefer a period or comma. Never strip umlauts or ß to write "fuer" or "loeschen".
+38. **Typografie.** Straight quotes are right in code, commit messages, and identifiers. In German prose „so“ is correct orthography and stays. The em dash "—" is not German punctuation at all. Correct German uses a spaced en dash "–", but when to use it is pattern 39. Never strip umlauts or ß to write "fuer" or "loeschen".
+39. **Gedankenstrich.** The most frequent German tell, and it shows up most in text nobody specified: a toast, a hint under a form, an error message. A dash used as a pause between words almost always stands in for other punctuation. Use that punctuation instead:
+
+    | Dash used for | Write instead | Example |
+    |---------------|---------------|---------|
+    | Joining two main clauses | Period | „Dein E-Mail-Programm wurde geöffnet. Bitte schicke die Nachricht dort ab.“ |
+    | An insertion | Commas | „Die Daten, auch ältere Einträge, werden übernommen.“ |
+    | A consequence after „und“ | Nothing | „Ein Klick genügt und alles ist gespeichert.“ |
+    | A contrast | Comma | „Nicht schneller, sondern zuverlässiger.“ |
+    | Announcing a list or an explanation | Colon (a dash is acceptable here) | „Drei Formate stehen bereit: PDF, Word und Markdown.“ |
+    | A qualifier on a label or menu item | Parentheses, or drop the qualifier | „PDF (zum Drucken geeignet)“ |
+    | Code comments | Comma preferred, not enforced | `// Cache leeren, sonst alte Werte` |
+
+    The en dash stays where it is a sign with a meaning of its own rather than a pause:
+
+    | Use | Example |
+    |-----|---------|
+    | Range, „bis“ (no spaces) | „10–12 Uhr“, „S. 4–7“, „2024–2026“ |
+    | Route or pairing (no spaces) | „Köln–Berlin“, „Nord–Süd-Verbindung“ |
+    | Empty value in a table or detail view | „Telefon: –“ |
+    | Amount without cents | „50,– €“, or simply „50 €“ |
+    | Separator in a page title | „Angebote – lenne.tech“, „Angebote \| lenne.tech“ works equally well |
+
+    The test: if you would pause there when reading aloud, the dash is punctuation and goes. If it reads as „bis“, „nach“, „gegen“ or „nichts“, it stays.
 
 ## Self-audit before shipping
 
 Run these three checks on the finished text:
 
-1. Grep your own output for the worst offenders. `Additionally`, `crucial`, `showcase`, `underscore`, `—`, `Zusammenfassend`, `Es ist wichtig`, `Darüber hinaus`.
+1. Grep your own output for the worst offenders. `Additionally`, `crucial`, `showcase`, `underscore`, `—`, ` – ` (a spaced en dash between words, checked against pattern 39), `Zusammenfassend`, `Es ist wichtig`, `Darüber hinaus`.
 2. Read the first sentence of every paragraph in a row. If they all have the same shape, vary them.
 3. Ask whether any sentence would survive unchanged in a different project's docs. If yes, it says nothing. Cut it.
 
@@ -140,6 +164,7 @@ Run these three checks on the finished text:
 - `writing-linear-comments` skill. Every Linear comment gets this prose pass before it is posted.
 - `filing-ai-proposed-tickets` skill. Every AI-proposed ticket body gets this prose pass before it is filed.
 - `developing-claude-plugins` skill. Skill, command, and agent bodies are prose and go through this skill before release.
+- `developing-lt-frontend` skill. UI text in components and i18n files goes through patterns 32 to 39.
 - `lt-offers:creating-offers` and `lt-showroom:creating-showcases` skills. Customer-facing copy, where German patterns 32 to 38 matter most.
 - `/lt-dev:git:commit-message` and `/lt-dev:git:mr-description` commands. The body is prose, the subject line stays terse.
 
