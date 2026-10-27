@@ -159,9 +159,14 @@ git -C "$GL_REPO" config --unset-all credential.helper; git -C "$GL_REPO" config
 echo "no timeout binary on PATH (stock macOS)"
 # Only what the script needs, minus `timeout` and `gtimeout`. The passthrough stub above
 # hid exactly this case: on a stock Mac both probes died with "command not found".
+# Each stub runs its tool with the PATH of this test (stubs first): a tool that is itself a
+# wrapper searching PATH for the real binary (a git wrapper in ~/.local/bin, observed
+# 2026-10-25) would otherwise find this stub, exec it and loop forever. The script under test
+# still sees only $BARE_BIN, so it finds no `timeout`.
 BARE_BIN="$TMP_ROOT/bare-bin"; mkdir -p "$BARE_BIN"
+printf '%s\n' "$PATH" > "$TMP_ROOT/real-path"
 for t in git grep cut head cat perl; do
-  printf '#!/bin/sh\nexec "%s" "$@"\n' "$(command -v "$t")" > "$BARE_BIN/$t"
+  printf '#!/bin/sh\nIFS= read -r PATH < "%s"; export PATH\nexec "%s" "$@"\n' "$TMP_ROOT/real-path" "$(command -v "$t")" > "$BARE_BIN/$t"
 done
 cp "$STUB_BIN/ssh" "$STUB_BIN/gh" "$STUB_BIN/glab" "$BARE_BIN/"
 chmod +x "$BARE_BIN"/*

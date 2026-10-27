@@ -35,11 +35,15 @@ assert_silent() {
 TMP_ROOT="$(mktemp -d)"
 trap 'rm -rf "$TMP_ROOT"' EXIT
 
-# A PATH without jq, so the script takes its grep/sed fallback.
+# A PATH without jq, so the script takes its grep/sed fallback. Each stub runs its tool with
+# the real PATH: a tool that is itself a wrapper searching PATH for the real binary (a git
+# wrapper in ~/.local/bin, observed 2026-10-25) would otherwise find this stub, exec it and
+# loop forever. The hook under test still sees only $NOJQ_BIN.
 NOJQ_BIN="$TMP_ROOT/nojq-bin"; mkdir -p "$NOJQ_BIN"
+printf '%s\n' "$PATH" > "$TMP_ROOT/real-path"
 for t in cat grep head sed tr basename git; do
   command -v "$t" >/dev/null 2>&1 || continue
-  printf '#!/bin/sh\nexec "%s" "$@"\n' "$(command -v "$t")" > "$NOJQ_BIN/$t"
+  printf '#!/bin/sh\nIFS= read -r PATH < "%s"; export PATH\nexec "%s" "$@"\n' "$TMP_ROOT/real-path" "$(command -v "$t")" > "$NOJQ_BIN/$t"
   chmod +x "$NOJQ_BIN/$t"
 done
 
