@@ -162,9 +162,9 @@ platform; when a caller asks this agent to upload, follow it:
    plus `showsCustomer`, and keeps the `fileId` in the manifest. The server stores the image as WebP; the same image
    uploaded again returns the same `fileId`. Without MCP, return the file list to the caller, which uploads.
 2. **Reference the `fileId`**, never a URL, in a `feature-spotlight` or `screenshot-gallery` block
-   (`content.screenshots[].fileId` with its `device`), an `image` block (`content.fileId`), a `gallery` block
-   (`content.fileIds[]`) or the showcase's `screenshots[]`, and set `showsCustomer` where the manifest marks customer
-   branding.
+   (`content.screenshots[].fileId` with its `device`), a `feature-grid` card (`content.features[].fileId`), an `image`
+   block (`content.fileId`), a `gallery` block (`content.fileIds[]`) or the showcase's `screenshots[]`, and set
+   `showsCustomer` where the manifest marks customer branding.
 3. **Teaser image**: set by the caller after saving, with `generate_teaser`, which frames up to three of the
    uploaded screenshots that do not show the customer. This agent sets no teaser.
 

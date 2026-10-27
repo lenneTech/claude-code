@@ -38,6 +38,9 @@ Each feature is:
 - Icon: an Iconify name from the Lucide set (`i-lucide-zap`, `i-lucide-shield-check`, `i-lucide-database`)
 - Count: with more than two features the first two render large and the rest in rows of three, so 8 (or 11) fill
   every row
+- Image (optional): a feature without a `feature-spotlight` of its own can carry one screenshot on its card
+  (`fileId` from the upload, `showsCustomer: true` where the manifest marks customer branding). Main features get a
+  spotlight; card images cover the rest
 
 ### Technologies
 
@@ -100,7 +103,7 @@ N-1. testimonial              — Customer feedback (if available)
 N.   text "Ergebnis"          — Impact, metrics, adoption
 ```
 
-The `feature-grid` gives visitors a quick scannable overview of all capabilities with icons. Each feature is then presented in detail via a `feature-spotlight` block with its screenshots. The `screenshot-gallery` at the end collects any additional screenshots (e.g., overview pages, mobile views) that are not tied to a specific feature.
+The `feature-grid` gives visitors a quick scannable overview of all capabilities with icons. Each main feature is then presented in detail via a `feature-spotlight` block with its screenshots; a feature without a spotlight of its own can show one screenshot on its card instead. The `screenshot-gallery` at the end collects any additional screenshots (e.g., overview pages, mobile views) that are not tied to a specific feature.
 
 ### Library/Framework Showcase
 

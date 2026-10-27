@@ -198,6 +198,8 @@ them per viewer: real names for the Showroom team and where the naming allows it
 **Block 2: feature-grid**
 - Compact icon overview of the report's features (8 items; 5, 8 or 11 fill every row)
 - Each with title (3-5 words), description (1-2 sentences), the report's `i-lucide-<name>` icon
+- A feature without a spotlight of its own (Block 3-N) can carry one image on its card: `fileId` from the upload,
+  `showsCustomer: true` where the manifest marks customer branding
 
 **Block 3-N: feature-spotlight, one per feature with screenshots, titled with the feature name**
 - `content.html`: the feature in 1-2 paragraphs (HTML as in `text`), with placeholders

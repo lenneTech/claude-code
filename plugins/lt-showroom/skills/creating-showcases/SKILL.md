@@ -91,8 +91,8 @@ the Showroom team and where `customerNaming` allows it, the aliases for everyone
 - A placeholder needs its value: the real one always, the alias as long as the naming is not `named`.
 - A testimonial is `author: "{{ansprechpartner}}"`, `role` the contact's function, `company: "{{kunde}}"`.
 - An image showing the customer (logo, branding) carries `showsCustomer` (screenshots, image, gallery and video
-  content, screenshot-gallery and feature-spotlight entries), the teaser `teaserShowsCustomer`; the alias view leaves
-  them out.
+  content, screenshot-gallery and feature-spotlight entries, feature-grid cards), the teaser `teaserShowsCustomer`; the
+  alias view leaves them out.
 - `get_showcase` with `view: "alias"` returns exactly what a viewer without the names sees: check it after every save.
 
 ## Reference Files
@@ -268,7 +268,7 @@ The page shows the blocks in array order; keep `order` equal to the index, since
 - [ ] Feature-grid has 8 features with evidence-based descriptions
 - [ ] Customer testimonial included (if the company's testimonial source has one for this customer), with `{{ansprechpartner}}` and `{{kunde}}`
 - [ ] No `cta` block
-- [ ] Screenshots uploaded through upload tickets and referenced by `fileId` (feature-spotlight, screenshot-gallery, `screenshots[]`); images with customer branding marked `showsCustomer`
+- [ ] Screenshots uploaded through upload tickets and referenced by `fileId` (feature-spotlight, screenshot-gallery, feature-grid card images, `screenshots[]`); images with customer branding marked `showsCustomer`
 - [ ] Teaser set with `generate_teaser`
 - [ ] `custom-html` only for a layout no block offers, files in it relative as `/files/id/<fileId>`
 - [ ] The project repository is unchanged; the work folder session is cleaned up

@@ -320,7 +320,8 @@ grouped by their `category`. The field stays the source for the hero and the PDF
 {
   "features": [
     { "icon": "i-lucide-shield-check", "title": "Rollenbasierte Rechte", "description": "Fein abgestufte Rechte für Admins, Nutzer und Gäste." },
-    { "icon": "i-lucide-zap", "title": "Echtzeit-Updates", "description": "Änderungen erscheinen sofort bei allen Beteiligten." }
+    { "icon": "i-lucide-zap", "title": "Echtzeit-Updates", "description": "Änderungen erscheinen sofort bei allen Beteiligten." },
+    { "icon": "i-lucide-file-down", "title": "PDF-Export", "description": "Jede Auswertung als PDF mit einem Klick.", "fileId": "<file id>", "showsCustomer": false }
   ]
 }
 ```
@@ -330,6 +331,8 @@ grouped by their `category`. The field stays the source for the hero and the PDF
 | `features[].title` | yes | Card heading |
 | `features[].description` | no | One or two sentences, plain text |
 | `features[].icon` | no | Iconify name, e.g. `i-lucide-zap` |
+| `features[].fileId` | no | Image at the top of the card, 16:10 and shown whole; a click opens the lightbox over all card images. The PDF shows it above the card title |
+| `features[].showsCustomer` | no | Shows the customer (logo, branding): the image is left out where the alias is shown, the card stays |
 
 With more than two features the first two become a row of two large cards and the rest flow, on wide screens, in
 rows of three, so 5, 8 or 11 features fill every row. The cards tilt slightly and glow on hover. Lucide
