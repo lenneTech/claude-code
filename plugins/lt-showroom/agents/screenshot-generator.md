@@ -165,9 +165,8 @@ platform; when a caller asks this agent to upload, follow it:
    (`content.screenshots[].fileId` with its `device`), an `image` block (`content.fileId`), a `gallery` block
    (`content.fileIds[]`) or the showcase's `screenshots[]`, and set `showsCustomer` where the manifest marks customer
    branding.
-3. **Teaser image**: the `fileId` of the best overview screenshot (typically `overview-desktop.webp`) becomes the
-   showcase's `teaserImageFileId` (with `teaserShowsCustomer` when it shows the customer's branding), shown on
-   showcase cards and in the hero. The caller sets it with `upsert_showcase` or `update_showcase`.
+3. **Teaser image**: set by the caller after saving, with `generate_teaser`, which frames up to three of the
+   uploaded screenshots that do not show the customer. This agent sets no teaser.
 
 ### Files in Block HTML
 

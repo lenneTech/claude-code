@@ -168,7 +168,7 @@ results. What names the customer goes into a field or a `press` link, never into
 
 ### Step 6: Upload Screenshots, Then Build Content Blocks (8-12 blocks)
 
-**Upload first**, so blocks, teaser and screenshots can reference the files by `fileId`. For each image in
+**Upload first**, so blocks and screenshots can reference the files by `fileId`. For each image in
 `node "${CLAUDE_PLUGIN_ROOT}/scripts/screenshot-session.mjs" manifest show <slug>`:
 
 1. `create_upload_ticket` (one ticket per file, single use, valid 15 minutes), also for an image whose manifest entry
@@ -223,8 +223,10 @@ them per viewer: real names for the Showroom team and where the naming allows it
 **Block N+4: text "Ergebnis"**
 - Outcomes and impact, 1-2 paragraphs; the live site as `{{link:live}}`, never as a URL
 
-No `tech-stack` and no `cta` block: the public page leaves both out. The technologies go into the showcase's
-`technologies` field, and the page ends with its own "Termin vereinbaren" button for the booking link.
+No `cta` block: the page ends with its own "Termin vereinbaren" button for the booking link. The technologies go into
+the showcase's `technologies` field, which the hero shows and the section "Technik & Architektur" groups by layer. A
+`tech-stack` block renders no section of its own; add one only when categories and descriptions per technology say
+more than that grouping, since its entries then replace it.
 
 ### Step 7: Save With `upsert_showcase`
 
@@ -240,7 +242,6 @@ when there is none, and answers `created` plus id, slug, status, clearance and t
 | `customer` | `name`, `shortName`, `alias`, `contactName`, `contactAlias`, `domains` (and `publicationVeto` when the customer objected) |
 | `project` | `name`, `alias` |
 | `links` | `[{ kind: live\|appstore\|press\|demo, url, label?, expected? }]` |
-| `teaserImageFileId`, `teaserShowsCustomer` | the `fileId` of the best overview screenshot (typically `overview-desktop.webp`, or the teaser cover); `teaserShowsCustomer` from its `showsCustomer` |
 | `screenshots` | `[{ fileId, device, caption?, order?, showsCustomer? }]` for the cards and the hero, from the uploaded images |
 | `contentBlocks` | from Step 6; on an existing showcase only with "Inhalte neu aufbauen" (Step 3) |
 | `source` | the report's `source` as it is; plus `screenshotsCommit` (the `commit` the manifest's `local` images carry; never the manifest's top-level `commit`, which a later clone moves on) and `screenshotsAt` (their newest `capturedAt`); for fallback levels only `screenshotsAt` |
@@ -263,6 +264,14 @@ when there is none, and answers `created` plus id, slug, status, clearance and t
 **Never in this command:** `publish_showcase`; `update_showcase` with `status`, `clearance`, `customerNaming` or
 `customer.referenceConsent`; anything with selections. Presets of the candidate that are more open than the showcase's
 clearance or naming (`list_candidates` shows them) are reported in Step 10, for the editorial team to set.
+
+**Then the teaser:** `generate_teaser` with the showcase id renders the cover from what was just saved (WebP
+1440×900, company name and logo from the settings, the title with the aliases). Variant `auto` frames up to three
+screenshots that do not show the customer, from `screenshots[]` first, then from the feature-spotlight and
+screenshot-gallery blocks; without one it shows title and tags (`text`). It stores the cover and sets it as teaser
+with `teaserShowsCustomer` false. Its answer names the previous teaser: on an existing showcase, report it in Step 10,
+and to set it back, `update_showcase` restores BOTH `teaserImageFileId` and `teaserShowsCustomer` (the file alone would
+show a customer-marked teaser in the alias view).
 
 ### Step 8: Check the Anonymous View
 

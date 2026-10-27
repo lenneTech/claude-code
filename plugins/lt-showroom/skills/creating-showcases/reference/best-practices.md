@@ -41,8 +41,9 @@ Each feature is:
 
 ### Technologies
 
-- Set them as the showcase's `technologies` field, not as a `tech-stack` block: the page hero shows the field with
-  logos and the PDF header as tags, while the public page leaves a `tech-stack` block out
+- Set them as the showcase's `technologies` field: the page hero shows the field with logos, the section "Technik &
+  Architektur" groups it by layer, and the PDF header shows it as tags. A `tech-stack` block adds categories and
+  descriptions to that section (its entries replace the grouping) and renders no section of its own
 - Include all significant technologies from `package.json` / manifest files
 - Only list technologies the analysis report found in a manifest
 - Write the plain product name (`NestJS`, `Nuxt`, `MongoDB`): the hero finds a logo by the exact name, so `NestJS 11`
@@ -82,8 +83,8 @@ the Showroom team, and a viewer without the names reads the aliases (`SKILL.md` 
 
 The page frames the blocks on its own: the hero shows title, description, teaser image, the key facts (`year`,
 `duration`, `teamSize`, `platforms`, `outcomes`) and the `technologies` field, and the page ends with "Interesse geweckt?" and a "Termin vereinbaren" button to the booking link (the showcase's
-`meetingUrl`, otherwise the company setting). The public page leaves `cta` and `tech-stack` blocks out, so none of the
-structures below has one.
+`meetingUrl`, otherwise the company setting), with the section "Technik & Architektur" before it. The public page
+renders no `cta` block and no `tech-stack` block of its own, so none of the structures below has one.
 
 ### Standard Showcase (8-14 blocks)
 
@@ -267,4 +268,5 @@ viewer of the showcase sees the facts, also when the customer is anonymous, so n
 - **Copy-paste from README** — Rewrite for the audience; READMEs are for developers, showcases are for prospects.
 - **English in German showcases** — Keep consistent; translate technical descriptions.
 - **An outdated analysis** — When the code moved past `source.analyzedCommit`, run `/lt-showroom:showroom:update`.
-- **A `cta` or `tech-stack` block** — The public page leaves both out: it ends with its own booking button and its hero shows the `technologies` field.
+- **A `cta` block** — The public page leaves it out: it ends with its own booking button.
+- **A `tech-stack` block instead of the `technologies` field** — The block only refines the section "Technik & Architektur"; the hero, the cards and the PDF header read the field.

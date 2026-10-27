@@ -7,7 +7,7 @@
 
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
@@ -26,7 +26,9 @@ import {
   scanForUris,
   slugForSource,
   slugify,
+  sourceIdentity,
   webpSize,
+  workSlug,
 } from '../screenshot-session.mjs';
 
 const SCRIPT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'screenshot-session.mjs');
@@ -56,9 +58,10 @@ function freshHome() {
 }
 
 /** Runs the CLI asynchronously, so an HTTP server in this process can still answer it. */
-function cli(args, { home, pid = process.pid, session = 'test-session', env = {}, input } = {}) {
+function cli(args, { home, pid = process.pid, session = 'test-session', env = {}, input, cwd } = {}) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [SCRIPT, ...args], {
+      cwd,
       env: {
         ...process.env,
         LT_SHOWROOM_HOME: home,
@@ -152,6 +155,44 @@ test('slug: a local checkout is named after its origin, else after its folder', 
   const without = gitRepo(path.join(TMP, 'Local Folder'));
   assert.equal(slugForSource(withOrigin), 'real-name');
   assert.equal(slugForSource(without), 'local-folder');
+});
+
+test('sourceIdentity: one project, whatever remote form or credentials name it', () => {
+  const id = sourceIdentity('https://git.example.com/customers/alpha/website.git');
+  assert.equal(id, 'git.example.com/customers/alpha/website');
+  assert.equal(sourceIdentity('git@git.example.com:customers/alpha/website.git'), id);
+  assert.equal(sourceIdentity('https://deploy:token@git.example.com/Customers/Alpha/website/'), id);
+  assert.notEqual(sourceIdentity('https://git.example.com/customers/beta/website.git'), id);
+  const local = gitRepo(path.join(TMP, 'identity-local'), { origin: 'git@git.example.com:customers/alpha/website.git' });
+  assert.equal(sourceIdentity(local), id, 'a local checkout is its origin');
+  const bare = gitRepo(path.join(TMP, 'identity-bare'));
+  assert.equal(sourceIdentity(bare), `path:${path.resolve(bare)}`);
+  assert.equal(sourceIdentity('Prüfportal für Großhändler'), `name:${slugify('Prüfportal für Großhändler')}`, 'a name run is its name');
+  assert.equal(sourceIdentity('/gone/checkout'), `path:${path.resolve('/gone/checkout')}`, 'a path that is gone stays a path');
+});
+
+test('workSlug: repositories with the same name get separate work folders, each keeps its own', () => {
+  const home = freshHome();
+  const claim = (slug, remote) => {
+    mkdirSync(path.join(home, slug), { recursive: true });
+    writeFileSync(path.join(home, slug, 'manifest.json'), JSON.stringify({ slug, remote, images: [] }));
+  };
+  const alpha = 'https://git.example.com/customers/alpha/website.git';
+  const beta = 'git@git.example.com:customers/beta/website.git';
+  const gamma = 'https://other.example.org/customers/beta/website.git';
+  assert.equal(workSlug(alpha, home), 'website', 'a free name stays the plain repository name');
+  claim('website', alpha);
+  assert.equal(workSlug(alpha, home), 'website');
+  assert.equal(workSlug(beta, home), 'beta-website', 'the namespace tells the second one apart');
+  claim('beta-website', beta);
+  assert.equal(workSlug(beta, home), 'beta-website');
+  const third = workSlug(gamma, home);
+  assert.match(third, /^website-[0-9a-f]{8}$/, 'same namespace on another host: a hash of the source');
+  claim(third, gamma);
+  assert.equal(workSlug(gamma, home), third);
+  rmSync(path.join(home, 'website'), { recursive: true });
+  assert.equal(workSlug(beta, home), 'beta-website', 'an existing folder keeps resolving after the plain name is free');
+  assert.equal(workSlug('Prüfportal für Großhändler', home), slugify('Prüfportal für Großhändler'), 'a name run keeps its slug');
 });
 
 test('repositoryFacts: provider, credential-free URL and project path from every remote form', () => {
@@ -361,6 +402,133 @@ test('clone: an unreachable origin falls back to the local checkout and records 
   await cli(['cleanup', 'clone-src'], { home });
   assert.ok(!existsSync(path.join(home, 'clone-src', 'checkout')));
   assert.ok(existsSync(path.join(repo, 'README.md')), 'the source checkout is untouched');
+});
+
+test('workSlug: a folder whose source is unknown but holds deliverables belongs to nobody else', () => {
+  const home = freshHome();
+  const alpha = 'https://git.example.com/customers/alpha/website.git';
+  const beta = 'https://git.example.com/customers/beta/website.git';
+  // An older run that recorded neither sourceId nor remote, but left its analysis behind.
+  mkdirSync(path.join(home, 'website'), { recursive: true });
+  writeFileSync(path.join(home, 'website', 'manifest.json'), JSON.stringify({ slug: 'website', images: [] }));
+  writeFileSync(
+    path.join(home, 'website', 'analysis.json'),
+    JSON.stringify({ source: { repositories: [{ url: 'https://git.example.com/customers/alpha/website' }] } }),
+  );
+  assert.equal(workSlug(alpha, home), 'website', 'the analysis names the repository the folder belongs to');
+  assert.equal(workSlug(beta, home), 'beta-website');
+  // Unknown source, but screenshots in the manifest: no other project may take it.
+  mkdirSync(path.join(home, 'portal'), { recursive: true });
+  writeFileSync(path.join(home, 'portal', 'manifest.json'), JSON.stringify({ slug: 'portal', images: [{ file: 'overview-desktop.webp' }] }));
+  assert.notEqual(workSlug('https://git.example.com/customers/gamma/portal.git', home), 'portal');
+  assert.notEqual(workSlug('Portal', home), 'portal');
+  // An empty folder of unknown source holds nothing to protect.
+  mkdirSync(path.join(home, 'empty'), { recursive: true });
+  assert.equal(workSlug('https://git.example.com/customers/delta/empty.git', home), 'empty');
+});
+
+test('workSlug and start: a legacy folder that recorded a relative source is nobody else\'s, whoever asks', async () => {
+  const home = freshHome();
+  // A run from before sourceId, started in a checkout without origin: it recorded "." (the default) and no remote.
+  const owner = realpathSync(gitRepo(path.join(TMP, 'relative', 'kundenportal')));
+  const dir = path.join(home, 'kundenportal');
+  mkdirSync(path.join(dir, 'screenshots'), { recursive: true });
+  const shot = path.join(dir, 'screenshots', 'overview-desktop.webp');
+  writeFileSync(shot, webp('VP8 ', 1440, 900));
+  const legacy = { slug: 'kundenportal', source: '.', remote: null, images: [{ file: 'overview-desktop.webp' }] };
+  writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify(legacy));
+  const other = gitRepo(path.join(TMP, 'relative', 'website'), { origin: 'https://127.0.0.1:9/customers/beta/website.git' });
+
+  assert.equal((await cli(['slug', '.'], { home, cwd: other })).stdout.trim(), 'website', 'a relative source names whoever asks, not the folder');
+  const start = await cli(['start', 'kundenportal', '--source', '.'], { home, cwd: other });
+  assert.equal(start.code, 5, start.stdout + start.stderr);
+  assert.equal(JSON.parse(readFileSync(path.join(dir, 'manifest.json'), 'utf8')).sourceId, undefined, 'the folder is not claimed');
+  assert.ok(existsSync(shot), 'its screenshots stay');
+
+  // The absolute checkout path an older start recorded still tells the owner its folder.
+  writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify({ ...legacy, sourceCheckout: { path: owner } }));
+  assert.equal((await cli(['slug', '.'], { home, cwd: owner })).stdout.trim(), 'kundenportal');
+  assert.notEqual((await cli(['slug', '.'], { home, cwd: other })).stdout.trim(), 'kundenportal');
+});
+
+test('start: a name run and a repository of the same name never share a work folder', async () => {
+  const home = freshHome();
+  const repo = 'https://127.0.0.1:9/customers/beta/website.git';
+  const shot = (slug) => path.join(home, slug, 'screenshots', 'overview-desktop.webp');
+  const capture = async (slug) => {
+    writeFileSync(shot(slug), webp('VP8 ', 1440, 900));
+    const add = ['manifest', 'add', slug, '--file', shot(slug), '--feature', 'overview', '--device', 'desktop', '--level', 'public'];
+    assert.equal((await cli(add, { home })).code, 0);
+    assert.equal((await cli(['cleanup', slug], { home })).code, 0);
+  };
+  const slugOf = async (source) => (await cli(['slug', source], { home })).stdout.trim();
+
+  // A name run first, then a repository whose name slugifies the same.
+  assert.equal(await slugOf('Website'), 'website');
+  assert.equal((await cli(['start', 'website', '--source', 'Website'], { home })).code, 0);
+  await capture('website');
+  assert.notEqual(await slugOf(repo), 'website', "the repository does not inherit the name run's screenshots");
+  assert.equal((await cli(['start', 'website', '--source', repo], { home })).code, 5);
+  assert.equal(await slugOf('Website'), 'website', 'the name run keeps its folder');
+
+  // A repository first, then a name run of the same name.
+  const portal = 'https://127.0.0.1:9/customers/gamma/portal.git';
+  assert.equal(await slugOf(portal), 'portal');
+  assert.equal((await cli(['start', 'portal', '--source', portal], { home })).code, 0);
+  await capture('portal');
+  assert.notEqual(await slugOf('Portal'), 'portal');
+  assert.equal((await cli(['start', 'portal', '--source', 'Portal'], { home })).code, 5);
+});
+
+test('start: a run whose clone failed keeps its folder against another repository of the same name', async () => {
+  const home = freshHome();
+  const alpha = 'https://127.0.0.1:9/customers/alpha/website.git';
+  const beta = 'https://127.0.0.1:9/customers/beta/website.git';
+  assert.equal((await cli(['start', 'website', '--source', alpha], { home })).code, 0);
+  assert.notEqual((await cli(['clone', 'website', alpha], { home })).code, 0, 'unreachable remote, no local checkout');
+  const shot = path.join(home, 'website', 'screenshots', 'overview-desktop.webp');
+  writeFileSync(shot, webp('VP8 ', 1440, 900));
+  const add = ['manifest', 'add', 'website', '--file', shot, '--feature', 'overview', '--device', 'desktop', '--level', 'public'];
+  assert.equal((await cli(add, { home })).code, 0);
+  assert.equal((await cli(['cleanup', 'website'], { home })).code, 0);
+  assert.equal((await cli(['slug', beta], { home })).stdout.trim(), 'beta-website');
+  assert.equal((await cli(['start', 'website', '--source', beta], { home })).code, 5);
+});
+
+test('start and clone: the work folder of another repository with the same name is refused, its deliverables stay', async () => {
+  const home = freshHome();
+  const alphaRemote = 'https://127.0.0.1:9/customers/alpha/website.git';
+  const alpha = gitRepo(path.join(TMP, 'collide', 'alpha', 'website'), { origin: alphaRemote });
+  const beta = gitRepo(path.join(TMP, 'collide', 'beta', 'website'), { origin: 'https://127.0.0.1:9/customers/beta/website.git' });
+  const slugOf = async (source) => (await cli(['slug', source], { home })).stdout.trim();
+  const manifest = () => JSON.parse(readFileSync(path.join(home, 'website', 'manifest.json'), 'utf8'));
+  const shot = path.join(home, 'website', 'screenshots', 'live-start-desktop.webp');
+
+  assert.equal(await slugOf(alpha), 'website');
+  assert.equal((await cli(['start', 'website', '--source', alpha], { home })).code, 0);
+  assert.equal((await cli(['clone', 'website', alpha], { home })).code, 0);
+  writeFileSync(shot, webp('VP8 ', 1440, 900));
+  assert.equal((await cli(['cleanup', 'website'], { home })).code, 0);
+
+  assert.equal(await slugOf(beta), 'beta-website', 'the second repository gets its own work folder');
+  assert.equal(await slugOf(alpha), 'website', 'the first keeps its slug');
+
+  const start = await cli(['start', 'website', '--source', beta], { home });
+  assert.equal(start.code, 5, start.stdout + start.stderr);
+  assert.match(start.stderr, /SLUG_TAKEN/);
+  // Without --source the start cannot tell; the clone names the repository and must refuse.
+  assert.equal((await cli(['start', 'website'], { home })).code, 0);
+  const clone = await cli(['clone', 'website', beta], { home });
+  assert.equal(clone.code, 5, clone.stdout + clone.stderr);
+  assert.ok(!existsSync(path.join(home, 'website', 'checkout')), 'nothing of the other repository is cloned in');
+  assert.equal(manifest().remote, alphaRemote, 'the manifest still describes the first repository');
+  assert.ok(existsSync(shot), "the first run's screenshots stay");
+  await cli(['cleanup', 'website'], { home });
+
+  assert.equal((await cli(['start', 'beta-website', '--source', beta], { home })).code, 0);
+  assert.equal((await cli(['clone', 'beta-website', beta], { home })).code, 0);
+  assert.equal(await slugOf(beta), 'beta-website');
+  assert.equal(await slugOf(alpha), 'website');
 });
 
 test('source: the showcase source of the cloned commit, without credentials, also after cleanup', async () => {

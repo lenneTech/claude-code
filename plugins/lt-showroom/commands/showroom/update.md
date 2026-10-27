@@ -140,10 +140,13 @@ Naming"):
   complete `content`. One block per call; the others stay untouched.
 - **A removed feature**: `remove_block` with its `blockId`, and the `feature-grid` block without its entry.
 - **Fields**: `update_showcase` with `technologies`, the confirmed key facts (`duration` of a running project, a new
-  platform; ask before changing them), `screenshots` and `teaserImageFileId` when they changed, `source` (the merged
+  platform; ask before changing them), `screenshots` when they changed, `source` (the merged
   report's `source`, plus `screenshotsCommit` and `screenshotsAt` from the `local` images of Step 6, as
   `/lt-showroom:showroom:create` Step 7 takes them) and
   `sourceCodeAnalysis` (the merged report).
+- **Teaser**: when the screenshots changed, `generate_teaser` with the showcase id renders the cover again from the
+  stored ones (as `/lt-showroom:showroom:create` Step 7 describes). Report the previous teaser its answer names, so the
+  editors can set it back with `update_showcase` (BOTH `teaserImageFileId` and `teaserShowsCustomer`).
 
 Status, clearance, customer naming and customer permissions stay untouched: an update is no reason to open a showcase
 further. A `422` with a place is a real name in a text: rewrite that place and send again, never get around it.

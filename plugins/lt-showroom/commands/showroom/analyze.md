@@ -66,7 +66,8 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/screenshot-session.mjs" clone <slug> <source
 `clone` takes the remote's default branch unless `--ref` names another, and records the commit. When the remote is
 unreachable it falls back to the local checkout's committed state and says so (`fromLocalCheckout: true`); name that
 in the report, because such a commit may not be on the remote yet. `start` answers `BUSY` (exit 3) while another
-Claude session works on the same project: stop and tell the user.
+Claude session works on the same project: stop and tell the user. `SLUG_TAKEN` (exit 5) means the slug was not taken
+from `slug <source>` and belongs to another project of the same name: take the printed slug and start again.
 
 ### Step 3: Run the Analysis
 

@@ -15,7 +15,7 @@ In a Claude Code session:
 
 | Server | Type | Purpose |
 |--------|------|---------|
-| `showroom-api` | http | Showcases (create, upsert by repository, edit single blocks, archive), showcase sources, link check, screenshot upload, selections, analytics, company context, knowledge base, global blocks, company settings (admins only), candidate register of the project search |
+| `showroom-api` | http | Showcases (create, upsert by repository, edit single blocks, generate the teaser cover, archive), showcase sources, link check, screenshot upload, selections, analytics, company context, knowledge base, global blocks, company settings (admins only), candidate register of the project search |
 
 The server signs in through OAuth in the browser on first use. The grant covers `showcases:read` and
 `showcases:write` for the editorial team, plus `settings:write`, which only `update_settings` needs and only admins can

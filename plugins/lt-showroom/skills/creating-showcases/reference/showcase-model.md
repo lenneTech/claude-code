@@ -23,7 +23,7 @@
 | `platforms` | string[] | Any of `web`, `ios`, `android`, `desktop`, each once (optional, key fact) |
 | `outcomes` | string[] | Up to 6 result statements with a number, each 1-120 characters, e.g. "-70 % Bearbeitungszeit" (optional; shown as cards in the hero) |
 | `customerName`, `customerCompany` | string | Deprecated inputs, stored as `customer.contactName` and `customer.name`; send `customer` instead |
-| `teaserImageFileId` | string | File ID of the teaser image shown on showcase cards and in the hero (optional; `null` removes it in an update) |
+| `teaserImageFileId` | string | File ID of the teaser image shown on showcase cards and in the hero (optional; `null` removes it in an update); `generate_teaser` renders and sets one |
 | `teaserShowsCustomer` | boolean | The teaser shows the customer (logo, branding): left out wherever the alias is shown |
 | `meetingUrl` | string | The showcase's own booking link (optional; omit it and the page uses the booking link from the company settings, see `get_showroom_context`) |
 | `category` | string | Kind of solution, a key: `platform`, `web-app`, `app`, `website`, `configurator`, `ai`, `backend`, `workshop`, `open-source` (free text is refused) |

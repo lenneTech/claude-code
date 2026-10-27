@@ -27,10 +27,10 @@ refused by name, so a misspelled field fails instead of rendering empty. `?` mar
 - **Plain-text fields show markup literally.** Only `text.html` and `custom-html.html` take HTML.
 - **File fields take a file id** (`fileId`, `fileIds`, `logoFileId`, `avatarFileId`): the `fileId` an upload answers
   with, never a URL.
-- **Two types do not appear on the public showcase page:** `cta` (the page ends with its own booking button from the
-  showcase's `meetingUrl`, which falls back to the company setting) and `tech-stack` (the page hero shows the
-  showcase's `technologies` field). Both still show in the admin preview and the PDF. A showcase therefore needs
-  neither block.
+- **Two types render no block on the public showcase page:** `cta` (the page ends with its own booking button from
+  the showcase's `meetingUrl`, which falls back to the company setting) and `tech-stack`, whose entries feed the
+  section "Technik & Architektur" instead (§15). Both still show as blocks in the admin preview and the PDF. A
+  showcase therefore needs no `cta` block, and a `tech-stack` block only for categories and descriptions.
 
 The fixed labels the page adds (button texts such as "Ansehen") are German.
 
@@ -101,19 +101,28 @@ No captions; for captioned images use `screenshot-gallery`.
 
 ---
 
-## 5. `video` — Embedded Video
+## 5. `video` — Embedded Video or Uploaded Loop
 
 ```json
 { "url": "https://www.youtube.com/watch?v=VIDEO_ID" }
 ```
 
+```json
+{ "fileId": "<24-hex id of an uploaded MP4 or WebM>", "posterFileId": "<id of a preview image>" }
+```
+
 | Field | Required | Shown as |
 |-------|----------|----------|
-| `url` | yes | Embedded 16:9 player |
+| `url` | one of `url` / `fileId` | Embedded 16:9 player (YouTube or Vimeo) |
+| `fileId` | one of `url` / `fileId` | An uploaded MP4 or WebM loop, played muted in a loop |
+| `posterFileId` | no | Preview image of the uploaded loop |
+| `showsCustomer` | no | `true` when the video shows the customer's branding |
 | `provider` | no | Accepted (`youtube`, `vimeo`), not used: the provider is read from the URL |
 
-The embed works for `https://www.youtube.com/watch?v=<id>`, `https://youtu.be/<id>` and `https://vimeo.com/<number>`.
-Other forms (`/shorts/`, `/embed/`, `player.vimeo.com`) render an empty frame. The PDF shows the URL as text.
+`url` and `fileId` together are refused. The embed works for `https://www.youtube.com/watch?v=<id>`,
+`https://youtu.be/<id>` and `https://vimeo.com/<number>`; other forms (`/shorts/`, `/embed/`, `player.vimeo.com`) render
+an empty frame. A loop (MP4 or WebM, up to 30 MB) is uploaded by an editor in the Showroom admin; an upload ticket takes
+images only, so Claude cannot supply the `fileId` of a video. The PDF shows a linked video's URL as text.
 
 ---
 
@@ -294,13 +303,14 @@ layouts)". For a feature with screenshots, use `feature-spotlight` (18) instead.
 | Field | Required | Shown as |
 |-------|----------|----------|
 | `technologies[].name` | yes | Chip text |
-| `technologies[].category` | no | Muted suffix in the chip (no grouping) |
+| `technologies[].category` | no | Muted suffix in the chip; on the public page the group in "Technik & Architektur" |
 | `technologies[].description` | no | Makes the chip clickable; the dialog shows it |
 | `technologies[].icon` | no | Iconify name, shown in the dialog only |
 | `technologies[].version` | no | Shown in the dialog only |
 
-**Not shown on the public showcase page**: technologies belong in the showcase's `technologies` field, which the
-page hero and the PDF header show.
+**No block of its own on the public showcase page**: the page groups the showcase's `technologies` field by layer in
+the section "Technik & Architektur"; the first visible `tech-stack` block replaces that grouping with its entries,
+grouped by their `category`. The field stays the source for the hero and the PDF header, so set it in either case.
 
 ---
 

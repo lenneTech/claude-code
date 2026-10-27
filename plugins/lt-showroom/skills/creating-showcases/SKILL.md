@@ -47,7 +47,7 @@ The MCP endpoint is `https://api.showroom.lenne.tech/mcp`; it signs in through O
 
 | Area | Tools |
 |------|-------|
-| Showcases | `list_showcases` (compact: id, slug, title, status, clearance, customerNaming, updatedAt; more through `fields`), `get_showcase` (status log and analysis only through `fields`; `view: "alias"` or `"real"` for what a viewer sees), `create_showcase`, `update_showcase`, `upsert_showcase`, `delete_showcase`, `publish_showcase` (sets `active`; editorial team only, never this plugin), `archive_showcase`, `duplicate_showcase` |
+| Showcases | `list_showcases` (compact: id, slug, title, status, clearance, customerNaming, updatedAt; more through `fields`), `get_showcase` (status log and analysis only through `fields`; `view: "alias"` or `"real"` for what a viewer sees), `create_showcase`, `update_showcase`, `upsert_showcase`, `delete_showcase`, `publish_showcase` (sets `active`; editorial team only, never this plugin), `archive_showcase`, `duplicate_showcase`, `generate_teaser` (renders the teaser cover from the stored showcase and sets it) |
 | Sources | `list_showcase_sources` (per showcase only id, slug, title, status, clearance, updatedAt and `source`) |
 | Single blocks | `upsert_block`, `remove_block` |
 | Links | `check_showcase_links`, `confirm_showcase_link`, `get_link_report` |
@@ -154,13 +154,19 @@ Nothing is written into the project repository. Full procedure: `${CLAUDE_SKILL_
    references page as raw HTML, never through a summarizing fetch, see `best-practices.md` → "Customer
    Testimonials"); customer, project, references and key facts from the user; web research.
 3. **Upload** the screenshots: one `create_upload_ticket` per file, then `screenshot-session.mjs upload`, which posts
-   the file from disk and keeps the `fileId` in the manifest; blocks, teaser and screenshots reference the `fileId`,
-   never a URL. No image content passes through the session.
+   the file from disk and keeps the `fileId` in the manifest; blocks and screenshots reference the `fileId`, never
+   a URL. No image content passes through the session.
 4. **Build 8-12 blocks** with placeholders (Phase 4, "Customer Naming").
-5. **`upsert_showcase`** with the fields, `customer`, `project`, `links`, teaser and screenshots, `source` and
+5. **`upsert_showcase`** with the fields, `customer`, `project`, `links`, screenshots, `source` and
    `sourceCodeAnalysis`. It answers `created` plus id, slug, status, clearance and title.
-6. **Check the alias view** (`get_showcase`, `view: "alias"`).
-7. **Report** the editor URL `https://showroom.lenne.tech/app/showcases/<id>`; the public URL
+6. **Set the teaser** with `generate_teaser` and the showcase id. It renders the cover from the stored showcase
+   (WebP 1440×900, company name and logo from the settings, the title with the aliases): variant `auto` frames up to
+   three screenshots that do not show the customer, and without one it shows title and tags (`text`). It stores the
+   cover and sets it as teaser with `teaserShowsCustomer` false. Its answer names the previous teaser; to set that
+   back, `update_showcase` restores BOTH `teaserImageFileId` and `teaserShowsCustomer`, since the file alone would
+   show a customer-marked teaser in the alias view.
+7. **Check the alias view** (`get_showcase`, `view: "alias"`).
+8. **Report** the editor URL `https://showroom.lenne.tech/app/showcases/<id>`; the public URL
    `https://showroom.lenne.tech/projects/<slug>` opens without login only when the showcase is active and public.
 
 `SHOWCASE.md` is no part of this: a `--export` writes it from the stored showcase into one of the organization's own
@@ -190,9 +196,10 @@ Block N:  text "Architektur"      — module structure, patterns, data flow (sco
           text "Ergebnis"         — outcomes and impact
 ```
 
-No `tech-stack` and no `cta` block: the public page leaves both out. Its hero shows the showcase's `technologies`
-field (plain product names, so the logo lookup matches), and it ends with its own "Termin vereinbaren" button for the
-booking link.
+No `cta` block: the public page ends with its own "Termin vereinbaren" button for the booking link. The technologies
+go into the showcase's `technologies` field (plain product names, so the logo lookup matches): the hero shows them,
+and the section "Technik & Architektur" groups them by layer. A `tech-stack` block is optional and renders no
+section of its own; its entries, with the categories and descriptions the editors keep there, replace that grouping.
 
 **Text quality standards** (same as best-practices.md):
 - Written in German (unless project is English-only)
@@ -260,7 +267,8 @@ The page shows the blocks in array order; keep `order` equal to the index, since
 - [ ] At least 8 content blocks, in display order with `order` equal to the index
 - [ ] Feature-grid has 8 features with evidence-based descriptions
 - [ ] Customer testimonial included (if the company's testimonial source has one for this customer), with `{{ansprechpartner}}` and `{{kunde}}`
-- [ ] No `cta` or `tech-stack` block
-- [ ] Screenshots uploaded through upload tickets and referenced by `fileId` (feature-spotlight, screenshot-gallery, teaser, `screenshots[]`); images with customer branding marked `showsCustomer`
+- [ ] No `cta` block
+- [ ] Screenshots uploaded through upload tickets and referenced by `fileId` (feature-spotlight, screenshot-gallery, `screenshots[]`); images with customer branding marked `showsCustomer`
+- [ ] Teaser set with `generate_teaser`
 - [ ] `custom-html` only for a layout no block offers, files in it relative as `/files/id/<fileId>`
 - [ ] The project repository is unchanged; the work folder session is cleaned up

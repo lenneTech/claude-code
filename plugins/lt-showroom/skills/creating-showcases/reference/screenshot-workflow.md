@@ -42,9 +42,9 @@ write the full path in each call (or set `S=…` within the same call).
 
 | Command | Use |
 |---|---|
-| `slug <path-or-url>` | Work-folder name: the repository name in kebab-case |
-| `start <slug> --source <path-or-url>` | Opens the run; cleans an abandoned earlier run of the same slug; refuses (exit 3) while another live Claude session runs it |
-| `clone <slug> <path-or-url> [--ref <branch>]` | Clones the remote's default branch (falls back to the local checkout when the remote is unreachable), disables pushing, records the commit |
+| `slug <path-or-url>` | Work-folder name: the repository name in kebab-case. A folder that already holds this repository (or, for a `--name` run, this name) keeps its slug; when another project of the same name holds the plain one, the namespace (`beta-website`) or a hash of the source tells them apart. A folder whose source nothing records counts as taken as soon as it holds screenshots or an analysis. Always take the slug from this command, never form it by hand |
+| `start <slug> --source <path-or-url>` | Opens the run; cleans an abandoned earlier run of the same slug; refuses (exit 3) while another live Claude session runs it, and `SLUG_TAKEN` (exit 5) when the folder holds another project's run, or deliverables of a run whose source is not recorded: its manifest, analysis and screenshots stay untouched, and `slug <source>` names the right folder |
+| `clone <slug> <path-or-url> [--ref <branch>]` | Clones the remote's default branch (falls back to the local checkout when the remote is unreachable), disables pushing, records the commit and the repository the folder belongs to; `SLUG_TAKEN` (exit 5) like `start` |
 | `run <slug> <name> --cwd <dir> [--env K=V]… -- <cmd…>` | Starts a dev server or worker in its own process group, logs to `logs/<name>.log` |
 | `compose-file <slug> --cwd <dir> [--files a.yml,b.yml]` | Writes an isolated copy of the Compose project and records it: fixed volume, network and container names dropped, bind mounts outside the clone refused (exit 2) |
 | `record <slug> lt-ticket\|compose\|container\|volume <value> [--cwd <dir>]` | Records a stack the run started by other means |
@@ -113,7 +113,7 @@ run's database or a free port is all allowed there, and all of it disappears wit
 | **Single frontend** | `nuxt.config.*`, `next.config.*`, `vite.config.*` | `run … app --env PORT=<free-port> -- <pm> run dev` |
 | **Headless CMS frontend** | Directus, Strapi or Contentful URL in the env | Frontend only; the CMS is external and is only read |
 | **Desktop app (Tauri)** | `src-tauri/` | Only the web dev server, never the Tauri wrapper |
-| **Backend only** | No frontend | API only; capture Swagger (`/swagger`) and the GraphQL playground (`/graphql`) |
+| **Backend only** | No frontend | API only; capture Swagger (`/swagger`) and the GraphQL IDE (`/graphql`, GraphiQL or an older project's Playground) |
 | **Library, CLI, framework** | `tsconfig.build.json`, no pages | Not screenshottable: go straight to the fallback chain, stage 3 |
 
 `lt ticket start` gives the run its own URLs (`<name>-showroom.localhost`), its own ports and Caddy block and its own
@@ -242,6 +242,11 @@ take_screenshot   format="webp"  quality=80  filePath=<output of: node "$S" capt
 Filenames: `<feature-slug>-<device>.webp`, kebab-case, always including `overview-desktop.webp` and
 `overview-mobile.webp`.
 
+**Still images only.** An upload ticket takes images and stores each as WebP; an animated WebP keeps only its first
+frame (measured: 48 frames and 313 KB in, one frame and 7 KB out). A turntable or a recorded flow goes in as single
+frames in a `screenshot-gallery`, or as an MP4 or WebM loop that an editor uploads in the Showroom admin for a `video`
+block (`content.fileId`, see `content-blocks.md`). Upload tickets do not take videos.
+
 ## Phase 6: Fallback Chain
 
 The local route is first choice. It is abandoned when the project cannot be started or seeded, or when
@@ -327,7 +332,8 @@ node "$S" manifest meta "$SLUG" pendingTag=screenshots-ausstehend
 ```
 
 The screenshot run writes nothing to the Showroom: the tag and the images reach the showcase when it is created or
-updated.
+updated. The cover stands in for missing screenshots; the showcase's teaser comes from `generate_teaser` after saving,
+which shows title and tags when no screenshot is there.
 
 ## Phase 7: Cleanup
 
@@ -350,6 +356,7 @@ ends, or explicitly with `/lt-showroom:showroom:screenshot <source> --cleanup`.
 | Error | Recovery |
 |---|---|
 | `start` exits 3 (BUSY) | Another live session runs this project. Wait, or work on another project |
+| `start` or `clone` exits 5 (`SLUG_TAKEN`) | The slug belongs to another project of the same name, or to a run whose source is not recorded. Take the slug `slug <source>` prints and start again; never move or delete the other project's files to make room |
 | Clone fails | Remote unreachable and no local checkout: ask the user for access, or go to stage 3 |
 | `lt ticket start` fails | Read its output; `lt dev doctor`; fall back to the Lerna/pnpm route with a database of the run |
 | Port taken | Another port in the clone; never stop the owner |

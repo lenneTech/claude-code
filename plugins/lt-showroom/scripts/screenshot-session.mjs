@@ -18,6 +18,7 @@
 // Usage: node screenshot-session.mjs <command> [args]   (see USAGE below)
 
 import { spawn, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import {
   closeSync,
   copyFileSync,
@@ -41,9 +42,12 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const USAGE = `Usage: node screenshot-session.mjs <command> [args]
 
 Session
-  slug <path-or-url>                         print the work-folder slug for a project
-  start <slug> [--source <path-or-url>]      open a session (cleans an abandoned earlier run first)
-  clone <slug> <path-or-url> [--ref <branch>] clone the project into <work>/checkout
+  slug <path-or-url>                         print the work-folder slug for a project (a folder that already
+                                             holds it keeps its slug; another project's name gets a qualified one)
+  start <slug> [--source <path-or-url>]      open a session (cleans an abandoned earlier run first; exit 5 when
+                                             the folder holds another project's run or deliverables of an
+                                             unrecorded source)
+  clone <slug> <path-or-url> [--ref <branch>] clone the project into <work>/checkout (exit 5 like start)
   run <slug> <name> --cwd <dir> [--env K=V]... -- <command> [args...]
                                              start a long-running process in its own process group
   compose-file <slug> --cwd <dir> [--files a.yml,b.yml]
@@ -164,6 +168,106 @@ export function slugForSource(source) {
     return slugify(path.basename(path.resolve(source)));
   }
   return slugify(repoName(source));
+}
+
+/**
+ * What makes two sources the same project: host and project path of the remote (without
+ * credentials, `.git` and case), for a local checkout its origin's, without an origin its absolute
+ * path (also once the path is gone), and for a project name (`--name` runs) the name. A name run
+ * needs one as much as a repository: its screenshots must not land in a repository's folder of the
+ * same name, nor the other way round. `null` only for an empty source.
+ */
+export function sourceIdentity(source) {
+  const value = String(source ?? '').trim();
+  if (!value) return null;
+  if (looksLikeUrl(value)) {
+    const facts = repositoryFacts(value);
+    const id = facts
+      ? facts.url.replace(/^https:\/\//, '')
+      : withoutCredentials(value).replace(/\/+$/, '').replace(/\.git$/i, '');
+    return id.toLowerCase();
+  }
+  if (existsSync(value) && statSync(value).isDirectory()) {
+    const origin = git(['-C', value, 'remote', 'get-url', 'origin']);
+    if (!origin) return `path:${path.resolve(value)}`;
+    return looksLikeUrl(origin) ? sourceIdentity(origin) : `path:${path.resolve(value, origin)}`;
+  }
+  return /[/\\]/.test(value) ? `path:${path.resolve(value)}` : `name:${slugify(value)}`;
+}
+
+/** A recorded source that names the same project from every working directory: a URL or an absolute path. */
+function stableSource(value) {
+  return typeof value === 'string' && value !== '' && (looksLikeUrl(value) || path.isAbsolute(value));
+}
+
+/**
+ * The project a work folder's runs belong to, `null` when nothing in it says so. Manifest and
+ * analysis survive cleanup, so the answer does too; a folder from before `sourceId` existed is
+ * still known by its manifest's remote, its analysis's repository, its recorded source or the
+ * checkout path its start recorded. A relative value (`.`, the default source) is skipped: it
+ * resolves against whoever asks now, so every caller would own the folder.
+ */
+export function folderIdentity(dir) {
+  const manifest = readJson(path.join(dir, 'manifest.json'), null) ?? {};
+  if (manifest.sourceId) return manifest.sourceId;
+  if (stableSource(manifest.remote)) return sourceIdentity(manifest.remote);
+  const analyzed = readJson(path.join(dir, 'analysis.json'), null)?.source?.repositories?.[0]?.url;
+  if (typeof analyzed === 'string' && analyzed) return sourceIdentity(analyzed);
+  const recorded = manifest.source ?? readJson(path.join(dir, 'session.json'), null)?.source;
+  if (stableSource(recorded)) return sourceIdentity(recorded);
+  return stableSource(manifest.sourceCheckout?.path) ? sourceIdentity(manifest.sourceCheckout.path) : null;
+}
+
+/** Whether a folder holds anything a run delivered: captures in the manifest or the screenshots folder, an analysis. */
+export function holdsDeliverables(dir) {
+  if ((readJson(path.join(dir, 'manifest.json'), null)?.images ?? []).length > 0) return true;
+  if (existsSync(path.join(dir, 'analysis.json'))) return true;
+  try {
+    return readdirSync(path.join(dir, 'screenshots')).length > 0;
+  } catch {
+    return false;
+  }
+}
+
+const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,59}$/;
+
+/** Slugs a source may take, in order: the plain name, namespace plus name, name plus a hash of the source. */
+function slugCandidates(base, id) {
+  const segments = id.replace(/^path:/, '').split(/[/\\]+/).filter(Boolean);
+  const namespace = segments.length > 1 ? slugify(segments[segments.length - 2]) : '';
+  const hash = createHash('sha256').update(id).digest('hex').slice(0, 8);
+  const list = [base];
+  if (namespace && namespace !== 'project') list.push(slugify(`${namespace}-${base}`));
+  list.push(`${base.slice(0, 51).replace(/-+$/, '')}-${hash}`);
+  return [...new Set(list)];
+}
+
+/**
+ * The work-folder slug of a source. The repository name alone is not unique (two customers each
+ * have a `website`), and the folder keeps manifest and analysis across runs, so a second project
+ * under the same name would write into the first one's deliverables. A folder that already holds
+ * this source keeps its slug; otherwise the first candidate no other project holds is taken. A
+ * folder of unknown source counts as free only while it holds no deliverables.
+ */
+export function workSlug(source, home = HOME_DIR) {
+  const base = slugForSource(source);
+  const id = sourceIdentity(source);
+  if (!id) return base;
+  const owners = new Map();
+  let entries = [];
+  try {
+    entries = readdirSync(home, { withFileTypes: true });
+  } catch {
+    /* no work folder yet */
+  }
+  for (const e of entries) {
+    if (e.isDirectory() && SLUG_RE.test(e.name)) owners.set(e.name, folderIdentity(path.join(home, e.name)));
+  }
+  if (owners.get(base) === id) return base;
+  for (const [slug, owner] of owners) if (owner === id) return slug;
+  const free = (c) => !owners.has(c) || (owners.get(c) === null && !holdsDeliverables(path.join(home, c)));
+  const candidates = slugCandidates(base, id);
+  return candidates.find(free) ?? candidates[candidates.length - 1];
 }
 
 export function isInside(dir, candidate) {
@@ -388,7 +492,24 @@ function writeJson(file, data) {
 }
 
 function assertSlug(slug) {
-  if (!/^[a-z0-9][a-z0-9-]{0,59}$/.test(slug ?? '')) fail(`invalid slug "${slug}" (use the output of \`slug\`)`);
+  if (!SLUG_RE.test(slug ?? '')) fail(`invalid slug "${slug}" (use the output of \`slug\`)`);
+}
+
+/**
+ * Refuses a work folder that holds another project's run, or deliverables of a run whose source
+ * nothing records: the two projects' deliverables would mix, and an unknown owner may be another one.
+ */
+function assertFolderSource(slug, source) {
+  const id = sourceIdentity(source);
+  if (!id) return null;
+  const owner = folderIdentity(workDir(slug));
+  if (owner && owner !== id) {
+    fail(`SLUG_TAKEN: the work folder "${slug}" holds the run of ${owner}, not of ${id}; \`slug <source>\` names this project's folder`, 5);
+  }
+  if (!owner && holdsDeliverables(workDir(slug))) {
+    fail(`SLUG_TAKEN: the work folder "${slug}" holds deliverables of a run whose source is not recorded; \`slug <source>\` names this project's folder`, 5);
+  }
+  return id;
 }
 
 function loadSession(slug) {
@@ -487,6 +608,7 @@ function parseFlags(argv) {
 
 function cmdStart(slug, flags) {
   assertSlug(slug);
+  const sourceId = assertFolderSource(slug, flags.source);
   const sweepReport = sweep({});
   const existing = readJson(sessionFile(slug));
   const me = ownerNow();
@@ -510,6 +632,7 @@ function cmdStart(slug, flags) {
   saveSession(slug, session);
   const manifest = readJson(manifestFile(slug), null) ?? { slug, images: [] };
   manifest.runStartedAt = session.startedAt;
+  if (sourceId) manifest.sourceId = sourceId;
   // A local checkout is only read. Its state is kept with the deliverables, so `verify-source`
   // can prove at the end that the run left it exactly as it was.
   manifest.sourceCheckout = sourceCheckoutState(flags.source);
@@ -565,6 +688,7 @@ function defaultBranchOf(localRepo) {
 function cmdClone(slug, source, flags) {
   const s = loadSession(slug);
   if (!source) fail('clone needs <path-or-url>');
+  const sourceId = assertFolderSource(slug, source);
   const dest = path.join(workDir(slug), 'checkout');
   if (existsSync(dest)) fail(`${dest} already exists — run cleanup first`);
   const isLocal = !looksLikeUrl(source) && existsSync(source);
@@ -606,6 +730,7 @@ function cmdClone(slug, source, flags) {
       const manifest = readJson(manifestFile(slug), { slug, images: [] });
       Object.assign(manifest, {
         source: s.source,
+        ...(sourceId && { sourceId }),
         commit: s.checkout.commit,
         branch: s.checkout.branch,
         committedAt: s.checkout.committedAt,
@@ -1267,7 +1392,7 @@ function main(argv) {
   switch (command) {
     case 'slug':
       if (!positional[0]) fail('usage: slug <path-or-url>');
-      return out(slugForSource(positional[0]));
+      return out(workSlug(positional[0]));
     case 'start':
       return cmdStart(positional[0], flags);
     case 'clone':
