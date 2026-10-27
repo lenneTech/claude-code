@@ -13,7 +13,7 @@ In a Claude Code session:
 /plugin install lt-tools@lenne-tech
 ```
 
-Or with the lenne.tech CLI: `lt claude plugins lt-tools`.
+Or with the lenne.Tech CLI: `lt claude plugins lt-tools`.
 
 ## Requirements
 

@@ -8,6 +8,7 @@
   },
   "homepage": "https://angebote.lenne.tech",
   "repository": "https://github.com/lenneTech/claude-code",
+  "privacyPolicyUrl": "https://lenne.tech/datenschutz",
   "license": "MIT",
   "keywords": [
     "lenne.tech",

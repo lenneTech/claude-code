@@ -25,7 +25,7 @@ These plugins enhance the experience when working with this plugin:
 - **TDD Workflows**: Test-Driven Development with story-based implementation
 - **Nest-Server Updates**: Automated migration guides and stepwise upgrades (auto-delegates to `nest-server-core-updater` in vendored projects)
 - **Fullstack Updates**: Synchronize projects with latest starter templates
-- **CLI Tools**: lenne.tech CLI integration
+- **CLI Tools**: lenne.Tech CLI integration
 - **Git Workflows**: Commit messages, MR descriptions, branch rebasing
 - **Code Review**: Nine review domains in parallel, filtered to proven Critical/High defects in what the diff actually changed, then fixed automatically. Everything below that bar is dropped rather than deferred, so one finished ticket does not leave ten follow-ups behind it — and a review that finds nothing ends clean
 - **Runnability Gate**: `/lt-dev:check` runs the project's `check` script with iterate-until-green auto-fix and mandatory audit-finding fix escalation (also integrated into review + rebase workflows)
@@ -46,12 +46,12 @@ These plugins enhance the experience when working with this plugin:
 
 ## Included
 
-- **32 Skills** - Auto-detected contextual expertise (includes `cleaning-up-disk-space` for auditing and freeing disk space through deterministic scripts, `maintaining-ai-models` for keeping a project's LLM models available and measured, with a scheduled CI check, `grilling-decisions` for settling open decisions before implementation, `running-check-script` for runnability validation, `managing-dev-servers` for dev-server lifecycle rules, `contributing-to-lt-framework` for pnpm link workflows, `coordinating-peer-sessions` for parallel sessions on one project, `writing-linear-comments` and `filing-ai-proposed-tickets` for what reaches a Linear ticket and in what shape, and `unslop` for cutting AI tells out of every text that reaches a human)
-- **25 Agents** - Autonomous task execution
-- **65 Commands** - User-triggered actions via `/lt-dev:<name>`; the 15 that orchestrators invoke stay model-invocable, every other one runs only by slash and stays out of the skill listing
-- **20 Hook Scripts** across 7 event types (SessionStart, PreToolUse, PostToolUse, PostToolUseFailure, UserPromptSubmit, StopFailure, SessionEnd) - Automated project detection and validation
+- **Skills** - Auto-detected contextual expertise (includes `cleaning-up-disk-space` for auditing and freeing disk space through deterministic scripts, `maintaining-ai-models` for keeping a project's LLM models available and measured, with a scheduled CI check, `grilling-decisions` for settling open decisions before implementation, `running-check-script` for runnability validation, `managing-dev-servers` for dev-server lifecycle rules, `contributing-to-lt-framework` for pnpm link workflows, `coordinating-peer-sessions` for parallel sessions on one project, `writing-linear-comments` and `filing-ai-proposed-tickets` for what reaches a Linear ticket and in what shape, and `unslop` for cutting AI tells out of every text that reaches a human)
+- **Agents** - Autonomous task execution
+- **Commands** - User-triggered actions via `/lt-dev:<name>`; the ones other commands invoke stay model-invocable, every other one runs only by slash and stays out of the skill listing
+- **Hook scripts** on SessionStart, SubagentStart, PreToolUse, PostToolUse, PostToolUseFailure, UserPromptSubmit, StopFailure and SessionEnd - Automated project detection and validation
 - **Helper Scripts** - Plugin-local shell helpers under `plugins/lt-dev/scripts/` (e.g. `discover-check-scripts.sh` for monorepo-aware `check` discovery, `peer-ledger.sh` for cross-session claims and diagnoses, `change-provenance.sh` for attributing changes this session did not write, `repo-expert.sh` for whether a live session works in the repository a change belongs to and the handover is the user's question, `find-vault-logins.sh` for the 1Password test accounts of a deployed stage, returned as login name plus private link and never as a secret, `chrome-devtools-mcp-launcher.sh` as Chrome MCP wrapper, `context-budget.sh` for what the plugin adds to every session, `ai-models.mjs` for the AI model check: provider catalog, announced shutdowns, capability probes and benchmark summaries, runnable in CI without Claude)
-- **3 MCP Servers** - Chrome DevTools, Linear, and Nuxt UI (Figma via the official `figma` plugin as a companion)
+- **MCP servers** - Chrome DevTools, Linear and Nuxt UI (Figma via the official `figma` plugin as a companion)
 
 ## Chrome DevTools MCP — Canary auto-detection
 
@@ -109,7 +109,7 @@ branch, never sets a ticket to Done, and never bypasses a hook or gate.
 
 ## Framework consumption modes (nest-server)
 
-lenne.tech api projects can consume `@lenne.tech/nest-server` in one of two modes:
+lenne.Tech API projects can consume `@lenne.tech/nest-server` in one of two modes:
 
 - **npm mode** (classic): `@lenne.tech/nest-server` is installed as a dependency. Framework source lives in `node_modules/@lenne.tech/nest-server/`. Imports use the bare specifier `from '@lenne.tech/nest-server'`. Updated via `/lt-dev:backend:update-nest-server` → `nest-server-updater` agent.
 - **vendored mode**: the framework's `core/` directory is copied directly into the project at `<api-root>/src/core/` and managed as first-class project code. There is NO `@lenne.tech/nest-server` npm dependency. Imports use relative paths (`from '../../../core'`). Local patches are allowed and logged in `<api-root>/src/core/VENDOR.md`. Updated via `/lt-dev:backend:update-nest-server-core` → `nest-server-core-updater` agent; local changes are proposed back upstream via `/lt-dev:backend:contribute-nest-server-core` → `nest-server-core-contributor` agent.
@@ -149,16 +149,16 @@ user has moved the session there with `/cd`.
 
 ## Further Reading
 
-The comprehensive guide for the full lenne.tech fullstack ecosystem — covering both the `lt` CLI and this `lt-dev` plugin — is maintained in the CLI repository:
+The comprehensive guide for the full lenne.Tech fullstack ecosystem — covering both the `lt` CLI and this `lt-dev` plugin — is maintained in the CLI repository:
 
 - **[LT-ECOSYSTEM-GUIDE](https://github.com/lenneTech/cli/blob/main/docs/LT-ECOSYSTEM-GUIDE.md)** — Full reference: architecture, CLI commands, plugin commands, agents, skills, vendor-mode workflows, decision matrix, glossary
 - **[VENDOR-MODE-WORKFLOW](https://github.com/lenneTech/cli/blob/main/docs/VENDOR-MODE-WORKFLOW.md)** — Step-by-step guide: npm → vendor conversion, update workflows, vendor → npm rollback, troubleshooting
 
 Both documents reference each other and are kept in sync with CLI releases.
 
-## For lenne.tech team members
+## For lenne.Tech team members
 
-Authorized lenne.tech team members have access to **additional internal plugins** via a private, unlisted marketplace (separate from the public `lenne-tech` marketplace). Access and setup are covered in internal onboarding — ask your team lead if you don't have it yet.
+Authorized lenne.Tech team members have access to **additional internal plugins** via a private, unlisted marketplace (separate from the public `lenne-tech` marketplace). Access and setup are covered in internal onboarding — ask your team lead if you don't have it yet.
 
 ## License
 
