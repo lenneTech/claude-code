@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 
-import { PaymentService } from './payment.service';
+import { PaymentService } from './payment.service.js';
 
 /**
  * Payment module

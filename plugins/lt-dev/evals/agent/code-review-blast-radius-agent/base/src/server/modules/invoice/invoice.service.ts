@@ -3,9 +3,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-import { PricingService } from '../pricing/pricing.service';
-import { InvoiceLineInput } from './inputs/invoice-line.input';
-import { Invoice, InvoiceDocument } from './invoice.model';
+import { PricingService } from '../pricing/pricing.service.js';
+import { InvoiceLineInput } from './inputs/invoice-line.input.js';
+import { Invoice, InvoiceDocument } from './invoice.model.js';
 
 /**
  * Invoice service

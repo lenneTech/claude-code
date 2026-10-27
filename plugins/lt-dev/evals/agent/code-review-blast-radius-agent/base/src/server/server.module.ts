@@ -2,17 +2,17 @@ import { Any, CoreModule, DateScalar, JSON, TusModule } from '@lenne.tech/nest-s
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 
-import envConfig from '../config.env';
-import { CronJobs } from './common/services/cron-jobs.service';
-import { CartModule } from './modules/cart/cart.module';
-import { CatalogModule } from './modules/catalog/catalog.module';
-import { FileModule } from './modules/file/file.module';
-import { InvoiceModule } from './modules/invoice/invoice.module';
-import { MetaModule } from './modules/meta/meta.module';
-import { PaymentModule } from './modules/payment/payment.module';
-import { PricingModule } from './modules/pricing/pricing.module';
-import { UserModule } from './modules/user/user.module';
-import { ServerController } from './server.controller';
+import envConfig from '../config.env.js';
+import { CronJobs } from './common/services/cron-jobs.service.js';
+import { CartModule } from './modules/cart/cart.module.js';
+import { CatalogModule } from './modules/catalog/catalog.module.js';
+import { FileModule } from './modules/file/file.module.js';
+import { InvoiceModule } from './modules/invoice/invoice.module.js';
+import { MetaModule } from './modules/meta/meta.module.js';
+import { PaymentModule } from './modules/payment/payment.module.js';
+import { PricingModule } from './modules/pricing/pricing.module.js';
+import { UserModule } from './modules/user/user.module.js';
+import { ServerController } from './server.controller.js';
 
 // Export imports for reuse (e.g. in tests)
 export const imports = [

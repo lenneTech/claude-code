@@ -3,8 +3,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-import { ErrorCode } from '../../common/errors/project-errors';
-import { CreditAccount, CreditAccountDocument } from './credit-account.model';
+import { ErrorCode } from '../../common/errors/project-errors.js';
+import { CreditAccount, CreditAccountDocument } from './credit-account.model.js';
 
 /**
  * Credit accounts: users hold credits, send them to other accounts and redeem them for vouchers

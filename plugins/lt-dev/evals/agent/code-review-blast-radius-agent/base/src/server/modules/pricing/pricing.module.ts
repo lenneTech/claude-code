@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 
-import { PricingService } from './pricing.service';
+import { PricingService } from './pricing.service.js';
 
 /**
  * Pricing module

@@ -1,6 +1,6 @@
 import { Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
 
-import { ErrorCode } from '../../common/errors/project-errors';
+import { ErrorCode } from '../../common/errors/project-errors.js';
 
 /**
  * Client for the payment provider

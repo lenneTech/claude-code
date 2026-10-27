@@ -2,11 +2,11 @@ import { ConfigService } from '@lenne.tech/nest-server';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { PaymentModule } from '../payment/payment.module';
-import { PricingModule } from '../pricing/pricing.module';
-import { CartController } from './cart.controller';
-import { Cart, CartSchema } from './cart.model';
-import { CartService } from './cart.service';
+import { PaymentModule } from '../payment/payment.module.js';
+import { PricingModule } from '../pricing/pricing.module.js';
+import { CartController } from './cart.controller.js';
+import { Cart, CartSchema } from './cart.model.js';
+import { CartService } from './cart.service.js';
 
 /**
  * Cart module

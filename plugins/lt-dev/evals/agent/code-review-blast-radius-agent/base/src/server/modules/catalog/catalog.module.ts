@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 
-import { PricingModule } from '../pricing/pricing.module';
-import { CatalogService } from './catalog.service';
+import { PricingModule } from '../pricing/pricing.module.js';
+import { CatalogService } from './catalog.service.js';
 
 /**
  * Catalog module

@@ -3,9 +3,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-import { ProductCreateInput } from './inputs/product-create.input';
-import { ProductInput } from './inputs/product.input';
-import { Product, ProductDocument } from './product.model';
+import { ProductCreateInput } from './inputs/product-create.input.js';
+import { ProductInput } from './inputs/product.input.js';
+import { Product, ProductDocument } from './product.model.js';
 
 /**
  * Product service

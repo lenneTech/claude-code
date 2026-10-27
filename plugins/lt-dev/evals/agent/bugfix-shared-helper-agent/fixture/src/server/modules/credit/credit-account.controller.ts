@@ -2,12 +2,12 @@ import { AuthGuard, AuthGuardStrategy, CurrentUser, RoleEnum, Roles } from '@len
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
-import { User } from '../user/user.model';
-import { CreditAccount } from './credit-account.model';
-import { CreditAccountService } from './credit-account.service';
-import { CreditAccountCreateInput } from './inputs/credit-account-create.input';
-import { CreditAmountInput } from './inputs/credit-amount.input';
-import { CreditTransferInput } from './inputs/credit-transfer.input';
+import { User } from '../user/user.model.js';
+import { CreditAccount } from './credit-account.model.js';
+import { CreditAccountService } from './credit-account.service.js';
+import { CreditAccountCreateInput } from './inputs/credit-account-create.input.js';
+import { CreditAmountInput } from './inputs/credit-amount.input.js';
+import { CreditTransferInput } from './inputs/credit-transfer.input.js';
 
 /**
  * Controller for credit account REST endpoints

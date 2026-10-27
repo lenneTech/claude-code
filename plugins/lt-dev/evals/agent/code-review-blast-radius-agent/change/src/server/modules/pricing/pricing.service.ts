@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { roundEuros } from '../../common/helpers/money.helper';
+import { roundEuros } from '../../common/helpers/money.helper.js';
 
 /**
  * Anything with a net price and a tax rate

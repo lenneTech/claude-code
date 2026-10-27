@@ -1,7 +1,7 @@
 import { Restricted, RoleEnum, UnifiedField } from '@lenne.tech/nest-server';
 import { InputType } from '@nestjs/graphql';
 
-import { ProductInput } from './product.input';
+import { ProductInput } from './product.input.js';
 
 /**
  * Product input to create a new product

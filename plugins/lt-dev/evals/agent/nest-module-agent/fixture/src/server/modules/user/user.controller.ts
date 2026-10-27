@@ -1,13 +1,5 @@
-import {
-  ApiCommonErrorResponses,
-  AuthGuard,
-  AuthGuardStrategy,
-  CurrentUser,
-  RoleEnum,
-  Roles,
-  ServiceOptions,
-} from '@lenne.tech/nest-server';
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { ApiCommonErrorResponses, CurrentUser, RoleEnum, Roles, ServiceOptions } from '@lenne.tech/nest-server';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -19,14 +11,20 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { UserCreateInput } from './inputs/user-create.input';
-import { UserInput } from './inputs/user.input';
-import { FindAndCountUsersResult } from './outputs/find-and-count-users-result.output';
-import { User } from './user.model';
-import { UserService } from './user.service';
+import { UserCreateInput } from './inputs/user-create.input.js';
+import { UserInput } from './inputs/user.input.js';
+import { FindAndCountUsersResult } from './outputs/find-and-count-users-result.output.js';
+import { User } from './user.model.js';
+import { UserService } from './user.service.js';
 
 /**
  * Controller to handle user REST API endpoints
+ *
+ * Access control lives in `@Roles()`, on the class and on each endpoint. It authenticates as well as
+ * authorizes, so no `@UseGuards(AuthGuard(...))` belongs next to it. Add such a guard only to switch
+ * to a different strategy, e.g. `AuthGuardStrategy.JWT_REFRESH` on a refresh-token endpoint. A second
+ * guard for the same strategy is a second check that can disagree with the first: until nest-server
+ * 11.42.14 it refused API tokens on routes that `@ApiTokenScopes()` had released.
  */
 @ApiCommonErrorResponses()
 @ApiTags('users')
@@ -50,7 +48,6 @@ export class UserController {
   @ApiOperation({ description: 'Find users (via filter)', summary: 'Get all users' })
   @Get()
   @Roles(RoleEnum.ADMIN)
-  @UseGuards(AuthGuard(AuthGuardStrategy.BETTER_AUTH))
   async findUsers(@CurrentUser() currentUser: User): Promise<User[]> {
     const serviceOptions: ServiceOptions = {
       currentUser,
@@ -69,7 +66,6 @@ export class UserController {
   })
   @Get('count')
   @Roles(RoleEnum.ADMIN)
-  @UseGuards(AuthGuard(AuthGuardStrategy.BETTER_AUTH))
   async findAndCountUsers(@CurrentUser() currentUser: User): Promise<FindAndCountUsersResult> {
     const serviceOptions: ServiceOptions = {
       currentUser,
@@ -101,7 +97,6 @@ export class UserController {
   @ApiParam({ description: 'User ID', name: 'id', type: String })
   @Get(':id')
   @Roles(RoleEnum.S_USER)
-  @UseGuards(AuthGuard(AuthGuardStrategy.BETTER_AUTH))
   async getUser(@CurrentUser() currentUser: User, @Param('id') id: string): Promise<User> {
     const serviceOptions: ServiceOptions = {
       currentUser,
@@ -123,7 +118,6 @@ export class UserController {
   @ApiOperation({ description: 'Create a new user', summary: 'Create user' })
   @Post()
   @Roles(RoleEnum.ADMIN)
-  @UseGuards(AuthGuard(AuthGuardStrategy.BETTER_AUTH))
   async createUser(@CurrentUser() currentUser: User, @Body() input: UserCreateInput): Promise<User> {
     const serviceOptions: ServiceOptions = {
       currentUser,
@@ -215,7 +209,6 @@ export class UserController {
   @ApiParam({ description: 'User ID', name: 'id', type: String })
   @Patch(':id')
   @Roles(RoleEnum.S_USER)
-  @UseGuards(AuthGuard(AuthGuardStrategy.BETTER_AUTH))
   async updateUser(@CurrentUser() currentUser: User, @Param('id') id: string, @Body() input: UserInput): Promise<User> {
     const serviceOptions: ServiceOptions = {
       currentUser,
@@ -238,7 +231,6 @@ export class UserController {
   @ApiParam({ description: 'User ID', name: 'id', type: String })
   @Delete(':id')
   @Roles(RoleEnum.S_USER)
-  @UseGuards(AuthGuard(AuthGuardStrategy.BETTER_AUTH))
   async deleteUser(@CurrentUser() currentUser: User, @Param('id') id: string): Promise<User> {
     const serviceOptions: ServiceOptions = {
       currentUser,

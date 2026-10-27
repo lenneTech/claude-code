@@ -64,6 +64,10 @@ call that counts against the plan's usage; `--max-cost-usd` caps the list-price 
   skill or at a grader that encodes the wrong convention.
 - The `agent` cases seed trimmed starter projects (`fixture/`, run with `--scaffold`). In an empty workspace an agent
   sometimes builds and sometimes stops to ask for the project, which swamps any quality signal.
+- `nest-module-agent/fixture`, which five more cases build on, is a verbatim copy of nest-server-starter files at a
+  release tag (`v12.0.0`: ES modules). Refresh it file by file with `git show <tag>:<path>`, keep every relative import
+  in the cases' own files on `.js`, and typecheck each case laid over a full checkout of that tag: errors may sit only
+  in the planted defects. Runs from before a refresh measured another project and compare only with each other.
 - `code-review-agent` hands the commit over as `REVIEW.diff` as well: an eval run cannot grant `Bash` on a machine
   whose Docker config holds symlinks (Docker Desktop's `cli-plugins` do), and the comparison needs both effort levels
   to see the change the same way.

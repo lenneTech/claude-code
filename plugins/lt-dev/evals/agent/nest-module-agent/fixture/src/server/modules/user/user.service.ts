@@ -1,7 +1,7 @@
 import {
   ConfigService,
   CoreBetterAuthUserMapper,
-  CoreModelConstructor,
+  type CoreModelConstructor,
   CoreUserService,
   EmailService,
   ServiceOptions,
@@ -13,9 +13,9 @@ import { PubSub } from 'graphql-subscriptions';
 // #endregion graphql
 import { Model } from 'mongoose';
 
-import { UserCreateInput } from './inputs/user-create.input';
-import { UserInput } from './inputs/user.input';
-import { User, UserDocument } from './user.model';
+import { UserCreateInput } from './inputs/user-create.input.js';
+import { UserInput } from './inputs/user.input.js';
+import { User, UserDocument } from './user.model.js';
 
 /**
  * User service
@@ -77,7 +77,8 @@ export class UserService extends CoreUserService<User, UserInput, UserCreateInpu
    * Returns `null` for an address without an account. The callers must still answer the same thing
    * either way — see the note on `requestPasswordResetMail` in the controller and the resolver.
    *
-   * Three things here are deliberate, and each was a defect once (tests/password-reset-mail.e2e-spec.ts):
+   * Three things here are deliberate, and each was a defect once
+   * (tests/password-reset-mail-rest.e2e-spec.ts, tests/password-reset-mail-graphql.e2e-spec.ts):
    *
    * - The token comes from `createPasswordResetToken`, not off the returned user. The security
    *   interceptor strips `passwordResetToken` from anything `process()` hands back — correctly, a

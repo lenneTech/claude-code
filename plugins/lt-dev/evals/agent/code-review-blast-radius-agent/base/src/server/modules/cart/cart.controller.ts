@@ -2,9 +2,9 @@ import { AuthGuard, AuthGuardStrategy, CurrentUser, RoleEnum, Roles } from '@len
 import { Controller, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
-import { User } from '../user/user.model';
-import { Cart } from './cart.model';
-import { CartService } from './cart.service';
+import { User } from '../user/user.model.js';
+import { Cart } from './cart.model.js';
+import { CartService } from './cart.service.js';
 
 /**
  * Controller for cart REST endpoints

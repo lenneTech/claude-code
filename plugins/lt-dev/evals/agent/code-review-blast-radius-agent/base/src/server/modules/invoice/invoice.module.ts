@@ -2,10 +2,10 @@ import { ConfigService } from '@lenne.tech/nest-server';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { PricingModule } from '../pricing/pricing.module';
-import { InvoiceController } from './invoice.controller';
-import { Invoice, InvoiceSchema } from './invoice.model';
-import { InvoiceService } from './invoice.service';
+import { PricingModule } from '../pricing/pricing.module.js';
+import { InvoiceController } from './invoice.controller.js';
+import { Invoice, InvoiceSchema } from './invoice.model.js';
+import { InvoiceService } from './invoice.service.js';
 
 /**
  * Invoice module

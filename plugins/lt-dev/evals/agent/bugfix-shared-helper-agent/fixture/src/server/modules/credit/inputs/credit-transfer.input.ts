@@ -2,7 +2,7 @@ import { Restricted, RoleEnum, UnifiedField } from '@lenne.tech/nest-server';
 import { InputType } from '@nestjs/graphql';
 import { IsMongoId } from 'class-validator';
 
-import { CreditAmountInput } from './credit-amount.input';
+import { CreditAmountInput } from './credit-amount.input.js';
 
 /**
  * Transfer of credits to another account

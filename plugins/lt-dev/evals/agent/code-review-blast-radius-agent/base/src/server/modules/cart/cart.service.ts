@@ -3,11 +3,11 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-import { ErrorCode } from '../../common/errors/project-errors';
-import { toCents } from '../../common/helpers/money.helper';
-import { PaymentService } from '../payment/payment.service';
-import { PricingService } from '../pricing/pricing.service';
-import { Cart, CartDocument, CartStatus } from './cart.model';
+import { ErrorCode } from '../../common/errors/project-errors.js';
+import { toCents } from '../../common/helpers/money.helper.js';
+import { PaymentService } from '../payment/payment.service.js';
+import { PricingService } from '../pricing/pricing.service.js';
+import { Cart, CartDocument, CartStatus } from './cart.model.js';
 
 /**
  * Cart service

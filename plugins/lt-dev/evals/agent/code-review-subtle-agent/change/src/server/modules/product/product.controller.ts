@@ -2,11 +2,11 @@ import { AuthGuard, AuthGuardStrategy, CurrentUser, RoleEnum, Roles, ServiceOpti
 import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
-import { User } from '../user/user.model';
-import { ProductCreateInput } from './inputs/product-create.input';
-import { ProductInput } from './inputs/product.input';
-import { Product } from './product.model';
-import { ProductService } from './product.service';
+import { User } from '../user/user.model.js';
+import { ProductCreateInput } from './inputs/product-create.input.js';
+import { ProductInput } from './inputs/product.input.js';
+import { Product } from './product.model.js';
+import { ProductService } from './product.service.js';
 
 /**
  * Controller for product REST endpoints

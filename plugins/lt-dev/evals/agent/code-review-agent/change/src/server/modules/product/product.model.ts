@@ -3,7 +3,7 @@ import { ObjectType } from '@nestjs/graphql';
 import { Schema as MongooseSchema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-import { PersistenceModel } from '../../common/models/persistence.model';
+import { PersistenceModel } from '../../common/models/persistence.model.js';
 
 export type ProductDocument = Document & Product;
 

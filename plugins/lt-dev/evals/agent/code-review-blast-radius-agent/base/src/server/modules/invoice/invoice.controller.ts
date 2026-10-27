@@ -2,10 +2,10 @@ import { AuthGuard, AuthGuardStrategy, CurrentUser, RoleEnum, Roles } from '@len
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
-import { User } from '../user/user.model';
-import { InvoiceLineInput } from './inputs/invoice-line.input';
-import { Invoice } from './invoice.model';
-import { InvoiceService } from './invoice.service';
+import { User } from '../user/user.model.js';
+import { InvoiceLineInput } from './inputs/invoice-line.input.js';
+import { Invoice } from './invoice.model.js';
+import { InvoiceService } from './invoice.service.js';
 
 /**
  * Controller for invoice REST endpoints

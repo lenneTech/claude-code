@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { PricedItem, PricingService } from '../pricing/pricing.service';
+import { PricedItem, PricingService } from '../pricing/pricing.service.js';
 
 /**
  * Catalog views on priced items

@@ -2,9 +2,9 @@ import { ConfigService } from '@lenne.tech/nest-server';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { CreditAccountController } from './credit-account.controller';
-import { CreditAccount, CreditAccountSchema } from './credit-account.model';
-import { CreditAccountService } from './credit-account.service';
+import { CreditAccountController } from './credit-account.controller.js';
+import { CreditAccount, CreditAccountSchema } from './credit-account.model.js';
+import { CreditAccountService } from './credit-account.service.js';
 
 /**
  * Credit account module
