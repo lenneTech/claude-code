@@ -398,6 +398,7 @@ that module's `INTEGRATION-CHECKLIST.md` (the four project classes as one table)
 - [ ] ServiceOptions: only pass `{ currentUser: serviceOptions.currentUser }` to other services
 - [ ] No blind `serviceOptions` passthrough
 - [ ] Constructor follows pattern: `@InjectModel`, `configService`, then custom deps
+- [ ] A Core service override that redeclares its constructor marks every optional parameter `@Optional()` itself (NestJS 12 does not inherit the parent's flags; an unmarked one is required, and the boot fails where nothing provides it)
 - [ ] **`@InjectModel` audit (instance of Informed-Trade-off Pattern) — applies ONLY to Models that do NOT belong to this Service.** The Service's OWN primary Model (passed to `super({ mainDbModel })`) is the standard pattern and requires nothing extra. For every `@InjectModel` of a Model belonging to a different Service, verify: (1) a code comment states a **good reason** for not using the corresponding Service, AND (2) the corresponding Service has been analyzed — `securityCheck()`, `@Restricted`/`@Roles`, ownership, field filtering, hooks/events, and side-effects are either safely skippable in this context or manually replicated. Unjustified or unanalyzed foreign `@InjectModel` = finding. See Layer 3b below (plain-object responses share the same bypass vectors).
 - [ ] **Tenant-authored values never resolve `process.env` at large (Rule 17).** A template, placeholder or "credential from env" field a tenant user writes resolves only an explicit allow-list; a free lookup exposes every tenant's secrets. Flag any `process.env[...]` whose key can come from tenant data.
 - [ ] **User-entered URLs pass an SSRF guard (Rule 18).** Outgoing requests to webhook, preview, import or "test connection" URLs refuse loopback, private, link-local (cloud metadata), CGNAT and ULA addresses and re-check every redirect hop.
@@ -421,6 +422,9 @@ that module's `INTEGRATION-CHECKLIST.md` (the four project classes as one table)
 - [ ] Every variable has explicit type — no implicit `any`
 - [ ] Functions have typed parameters AND return type
 - [ ] Options object pattern for optional parameters (no positional optionals)
+- [ ] `@nestjs/*` imports come from the package root, never `…/dist/…` (the `exports` maps reject deep paths)
+- [ ] The GraphQL `Upload` scalar is imported from `@lenne.tech/nest-server`, not from `graphql-upload` (a second copy refuses every upload); no relative dynamic `import()` in `src/` (no specifier works in both `tsc` output and a source run)
+- [ ] **ESM project only** (`"type": "module"` in the API's `package.json`): no named value import from a CommonJS package whose names Node cannot detect (`import { Connection } from 'mongoose'`, `import { cloneDeep } from 'lodash'`): vitest passes it, the production start fails, so a test run is no evidence; a decorated declaration typed by a class on an import cycle uses `WrapperType<X>`, or the start throws `Cannot access 'X' before initialization`
 - [ ] No `declare` keyword
 - [ ] No `process.env` — use `ConfigService`
 

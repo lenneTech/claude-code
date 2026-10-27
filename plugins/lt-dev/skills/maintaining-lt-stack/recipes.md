@@ -28,7 +28,7 @@ Part of the [`maintaining-lt-stack`](SKILL.md) skill. Where a step says "see the
 ### nest-server (npm package `@lenne.tech/nest-server`, branch `develop`)
 
 > **Picking the number: a breaking change is a MINOR here, never a major.**
-> The MAJOR digit tracks the NestJS major this package targets — 11.x is NestJS 11 — so it
+> The MAJOR digit tracks the NestJS major this package targets — 12.x is NestJS 12 — so it
 > moves when, and only when, NestJS moves. Everything of our own ships in a minor, breaking
 > changes included: removed APIs, changed signatures, a dependency turned into a required
 > peer. Do not "promote" a breaking change to a major because semver would elsewhere; that

@@ -228,7 +228,7 @@ stay identical, because this refactor is verified by comparing behaviour before 
 - [ ] shallowRef for large arrays/objects
 - [ ] v-memo on expensive list items
 - [ ] Debounce search/filter inputs (300ms)
-- [ ] NuxtImg with loading="lazy" for off-screen images
+- [ ] Off-screen images with loading="lazy" (`<NuxtImg>` only where `@nuxt/image` is installed, else `<img>` with width/height)
 - [ ] No v-if + v-for on same element
 
 ### Styling

@@ -135,7 +135,8 @@ Generate report
    - Major jumps cross through latest of each major: `11.10 → 11.latest → 12.0 → ...`
 
    For each step, find matching guide:
-   - Pattern: `A.B.x-to-A.C.x.md` or `A.x-to-B.x.md`
+   - Patterns: `A.B.C-to-A.B.D.md` (patch), `A.B.x-to-A.C.x.md` or `A.B.x-to-A.C.0.md` (minor),
+     `A.B.x-to-X.0.x.md` (major step from the last minor of the old major)
 
    **Filter guides by "from" version, not by substring match.** Only include guides
    where the "from" version is >= `SOURCE_VERSION` AND < `TARGET_VERSION`. For example, with

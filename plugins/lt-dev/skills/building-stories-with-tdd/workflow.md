@@ -688,13 +688,13 @@ See **reference.md** for detailed debugging instructions and examples.
 
 ## Step 4: Implement/Extend API Code
 
-**Use the `nest-server-generator` skill for implementation:**
+**Use the `generating-nest-servers` skill for implementation:**
 
 1. **Analyze what's needed:**
-   - New modules? -> Use `nest-server-generator`
-   - New objects? -> Use `nest-server-generator`
-   - New properties? -> Use `nest-server-generator`
-   - Code modifications? -> Use `nest-server-generator`
+   - New modules? -> Use `generating-nest-servers`
+   - New objects? -> Use `generating-nest-servers`
+   - New properties? -> Use `generating-nest-servers`
+   - Code modifications? -> Use `generating-nest-servers`
 
 2. ** Understand existing codebase first - VERIFY before using:**
    - **Read actual Service files** before calling methods:
@@ -756,7 +756,7 @@ See **reference.md** for detailed debugging instructions and examples.
    price: number;
    ```
 
-   **See `nest-server-generator` skill -> `description-management.md` for complete details.**
+   **See `generating-nest-servers` skill -> `description-management.md` for complete details.**
 
 3. ** ServiceOptions when calling other Services:**
 

@@ -355,16 +355,17 @@ describe('Product Review Story', () => {
  GET /api/products/:id/reviews -> 404 (endpoint doesn't exist)
 ```
 
-**Implementation (using nest-server-generator):**
+**Implementation (using generating-nest-servers):**
 ```bash
 # Create Review module
-lt server module Review --no-interactive
+lt server module --name Review --noConfirm --skipLint
 
 # Add properties
-lt server addProp Review productId:string --no-interactive
-lt server addProp Review authorId:string --no-interactive
-lt server addProp Review rating:number --no-interactive
-lt server addProp Review comment:string? --no-interactive
+lt server addProp --type Module --element Review --noConfirm --skipLint \
+  --prop-name-0 productId --prop-type-0 string \
+  --prop-name-1 authorId --prop-type-1 string \
+  --prop-name-2 rating --prop-type-2 number \
+  --prop-name-3 comment --prop-type-3 string --prop-nullable-3 true
 ```
 
 **Manual adjustments needed:**
@@ -1363,7 +1364,7 @@ const result = await testHelper.rest('/api/upload-multiple', {
 - Test edge cases and error conditions
 
 ### 4. Implementation Strategy
-- Use nest-server-generator for scaffolding
+- Use generating-nest-servers for scaffolding
 - Implement business logic in services
 - Add custom validation where needed
 - Follow existing patterns in codebase

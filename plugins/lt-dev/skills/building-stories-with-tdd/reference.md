@@ -124,22 +124,26 @@ pnpm run test:watch
 NODE_ENV=e2e pnpm dlx vitest run
 ```
 
-### Using nest-server-generator Skill
+### Using generating-nest-servers Skill
 
 ```bash
-# Create module
-lt server module ModuleName --no-interactive
+# Create module (properties optional, numbered from 0)
+lt server module --name ModuleName --noConfirm --skipLint \
+  --prop-name-0 propertyName --prop-type-0 string
 
 # Create object
-lt server object ObjectName --no-interactive
+lt server object --name ObjectName --noConfirm --skipLint \
+  --prop-name-0 propertyName --prop-type-0 string
 
-# Add property
-lt server addProp ModuleName propertyName:type --no-interactive
+# Add properties to an existing module (--type Object for an object)
+lt server addProp --type Module --element ModuleName --noConfirm --skipLint \
+  --prop-name-0 propertyName --prop-type-0 string
 
-# Examples:
-lt server module Review --no-interactive
-lt server addProp Review rating:number --no-interactive
-lt server addProp Review comment:string? --no-interactive
+# Examples (an optional field takes --prop-nullable-<n> true):
+lt server module --name Review --noConfirm --skipLint
+lt server addProp --type Module --element Review --noConfirm --skipLint \
+  --prop-name-0 rating --prop-type-0 number \
+  --prop-name-1 comment --prop-type-1 string --prop-nullable-1 true
 ```
 
 ## Test File Organization
@@ -703,7 +707,7 @@ await testHelper.rest(`/api/users/${otherUserId}/profile`, {
 - Running tests
 - Analyzing failures
 - Implementing obvious features
-- Using nest-server-generator
+- Using generating-nest-servers
 ```
 
 ## Debugging Failed Tests
@@ -1419,7 +1423,7 @@ await testHelper.rest('/api/resource', {
 
 ## Integration Points
 
-### With nest-server-generator
+### With generating-nest-servers
 - Use for creating modules, objects, properties
 - Use for understanding NestJS patterns
 - Use for reading CrudService implementations

@@ -126,9 +126,24 @@ After any framework version change, read the framework's own manifest and align:
 
 ```bash
 node -e "const p=require('@lenne.tech/nest-server/package.json');
-  for (const [k,v] of Object.entries({...p.dependencies, ...p.peerDependencies}))
-    if (k.startsWith('@nestjs/')) console.log(k, v);"
+  for (const [s, deps] of Object.entries({runtime: {...p.dependencies, ...p.peerDependencies}, dev: p.devDependencies || {}}))
+    for (const [k,v] of Object.entries(deps))
+      if (k.startsWith('@nestjs/') || k === 'typescript') console.log(s, k, v);"
 ```
+
+`runtime` pins count for either project section, `dev` pins for the project's
+`devDependencies` (the rule `pnpm run update` applies). On a framework major the dev
+side moves too: `@nestjs/testing`, `@nestjs/cli` and `typescript` follow the NestJS
+major, and a peer range in the framework's packages may still exclude the newest
+`typescript` major, so raise it to the framework's pin, not to `latest`.
+
+**A package the framework holds back on purpose stays at the framework's major.** The
+framework's migration guide lists such hold-backs with the reason (nest-server: a "Not in
+this release, on purpose" table). Raising one in the project brings exactly the breakage
+the framework avoided: on nest-server 12.0, `undici` 8 replaces the global dispatcher of
+Node's `fetch` as soon as it loads, so a plain `POST` with `Content-Length: 0` anywhere in
+the process fails with `UND_ERR_INVALID_ARG`. Read that table before raising a direct
+dependency across a major, and report the hold-back instead of raising it.
 
 Real incident (offers, 2026-07): after nest-server `11.25.2 → 11.27.6` the API build failed
 with `Class 'CronJobs' incorrectly extends base class 'CoreCronJobs'`. Cause:
@@ -239,15 +254,15 @@ If `git status --short` shows modified files outside of `package.json`/lockfiles
 # For each package in dependencies and devDependencies:
 
 # 1. Check usage in source directories
-grep -r "from 'package-name'" src/ scripts/ extras/ tests/ lib/ app/ 2>/dev/null
-grep -r "require('package-name')" src/ scripts/ extras/ tests/ lib/ app/ 2>/dev/null
+grep -r "from 'package-name'" src/ scripts/ extras/ tests/ lib/ app/ migrations-utils/ 2>/dev/null
+grep -r "require('package-name')" src/ scripts/ extras/ tests/ lib/ app/ migrations-utils/ 2>/dev/null
 
 # 2. Check usage in ROOT-LEVEL CONFIG FILES (CRITICAL!)
 grep -l "package-name" *.config.ts *.config.js *.config.mjs *.config.cjs 2>/dev/null
 grep -l "package-name" vite.config.* webpack.config.* rollup.config.* 2>/dev/null
 grep -l "package-name" jest.config.* vitest.config.* tsconfig.* 2>/dev/null
 grep -l "package-name" .eslintrc* .prettierrc* babel.config.* 2>/dev/null
-grep -l "package-name" nuxt.config.* next.config.* nest-cli.json 2>/dev/null
+grep -l "package-name" nuxt.config.* next.config.* nest-cli.json nodemon*.json 2>/dev/null
 
 # 3. Check monorepo structures
 grep -r "from 'package-name'" projects/ packages/ apps/ 2>/dev/null
@@ -301,7 +316,11 @@ pnpm install && pnpm run build && pnpm test
 ```
 
 **Move to devDependencies** (not used in src/):
-- Build tools: typescript, @nestjs/cli, ts-node
+- Build tools: typescript, @nestjs/cli, @swc/core (nothing imports it: nest-server's `ts-compiler.js`
+  loader, `unplugin-swc` and `nest start -b swc` need it, so it stays), ts-node only while
+  `nodemon*.json`, a script or a vendor-mode `migrations-utils/ts-compiler.js` still needs it (the legacy
+  form always, the current form only on a core below 12) (nest-server 12 loads TypeScript sources through SWC;
+  unused, it goes, and `tsconfig-paths` with it when `tsconfig.json` declares no `paths`)
 - Testing frameworks: jest, supertest
 - Type definitions: @types/* (if not runtime required)
 - Linting/formatting: eslint, prettier

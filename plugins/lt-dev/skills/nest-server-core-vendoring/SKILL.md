@@ -8,7 +8,7 @@ description: 'Knowledge base for projects that vendored the @lenne.tech/nest-ser
 ## Gotchas
 
 - **Flatten-fix edge case on `core-persistence-model.interface.ts`** — During flatten-fix, most files get `'../../..'` rewritten to `'../..'`. This file is an exception: it sits one directory deeper and needs `'../../..'` → `'../..'` → `'..'`. Missing this step causes a silent `Cannot find module` at runtime, not compile-time.
-- **`migrate` CLI disappears after vendoring** — The upstream `@lenne.tech/nest-server` package exports a `migrate` binary in its `package.json`. When vendored (no longer a dependency), that binary is gone from `node_modules/.bin/`. `convert-mode` copies `bin/migrate.js` into the project and repoints the `migrate:*` scripts at it. See "The migrate CLI in a Vendored Project" below — and note that the **production** path differs from the local ts-node path, which is how migrations end up silently never running in the container.
+- **`migrate` CLI disappears after vendoring** — The upstream `@lenne.tech/nest-server` package exports a `migrate` binary in its `package.json`. When vendored (no longer a dependency), that binary is gone from `node_modules/.bin/`. `convert-mode` copies `bin/migrate.js` into the project and repoints the `migrate:*` scripts at it. See "The migrate CLI in a Vendored Project" below — and note that the **production** path (compiled JS) differs from the local path (TypeScript loaded at run time), which is how migrations end up silently never running in the container.
 - **Cosmetic commits are tempting upstream PR candidates** — Formatting-only, linting-only, or rename-only commits look substantive but offer no value as upstream PRs. The contributor agent filters these — if authoring manually, verify the commit changes behavior, not just style.
 - **Local patches in `src/core/` are invisible to future `/lt-dev:backend:update-nest-server-core` runs** — The updater does AI-driven curation but cannot read your intent. Document every intentional local deviation in `src/core/LOCAL-PATCHES.md` so the next sync doesn't silently undo your work.
 
@@ -205,6 +205,21 @@ All of these are **legitimate upstream-candidate patches** — they fix
 problems that every consumer will hit. The `nest-server-core-contributor`
 agent should recognize them and suggest them as Upstream-PR candidates.
 
+**TypeScript 6 (core 12.x) — project config only, never a core patch.** The
+vendored core is compiled with the project's `tsconfig.json`, so the compiler
+defaults TypeScript 6 changed hit it directly. The core compiles under the
+settings of `11.43.x-to-12.0.x.md` §2; the fix belongs in the project config:
+
+| Symptom                                                  | Fix                                          |
+| -------------------------------------------------------- | -------------------------------------------- |
+| Hundreds of `TS2322` / `TS18048` in `src/core/`          | `"strict": false` (TypeScript 6 default is `true`) |
+| `Cannot find name 'process'` / `'Buffer'`                | `"types": ["node", "vitest/globals"]`        |
+| `TS5011 … 'rootDir' setting must be explicitly set`      | Set `rootDir` in `tsconfig.build.json`       |
+| `TS5011` / `TS5110` from `pnpm run migrate:*` while `build` passes | The migrate bootstrap reads `tsconfig.json`; replace it (see "The migrate CLI in a Vendored Project") |
+| `TS5107 Option 'moduleResolution=node10' is deprecated`  | `"module"` and `"moduleResolution"` `"nodenext"` |
+| `TS2307` on `@nestjs/…/dist/…` in project code           | Import from the package root (the core already does) |
+| `TS2835` on a relative `await import('./x')` in project code | No relative dynamic `import()`: no specifier works everywhere (`tsc` output needs `./x.js`, a ts-node source run does not map it to `.ts`). A static import, or move what a cycle needs into a module of its own; the core has none for that reason |
+
 ## The migrate CLI in a Vendored Project
 
 Upstream ships a `migrate` CLI as a `bin` field in `@lenne.tech/nest-server`
@@ -214,23 +229,75 @@ into `node_modules/.bin/`. `lt fullstack convert-mode` therefore copies
 no global install, no hand-written wrapper needed.
 
 Locally the scripts pass `--compiler ts:./migrations-utils/ts-compiler.js`, a
-ts-node bootstrap that exists because the project `tsconfig.json` usually
-restricts `types` to `vitest/globals`, which strips `@types/node` and crashes
-ts-node when it compiles vendored core files.
+bootstrap the CLI writes into the project. It loads the `.ts` migrations (and,
+in the repo layout, the vendored core) at run time. Read the file before touching
+the tsconfig; its header tells the form:
+
+- **Legacy, reads the project `tsconfig.json`**: header `ts-node bootstrap for the
+  migrate CLI (vendor mode).`, `tsNode.register({ transpileOnly: true,
+  compilerOptions: … })` without `skipProject`. This is the file existing vendor
+  projects carry. Under TypeScript 6 the options it inherits fail the load:
+  `TS5011` (`outDir` without `rootDir`; a `rootDir` in `tsconfig.build.json` does
+  not reach it) and `TS5110` (`commonjs` on a `nodenext` config).
+- **Current**: header `TypeScript loader for the migrate CLI (vendor mode).` It uses
+  the core's own loader, `src/core/modules/migrate/helpers/ts-compiler.js`, where the
+  core ships it (core 12.x: an `@swc/core` require hook with the options of the
+  `tsc` build, which checks no types and needs `@swc/core` as devDependency; `tsc`
+  in `build` and `check` still does), and otherwise registers ts-node with
+  `skipProject: true`. It works on core 11 and 12 alike and needs no change on the
+  sync.
+
+Replace the legacy file before the core sync into 12.x. From 12.0 the core imports
+`./x.js`, which ts-node cannot load at all, so on core 12 the bootstrap has to hand
+over to the core's loader; a ts-node bootstrap, with or without `skipProject`,
+fails there. `lt fullstack update`, run after the core sync with a CLI that carries
+the current form, replaces the file, but only one byte-identical to the one the CLI
+once generated (CRLF tolerated); a hand-edited legacy file is left alone on purpose.
+Replace that one, or one under an older CLI, by hand. On core 12 in a CommonJS
+project the whole file can be `module.exports =
+require('../src/core/modules/migrate/helpers/ts-compiler.js');`: requiring the
+loader registers it, and its export is the idempotent register function the
+`--compiler ts:` contract calls. On core 11 the minimal fix keeps ts-node: add
+`skipProject: true`, keep `transpileOnly` and its own `compilerOptions`, and pick
+`moduleResolution` by the TypeScript major (`'bundler'` from 6, `'node'` below):
+without a project config ts-node falls back to `node`, which TypeScript 6 rejects
+(`TS5107`), while TypeScript 5 accepts `bundler` only with ES module output.
+
+ts-node stays a devDependency while the legacy form is in place, and with the
+current form while the core is below 12.
+
+### Core 12.x: what the sync has to carry
+
+The 12.x core is written as ES module source (`./x.js` imports) and compiles as
+CommonJS in a CommonJS project and as ESM in an ESM project. Four things outside
+plain `.ts` changes decide whether a synced project still starts:
+
+| Item | Why | Symptom when missing |
+|---|---|---|
+| Dev start through the core's loader: `nodemon.json` `"exec": "node -r ./src/core/modules/migrate/helpers/ts-compiler.js src/main.ts"`, the same in `nodemon-debug.json` (`node --inspect-brk -r …`), `docs:ci` and `start:nodemon`; keep a `-r tsconfig-paths/register` where the project declares `paths` | ts-node does not map `./x.js` to `x.ts` | `pnpm start` fails with `Cannot find module './core.module.js'` while build, `migrate:*` and tests pass |
+| The non-TypeScript files of `src/core/modules/migrate/helpers/`: `package.json` (`"type": "commonjs"`), `ts-compiler.cjs`, `ts-compiler-hooks.mjs` | the loader is CommonJS in every project, and its hooks reach ES module sources | the loader fails to load, or `.ts` imported from ESM is not compiled |
+| `bin/package.json` (`"type": "commonjs"`) next to `bin/migrate.js` | `bin/` is no part of `src/core/`, so no sync brings it; an ESM project would read the CommonJS shim as ESM | every `migrate:*` fails in an ESM project; harmless to add in a CommonJS one |
+| `migrate/migration.helper.ts` (moved from `migrate/helpers/`) | the old path forwards, so `migrations-utils/migrate.js` keeps working | nothing, as long as the forwarder is synced too |
+
+Tests: ts-jest does not map `./x.js` either (`moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$':
+'$1' }`, or move to vitest), and every vitest config needs `resolve.extensions` with
+`.js` before `.mjs`, or Vite loads a second graphql copy (`modernizing-toolchain`).
+The `lt` CLI wires the dev start itself when it converts a project to vendor mode
+with a 12.x core; a project already vendored needs the edits above on its sync.
 
 ### The production trap: migrations that never run
 
-**The dev path (ts-node) and the container path (compiled JS) are different, and
+**The dev path (TypeScript loaded at run time) and the container path (compiled JS) are different, and
 only the dev path is exercised while you work.** A vendored project must satisfy
 all four of these, or the container silently skips every migration — no error,
 no failed deploy, just data that was never migrated:
 
 | Requirement | Provided by | Symptom when missing |
 |---|---|---|
-| Migrations compiled to `.js` | `tsconfig.build.json` includes `migrations/**/*.ts` | CLI cannot load `.ts`, no ts-node in the image |
+| Migrations compiled to `.js` | `tsconfig.build.json` includes `migrations/**/*.ts` | CLI cannot load `.ts`: the image has no TypeScript loader (devDependencies are pruned) |
 | `dist/bin/migrate.js` exists | `copy:bin` script | entrypoint's `[ -f … ]` guard fails → **silent skip** |
 | No `*.d.ts` in `dist/migrations/` | `prune:migrations` script | runner loads the declaration file as a second migration and throws on `export declare` |
-| Store works without ts-node | `migrations-utils/migrate.js` probes for the compiled helper before `require('./ts-compiler')` | `MODULE_NOT_FOUND` under `set -e` → container never starts |
+| Store works without a TypeScript loader | `migrations-utils/migrate.js` probes for the compiled helper before `require('./ts-compiler')` | `MODULE_NOT_FOUND` under `set -e` → container never starts |
 | Shim enters via `runCli()` | `bin/migrate.js` copied from a nest-server that has the fix | migrations run, then the process **never exits** — see below |
 
 Current `lt` versions wire all four up automatically. **When auditing an older
@@ -381,8 +448,6 @@ release. Consequences:
   when the content matches. To find upstream changes since the baseline, diff by
   path (`git log <baseline>..origin/main -- <path>`) or compare `develop` HEAD
   content directly — do not conclude "no changes" from the ancestor check.
-- `pnpm run build` regenerates the checked-in `FRAMEWORK-API.md` (timestamp-only
-  diff). Discard it before committing — it is not part of any fix.
 
 ### Verifying an SWC / circular-import fix
 

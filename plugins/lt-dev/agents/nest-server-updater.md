@@ -187,12 +187,16 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
    ```
 
    Load ALL relevant guides for the version path:
-   - Sequential: `A.B.x-to-A.C.x.md`, `A.C.x-to-A.D.x.md`, ...
-   - Major jumps: `A.x-to-X.x.md`
-   - Spanning: `A.B.x-to-X.Y.x.md` (if exists)
+   - Patch steps: `A.B.C-to-A.B.D.md` (only patches that need action have one)
+   - Minor steps: `A.B.x-to-A.C.x.md` or `A.B.x-to-A.C.0.md`, `A.C.x-to-A.D.x.md`, ...
+   - Major step: `A.B.x-to-X.0.x.md`, written from the last minor of the old major
+
+   Select by "from" version (`>= current`, `< target`) and apply in "from" order, as
+   `nest-server-updating` → `reference/migration-guides.md` describes. A patch-only update
+   is done in one step, but its patch guides still apply.
 
    ```bash
-   gh api repos/lenneTech/nest-server/contents/migration-guides/11.6.x-to-11.7.x.md \
+   gh api repos/lenneTech/nest-server/contents/migration-guides/11.42.x-to-11.43.x.md \
      --jq '.content' | base64 -d
    ```
 

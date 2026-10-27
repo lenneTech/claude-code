@@ -371,22 +371,23 @@ app.use(helmet({
 |---|----------|----------------------|
 | 10.1 | Servers/frameworks configured securely | Follow NestJS security guide |
 | 10.2 | Third-party components up to date | Regular `pnpm audit`, `pnpm update` |
-| 10.3 | Non-essential features disabled | Disable GraphQL playground in prod |
+| 10.3 | Non-essential features disabled | Disable GraphiQL (the GraphQL IDE) in prod |
 | 10.4 | Appropriate access controls for server files | chmod 640 for configs |
 | 10.5 | Separate environments (dev/staging/prod) | NODE_ENV based configuration |
 | 10.6 | Remove default/demo code | No sample data in production |
 | 10.7 | Don't expose system info in errors | Production error filter |
 
 ```typescript
-// Environment-specific configuration
-const isDev = process.env.NODE_ENV !== 'production';
+// src/config.env.ts — the driver options reach the Apollo driver unchanged
+const isProd = envName === 'production';
 
-// Disable introspection in production
-GraphQLModule.forRoot({
-  playground: isDev,
-  introspection: isDev,
-  debug: isDev
-});
+graphQl: {
+  driver: {
+    graphiql: !isProd,       // the IDE; `playground` is only a deprecated boolean alias
+    introspection: !isProd,  // disable where no tooling needs the schema in production
+  },
+  maxComplexity: 1000,
+},
 ```
 
 ---

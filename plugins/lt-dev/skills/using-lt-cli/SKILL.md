@@ -166,6 +166,14 @@ lt server create <name> --noConfirm [--branch <branch>] [--copy <path>] [--link 
 
 Creates a standalone NestJS project from nest-server-starter. With `--next`, clones [`nest-base`](https://github.com/lenneTech/nest-base) (Bun + Prisma 7 + Postgres + Better-Auth) instead and skips API-mode / vendor-mode / install / `lt.config.json` processing. For module/object/property commands, see `generating-nest-servers` skill — those are NOT compatible with `--next` projects.
 
+### lt server convert-esm — Convert the API to ES Modules
+
+```bash
+lt server convert-esm --noConfirm [--dry-run] [--force] [--skip-verify]
+```
+
+Switches a nest-server 12+ API project from CommonJS to `"type": "module"` by migration guide `11.43.x-to-12.0.x.md` §17 (npm mode: the installed package; vendor mode: a core with `src/core/modules/migrate/helpers/package.json`). Run it in the API project or in a workspace root with `projects/api`; there is no fullstack variant, the Nuxt app is ESM already. A dirty git tree is refused unless `--force`, so the conversion stays one diff. Exact rewrites are applied; what has none (a named import Node cannot see in a CommonJS package such as `import { Connection } from 'mongoose'`, a decorated field on an import cycle that needs `WrapperType<X>`, a leftover `require`) is listed with file:line and exits 1. Fix those and run the same command again: on an ESM project it is idempotent and needs no clean tree. It ends with build, start of the built server, `migrate:list` and dev start (`--skip-verify` skips them). Afterwards the `lt server` generators write `.js` imports. Never part of a nest-server update (`nest-server-updating`).
+
 ### lt deployment create — Wire the Project to TurboOps
 
 ```bash

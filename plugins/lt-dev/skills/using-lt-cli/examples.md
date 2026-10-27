@@ -5,7 +5,7 @@ description: Real-world examples for Git operations and Fullstack initialization
 
 # LT CLI Examples
 
- **Note**: For NestJS server examples (modules, objects, properties), see the **nest-server-generator skill** instead.
+ **Note**: For NestJS server examples (modules, objects, properties), see the **generating-nest-servers skill** instead.
 
 ## Table of Contents
 - [Git Operations](#git-operations)
@@ -418,7 +418,7 @@ lt server module --name User --controller Both \
   --prop-name-1 password --prop-type-1 string
 
 # Add business logic modules
-# ... (use nest-server-generator skill for this)
+# ... (use generating-nest-servers skill for this)
 ```
 
 #### Internal Tool (Nuxt + NestJS)
@@ -464,7 +464,7 @@ pnpm start
 
 # Terminal 3: Development
 cd projects/api
-# Generate server modules using nest-server-generator skill
+# Generate server modules using generating-nest-servers skill
 ```
 
 #### After Nuxt Fullstack Init
@@ -645,4 +645,4 @@ lt full init --name MyApp --frontend angular --git true
 
 For detailed command syntax and all available options, see [reference.md](reference.md).
 
-For NestJS server development examples, use the **nest-server-generator skill**.
+For NestJS server development examples, use the **generating-nest-servers skill**.

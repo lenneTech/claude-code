@@ -6,9 +6,12 @@ Migration guides in `migration-guides/` follow these patterns:
 
 | Pattern | Example | Scope |
 |---------|---------|-------|
-| `X.Y.x-to-A.B.x.md` | `11.6.x-to-11.7.x.md` | Minor version step |
-| `X.x-to-Y.x.md` | `11.x-to-12.x.md` | Major version jump |
-| `X.Y.x-to-A.B.x.md` | `11.6.x-to-12.0.x.md` | Spanning multiple versions |
+| `X.Y.Z-to-X.Y.W.md` | `11.43.1-to-11.43.2.md` | Patch step (only where the patch needs action) |
+| `X.Y.x-to-X.Z.x.md` or `X.Y.x-to-X.Z.0.md` | `11.42.x-to-11.43.x.md`, `11.17.x-to-11.18.0.md` | Minor step |
+| `X.Y.x-to-W.0.x.md` | `11.43.x-to-12.0.x.md` | Major step, from the last minor of the old major |
+
+There is no `X.x-to-Y.x.md`: a major step is always written from the last minor of the old major, so it
+assumes every guide of that major has been applied before it. `TEMPLATE.md` in the same directory is no guide.
 
 ## Guide Selection Logic
 
@@ -19,32 +22,25 @@ For an update from version `CURRENT` to `TARGET`:
    gh api repos/lenneTech/nest-server/contents/migration-guides --jq '.[].name'
    ```
 
-2. **Select applicable guides:**
+2. **Select by "from" version, not by substring match.** Include a guide when its "from" version is
+   `>= CURRENT` and `< TARGET` (an `x` matches the whole minor). Sort the selection by "from" version
+   numerically and apply it in that order. With `CURRENT` 11.42.5 and `TARGET` 12.0.0:
+   - `11.42.3-to-11.42.4.md` → exclude (from 11.42.3 < 11.42.5, already applied)
+   - `11.42.5-to-11.42.6.md` … `11.42.15-to-11.42.16.md` → include
+   - `11.42.x-to-11.43.x.md` → include
+   - `11.43.0-to-11.43.1.md` … `11.43.2-to-11.43.3.md` → include
+   - `11.43.x-to-12.0.x.md` → include (the major step)
 
-   | Condition | Guides to load |
-   |-----------|----------------|
-   | Same major, sequential minor | Each `X.Y.x-to-X.Z.x.md` in sequence |
-   | Major version jump | All minor guides + `X.x-to-Y.x.md` |
-   | Spanning guide exists | Include it (may consolidate steps) |
+   A guide whose "from" equals `TARGET` is for upgrading past the target and stays out.
 
-3. **Load order (example 11.6.0 → 12.1.0):**
-   ```
-   1. 11.6.x-to-11.7.x.md
-   2. 11.7.x-to-11.8.x.md
-   3. ... (all minor steps to 11.x latest)
-   4. 11.x-to-12.x.md (major jump)
-   5. 12.0.x-to-12.1.x.md
-   6. 11.6.x-to-12.x.md (if exists - consolidated)
-   ```
-
-4. **Fetch guide content:**
+3. **Fetch guide content:**
    ```bash
-   gh api repos/lenneTech/nest-server/contents/migration-guides/11.6.x-to-11.7.x.md \
+   gh api repos/lenneTech/nest-server/contents/migration-guides/11.42.x-to-11.43.x.md \
      --jq '.content' | base64 -d
    ```
    Or via URL:
    ```
-   https://raw.githubusercontent.com/lenneTech/nest-server/main/migration-guides/11.6.x-to-11.7.x.md
+   https://raw.githubusercontent.com/lenneTech/nest-server/main/migration-guides/11.42.x-to-11.43.x.md
    ```
 
 ## Fallback When No Guides Available

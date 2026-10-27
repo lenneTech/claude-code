@@ -111,7 +111,7 @@ The k6 results from the `running-load-tests-with-k6` skill feed directly into th
 | Check | How | Severity if missing |
 |-------|-----|----------------------|
 | Dockerfile multi-stage | Builder + runtime stages; runtime image contains only built artefacts + prod deps | Major |
-| Image base pinned | `FROM node:22.11.0-alpine` (concrete version), not `node:latest` | Major |
+| Image base pinned | `FROM node:24-alpine@sha256:<digest>` (pinned by digest, like the starter), not `node:latest`; not below the framework's `engines.node` | Major |
 | `.dockerignore` complete | `.git`, `node_modules`, `tests/`, `.env*` excluded | Major |
 | CI builds from main with tag | Tag-triggered pipeline builds the production image; never `latest`-only | Major |
 | Build is reproducible | Lockfiles (`pnpm-lock.yaml`) committed; CI uses `--frozen-lockfile` | Major |

@@ -140,7 +140,7 @@ Analyze how changes affect bundle size and asset loading:
 - [ ] **No barrel exports** (`index.ts` re-exporting everything) in frequently imported directories
 - [ ] **Tree-shaking safe**: no side-effect imports (`import 'module'` without using exports)
 - [ ] **Large dependency additions**: check `package.json` diff for new dependencies, estimate bundle impact
-- [ ] **Image optimization**: `<NuxtImg>` with `format="webp"` and explicit `width`/`height` — no raw `<img>` with large assets
+- [ ] **Image optimization**: explicit `width`/`height` on every image and no large raw asset; with `@nuxt/image` in `package.json` `<NuxtImg>` with `format="webp"`, without it a pre-optimized file (WebP/AVIF) in a plain `<img>`, which is no finding
 - [ ] **Font loading**: `font-display: swap` or `optional`, preloaded critical fonts
 - [ ] **No duplicate dependencies**: same library imported under different names/versions
 

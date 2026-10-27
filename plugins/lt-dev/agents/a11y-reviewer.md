@@ -258,7 +258,7 @@ Validate image and media accessibility.
 - [ ] **All `<img>`/`<NuxtImg>`** have `alt` attribute
 - [ ] **Informative images** have descriptive `alt` text (not "image" or filename)
 - [ ] **Decorative images** have `alt=""` (empty, not missing)
-- [ ] **`<NuxtImg>`** used instead of raw `<img>` for optimization
+- [ ] **With `@nuxt/image` in `package.json`:** `<NuxtImg>` instead of raw `<img>` for optimization. Without the module a raw `<img>` with `width`/`height` is correct and no finding
 - [ ] **SVG icons** inline have `aria-hidden="true"` (when alongside text)
 - [ ] **SVG icons** standalone have `aria-label` or `<title>` element
 - [ ] **Video/audio** has captions or transcript (if applicable)
@@ -270,8 +270,10 @@ Validate image and media accessibility.
 grep -rn "<img\|<NuxtImg\|<nuxt-img" <vue-files> | grep -v "alt="
 # Bad alt text
 grep -rn 'alt="image\|alt="picture\|alt="photo\|alt="img\|alt="icon"' <vue-files>
-# Raw img instead of NuxtImg
-grep -rn "<img " <vue-files> | grep -v "NuxtImg"
+# Raw img instead of NuxtImg (only where the module is installed; cat, because grep over a missing
+# file exits 2 under the session's grep even when another file matches)
+cat package.json projects/app/package.json packages/app/package.json 2>/dev/null | grep -q '"@nuxt/image"' \
+  && grep -rn "<img " <vue-files> | grep -v "NuxtImg"
 # SVGs without aria-hidden or aria-label
 grep -rn "<svg" <vue-files> | grep -v "aria-hidden\|aria-label\|role="
 # Missing lazy loading

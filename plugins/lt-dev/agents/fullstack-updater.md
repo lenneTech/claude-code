@@ -202,6 +202,43 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
    - Identify configuration drift (nuxt.config.ts, nest-cli.json, tsconfig.json, etc.)
    - Identify new files in starters that don't exist in project
    - Identify updated patterns (components, services, middleware)
+   - Identify packages and Nuxt modules the project has and the current starter no longer ships
+     (see "Removed upstream" below)
+
+#### Removed upstream: report, never remove
+
+A starter drops a package or module because most projects do not use it, not because the
+project at hand does not. It stays in the project. Build and lint do not notice a module that is
+gone while the project still uses it: an unresolved `<NuxtImg>` renders as an unknown element,
+and `vue-tsc` without `strictTemplates` does not report it. List each one in UPDATE_PLAN.md
+under "Removed upstream" with the usage check and its result. Remove it only when the check finds
+nothing and the user approves the plan; then its `nuxt.config.ts` entries (`modules`, its config
+key such as `image: {…}`) go with it.
+
+- **Module with components or composables:** grep its tags and functions in `app/`, for
+  `@nuxt/image`:
+  ```bash
+  grep -rnE '<NuxtImg|<nuxt-img|<NuxtPicture|<nuxt-picture|useImage\(|\$img\(' app/
+  ```
+  Single quotes: in double quotes the shell turns `\$img` into `$img`, an anchor that never matches.
+- **Auto-import module** (`@vueuse/nuxt` …): the names it registers in `.nuxt/imports.d.ts` (after
+  `nuxt prepare`), grepped in `app/`.
+- **Plain package:** the import and config grep of `npm-package-maintainer` Phase 1.
+
+The starter's migration guide for the release that dropped it says whether removal is optional;
+it never makes it mandatory for a project that uses it.
+
+#### Module format: never synced
+
+The starter and the project may differ in module format: an ESM starter (`"type": "module"` in
+`projects/api/package.json`) next to a CommonJS project, or the other way round. That is no drift.
+Never carry `"type"`, the tsconfig's `module` / `moduleResolution` / `isolatedModules`, ESM
+`migrations-utils/*.js`, `import.meta` or `.js`-suffixed relative imports from one into the other: a
+CommonJS project with an ESM file set fails at start, while build and tests may still pass. List
+the difference in UPDATE_PLAN.md as information. Converting is its own step after a green update
+(`lt server convert-esm` from the workspace root, the API only, since the Nuxt app is ESM already; on
+a CLI without it, nest-server's migration guide `11.43.x-to-12.0.x.md` §17), and only when the user
+asks for it.
 
 ### Phase 3: Update Plan Generation
 
@@ -226,7 +263,10 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
    - [List of files that differ from latest starter]
 
    ### Package Dependency Changes
-   - [Added/removed/updated packages]
+   - [Added/updated packages]
+
+   ### Removed upstream (kept unless unused and approved)
+   - [package — usage check — result]
 
    ### Configuration Changes
    - [tsconfig.json, nest-cli.json, .env changes]
@@ -240,7 +280,10 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
    - [List of files that differ from latest starter]
 
    ### Package Dependency Changes
-   - [Added/removed/updated packages]
+   - [Added/updated packages]
+
+   ### Removed upstream (kept unless unused and approved)
+   - [package or Nuxt module — usage check — result]
 
    ### Configuration Changes
    - [nuxt.config.ts, tailwind.config.ts changes]
@@ -257,7 +300,7 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
    4. Frontend update (nuxt-extensions)
    5. Frontend starter synchronization
    6. Type regeneration (pnpm run generate-types) — ONLY if the frontend imports the generated api-client (detection below)
-   7. Frontend validation (build, lint)
+   7. Frontend validation (build, lint, typecheck)
    8. Cross-project validation
    ```
 
@@ -340,7 +383,7 @@ Skip steps 1-2 below and proceed to step 3 (apply starter changes).
    ```
 
 2. **Apply nuxt-base-starter changes:**
-   - Compare and update nuxt.config.ts
+   - Compare and update nuxt.config.ts (a module the starter dropped stays: "Removed upstream")
    - Sync tailwind configuration
    - Update base components if present
    - Apply new middleware patterns
@@ -381,6 +424,7 @@ Skip steps 1-2 below and proceed to step 3 (apply starter changes).
    cd <frontend-path>
    pnpm run build
    pnpm run lint
+   pnpm run typecheck   # where the project has it: catches an auto-import that is gone
    ```
    Fix issues until all pass.
 
@@ -458,7 +502,9 @@ the original migration if missed):
    the upstream starters, bump every `dependencies` AND `devDependencies` entry
    to whatever the current `nest-server-starter` / `nuxt-base-starter`
    `package.json` ships. Surface every major-version delta in the migration
-   log so the operator can read the relevant CHANGELOG. The trap a blanket
+   log so the operator can read the relevant CHANGELOG. This bumps what both
+   sides have; an entry the starter no longer ships follows "Removed upstream:
+   report, never remove" (Phase 2). The trap a blanket
    version-sync does NOT fix is **a missing direct dependency after a peer
    restructure**: when `Rollup failed to resolve import "X"` or the install-
    time equivalent appears, the wrapper package no longer pulls X transitively

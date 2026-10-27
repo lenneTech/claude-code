@@ -145,7 +145,7 @@ volumes:
 
 | Concern | Standard |
 |---------|----------|
-| Base image | `node:20-alpine` (or current LTS) — pinned version (e.g., `node:20.11-alpine3.19`) |
+| Base image | Current Node LTS, at least the framework's `engines.node` (NestJS 12 loads its ESM-only packages through `require(esm)`, which older Node lines lack), pinned by digest like the starter: `node:24-alpine@sha256:<digest>` |
 | Multi-stage | Stage 1: deps, Stage 2: build, Stage 3: runtime |
 | User | Non-root user (`node`) in final stage |
 | Layer caching | Copy package*.json first, install, then copy source |
@@ -156,7 +156,7 @@ volumes:
 ```dockerfile
 # projects/api/Dockerfile
 # ── Stage 1: Dependencies ─────────────────────────────────
-FROM node:20.11-alpine3.19 AS deps
+FROM node:24-alpine@sha256:<digest> AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN pnpm install --frozen-lockfile --ignore-scripts
@@ -167,7 +167,7 @@ COPY . .
 RUN pnpm run build
 
 # ── Stage 3: Runtime ──────────────────────────────────────
-FROM node:20.11-alpine3.19 AS runtime
+FROM node:24-alpine@sha256:<digest> AS runtime
 WORKDIR /app
 
 # Non-root user (MANDATORY)
@@ -390,7 +390,7 @@ Your final message is the report the caller acts on. Write it when every phase i
 
 ```yaml
 # FORBIDDEN: :latest tag
-image: node:latest              # USE: node:20.11-alpine3.19
+image: node:latest              # USE: node:24-alpine@sha256:<digest>
 image: mongo:latest             # USE: mongo:7.0
 
 # FORBIDDEN: Root user in production
@@ -405,7 +405,7 @@ environment:
   - JWT_SECRET=real-secret      # USE: env_file: .env (gitignored)
 
 # FORBIDDEN: Single-stage production build
-FROM node:20-alpine
+FROM node:24-alpine
 COPY . .
 RUN pnpm install && pnpm run build
 CMD ["node", "dist/main.js"]    # USE: Multi-stage build + correct lt-Stack entry: dist/src/main.js

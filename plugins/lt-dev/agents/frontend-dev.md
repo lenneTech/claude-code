@@ -637,7 +637,7 @@ Wrap sections that may fail independently with `NuxtErrorBoundary`:
 | Modals | Always lazy — `LazyModalXyz` (not rendered until needed) |
 | Below-the-fold content | Lazy-load charts, tables, heavy sections |
 | Above-the-fold content | Never lazy — ensure instant render |
-| Images | Use `<NuxtImg>` with `loading="lazy"` for off-screen images |
+| Images | Off-screen images get `loading="lazy"`. `<NuxtImg>` only where `@nuxt/image` is in `package.json`; otherwise `<img>` with `width`, `height`, `alt` and `loading="lazy"` (never add the module just for one image) |
 
 ### Rendering Performance
 

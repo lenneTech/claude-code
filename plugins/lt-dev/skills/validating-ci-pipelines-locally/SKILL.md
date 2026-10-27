@@ -107,7 +107,7 @@ Each job declares an image. The local execution uses the **same** image so depen
 ```yaml
 # Example .gitlab-ci.yml job
 test:
-  image: node:22.11.0-alpine
+  image: node:22-alpine
   services:
     - mongo:7.0
     - redis:7-alpine
@@ -161,7 +161,7 @@ services:
     image: redis:7-alpine
     healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 5s }
   job:
-    image: node:22.11.0-alpine
+    image: node:22-alpine
     depends_on:
       mongo: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -261,12 +261,12 @@ Image parity: <PASS|FAIL>  (mismatch: <comma-separated jobs>)
 
 | Job | Stage | Image | Result | Duration | Iterations | Notes |
 |-----|-------|-------|--------|----------|-------------|-------|
-| install      | build | node:22.11.0-alpine | PASS    | 42s | 1 | — |
-| lint         | test  | node:22.11.0-alpine | PASS    | 18s | 1 | — |
-| typecheck    | test  | node:22.11.0-alpine | PASS    | 33s | 1 | — |
-| test         | test  | node:22.11.0-alpine | FAIL    | 2m  | 3 | flaky DB seed — fixed in commit abc123 |
-| build        | build | node:22.11.0-alpine | PASS    | 1m  | 1 | — |
-| audit        | test  | node:22.11.0-alpine | SKIPPED | —   | — | requires CI_TOKEN |
+| install      | build | node:22-alpine | PASS    | 42s | 1 | — |
+| lint         | test  | node:22-alpine | PASS    | 18s | 1 | — |
+| typecheck    | test  | node:22-alpine | PASS    | 33s | 1 | — |
+| test         | test  | node:22-alpine | FAIL    | 2m  | 3 | flaky DB seed — fixed in commit abc123 |
+| build        | build | node:22-alpine | PASS    | 1m  | 1 | — |
+| audit        | test  | node:22-alpine | SKIPPED | —   | — | requires CI_TOKEN |
 
 Global verdict: <PASS|PARTIAL|FAIL>
 Failing jobs: <comma-separated or "none">

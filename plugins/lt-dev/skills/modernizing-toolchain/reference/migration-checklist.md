@@ -47,6 +47,10 @@ substitute as appropriate.
          },
        }),
      ],
+     // Node's order, `.js` before `.mjs`: Vite's default probes `.mjs` first and loads graphql's
+     // `index.mjs` as a second copy ("Cannot use GraphQLSchema from another module or realm",
+     // subscriptions closing with 4500). Same line in every vitest config of the project.
+     resolve: { extensions: ['.js', '.mjs', '.mts', '.ts', '.jsx', '.tsx', '.json'] },
      test: {
        environment: 'node',
        exclude: ['tests/helpers/**/*', 'tests/fixtures/**/*', 'tests/global-setup.ts', 'tests/report.js'],
@@ -75,6 +79,7 @@ substitute as appropriate.
 
    export default defineConfig({
      plugins: [swc.vite()],
+     resolve: { extensions: ['.js', '.mjs', '.mts', '.ts', '.jsx', '.tsx', '.json'] }, // as in the e2e config
      test: {
        environment: 'node',
        globals: true,
@@ -104,10 +109,24 @@ substitute as appropriate.
      "compilerOptions": {
        "target": "es2022",                     // bump from es2020 — needed for `new Error(msg, { cause })`
        "useDefineForClassFields": true,        // MUST match swc setting above
-       "types": ["vitest/globals"]              // describe/it/expect/vi available without per-file imports
+       "strict": false,                        // TypeScript 6 turns it on by default
+       "types": ["node", "vitest/globals"]     // TypeScript 6 defaults `types` to []; vitest/globals gives describe/it/expect/vi
      }
    }
    ```
+   On TypeScript 6 (nest-server 12.x) take `module` / `moduleResolution` and `rootDir` from the
+   starter's `tsconfig.json` and `tsconfig.build.json` as well; `nest-server-updating` →
+   `reference/error-patterns.md` maps each compiler error to its setting.
+
+   **Dev start without ts-node** (nest-server 12.x): `nodemon.json` runs
+   `node -r <loader> src/main.ts`, where `<loader>` is
+   `./node_modules/@lenne.tech/nest-server/dist/core/modules/migrate/helpers/ts-compiler.js` in npm
+   mode and `./src/core/modules/migrate/helpers/ts-compiler.js` in vendor mode; the same for
+   `nodemon-debug.json` (`node --inspect-brk -r …`), `docs:ci` and `start:nodemon`. Required in vendor
+   mode (ts-node cannot load the 12.x core), optional in npm mode, where it saves the type check on
+   every start; `tsc` in `build` and `check` still checks types. The loader needs `@swc/core`.
+   Afterwards `ts-node` leaves the devDependencies unless a legacy vendor-mode
+   `migrations-utils/ts-compiler.js` still requires it (`nest-server-core-vendoring`).
 
 6. **Migrate all `jest.*` calls** to `vi.*`:
    - `jest.spyOn` → `vi.spyOn`
@@ -124,6 +143,12 @@ substitute as appropriate.
    ```
    `sed 's/jest\.spyOn/vi.spyOn/g'` won't catch this. Run it again as
    `sed 's/^[[:space:]]*const \([a-zA-Z]*\) = jest$/  const \1 = vi/' || grep "jest$" tests/`.
+
+   **vitest 5 behaves differently from jest in three places a converted suite trips over:**
+   mocks are cleared before every test (`clearMocks` on), so a call count collected in
+   `beforeAll` or an earlier test reads zero; an un-awaited `expect(p).rejects…` /
+   `.resolves…` fails the test; and `vi.mock()` / `vi.hoisted()` throw unless they sit at the
+   top level of the file. A `jest.mock()` inside a function or `describe` block has to move up.
 
 7. **Replace `import * as supertest`** with default import:
    ```diff
@@ -203,6 +228,13 @@ substitute as appropriate.
      ]
    }
    ```
+
+   **Type-aware lint (recommended):** NestJS 12's template and nest-server run `oxlint --type-aware`
+   (`oxlint-tsgolint` as devDependency) with `"typescript/no-floating-promises": "error"`: an
+   un-awaited promise's rejection is unhandled, and Node ends the process on that. Type-aware mode
+   turns on every other type-aware rule of the enabled categories too; under `"strict": false` most
+   of them only report "requires strictNullChecks", so switch those off by name (nest-server's
+   `.oxlintrc.json` lists them). Adopt it with the starter's config rather than by hand.
 
 3. **Create `.oxlintignore`**: `node_modules`, `dist`, `*.d.ts`, `**/migrate/templates/**`,
    `temp/`, `uploads/`, `scripts/benchmark-fixtures/`.

@@ -162,7 +162,7 @@ new role is seen immediately. The API honours `VITEST`, `PLAYWRIGHT` and
 ## CI must be sharded — check before you touch the pipeline
 
 **A `.gitlab-ci.yml` that runs the whole Playwright suite in ONE job with
-`nuxt dev` and a ts-node API is out of date.** Projects scaffolded before the
+`nuxt dev` and an API run from source is out of date.** Projects scaffolded before the
 sharded template still carry it. Check `parallel:` in the `app:test` job first —
 if it is missing, port the current `lt-monorepo` template job before doing
 anything else with that pipeline.
@@ -172,7 +172,7 @@ Three costs, in the order they hurt:
 | Cost | Symptom | Fix |
 |---|---|---|
 | `nuxt dev` in CI | Vite recompiles every route on first hit, per device project — by far the largest share of runtime | `E2E_BUILT_SERVER=true` + the `build` job's `projects/app/.output` artifact |
-| ts-node API | slow boot, occasional mid-run death | `pnpm run start:e2e:dist` + the `projects/api/dist` artifact |
+| API from source (`start:nodemon`) | slow boot, occasional mid-run death | `pnpm run start:e2e:dist` + the `projects/api/dist` artifact |
 | One serial job | wall-clock = sum of everything | `parallel: 4` + `--shard=$CI_NODE_INDEX/$CI_NODE_TOTAL` |
 
 `workers: 1` stays in `playwright.config.ts`. CI parallelism is across
@@ -181,7 +181,7 @@ via `FF_NETWORK_PER_BUILD`), never across in-process workers — those collide o
 the virtual WebAuthn authenticator and on shared seed data.
 
 **Migrations do not run themselves.** `start:e2e:dist` and `start:nodemon` are
-bare node/ts-node — only `pnpm start` chains `migrate:up`. Without an explicit
+bare node starts (from `dist/` or from source) — only `pnpm start` chains `migrate:up`. Without an explicit
 `migrate:up` step the CI database has no seed data, and every test that depends
 on it skips itself. **A suite that quietly skips reports green and proves
 nothing** — always read the summary line (`N passed`, `M skipped`), never just
@@ -606,7 +606,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

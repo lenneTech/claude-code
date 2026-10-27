@@ -365,7 +365,7 @@ These hold without exception: the decorators are the access control, and a test 
 
 ## Autonomous Execution
 
-**Work autonomously:** Create tests, run tests, fix code, iterate Steps 3-5, use nest-server-generator skill
+**Work autonomously:** Create tests, run tests, fix code, iterate Steps 3-5, use generating-nest-servers skill
 
 **Only ask when:** Story ambiguous, security changes needed, new packages, architectural decisions, persistent failures
 

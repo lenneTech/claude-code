@@ -85,7 +85,7 @@ For each Dockerfile in the diff:
 #### Production Dockerfiles
 
 - [ ] **Multi-stage build** — 3 stages: deps, build, runtime
-- [ ] **Pinned base image** — no `:latest` (e.g., `node:20.11-alpine3.19`)
+- [ ] **Pinned base image** — no `:latest`, pinned by digest (e.g., `node:24-alpine@sha256:<digest>`), not below the framework's `engines.node`
 - [ ] **Non-root user** — `USER node` in final stage
 - [ ] **Layer caching** — `COPY package*.json` before source
 - [ ] **No secrets** — no `ENV SECRET=`, no `ARG PASSWORD=`
@@ -280,12 +280,12 @@ grep -rn "actions/checkout@v[12]\|actions/setup-node@v[12]\|actions/cache@v[12]"
 # Deprecated GitLab CI keywords
 grep -rn "^[[:space:]]*only:\|^[[:space:]]*except:" .gitlab-ci.yml .gitlab/ 2>/dev/null
 # EOL Node versions in Dockerfiles
-grep -rn "FROM node:1[0-6]\|FROM node:17" **/Dockerfile* 2>/dev/null
+grep -rnE "FROM node:(1[0-9]|2[01])([.-]|[[:space:]]|$)" **/Dockerfile* 2>/dev/null
 ```
 
 **Security-aware evaluation (mandatory for every finding):**
 Infrastructure deprecations often coincide with security or supply-chain hardening. For each finding, ask:
-- **EOL base images:** does the current base image still receive security patches? Node 16 and older receive no CVE fixes — upgrade is Medium minimum (supply-chain risk).
+- **EOL base images:** does the current base image still receive security patches? Node 21 and older receive no CVE fixes — upgrade is Medium minimum (supply-chain risk).
 - **Deprecated Actions versions:** has GitHub announced the action will stop running? Did the newer major version add required security features (e.g. `actions/checkout@v4` no longer persists credentials by default)?
 - **Deprecated Compose keys:** did the replacement introduce network isolation, secret handling, or capability-drop primitives not available in the old key?
 - **Deprecated CI keywords:** do the replacements add required security gating (e.g. GitLab `rules` support branch-protected conditions that `only`/`except` could not express)?

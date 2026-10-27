@@ -168,7 +168,10 @@ For each hunk in `upstream-delta.patch`:
 2. **Conflict**: touches lines that the local vendor also modified
 3. **Not applicable**: file path is never imported by consumer code
    (grep `projects/api/src/server`, `tests/`, `migrations/`, `scripts/`
-   for symbol names exported from the changed file)
+   for symbol names exported from the changed file). A file the core loads at run
+   time is never "not applicable", whatever the grep says: a `package.json` that sets
+   `"type"` for its directory, a `.cjs` or `.mjs` (`modules/migrate/helpers/`), a
+   template. Dropping one breaks the loader, not an import
 
 Write a structured report (output it to the user, no file needed):
 
@@ -276,10 +279,16 @@ Phase 8 fails against stale transitive deps.
    ```bash
    cat /tmp/nest-server-target/package.json
    ```
-2. For every `dependencies` / `peerDependencies` entry the upstream declares
-   that the project also lists in `projects/api/package.json`, raise the project
-   range to the upstream version **only when upstream is newer** (semver-max).
-   Never downgrade a project that is already ahead.
+2. For every package the upstream declares that the project also lists in
+   `projects/api/package.json`, raise the project range to the upstream version
+   **only when upstream is newer** (semver-max), in the section the project keeps
+   it. Never downgrade a project that is already ahead. This is the rule of the
+   starter's `pnpm run update`: what upstream ships (`dependencies`,
+   `peerDependencies`) counts for either project section; what it only develops
+   with (`devDependencies`) counts for the project's `devDependencies`. The dev
+   side matters on a major step: `typescript`, `@nestjs/testing`, `@nestjs/cli`
+   and `vitest` have to move with the core, or the project keeps a second NestJS
+   copy or a compiler the core no longer builds with.
 3. Add any **runtime helper** the upstream now requires that the project is
    missing. The CLI tracks these in `src/config/vendor-runtime-deps.json`
    (e.g. `find-file-up`); mirror that list — a helper that lives in the
@@ -328,10 +337,31 @@ NODE_ENV=e2e pnpm run test            # full e2e suite
 Loop this up to 10 times, fixing issues each round. Common issues:
 
 - **tsc error: Expected 0-1 arguments** → ES2022 syntax. Bump `target` in tsconfig.
+- **Hundreds of `TS2322` / `TS18048`, `Cannot find name 'process'`, `TS5011` (rootDir)
+  or `TS5107` (moduleResolution node10) after a sync into 12.x** → TypeScript 6
+  compiler defaults. Fix the project tsconfig as `nest-server-core-vendoring` →
+  "TypeScript 6" lists; never patch the core for it.
+- **`Class 'X' incorrectly extends base class 'CoreX'`** → a `@nestjs/*` pin in the
+  project's `package.json` lags the target's (two NestJS copies); Phase 7b step 2
+  missed one, `pnpm why @nestjs/common` names it.
 - **tsc error: Cannot find module '../../..'** → core-persistence-model flatten not reapplied.
 - **runtime error: input is invalid type** in sha256 → check `normalizePasswordForIam` defensive guard.
+- **`Cannot find module './core.module.js'` (or another core `.js`) at `pnpm start`
+  after a sync into 12.x, while build, tests and `migrate:*` pass** → the dev start
+  still runs ts-node, which cannot load the 12.x core's `./x.js` imports. Switch
+  `nodemon.json`, `nodemon-debug.json`, `docs:ci` and `start:nodemon` to
+  `node -r ./src/core/modules/migrate/helpers/ts-compiler.js …`
+  (`nest-server-core-vendoring` → "Core 12.x: what the sync has to carry").
+- **`TS5011` / `TS5110` from `migrate:list` while the build passes** → the project's
+  `migrations-utils/ts-compiler.js` is still the legacy form that reads the project
+  tsconfig. Run `lt fullstack update` (it replaces an unedited legacy file with the
+  current form where the CLI carries it), and replace a hand-edited one by hand
+  (`nest-server-core-vendoring` → "The migrate CLI in a Vendored Project"); never
+  loosen the tsconfig for it.
 - **migrate:list error: Cannot find module 'ts-node/register'** → use explicit
-  `./migrations-utils/ts-compiler.js` as --compiler argument, not bare `ts-node/register`.
+  `./migrations-utils/ts-compiler.js` as --compiler argument, not a bare loader.
+- **`Running TypeScript sources needs @swc/core`** → the core's `helpers/ts-compiler.js`
+  is an `@swc/core` require hook (core 12.x); `pnpm add -D @swc/core`.
 
 ### Phase 9: Sync upstream CLAUDE.md into project
 
@@ -402,8 +432,12 @@ Update `VENDOR.md`:
    `target: "es2022"` in consumer tsconfig.
 
 3. **migrate:* scripts:** need `./migrations-utils/ts-compiler.js` as local
-   ts-node bootstrap (not bare `ts-node/register`), because project tsconfig
-   restricts `types` field.
+   TypeScript loader (not a bare `ts-node/register`). The legacy form existing
+   projects carry is ts-node, which cannot load the 12.x core (`./x.js` imports) and
+   fails under TypeScript 6 (`TS5011`, `TS5110`): on a sync into 12.x it must hand
+   over to the core's loader `helpers/ts-compiler.js`, through `lt fullstack update`
+   after the sync or by hand for an edited file (`nest-server-core-vendoring`).
+   ts-node stays while the legacy form is in place (migration guide §14).
 
 4. **jsonTransport in smtp config:** vendor's IServerOptions.smtp type was
    missing JSONTransport.Options. Local patch in the vendor pilot project. Upstream-candidate
@@ -411,6 +445,13 @@ Update `VENDOR.md`:
 
 5. **migration-project.template.ts + vite.config.ts:** must be in tsconfig
    `exclude` list to avoid spurious tsc errors on non-runtime files.
+
+6. **Sync into 12.x (NestJS 12):** beyond the code, the sync carries the dev start
+   through the core's loader, the non-TypeScript files of
+   `modules/migrate/helpers/` and a `bin/package.json` (`"type": "commonjs"`) next to
+   `bin/migrate.js`; `nest-server-core-vendoring` → "Core 12.x: what the sync has to
+   carry" lists each with its symptom. Prove it with `pnpm start` (or
+   `check:server-start`), not only build and tests: the missing dev start passes both.
 
 ## Report Output
 

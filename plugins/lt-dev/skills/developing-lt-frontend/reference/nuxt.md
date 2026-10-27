@@ -90,17 +90,21 @@ const { data } = await useAsyncData('dashboard', async () => {
 
 ### Image Optimization
 
+`<NuxtImg>` exists only where the project has `@nuxt/image` (`grep '"@nuxt/image"' package.json`). The
+starter does not ship it; do not add it for a few images. Without it, a plain `<img>` with fixed size,
+lazy loading and an optimized file is the pattern:
+
 ```vue
 <template>
-  <NuxtImg
-    src="/hero.jpg"
-    width="800"
-    height="600"
-    format="webp"
-    loading="lazy"
-  />
+  <!-- without @nuxt/image -->
+  <img src="/hero.webp" width="800" height="600" alt="Team at the workshop" loading="lazy" />
+
+  <!-- with @nuxt/image in package.json -->
+  <NuxtImg src="/hero.jpg" width="800" height="600" format="webp" alt="Team at the workshop" loading="lazy" />
 </template>
 ```
+
+`width`/`height` keep the layout from shifting; above-the-fold images (the hero) drop `loading="lazy"`.
 
 ## Route Middleware
 
