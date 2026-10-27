@@ -186,6 +186,16 @@ What does **not** go over messages: which repos exist and in which order they go
   it is the one place a wire split shows up as a failing flow rather than as a
   version diff.
 
+- **Nothing is published before `/lt-dev:review` ran** over that repo's release diff
+  (`/lt-dev:review --base=<last release tag>`, which includes uncommitted and untracked files),
+  after its maintenance and before its version bump. Take the tag from `origin/main`:
+  `git describe --tags --abbrev=0 origin/main`. Release tags sit on `main` in every base repo, and
+  nest-server's are merge commits that `develop` never contains, so a lookup from `HEAD` returns a
+  tag releases old (measured 2026-10-27 on nest-server `develop`: `11.33.1` instead of `12.0.0`, a
+  review over 851 files instead of 14). Every repo of a chain passes it on its own
+  diff; a finding the review could not fix stops that repo's release and everything downstream of
+  it. Decided by Kai 2026-10-21, so that an automated release chain never publishes code nobody
+  reviewed.
 - **No change → no release.** The ONLY case that skips a release is a repo
   where truly NOTHING changed (working tree clean AND no commits since the
   last released version) — never mint a version that contains no changes at
@@ -334,6 +344,10 @@ payload has to be committed first (recipes.md, "Marketplace repos"); maintenance
 interactive gate — the command ASKS "publish directly" vs. "maintain first"
 (`/lt-dev:maintenance:maintain`) rather than auto-running it; the smoke test is
 opt-in instead of mandatory; and the chain ends after the direct consumers.
+When a live session works in a downstream repo, the command asks up front whether this run
+releases it from a separate worktree on `origin/main` (that session's checkout stays untouched,
+with `CLAIM` before and `LANDED` after) or hands it over to that session, whose user then types
+one line to publish; a release never starts from a message.
 Everything else — the no-change gate, commit-message convention, release-note
 conventions, propagation waits — applies unchanged.
 

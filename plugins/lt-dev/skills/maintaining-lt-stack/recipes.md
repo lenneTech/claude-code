@@ -111,7 +111,8 @@ Part of the [`maintaining-lt-stack`](SKILL.md) skill. Where a step says "see the
    `cd nuxt-base-template && pnpm i && pnpm run check`.
 3. Optional but recommended before UI-lib bumps: `pnpm run test:e2e` in the
    template (Playwright is NOT part of `check`).
-4. `git add .` → commit (message from diff analysis) → version via
+4. Stage the paths this update changed (`git add <paths>`, never `git add .`: the checkout can
+   hold a live session's uncommitted work) → commit (message from diff analysis) → version via
    `pnpm exec standard-version --release-as <patch|minor|major>` → then push the
    commit and the tag **in two steps**, NOT via `pnpm run release`:
 
@@ -179,7 +180,8 @@ Part of the [`maintaining-lt-stack`](SKILL.md) skill. Where a step says "see the
    downstream update. Applies in publish-directly mode too (this is part of the
    recipe, not the dependency-maintenance step that `--skip-maintenance` skips).
 3. Maintenance (`/lt-dev:maintenance:maintain`) → `pnpm run check` again.
-4. Commit: on a nest-server version change exactly
+4. Commit the paths this update changed (`git add <paths>`, never `git add .`, as in
+   nuxt-base-starter step 4): on a nest-server version change exactly
    `Updated to nest-server version <X.Y.Z>`, otherwise a normal message →
    push main.
 5. **Then stop — the tag makes itself.** `.github/workflows/tag.yml` fires on a push

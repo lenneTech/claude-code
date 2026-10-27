@@ -19,6 +19,15 @@
       ]
     },
     {
+      "name": "every base-repo release passes the review gate, based on the last release tag on origin/main",
+      "phrase": "git describe --tags --abbrev=0 origin/main",
+      "files": [
+        "skills/maintaining-lt-stack/SKILL.md",
+        "commands/publish.md",
+        "commands/maintenance/maintain-stack.md"
+      ]
+    },
+    {
       "name": "closing line of a change report (English)",
       "phrase": "Not checked:",
       "files": [

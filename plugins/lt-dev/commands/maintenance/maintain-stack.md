@@ -1,7 +1,7 @@
 ---
 description: Fully automated maintenance and release of all lt base repos in dependency order, gated by the full fullstack smoke test. Every finding is fixed in the base repo that caused it and re-released until the stack is clean. Leaves no test artifacts.
 argument-hint: '[--only=<repo,repo>] [--skip-smoke-test] [--smoke-rounds=1] [--release-as=patch|minor|major] [--dry-run]'
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, Skill(lt-dev:fullstack:smoke-test), Skill(lt-dev:maintenance:maintain), Skill(lt-dev:git:commit-message), SendMessage, ToolSearch
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, Skill(lt-dev:review), Skill(lt-dev:fullstack:smoke-test), Skill(lt-dev:maintenance:maintain), Skill(lt-dev:git:commit-message), SendMessage, ToolSearch
 disable-model-invocation: true
 ---
 
@@ -32,7 +32,7 @@ repo-dependent to enumerate as individual patterns.
 
 ### Turn endings
 
-This command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; waiting on npm propagation or CI means polling again, not reporting. The run stops only at the handoff points this command defines (a red Phase 0 preflight, the `--dry-run` plan, the report after the third Phase 5 iteration), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation. The releases themselves are the job the user started this command for.
+This command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; waiting on npm propagation or CI means polling again, not reporting. The run stops only at the handoff points this command defines (a red Phase 0 preflight, the `--dry-run` plan, a review-gate finding the review could not fix, the report after the third Phase 5 iteration), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation. The releases themselves are the job the user started this command for.
 
 ### Phase 0 — Preflight (hard gate: stop on red)
 
@@ -52,9 +52,13 @@ This command runs to completion without check-ins. A message without a tool call
 ### Phase 1 — Wave 1 (nuxt-extensions ∥ nest-server ∥ lt-monorepo ∥ cli)
 
 Per repo: the `lt-dev:npm-package-maintainer` agent (FULL, without commit), then
-the orchestrator commits, versions and releases following the skill recipe.
-Repos may run in parallel (separate directories); run at most 2 CPU-heavy
-`check` runs at once. `--release-as` sets the version bump (default: derive it
+the skill's review gate, then the orchestrator commits, versions and releases
+following the skill recipe. The review gate is `/lt-dev:review --base=<tag>
+--repo=<repo path>` (via the `Skill` tool), the tag from
+`git describe --tags --abbrev=0 origin/main`; a finding it could not fix stops
+that repo's release and every repo downstream of it. Repos may run in parallel
+(separate directories), the reviews one repo at a time, since each fans out its
+own reviewer fleet; run at most 2 CPU-heavy `check` runs at once. `--release-as` sets the version bump (default: derive it
 from the diff; dependency-only changes ⇒ patch).
 
 A maintainer agent's final message is its report, not proof that the task is done. Compare it against the task given; when items are still open and no blocker is named, resume the same agent via `SendMessage` to its agent id, naming the open items. After two or three continuations on the same task, stop and report the gap instead.
@@ -76,7 +80,8 @@ failure (re-run). Do not stack a new tag on top.
 
 Follow the skill recipe: raise the dependency version, run `pnpm run update`
 plus the migration guides (nest-server-starter), run the maintenance agent, run
-`check` twice (repo root and template), follow the commit convention, release.
+`check` twice (repo root and template), pass the review gate as in Phase 1,
+follow the commit convention, release.
 
 ### Phase 4 — Release gate: smoke test
 
@@ -87,7 +92,8 @@ validates exactly what customers get.
 ### Phase 5 — Findings → patch releases (loop)
 
 Fix each smoke-test finding in the base repo that **caused** it, never only in
-the throwaway project. Release it as a patch using the repo recipe, wait for npm
+the throwaway project. Release it as a patch using the repo recipe, after the
+review gate (Phase 1), wait for npm
 propagation and repeat the smoke-test phase until no findings remain (at most 3
 iterations, then report the open items).
 

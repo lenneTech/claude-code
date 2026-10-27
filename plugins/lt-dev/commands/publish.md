@@ -1,7 +1,7 @@
 ---
 description: Publish the current (or a named) lt base repo as a new version, optionally maintaining dependencies first, then update and release its downstream base repos (nest-server-starter, nuxt-base-starter). Smoke test opt-in via --smoke-test.
 argument-hint: '[nest-server|nuxt-extensions|lt-monorepo|cli|nuxt-base-starter|nest-server-starter|claude-code|claude-code-internal] [--release-as=patch|minor|major] [--skip-downstream] [--maintenance|--skip-maintenance] [--smoke-test] [--dry-run]'
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, Skill(lt-dev:git:commit-message), Skill(lt-dev:plugin:check), Skill(lt-dev:maintenance:maintain), Skill(lt-dev:fullstack:smoke-test), ToolSearch
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, ListAgents, SendMessage, TaskStop, Skill(lt-dev:review), Skill(lt-dev:git:commit-message), Skill(lt-dev:plugin:check), Skill(lt-dev:maintenance:maintain), Skill(lt-dev:fullstack:smoke-test), ToolSearch
 disable-model-invocation: true
 ---
 
@@ -29,7 +29,7 @@ target.
 
 ## Turn endings
 
-This command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; waiting on npm propagation means polling again, not reporting. The run stops only at the handoff points this command defines (a cwd that is not a base repo, foreign-looking changes in the preflight, the step 1b report on red gates, the step 2 maintenance gate, a downstream `check` failing on its own outdated dependencies, the `--dry-run` plan), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation. The releases themselves are the job the user started this command for.
+This command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; waiting on npm propagation means polling again, not reporting. The run stops only at the handoff points this command defines (a cwd that is not a base repo, foreign-looking changes in the preflight, the step 1b report on red gates, the step 2 questions (maintenance, and the route for a downstream repo a live session works in), a step 2b review finding the review could not fix, a downstream `check` failing on its own outdated dependencies, the `--dry-run` plan), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation. The releases themselves are the job the user started this command for.
 
 Commands named below as `/lt-dev:<name>` are invoked through the `Skill` tool in their `lt-dev:<name>` form.
 
@@ -90,8 +90,8 @@ and **every** `plugins/*/plugin.json` to the same version, then commits, tags
 - **`claude-code`** commits **only the version bump**, on top of `HEAD`, and refuses to
   start while anything is staged. Several sessions share this checkout and leave their
   work uncommitted by house rule, so the script never sweeps the tree. The release
-  content is whatever is **already committed**: commit the final changes first with
-  explicit paths (`git add <paths>`, never `git add .`), then run the script. Run it
+  content is whatever is **already committed**: after the step 2b review, commit the final
+  changes with explicit paths (`git add <paths>`, never `git add .`), then run the script. Run it
   over uncommitted content and the release ships a version number with none of that
   content. 8.15.2 shows the intended shape: a content commit, then a bump commit that
   touches only the version files.
@@ -187,8 +187,8 @@ A restart of Claude Code is required — running sessions keep the old version.
 
    | Answer | Source repo | Downstream repo(s) |
    |---|---|---|
-   | Maintain first | maintain + release | bump + **maintain** + `check` + release |
-   | Publish directly | release as-is | bump + `check` + release (**no** dependency refresh) |
+   | Maintain first | maintain + review + release | bump + **maintain** + `check` + review + release |
+   | Publish directly | review + release as-is | bump + `check` + review + release (**no** dependency refresh) |
 
    Say which repos the answer will cover when asking, so the scope is visible
    before the choice (e.g. "applies to nest-server AND nest-server-starter").
@@ -201,6 +201,32 @@ A restart of Claude Code is required — running sessions keep the old version.
    maintenance runs and afterwards there is genuinely NO change to the
    published artifact, stop with "already current — nothing to publish"
    (skill rule: no change → no release).
+
+   **Downstream route, asked in the same `AskUserQuestion` call** (not with `--skip-downstream`).
+   For each downstream repo of the chain run
+   `bash "${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh" <downstream checkout>`. On
+   `HANDOVER-QUESTION` (or `UNKNOWN` with a `ListAgents` row named after that repo) a live session
+   is its expert, and its checkout holds that session's uncommitted work. Ask which route the
+   release takes there, naming the session:
+   - **Release here in a worktree** (recommended): this run releases the repo from a separate
+     worktree on `origin/main`, the expert's checkout stays untouched, and the chain finishes in
+     this run.
+   - **Hand over to `<session>`**: the expert session prepares the release, and its user types
+     one line there to publish it.
+
+   On `NONE` or `SELF` there is nothing to ask; step 5 works in the checkout itself. The
+   maintenance flags pre-answer only the maintenance question; `--dry-run` names the route
+   options in its plan instead of asking.
+2b. **Review gate: nothing is published before `/lt-dev:review` ran.** Run it over this repo's
+   release diff after the step-2 maintenance (its changes ship too) and before any version bump
+   or release commit:
+   `/lt-dev:review --base=<last release tag>` (`git describe --tags --abbrev=0 origin/main`; looked
+   up from `HEAD`, nest-server's `develop` finds a tag releases old, see the skill rule). The review
+   includes uncommitted and untracked files, which is where a base repo's payload usually sits,
+   and fixes what it reports. A finding it could not fix stops this repo's publish: report it and
+   release nothing from this repo, and nothing downstream either, since a downstream bump would
+   point at a version that never came out. Each downstream repo passes the same gate in step 5,
+   over its own diff.
 3. **Release source repo** per skill recipe — for `claude-code` /
    `claude-code-internal` use the marketplace section above instead — (version bump, commit convention,
    PR flow for nest-server incl. migration guide, `gh release create`,
@@ -212,23 +238,74 @@ A restart of Claude Code is required — running sessions keep the old version.
    or the fixed `Updated to nest-server version <X.Y.Z>`). If after maintenance
    there is genuinely NO change to the published artifact: stop with
    "already current — nothing to publish" (skill rule: no change → no release).
-4. **Wait for npm propagation** (`npm view <pkg> version`), npm packages only.
+4. **Wait for npm propagation**, npm packages only: poll the version-specific endpoint
+   (`https://registry.npmjs.org/<pkg>/<version>` answers 200), never `npm view`, which reads a
+   cache that lags minutes behind a publish (skill rule).
 5. **Update downstream** (unless `--skip-downstream`): bump to the new
    version per its recipe (lock-step + migration guides for
    nest-server-starter), then **apply the step-2 answer here too** — run
    `/lt-dev:maintenance:maintain` (latest frameworks + packages) only when the
    gate was answered "Maintain first" (or `--maintenance` was passed); on
    "Publish directly" / `--skip-maintenance` do the lock-step bump WITHOUT the
-   dependency refresh. Either way: iterate `check` green, release. A downstream
+   dependency refresh. Either way: iterate `check` green, pass the step-2b
+   review gate over this repo's diff (`--repo=<path>` when it is not the working
+   directory), commit only the paths the update changed (`git add <paths>`,
+   never `git add .`), release. A downstream
    `check` that fails on its own outdated dependencies is the one exception —
    report it and ask, rather than silently upgrading past the user's answer.
+
+   Where this runs follows the step-2 route:
+
+   - **No live session there** (`NONE`, `SELF`): in the repo's checkout.
+   - **Release here in a worktree.** Claim the repo first, from its checkout and not from the
+     worktree, because the ledger is keyed by the repository root
+     (`cd <checkout> && bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh" claim "repo:<name>" "release <version> from a worktree"`),
+     and send its expert one `CLAIM` before the first write:
+
+     ```
+     [CLAIM] nest-server-starter — releasing 12.1.0 from a separate worktree on origin/main.
+     Betrifft: main gains the release commit and tag; your checkout and uncommitted work stay untouched.
+     Nötig: push nothing to main until LANDED.
+     Frei: when I report LANDED.
+     ```
+
+     Build the worktree in a temporary directory outside every checkout, run the whole recipe there
+     (install, bump, migration guides, maintenance per the answer, `check`, review, commit), and
+     push from it:
+
+     ```bash
+     git -C <checkout> fetch origin
+     git -C <checkout> worktree add --detach <tmp>/<repo>-<version> origin/main
+     # … recipe inside the worktree …
+     git -C <worktree> push origin HEAD:main            # HEAD:main, never main: in a detached
+                                                        # worktree `main` is the expert's local branch
+     git -C <worktree> push origin refs/tags/vX.Y.Z     # only where the recipe pushes its tag itself
+     git -C <checkout> worktree remove --force <worktree>   # once the push is verified on the remote
+     ```
+
+     Release the ledger claim from the checkout with the version, then send one `LANDED`:
+
+     ```
+     [LANDED] nest-server-starter 12.1.0 — released from a worktree, origin/main is at <sha>.
+     Betrifft: your checkout, which is now behind origin/main.
+     Nötig: pull with rebase before your next commit; nothing in your tree was touched.
+     ```
+
+   - **Hand over.** Send the expert session one `SOLVED` that opens with `Übergabe auf
+     Entscheidung von <user>:` and names the released upstream version, the step-2 answer and
+     the recipe. That session prepares the release in its own checkout (bump, migration guides,
+     maintenance per the answer, `check` green) without committing, and its user then types
+     `/lt-dev:publish --skip-maintenance` there, which runs the review gate and releases what was
+     prepared. A release never starts from a message, so this run ends for that repo here.
 6. **Validate**: downstream `check` green is the default gate; for marketplace
    repos it is `claude plugin validate` per changed plugin. With
    `--smoke-test`, run `/lt-dev:fullstack:smoke-test` afterwards (recommended
    when the change touches scaffold-critical paths: build wiring, auth, SSR,
    deploy contract). The smoke test does not apply to marketplace repos.
-7. **Report**: versions old→new per repo, release links, what was NOT
-   released and why, leftovers (none expected — this flow creates no test
+7. **Report**: versions old→new per repo, release links, the review result
+   per repo, the route per downstream repo (checkout, worktree with `CLAIM` and
+   `LANDED`, or handed over to `<session>` together with the line its user types),
+   what was NOT released and why, leftovers (none expected — this flow creates no test
    systems unless `--smoke-test` ran, which cleans up after itself).
 
 ## Flags
@@ -252,5 +329,8 @@ A restart of Claude Code is required — running sessions keep the old version.
 ## Related
 
 - Skill `maintaining-lt-stack` — **load first**; recipes, gates, pitfalls.
+- `/lt-dev:review` — the step 2b gate every repo of the chain passes before its release.
+- Skill `coordinating-peer-sessions` — `repo-expert.sh`, the ledger and the message formats behind
+  the step 5 routes.
 - `/lt-dev:maintenance:maintain-stack` — the full-stack cycle.
 - `/lt-dev:fullstack:smoke-test` — optional end-to-end gate.

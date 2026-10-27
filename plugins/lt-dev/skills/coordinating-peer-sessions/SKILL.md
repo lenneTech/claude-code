@@ -106,6 +106,7 @@ The question names the expert session (match the script's pid to its `ListAgents
 
 - **Hand over** → send the expert session one `SOLVED` that opens with `Übergabe auf Entscheidung von <user>:` and carries everything it needs to act without asking back: what to change, where (`file:line`), the evidence, and the proposed fix. Then do not touch those paths; pick the thread back up when it reports `READY`, or subscribe with `notify_when_idle`.
   **A whole ticket** (`take-ticket` STEP 1c) is handed over the same way, naming the ticket ID instead of a fix, and asks for a one-word answer: `übernommen` or `abgelehnt`. The receiving session answers at once, `übernommen` only when it starts the ticket now (`/lt-dev:take-ticket <ID>`), `abgelehnt` when it is in the middle of other work. The sender waits up to five minutes; silence counts as `abgelehnt`, and the sender implements the ticket itself.
+  **A release** (`/lt-dev:publish` step 5) is handed over the same way, naming the released upstream version. The receiving session prepares everything up to the release in its own checkout, commits nothing, and tells its user the one line to type (`/lt-dev:publish --skip-maintenance`). It never releases on the message alone: publishing is the user's act, which is why `/lt-dev:publish` is a slash command only.
 - **Implement here** → write a ledger claim and send the expert session one `CLAIM` naming the paths **before the first edit**, so it freezes them, and keep to its answer if it reports work already in flight on them. Release with `READY` and the list of changes.
 
 **When the expert already acted.** A handover or a claim can cross with the expert's own work. Look at the paths' modification times before editing (`find <paths> -newermt …`): if they changed after your message, build on the expert's state and say so, never overwrite it. Observed 2026-10-08: a claim to take over seven review fixes arrived after the author session had already implemented all of them; checking the mtimes first turned a collision into a review of its work.
@@ -262,7 +263,7 @@ Messages are not history. A session that starts later never learns what was sent
 | `LANDED`, `READY`, `CONFLICT`, `ASK`, `ORIGIN` | Message only | Genuinely about this moment; stale within the hour |
 | **An `ORIGIN` answer that explains a trade-off** | **Ledger `note`, or the ticket / MR description** | The question is about this moment, the answer often is not. "We chose the shared cache because per-request invalidation cost more than it saved" is worth as much next month as today, and it dies with the terminal unless somebody writes it down. |
 
-The ledger is `scripts/peer-ledger.sh`. It stores state per repository under `${CLAUDE_PLUGIN_DATA}`, never inside a project, so no customer repo gains a file and nothing shows up in a diff.
+The ledger is `scripts/peer-ledger.sh`. It stores state per repository under `~/.claude/lt-dev/peer-ledger/`, never inside a project, so no customer repo gains a file and nothing shows up in a diff.
 
 ```bash
 bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh" read

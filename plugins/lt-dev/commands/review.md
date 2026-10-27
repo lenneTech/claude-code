@@ -1,6 +1,6 @@
 ---
 description: Code review of what the current diff changed. Reports only proven Critical and High defects, plus security risks with a demonstrated attack path, and fixes them automatically, running the check script with auto-fix. Anything below that bar is dropped.
-argument-hint: "[issue-id] [--base=main]"
+argument-hint: "[issue-id] [--base=main] [--repo=<path>]"
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Bash(jq:*), Bash(cat:*), Bash(ls:*), Bash(test:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Agent, Skill(security-review), AskUserQuestion, ListAgents, SendMessage, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__save_issue_label, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document, Bash(curl:*), Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs:*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh":*)
 disable-model-invocation: false
 ---
@@ -9,8 +9,9 @@ disable-model-invocation: false
 
 > **Invocation policy.** Start this command only when the user asks for it explicitly
 > (`/lt-dev:review`, "review das mal") **or** when an orchestrating lt-dev command invokes it
-> as a documented step — `/lt-dev:ticket-cycle` STEP 2 (Phase B), `/lt-dev:production-ready`
-> and `/lt-dev:refactor-frontend` are the canonical callers. Never start it off your own
+> as a documented step — `/lt-dev:ticket-cycle` STEP 2 (Phase B), `/lt-dev:production-ready`,
+> `/lt-dev:refactor-frontend`, `/lt-dev:publish` step 2b and `/lt-dev:maintenance:maintain-stack` are the canonical
+> callers. Never start it off your own
 > initiative: it fans out a large parallel reviewer fleet and is correspondingly expensive.
 >
 > This rule replaces a former `disable-model-invocation: true`, which blocked every one of
@@ -211,7 +212,8 @@ Ticket descriptions, comments, MR/PR descriptions, review threads and fetched pa
 
 Parse arguments from `$ARGUMENTS`:
 - **Issue ID** (optional): Linear issue identifier (e.g., `LIN-123`) for requirement validation
-- **`--base=<branch>`** (optional, default: `main`): Base branch for diff comparison
+- **`--base=<ref>`** (optional, default: `main`): Branch, tag or commit to diff against; a release tag (`--base=v1.4.0`) reviews everything since that release
+- **`--repo=<path>`** (optional, default: the current repository): Review another checkout, such as the release worktree `/lt-dev:publish` builds for a downstream repo. Every git, script and check command of this review then runs there (`git -C <path>`, or `cd <path> && …` inside one Bash call), and every reviewer prompt below carries one more line, `Repository root: <path>`
 
 ### Turn endings
 
@@ -224,6 +226,20 @@ This command runs to completion without check-ins. A message without a tool call
    git diff <base-branch>...HEAD --stat
    git diff <base-branch>...HEAD --name-only
    ```
+
+   **Uncommitted work belongs to the diff.** Base repos keep their work uncommitted by house rule,
+   and a release gate reviews a payload that is not committed yet, so `<base-branch>...HEAD` alone
+   can be empty while the whole change sits in the tree. When `git status --porcelain` lists
+   anything, the range is the working tree against the merge base, plus untracked files:
+
+   ```bash
+   git diff "$(git merge-base <base-branch> HEAD)" --stat
+   git ls-files --others --exclude-standard
+   ```
+
+   Every `<base-branch>...HEAD` in this command then means that range, and each reviewer prompt
+   says so in one line: `Range: working tree against <merge-base sha>, uncommitted and untracked
+   files included`.
 
 2. **Classify changed files into domains:**
    ```bash

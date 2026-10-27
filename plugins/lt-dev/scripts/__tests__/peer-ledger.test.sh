@@ -36,7 +36,9 @@ TMP_ROOT="$(mktemp -d)"; TMP_ROOT="$(cd "$TMP_ROOT" && pwd -P)"
 cleanup() { rm -rf "$TMP_ROOT"; }
 trap cleanup EXIT
 
-export CLAUDE_PLUGIN_DATA="$TMP_ROOT/data"
+# A Bash tool call's environment: Claude Code does not export CLAUDE_PLUGIN_DATA there.
+export HOME="$TMP_ROOT/home"
+unset CLAUDE_PLUGIN_DATA
 REPO="$TMP_ROOT/repo"; mkdir -p "$REPO"
 cd "$REPO" || exit 1
 
@@ -98,6 +100,19 @@ assert_contains "$out" "cause: shared e2e DB" "a note survives the session that 
 run "$LIVE_PID" note "messy" "$(printf 'line one\tand\ntwo')" >/dev/null
 out="$(run "$LIVE_PID" read)"
 assert_contains "$out" "line one and two" "collapses tabs and newlines instead of corrupting the record"
+
+# Hooks run with CLAUDE_PLUGIN_DATA set, Bash tool calls without it. A path derived from it split
+# the ledger in two: sessions wrote under ~/.claude/lt-dev, while the SessionStart prune looked
+# under ~/.claude/plugins/data/lt-dev-*/ and never found a file (measured 2026-10-27, nothing
+# had been pruned there since the ledger existed). Both environments must reach one file.
+HOOK_ENV_DATA="$TMP_ROOT/plugin-data"
+out="$(CLAUDE_PLUGIN_DATA="$HOOK_ENV_DATA" CLAUDE_PID="$LIVE_PID" bash "$SCRIPT" read 2>&1)"
+assert_contains "$out" "cause: shared e2e DB" "a hook's environment reads the ledger a Bash call wrote"
+out="$(CLAUDE_PLUGIN_DATA="$HOOK_ENV_DATA" CLAUDE_PID="$LIVE_PID" bash "$SCRIPT" prune 2>&1)"
+assert_contains "$out" "pruned" "a hook's prune reaches the ledger a Bash call wrote"
+CLAUDE_PLUGIN_DATA="$HOOK_ENV_DATA" CLAUDE_PID="$LIVE_PID" bash "$SCRIPT" note "hook-topic" "written from a hook" >/dev/null 2>&1
+out="$(run "$LIVE_PID" read)"
+assert_contains "$out" "written from a hook" "a Bash call reads what a hook's environment wrote"
 
 # Day counts are digits only. Bash arithmetic evaluates `PATH[$(cmd)]` and runs cmd, and skills
 # grant this script by name without a prompt, so an unchecked value was a way to run any

@@ -18,8 +18,12 @@
 # claim reads as stale and is free to take, so nothing stays blocked by a
 # session that crashed or was closed.
 #
-# State lives outside every repository (never in a customer project):
-#   ${CLAUDE_PLUGIN_DATA:-~/.claude/lt-dev}/peer-ledger/<repo-key>.tsv
+# State lives outside every repository (never in a customer project), at one
+# fixed path:
+#   ~/.claude/lt-dev/peer-ledger/<repo-key>.tsv
+# Not under CLAUDE_PLUGIN_DATA: Claude Code exports it to hooks but not to Bash
+# tool calls, so a path derived from it gave the SessionStart prune a different
+# file than the one sessions write.
 #
 # Usage:
 #   peer-ledger.sh claim   <topic> [detail]   claim a topic for this session
@@ -34,7 +38,7 @@
 
 set -u
 
-STATE_DIR="${CLAUDE_PLUGIN_DATA:-$HOME/.claude/lt-dev}/peer-ledger"
+STATE_DIR="$HOME/.claude/lt-dev/peer-ledger"
 NOTES_DAYS_DEFAULT=30
 PRUNE_DAYS_DEFAULT=30
 
