@@ -227,23 +227,30 @@ If all ACs are satisfied, log `All acceptance criteria satisfied — proceeding`
 
    Format and occasions: [`coordinating-peer-sessions`](../../skills/coordinating-peer-sessions/SKILL.md).
 
-1b. **If anything under `.claude/agent-memory/` is dirty**, follow the
+1b. **If anything under `.claude/agent-memory/` is dirty, or a `.claude/agent-memory`
+   is a symlink to an external note store**, follow the
    [`managing-agent-memory`](../../skills/managing-agent-memory/SKILL.md) skill
-   FIRST — it resolves the repo's commit policy (asking at most once, then
+   FIRST — it resolves the repo's commit policy (none for an external store,
+   `local` without asking in a public repo, otherwise asking at most once and
    remembering the answer locally) and curates the notes so no note that a
-   rename or a fix has invalidated gets committed. Only then continue below.
+   rename or a fix has invalidated gets committed. Every scope it does not resolve
+   to `commit` stays out of each staging step below (STEP 2 and STEP 5): instead of
+   a bare `git add -A`, stage with
+   `git add -A -- ':/' ':(top,exclude)<scope>.claude/agent-memory'`, one exclusion
+   per such scope (the skill explains `<scope>`). `.gitignore` does not cover a
+   tracked note. Only then continue below.
 2. **If there are uncommitted changes:**
    - With `--unattended`: take Option 1 without asking, staging the paths 1a attributed to this
      session plus the tool output it resolved by committing (`git add <paths>`, not
-     `git add -A`). Typical sources: fixes made during the browser walk, a tool's rewrite of a
-     tracked file.
+     `git add -A`), minus the agent-memory scopes 1b keeps out of the commit. Typical sources:
+     fixes made during the browser walk, a tool's rewrite of a tracked file.
    - Otherwise ask via `AskUserQuestion`:
      - Show the list of changed files.
      - Option 1: "Automatisch committen & pushen" — proceed below
      - Option 2: "Ich committe selbst" — pause, then re-check
      - Option 3: "Abbrechen"
    - On Option 1:
-     - `git add -A`
+     - `git add -A`, with the agent-memory exclusions from 1b when it kept a scope out
      - Generate a concise commit message from the diff. Prefix with the Linear identifier if the branch name carries one (e.g. `abc-123-...` → `ABC-123: <summary>`).
      - `git commit -m "<message>"`
 3. **Check unpushed commits:** `git log @{upstream}..HEAD --oneline 2>/dev/null` (or compare against the would-be upstream if no upstream is set).
@@ -347,7 +354,7 @@ Pre-existing errors are fixed here like any other. The question is only whether 
 
 1. Re-run `git status --porcelain`.
 2. **If new uncommitted changes exist** (from Phase 4 fixes):
-   - `git add -A`
+   - `git add -A`, with the agent-memory exclusions from STEP 2 1b when it kept a scope out
    - `git commit -m "chore: post-rebase fixes (tests + check)"` — or a more specific message if the changes are obviously scoped (e.g. "fix: failing API test for X").
 
    > ⚠️ **The `check` script auto-fixes format/lint in the working tree, not in the commit.** If the check ran *after* the commit was created (typical post-rebase order), its formatter fixes are sitting uncommitted — pushing without this `git status` sweep ships the unformatted commit and the remote `lint` job fails on `format:check` (seen live: oxfmt fix left in the tree, CI red on exactly one file). This step therefore runs after every check run.

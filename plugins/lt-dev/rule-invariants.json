@@ -83,6 +83,14 @@
       ]
     },
     {
+      "name": "agent-memory scopes outside `commit` stay out of staging: .gitignore does not cover a tracked note, so a bare git add -A publishes it",
+      "phrase": "git add -A -- ':/' ':(top,exclude)<scope>.claude/agent-memory'",
+      "files": [
+        "skills/managing-agent-memory/SKILL.md",
+        "commands/git/ship.md"
+      ]
+    },
+    {
       "name": "the layout lt dev init accepts; has_dev_layout() in hooks/scripts/detect-lt-dev.sh checks the same files",
       "phrase": "`src/config.env.ts` or `nest-cli.json` (API) or `nuxt.config.ts` (app)",
       "files": [

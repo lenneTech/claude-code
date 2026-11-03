@@ -392,9 +392,12 @@ Read [release-performance.md](release-performance.md) when a publish run looks s
   run `pnpm i` there (the template has its OWN lockfile next to the repo
   root's).
 - **Agent memory:** follow the [`managing-agent-memory`](../managing-agent-memory/SKILL.md)
-  skill — it resolves the repo's commit policy (asking at most once, then
-  remembering the answer in `.claude/settings.local.json`) and curates the notes
-  before they are staged. Never leave them in unstaged limbo.
+  skill — it resolves each scope's policy (none for an external note store behind a
+  symlink, `local` without asking in a public repo, otherwise asking at most once
+  and remembering the answer in `.claude/settings.local.json`) and curates the notes
+  before anything is staged. Under `commit` they go into the release commit, never
+  left unstaged; every other scope stays out of each `git add` (the skill gives the
+  exclusion, `.gitignore` does not cover a tracked note) and is named in the summary.
 - **Release scripts that push themselves** (nuxt-base-starter `release`): their
   embedded `git push --follow-tags` was refused at v2.25.0 for a reason nobody has
   measured — run the version tool directly and push commit and tag yourself, in

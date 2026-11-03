@@ -12,7 +12,7 @@ ones still deserve to be there is a **judgement call that has to be re-made ever
 time**, because notes rot: the code they describe gets renamed, and the bugs they
 warn about get fixed.
 
-Three failure modes this skill exists to prevent:
+Four failure modes this skill exists to prevent:
 
 1. **Asking the same question forever.** Re-prompting on every commit is noise.
 2. **Answering it once for everything.** A decision taken in one project must
@@ -21,6 +21,9 @@ Three failure modes this skill exists to prevent:
    that has since been closed, or naming a symbol a rename deleted, is worse than
    no note — it sends the next agent down a path that no longer exists and gets
    believed because it looks specific.
+4. **Publishing notes through a public repository.** Notes describe weaknesses
+   before the fix lands, internal project names, local paths and people. A public
+   history keeps every one of them, even after the files are removed.
 
 ## STEP 0 — Find the scopes (there is usually more than one)
 
@@ -33,14 +36,17 @@ ROOT=$(git rev-parse --show-toplevel)
 git -C "$ROOT" ls-files '*.claude/agent-memory/*' | sed 's|\.claude/agent-memory/.*||' | sort -u
 ```
 
-An empty prefix means the repo root. Add any scope that is untracked but dirty:
+An empty prefix means the repo root. Add every scope that exists on disk, tracked
+or not, including one whose `agent-memory` is a symlink:
 
 ```bash
-find "$ROOT" -type d -name agent-memory -path '*/.claude/*' -not -path '*/node_modules/*'
+find "$ROOT" \( -type d -o -type l \) -name agent-memory -path '*/.claude/*' \
+  -not -path '*/node_modules/*' -not -path '*/.claude/worktrees/*'
 ```
 
-Ignore anything under `.claude/worktrees/` — throwaway agent worktrees, normally
-gitignored.
+`-type l` is what finds an external note store (STEP 1, rule 1): `-type d` does not
+match a symlink to a directory. `.claude/worktrees/` holds throwaway agent worktrees,
+normally gitignored.
 
 **Anchor every path at `$ROOT`, never at the current working directory.** `git
 ls-files` is cwd-scoped: run from `projects/api` it reports only that sub-project's
@@ -50,31 +56,68 @@ through `git -C "$ROOT"`.
 
 ## STEP 1 — Resolve the policy, once per scope
 
-For **each** scope `$S` (the directory containing `.claude/`), independently:
+For **each** scope `$S` (the directory containing `.claude/`), independently, the
+first rule that applies decides:
 
-```bash
-git -C "$ROOT" ls-files "$S/.claude/agent-memory/" | head -1
-```
+1. **`$S/.claude/agent-memory` is a symlink → external note store.** The notes live
+   outside this repository, in a store whose own tooling versions and syncs them.
+   Ask nothing, persist no policy, stage nothing here: curate the notes behind the
+   link (STEP 2) and leave syncing to the store. Never apply `delete` through the
+   link; it would erase the store's notes, not a local copy.
 
-**Non-empty → tracked → policy is `commit` for this scope.** The team already
-opted in here. Do not ask. Go to STEP 2.
+   ```bash
+   test -L "$S/.claude/agent-memory" && echo external
+   ```
 
-**Empty → no policy yet for this scope.** Read `$S/.claude/settings.local.json`:
+   The link itself belongs in `.gitignore` as `**/.claude/agent-memory`, without a
+   trailing slash: git treats a symlink as a file, and `agent-memory/` matches only
+   directories, so the link would show up as untracked.
 
-- **`agentMemoryPolicy` present** → use it (`commit` | `local` | `delete`). Do not ask.
-- **Absent** → ask ONCE, naming the scope so the user knows what they are deciding
-  for ("im Unterprojekt `projects/api`" vs. "im Repo-Root"):
-  1. **Mitcommitten** — the team shares the notes; they are versioned with the code.
-  2. **Nur lokal behalten** — stay uncommitted on this machine.
-  3. **Löschen** — remove after each run; agents start fresh every time.
+2. **`agentMemoryPolicy` in `$S/.claude/settings.local.json`** → use it
+   (`commit` | `local` | `delete`). Do not ask.
 
-  Then persist the answer **into that scope's own file**,
-  `$S/.claude/settings.local.json`, creating it if needed and preserving existing
-  keys:
+3. **Public repository → `local`.** Check the visibility of `origin` once per repo:
 
-  ```json
-  { "agentMemoryPolicy": "commit" }
-  ```
+   ```bash
+   url=$(git -C "$ROOT" remote get-url origin 2>/dev/null)
+   case "$url" in
+     *github.com*) gh repo view "$url" --json visibility -q .visibility ;;  # PUBLIC | PRIVATE | INTERNAL
+     ?*) glab repo view "$url" -F json | jq -r .visibility ;;              # public | private | internal
+   esac
+   ```
+
+   `PUBLIC` / `public` → policy `local` without asking, also when notes are already
+   tracked: a tracked note shows only that someone committed it once, not that a
+   public repo should keep it. If the scope has tracked notes, name them and
+   recommend untracking, as a change for the user to decide: `**/.claude/agent-memory`
+   in `.gitignore`, then `git rm -r --cached "$S/.claude/agent-memory"` (the files
+   stay on disk). Recommend also checking whether a note describes a weakness that is
+   still open in the code: the published history keeps it, so it needs a fix or a
+   ticket.
+
+4. **Tracked notes, visibility `private` or `internal` → `commit`.**
+
+   ```bash
+   git -C "$ROOT" ls-files "$S/.claude/agent-memory/" | head -1
+   ```
+
+   Non-empty: the team already opted in here. Do not ask. Go to STEP 2.
+
+5. **Otherwise ask ONCE**, also when the visibility could not be determined (no
+   remote, CLI missing or not signed in), because inferring `commit` there could
+   publish the notes. Name the scope so the user knows what they are deciding for
+   ("im Unterprojekt `projects/api`" vs. "im Repo-Root"):
+   1. **Mitcommitten** — the team shares the notes; they are versioned with the code.
+   2. **Nur lokal behalten** — stay uncommitted on this machine.
+   3. **Löschen** — remove after each run; agents start fresh every time.
+
+   Then persist the answer **into that scope's own file**,
+   `$S/.claude/settings.local.json`, creating it if needed and preserving existing
+   keys:
+
+   ```json
+   { "agentMemoryPolicy": "commit" }
+   ```
 
 **Where the decision must NOT go:**
 
@@ -92,11 +135,28 @@ opted in here. Do not ask. Go to STEP 2.
 Policy `local` → leave that scope's files dirty, mention them, commit nothing.
 Policy `delete` → remove that scope's `agent-memory/`, commit nothing.
 Policy `commit` → STEP 2 for that scope.
+External store → STEP 2 for the notes behind the link; staging and syncing stay with the store.
 
-## STEP 2 — Curate before committing (policy `commit` only)
+**Every scope that does not resolve to `commit` stays out of the caller's staging.**
+`.gitignore` does not cover tracked notes, and a repo may not ignore the scope yet, so a
+bare `git add -A` still stages them: a tracked note in a public repo, an un-ignored link,
+the removals of `delete`. Stage with each such scope excluded, `<scope>` being its path
+from the repo root with a trailing slash, empty for the root:
+
+```bash
+git add -A -- ':/' ':(top,exclude)<scope>.claude/agent-memory'
+```
+
+One `':(top,exclude)…'` per scope; `':/'` keeps the add repo-wide when it runs from a
+subdirectory. A path list (`git add <paths>`) leaves those scopes' paths out instead.
+
+## STEP 2 — Curate the notes (policy `commit` and external stores)
 
 Never stage agent memory unread. Go through everything dirty **plus** the notes
-around it, and act:
+around it, and act. In an external store, "dirty" means changed since the store's
+last sync; when the link target is a git checkout,
+`git -C "$S/.claude/agent-memory/" status --porcelain -- .` lists exactly that
+scope's changes.
 
 **Delete outright:**
 - Notes about a **different repository** (a `lt-monorepo` observation sitting in a
@@ -149,7 +209,9 @@ assuming Markdown is exempt.
 
 Then stage each scope's `agent-memory/` with the rest of the commit, and say in the
 commit message what was pruned and why — a deletion nobody can reconstruct looks
-like data loss later.
+like data loss later. An external store is the exception: nothing of it is staged
+here, so name what was pruned and why in the run's summary, and the store's tooling
+carries the change.
 
 ## Scale check
 
@@ -162,7 +224,7 @@ checked".
 
 | Element | Relationship |
 |---------|--------------|
-| `/lt-dev:git:ship` | Runs this skill's commit policy in its STEP 2 commit phase |
+| `/lt-dev:git:ship` | Runs this skill's commit policy in its STEP 1b, before the commit |
 | `/lt-dev:ticket-cycle` | Inherits it through `git:ship` |
 | `/lt-dev:review` | Curates agent-memory notes before a review commit |
 | `maintaining-lt-stack` skill | Same decision applies per base repo during a stack release |
