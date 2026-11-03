@@ -300,8 +300,8 @@ What does **not** go over messages: which repos exist and in which order they go
   `package.json`, then `pnpm i`/`npm i` (lockfile!), commit message exactly
   `NEW_VERSION: COMMIT_MESSAGE` (e.g. `1.11.0: update deps, fix X`).
 - **Commit message:** the CONVENTION is non-negotiable — `NEW_VERSION: MESSAGE`
-  for npm packages, conventional-commits for templates (so
-  `commit-and-tag-version` derives the bump), and the fixed
+  for npm packages, conventional-commits for templates (the release commit
+  groups their CHANGELOG section by type, see [recipes.md](recipes.md)), and the fixed
   `Updated to nest-server version <X.Y.Z>` for a nest-server-starter version
   bump. `/lt-dev:git:commit-message` is the recommended helper for crafting the
   descriptive part — but it is a helper, not a gate: skip it when the change
@@ -322,8 +322,9 @@ What does **not** go over messages: which repos exist and in which order they go
   minutes") out of release texts and migration guides — they are usually wrong;
   describe the effort qualitatively ("no code changes for most projects").
 - **Tag convention:** `gh release list` shows the repo's pattern
-  (nuxt-extensions/nest-server/cli: bare `X.Y.Z`; the templates tag `vX.Y.Z`
-  through their release scripts) — follow the existing pattern.
+  (nuxt-extensions/nest-server/cli: bare `X.Y.Z`; the templates use an annotated
+  `vX.Y.Z`, set by hand in the release commit of lt-monorepo and nuxt-base-starter
+  and by the `tag.yml` workflow in nest-server-starter) — follow the existing pattern.
 
 ## Recipes per repo
 
@@ -398,10 +399,11 @@ Read [release-performance.md](release-performance.md) when a publish run looks s
   before anything is staged. Under `commit` they go into the release commit, never
   left unstaged; every other scope stays out of each `git add` (the skill gives the
   exclusion, `.gitignore` does not cover a tracked note) and is named in the summary.
-- **Release scripts that push themselves** (nuxt-base-starter `release`): their
-  embedded `git push --follow-tags` was refused at v2.25.0 for a reason nobody has
-  measured — run the version tool directly and push commit and tag yourself, in
-  two steps, on the channel the push-channel rule picks.
+- **Push commit and tag in two steps:** the combined `git push --follow-tags` that
+  nuxt-base-starter's release script ran was refused at v2.25.0 for a reason nobody
+  has measured, and `--follow-tags` leaves a lightweight tag behind anyway. Push
+  `main`, then `refs/tags/vX.Y.Z`, on the channel the push-channel rule picks
+  (recipes.md, "Release commit for the templates").
 - **Husky/simple-git-hooks** run on every commit (lint) — a red hook is a
   real finding, never bypass with `-n`.
 

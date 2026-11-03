@@ -78,13 +78,69 @@ Part of the [`maintaining-lt-stack`](SKILL.md) skill. Where a step says "see the
 > Carrying a red evidence run into the next release is a legitimate decision; making it silently
 > is not. Name the failing mutation, then decide.
 
+### Release commit for the templates (lt-monorepo, nuxt-base-starter)
+
+Both templates are released by hand, without a release tool: the version jump is
+`/lt-dev:publish`'s decision (`--release-as`, otherwise derived from the diff), and the
+CHANGELOG section is written directly.
+
+1. **Version.** Raise `version` in the root `package.json` to `X.Y.Z`. lt-monorepo
+   carries it a second time, in the `// @lt-check-wrapper X.Y.Z` line at the top of
+   `scripts/check.mjs`: the lt CLI reads that marker so `lt fullstack update` never
+   replaces a project's wrapper with an older one, and
+   `scripts/check-wrapper-version.test.mjs` fails when it differs from `package.json`.
+   Set both.
+2. **CHANGELOG section.** Insert it at the top of `CHANGELOG.md`, below the intro
+   paragraph, in the layout the repo already uses: the topmost entry is the template.
+   List the commits since the previous tag, without merges and without earlier
+   `chore(release)` commits:
+
+   ```bash
+   git log vA.B.C..HEAD --no-merges --format='%h %H %s'
+   ```
+
+   One line per commit under the section of its conventional-commit type, built from
+   the subject line only: `* **scope:** subject ([<short>](https://github.com/lenneTech/<repo>/commit/<full>))`,
+   `* subject (…)` without a scope. A commit without a conventional type goes under the
+   section its change fits.
+   - **nuxt-base-starter:** a patch is headed
+     `### [X.Y.Z](https://github.com/lenneTech/nuxt-base-starter/compare/vA.B.C...vX.Y.Z) (YYYY-MM-DD)`,
+     a minor or major `## [X.Y.Z](…)`; below it `### Features`, `### Bug Fixes`,
+     `### Documentation`, and further sections only for types that occur.
+     `.github/workflows/release.yml` turns exactly the lines this commit adds to
+     `CHANGELOG.md` into the GitHub release notes (a `diff` against
+     `HEAD~1:CHANGELOG.md`), so the section only has to be consistent in itself, and
+     the section must arrive in the release commit, not in an earlier one.
+   - **lt-monorepo:** every release is headed
+     `## [X.Y.Z](https://github.com/lenneTech/lt-monorepo/compare/vA.B.C...vX.Y.Z) (YYYY-MM-DD)`;
+     sections in this order, each only when it has entries: Features, Bug Fixes,
+     Performance, Refactoring, Documentation, CI/CD, Build System, Tests, Chores.
+     `style` commits stay out.
+3. **Commit, tag, push.** Stage exactly the release files (`git add package.json
+   CHANGELOG.md`, in lt-monorepo plus `scripts/check.mjs`), then:
+
+   ```bash
+   git commit -m "chore(release): X.Y.Z"
+   git tag -a vX.Y.Z -m "chore(release): X.Y.Z"
+   git push origin main
+   git push origin refs/tags/vX.Y.Z
+   ```
+
+   The tag is annotated like every earlier release tag. The push goes in two steps
+   (nuxt-base-starter step 4 has the reason); pick the channel with the push-channel
+   rule above.
+
 ### lt-monorepo (template, not an npm package)
 
 1. Maintenance (`/lt-dev:maintenance:maintain`) → `pnpm run check` green.
 2. `git add . && git commit -am 'MESSAGE'`.
-3. `pnpm run release[:minor|:major]` (commit-and-tag-version) →
-   `git push --follow-tags origin main` (HTTPS fallback applies — the release
-   script does NOT push by itself here).
+3. Release commit, tag and push as in "Release commit for the templates" above
+   (HTTPS fallback applies).
+4. GitHub release by hand: no workflow creates it here, and every version since 3.10.0
+   has one. After the tag push, `gh release create vX.Y.Z --verify-tag --title X.Y.Z
+   --notes-file <notes>`, with notes written for consumers (SKILL.md, "Release notes
+   are for CONSUMERS"). `--verify-tag` aborts when the tag push did not land, instead
+   of creating a lightweight tag on the remote.
 
 ### lt CLI (npm package `@lenne.tech/cli`)
 
@@ -112,9 +168,9 @@ Part of the [`maintaining-lt-stack`](SKILL.md) skill. Where a step says "see the
 3. Optional but recommended before UI-lib bumps: `pnpm run test:e2e` in the
    template (Playwright is NOT part of `check`).
 4. Stage the paths this update changed (`git add <paths>`, never `git add .`: the checkout can
-   hold a live session's uncommitted work) → commit (message from diff analysis) → version via
-   `pnpm exec standard-version --release-as <patch|minor|major>` → then push the
-   commit and the tag **in two steps**, NOT via `pnpm run release`:
+   hold a live session's uncommitted work) → commit (message from diff analysis) → release
+   commit, tag and push as in "Release commit for the templates" above. The push of commit
+   and tag goes **in two steps**, never as one combined `git push --follow-tags`:
 
    ```bash
    git push origin main
@@ -122,8 +178,8 @@ Part of the [`maintaining-lt-stack`](SKILL.md) skill. Where a step says "see the
    ```
 
    Pick the channel with the push-channel rule above — **do not assume HTTPS.**
-   `pnpm run release` (root `package.json`) appends `git push --follow-tags origin
-   main`, and that combined push was refused at v2.25.0 (2026-09-02).
+   The combined `git push --follow-tags origin main`, which the repo's release
+   script ran at the time, was refused at v2.25.0 (2026-09-02).
    **Why it was refused is unmeasured.** This skill used to blame an empty SSH
    agent — but that is the exact false negative `ssh-add -l` produces here, and on
    2026-09-04 the functional check reported `ssh … push normally` with two keys in
@@ -133,7 +189,7 @@ Part of the [`maintaining-lt-stack`](SKILL.md) skill. Where a step says "see the
    main` as a force push (measured 2026-10-09 on the lt-monorepo v3.15.1 release;
    fixed since, the flag must now be a whole token). Whether it caused v2.25.0 is
    still open: the hook reads only the command typed into the tool, so it can deny
-   a direct `git push --follow-tags`, but not the push inside `pnpm run release`.
+   a direct `git push --follow-tags`, but not the push inside that script.
    The two-step push worked at v2.25.0 and v2.25.1 — use it, and leave the cause
    open instead of repeating a guess.
 5. **Then stop — the GitHub release makes itself.** A workflow reacts to the tag
@@ -189,10 +245,9 @@ Part of the [`maintaining-lt-stack`](SKILL.md) skill. Where a step says "see the
    pushes an annotated `vX.Y.Z` onto the bump commit. So do not reach for `git tag`
    because the tag series looks incomplete: the push comes back `already exists`, and
    a lightweight tag set locally before the workflow lands diverges from the annotated
-   one on the remote (delete it, then `git fetch --tags`). Skip `pnpm run release`
-   (standard-version) too: besides tagging, which the workflow already does, it bumps
-   the version, and step 1 already set that by hand, so the version would rise a
-   second time (11.41.1 → 11.41.2).
+   one on the remote (delete it, then `git fetch --tags`). Bump nothing a second time
+   either: step 1 already set the version, and a release tool run on top of it raised
+   the version twice (11.41.1 → 11.41.2).
 
 ### Marketplace repos (`claude-code` public, `claude-code-internal` private)
 
