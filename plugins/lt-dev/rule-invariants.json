@@ -53,7 +53,7 @@
       ]
     },
     {
-      "name": "native SQL rows reach a response only mapped or through named columns, because removeSecrets matches camelCase field names only, in the database reference and both reviewers",
+      "name": "native SQL rows reach a response only mapped or through named columns, because removeSecrets matched camelCase field names only before nest-server 12.3.1 and a raw row skips the model's field rules, in the database reference and both reviewers",
       "phrase": "camelCase `secretFields` never match",
       "files": [
         "skills/generating-nest-servers/reference/choosing-a-database.md",

@@ -109,7 +109,11 @@ export function validateAdapter(adapter) {
     if (!providerIds.has(u.provider)) problems.push(`usage ${u.id}: provider "${u.provider}" is not declared`);
     if (u.latency !== undefined && !LATENCY_CLASSES.includes(u.latency)) problems.push(`usage ${u.id}: latency must be ${LATENCY_CLASSES.join(' or ')}`);
     if (u.latencyBudgetMs !== undefined && !(Number(u.latencyBudgetMs) > 0)) problems.push(`usage ${u.id}: latencyBudgetMs must be a positive number`);
+    if (u.params?.imageEdgePx !== undefined && !(Number(u.params.imageEdgePx) > 0)) problems.push(`usage ${u.id}: params.imageEdgePx must be a positive number`);
   }
+  const b = adapter.benchmark ?? {};
+  if (b.lastReview !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(String(b.lastReview))) problems.push('benchmark.lastReview must be a date (YYYY-MM-DD)');
+  if (b.reviewEveryDays !== undefined && !(Number(b.reviewEveryDays) > 0)) problems.push('benchmark.reviewEveryDays must be a positive number');
   if (problems.length) throw new Error(`adapter is invalid:\n  - ${problems.join('\n  - ')}`);
 }
 
@@ -363,6 +367,28 @@ export function daysUntil(isoDate, today = new Date()) {
   return Math.round((Date.UTC(y, m - 1, d) - t) / 86_400_000);
 }
 
+/** Days between two full measurements when the adapter names none: a quarter. */
+export const DEFAULT_REVIEW_EVERY_DAYS = 90;
+
+/**
+ * Is the full measurement due? The check itself only asks whether every model is still offered;
+ * whether a better model, a better input resolution or a better route exists only the
+ * measurement over the project's pipeline answers. Without a reminder it is run once and then
+ * never again, so the scheduled check carries the date of the last one (`benchmark.lastReview`)
+ * and turns an overdue review into an action finding, which files the ticket.
+ */
+export function compareReview(adapter, { today = new Date() } = {}) {
+  const b = adapter.benchmark;
+  if (!b?.command) return [];
+  const every = Number(b.reviewEveryDays ?? DEFAULT_REVIEW_EVERY_DAYS);
+  if (!b.lastReview) {
+    return [finding(0, 'review-unrecorded', 'benchmark', 'benchmark.lastReview is not set: record the date of the last full measurement, so the check can say when the next one is due')];
+  }
+  const age = -daysUntil(String(b.lastReview), today);
+  if (age <= every) return [];
+  return [finding(1, 'review-due', 'benchmark', `the last full measurement was on ${b.lastReview} (${age} days ago, every ${every} days): run /lt-dev:backend:ai-model-review, models, input resolution and routes may have better options by now`, { lastReview: b.lastReview })];
+}
+
 // An OCR model is not a vision model: the catalog lists GLM-OCR with `ocr` only, and a usage that
 // declares `vision` for it is flagged on purpose (observed 2026-10-17 on a document-OCR usage).
 const NEED_TO_CAP = { embeddings: 'embeddings', ocr: 'ocr', tools: 'tools', vision: 'vision' };
@@ -540,6 +566,50 @@ export function textPng(text, scale = 6) {
   return encodePng(width, height, rows);
 }
 
+/**
+ * A page-shaped PNG (1 : sqrt 2, like A4) with a few dark bars, so the image is not blank.
+ * The resolution probe only reads the prompt tokens it costs, which depend on the pixel
+ * count, not on what is drawn.
+ */
+export function pagePng(longEdge) {
+  const height = longEdge;
+  const width = Math.round(longEdge / Math.SQRT2);
+  const rows = [];
+  for (let y = 0; y < height; y++) {
+    const row = Buffer.alloc(width * 3, 255);
+    if (Math.floor(y / Math.max(8, Math.round(height / 60))) % 4 === 1) row.fill(40, Math.round(width * 0.1) * 3, Math.round(width * 0.9) * 3);
+    rows.push(row);
+  }
+  return encodePng(width, height, rows);
+}
+
+/** Long edges the resolution probe sends: on A4 about 88, 132, 176 and 300 DPI. */
+export const RESOLUTION_PROBE_EDGES = [1024, 1540, 2048, 3508];
+
+/**
+ * The largest long edge a model still reads, from the prompt tokens per edge. A provider that
+ * downscales server-side charges the same tokens above its limit (observed 2026-11-03: one
+ * vision model stopped at about 1540 px, two others took a full 300 DPI page). Growth under 10 %
+ * counts as no growth; a rejected size ends the series.
+ */
+export function effectiveEdgeOf(points) {
+  let edge = null;
+  let tokens = null;
+  let rejectedAt = null;
+  for (const p of [...points].sort((a, b) => a.edge - b.edge)) {
+    if (p.status >= 400 || p.promptTokens == null) {
+      rejectedAt = p.edge;
+      break;
+    }
+    if (tokens === null || p.promptTokens > tokens * 1.1) {
+      edge = p.edge;
+      tokens = p.promptTokens;
+    }
+  }
+  const largest = Math.max(...points.map((p) => p.edge));
+  return { edge, rejectedAt, reachesLargest: edge === largest };
+}
+
 function reasoningOf(message, usage) {
   const tokens = usage?.completion_tokens_details?.reasoning_tokens ?? null;
   const text = message?.reasoning_content ?? message?.reasoning ?? '';
@@ -659,6 +729,19 @@ const PROBES = {
     const over = await ctx.chat(chatBody(ctx.usage.model, [{ text: 'Reply OK.', type: 'text' }, ...Array(max + 1).fill(img)], { maxTokens: 512, params: ctx.usage.params }));
     return { atLimit: atLimit.status, ok: atLimit.status < 400 && over.status >= 400, over: over.status };
   },
+  async resolution(ctx) {
+    const points = [];
+    for (const edge of RESOLUTION_PROBE_EDGES) {
+      const img = `data:image/png;base64,${pagePng(edge).toString('base64')}`;
+      // The edge in the text keeps every call out of a gateway cache.
+      const r = await ctx.chat(chatBody(ctx.usage.model, [
+        { text: `Reply OK (${edge}).`, type: 'text' },
+        { image_url: { url: img }, type: 'image_url' },
+      ], { maxTokens: 16, params: ctx.usage.params }));
+      points.push({ edge, promptTokens: r.json?.usage?.prompt_tokens ?? null, status: r.status });
+    }
+    return { ...effectiveEdgeOf(points), ok: true, points, sentEdge: ctx.usage.params?.imageEdgePx ?? null };
+  },
   async embeddings(ctx) {
     const r = await ctx.post('/embeddings', { input: 'probe', model: ctx.usage.model });
     const dims = r.json?.data?.[0]?.embedding?.length ?? null;
@@ -676,6 +759,8 @@ export function probesFor(usage) {
   }
   if (usage.params?.reasoningEffort && !set.includes('reasoning-off')) set.push('reasoning-off');
   if (usage.params?.maxTokens && !set.includes('budget')) set.push('budget');
+  // What a page image costs and how much of it the model reads is part of every image usage.
+  if ((usage.needs ?? []).some((n) => n === 'vision' || n === 'ocr')) set.push('resolution');
   if (maxImagesOf(usage) && !set.includes('image-limit')) set.push('image-limit');
   return set;
 }
@@ -712,6 +797,12 @@ export function judgeProbes(usage, results) {
       findings.push(finding(1, 'probe-error', usage.id, `usage ${usage.id}: probe ${name} failed: ${r.error}`, { model: usage.model }));
     } else if (name === 'cache' && r.cached) {
       findings.push(finding(0, 'gateway-cache', usage.id, `usage ${usage.id}: identical requests are answered from a cache (${r.first} ms → ${r.second} ms); time only first calls`, { model: usage.model }));
+    } else if (name === 'resolution') {
+      findings.push(...judgeResolution(usage, r));
+    } else if (name === 'image-limit' && r.atLimit < 400 && r.over < 400) {
+      // The model takes what the application sends and more: a model switch raised the
+      // provider's limit. Nothing breaks; batching could put more pages in one request.
+      findings.push(finding(0, 'image-limit-headroom', usage.id, `usage ${usage.id}: ${usage.model} accepts more than the ${maxImagesOf(usage)} images per request the application sends; more pages per request are possible (measure before changing the batch size)`, { model: usage.model }));
     } else if (name === 'budget' && r.emptyOnLength) {
       findings.push(finding(1, 'budget-eaten-by-reasoning', usage.id, `usage ${usage.id}: at a small max_tokens the answer comes back EMPTY (reasoning consumed the budget) — check the usage's maxTokens against reasoning plus answer`, { model: usage.model }));
     } else if (!r.ok && !r.skipped) {
@@ -720,6 +811,27 @@ export function judgeProbes(usage, results) {
     }
   }
   return findings;
+}
+
+/**
+ * Information, never an action: the edge that reads best is a measurement question, the probe
+ * only shows where to look. Sending far less than the model reads leaves detail unused (small
+ * print, dense tables); sending far more than it reads costs upload and time for nothing.
+ */
+export function judgeResolution(usage, r) {
+  if (r.edge == null) return [];
+  const reads = r.reachesLargest ? `at least ${r.edge} px` : `up to about ${r.edge} px`;
+  const sent = Number(r.sentEdge) || null;
+  if (!sent) {
+    return [finding(0, 'resolution', usage.id, `usage ${usage.id}: ${usage.model} reads ${reads} on the long edge; declare params.imageEdgePx (what the application sends) to compare`, { model: usage.model })];
+  }
+  if (r.edge >= sent * 1.25) {
+    return [finding(0, 'resolution-headroom', usage.id, `usage ${usage.id}: sends ${sent} px, ${usage.model} reads ${reads}: measure larger edges (small print, dense tables)`, { model: usage.model })];
+  }
+  if (!r.reachesLargest && sent >= r.edge * 1.25) {
+    return [finding(0, 'resolution-wasted', usage.id, `usage ${usage.id}: sends ${sent} px, ${usage.model} reads ${reads}: the provider downscales the rest`, { model: usage.model })];
+  }
+  return [];
 }
 
 /** A gateway cache is a property of the provider, not of a usage: one line per provider. */
@@ -940,17 +1052,22 @@ export function reportMarkdown(report) {
   return lines.join('\n');
 }
 
-/** Stable across runs with the same findings, so a scheduled run does not file the same ticket twice. */
+/**
+ * Stable across runs with the same findings, so a scheduled run does not file the same ticket twice.
+ * `review-due` carries the date of the last full measurement: a ticket declined in one review cycle
+ * blocks only that cycle, not every later one. Findings without it keep the fingerprint their open
+ * tickets already carry.
+ */
 export function fingerprintOf(report) {
   const keys = report.findings
     .filter((f) => f.level > 0)
-    .map((f) => `${f.code}|${f.subject}|${f.model ?? ''}|${f.shutdown ?? ''}`)
+    .map((f) => `${f.code}|${f.subject}|${f.model ?? ''}|${f.shutdown ?? ''}${f.lastReview ? `|${f.lastReview}` : ''}`)
     .sort();
   return createHash('sha256').update(`${report.project}\n${keys.join('\n')}`).digest('hex').slice(0, 16);
 }
 
 export async function runCheck(adapter, root, opts = {}) {
-  const findings = [...unknownNeeds(adapter)];
+  const findings = [...unknownNeeds(adapter), ...compareReview(adapter)];
   const catalogs = {};
   if (!opts.offline) {
     for (const p of adapter.providers) {
@@ -1086,7 +1203,8 @@ Commands:
   inventory   adapter vs code seeds vs runtime
   catalog     models in use vs the provider catalog
   lifecycle   announced shutdowns and status (mittwald)
-  probe       capability probes for each usage (costs a few tokens)
+  probe       capability probes for each usage (costs a few tokens; an image usage also
+              gets the resolution probe, four images up to 300 DPI)
   summarize   <results.jsonl> [--group config,tags.source]  benchmark summary, ranked per usage
               by the adapter's latency class (interactive: latency budget counts; background: quality)
   ticket      --report <report.json> --team <KEY> [--dry-run]  file one Linear ticket

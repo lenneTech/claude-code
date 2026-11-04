@@ -179,6 +179,7 @@ REGISTRY_PATH="${LT_DEV_REGISTRY_PATH:-$HOME/.lenneTech/projects.json}"
 API_URL=""
 APP_URL=""
 DB_NAME=""
+DB_URLS=""
 SESSION_ACTIVE="no"
 REGISTERED="no"
 
@@ -192,6 +193,12 @@ if [ -f "$REGISTRY_PATH" ] && command -v jq >/dev/null 2>&1; then
   API_URL=$(jq -r --arg s "$SLUG" '(.projects[$s].subdomains.api // empty) | if . == "" then "" else "https://" + . end' "$REGISTRY_PATH" 2>/dev/null)
   APP_URL=$(jq -r --arg s "$SLUG" '(.projects[$s].subdomains.app // empty) | if . == "" then "" else "https://" + . end' "$REGISTRY_PATH" 2>/dev/null)
   DB_NAME=$(jq -r --arg s "$SLUG" '.projects[$s].dbName // empty' "$REGISTRY_PATH" 2>/dev/null)
+  # The SQL databases `lt dev` created for this stack, recorded without credentials. A hand-edited
+  # entry could still carry some: user info is cut, and anything that is not a plain SQL URL is
+  # dropped before it can reach the context.
+  DB_URLS=$(jq -r --arg s "$SLUG" '.projects[$s].dbUrls // [] | if type == "array" then .[] | strings else empty end' "$REGISTRY_PATH" 2>/dev/null \
+    | sed -E 's#^([a-z]+://)[^/@]*@#\1#' \
+    | grep -E '^(postgres|postgresql|mysql|mariadb)://[A-Za-z0-9._~:/%?=&-]+$' | head -4)
   if [ -n "$API_URL" ] || [ -n "$APP_URL" ]; then
     REGISTERED="yes"
   fi
@@ -200,8 +207,9 @@ fi
 # The project's database for the block's DB line. nest-server 12.1+ runs on MongoDB, PostgreSQL,
 # MySQL / MariaDB or several of them. A decision recorded in CLAUDE.md (`## Database`,
 # generating-nest-servers → reference/choosing-a-database.md) wins; otherwise the API's
-# config.env.ts (comments skipped: the starter ships its `database` block commented out) and its
-# runtime dependencies tell. Nothing found keeps the MongoDB line every project had before 12.1.
+# config.env.ts (comments skipped: the starter ships its `database` block commented out), the
+# scheme of NSC__DATABASE__URL in its .env, the registry's `dbUrls`, and its runtime dependencies
+# tell. Nothing found keeps the MongoDB line every project had before 12.1.
 DB_KIND=""
 DB_ENGINE=""
 detect_database() {
@@ -222,10 +230,31 @@ detect_database() {
     *"mysql://"*) sql="MySQL" ;;
   esac
   case "$code" in *"mongodb://"*|*"mongodb+srv://"*) mongo="yes" ;; esac
+  # Only the scheme is read from .env; the URL itself can carry a password.
+  if [ -z "$sql" ] && [ -f "$api/.env" ]; then
+    case "$(grep -m1 -E '^[[:space:]]*(export[[:space:]]+)?NSC__DATABASE__URL=' "$api/.env" 2>/dev/null)" in
+      *"postgres://"*|*"postgresql://"*) sql="PostgreSQL" ;;
+      *"mariadb://"*) sql="MariaDB" ;;
+      *"mysql://"*) sql="MySQL" ;;
+    esac
+  fi
+  if [ -z "$sql" ] && [ -n "$DB_URLS" ]; then
+    case "$DB_URLS" in
+      postgres*) sql="PostgreSQL" ;;
+      mariadb*) sql="MariaDB" ;;
+      mysql*) sql="MySQL" ;;
+    esac
+  fi
   if [ -z "$sql" ] && [ "$mongo" = "no" ] && [ -f "$api/package.json" ] && command -v jq >/dev/null 2>&1; then
     local deps
     deps=$(jq -r '(.dependencies // {}) | keys | join(" ")' "$api/package.json" 2>/dev/null)
-    case " $deps " in *" pg "*) sql="PostgreSQL" ;; *" mysql2 "*) sql="MySQL / MariaDB" ;; esac
+    # A driver alone names no database: a MongoDB API can carry `pg` for something else (TurboOps
+    # does, for CrowdSec). It tells PostgreSQL from MySQL only where the config sets up a SQL source
+    # whose URL comes from the environment; a bare `database:` would also match the health check.
+    case "$code" in
+      *"NSC__DATABASE__"*|*"ownerUrl"*|*"sqlEngine"*)
+        case " $deps " in *" pg "*) sql="PostgreSQL" ;; *" mysql2 "*) sql="MySQL / MariaDB" ;; esac ;;
+    esac
     case " $deps " in *" mongoose "*) mongo="yes" ;; esac
   fi
   if [ -n "$sql" ]; then
@@ -242,12 +271,12 @@ detect_database() {
 }
 
 # Detection runs only when the block is rendered, since the hook fires on every prompt everywhere.
-# `lt dev` exports the MongoDB URI the API reads (NSC__MONGOOSE__URI) and a DATABASE_URL that
-# nest-server never reads (cli src/lib/dev-env.ts), so the SQL side is named by where the API
-# takes its connection from rather than by a URL; that URL can carry a password, and nothing from
-# config.env.ts is printed.
+# `lt dev` gives a SQL project its own database per stack (the base stack keeps the configured one,
+# a ticket gets `<base>-<id>`) and records it in the registry's `dbUrls`; the line names those.
+# Without them (an older lt CLI, a stack never started) it names where the API takes its
+# connection from instead. A URL from config.env.ts or .env is never printed: it can carry a password.
 db_line() {
-  local line local_db=""
+  local line local_db="" u
   detect_database
   if [ -z "$DB_KIND" ]; then
     [ -n "$DB_NAME" ] && echo "- DB:  \`mongodb://127.0.0.1/$DB_NAME\`"
@@ -256,7 +285,12 @@ db_line() {
   line="- Database: $DB_KIND"
   [ -n "$DB_ENGINE" ] && line="$line, engine $DB_ENGINE"
   case "$DB_KIND" in
-    *PostgreSQL*|*MySQL*|*MariaDB*) local_db="SQL from \`database.url\` in the API's \`src/config.env.ts\` (env \`NSC__DATABASE__URL\`)" ;;
+    *PostgreSQL*|*MySQL*|*MariaDB*)
+      while IFS= read -r u; do
+        [ -n "$u" ] && local_db="${local_db:+$local_db and }\`$u\`"
+      done <<< "$DB_URLS"
+      [ -z "$local_db" ] && local_db="SQL from \`database.url\` in the API's \`src/config.env.ts\` (env \`NSC__DATABASE__URL\`)"
+      ;;
   esac
   if [ -n "$DB_NAME" ]; then
     case "$DB_KIND" in *MongoDB*) local_db="${local_db:+$local_db and }\`mongodb://127.0.0.1/$DB_NAME\`" ;; esac

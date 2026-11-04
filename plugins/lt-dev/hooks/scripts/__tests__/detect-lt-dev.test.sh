@@ -502,6 +502,58 @@ assert_contains "$out" "Database: PostgreSQL, engine TypeORM" "falls back to the
 assert_not_contains "$out" "mongodb://" "no MongoDB URI without mongoose"
 cleanup
 
+echo "Case DB-10: a MongoDB API carrying pg for something else"
+setup_tmp
+echo '{"name":"crm","dependencies":{"@lenne.tech/nest-server":"^12","mongoose":"^9","pg":"^8"}}' > "$PROJ/package.json"
+mkdir -p "$PROJ/src"
+printf "%s\n" "healthCheck: { configs: { database: { enabled: true } } }," "mongoose: { uri: process.env.NSC__MONGOOSE__URI }," > "$PROJ/src/config.env.ts"
+registered_crm
+out=$(run_hook "$PROJ" "$REGISTRY")
+assert_contains "$out" "Database: MongoDB" "a driver without a SQL source names no SQL database"
+assert_not_contains "$out" "PostgreSQL" "pg alone does not make the project PostgreSQL"
+
+echo "Case DB-10b: the SQL source is set in the API's .env"
+echo "mongoose: { uri: process.env.NSC__MONGOOSE__URI }," > "$PROJ/src/config.env.ts"
+echo '{"name":"crm","dependencies":{"@lenne.tech/nest-server":"^12","pg":"^8"}}' > "$PROJ/package.json"
+echo 'NSC__DATABASE__URL=postgres://app:s3cret@127.0.0.1/crm' > "$PROJ/.env"
+out=$(run_hook "$PROJ" "$REGISTRY")
+assert_contains "$out" "Database: PostgreSQL, engine TypeORM" "reads the scheme of the URL in .env"
+assert_not_contains "$out" "s3cret" "never prints the URL from .env"
+cleanup
+
+registered_crm_sql() {
+  cat > "$REGISTRY" <<EOF
+{ "projects": { "crm": { "path": "$PROJ", "subdomains": { "api": "api.crm.localhost", "app": "crm.localhost" },
+  "dbName": "crm-local", "dbUrls": $1 } }, "version": 1 }
+EOF
+}
+
+echo "Case DB-11: the registry names the stack's own SQL database"
+setup_tmp
+echo '{"name":"crm","dependencies":{"@lenne.tech/nest-server":"^12","pg":"^8"}}' > "$PROJ/package.json"
+mkdir -p "$PROJ/src"
+echo "database: { url: process.env.NSC__DATABASE__URL }," > "$PROJ/src/config.env.ts"
+registered_crm_sql '["postgres://127.0.0.1:5432/crm-2314"]'
+out=$(run_hook "$PROJ" "$REGISTRY")
+assert_contains "$out" 'Database: PostgreSQL, engine TypeORM · local: `postgres://127.0.0.1:5432/crm-2314`' "names the database lt dev created"
+assert_not_contains "$out" "SQL from" "no config pointer when the registry names the database"
+
+echo "Case DB-11b: the registry's scheme alone tells"
+echo '{"name":"crm","dependencies":{"@lenne.tech/nest-server":"^12"}}' > "$PROJ/package.json"
+: > "$PROJ/src/config.env.ts"
+registered_crm_sql '["mariadb://127.0.0.1:3306/crm-local"]'
+out=$(run_hook "$PROJ" "$REGISTRY")
+assert_contains "$out" 'Database: MariaDB, engine TypeORM · local: `mariadb://127.0.0.1:3306/crm-local`' "takes MariaDB from the registry URL"
+
+echo "Case DB-11c: credentials and foreign characters never reach the context"
+registered_crm_sql '["postgres://app:s3cret@127.0.0.1/crm", "postgres://127.0.0.1/x`touch pwned`", "https://evil.example/"]'
+out=$(run_hook "$PROJ" "$REGISTRY")
+assert_contains "$out" 'local: `postgres://127.0.0.1/crm`' "keeps the URL without its user info"
+assert_not_contains "$out" "s3cret" "drops the password"
+assert_not_contains "$out" "pwned" "drops an entry that is no plain URL"
+assert_not_contains "$out" "evil.example" "drops a non-SQL URL"
+cleanup
+
 echo ""
 echo "─────────────────────────────────────────"
 echo "Total: $((PASS + FAIL)) | Passed: $PASS | Failed: $FAIL"

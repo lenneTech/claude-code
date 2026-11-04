@@ -47,6 +47,18 @@ const mirror = (out, bundle) =>
 const compare = (mirrorDir, extra = {}) =>
   compareSite({ mirrorDir, viewports: ['desktop'], interactions: true, concurrency: 2, quiet: true, settle: 400, ...extra });
 
+// One more run when a page could not be compared at all: on 2026-11-04 (Plugin CI run
+// 41822812835, macos-latest) this test took 128 s instead of about 21 s, /contact came back
+// without differences, and the rerun of the job was green. The first error stays in the test
+// log; a page that fails twice still fails the test.
+async function compareTwiceOnError(t, mirrorDir, extra) {
+  const res = await compare(mirrorDir, extra);
+  const failed = res.results.filter((r) => r.error);
+  if (!failed.length) return res;
+  for (const r of failed) t.diagnostic(`first run: ${r.path} could not be compared: ${r.error}`);
+  return compare(mirrorDir, extra);
+}
+
 before(async () => {
   server = await startFixtureServer();
   tmp = mkdtempSync(path.join(os.tmpdir(), 'lt-compare-test-'));
@@ -62,10 +74,13 @@ test('Chrome and esbuild are available in CI', { skip: !ci && 'only enforced in 
   assert.ok(canBundle, 'esbuild is required in CI');
 });
 
-test('a bundled mirror is identical where it is complete, and pages that need the live site are reported', { skip: skipBundled, timeout: 180000 }, async () => {
+test('a bundled mirror is identical where it is complete, and pages that need the live site are reported', { skip: skipBundled, timeout: 300000 }, async (t) => {
   const report = await mirror(path.join(tmp, 'bundled'), true);
-  const res = await compare(report.outDir);
+  const res = await compareTwiceOnError(t, report.outDir);
   assert.equal(res.results.length, 3);
+  // A page whose probe failed comes back with an error and no diffs, which would read as
+  // "identical" below (2026-11-04, macos-latest: /contact reported nothing, no cause printed).
+  for (const r of res.results) assert.equal(r.error, undefined, `${r.path} could not be compared: ${r.error}`);
   const byPath = Object.fromEntries(res.results.map((r) => [r.path, r]));
   assert.deepEqual(byPath['/'].diffs, [], JSON.stringify(byPath['/'].diffs, null, 2));
   assert.deepEqual(byPath['/about/'].diffs, [], JSON.stringify(byPath['/about/'].diffs, null, 2));
@@ -78,10 +93,11 @@ test('a bundled mirror is identical where it is complete, and pages that need th
   assert.match(contactErrors, /ERR_BLOCKED_BY_CLIENT/, `blocked request named in ${contactErrors}`);
 });
 
-test('a mirror with unbundled ES modules is reported as broken', { skip: skipChrome, timeout: 180000 }, async () => {
+test('a mirror with unbundled ES modules is reported as broken', { skip: skipChrome, timeout: 300000 }, async (t) => {
   const report = await mirror(path.join(tmp, 'unbundled'), false);
   assert.equal(report.modulesNeedServer, true);
-  const res = await compare(report.outDir, { pages: ['/'] });
+  const res = await compareTwiceOnError(t, report.outDir, { pages: ['/'] });
+  assert.equal(res.results[0].error, undefined, `/ could not be compared: ${res.results[0].error}`);
   const keys = res.results[0].diffs.map((d) => d.key);
   assert.ok(keys.includes('text'), `expected a text difference, got ${keys.join(', ')}`);
   assert.ok(keys.includes('errors'), `expected backup-only errors, got ${keys.join(', ')}`);

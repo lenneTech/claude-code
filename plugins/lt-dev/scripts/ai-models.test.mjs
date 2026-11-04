@@ -13,16 +13,19 @@ import {
   capabilitiesOf,
   collapseCacheFindings,
   chatBody,
+  compareReview,
   compareCatalog,
   compareInventory,
   compareLifecycle,
   daysUntil,
+  effectiveEdgeOf,
   exitCodeOf,
   fileTicket,
   findModelIds,
   fingerprintOf,
   isRedirect,
   judgeProbes,
+  judgeResolution,
   looksCached,
   mask,
   maxImagesOf,
@@ -41,6 +44,8 @@ import {
   ticketContent,
   KNOWN_NEEDS,
   OCR_PROBE_TEXT,
+  pagePng,
+  RESOLUTION_PROBE_EDGES,
   textPng,
   twoColourPng,
   unknownNeeds,
@@ -236,7 +241,7 @@ test('maxImagesOf reads params.maxImages or a max-images:<n> need', () => {
 test('probesFor picks probes from needs and params', () => {
   const [summarizeUsage, ocrUsage] = adapter().usages;
   assert.deepEqual(probesFor(summarizeUsage), ['basic', 'cache', 'reasoning-off', 'budget']);
-  assert.deepEqual(probesFor(ocrUsage), ['basic', 'cache', 'vision', 'image-limit']);
+  assert.deepEqual(probesFor(ocrUsage), ['basic', 'cache', 'vision', 'resolution', 'image-limit']);
   assert.deepEqual(probesFor({ needs: ['embeddings'] }), ['embeddings']);
 });
 
@@ -470,7 +475,7 @@ test('compareLifecycle maps the ocr need to the ocr capability', () => {
 });
 
 test('the ocr need gets its own probe, and a failed one is urgent', () => {
-  assert.deepEqual(probesFor({ needs: ['ocr'] }), ['basic', 'cache', 'ocr']);
+  assert.deepEqual(probesFor({ needs: ['ocr'] }), ['basic', 'cache', 'ocr', 'resolution']);
   const f = judgeProbes({ id: 'doc-ocr', model: 'GLM-OCR' }, { ocr: { answer: 'unreadable', ok: false } });
   assert.deepEqual(f.map((x) => `${x.code}:${x.level}`), ['probe-ocr-failed:2']);
 });
@@ -546,4 +551,93 @@ test('fileTicket sends only queries whose connections all name a size', async ()
     if (realKey === undefined) delete process.env.LINEAR_API_KEY;
     else process.env.LINEAR_API_KEY = realKey;
   }
+});
+
+test('pagePng builds a page-shaped PNG of the requested long edge', () => {
+  const png = pagePng(1024);
+  assert.equal(png.subarray(1, 4).toString(), 'PNG');
+  assert.equal(png.readUInt32BE(16), Math.round(1024 / Math.SQRT2));
+  assert.equal(png.readUInt32BE(20), 1024);
+  assert.deepEqual(RESOLUTION_PROBE_EDGES, [...RESOLUTION_PROBE_EDGES].sort((a, b) => a - b));
+});
+
+test('effectiveEdgeOf finds where the prompt tokens stop growing', () => {
+  // Measured shapes (2026-11-03): one model plateaued at 1540 px, another grew to 300 DPI.
+  const capped = [
+    { edge: 1024, promptTokens: 1006, status: 200 },
+    { edge: 1540, promptTokens: 2207, status: 200 },
+    { edge: 2048, promptTokens: 2207, status: 200 },
+    { edge: 3508, promptTokens: 2207, status: 200 },
+  ];
+  assert.deepEqual(effectiveEdgeOf(capped), { edge: 1540, reachesLargest: false, rejectedAt: null });
+  const full = [
+    { edge: 1024, promptTokens: 754, status: 200 },
+    { edge: 1540, promptTokens: 1650, status: 200 },
+    { edge: 2048, promptTokens: 2898, status: 200 },
+    { edge: 3508, promptTokens: 8598, status: 200 },
+  ];
+  assert.deepEqual(effectiveEdgeOf(full), { edge: 3508, reachesLargest: true, rejectedAt: null });
+  const rejected = [
+    { edge: 1024, promptTokens: 900, status: 200 },
+    { edge: 2048, promptTokens: null, status: 400 },
+  ];
+  assert.deepEqual(effectiveEdgeOf(rejected), { edge: 1024, reachesLargest: false, rejectedAt: 2048 });
+});
+
+test('judgeResolution reports headroom, waste and a missing sent edge, as information only', () => {
+  const usage = { id: 'ocr', model: 'Example-VL' };
+  const headroom = judgeResolution(usage, { edge: 3508, reachesLargest: true, sentEdge: 1024 });
+  assert.equal(headroom[0].code, 'resolution-headroom');
+  assert.equal(headroom[0].level, 0);
+  const wasted = judgeResolution(usage, { edge: 1540, reachesLargest: false, sentEdge: 3508 });
+  assert.equal(wasted[0].code, 'resolution-wasted');
+  assert.equal(judgeResolution(usage, { edge: 1540, reachesLargest: false, sentEdge: 1540 }).length, 0);
+  assert.equal(judgeResolution(usage, { edge: 2048, reachesLargest: false, sentEdge: null })[0].code, 'resolution');
+  assert.equal(judgeProbes(usage, { resolution: { edge: 3508, ok: true, reachesLargest: true, sentEdge: 1024 } })[0].code, 'resolution-headroom');
+});
+
+test('judgeProbes: a model that takes more images than the application sends is information', () => {
+  // Observed 2026-11-03: one vision model took 4 images per request, its successor 5.
+  const usage = { id: 'doc-vision', model: 'Qwen3.6-35B-A3B-FP8', params: { maxImages: 4 } };
+  const more = judgeProbes(usage, { 'image-limit': { atLimit: 200, ok: false, over: 200 } });
+  assert.equal(more.length, 1);
+  assert.equal(more[0].code, 'image-limit-headroom');
+  assert.equal(more[0].level, 0);
+  // Fewer than the application sends still breaks every long document.
+  const fewer = judgeProbes(usage, { 'image-limit': { atLimit: 400, ok: false, over: 400 } });
+  assert.equal(fewer[0].code, 'probe-image-limit-failed');
+  assert.equal(fewer[0].level, 1);
+});
+
+test('compareReview turns an overdue full measurement into an action finding', () => {
+  const today = new Date('2026-11-03T12:00:00Z');
+  const withReview = (benchmark) => ({ ...adapter(), benchmark: { command: 'pnpm run bench', ...benchmark } });
+  assert.deepEqual(compareReview(withReview({ lastReview: '2026-10-01' }), { today }), []);
+  const due = compareReview(withReview({ lastReview: '2026-07-01' }), { today });
+  assert.equal(due[0].code, 'review-due');
+  assert.equal(due[0].level, 1);
+  assert.equal(compareReview(withReview({ lastReview: '2026-10-01', reviewEveryDays: 14 }), { today })[0].code, 'review-due');
+  assert.equal(compareReview(withReview({}), { today })[0].code, 'review-unrecorded');
+  assert.equal(compareReview(withReview({})).every((f) => f.level === 0), true);
+  assert.deepEqual(compareReview(adapter(), { today }), []);
+});
+
+test('fingerprintOf: a declined review-due ticket blocks only its own review cycle', () => {
+  const run = (lastReview, today) => ({
+    findings: compareReview({ ...adapter(), benchmark: { command: 'pnpm run bench', lastReview } }, { today: new Date(today) }),
+    project: 'p',
+  });
+  // The weekly runs of one overdue cycle file one ticket
+  assert.equal(fingerprintOf(run('2026-01-01', '2026-04-15')), fingerprintOf(run('2026-01-01', '2026-04-22')));
+  // The next cycle is a new fact, so a ticket canceled in the first one does not block it
+  assert.notEqual(fingerprintOf(run('2026-01-01', '2026-04-15')), fingerprintOf(run('2026-04-20', '2026-08-01')));
+  // Findings without a review date keep the fingerprint their open tickets already carry
+  assert.equal(fingerprintOf({ findings: [finding2('a')], project: 'p' }), 'd40834222e3bc536');
+});
+
+test('validateAdapter checks the review date, its interval and the sent image edge', () => {
+  const a = { ...adapter(), benchmark: { command: 'x', lastReview: '03.11.2026', reviewEveryDays: 0 } };
+  a.usages[1].params = { imageEdgePx: -1 };
+  assert.throws(() => validateAdapter(a), /lastReview[\s\S]*reviewEveryDays|reviewEveryDays[\s\S]*lastReview/);
+  assert.throws(() => validateAdapter(a), /imageEdgePx/);
 });

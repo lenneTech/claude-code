@@ -567,8 +567,16 @@ MariaDB nothing in the database keeps tenants apart. In the diff, outside `src/c
       has no row-level security, so a missing filter is a cross-tenant read or write
 - [ ] **Raw rows reach a response only through named columns without secrets, or mapped to the
       model.** Native rows carry snake_case keys (`password_reset_token`), which the interceptor's
-      camelCase `secretFields` never match: a `SELECT *` or `RETURNING *` on a table with token
-      columns, returned unmapped, hands those tokens to the client
+      camelCase `secretFields` never match before nest-server 12.3.1: a `SELECT *` or `RETURNING *`
+      on a table with token columns, returned unmapped, hands those tokens to the client. From
+      12.3.1 on the interceptor strips them under the column name too, but only the
+      `security.secretFields` entries: a secret column outside that list (Better Auth's
+      `session.token`, `account.access_token` / `refresh_token` / `id_token`, a key or token column
+      of the project's own) is stripped by nothing. A raw row also skips the model's
+      `securityCheck` and `@Restricted` fields unless the route declares `@ResponseModel`.
+      A driver result returned as it is (the node-postgres `Result` of `store.raw(reason).query(…)`
+      or of Drizzle's `db.execute(…)`) is no plain object: the interceptor never enters it, so
+      every column, `password` included, reaches the client in every version
 - [ ] **The framework owns the schema.** No `synchronize: true`, no `migrationsRun`, no engine
       migration generator (`typeorm migration:generate`, `drizzle-kit push` / `generate`); a
       change the framework refuses becomes a migration (`migrate create <name> --sql`)
@@ -579,9 +587,12 @@ MariaDB nothing in the database keeps tenants apart. In the diff, outside `src/c
       `store.native(reason)` / `store.raw(reason)` returns (`sql` from `drizzle-orm` or `kysely`,
       `CompiledQuery`, Drizzle table definitions) and `import type` are the documented way
 
-**Severity:** interpolated SQL reachable from request data, a missing tenant filter on MySQL /
-MariaDB, and unmapped raw rows that can carry a secret column on their way to a response are
-Critical. An engine-owned schema change is High (Critical in production config), a connection
+**Severity:** interpolated SQL reachable from request data and a missing tenant filter on MySQL /
+MariaDB are Critical. Unmapped raw rows that can carry a secret column on their way to a response
+are Critical below nest-server 12.3.1, and in every version when that column is no
+`security.secretFields` entry (Better Auth's `session.token`, `account.access_token`) or the
+driver result itself is returned; from 12.3.1 on, other plain rows are High where the model has a
+non-trivial `securityCheck` or role-restricted fields, otherwise no finding. An engine-owned schema change is High (Critical in production config), a connection
 or pool of its own High (Critical on MySQL / MariaDB with a tenant-scoped table). Findings go into the report's Security & Permissions section. Rules:
 `generating-nest-servers` → `reference/choosing-a-database.md` ("Code on a SQL database").
 

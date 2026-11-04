@@ -1,5 +1,5 @@
 ---
-description: Recurring model review — deterministic check of catalog, announced shutdowns and capabilities, then inventory, research, measurement against the project's own benchmark, and adoption of the confirmed winners
+description: Recurring model review — deterministic check of catalog, announced shutdowns and capabilities, then inventory, research, measurement against the project's own benchmark, adoption of the confirmed winners, and an improvement of the review itself
 allowed-tools: Bash(pnpm run bench:ai:*), Bash(npm run bench:ai:*), Bash(yarn run bench:ai:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(git:*), Bash(curl:*), Bash(jq:*), Bash(node:*), Bash(grep:*), Bash(ls:*), Bash(cat:*), Bash(test:*), Read, Grep, Glob, Write, Edit, WebFetch, WebSearch, AskUserQuestion
 argument-hint: "[--quick] [--probe] [--usage=<list>] [--dry-run] [--no-research] [--repeat=<n>]"
 disable-model-invocation: true
@@ -60,6 +60,7 @@ Work through these steps in order; the final report states each step's outcome:
 3. Test — run the project's benchmark against the candidates
 4. Report — comparison table + recommendation per usage
 5. Adopt — apply the confirmed recommendations, then `check`
+6. Improve — make the next review better than this one (never skipped)
 
 ### 0a. Adapter
 
@@ -209,7 +210,24 @@ the model with the strongest published tool-use score called **zero** tools in
 the real application, because it emitted its calls as JSON text instead of via
 the native field. Your own measurement (STEP 3) always outranks a foreign one.
 
-### 2c. Pick candidates per usage
+### 2c. Beyond the catalog
+
+Three questions the catalog cannot answer, each asked in every review (criteria, gates and
+evidence: the skill's `reference/research.md`):
+
+- **What does each model get to see?** Run the `resolution` probe
+  (`ai-models.mjs probe --usage <image usages>`) and compare its limit with what the application
+  sends and renders. A gap is a measurement dimension, not a finding to act on directly.
+- **Which self-hostable engines qualify?** Current open-source OCR and document engines that
+  pass the licence (code AND weights), hardware (read the target server), locality and language
+  gates. A GPU-only engine may still qualify through a GDPR-compliant hosting provider.
+- **Which combinations are worth a configuration?** Image plus text layer, image plus OCR text,
+  cascades, votes; each with its cost in calls and time.
+
+Delegating this research to a subagent keeps the main context free: hand it the gates, the
+target hardware and what the project already uses, and ask for a ranked shortlist with sources.
+
+### 2d. Pick candidates per usage
 
 For each usage from STEP 1, shortlist the models that are (a) present in the
 catalog and (b) of the right modality. Include the incumbent — a comparison
@@ -262,6 +280,10 @@ git log --oneline -20 -- src/server/modules  # what changed since the last revie
 
 Then read the case files against the current prompts and ask, per usage:
 
+- Do the cases discriminate? If the last review's candidates all reached the ceiling on a group
+  of cases, add harder ones there first (the skill's `reference/measurement.md` lists the kinds:
+  quality levels, small print, photos, faxes, more pages than one request takes).
+
 - Does a usage exist in the code with **no** case? (A `coverage.spec.ts` answers
   this mechanically — prefer that over reading.)
 - Does a case still reflect the current prompt and the current parser?
@@ -271,7 +293,14 @@ Then read the case files against the current prompts and ask, per usage:
 comparison run against a stale set is worse than no comparison, because it looks
 authoritative.
 
-### 3c. Run it
+### 3c. Dimensions
+
+Measure every dimension that changes what the model sees or does, one configuration per value:
+model, reasoning setting, input resolution, route, combination, and self-hosted engines from 2c.
+Keep the incumbent configuration in the matrix. Finish every code change in the application
+before the run: a dev server that watches the source restarts and breaks the run.
+
+### 3d. Run it
 
 ```bash
 pnpm run bench:ai -- --repeat=3           # or the project's equivalent
@@ -376,6 +405,32 @@ Skip entirely on `--dry-run`.
 
 ---
 
+## STEP 6 — Improve the review itself
+
+Runs on every full review, also on `--dry-run`. The model running this review may know engines,
+methods and failure modes the method predates; this step is where that knowledge enters the
+process. On `--dry-run` it changes nothing: items 2 to 4 go into the report as proposals.
+`--quick` ends before this step, so it records no review.
+
+1. **Question the run** with the five questions of the skill's `reference/research.md`
+   section 4: what the run found that the method did not ask for, whether the case set
+   discriminated, which errors were real reading errors, what the running model would do
+   differently, what the next run needs.
+2. **Apply the cheap improvements now**, in the project: a new case kind in the generator, a new
+   dimension or flag in the benchmark harness, a sharper scorer. A change that would alter
+   production behaviour is a proposal, not an improvement of the review.
+3. **Record the review** in the project's measurement log (date, the model that ran the review,
+   the configurations, the decision, the process changes) and set `benchmark.lastReview`
+   (`YYYY-MM-DD`) in the adapter, so the scheduled check knows when the next review is due. The
+   check reads the date only when `benchmark.command` is set; add the command that ran this
+   measurement when it is missing.
+4. **Carry generic lessons into this plugin**: a trap, a probe, a rule that holds for every
+   project goes into the `maintaining-ai-models` skill or this command, anonymised (no customer,
+   no project names, masked values). Project-specific knowledge stays in the project.
+5. **Report the process changes** in the final summary, next to the model decision.
+
+---
+
 ## Hard Rules
 
 - **Derive the inventory from the code, every time.** A usage missing from the
@@ -401,6 +456,8 @@ Skip entirely on `--dry-run`.
   Filter candidates before spending tokens on them.
 - **The run costs real tokens.** Say so before starting a full matrix, and honour
   `--usage=` to keep a re-run cheap.
+- **Every review improves the next one.** STEP 6 is part of the review, not a follow-up: a
+  review that leaves the method as it found it will miss the same things next time.
 
 ## Failure Handling
 

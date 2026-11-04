@@ -44,7 +44,18 @@ came from another model or more than one route. Group further with `--group conf
     in the report.
 - **Synthetic cases** with known values cover layout traps real data shows rarely: several
   layouts, digital and as a "scan" (skew, noise). Generate them from HTML (headless Chrome) and
-  rasterise for the scan variant.
+  rasterise for the scan variant. Vary what decides between candidates, not only the layout:
+  - document kinds (each with its own type and fields): orders, invoices, delivery notes,
+    landscape certificates with dense numeric tables;
+  - quality levels: digital, scan at about 200 and at 300 DPI, fax (1 bit, 200 x 100 DPI),
+    a phone photo (perspective, uneven light, uploaded as an image, not a PDF);
+  - small print (6.5-7 pt), stamps and handwritten notes over values, a second language;
+  - more pages than one request may carry (the provider's image limit), so batching is measured.
+  Keep the seed fixed and append new layouts after the existing ones, so earlier cases stay
+  byte-for-byte comparable across reviews.
+- **Real cases are scarce and repetitive.** Deduplicated, confirmed production documents shrank
+  from 20 to 2 in one project (the same file uploaded again and again). Use them as a check on
+  the synthetic set, not as the whole basis.
 - **Customer data** only with the customer's consent, read-only, in a local scratchpad, deleted
   afterwards. Reports, tickets and plugins carry masked shapes only.
 
@@ -66,6 +77,12 @@ came from another model or more than one route. Group further with `--group conf
 - **Do not parallelise and do not retry.** Concurrent calls measure the queue; a retry quietly
   improves a candidate's score.
 - **Repeat.** One pass is a sample of one; three passes before moving production.
+- **Parallel streams only for quality.** Running several configurations at once shortens a long
+  matrix, and the scores stay valid; the latencies do not. Re-measure the finalists' latency
+  serially before a decision.
+- **Measure every dimension that changes what the model sees or does:** model, reasoning setting,
+  input resolution (`@<edge>` per configuration), route (image, OCR plus text model, text layer)
+  and combinations (image plus text). One configuration per combination of values.
 - **Score by value.** Numbers and dates compare by value; format differences are reported
   separately. Raw string equality cost one model 16 points it did not deserve.
 
@@ -89,6 +106,9 @@ P90 as well as median, because the slow tail is what an interactive user remembe
 
 Read the failures, not only the rates: swapping the customer's and the supplier's article number
 is worse than an empty field, because the empty field is visible and the swapped one looks right.
+Classify the masked deviations: same shape with different content is a reading error, two fields
+of one row with crossed values a swap, extra units or spacing a format difference, an empty value
+a miss. A configuration that wins on the score may win on fewer swaps, not on better reading.
 
 Report per usage: the table, the recommendation, the margin, the bias, and every configuration
 whose rows came from another model or route. A one-case difference is noise; say when a

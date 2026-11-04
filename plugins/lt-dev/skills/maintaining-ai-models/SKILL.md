@@ -41,6 +41,17 @@ that run is needed.
   2026-10-14: `Mistral-Medium-3.5-128B`, gone from the mittwald catalog, still answered HTTP 200
   under its own ID, with no text. `model-redirected` fires only when the provider reports the
   serving model in the response; mittwald echoes the requested ID. Act on `model-missing`.
+- **The model only reads what it is sent.** A pipeline that renders PDF pages at a fixed DPI caps
+  every configured image edge, and providers downscale server-side at their own limit (observed
+  2026-11-03: one vision model stopped at about 1540 px, two others read a full 300 DPI page).
+  The `resolution` probe shows each model's limit; measure the edge as its own dimension.
+- **A case set at the ceiling decides nothing.** When the candidates all score 100 % on the
+  synthetic set, the question moved to cases the set does not have. Read the error kinds too:
+  two fields swapped is an interpretation error, the same shape with other characters a reading
+  error, and only the second one answers a resolution question.
+- **A dev server that watches the source restarts mid-run.** Editing or formatting the API's
+  source while a benchmark runs ends every later case with `fetch failed`. Finish code changes
+  first, then measure.
 - **Speed counts where a person waits.** In a document analysis whose other steps take longer
   anyway, a clearly better but slower model wins. For an assistant the user is waiting on,
   seconds matter next to quality: 16/16 in 7.1 s is not automatically better than 18/21 in
@@ -84,6 +95,10 @@ itself failed (no key, no network, invalid adapter).
 | `budget-eaten-by-reasoning` | Empty answer at a small `max_tokens` | Check the usage's budget against reasoning plus answer, or switch reasoning off |
 | `adapter-*`, `code-*`, `runtime-*` | Adapter, code and running system disagree | Fix the adapter, or find out who changed the running system |
 | `candidate` (information) | Available, unused model | Candidate for the next measurement |
+| `review-due` | The last full measurement is older than `benchmark.reviewEveryDays` | Run `/lt-dev:backend:ai-model-review`; afterwards set `benchmark.lastReview` |
+| `resolution-headroom` (information) | The usage sends a smaller image than the model reads (probe) | Measure larger edges, after checking the application renders them |
+| `image-limit-headroom` (information) | The model takes more images per request than the application sends (e.g. after a model switch) | Nothing breaks; measure before raising the batch size |
+| `resolution-wasted` (information) | The usage sends more than the provider passes on (probe) | Lower the edge, or keep it only where a measurement proved it |
 
 ### 3. Measure (only when the check or the user asks for it)
 
@@ -99,6 +114,10 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs" summarize results.jsonl --gro
 The summary ranks per usage by its latency class: goal first; for an interactive usage the
 configurations within the latency budget before those over it; then quality; then speed.
 
+Beyond the catalog, every review also asks what the model gets to see (input resolution), which
+self-hostable engines pass licence, hardware and privacy gates, and whether a combination beats
+the best single route: `${CLAUDE_SKILL_DIR}/reference/research.md`.
+
 ### 4. Decide and deliver
 
 - **A model swap with a clear margin** can be prepared: ticket with the measurement report,
@@ -107,12 +126,27 @@ configurations within the latency budget before those over it; then quality; the
   Present them; never apply them on your own.
 - Record the reason next to every pin: the measured margin and the date.
 
-### 5. Repeat on a schedule
+### 5. Improve the review itself
+
+Every review ends by improving the next one: what did this run find that the method did not ask
+for, did the case set discriminate, which errors were real reading errors, what would the model
+running the review do differently, and what does the next run need. The answers go into the
+project's benchmark harness and measurement log, into this skill (generic lessons, anonymised),
+and into `benchmark.lastReview`. Questions and log format: `${CLAUDE_SKILL_DIR}/reference/research.md`
+section 4.
+
+### 6. Repeat on a schedule
 
 The check runs without Claude, so it belongs in CI: a GitLab scheduled pipeline per project, the
 script pinned to a commit and checksum, the key from a masked CI variable, one Linear ticket in
 Triage on a finding. Template, variables, costs and the line between reporting and changing:
 `${CLAUDE_SKILL_DIR}/reference/automation.md`.
+
+The check also turns an overdue full measurement into an action finding (`review-due`): the
+adapter records `benchmark.lastReview` (`YYYY-MM-DD`) and optionally `benchmark.reviewEveryDays`
+(default 90). That is what makes the measurement recur, not only the catalog check. The check
+reads the date only when `benchmark.command` is set, so an adapter without it never reports
+`review-due`.
 
 ## Rules
 

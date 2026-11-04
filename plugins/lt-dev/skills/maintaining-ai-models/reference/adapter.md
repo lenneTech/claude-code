@@ -55,7 +55,8 @@ holds one.
   },
   "benchmark": {
     "command": "pnpm --dir projects/api run bench:ai -- --repeat=3",
-    "results": "projects/api/tests/benchmark/results/latest.jsonl"
+    "results": "projects/api/tests/benchmark/results/latest.jsonl",
+    "lastReview": "2026-11-03"
   }
 }
 ```
@@ -76,12 +77,14 @@ holds one.
 | `usages[].needs` | no | Capabilities the usage depends on, each one a probe: `vision` (answers a question about an image), `ocr` (transcribes the text in an image; a document-OCR model such as GLM-OCR is listed with `ocr`, not `vision`), `json` (`response_format: json_object`), `tools` (native tool calls, not JSON in the text), `reasoning-off`, `embeddings`, `max-images:<n>`. Any other word is reported as `unknown-need`, because nothing would check it |
 | `usages[].latency` | recommended | How much speed counts: `interactive` when a person waits for the answer (chat, assistant, inline generation, search), `background` when the call is one step of a longer process whose other steps take longer anyway (document analysis, import, batch). Decides how a measurement weighs latency against quality (`measurement.md`, "Reading the result") |
 | `usages[].latencyBudgetMs` | for `interactive` | The P90 latency the person will accept, measured end to end through the application. `summarize` ranks configurations within it first and flags the ones over it |
-| `usages[].params` | no | The call parameters the application sends: `maxTokens`, `reasoningEffort`, `temperature`, `maxImages`, `dims`. Probes send the same, so they test the call the application makes |
+| `usages[].params` | no | The call parameters the application sends: `maxTokens`, `reasoningEffort`, `temperature`, `maxImages`, `dims`, and for an image usage `imageEdgePx` (a positive number: the long edge in px of the images the application sends, which the `resolution` probe compares with what the model reads). Probes send the same, so they test the call the application makes |
 | `usages[].source` | no | Where the model is set in code, for the reader |
 | `inventory.seed.files` | no | Files where models are configured in code (registry, seeds, env defaults). The check reports declared models missing there and catalog models quoted there but not declared |
 | `inventory.runtime.command` | no | A command that prints the models the running system uses, as JSON: `["id", …]`, `[{ "model": "…", "usage": "…" }]` or `{ "models": [...] }`. Runs from the project root; skipped with `--no-runtime` |
 | `benchmark.command` | no | How the project measures its usages (see `measurement.md`) |
 | `benchmark.results` | no | Where that command writes its JSONL |
+| `benchmark.lastReview` | after the first full review | The date of the last full measurement, `YYYY-MM-DD` (any other form fails validation). Read only when `benchmark.command` is set: the check then reports `review-due` once the date is older than `reviewEveryDays`, and `review-unrecorded` while it is missing |
+| `benchmark.reviewEveryDays` | no | Days between two full measurements, a positive number; default 90 |
 
 ## Where models live, and which source counts
 
