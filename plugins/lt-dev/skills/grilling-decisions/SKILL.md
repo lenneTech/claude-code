@@ -107,6 +107,7 @@ Reach for Read, Grep, Glob, the Linear MCP, and the Figma MCP before you reach f
 
 - **Probe the edges, not the happy path.** Empty, null, very large, concurrent, unauthorised, offline. The happy path is the part everyone already agrees on.
 - **Surface consequences that outlive the ticket:** a data model that is hard to migrate later, a permission default that becomes the precedent, a contract other teams will consume.
+- **A new nest-server project settles its database in this round.** Unless the ticket or a `## Database` section in the root `CLAUDE.md` names it, the database and SQL engine are a question (they outlive every ticket), briefed by the procedure in `generating-nest-servers` → [reference/choosing-a-database.md](../generating-nest-servers/reference/choosing-a-database.md): the signal from the sources in part 3, the deciding step in part 5, and for MySQL / MariaDB what the project gives up. A new module with data of its own stays in the project's database without a question; it becomes one only when the sources point at another database (hybrid). The confirmed answer goes into the decision record and, as `## Database`, into the root `CLAUDE.md`.
 - **Cover what the implementation would otherwise stop for.** Before closing, walk the planned work once in your head (models, endpoints, permissions, UI states, tests) and put every point where you would otherwise pause through [Settle or ask](#settle-or-ask). That is what makes the run afterwards question-free.
 
 ## When the user is unreachable

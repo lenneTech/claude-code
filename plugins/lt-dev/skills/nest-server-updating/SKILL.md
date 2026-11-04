@@ -15,6 +15,7 @@ This skill provides **knowledge and resources** for updating @lenne.tech/nest-se
 - **The 12.0 step (NestJS 12, TypeScript 6) breaks builds without a single source change** — `11.43.x-to-12.0.x.md` is the guide; four things in it catch most projects. (1) Raise every NestJS-family pin and `typescript` together with nest-server (`pnpm run update` raises the pins the project already declares): one `@nestjs/*` package left on 11 installs a second NestJS copy, and the build fails with `Class 'X' incorrectly extends base class 'CoreX'`. (2) TypeScript 6 turns `strict` on, resolves `rootDir` to the tsconfig's directory and defaults `types` to `[]`, so `tsconfig.json` needs `"strict": false`, `"types": ["node", "vitest/globals"]` and a `rootDir` the `start:prod` path expects; an explicit `"moduleResolution": "node"` is error TS5107. (3) `@nestjs/{jwt,mongoose,passport,schedule,swagger,terminus}` resolve only from their package root, so a deep `…/dist/…` import fails with `TS2307` or `ERR_PACKAGE_PATH_NOT_EXPORTED`. (4) A subclass that redeclares its constructor no longer inherits the parent's `@Optional()` flags; the symptom is `Nest can't resolve dependencies of the XService (…, ?)`. nest-server itself is an ES module from 12.0 on, like every `@nestjs/*` package, and CommonJS projects stay CommonJS: Node loads them all through `require(esm)`, which is why the Node floor matters (22.12+, nest-server's `engines.node` names the exact one). A vendor-mode project has one more required step: its dev start moves from ts-node to the framework's loader (`node -r ./src/core/modules/migrate/helpers/ts-compiler.js src/main.ts`, guide §14), because the 12.x core imports `./x.js` and ts-node cannot load it; without it `pnpm start` fails with `Cannot find module './core.module.js'` while build, `migrate:*` and tests pass (details in `nest-server-core-vendoring`).
 - **ESM projects are optional, never part of the update** — Converting a project to `"type": "module"` (guide §17 "Converting a project to ESM") is worth it only for a package that loads from an ES module alone (top-level `await`, `ERR_REQUIRE_ASYNC_MODULE` under `require(esm)`) or to match `nest new`. Do it as its own step after the update is green, with `lt server convert-esm --noConfirm` in the API project or a workspace root with `projects/api` (`--dry-run` previews; it refuses nest-server below 12 and, unless `--force`, a dirty git tree, so the conversion is one diff). What has no exact rewrite (a named import from a CommonJS package, a decorated field on an import cycle, a leftover `require`) comes with file:line and exit 1: fix it by hand (`generating-nest-servers` → ESM rules) and run the same command again, which on an ESM project re-checks without a clean tree. It ends with build, start of the BUILT server, `migrate:list` and dev start, because vitest passes code that Node's ESM loader refuses; with `--skip-verify`, or by the guide's steps on a CLI without the command, start the built server yourself.
 - **`useDefineForClassFields` mismatch** — When migrating to vitest, both the `tsconfig.json` `compilerOptions.useDefineForClassFields` and the swc plugin in `vitest-e2e.config.ts` must be set to `true`. Mixing them (e.g. swc=false, ts=true) silently breaks NestJS DI: `securityCheck` gets the wrong `currentUser`, so user `signUp` returns `createdBy: null` even though the override service set it. There is no error, only test failures that look like business logic regressions.
+- **The 12.1 step makes the framework database-agnostic, and a MongoDB project declares MongoDB's libraries itself** — `12.0.x-to-12.1.x.md` is the guide. `mongoose`, `@nestjs/mongoose` and `mongodb` become optional peers: a project on MongoDB lists all three in `dependencies` (a starter-based one already has two; `mongodb` moves there from `devDependencies`, because Better-Auth's MongoDB adapter loads it at runtime), and nothing else changes for it. A vendor-mode core imports every SQL package, so `pg`, `@types/pg`, `mysql2`, `typeorm`, `kysely` and `drizzle-orm` go in at least as `devDependencies` (TS2307 otherwise), whatever the database. A project on PostgreSQL follows §3, on MySQL / MariaDB §7; login (Better-Auth) there needs 12.1.1 (`12.1.0-to-12.1.1.md` §6). An update never moves a project to another database: that is a data migration and a decision of its own (`generating-nest-servers` → `reference/choosing-a-database.md`).
 - **Minor version bumps are treated as MAJOR** — `@lenne.tech/nest-server` follows a "stepwise update" policy even on minor versions. Jumping from `7.5.x` directly to `7.9.x` in one step is likely to miss breaking changes that were introduced sub-minor. Always run the update step-by-step via `pnpm run update`, even if the version gap looks small.
 - **`pnpm run update` requires the target version in `package.json` FIRST** — The update script reads the current/target from `package.json`. Running it before bumping the version does nothing or produces confusing errors. Order: (1) bump `package.json` → (2) `pnpm install` → (3) `pnpm run update`.
 - **`nuxt-extensions` alignment breaks silently** — `@lenne.tech/nuxt-extensions` is version-aligned with `@lenne.tech/nest-server`. Updating nest-server to `7.19.0` without also updating nuxt-extensions to `7.19.x` leaves the frontend consuming an outdated API contract. Types generated via `generate-types` may still pass locally but break at runtime on production.
@@ -184,6 +185,25 @@ gh api repos/lenneTech/nest-server/contents/migration-guides --jq '.[].name'
 
 The `pnpm run update` script requires this order:
 
+0. **Before the first run:** bring the project's update script to the starter's state. A copy
+   older than the starter's fix of 2026-09-03 aborts on the first caret range in `package.json`
+   (`TypeError: Invalid Version: ^4.21.0` at `semver.gt`) and leaves the update undone, so the
+   framework's dependencies are never aligned. Compare `extras/sync-packages.mjs` and every file
+   it imports by relative path (today `extras/align-package-versions.mjs`) with nest-server-starter
+   on the branch of the target line (`main`, or `release/11.x` for an 11.x target):
+
+   ```bash
+   ref=main   # release/11.x for an 11.x target
+   for f in sync-packages.mjs align-package-versions.mjs; do
+     curl -fsSL "https://raw.githubusercontent.com/lenneTech/nest-server-starter/$ref/extras/$f" -o "<scratchpad>/starter-$f"
+     cmp -s "<scratchpad>/starter-$f" "extras/$f" || echo "differs or missing: extras/$f"
+   done
+   ```
+
+   Copy every file that differs or is missing from the starter, together with the `update` and
+   `update:all` entries of its `package.json`. Copying `sync-packages.mjs` alone breaks on its
+   missing import. A change the project made to its own copy is named in the report.
+
 1. **First:** Update the version in `package.json` to the desired target version
    ```
    "@lenne.tech/nest-server": "^X.Y.Z"
@@ -200,6 +220,22 @@ The `pnpm run update` script requires this order:
 - Analyzes which packages inside `@lenne.tech/nest-server` were updated
 - Installs those updated dependencies if they don't exist or have a lower version
 - Ensures version consistency between nest-server and its peer dependencies
+
+**Then check for duplicate core packages.** One package the project shares with nest-server in
+two versions breaks the application at runtime even when the build passes: two `mongoose`
+copies mean two `MongooseCoreModule` instances, and dependency injection fails across the whole
+test suite. After every `pnpm run update`, each of these must report one version:
+
+```bash
+for p in @nestjs/core mongoose @nestjs/mongoose typeorm kysely drizzle-orm pg mysql2; do
+  pnpm why "$p" 2>/dev/null | grep -E "^Found [0-9]+ versions? of" | grep -v "Found 1 version" && echo "  -> $p"
+done
+# npm: npm ls <pkg> --all
+```
+
+A second version is resolved by raising the project's own pin to the version nest-server
+declares, then `pnpm install` and the check again. Every duplicate found goes into the report
+with how it was resolved.
 
 **Manual update (only if `pnpm run update` script is not available):**
 ```bash

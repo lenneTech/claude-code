@@ -36,7 +36,7 @@ Every architecture uses exactly this stack, without alternatives or substitution
 | Modals | `useOverlay()` | Programmatic ONLY, never inline |
 | Backend | NestJS + @lenne.tech/nest-server | Services extend `CrudService` |
 | API Style | REST | GraphQL ONLY when explicitly requested |
-| Database | MongoDB + Mongoose | Via nest-server models |
+| Database | The project's database: MongoDB (default), PostgreSQL, MySQL / MariaDB, or several (nest-server 12.1+) | Read `## Database` in the root `CLAUDE.md`; a new project decides it by `generating-nest-servers` → `reference/choosing-a-database.md`. Models via nest-server (`CorePersistenceModule.forFeature`), data through `CrudService` / `this.dataStore` |
 | Security | @Restricted + @Roles + securityCheck() | On EVERY module |
 | Types | Generated SDK | `types.gen.ts` + `sdk.gen.ts`, no manual DTOs |
 | State | `useState()` for shared, `ref()` for local | SSR-safe patterns only |
@@ -65,7 +65,20 @@ Before designing anything, understand what exists.
 
 ### Phase 2: Architecture Design
 
-#### 2.1 Data Model Design (MongoDB)
+#### 2.1 Data Model Design
+
+**Database first.** Read `## Database` in the root `CLAUDE.md`, and the nest-server version from
+Phase 1. Without a recorded decision in a new project, decide by the procedure in
+`generating-nest-servers` → `reference/choosing-a-database.md` (external requirement wins;
+PostgreSQL on relational, reporting or finance signals or database-enforced tenant isolation;
+MongoDB otherwise; hybrid only with a named reason and cost; MySQL / MariaDB only on a requirement,
+login from nest-server 12.1.1 on, without row-level security). The blueprint states the decision
+in its Data Model section (database, SQL engine, the deciding step, what MySQL / MariaDB gives up)
+and includes writing it as `## Database` into the root `CLAUDE.md`. A new module with data of its
+own stays in the project's database unless the requirements name another; then the blueprint
+proposes hybrid with its reason and cost. On a SQL database `ObjectId` references below are 24-hex
+string ids, and an aggregation pipeline is replaced by the store's `count` / `sum` / `distinct` /
+`find`.
 
 For every new entity, define:
 
@@ -324,7 +337,7 @@ Deliver as structured blueprint:
 [Existing conventions with file:line references — what patterns to follow]
 
 ## Data Model
-[Entity definitions, relations, embedding decisions, security layers]
+[Database and SQL engine (recorded, or decided here with its step and reason), entity definitions, relations, embedding decisions, security layers]
 
 ## API Contract
 [Endpoints, methods, roles, inputs, outputs, error cases]

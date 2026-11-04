@@ -52,8 +52,10 @@ Work through these phases in order; the final report states each phase's outcome
 ```
 Analyze version jump and fetch migration guides
 Fetch release notes and reference project
+Bring extras/sync-packages.mjs (and its helpers) to the starter's state
 Update version in package.json
 Execute pnpm run update
+Check for duplicate core packages (pnpm why)
 Run package optimization (npm-package-maintainer FULL MODE)
 Apply code migrations
 Validate: Build
@@ -257,6 +259,17 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
 
 ### Phase 3: Update Execution
 
+**Once, before the first version step: bring the update script to the starter's state.** A copy
+of `extras/sync-packages.mjs` older than the starter's fix of 2026-09-03 aborts on the first caret
+range in `package.json` (`TypeError: Invalid Version: ^4.21.0`) and leaves the update undone,
+which later shows up as two `mongoose` versions and a test suite that fails on dependency
+injection (observed in a customer project, DEV-3382). Compare `extras/sync-packages.mjs` and every
+file it imports by relative path (today `extras/align-package-versions.mjs`) with
+nest-server-starter on the branch of the target line (`main`, `release/11.x` for an 11.x target),
+with the loop from the `nest-server-updating` skill (Update Workflow, step 0). Copy every file
+that differs or is missing, together with the `update` and `update:all` entries of the starter's
+`package.json`, and name a change the project made to its own copy in the report.
+
 **For each version step (stepwise for minor/major, direct for patch-only):**
 
 1. **Update version in package.json FIRST:**
@@ -280,6 +293,13 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
    - Analyzes which packages inside `@lenne.tech/nest-server` were updated
    - Installs those updated peer/optional dependencies if they don't exist or have a lower version
    - This ensures version consistency between nest-server and its dependencies
+
+   **Then check for duplicate core packages.** `pnpm why <pkg>` ends with `Found <n> version(s)
+   of <pkg>`; for `@nestjs/core`, `mongoose`, `@nestjs/mongoose` and the SQL engine and driver the
+   project uses (`typeorm`, `kysely`, `drizzle-orm`, `pg`, `mysql2`) it must say one (loop in the
+   skill). A second version is resolved by raising the project's pin to the one nest-server
+   declares, `pnpm install`, and the check again. The report lists every duplicate found and how
+   it was resolved.
 
 3. **Package optimization** (unless `--skip-packages`):
 

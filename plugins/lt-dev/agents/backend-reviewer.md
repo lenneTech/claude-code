@@ -66,6 +66,7 @@ Phase 3: Controller & service patterns
 Phase 4: Type strictness & input validation
 Phase 5: Code quality (DRY, naming, complexity)
 Phase 6: Performance (N+1 queries, memory leaks, async, pagination)
+Phase 6c: Native database access (only on PostgreSQL / MySQL / MariaDB or with SQL code in the diff)
 Phase 7: Test coverage
 Phase 8: Formatting & lint
 Phase 9: Vendor modification compliance (only if vendored + src/core/ touched)
@@ -549,6 +550,40 @@ reasoning model that spends `max_tokens` on thinking returns an empty answer wit
 **Severity:** a model the provider no longer offers, or a budget that leaves the answer empty, is
 High: the feature fails silently. A missing adapter entry or measurement note is Medium. Details:
 `maintaining-ai-models` skill.
+
+### Phase 6c: Native Database Access (conditional — skip when the project runs on MongoDB only and the diff adds no SQL, engine or driver code)
+
+From nest-server 12.1 on a project may run on PostgreSQL, MySQL or MariaDB (`## Database` in the
+root `CLAUDE.md`, else the URL scheme in `src/config.env.ts` and the `pg` / `mysql2` dependency).
+The data store carries the security pipeline there; native access leaves it, and on MySQL /
+MariaDB nothing in the database keeps tenants apart. In the diff, outside `src/core/`:
+
+- [ ] **Native SQL takes parameters only.** `store.native(reason)`, `store.raw(reason)`,
+      `getNativeConnection(reason)`, `.query(…)`, `sql.raw(…)`: no value and no identifier is
+      interpolated into the statement; an identifier never comes from input
+- [ ] **On MySQL / MariaDB, native access to a tenant-scoped table filters by the request's
+      tenant**, and a native write sets it: `RequestContext.getTenantId()` (refused when undefined)
+      on the `tenant_id` column, because native SQL sees the snake_case column names. The database
+      has no row-level security, so a missing filter is a cross-tenant read or write
+- [ ] **Raw rows reach a response only through named columns without secrets, or mapped to the
+      model.** Native rows carry snake_case keys (`password_reset_token`), which the interceptor's
+      camelCase `secretFields` never match: a `SELECT *` or `RETURNING *` on a table with token
+      columns, returned unmapped, hands those tokens to the client
+- [ ] **The framework owns the schema.** No `synchronize: true`, no `migrationsRun`, no engine
+      migration generator (`typeorm migration:generate`, `drizzle-kit push` / `generate`); a
+      change the framework refuses becomes a migration (`migrate create <name> --sql`)
+- [ ] **No connection of its own.** Project code opens no connection or pool past the data store
+      (`new DataSource(`, `new Kysely(`, `drizzle(` on a client, `new Pool(`, `createPool(` /
+      `createConnection(` from `pg` or `mysql2`); data goes through the `CrudService`,
+      `this.dataStore` or `store.native(reason)`. Query building blocks used on the handle
+      `store.native(reason)` / `store.raw(reason)` returns (`sql` from `drizzle-orm` or `kysely`,
+      `CompiledQuery`, Drizzle table definitions) and `import type` are the documented way
+
+**Severity:** interpolated SQL reachable from request data, a missing tenant filter on MySQL /
+MariaDB, and unmapped raw rows that can carry a secret column on their way to a response are
+Critical. An engine-owned schema change is High (Critical in production config), a connection
+or pool of its own High (Critical on MySQL / MariaDB with a tenant-scoped table). Findings go into the report's Security & Permissions section. Rules:
+`generating-nest-servers` → `reference/choosing-a-database.md` ("Code on a SQL database").
 
 ### Phase 7: Test Coverage (Static Analysis Only)
 

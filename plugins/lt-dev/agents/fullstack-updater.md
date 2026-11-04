@@ -327,8 +327,9 @@ asks for it.
    > **Note:** When spawned by `/lt-dev:fullstack:update`, backend update is handled by the command via `lt-dev:nest-server-updater` agent. This phase is only relevant for standalone usage.
 
    Apply the `nest-server-updating` skill knowledge to update `@lenne.tech/nest-server`:
+   - Bring `extras/sync-packages.mjs` and its helpers to the starter's state first (skill, Update Workflow step 0): an older copy aborts on a caret range and updates nothing
    - Update version in package.json
-   - Run `pnpm run update`
+   - Run `pnpm run update`, then check for duplicate core packages (`pnpm why`, skill)
    - Apply migration guide changes
    - Validate build/lint/test
 

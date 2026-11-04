@@ -427,6 +427,33 @@ grep -rn "\$where\|\.aggregate(\|JSON\.parse.*req\.\|JSON\.parse.*body\|JSON\.pa
 
 - Flag: `$where` with user input, `.aggregate()` with unsanitized pipeline, `JSON.parse(userInput)` in queries
 
+#### SQL and Native Database Access (nest-server 12.1+ on PostgreSQL, MySQL, MariaDB)
+
+A project's database is named in `## Database` of the root `CLAUDE.md`, else by the URL scheme in
+`src/config.env.ts` (`postgres://`, `mysql://`, `mariadb://`) and the `pg` / `mysql2` dependency.
+On SQL the data store enforces the security pipeline; native access steps out of it in tiers
+(`store.native(reason)`, then `store.raw(reason)` / `getNativeConnection(reason)`), and on MySQL /
+MariaDB nothing in the database keeps tenants apart: neither has row-level security.
+
+```bash
+# Native access, raw SQL, engine and driver imports, engine-owned schema changes
+grep -rnE "\.(native|raw)(<[^(]*>)?\(|getNativeConnection\(|\.query\(|sql\.raw\(|from '(typeorm|kysely|drizzle-orm[^']*|pg|mysql2[^']*)'|synchronize:[[:space:]]*true|migrationsRun:[[:space:]]*true|migration:generate|drizzle-kit (push|generate)" src/ package.json --include="*.ts" --include="package.json" | grep -v "src/core/" | grep -v ".spec.ts"
+```
+
+| Scenario | Severity |
+|----------|----------|
+| A value or identifier interpolated into SQL (template string, `+`, `sql.raw()`), reachable from request data | **CRITICAL** — SQL injection (OWASP A03). Parameters only; an identifier never comes from input |
+| On MySQL / MariaDB, a native query (tier 2/3, or a connection of the project's own) on a tenant-scoped table without a filter on the request's tenant (`RequestContext.getTenantId()` on the `tenant_id` column: native SQL sees the snake_case column names), or a native write that does not set it | **CRITICAL** — cross-tenant read or write; the database does not stop it |
+| Rows from native access returned toward a response unmapped while the query can select a secret column (`SELECT *`, `RETURNING *`, a named token column) | **CRITICAL** — secret exposure (OWASP A02): raw rows carry snake_case keys (`password_reset_token`), which the interceptor's camelCase `secretFields` never match, so only `password` is stripped. Select named columns without secrets, or map the rows to the model |
+| `synchronize: true`, `migrationsRun`, or an engine's migration generator (`typeorm migration:generate`, `drizzle-kit push`) against the framework's schema | **HIGH** — the engine rewrites tables the framework owns (dropped columns, lost grants and row-level security policies); production config: **CRITICAL** |
+| Project code outside the core's adapters that opens a connection or pool of its own (`new DataSource(`, `new Kysely(`, `drizzle(` on a client, `new Pool(`, `createPool(` / `createConnection(` from `pg` or `mysql2`) | **HIGH** — queries on it bypass the data store's policies; on MySQL / MariaDB with a tenant-scoped table: **CRITICAL**. Query building blocks used on the handle `store.native(reason)` / `store.raw(reason)` returns (`sql` from `drizzle-orm` or `kysely`, `CompiledQuery`, Drizzle table definitions) and `import type` are the documented way and not a finding |
+
+Native access through `store.native(reason)` / `store.raw(reason)` with a reason (at least 20
+characters, it is logged), parameters, on MySQL / MariaDB the tenant filter, and rows that reach a
+response only through named columns without secrets or mapped to the model is the framework's
+documented escape hatch and not a finding.
+Rules: <https://github.com/lenneTech/nest-server/blob/main/.claude/rules/persistence.md> ("Native access in three tiers").
+
 #### Command Injection
 
 ```bash

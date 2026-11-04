@@ -69,10 +69,25 @@ into the release notes analysis and the final report.
 
 | Source repo | Downstream updated afterwards |
 |---|---|
-| `nest-server` | `nest-server-starter` (lock-step version, `pnpm run update`, migration guides) |
+| `nest-server` | `nest-server-starter`, mandatory (lock-step version, `pnpm run update`, migration guides); a release from `release/11.x` goes to the starter's `release/11.x` |
 | `nuxt-extensions` | `nuxt-base-starter` (bump dep in `nuxt-base-template/`) |
 | `lt-monorepo`, `cli`, starters | none (chain ends there) |
 | `claude-code`, `claude-code-internal` | none — consumers pull via `lt claude plugins` |
+
+**nest-server-starter has no releases of its own.** Its version is always the nest-server
+version it pins, every nest-server version gets one, and nothing else raises it (skill recipe,
+nest-server-starter). Two consequences for this command:
+
+- **After a nest-server release the starter release is part of the job.** `--skip-downstream`
+  leaves the starter without that version: the report names the gap, and the next run closes
+  it before releasing anything newer.
+- **`nest-server-starter` as the target** first compares its pinned `@lenne.tech/nest-server`
+  with the newest version on npm for its line (`latest` for `main`, `latest-11` for
+  `release/11.x`). A newer version there makes this run the lock-step bump of step 5, one bump
+  and one push per missing version, oldest first. Otherwise the change is an interim one: never
+  raise `version` and refuse `--release-as`; it passes the step 2b review, is committed with a
+  normal message and pushed, with no release and no tag. It ships under the next nest-server
+  version.
 
 ## Marketplace repos (`claude-code`, `claude-code-internal`)
 
@@ -305,14 +320,17 @@ A restart of Claude Code is required — running sessions keep the old version.
 7. **Report**: versions old→new per repo, release links, the review result
    per repo, the route per downstream repo (checkout, worktree with `CLAIM` and
    `LANDED`, or handed over to `<session>` together with the line its user types),
-   what was NOT released and why, leftovers (none expected — this flow creates no test
+   what was NOT released and why (for nest-server with `--skip-downstream`: the starter
+   version now missing), leftovers (none expected — this flow creates no test
    systems unless `--smoke-test` ran, which cleans up after itself).
 
 ## Flags
 
 - `--release-as=…` — force the version jump for the source repo (default:
-  derived from the diff).
-- `--skip-downstream` — publish the source repo only.
+  derived from the diff). Refused for `nest-server-starter`, whose version only
+  follows nest-server.
+- `--skip-downstream` — publish the source repo only. For nest-server this leaves
+  the starter version missing, which the report names and the next run closes.
 - **Maintenance is interactive by default** — the command ASKS whether to
   refresh dependencies before publishing (see Flow step 2), and the answer
   applies to the WHOLE chain. The two flags below only pre-answer that question

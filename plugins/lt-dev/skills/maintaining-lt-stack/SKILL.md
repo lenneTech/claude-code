@@ -32,7 +32,7 @@ Wave 2 (parallelizable):   nuxt-base-starter  nest-server-starter
 Validation:                /lt-dev:fullstack:smoke-test  (exercises ALL repos live)
                                  │
                                  ▼
-Wave 3 (only on findings): patch fixes → re-release affected repos
+Wave 3 (only on findings): patch fixes → re-release affected repos (nest-server-starter: push only)
 ```
 
 **Rule:** A starter is only updated once its npm package actually resolves on
@@ -202,7 +202,10 @@ What does **not** go over messages: which repos exist and in which order they go
   all. ANY actual repo change — dependency bumps, code, scripts, lockfile,
   tooling pins — justifies a new version; do not second-guess whether a
   change is "release-worthy". An unchanged repo is reported as
-  "already current — no release" and skipped.
+  "already current — no release" and skipped. The one exception is
+  nest-server-starter: its version moves only with a nest-server version, so its
+  own changes are committed and pushed without a release and ship under the next
+  one ([recipes.md](recipes.md), nest-server-starter).
   The reference is the PUBLISHED ARTIFACT: for npm packages, commits that
   cannot reach the tarball (outside the package.json `files` set — e.g.
   `.claude/agent-memory/**`, CI config) do not trigger a release of their
@@ -299,6 +302,9 @@ What does **not** go over messages: which repos exist and in which order they go
 - **Version convention for npm packages:** set the version manually in
   `package.json`, then `pnpm i`/`npm i` (lockfile!), commit message exactly
   `NEW_VERSION: COMMIT_MESSAGE` (e.g. `1.11.0: update deps, fix X`).
+- **nest-server-starter has no numbering of its own:** its `version` is always the
+  nest-server version it pins. Every nest-server version gets one, and nothing else
+  raises it ([recipes.md](recipes.md), nest-server-starter).
 - **Commit message:** the CONVENTION is non-negotiable — `NEW_VERSION: MESSAGE`
   for npm packages, conventional-commits for templates (the release commit
   groups their CHANGELOG section by type, see [recipes.md](recipes.md)), and the fixed
@@ -357,7 +363,11 @@ conventions, propagation waits — applies unchanged.
 After wave 2, run `/lt-dev:fullstack:smoke-test` (full run incl.
 TurboOps deploy + online checks + residue-free cleanup). Every finding is a
 base-repo fix → patch the causing repo → run its recipe again (patch
-release) → repeat the smoke-test phase until clean.
+release) → repeat the smoke-test phase until clean. A fix in
+nest-server-starter gets no patch release: its version moves only with a
+nest-server version, so the fix is committed and pushed with `version`
+unchanged, no bump and no tag ([recipes.md](recipes.md), nest-server-starter),
+and the push is what the next smoke round clones.
 
 The smoke test clones the templates from GitHub (`main`), so fixes take
 effect only after commit+push/release of the affected repo, never from the

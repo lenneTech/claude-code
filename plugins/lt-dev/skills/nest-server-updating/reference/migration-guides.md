@@ -66,9 +66,14 @@ gh release view v11.7.0 --repo lenneTech/nest-server
 
 # Compare reference project between versions
 cd /tmp/nest-server-starter-ref
-git log --oneline v11.6.0..v11.8.0
-git diff v11.6.0..v11.8.0 -- package.json src/
+git log --oneline v12.1.0..v12.2.0
+git diff v12.1.0..v12.2.0 -- package.json src/
 ```
+
+The starter has a version for every nest-server version and tags it `v<X.Y.Z>`, versions of
+the maintenance line on its `release/11.x`. That holds from 11.34.0 on, except 11.36.2, 11.42.0
+and 11.42.5, which the starter skipped; most versions before 11.34.0 are untagged, so compare
+the nearest tags around them.
 
 **When using fallback:**
 - Proceed with extra caution

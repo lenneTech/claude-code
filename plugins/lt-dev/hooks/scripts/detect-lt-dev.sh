@@ -197,6 +197,74 @@ if [ -f "$REGISTRY_PATH" ] && command -v jq >/dev/null 2>&1; then
   fi
 fi
 
+# The project's database for the block's DB line. nest-server 12.1+ runs on MongoDB, PostgreSQL,
+# MySQL / MariaDB or several of them. A decision recorded in CLAUDE.md (`## Database`,
+# generating-nest-servers → reference/choosing-a-database.md) wins; otherwise the API's
+# config.env.ts (comments skipped: the starter ships its `database` block commented out) and its
+# runtime dependencies tell. Nothing found keeps the MongoDB line every project had before 12.1.
+DB_KIND=""
+DB_ENGINE=""
+detect_database() {
+  local api="$ROOT" section code="" sql="" mongo="no"
+  [ -d "$ROOT/projects/api" ] && api="$ROOT/projects/api"
+  if [ -f "$ROOT/CLAUDE.md" ]; then
+    section=$(awk '/^## Database[[:space:]]*$/ { f = 1; next } f && /^## / { exit } f' "$ROOT/CLAUDE.md" 2>/dev/null)
+    DB_KIND=$(printf '%s\n' "$section" | sed -n 's/^- Database:[[:space:]]*//p' | head -1 | tr -d '`' | cut -c1-80)
+    DB_ENGINE=$(printf '%s\n' "$section" | sed -n 's/^- SQL engine:[[:space:]]*//p' | head -1 | tr -d '`' | cut -c1-30)
+    case "$DB_ENGINE" in -|–|—|none) DB_ENGINE="" ;; esac
+    [ -n "$DB_KIND" ] && return 0
+  fi
+  [ -f "$api/src/config.env.ts" ] && code=$(grep -vE '^[[:space:]]*(//|\*|/\*)' "$api/src/config.env.ts" 2>/dev/null)
+  case "$code" in *"database: false"*) DB_KIND="none (database: false)"; return 0 ;; esac
+  case "$code" in
+    *"postgres://"*|*"postgresql://"*) sql="PostgreSQL" ;;
+    *"mariadb://"*) sql="MariaDB" ;;
+    *"mysql://"*) sql="MySQL" ;;
+  esac
+  case "$code" in *"mongodb://"*|*"mongodb+srv://"*) mongo="yes" ;; esac
+  if [ -z "$sql" ] && [ "$mongo" = "no" ] && [ -f "$api/package.json" ] && command -v jq >/dev/null 2>&1; then
+    local deps
+    deps=$(jq -r '(.dependencies // {}) | keys | join(" ")' "$api/package.json" 2>/dev/null)
+    case " $deps " in *" pg "*) sql="PostgreSQL" ;; *" mysql2 "*) sql="MySQL / MariaDB" ;; esac
+    case " $deps " in *" mongoose "*) mongo="yes" ;; esac
+  fi
+  if [ -n "$sql" ]; then
+    DB_ENGINE="TypeORM"
+    case "$code" in
+      *"sqlEngine: 'kysely'"*|*'sqlEngine: "kysely"'*) DB_ENGINE="Kysely" ;;
+      *"sqlEngine: 'drizzle'"*|*'sqlEngine: "drizzle"'*) DB_ENGINE="Drizzle" ;;
+    esac
+    DB_KIND="$sql"
+    [ "$mongo" = "yes" ] && DB_KIND="$sql + MongoDB (hybrid)"
+  elif [ "$mongo" = "yes" ]; then
+    DB_KIND="MongoDB"
+  fi
+}
+
+# Detection runs only when the block is rendered, since the hook fires on every prompt everywhere.
+# `lt dev` exports the MongoDB URI the API reads (NSC__MONGOOSE__URI) and a DATABASE_URL that
+# nest-server never reads (cli src/lib/dev-env.ts), so the SQL side is named by where the API
+# takes its connection from rather than by a URL; that URL can carry a password, and nothing from
+# config.env.ts is printed.
+db_line() {
+  local line local_db=""
+  detect_database
+  if [ -z "$DB_KIND" ]; then
+    [ -n "$DB_NAME" ] && echo "- DB:  \`mongodb://127.0.0.1/$DB_NAME\`"
+    return 0
+  fi
+  line="- Database: $DB_KIND"
+  [ -n "$DB_ENGINE" ] && line="$line, engine $DB_ENGINE"
+  case "$DB_KIND" in
+    *PostgreSQL*|*MySQL*|*MariaDB*) local_db="SQL from \`database.url\` in the API's \`src/config.env.ts\` (env \`NSC__DATABASE__URL\`)" ;;
+  esac
+  if [ -n "$DB_NAME" ]; then
+    case "$DB_KIND" in *MongoDB*) local_db="${local_db:+$local_db and }\`mongodb://127.0.0.1/$DB_NAME\`" ;; esac
+  fi
+  [ -n "$local_db" ] && line="$line · local: $local_db"
+  echo "$line"
+}
+
 # Decide: registered → URL block; lt project but unregistered → migration hint; otherwise silent.
 # Every block also names the skill that governs dev servers: this hook runs on every turn in an
 # lt project, so the skill reaches Claude whether or not its description survives the listing budget.
@@ -214,7 +282,7 @@ if [ "$REGISTERED" = "yes" ]; then
   [ -n "$TICKET" ] && echo "- ticket: \`$TICKET\` — ISOLATED worktree; work ONLY here, never touch another ticket's folder/DB; all tickets: \`lt ticket list\`"
   [ -n "$APP_URL" ] && echo "- App: \`$APP_URL\`"
   [ -n "$API_URL" ] && echo "- API: \`$API_URL\`"
-  [ -n "$DB_NAME" ] && echo "- DB:  \`mongodb://127.0.0.1/$DB_NAME\`"
+  db_line
   echo "- session: $SESSION_ACTIVE"
   echo ""
   if [ "$SESSION_ACTIVE" = "no" ]; then

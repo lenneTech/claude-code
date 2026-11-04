@@ -203,6 +203,22 @@ CHANGELOG section is written directly.
 
 ### nest-server-starter (template; consumes nest-server)
 
+**The starter follows nest-server, release for release** (Kai, 2026-11-03; the starter's
+`CLAUDE.md` states the same rule):
+
+1. **Same number.** `version` equals the `@lenne.tech/nest-server` version (step 1).
+2. **Every nest-server version gets its starter version.** Each version published to npm is
+   followed by the bump commit `Updated to nest-server version <X.Y.Z>` and its tag
+   `v<X.Y.Z>`, also when the bump is the only change. nest-server's maintenance line
+   (`release/11.x`, dist-tag `latest-11`) is followed on the starter branch of the same name:
+   the steps below run there, and its push replaces the push to `main`. A route that skips
+   the starter leaves a gap in the tag series; close it before the next release, one bump and
+   one push per missing version, oldest first (`tag.yml` tags only the version of the pushed
+   head).
+3. **Nothing else changes the version.** Starter changes between two nest-server releases are
+   committed and pushed with a normal message and leave `version` as it is: no patch bump, no
+   starter-only release, no tag. They ship under the next nest-server version.
+
 0. **Wait** until `@lenne.tech/nest-server@<version>` resolves — version-specific
    endpoint, see the propagation rule above (`npm view` reads a lagging cache).
 1. Set `version` AND `@lenne.tech/nest-server` in `package.json` to the new
@@ -238,11 +254,12 @@ CHANGELOG section is written directly.
 3. Maintenance (`/lt-dev:maintenance:maintain`) → `pnpm run check` again.
 4. Commit the paths this update changed (`git add <paths>`, never `git add .`, as in
    nuxt-base-starter step 4): on a nest-server version change exactly
-   `Updated to nest-server version <X.Y.Z>`, otherwise a normal message →
-   push main.
+   `Updated to nest-server version <X.Y.Z>`, otherwise a normal message with
+   `version` unchanged (rule 3: no bump, no tag) → push main (`release/11.x` for
+   the maintenance line).
 5. **Then stop — the tag makes itself.** `.github/workflows/tag.yml` fires on a push
-   to main that touched `package.json`, reads the version out of the manifest and
-   pushes an annotated `vX.Y.Z` onto the bump commit. So do not reach for `git tag`
+   to `main` or a `release/**` branch that touched `package.json`, reads the version
+   out of the manifest and pushes an annotated `vX.Y.Z` onto the bump commit. So do not reach for `git tag`
    because the tag series looks incomplete: the push comes back `already exists`, and
    a lightweight tag set locally before the workflow lands diverges from the annotated
    one on the remote (delete it, then `git fetch --tags`). Bump nothing a second time

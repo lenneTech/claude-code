@@ -67,7 +67,10 @@ A maintainer agent's final message is its report, not proof that the task is don
 "already current — no release" only when truly nothing has changed in it (clean
 working tree and no commits since the last released version). Never mint a
 version without any change. Every real repo change (dependencies, code,
-scripts, lockfile, tooling pins) justifies a new version.
+scripts, lockfile, tooling pins) justifies a new version, except in
+nest-server-starter: its version moves only with a nest-server version, so
+without a new one this round its changes are committed and pushed with
+`version` unchanged, no release and no tag (skill recipe).
 
 ### Phase 2 — npm propagation
 
@@ -95,7 +98,10 @@ Fix each smoke-test finding in the base repo that **caused** it, never only in
 the throwaway project. Release it as a patch using the repo recipe, after the
 review gate (Phase 1), wait for npm
 propagation and repeat the smoke-test phase until no findings remain (at most 3
-iterations, then report the open items).
+iterations, then report the open items). A fix in nest-server-starter passes the
+same review gate but gets no patch release: its version moves only with a
+nest-server version, so it is committed and pushed with `version` unchanged, no
+bump and no tag (skill recipe), and the push is what the next smoke round clones.
 
 ### Phase 6 — Cleanliness + report
 

@@ -1,7 +1,7 @@
 ---
 description: Generate and post a short, testable comment on a Linear issue — plain-language summary plus complete test steps, with the technical detail moved into an attached Linear document
 argument-hint: "[issue-id]"
-allowed-tools: Read, Bash(git:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document, AskUserQuestion
+allowed-tools: Read, Bash(git:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document, mcp__plugin_lt-dev_linear__prepare_file_upload, Bash(curl:*), AskUserQuestion
 disable-model-invocation: true
 ---
 

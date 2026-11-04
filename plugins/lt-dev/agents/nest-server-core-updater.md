@@ -289,6 +289,16 @@ Phase 8 fails against stale transitive deps.
    side matters on a major step: `typescript`, `@nestjs/testing`, `@nestjs/cli`
    and `vitest` have to move with the core, or the project keeps a second NestJS
    copy or a compiler the core no longer builds with.
+   **Both databases from core 12.1 on.** The vendored core names every SQL package in an
+   `import()`, which TypeScript resolves whatever database the project uses: `pg`,
+   `@types/pg`, `mysql2`, `typeorm`, `kysely` and `drizzle-orm` go in at least as
+   `devDependencies`, or the build fails with TS2307. MongoDB's libraries (`mongoose`,
+   `@nestjs/mongoose`, `mongodb`) stay declared: in `dependencies` on a MongoDB project
+   (`mongodb` too, Better-Auth's MongoDB adapter loads it at runtime), as `devDependencies` on a
+   project on PostgreSQL or MySQL / MariaDB alone, because the core imports their types. A local
+   patch never adds a static value import of `@nestjs/mongoose` or `mongoose` to `src/core/`: the
+   core must load where they are not installed. Guides: `12.0.x-to-12.1.x.md`, and
+   `12.1.0-to-12.1.1.md` §6 (Better-Auth on MySQL / MariaDB).
 3. Add any **runtime helper** the upstream now requires that the project is
    missing. The CLI tracks these in `src/config/vendor-runtime-deps.json`
    (e.g. `find-file-up`); mirror that list — a helper that lives in the

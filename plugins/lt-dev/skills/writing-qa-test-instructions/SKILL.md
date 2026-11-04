@@ -165,7 +165,7 @@ For every role the steps need, stop at the first hit:
 
 ### 2. Check the records each step acts on
 
-For every step, name the precondition it needs ("ein stornierter Auftrag", "ein Kunde mit drei Ansprechpartnern") and look on the stage for a record that meets it. Sign in through the API as the step's account and query. The password goes from 1Password straight into the request, and never into the output, a file or the transcript:
+For every step, name the precondition it needs ("ein stornierter Auftrag", "ein Kunde mit drei Ansprechpartnern") and look on the stage for a record that meets it. That covers every record the step **selects or refers to**, not only the one it opens: the entry picked in a dropdown, the customer a new order is created for, the products added to it. Note each hit with its name exactly as the screen shows it (the field the list or dropdown displays, taken from the API response), plus the number or ID the screen shows wherever the name is empty or not unique, because the tester finds the record by what they read. Sign in through the API as the step's account and query. The password goes from 1Password straight into the request, and never into the output, a file or the transcript:
 
 ```bash
 JAR="<scratchpad>/dev-session-<role>.txt"   # session cookie only; deleted when the run ends
@@ -180,16 +180,19 @@ Take the sign-in path and payload from the project's own auth setup; never guess
 
 | Finding | What the step gets |
 |---|---|
-| A matching record exists | A deep link to it, marked `vorhanden` |
+| A matching record exists | A deep link to it under its displayed name, marked `vorhanden` |
 | Missing, and it is only a precondition | Created through the application's regular API as the step's account, with an obvious test label (`Test <TICKET-ID> – storniert`), marked `für diesen Test angelegt` |
-| Missing, and it needs the merged version (a new entity or field) | Created once the deploy is verified healthy, where the caller verifies it (`ticket-cycle` STEP 4b.3), and the comment is updated; otherwise the step tells the tester to create it, with concrete values |
-| Missing, and creating it is what the step tests | Never pre-created; the step has the tester create it (Part 5) |
+| Missing, and it needs the merged version (a new entity or field) | Created once the deploy is verified healthy, where the caller verifies it (`ticket-cycle` STEP 4b.3), and the comment is updated; otherwise a `bitte vor Schritt <n> anlegen` line with its name and every value |
+| Missing, and creating it is what the step tests | Never pre-created; the step has the tester create it (Part 5), with every record the new one refers to named and every value given. Creating counts as tested only when the ticket changed the creation itself; a record that only has to exist so the changed screen has something to show is a precondition |
+| The step uploads a file (an import, a document, an image) | The finished file, valid for that upload, embedded in the comment under the name the step uses ([`writing-linear-comments`](../writing-linear-comments/SKILL.md), "When a real file has to travel"); never rows or a format description the tester has to turn into a file. People in it are obviously fake, with `@test.com` addresses and the ticket ID in a name, so what the upload creates on the stage is recognisable |
 
 Anything created is additive: never edit or delete a record that was already there, never write to the database directly on a shared stage, and never create anything on a production stage. A caller may move the creation to a later point: `ticket-cycle` only notes what is missing at STEP 3b and creates it after the developer's approval, so a cancelled cycle leaves nothing behind on dev.
 
 ### 3. Hand the result on as the test context
 
-The test context is the stage URL, the account per role with its link, and per step the record with its link and its `vorhanden` / `für diesen Test angelegt` label. The caller writes the comment from it. A check that could not run (no `op`, no vault entry, a failed sign-in) is stated in the context, so the comment does not claim a precision it lacks. When the run ends, delete the session cookie files.
+The test context is the stage URL, the account per role with its link, per step every record it opens or selects with its displayed name, its link and its `vorhanden` / `für diesen Test angelegt` label, and the files the steps upload. The caller writes the comment from it. A check that could not run (no `op`, no vault entry, a failed sign-in) is stated in the context, so the comment does not claim a precision it lacks. When the run ends, delete the session cookie files.
+
+Stating it does not hand the search to the tester, who has less access than Claude had. The step still gets a concrete record: ask the developer for it where one is present (`ticket-cycle` STEP 3b shows it as open in its REVIEW AUF DEV block); otherwise the comment lists it under `Vorbereitete Daten` as `bitte vor Schritt <n> anlegen`, with the name it gets (`Test <TICKET-ID> – <Eigenschaft>`) and every value it needs, and the run's summary names it, so someone can prepare it before the test starts. Observed 2026-10-30 on DEV-3807 and DEV-3815: steps read "ein <Datensatz> mit <Eigenschaft> wählen" and "ein beliebiges solches <Datensatz> wählen (nicht vorab geprüft)", and an import step listed CSV rows instead of files; the tester wrote the three files and searched for the record themselves.
 
 ## Part 5 — Help the tester without taking the test away from them
 
@@ -199,7 +202,7 @@ Parts 2 and 4 exist to save the tester searching. Neither may decide the result 
 - **A migration or backfill is checked on records that existed before the deploy**, never on records created afterwards. Name one such record per step.
 - **No shortcut past the flow under test.** The tester signs in through the normal login form with the named account: no pre-authenticated link, no token, no impersonation, no database edit, and when the login itself is part of the change, no prepared session of any kind.
 - **The expected result names what to observe, not a verdict.** "Der Auftrag erscheint mit Status `storniert` und grauem Badge" lets the tester compare; "funktioniert" or "ist korrekt" only invites agreement.
-- **One counter-check per requirement uses the tester's own choice**, wherever the change allows it: after the step on the prepared record, a step marked `Gegenprobe` in which the tester picks the record or the value ("mit einem Auftrag deiner Wahl wiederholen", "einen eigenen Wert über dem Limit eingeben"). It shows the behaviour is not tailored to the prepared case, and it is the step where the tester's judgement does the work.
+- **One counter-check per requirement uses the tester's own choice**, wherever the change allows it: after the step on the prepared record, a step marked `Gegenprobe` in which the tester picks the record or the value ("mit einem Auftrag deiner Wahl wiederholen", "einen eigenen Wert über dem Limit eingeben"). It shows the behaviour is not tailored to the prepared case, and it is the step where the tester's judgement does the work. It is also the only step that leaves the choice to the tester; every other step names its record.
 - **Every step keeps its `prüft:` clause.** A tester who knows what a step proves notices when the screen shows something the step did not anticipate.
 
 ## Part 6 — The comment format
@@ -230,10 +233,12 @@ Zugänge (Passwörter stehen nur in 1Password, hier bewusst nicht):
 - Ohne Login: privates Browserfenster
 
 Vorbereitete Daten:
-- [<Datensatz>](<Deep-Link>) — <vorhanden | für diesen Test angelegt>
-- <oder "keine nötig">
+- [<Name wie in der Oberfläche>](<Deep-Link>) (<Nummer/ID, wenn der Name fehlt oder mehrfach vorkommt>): <wofür> — <vorhanden | für diesen Test angelegt>
+- Datei [<dateiname>](<Linear-Upload-Link>): <Inhalt in einem Satz>, für Schritt <n>
+- Bitte vor Schritt <n> anlegen: <Art> `Test <TICKET-ID> – <Eigenschaft>` mit <allen Werten>   (nur, was Claude weder finden noch anlegen konnte)
+- <oder "keine nötig", wenn kein Schritt einen vorhandenen Datensatz wählt oder eine Datei hochlädt>
 
-1. Als <Rolle> (`<login>`) anmelden → [<Seite>](<URL mit Datensatz-ID>) → <genaue Aktion mit konkretem Beispielwert>
+1. Als <Rolle> (`<login>`) anmelden → [<Seite>](<URL mit Datensatz-ID>) → <genaue Aktion: `<Name wie in der Oberfläche>` wählen, `<Wert>` eingeben>
    → erwartet: <konkret beobachtbares Ergebnis> → prüft: <warum dieser Schritt existiert>
 2. Gegenprobe: Als <Rolle> → [<Seite>](<URL>) → <dieselbe Aktion mit einem Datensatz oder Wert deiner Wahl>
    → erwartet: <Ergebnis> → prüft: <dass es nicht nur am vorbereiteten Fall hängt>
@@ -276,6 +281,10 @@ Abgesichert über: <Unit-/API-/E2E-Tests, grüne CI-Pipeline, verifiziertes Depl
   produces a test nobody can repeat and a bug report nobody can reproduce. Where the data has to
   exist beforehand, link the record Part 4 found or prepared; where it could not, say to create one
   and with what values.
+- **A record the step selects is named, not described.** "Team `Muster Team 2027` wählen", never
+  "ein Team mit Zahlungsempfänger wählen": the property that makes it the right record may follow
+  in brackets as the reason, never in its place. The same holds for the products, people or
+  categories a step adds. A file the step uploads is linked under its file name, ready to use.
 - **Every login names its account** and links its vault entry (Part 2). "Als Admin anmelden" alone
   leaves the tester to find out which admin.
 - **Every route is a complete clickable link**, including query and hash parameters, resolved
@@ -297,6 +306,7 @@ Abgesichert über: <Unit-/API-/E2E-Tests, grüne CI-Pipeline, verifiziertes Depl
 - **A manual-testing column is only ever reached together with posted instructions.** The transition and the comment are one operation: if the comment cannot be posted, the ticket does not move into the testing column. A ticket sitting in QA without instructions is indistinguishable from one nobody has looked at, and it costs the tester a round-trip to find out which it is.
 - **Never a secret in a Linear comment**: no password, one-time code, token, pre-authenticated link, or public share link from `op item share`. The comment carries the login name and the private vault link instead (Part 2), and the role-only line where no entry exists. The local, developer-facing manual with literal passwords is a different artefact with a different audience.
 - **The deployed stage is checked before the steps are written** (Part 4): an account per role, and per step a record that already exists or was prepared for it, each labelled as such. `op` runs only while the developer is at the screen; an unattended run uses the stored mapping.
+- **Every record a step selects and every file it uploads is provided, by name** (Part 4): found or created on the stage and named as the screen shows it, the file embedded in the comment. A description of what would fit ("ein passendes …", "beliebig") appears only in the `Gegenprobe`; a record Claude could not resolve becomes a `bitte vor Schritt <n> anlegen` line with every value, never a search for the tester.
 - **Prepared data never decides the result** (Part 5). It sets the starting state; the tester triggers the change, signs in through the normal login, and does one counter-check per requirement with a record or value of their own choice.
 - **Never link `localhost` in a Linear comment.** Resolve the deployed URL, or fall back to relative routes with a stated reason.
 - **The classification is stated, never implied.** Whichever way it goes, the reason appears in the comment (testable → the steps themselves; not testable → the one-sentence reason plus what covers it instead). A reader must be able to disagree with the call.

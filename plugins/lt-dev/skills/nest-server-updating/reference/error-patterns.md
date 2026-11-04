@@ -20,6 +20,8 @@
 
 | Error | Cause | Solution |
 |-------|-------|----------|
+| `TypeError: Invalid Version: ^4.21.0` at `semver.gt` during `pnpm run update`, then nothing is updated | A copy of `extras/sync-packages.mjs` older than the starter's fix (2026-09-03) cannot compare caret ranges | Copy `extras/sync-packages.mjs` and the helpers it imports from nest-server-starter (SKILL.md, Update Workflow step 0), then run the update again |
+| `Nest can't resolve dependencies` across many modules, `MongooseCoreModule` twice in the trace, mass test failures right after the update | Two `mongoose` versions in the tree, usually from an update the script never finished | Raise the project's `mongoose` pin to the one nest-server declares; `pnpm why mongoose` must report one version |
 | `Decorator not found` | Decorator moved | Import from new location |
 | `Cannot read property of undefined` | Initialization changed | Check startup sequence in reference project |
 | `Module not found` | Peer dependency missing | Compare package.json with reference project |

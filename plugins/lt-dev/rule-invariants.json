@@ -28,6 +28,40 @@
       ]
     },
     {
+      "name": "nest-server-starter is the exception to \"No change → no release\" in both release gates: its version follows nest-server only",
+      "phrase": "its version moves only with a nest-server version",
+      "files": [
+        "skills/maintaining-lt-stack/SKILL.md",
+        "commands/maintenance/maintain-stack.md"
+      ]
+    },
+    {
+      "name": "a smoke-test fix in nest-server-starter is pushed without a release, in the skill's smoke gate and in maintain-stack Phase 5",
+      "phrase": "gets no patch release",
+      "files": [
+        "skills/maintaining-lt-stack/SKILL.md",
+        "commands/maintenance/maintain-stack.md"
+      ]
+    },
+    {
+      "name": "native SQL on MySQL / MariaDB filters by the request's tenant on tenant_id, in the database reference and both reviewers",
+      "phrase": "RequestContext.getTenantId()",
+      "files": [
+        "skills/generating-nest-servers/reference/choosing-a-database.md",
+        "agents/backend-reviewer.md",
+        "agents/security-reviewer.md"
+      ]
+    },
+    {
+      "name": "native SQL rows reach a response only mapped or through named columns, because removeSecrets matches camelCase field names only, in the database reference and both reviewers",
+      "phrase": "camelCase `secretFields` never match",
+      "files": [
+        "skills/generating-nest-servers/reference/choosing-a-database.md",
+        "agents/backend-reviewer.md",
+        "agents/security-reviewer.md"
+      ]
+    },
+    {
       "name": "closing line of a change report (English)",
       "phrase": "Not checked:",
       "files": [
@@ -88,6 +122,26 @@
       "files": [
         "skills/managing-agent-memory/SKILL.md",
         "commands/git/ship.md"
+      ]
+    },
+    {
+      "name": "test instructions name every record a step opens or selects as the screen shows it, in the skill and in every template that writes them",
+      "phrase": "Name wie in der Oberfläche",
+      "files": [
+        "skills/writing-qa-test-instructions/SKILL.md",
+        "commands/ticket-cycle.md",
+        "commands/git/ship.md",
+        "commands/dev-submit.md"
+      ]
+    },
+    {
+      "name": "a test record Claude could not resolve becomes a line with every value, never a search for the tester",
+      "phrase": "bitte vor Schritt <n> anlegen",
+      "files": [
+        "skills/writing-qa-test-instructions/SKILL.md",
+        "commands/ticket-cycle.md",
+        "commands/git/ship.md",
+        "commands/dev-submit.md"
       ]
     },
     {

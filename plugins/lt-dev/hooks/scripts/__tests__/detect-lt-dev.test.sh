@@ -363,6 +363,145 @@ assert_contains "$REG" "groups:1" "registered once with the SubagentStart argume
 assert_contains "$REG" "backend-dev:true" "fires for an lt-dev agent"
 assert_contains "$REG" "general-purpose:false Explore:false other-plugin:false" "stays off for built-in and other plugins' agents"
 
+# --- Database line: nest-server 12.1+ runs on MongoDB, PostgreSQL, MySQL / MariaDB or both ---
+assert_not_contains() {
+  if echo "$1" | grep -q "$2"; then
+    FAIL=$((FAIL + 1)); echo "  ✗ $3"; echo "    expected NOT to contain: $2"
+  else
+    PASS=$((PASS + 1)); echo "  ✓ $3"
+  fi
+}
+registered_crm() {
+  cat > "$REGISTRY" <<EOF
+{ "projects": { "crm": { "path": "$PROJ", "subdomains": { "api": "api.crm.localhost", "app": "crm.localhost" },
+  "dbName": "crm-local" } }, "version": 1 }
+EOF
+}
+
+echo "Case DB-1: PostgreSQL with Kysely in config.env.ts"
+setup_tmp
+echo '{"name":"crm","dependencies":{"@lenne.tech/nest-server":"^12","pg":"^8"}}' > "$PROJ/package.json"
+mkdir -p "$PROJ/src"
+cat > "$PROJ/src/config.env.ts" <<'EOF'
+const config = {
+  local: {
+    database: { url: 'postgres://app@127.0.0.1/crm', ownerUrl: 'postgres://owner@127.0.0.1/crm', sqlEngine: 'kysely' },
+  },
+};
+EOF
+registered_crm
+out=$(run_hook "$PROJ" "$REGISTRY")
+assert_contains "$out" "Database: PostgreSQL, engine Kysely" "names PostgreSQL and the configured engine"
+assert_contains "$out" 'local: SQL from `database.url`' "points at the SQL connection the API reads"
+assert_not_contains "$out" "crm-local:crm-local@" "not lt dev's DATABASE_URL, which nest-server never reads"
+assert_not_contains "$out" "app@127.0.0.1" "prints nothing from config.env.ts"
+assert_not_contains "$out" "mongodb://" "no MongoDB URI for a PostgreSQL project"
+cleanup
+
+echo "Case DB-2: MongoDB, database block commented out as in the starter"
+setup_tmp
+echo '{"name":"crm","dependencies":{"@lenne.tech/nest-server":"^12","mongoose":"^9"}}' > "$PROJ/package.json"
+mkdir -p "$PROJ/src"
+cat > "$PROJ/src/config.env.ts" <<'EOF'
+const config = {
+  local: {
+    // database: {
+    //   url: 'postgres://app@db/project',
+    //   sqlEngine: 'typeorm', // or 'kysely' / 'drizzle'
+    // },
+    healthCheck: { configs: { database: { enabled: true } } },
+    mongoose: { uri: 'mongodb://127.0.0.1/crm-local' },
+  },
+};
+EOF
+registered_crm
+out=$(run_hook "$PROJ" "$REGISTRY")
+assert_contains "$out" 'Database: MongoDB · local: `mongodb://127.0.0.1/crm-local`' "MongoDB with its local URI"
+assert_not_contains "$out" "PostgreSQL" "a commented-out database block is not a PostgreSQL project"
+cleanup
+
+echo "Case DB-3: hybrid PostgreSQL + MongoDB"
+setup_tmp
+echo '{"name":"crm","dependencies":{"@lenne.tech/nest-server":"^12"}}' > "$PROJ/package.json"
+mkdir -p "$PROJ/src"
+printf "%s\n" "database: { url: 'postgresql://app@db/crm', models: { Article: 'mongoose' } }," "mongoose: { uri: 'mongodb://127.0.0.1/crm' }," > "$PROJ/src/config.env.ts"
+registered_crm
+out=$(run_hook "$PROJ" "$REGISTRY")
+assert_contains "$out" "PostgreSQL + MongoDB (hybrid), engine TypeORM" "hybrid with the default engine"
+assert_contains "$out" 'NSC__DATABASE__URL`) and `mongodb://127.0.0.1/crm-local`' "the SQL pointer and the MongoDB URI"
+cleanup
+
+echo "Case DB-4: decision recorded in CLAUDE.md wins"
+setup_tmp
+echo '{"name":"crm","dependencies":{"@lenne.tech/nest-server":"^12","mongoose":"^9"}}' > "$PROJ/package.json"
+mkdir -p "$PROJ/src" && : > "$PROJ/src/config.env.ts"
+printf "%s\n" "# CRM" "" "## Database" "" "- Database: MariaDB 11.8" "- SQL engine: TypeORM" "- Decided: 2026-11-03" "" "## Other" "- Database: ignored" > "$PROJ/CLAUDE.md"
+registered_crm
+out=$(run_hook "$PROJ" "$REGISTRY")
+assert_contains "$out" "Database: MariaDB 11.8, engine TypeORM" "takes the recorded database and engine"
+assert_not_contains "$out" "mongodb://" "no MongoDB URI next to a recorded MariaDB decision"
+cleanup
+
+echo "Case DB-5: nothing to tell → the MongoDB line every project had before 12.1"
+setup_tmp
+echo '{"name":"crm","dependencies":{"@lenne.tech/nest-server":"^11"}}' > "$PROJ/package.json"
+mkdir -p "$PROJ/src" && : > "$PROJ/src/config.env.ts"
+registered_crm
+out=$(run_hook "$PROJ" "$REGISTRY")
+assert_contains "$out" 'DB:  `mongodb://127.0.0.1/crm-local`' "keeps the previous DB line"
+cleanup
+
+echo "Case DB-6: monorepo, PostgreSQL configured in projects/api"
+setup_tmp
+echo '{"name":"crm","private":true}' > "$PROJ/package.json"
+mkdir -p "$PROJ/projects/api/src"
+echo '{"name":"api","dependencies":{"@lenne.tech/nest-server":"^12","pg":"^8"}}' > "$PROJ/projects/api/package.json"
+echo "database: { url: 'postgres://app@127.0.0.1/crm' }," > "$PROJ/projects/api/src/config.env.ts"
+registered_crm
+out=$(run_hook "$PROJ" "$REGISTRY")
+assert_contains "$out" "Database: PostgreSQL, engine TypeORM" "reads the API's config in projects/api"
+assert_not_contains "$out" "mongodb://" "no MongoDB URI for a PostgreSQL monorepo"
+cleanup
+
+echo "Case DB-7: MariaDB URL next to the MongoDB block"
+setup_tmp
+echo '{"name":"crm","dependencies":{"@lenne.tech/nest-server":"^12","mysql2":"^3"}}' > "$PROJ/package.json"
+mkdir -p "$PROJ/src"
+printf "%s\n" "database: { url: 'mariadb://app@db/crm', models: { Article: 'mongoose' } }," "mongoose: { uri: 'mongodb://127.0.0.1/crm' }," > "$PROJ/src/config.env.ts"
+registered_crm
+out=$(run_hook "$PROJ" "$REGISTRY")
+assert_contains "$out" "Database: MariaDB + MongoDB (hybrid)" "names MariaDB from its URL scheme"
+assert_contains "$out" 'local: SQL from `database.url`' "points at the SQL connection"
+
+echo "Case DB-7b: MySQL URL"
+echo "database: { url: 'mysql://app@db/crm' }," > "$PROJ/src/config.env.ts"
+out=$(run_hook "$PROJ" "$REGISTRY")
+assert_contains "$out" "Database: MySQL, engine TypeORM" "names MySQL from its URL scheme"
+assert_not_contains "$out" "mongodb://" "no MongoDB URI for a MySQL project"
+cleanup
+
+echo "Case DB-8: a stateless service, database: false"
+setup_tmp
+echo '{"name":"crm","dependencies":{"@lenne.tech/nest-server":"^12","mongoose":"^9"}}' > "$PROJ/package.json"
+mkdir -p "$PROJ/src"
+echo "local: { database: false, betterAuth: false }," > "$PROJ/src/config.env.ts"
+registered_crm
+out=$(run_hook "$PROJ" "$REGISTRY")
+assert_contains "$out" "Database: none (database: false)" "names the service as database-free"
+assert_not_contains "$out" "mongodb://" "no MongoDB URI for a service without a database"
+cleanup
+
+echo "Case DB-9: URL from the environment, the pg dependency tells"
+setup_tmp
+echo '{"name":"crm","dependencies":{"@lenne.tech/nest-server":"^12","pg":"^8"}}' > "$PROJ/package.json"
+mkdir -p "$PROJ/src"
+echo "database: { url: process.env.NSC__DATABASE__URL }," > "$PROJ/src/config.env.ts"
+registered_crm
+out=$(run_hook "$PROJ" "$REGISTRY")
+assert_contains "$out" "Database: PostgreSQL, engine TypeORM" "falls back to the pg dependency"
+assert_not_contains "$out" "mongodb://" "no MongoDB URI without mongoose"
+cleanup
+
 echo ""
 echo "─────────────────────────────────────────"
 echo "Total: $((PASS + FAIL)) | Passed: $PASS | Failed: $FAIL"

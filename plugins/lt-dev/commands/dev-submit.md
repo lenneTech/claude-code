@@ -146,7 +146,7 @@ Store the MR/PR URL as `REQUEST_URL`.
 
 Classify first (skill Part 1): can a non-developer exercise this change through the running application? The answer picks the shape.
 
-For the testable shape, take the test context next (skill Part 4). A context handed over by `/lt-dev:ticket-cycle` STEP 3b is used as it stands. Otherwise resolve it here; with `--unattended` and no handed-over context, use only the stored account mapping and skip every `op` call. The change is not merged on this path, so a record that only the new version can hold is described as something the tester creates, with concrete values.
+For the testable shape, take the test context next (skill Part 4). A context handed over by `/lt-dev:ticket-cycle` STEP 3b is used as it stands. Otherwise resolve it here; with `--unattended` and no handed-over context, use only the stored account mapping and skip every `op` call. Every record a step opens or selects goes in under its displayed name, and every file a step uploads is embedded in the comment. The change is not merged on this path, so a record that only the new version can hold, or one that stays unresolved, becomes a `bitte vor Schritt <n> anlegen` line with every value.
 
 **Testable:**
 
@@ -167,9 +167,11 @@ Zugänge (Passwörter stehen nur in 1Password, hier bewusst nicht):
 - <Rolle ohne Eintrag>: kein Eintrag im Team-Tresor, Zugang bitte beim Team erfragen
 
 Vorbereitete Daten:
-- [<Datensatz>](<Deep-Link>) — <vorhanden | für diesen Test angelegt>
+- [<Name wie in der Oberfläche>](<Deep-Link>): <wofür> — <vorhanden | für diesen Test angelegt>
+- Datei [<dateiname>](<Linear-Upload-Link>): <Inhalt in einem Satz>, für Schritt <n>
+- Bitte vor Schritt <n> anlegen: <Art> `Test <ISSUE_ID> – <Eigenschaft>` mit <allen Werten>
 
-1. Als <Rolle> (`<login>`) anmelden → [<Seite>](<URL mit Datensatz-ID>) → <genaue Aktion>
+1. Als <Rolle> (`<login>`) anmelden → [<Seite>](<URL mit Datensatz-ID>) → <genaue Aktion: `<Name wie in der Oberfläche>` wählen, `<Wert>` eingeben>
    → erwartet: <Ergebnis> → prüft: <warum>
 2. Gegenprobe: <dieselbe Aktion mit einem Datensatz oder Wert deiner Wahl>
    → erwartet: <Ergebnis> → prüft: <dass es nicht nur am vorbereiteten Fall hängt>

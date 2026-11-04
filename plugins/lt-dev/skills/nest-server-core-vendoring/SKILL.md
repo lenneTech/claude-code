@@ -218,6 +218,7 @@ settings of `11.43.x-to-12.0.x.md` §2; the fix belongs in the project config:
 | `TS5011` / `TS5110` from `pnpm run migrate:*` while `build` passes | The migrate bootstrap reads `tsconfig.json`; replace it (see "The migrate CLI in a Vendored Project") |
 | `TS5107 Option 'moduleResolution=node10' is deprecated`  | `"module"` and `"moduleResolution"` `"nodenext"` |
 | `TS2307` on `@nestjs/…/dist/…` in project code           | Import from the package root (the core already does) |
+| `TS2307` on `pg`, `mysql2`, `typeorm`, `kysely` or `drizzle-orm` in `src/core/` (core 12.1+) | The core names every SQL package whatever the database: declare them (and `@types/pg`) at least as `devDependencies` (`12.0.x-to-12.1.x.md`) |
 | `TS2835` on a relative `await import('./x')` in project code | No relative dynamic `import()`: no specifier works everywhere (`tsc` output needs `./x.js`, a ts-node source run does not map it to `.ts`). A static import, or move what a cycle needs into a module of its own; the core has none for that reason |
 
 ## The migrate CLI in a Vendored Project

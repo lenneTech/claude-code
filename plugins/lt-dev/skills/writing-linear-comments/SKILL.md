@@ -144,7 +144,7 @@ Exactly these, in this order. Nothing else.
 | Block | Content | Omitted when |
 |-------|---------|--------------|
 | `## Umsetzung` | 1 to 3 sentences, plain language: what was wrong or missing, what happens now instead. Then one line on the decisions: `Entscheidungen und Annahmen: im Kommentar „Entscheidungen und Annahmen“.`, or `Entscheidungen und Annahmen: keine, umgesetzt wie im Ticket beschrieben.` when there is no decisions comment. | never |
-| `## Testanleitung` | The complete manual test: environment, the account per role with its vault link, the prepared records, numbered steps with full links and concrete example data. Shape and wording come from [`writing-qa-test-instructions`](../writing-qa-test-instructions/SKILL.md). | never — the not-testable variant states the reason instead |
+| `## Testanleitung` | The complete manual test: environment, the account per role with its vault link, the prepared records by name and the files to upload, numbered steps with full links and concrete example data. Shape and wording come from [`writing-qa-test-instructions`](../writing-qa-test-instructions/SKILL.md). | never — the not-testable variant states the reason instead |
 | `## Nicht in diesem Ticket` | Scope cuts decided during the implementation that the reader might otherwise expect, one line each, plus findings that are handled separately. A scope limit the ticket itself states stays in the ticket. | when there are none |
 | `## Details` | One line per attached document, each with its link: the questions document first, then the technical one. | when no document was attached |
 
@@ -323,6 +323,14 @@ document. `delete_attachment` removes one.
 
 Prefer the document for anything that is prose or a table: it renders inside Linear, while an
 attachment has to be downloaded before anybody can read it.
+
+**A file a test step uploads goes into the completion comment itself**, next to the step that
+uses it, because that is where the tester reads: `prepare_file_upload` with `filename`,
+`contentType` and exact `size` (no issue), the same `PUT` with every header verbatim, then the
+returned markdown link in the `Vorbereitete Daten` line of
+[`writing-qa-test-instructions`](../writing-qa-test-instructions/SKILL.md). The file name says what
+it holds and matches the step (`1-nur-firmenkunden.csv`). One file at a time, as above. An update of
+the comment in place keeps the link.
 
 ### Limits worth knowing
 

@@ -116,6 +116,15 @@ lenne.Tech API projects can consume `@lenne.tech/nest-server` in one of two mode
 
 **Detection**: `test -f <api-root>/src/core/VENDOR.md` → vendored, else npm. The `detect-nest-server` hook, the `nest-server-updater` agent, and the `nest-server-core-vendoring` skill all perform this check automatically and branch accordingly. All skills and agents that reference framework files (`generating-nest-servers`, `building-stories-with-tdd`, `backend-dev`, etc.) carry a preamble listing both path conventions.
 
+## Databases (nest-server 12.1+)
+
+From nest-server 12.1 on a project stores its data in MongoDB (the default), PostgreSQL, MySQL 8.4 / MariaDB 11.8, or several of them, model by model.
+
+- **Choosing one**: a new project, or a new module that would need another database, is decided by the procedure in `generating-nest-servers` → `reference/choosing-a-database.md`: an external requirement wins; PostgreSQL on relational, reporting or finance signals, or when the database itself must keep tenants apart; MongoDB otherwise; hybrid only with a named reason and cost; MySQL / MariaDB only on a requirement (login from 12.1.1 on, without row-level security). The SQL engine is TypeORM unless the team asks for Kysely or Drizzle. The decision round (`grilling-decisions`) and the `architect` agent ask it, and the answer is recorded as `## Database` in the project's root `CLAUDE.md`.
+- **Seeing it**: the `detect-lt-dev` hook shows the project's database and engine next to its `lt dev` URLs: the local MongoDB URI, and for SQL where the API takes its connection from (`database.url` in `src/config.env.ts`, env `NSC__DATABASE__URL`).
+- **Reviewing it**: `backend-reviewer` and `security-reviewer` check native database access: SQL with interpolated values or identifiers, native queries on tenant-scoped tables without a `tenant_id` filter on MySQL / MariaDB, raw rows returned unmapped with secret columns, an engine's own `synchronize` or migration generator, and connections or pools opened past the data store.
+- **Updating**: `nest-server-updating` and the core updater know both databases and the 12.1 migration guides, bring an outdated `extras/sync-packages.mjs` to the starter's state before `pnpm run update`, and check for duplicate `mongoose`, `@nestjs/core` and SQL engine versions afterwards.
+
 ## Linear conventions
 
 **New tickets are created in `Open` — always, unless the user explicitly asks for
