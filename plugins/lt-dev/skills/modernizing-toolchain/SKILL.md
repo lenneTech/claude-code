@@ -56,9 +56,9 @@ After all phases, all three must hold:
    ```
    with both api and app green (audit + format:check + lint + test + build + check-server-start).
 
-2. `src/config.env.spec.ts` (api) covers every entry of `REQUIRED_DEPLOYED_ENV_VARS` and passes in
-   `<pm> test`: `develop`, `test` and `production` stop at startup and name every missing var,
-   `local`, `e2e` and `ci` start without them.
+2. `src/config.env.spec.ts` (api) covers every unconditional entry of `REQUIRED_DEPLOYED_ENV_VARS`
+   and passes in `<pm> test`, whose output lists it: `develop`, `test` and `production` stop at
+   startup and name every missing var, `local`, `e2e` and `ci` start without them.
 
 3. **No tests skipped, no warnings tolerated**: pre-existing failures in either subproject must be
    fixed as part of the migration, not silenced. The `check` pipeline is intentionally strict —

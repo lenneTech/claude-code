@@ -186,8 +186,8 @@ substitute as appropriate.
    ```jsonc
    {
      "scripts": {
-       "test": "<pm> run vitest",
-       "test:ci": "<pm> run vitest:ci",
+       "test": "<pm> run vitest:unit && <pm> run vitest",
+       "test:ci": "<pm> run vitest:unit && <pm> run vitest:ci",
        "test:e2e": "<pm> run vitest",
        "vitest": "NODE_ENV=e2e vitest run --config vitest-e2e.config.ts",
        "vitest:ci": "NODE_ENV=ci vitest run --config vitest-e2e.config.ts",
@@ -197,6 +197,8 @@ substitute as appropriate.
      }
    }
    ```
+   `test` and `test:ci` run the unit specs first, as nest-server-starter does: `src/**/*.spec.ts`, the env
+   contract test of Phase 8 among them, runs only through `vitest.config.ts`.
 
 10. **Remove jest artifacts**:
     - delete `jest-e2e.json`, `babel.config.js`, `tests/report.js`
@@ -424,8 +426,9 @@ export default resolved;
 ## Phase 8 — `src/config.env.spec.ts` (env contract test)
 
 Copy the `config.env.ts — fail-fast for deployed envs` block of `src/config.env.spec.ts` from
-nest-server-starter. It checks the Phase 7 contract at import, in every `<pm> test`, in milliseconds
-and on every platform:
+nest-server-starter. It checks the Phase 7 contract at import, in milliseconds and on every platform,
+in every `<pm> test` once `test` runs the unit specs (Phase 2 step 9); the run lists
+`src/config.env.spec.ts`:
 
 - every unconditional entry of `REQUIRED_DEPLOYED_ENV_VARS` has a public dummy value in the test, so
   a requirement added later without one fails the test;
@@ -472,7 +475,7 @@ Two stages (`test`, `build`). Cache root + per-subproject `node_modules`. Jobs:
 - `build`: api + app build
 
 The env contract (Phase 8) needs no job of its own: it runs with the unit tests, so `api:test`
-runs them too (`<pm> run test:ci` in nest-server-starter runs unit and API tests).
+runs `<pm> run test:ci`, which runs unit and API tests (Phase 2 step 9).
 
 ## Phase 11 — `docker-compose.yml`
 

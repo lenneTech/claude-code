@@ -685,7 +685,7 @@ If blocked at any phase:
 | All linting passes (oxlint 0/0 in both subprojects) | ✅ |
 | All tests pass (no skips, no `it.skip`, no `--passWithNoTests`) | ✅ |
 | `<pm> run check` from monorepo root prints "Successfully ran target check for 2 projects" | ✅ |
-| `src/config.env.spec.ts` (api) covers every entry of `REQUIRED_DEPLOYED_ENV_VARS` and passes in `<pm> test` | ✅ |
+| `src/config.env.spec.ts` (api) covers every unconditional entry of `REQUIRED_DEPLOYED_ENV_VARS` and passes in `<pm> test`, whose output lists it | ✅ |
 | Pre-existing failures fixed, not silenced | ✅ |
 | Types regenerated (only when api-client is actually imported) | ✅ |
 | Report generated | ✅ |
