@@ -147,6 +147,9 @@ Naming"):
 - **Teaser**: when the screenshots changed, `generate_teaser` with the showcase id renders the cover again from the
   stored ones (as `/lt-showroom:showroom:create` Step 7 describes). Report the previous teaser its answer names, so the
   editors can set it back with `update_showcase` (BOTH `teaserImageFileId` and `teaserShowsCustomer`).
+- **Presentation**: when features or screenshots changed, `get_presentation_video` with the showcase id has to answer
+  `available: true` (as `/lt-showroom:showroom:create` Step 7 describes). With `outdated: true`, report that the MP4
+  export no longer matches; `generate_presentation_video` runs only when the user asks for it.
 
 Status, clearance, customer naming and customer permissions stay untouched: an update is no reason to open a showcase
 further. A `422` with a place is a real name in a text: rewrite that place and send again, never get around it.
@@ -174,6 +177,7 @@ Showcase updated: {title}
   Blocks:       {changed} changed, {removed} removed, the rest untouched
   Technologies: {+added, -removed | unchanged}
   Screenshots:  {n} new | none needed
+  Presentation: available | none ({reason}), export {current | outdated | none}
   Alias view:   clean | {places corrected}
   Project:      unchanged | only {SHOWCASE.md path} exported
 ```

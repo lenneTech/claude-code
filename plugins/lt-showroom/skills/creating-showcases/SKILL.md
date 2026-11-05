@@ -47,7 +47,7 @@ The MCP endpoint is `https://api.showroom.lenne.tech/mcp`; it signs in through O
 
 | Area | Tools |
 |------|-------|
-| Showcases | `list_showcases` (compact: id, slug, title, status, clearance, customerNaming, updatedAt; more through `fields`), `get_showcase` (status log and analysis only through `fields`; `view: "alias"` or `"real"` for what a viewer sees), `create_showcase`, `update_showcase`, `upsert_showcase`, `delete_showcase`, `publish_showcase` (sets `active`; editorial team only, never this plugin), `archive_showcase`, `duplicate_showcase`, `generate_teaser` (renders the teaser cover from the stored showcase and sets it) |
+| Showcases | `list_showcases` (compact: id, slug, title, status, clearance, customerNaming, updatedAt; more through `fields`), `get_showcase` (status log and analysis only through `fields`; `view: "alias"` or `"real"` for what a viewer sees), `create_showcase`, `update_showcase`, `upsert_showcase`, `delete_showcase`, `publish_showcase` (sets `active`; editorial team only, never this plugin), `archive_showcase`, `duplicate_showcase`, `generate_teaser` (renders the teaser cover from the stored showcase and sets it), `get_presentation_video` (whether the showcase has a presentation: `available`, otherwise `reason`; state of its MP4 export: `status` none, rendering, ready or failed, and `outdated`), `generate_presentation_video` (MP4 export for sharing in 16:9 and 4:5, always with the aliases; takes several minutes, `wait: true` waits at most five; only when the user asks for it, the presentation itself needs no export) |
 | Sources | `list_showcase_sources` (per showcase only id, slug, title, status, clearance, updatedAt and `source`) |
 | Single blocks | `upsert_block`, `remove_block` |
 | Links | `check_showcase_links`, `confirm_showcase_link`, `get_link_report` |
@@ -66,7 +66,7 @@ The tool arguments are strict: a misspelled argument or block field is refused b
 
 **Everything company-specific comes from the account, not from this plugin.** `get_showroom_context` returns the company settings (name, logo, meeting booking URL), the knowledge base and the platform's global blocks. Build showcases from that context; when it lacks something the showcase needs, ask the user rather than filling the gap with assumptions. An organization can add its own conventions on top (a skill from its internal plugin, or its CLAUDE.md); where those name a source, a restriction or a rule for this company or one of its projects, follow them.
 
-**Company settings change through `update_settings`**, once the user has confirmed the value: `companyName` (at most 200 characters), `companyLogo` (the file id of an upload, never a URL), `meetingUrl` (http or https, at most 500 characters) and `pdfEngine` (`puppeteer` or `pdf-lib`). Only the fields passed change, `null` clears one, and the answer is the new settings. The tool is for admins and needs the OAuth scope `settings:write`:
+**Company settings change through `update_settings`**, once the user has confirmed the value: `companyName` (at most 200 characters), `companyLogo` (the file id of an upload, never a URL), `meetingUrl` (http or https, at most 500 characters), `website` (http or https, at most 200 characters, shown in the closing scene of every presentation) and `pdfEngine` (`puppeteer` or `pdf-lib`). Only the fields passed change, `null` clears one, and the answer is the new settings. The tool is for admins and needs the OAuth scope `settings:write`:
 - `Forbidden (403)`: the user is no admin. Pass a missing booking link on this showcase as `meetingUrl` and leave the settings to an admin.
 - `Insufficient scope (insufficient_scope)`: the connection was granted without `settings:write`. The user reconnects `showroom-api` once through `/mcp`; the consent page lists "Einstellungen ändern (nur Admins)".
 
@@ -165,8 +165,15 @@ Nothing is written into the project repository. Full procedure: `${CLAUDE_SKILL_
    cover and sets it as teaser with `teaserShowsCustomer` false. Its answer names the previous teaser; to set that
    back, `update_showcase` restores BOTH `teaserImageFileId` and `teaserShowsCustomer`, since the file alone would
    show a customer-marked teaser in the alias view.
-7. **Check the alias view** (`get_showcase`, `view: "alias"`).
-8. **Report** the editor URL `https://showroom.lenne.tech/app/showcases/<id>`; the public URL
+7. **Check the presentation** with `get_presentation_video` and the showcase id: `available` has to be `true`,
+   otherwise `reason` names the gap. The presentation comes by itself and needs no export. Its features are the
+   `feature-grid` cards, then the `feature-spotlight` blocks no card named; the `features` field does not count. A
+   card's image or the spotlight of the same title supplies the screen, and without any screen it plays as text
+   variant. It shows up to five features, those with a screen first: three where the showcase has them, a fourth or
+   fifth only within 55 seconds overall at about three words per second, so feature titles and texts stay short. In
+   the alias view a file marked `showsCustomer` once drops out everywhere, also where the same file stands unmarked.
+8. **Check the alias view** (`get_showcase`, `view: "alias"`).
+9. **Report** the editor URL `https://showroom.lenne.tech/app/showcases/<id>`; the public URL
    `https://showroom.lenne.tech/projects/<slug>` opens without login only when the showcase is active and public.
 
 `SHOWCASE.md` is no part of this: a `--export` writes it from the stored showcase into one of the organization's own
@@ -270,5 +277,6 @@ The page shows the blocks in array order; keep `order` equal to the index, since
 - [ ] No `cta` block
 - [ ] Screenshots uploaded through upload tickets and referenced by `fileId` (feature-spotlight, screenshot-gallery, feature-grid card images, `screenshots[]`); images with customer branding marked `showsCustomer`
 - [ ] Teaser set with `generate_teaser`
+- [ ] `get_presentation_video` answers `available: true`
 - [ ] `custom-html` only for a layout no block offers, files in it relative as `/files/id/<fileId>`
 - [ ] The project repository is unchanged; the work folder session is cleaned up
