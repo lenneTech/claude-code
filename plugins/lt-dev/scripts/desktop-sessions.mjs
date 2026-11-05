@@ -386,7 +386,7 @@ export function carrySession(
     stdio: ['ignore', 'pipe', 'pipe'],
     timeout: timeoutMs,
   });
-  // biome-ignore lint/suspicious/noControlCharactersInRegex: strips the terminal escapes script(1) passes through
+  // Strips the terminal escapes script(1) passes through.
   const out = `${r.stdout ?? ''}\n${r.stderr ?? ''}`.replace(/\u001b\[[0-9;?]*[ -/]*[@-~]/g, '').replace(/\r/g, '');
   const lines = out
     .split('\n')
@@ -488,7 +488,6 @@ function printList(result, families) {
     `Nicht zur Wahl: ${s.alreadyActive} schon hier, ${s.archived} archiviert, ${s.tooOld} älter, ${s.noTranscript} ohne Transkript, ${s.noCwd} ohne Ordner`,
   ];
   families.forEach((f, i) => {
-    const head = f.main ?? f.children[0];
     lines.push('', `${i + 1}. ${f.main ? `„${f.main.title}“` : `Sub-Sessions von „${f.mainElsewhere?.title ?? '?'}“`}`);
     for (const c of [f.main, ...f.children].filter(Boolean)) {
       const prefix = c === f.main ? '   ' : `   Sub-Session ${c.name ? `${c.name} ` : ''}„${c.title}“: `;
@@ -502,7 +501,6 @@ function printList(result, families) {
       if (c.queuedNotes.length) lines.push(`   Nicht zugestellte Berichte: ${c.queuedNotes.length}`);
     }
     if (!f.main && f.mainElsewhere?.desktopId) lines.push(`   Main-Session ist schon hier: ${f.mainElsewhere.desktopId}`);
-    if (!head) lines.push('   (leer)');
   });
   process.stdout.write(`${lines.join('\n')}\n`);
 }
