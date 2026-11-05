@@ -275,6 +275,10 @@ with `teaserShowsCustomer` false. Its answer names the previous teaser: on an ex
 and to set it back, `update_showcase` restores BOTH `teaserImageFileId` and `teaserShowsCustomer` (the file alone would
 show a customer-marked teaser in the alias view).
 
+**Then the presentation:** `get_presentation_video` with the showcase id has to answer `available: true`. The
+presentation comes by itself and needs no export; `creating-showcases` → "Phase 3" names what it shows. With
+`available: false`, `reason` says what is missing: add the `feature-grid` or `feature-spotlight` block it needs.
+
 ### Step 8: Check the Anonymous View
 
 `get_showcase` with the id, `view: "alias"` and `fields: ["title", "description", "contentBlocks", "links"]` returns
@@ -311,6 +315,7 @@ Showcase {created | updated}: {title}
   Source:       {repository url} @ {short analyzedCommit} ({defaultBranch})
   Blocks:       {count} content blocks {rebuilt | kept}
   Screenshots:  {count} uploaded, teaser {set | missing}
+  Presentation: available | none ({reason})
   Alias view:   clean | {places corrected}
   Open presets: {candidate presets more open than the showcase, for the editorial team | none}
   Project:      unchanged | only {SHOWCASE.md path} exported

@@ -33,7 +33,7 @@
 | `technologies` | string[] | Technology names; the page hero renders them as badges |
 | `tags` | string[] | Tags for categorization and filtering |
 | `showTableOfContents` | boolean | Show table of contents on showcase page (default: true) |
-| `features` | FeatureEntry[] | Extracted features (stored; neither create nor update accepts them) |
+| `features` | FeatureEntry[] | Extracted features (stored; neither create nor update accepts them, and the presentation does not read them) |
 | `screenshots` | ScreenshotRef[] | Project screenshots (at most 50, replaced as a whole); cards and the hero fall back to the first without a teaser |
 | `sourceCodeAnalysis` | object | The analysis report (JSON, `analyzing-projects` report schema), replaced as a whole — signed-in users only; `get_showcase` returns it only through `fields` |
 | `statusLog` | StatusLogEntry[] | Log of every change to status, clearance and customer naming — editorial team only; `get_showcase` returns it only through `fields` |
