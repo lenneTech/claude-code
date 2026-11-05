@@ -154,6 +154,21 @@
         "agents/ux-reviewer.md",
         "agents/performance-reviewer.md"
       ]
+    },
+    {
+      "name": "the guard message nest-server-starter's config.env.spec.ts matches with `: <VAR>\\. `; without the text after the period the copied contract test fails for every var",
+      "phrase": "'See .env.example for the full list.'",
+      "files": ["skills/modernizing-toolchain/reference/migration-checklist.md"]
+    },
+    {
+      "name": "the contract test reads REQUIRED_DEPLOYED_ENV_VARS from config.env.ts, so the table is exported",
+      "phrase": "export const REQUIRED_DEPLOYED_ENV_VARS",
+      "files": ["skills/modernizing-toolchain/reference/migration-checklist.md"]
+    },
+    {
+      "name": "unit specs, the contract test among them, run in CI through vitest.config.ts and need nest-server-starter's headroom over the 5s default",
+      "phrase": "cold CI runners (nest-server-starter's reason). testTimeout: 30000, hookTimeout: 30000,",
+      "files": ["skills/modernizing-toolchain/reference/migration-checklist.md"]
     }
   ],
   "forbidden": [
