@@ -85,6 +85,10 @@ substitute as appropriate.
        globals: true,
        include: ['src/**/*.spec.ts'],
        root: './',
+       // The first dynamic import('./config.env') in the Phase 8 contract test cold-compiles the whole
+       // config graph, which exceeds the 5s default on cold CI runners (nest-server-starter's reason).
+       testTimeout: 30000,
+       hookTimeout: 30000,
      },
    });
    ```
@@ -395,8 +399,9 @@ must **fail-fast** on missing `NSC__*` vars in `develop`/`test`/`production`.
 The canonical shape:
 - `localConfig(envName, options)` helper — returns a config with public dummy secrets.
 - `deployedConfig(envName, options)` helper — no secrets in code; reads everything from `NSC__*`.
-- `REQUIRED_DEPLOYED_ENV_VARS` array — single source of truth for both the runtime fail-fast
-  guard and the `.env.example` documentation.
+- `export const REQUIRED_DEPLOYED_ENV_VARS` array of `{ envVar, check, condition? }` — single source of
+  truth for both the runtime fail-fast guard and the `.env.example` documentation. It is exported because
+  the Phase 8 contract test reads it.
 - Auto-derive `appUrl` from `baseUrl` (strip leading `api.`) — operators only set `NSC__BASE_URL`.
 - `ci.mongoose.uri` defaults to `127.0.0.1` (NOT `mongo:27017`) so the `ci` env also starts outside
   Docker, for example in a local test run. CI pipelines override via `NSC__MONGOOSE__URI`.
@@ -417,7 +422,11 @@ if (DEPLOYED.has(resolved.env)) {
     .filter(({ check }) => !check(resolved))
     .map(({ envVar }) => envVar);
   if (missing.length > 0) {
-    throw new Error(`Missing required environment variables for NODE_ENV='${resolved.env}': ${missing.join(', ')}.`);
+    // Word for word as in nest-server-starter: the Phase 8 test matches `: <VAR>\. ` and needs the text after it.
+    throw new Error(
+      `Missing required environment variables for NODE_ENV='${resolved.env}': ${missing.join(', ')}. ` +
+        'See .env.example for the full list.',
+    );
   }
 }
 export default resolved;
