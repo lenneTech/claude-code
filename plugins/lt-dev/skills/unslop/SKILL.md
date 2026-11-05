@@ -146,7 +146,7 @@ Patterns 1 to 31 apply to German too. These are the tells that only show up ther
     | Route or pairing (no spaces) | „Köln–Berlin“, „Nord–Süd-Verbindung“ |
     | Empty value in a table or detail view | „Telefon: –“ |
     | Amount without cents | „50,– €“, or simply „50 €“ |
-    | Separator in a page title | „Angebote – lenne.tech“, „Angebote \| lenne.tech“ works equally well |
+    | Separator in a page title | „Angebote – lenne.Tech“, „Angebote \| lenne.Tech“ works equally well |
 
     The test: if you would pause there when reading aloud, the dash is punctuation and goes. If it reads as „bis“, „nach“, „gegen“ or „nichts“, it stays.
 
@@ -165,7 +165,7 @@ Run these three checks on the finished text:
 - `filing-ai-proposed-tickets` skill. Every AI-proposed ticket body gets this prose pass before it is filed.
 - `developing-claude-plugins` skill. Skill, command, and agent bodies are prose and go through this skill before release.
 - `developing-lt-frontend` skill. UI text in components and i18n files goes through patterns 32 to 39.
-- `lt-offers:creating-offers` and `lt-showroom:creating-showcases` skills. Customer-facing copy, where German patterns 32 to 38 matter most.
+- `lt-offers:creating-offers` and `lt-showroom:creating-showcases` skills. Customer-facing copy, where German patterns 32 to 39 matter most.
 - `/lt-dev:git:commit-message` and `/lt-dev:git:mr-description` commands. The body is prose, the subject line stays terse.
 
 ## Attribution
