@@ -64,6 +64,27 @@ The helper:
 
 If the helper returns nothing → no project defines `check` → skip the rest of this skill.
 
+### Step 1a — No oxlint suggestion fixes
+
+`oxlint --fix-suggestions` applies fixes oxlint itself marks as possibly behaviour-changing: its `no-console`
+suggestion deletes the call. `--fix-dangerously` goes further. Current templates pass neither, but projects from
+older ones still do, in the check wrapper, `lint:fix`, lint-staged or an app's own `scripts/check.mjs`, until
+`lt fullstack update` removes them (it edits only tracked, clean files). Observed in nest-server (2026-09, claude-code PR #10): a
+commit hook turned a `console.log` into an empty function body and still reported "passed". Before Step 2, look for a *use* of either flag;
+a mention in a comment does not count:
+
+```bash
+git grep -n -E "(^|[[:space:]\"'])--fix-(suggestions|dangerously)" -- '*package.json' '*.lintstagedrc*' '*lint-staged.config.*' '*scripts/check.mjs'
+```
+
+On a hit, the check runs without auto-fix:
+
+- Run the lt wrapper as its read-only gate: `<pm> run check --no-fix` (npm: `npm run check -- --no-fix`). Every
+  wrapper that still passes one of the flags already knows `--no-fix`. Where a project's own chain calls `lint:fix`,
+  or its own `scripts/check.mjs` is one of the hits, run that project's steps with `lint` instead of `lint:fix`.
+- Fix lint findings by hand or with plain `oxlint --fix`; format with the project's formatter as usual.
+- Name every hit (`file:line`) in the Step 8 report and recommend `lt fullstack update`, which removes the flags.
+
 ### Step 2 — Run `check` per project
 
 For each discovered project, `cd` into its directory and run the `check` script with the detected package manager:
@@ -380,6 +401,9 @@ Every caller must include this block in its final report:
 **Fixes applied:**
 - `projects/api/src/modules/user/user.service.ts:42` — Removed unused `LoggerService` import (pre-existing)
 - `projects/api/src/modules/auth/auth.controller.ts:18` — Fixed implicit `any` on `req` parameter (introduced in diff)
+
+**Suggestion fixes off** (Step 1a; omit the line when there was no hit):
+- `projects/app/package.json:14` — `lint:fix` passes `--fix-suggestions`; ran with `--no-fix`. `lt fullstack update` removes the flag
 
 **Check Script — Accepted Residuals** (escalation ladder exhausted):
 - `projects/api`: `some-package@1.2.3` — GHSA-xxxx-yyyy-zzzz (Moderate)
