@@ -277,8 +277,14 @@ export function groupFamilies({ active, candidates, sessions }) {
 
 // ── Handover ─────────────────────────────────────────────────────────────────────────────────────────────────────
 
+/**
+ * The handover line for PowerShell. PowerShell ends a single-quoted string at any of five quote characters (the ASCII
+ * one and U+2018 to U+201B), so each is doubled: a folder named `Kai’s Projekte` or one carrying `’; iex …` from an
+ * extracted archive must stay inside the literal.
+ */
 export function powershellCommand(cwd, id) {
-  return `Set-Location -LiteralPath '${String(cwd).replace(/'/g, "''")}'; claude --desktop --resume ${id}`;
+  const literal = String(cwd).replace(/['‘’‚‛]/g, (q) => q + q);
+  return `Set-Location -LiteralPath '${literal}'; claude --desktop --resume ${id}`;
 }
 
 /** The CLI to hand over with: the override, `claude` on PATH, then the newest CLI Desktop bundles. */
@@ -549,7 +555,9 @@ function main(argv) {
     process.stderr.write('Keine Daten von Claude Desktop auf diesem Rechner gefunden.\n');
     return 1;
   }
-  const result = findCandidates({ appDir, configDir, days: opts.days });
+  // `carry` takes ids the user picked from a list, maybe one with a wider --days, maybe a while ago: the age window
+  // applies to the list, not to the choice. Archived and already carried sessions stay out either way.
+  const result = findCandidates({ appDir, configDir, days: opts.sub === 'carry' ? Number.POSITIVE_INFINITY : opts.days });
   if (!result.active) {
     process.stderr.write('Der angemeldete Desktop-Account ließ sich nicht bestimmen (config.json).\n');
     return 1;

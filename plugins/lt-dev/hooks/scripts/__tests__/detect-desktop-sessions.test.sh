@@ -72,6 +72,8 @@ assert_silent "$out" "silent in headless mode"
 
 # --- Desktop session, no switch of accounts ----------------------------------
 rm -rf "$APP/claude-code-sessions/acc-old"
+# In real use the active account always holds a fresh entry: the running Desktop session itself.
+add_session acc-active 44444444-4444-4444-8444-444444444444 "Diese Session"
 start="$(date +%s%N 2>/dev/null)"
 out="$(run_fake_node claude-desktop)"
 end="$(date +%s%N 2>/dev/null)"
