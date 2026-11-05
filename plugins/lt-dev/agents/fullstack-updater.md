@@ -335,7 +335,7 @@ asks for it.
 
 2. **Apply additional starter changes** not covered by nest-server update:
    - Compare project files against latest nest-server-starter
-   - Update configuration files (tsconfig.json, nest-cli.json, .eslintrc.js)
+   - Update configuration files (tsconfig.json, nest-cli.json, .oxlintrc.json, .oxfmtrc.jsonc)
    - Add new scripts from starter (package.json scripts section)
    - Update Docker-related files if present
    - Sync environment variable templates (.env.example)
