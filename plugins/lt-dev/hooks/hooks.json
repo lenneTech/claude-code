@@ -1,5 +1,5 @@
 {
-  "description": "Project detection, post-compaction context, safety guards, circuit breaker, file protection, peer-session coordination, and lt-plugin auto-update",
+  "description": "Project detection, post-compaction context, safety guards, circuit breaker, file protection, peer-session coordination, Claude Desktop sessions left in another account, and lt-plugin auto-update",
   "hooks": {
     "SessionStart": [
       {
@@ -22,6 +22,12 @@
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/detect-peer-sessions.sh\"",
             "timeout": 5,
             "statusMessage": "Checking for parallel Claude Code sessions"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/detect-desktop-sessions.sh\"",
+            "timeout": 5,
+            "statusMessage": "Checking for Claude Desktop sessions of another account"
           }
         ]
       },
