@@ -64,6 +64,33 @@ The helper:
 
 If the helper returns nothing → no project defines `check` → skip the rest of this skill.
 
+### Step 1a — No oxlint suggestion fixes
+
+`oxlint --fix-suggestions` applies fixes oxlint itself marks as possibly behaviour-changing: its `no-console`
+suggestion deletes the call. `--fix-dangerously` goes further. Current templates pass neither, but projects from
+older ones still do, in the check wrapper, `lint:fix`, lint-staged or a project's own `scripts/check.mjs`.
+`lt fullstack update` removes them at the workspace root and in the app (tracked, clean files only); the API project
+keeps its own files, so a hit there is removed by hand or by taking the current nest-server-starter file. Observed in nest-server (2026-09, claude-code PR #10): a
+commit hook turned a `console.log` into an empty function body and still reported "passed". Before Step 2, look for a *use* of either flag;
+a mention in a comment does not count:
+
+```bash
+git grep -n -E "(^|[[:space:]\"'])--fix-(suggestions|dangerously)" -- '*package.json' '*.lintstagedrc*' '*lint-staged.config.*' '*scripts/check.mjs' \
+  | grep -v -E '^[^:]+:[0-9]+:[[:space:]]*(//|/?\*|#)'
+```
+
+The second filter drops comment lines: the current nest-server-starter wrapper explains in a comment why it passes
+plain `--fix` only.
+
+On a hit, the check runs without auto-fix:
+
+- Run the lt wrapper as its read-only gate: `<pm> run check --no-fix` (npm: `npm run check -- --no-fix`). Every
+  wrapper that still passes one of the flags already knows `--no-fix`. Where a project's own chain calls `lint:fix`,
+  or its own `scripts/check.mjs` is one of the hits, run that project's steps with `lint` instead of `lint:fix`.
+- Fix lint findings by hand or with plain `oxlint --fix`; format with the project's formatter as usual.
+- Name every hit (`file:line`) in the Step 8 report with its remedy: `lt fullstack update` for the root and the app,
+  removing the flag by hand (or the current nest-server-starter file) for the API project.
+
 ### Step 2 — Run `check` per project
 
 For each discovered project, `cd` into its directory and run the `check` script with the detected package manager:
@@ -380,6 +407,10 @@ Every caller must include this block in its final report:
 **Fixes applied:**
 - `projects/api/src/modules/user/user.service.ts:42` — Removed unused `LoggerService` import (pre-existing)
 - `projects/api/src/modules/auth/auth.controller.ts:18` — Fixed implicit `any` on `req` parameter (introduced in diff)
+
+**Suggestion fixes off** (Step 1a; omit the line when there was no hit):
+- `projects/app/package.json:14` — `lint:fix` passes `--fix-suggestions`; ran with `--no-fix`. `lt fullstack update` removes the flag
+- `projects/api/package.json:31` — `lint:fix` passes `--fix-suggestions`; ran with `--no-fix`. Remove the flag by hand: the update leaves the API project alone
 
 **Check Script — Accepted Residuals** (escalation ladder exhausted):
 - `projects/api`: `some-package@1.2.3` — GHSA-xxxx-yyyy-zzzz (Moderate)

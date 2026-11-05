@@ -335,7 +335,7 @@ asks for it.
 
 2. **Apply additional starter changes** not covered by nest-server update:
    - Compare project files against latest nest-server-starter
-   - Update configuration files (tsconfig.json, nest-cli.json, .eslintrc.js)
+   - Update configuration files (tsconfig.json, nest-cli.json, .oxlintrc.json, .oxfmtrc.jsonc)
    - Add new scripts from starter (package.json scripts section)
    - Update Docker-related files if present
    - Sync environment variable templates (.env.example)
@@ -466,11 +466,11 @@ end-to-end:
 
 - API: Phases 2 (jest→vitest) and 3 (eslint→oxlint, prettier→oxfmt) of the skill.
 - App: Phase 4 of the skill (vitest+happy-dom, oxlint with vue plugin, oxfmt).
-- BOTH: Phase 5 (`check` / `check:fix` / `check:envs` scripts), Phase 6
+- BOTH: Phase 5 (`check` / `check:fix` scripts), Phase 6
   (`scripts/check-server-start.mjs` — the Node port that also runs on Windows;
   replaces `check-server-start.sh` and its ANSI-strip + `NITRO_PORT` guards),
-  Phase 7 (`config.env.ts` offers pattern), Phase 8 (`scripts/check-envs.sh` +
-  fixture), Phase 9 (`main.ts` log levels + CORS + `QuietHttpExceptionFilter`),
+  Phase 7 (`config.env.ts` offers pattern), Phase 8 (`src/config.env.spec.ts`,
+  the env contract test), Phase 9 (`main.ts` log levels + CORS + `QuietHttpExceptionFilter`),
   Phase 10 (GitLab CI), Phase 11 (docker-compose healthchecks).
 
 **Critical gotchas to surface in the report** (these consumed days in
@@ -685,7 +685,7 @@ If blocked at any phase:
 | All linting passes (oxlint 0/0 in both subprojects) | ✅ |
 | All tests pass (no skips, no `it.skip`, no `--passWithNoTests`) | ✅ |
 | `<pm> run check` from monorepo root prints "Successfully ran target check for 2 projects" | ✅ |
-| `<pm> run check:envs` (api) prints "All env configurations OK." | ✅ |
+| `src/config.env.spec.ts` (api) covers every unconditional entry of `REQUIRED_DEPLOYED_ENV_VARS` and passes in `<pm> test`, whose output lists it | ✅ |
 | Pre-existing failures fixed, not silenced | ✅ |
 | Types regenerated (only when api-client is actually imported) | ✅ |
 | Report generated | ✅ |

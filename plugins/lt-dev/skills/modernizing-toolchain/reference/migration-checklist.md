@@ -186,8 +186,8 @@ substitute as appropriate.
    ```jsonc
    {
      "scripts": {
-       "test": "<pm> run vitest",
-       "test:ci": "<pm> run vitest:ci",
+       "test": "<pm> run vitest:unit && <pm> run vitest",
+       "test:ci": "<pm> run vitest:unit && <pm> run vitest:ci",
        "test:e2e": "<pm> run vitest",
        "vitest": "NODE_ENV=e2e vitest run --config vitest-e2e.config.ts",
        "vitest:ci": "NODE_ENV=ci vitest run --config vitest-e2e.config.ts",
@@ -197,6 +197,8 @@ substitute as appropriate.
      }
    }
    ```
+   `test` and `test:ci` run the unit specs first, as nest-server-starter does: `src/**/*.spec.ts`, the env
+   contract test of Phase 8 among them, runs only through `vitest.config.ts`.
 
 10. **Remove jest artifacts**:
     - delete `jest-e2e.json`, `babel.config.js`, `tests/report.js`
@@ -322,9 +324,7 @@ Adopt these scripts in EACH subproject (api + app). The shape mirrors `nest-serv
   "audit": "<pm> audit --omit=dev || echo '\\n[check] audit reported issues; continuing.'",
   "check":     "<pm> run audit && <pm> run format:check && <pm> run lint && <pm> run test && <pm> run build && <pm> run check:server-start",
   "check:fix": "<pm> install && <pm> run format && <pm> run lint:fix && <pm> run test && <pm> run build && <pm> run check:server-start",
-  "check:naf": "<pm> install && <pm> run format && <pm> run lint:fix && <pm> run test && <pm> run build && <pm> run check:server-start",
-  "check:envs":        "bash scripts/check-envs.sh",
-  "check:envs:docker": "bash scripts/check-envs.sh --docker"
+  "check:naf": "<pm> install && <pm> run format && <pm> run lint:fix && <pm> run test && <pm> run build && <pm> run check:server-start"
 }
 ```
 
@@ -343,9 +343,7 @@ For monorepos, add a root `package.json` aggregator:
 ```jsonc
 {
   "check":     "lerna run --concurrency 1 check",
-  "check:fix": "lerna run --concurrency 1 check:fix",
-  "check:envs":        "cd projects/api && <pm> run check:envs",
-  "check:envs:docker": "cd projects/api && <pm> run check:envs:docker"
+  "check:fix": "lerna run --concurrency 1 check:fix"
 }
 ```
 `--concurrency 1` is **mandatory** so api and app don't fight over MongoDB or ports.
@@ -400,8 +398,8 @@ The canonical shape:
 - `REQUIRED_DEPLOYED_ENV_VARS` array — single source of truth for both the runtime fail-fast
   guard and the `.env.example` documentation.
 - Auto-derive `appUrl` from `baseUrl` (strip leading `api.`) — operators only set `NSC__BASE_URL`.
-- `ci.mongoose.uri` defaults to `127.0.0.1` (NOT `mongo:27017`) so `check:envs` Phase 1 works
-  outside Docker. CI pipelines override via `NSC__MONGOOSE__URI`.
+- `ci.mongoose.uri` defaults to `127.0.0.1` (NOT `mongo:27017`) so the `ci` env also starts outside
+  Docker, for example in a local test run. CI pipelines override via `NSC__MONGOOSE__URI`.
 
 The fail-fast guard at the bottom of `config.env.ts`:
 ```ts
@@ -425,14 +423,31 @@ if (DEPLOYED.has(resolved.env)) {
 export default resolved;
 ```
 
-## Phase 8 — `scripts/check-envs.sh` + `tests/fixtures/.env.deployed-test`
+## Phase 8 — `src/config.env.spec.ts` (env contract test)
 
-The check-envs script verifies all six NODE_ENVs. Phase 1 runs without a `.env` (local/e2e/ci must
-start, develop/test/production must fail-fast). Phase 2 with a fixture `.env` (all six must
-start). Phase 3 (optional, `--docker`) repeats inside the production image.
+Copy the `config.env.ts — fail-fast for deployed envs` block of `src/config.env.spec.ts` from
+nest-server-starter. It checks the Phase 7 contract at import, in milliseconds and on every platform,
+in every `<pm> test` once `test` runs the unit specs (Phase 2 step 9); the run lists
+`src/config.env.spec.ts`:
 
-Fixture `tests/fixtures/.env.deployed-test` carries public dummy values for every required
-NSC__* var. Generate fresh dummies — never reuse real secrets.
+- every unconditional entry of `REQUIRED_DEPLOYED_ENV_VARS` has a public dummy value in the test, so
+  a requirement added later without one fails the test;
+- `develop`, `test` and `production` stop at import and name exactly the var that is missing, and
+  start once every required var is set;
+- `local`, `e2e` and `ci` start without any of them.
+
+The test controls its environment: it removes every inherited `NSC__*` var (`lt dev up` sets
+`NSC__MONGOOSE__URI`, for one) and imports the config from an empty working directory, because
+`config.env.ts` and nest-server both call `dotenv.config()` and a developer's `.env` would otherwise
+fill in what the test left out. Keep both when adapting it. The dummy values are public test
+values, never real secrets.
+
+A project that still carries `scripts/check-envs.sh`, `tests/fixtures/.env.deployed-test` or
+`check:envs*` scripts drops them. That script could not pass anywhere (measured in
+nest-server-starter on 2026-09-23): it waited for `Server startet at` while `main.ts` logs `Server
+started at`, so all nine boot cases ran into the 60 s timeout, and its Phase 2 fixture matched the
+`.env.*` rule in `.gitignore`, so no clone ever had it. Neither the check wrapper nor CI ran it, so
+nobody noticed. nest-server-starter #57 replaced it with this test.
 
 ## Phase 9 — `main.ts` (offers pattern)
 
@@ -457,8 +472,10 @@ Two stages (`test`, `build`). Cache root + per-subproject `node_modules`. Jobs:
 - `audit`: `allow_failure: true`, prints findings only
 - `api:test`: vitest e2e against MongoDB service alias
 - `app:test`: Playwright with full api+app server bring-up (mirrors offers)
-- `check:envs`: six-env smoke matrix in CI with MongoDB service
 - `build`: api + app build
+
+The env contract (Phase 8) needs no job of its own: it runs with the unit tests, so `api:test`
+runs `<pm> run test:ci`, which runs unit and API tests (Phase 2 step 9).
 
 ## Phase 11 — `docker-compose.yml`
 
