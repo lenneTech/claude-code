@@ -15,7 +15,12 @@ PASS=0
 FAIL=0
 
 ok() { PASS=$((PASS + 1)); echo "  ✓ $1"; }
-ko() { FAIL=$((FAIL + 1)); echo "  ✗ $1"; [ -n "${2:-}" ] && echo "    $2"; }
+ko() {
+  FAIL=$((FAIL + 1))
+  echo "  ✗ $1"
+  if [ -n "${2:-}" ]; then echo "    $2"; fi
+  return 0 # `cond && ko … || ok …` must not count a failure as a pass as well
+}
 
 assert_silent() { if [ -z "$1" ]; then ok "$2"; else ko "$2" "expected no output, got: $1"; fi; }
 assert_contains() { if printf '%s' "$1" | grep -q -- "$2"; then ok "$3"; else ko "$3" "expected '$2' in: $1"; fi; }
