@@ -8,7 +8,7 @@ description: 'Migrates lenne.tech projects from the legacy jest+eslint+prettier 
 ## When This Skill Activates
 
 - Migrating an existing API/App from jest → vitest, eslint → oxlint, prettier → oxfmt
-- Adopting the `check` / `check:fix` / `check:envs` pipeline used by the starters
+- Adopting the `check` / `check:fix` pipeline and the env contract test (`src/config.env.spec.ts`) used by the starters
 - Debugging Mongoose `"Cannot determine a type for the X field (union/intersection/ambiguous type was used)"` after switching to vitest+SWC
 - Debugging `ERR_SOCKET_BAD_PORT` from `node .output/server/index.mjs` in any check pipeline
 - Debugging missing or stale `types.gen.ts` after a Nuxt update
@@ -39,7 +39,7 @@ Eleven phases in fixed order, each assuming the previous one landed. Every phase
 | 5 | `check` pipeline |
 | 6 | `scripts/check-server-start.mjs` (Node, runs on Windows too) |
 | 7 | `config.env.ts` |
-| 8 | `scripts/check-envs.sh` + `tests/fixtures/.env.deployed-test` |
+| 8 | `src/config.env.spec.ts` (env contract test) |
 | 9 | `main.ts` |
 | 10 | GitLab CI |
 | 11 | `docker-compose.yml` |
@@ -48,7 +48,7 @@ Full commands, file contents and per-phase traps: [`reference/migration-checklis
 
 ## Done Signals
 
-After all phases, both must be true:
+After all phases, all three must hold:
 
 1. `<pm> run check` from the monorepo root prints
    ```
@@ -56,7 +56,9 @@ After all phases, both must be true:
    ```
    with both api and app green (audit + format:check + lint + test + build + check-server-start).
 
-2. `<pm> run check:envs` (api) prints `All env configurations OK.` (six envs across two phases).
+2. `src/config.env.spec.ts` (api) covers every unconditional entry of `REQUIRED_DEPLOYED_ENV_VARS`
+   and passes in `<pm> test`, whose output lists it: `develop`, `test` and `production` stop at
+   startup and name every missing var, `local`, `e2e` and `ci` start without them.
 
 3. **No tests skipped, no warnings tolerated**: pre-existing failures in either subproject must be
    fixed as part of the migration, not silenced. The `check` pipeline is intentionally strict —
