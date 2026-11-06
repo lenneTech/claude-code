@@ -41,7 +41,8 @@ Each pillar lists the concrete checks to perform, the file paths to inspect, and
 | `.env*` excluded from VCS | `.gitignore` covers `.env`, `.env.*`, **except** `.env.example` | Critical |
 | `.env.example` exists & is current | All keys read by code are present with placeholder values | Major |
 | Secrets are runtime-injected (not baked) | Production Dockerfile does NOT `COPY .env`; secrets come from CI vault | Critical |
-| `NODE_ENV` taxonomy respected | `e2e` (local tests), `ci` (pipeline tests), `develop` (dev server), `test` (customer staging — NOT a test env), `production` (live) | Major |
+| `NODE_ENV` taxonomy respected | `local` (development, also when `NODE_ENV` is unset), `e2e` (local tests), `ci` (pipeline tests), `develop` (dev server), `test` (customer staging — NOT a test env), `production` (live). A stage with a name of its own gets a block (`staging: deployedConfig('staging')`) instead of a renamed `NODE_ENV`, because libraries read the value themselves | Major |
+| Every `NODE_ENV` has a block, none is empty | Each value a stage, compose file or CI job sets is a key of `config` in `src/config.env.ts`, no compose file passes `NODE_ENV=${NODE_ENV}` (an empty string on a host without it), the API image sets `ENV NODE_ENV=production`. `config.env.ts` refuses an empty value or one without a block, as nest-server-starter's does; otherwise the stage boots on the `local` block (public dummy secrets, open first-run setup, `GET /config`), visible in the boot line `Configured for: local` (with `(requested: <x>)` for an unknown value, without it for an empty one) | Critical |
 | Per-env DB URI / database name | `nsc.mongoose.uri` ends with the env-specific DB (no shared "test" DB across envs) | Critical |
 | Default-credentials guard | Production refuses to boot with `password === 'admin'` / `JWT_SECRET === 'change-me'` etc | Critical |
 
@@ -51,6 +52,7 @@ Each pillar lists the concrete checks to perform, the file paths to inspect, and
 |-------|-----|----------------------|
 | Structured logs (JSON) in production | `pino-http` or NestJS Logger configured with JSON transport when `NODE_ENV=production` | Major |
 | No `console.log` in shipped server code | `grep -nR "console\.log" projects/api/src` returns 0 (`console.error` for boot failures is acceptable) | Major |
+| No auth link or token in deployed logs | No log line on `develop`, `test` or `production` carries a verification, reset or magic link, a session or access token, or a one-time code. A local-only line is gated on the config env **and** the raw `NODE_ENV` (both `local`, `ci` or `e2e`, `NODE_ENV` also unset, never empty), at every log level; nest-server is at 11.42.12 or later (below it prints its own verification and reset links on `develop` and `test`); no deployed stage sets `LT_LOG_AUTH_URLS=1` | Critical |
 | Request ID / correlation ID | Middleware emits and propagates `x-request-id` to outgoing calls | Major |
 | Error tracking wired up | Sentry (or equivalent) initialised on both API and App when DSN is set | Major |
 | Metrics endpoint or APM | `/metrics` (Prometheus) OR APM agent (NewRelic/Datadog) instrumented | Minor |

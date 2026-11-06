@@ -59,6 +59,8 @@ Review its output against Phase 2 below before writing anything to disk: Phase 2
 - Cache npm/pnpm dependencies effectively in layers
 - Non-root user in container
 - Proper signal handling (tini or dumb-init if needed)
+- The API's runner stage sets `ENV NODE_ENV=production`, so an image started without the variable runs as
+  production and never on the `local` block of `src/config.env.ts`
 
 ### 2. Docker Compose Setup
 
@@ -70,6 +72,9 @@ Create two compose files:
 - Restart policies
 - Health checks
 - Network configuration
+- `NODE_ENV` for the API written out (`NODE_ENV=production`) or left out for the image default, never passed
+  through as `NODE_ENV=${NODE_ENV}`: a host without the variable hands the container an empty string, which
+  the API refuses
 
 **docker-compose.override.yml** (Local Development):
 
@@ -77,6 +82,9 @@ Create two compose files:
 - node_modules in named volume (not mounted from host)
 - Ports exposed for debugging
 - Helper services (local only)
+- The API's `environment` sets `NODE_ENV=local`: Compose merges the base file's `NODE_ENV=production` into the
+  local stack, and the runner stage's image default is production too, so without this line the local API
+  boots as production and stops on the missing `NSC__*` variables
 
 ### 3. Hot Reload & node_modules Handling
 
@@ -225,7 +233,9 @@ SMTP_PORT=1025
 MAIL_FROM=noreply@localhost
 
 # === Development ===
-NODE_ENV=development
+# NODE_ENV is not set here: docker-compose.override.yml sets NODE_ENV=local for the API, and a run on the
+# host leaves it unset, which also means local. Every value the API gets needs a block in
+# src/config.env.ts: it refuses an unknown or empty NODE_ENV (`development` has no block).
 ```
 
 ### 7. Additional Files
@@ -428,6 +438,8 @@ WHILE errors exist AND attempts < 5:
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | Container won't start | Missing env vars | Check/complete `.env` file |
+| API exits: `NODE_ENV='<x>' has no block in src/config.env.ts` | `NODE_ENV` names an environment the config does not know (`development`) | Leave it unset locally, use a known block name, or add a block |
+| API exits: `NODE_ENV is set but empty` | `NODE_ENV=${NODE_ENV}` in compose on a host without the variable | Write the value, or remove the key |
 | Container won't start | Syntax error in code | Check logs, fix code |
 | Container crash loop | Wrong Node version | Adjust Node version in Dockerfile |
 | "Module not found" | node_modules problem | Delete volume, rebuild |

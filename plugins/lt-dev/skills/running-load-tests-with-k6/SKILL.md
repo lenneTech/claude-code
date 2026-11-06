@@ -251,7 +251,7 @@ The consumer (command/agent) iterates this ladder, re-running the load scenario 
 | 6 | **Payload size** — measure `Content-Length` on the slowest endpoints; if > 50 KB per response under 10 VUs, the bottleneck is serialisation | Use `select` projections, paginate, return references not deep populates |
 | 7 | **Rate-limit interference** — check `@nestjs/throttler` ttl/limit; load tests must not be blocked by rate limiting | Whitelist the test client IP in dev, or temporarily disable for the run via env var |
 | 8 | **CPU saturation** — `top` shows node process pegged near 100% during the run | Profile with `clinic flame` or `0x`; offload heavy work to a queue (BullMQ) |
-| 9 | **External API contention** — load test reveals upstream bottleneck (mailer, payment, etc) | Mock the external in load mode (`NODE_ENV=load` env switch), document the assumption |
+| 9 | **External API contention** — load test reveals upstream bottleneck (mailer, payment, etc) | Mock the external behind a switch of its own (e.g. `LOAD_TEST_MOCK_EXTERNALS=1`), not a new `NODE_ENV` value: the API refuses a `NODE_ENV` without a block in `src/config.env.ts`. Document the assumption |
 
 If steps 1–9 are exhausted and thresholds still fail, the system is **not production-ready for 10 concurrent users** — that is the report the consumer must surface.
 

@@ -169,6 +169,11 @@
       "name": "unit specs, the contract test among them, run in CI through vitest.config.ts and need nest-server-starter's headroom over the 5s default",
       "phrase": "cold CI runners (nest-server-starter's reason). testTimeout: 30000, hookTimeout: 30000,",
       "files": ["skills/modernizing-toolchain/reference/migration-checklist.md"]
+    },
+    {
+      "name": "the auth-link log gate both reviewers check: config env local AND raw NODE_ENV unset (undefined, not empty) or local",
+      "phrase": "isLocalEnv(env) && (process.env.NODE_ENV === undefined || isLocalEnv(process.env.NODE_ENV))",
+      "files": ["agents/security-reviewer.md", "agents/backend-reviewer.md"]
     }
   ],
   "forbidden": [
@@ -220,6 +225,16 @@
       "pattern": "\"pattern\": \".*CLAUDE_PLUGIN_ROOT",
       "files": [
         "permissions.json"
+      ]
+    },
+    {
+      "name": "a falsy NODE_ENV check in the auth-link log gate lets an empty NODE_ENV through, which resolves to the local block on a deployed stage",
+      "pattern": "\\(!process\\.env\\.NODE_ENV \\|\\| isLocalEnv",
+      "files": [
+        "agents/security-reviewer.md",
+        "agents/backend-reviewer.md",
+        "agents/devops.md",
+        "skills/validating-production-readiness/SKILL.md"
       ]
     }
   ],

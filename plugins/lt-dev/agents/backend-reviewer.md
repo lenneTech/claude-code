@@ -642,6 +642,7 @@ pnpm run lint
 
 - [ ] Zero lint errors
 - [ ] No `console.log` / `debugger` statements
+- [ ] **No auth link or token logged on a deployed stage** (Critical). Any `console.*` or logger call, at any level (error paths included: deployed stages print `log`, `warn`, `error` and `fatal`), with a verification, reset or magic link, a session or access token, or a one-time code needs a gate on both the config env and the raw `NODE_ENV`: `isLocalEnv(env) && (process.env.NODE_ENV === undefined || isLocalEnv(process.env.NODE_ENV))`, `isLocalEnv` from `@lenne.tech/nest-server`. The config env alone is not enough: a `NODE_ENV` without a block in `src/config.env.ts`, and an empty one, resolves to the `local` block, whose `env` then claims `local` on a deployed stage. A falsy check (`!process.env.NODE_ENV`) lets the empty value through
 - [ ] No commented-out code
 - [ ] Consistent indentation
 - [ ] Import organization follows project conventions

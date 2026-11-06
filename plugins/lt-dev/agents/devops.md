@@ -93,7 +93,7 @@ services:
       - api-node-modules:/app/node_modules   # Isolated deps
     env_file: .env
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=local   # the API refuses a value without a block in src/config.env.ts
     depends_on:
       mongo:
         condition: service_healthy
@@ -178,6 +178,7 @@ COPY --from=deps --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
 COPY --from=build --chown=node:node /app/package.json ./
 
+# Image default: a container started without NODE_ENV runs as production, never on the local block
 ENV NODE_ENV=production
 EXPOSE 3000
 
@@ -319,13 +320,33 @@ lint → build → test → permissions → security-scan → deploy
 
 | Variable | Purpose | Dev Value | Prod Rule |
 |----------|---------|-----------|-----------|
-| `NODE_ENV` | Runtime environment | `development` | `production` |
+| `NODE_ENV` | Runtime environment | unset (the API runs on `local`) | `production` (image default) or the stage's block name |
 | `MONGO_URI` | Database connection | `mongodb://localhost:27017/app-dev` | CI/CD secret |
 | `JWT_SECRET` | Token signing | (generated, 64+ chars) | CI/CD secret, unique per env |
 | `API_URL` | Backend URL for frontend | `http://localhost:3000` | Environment-specific |
 | `PORT` | Service port | `3000` | `3000` |
 | `BETTER_AUTH_SECRET` | Auth secret | (generated, 64+ chars) | CI/CD secret, unique per env |
 | `BETTER_AUTH_BASE_PATH` | Auth base path | `/iam` | `/iam` |
+
+#### NODE_ENV for the API
+
+`src/config.env.ts` holds one block per environment (`local`, `e2e`, `ci`, `develop`, `test`, `production`,
+plus any the project adds), and the starter refuses to boot on a `NODE_ENV` without a block or with an empty
+value. Without these refusals the API would boot on the `local` block: public dummy secrets, the open first-run
+setup, `GET /config`. Only an unset `NODE_ENV` means `local`.
+
+- **Every value a stage uses has a block.** A stage with a name of its own gets a block
+  (`staging: deployedConfig('staging')`) instead of a renamed `NODE_ENV`, because libraries read the value
+  themselves.
+- **The runner stage of the Dockerfile sets `ENV NODE_ENV=production`**, so an image started without the
+  variable runs as production.
+- **Compose writes the value or leaves the key out.** No `NODE_ENV=${NODE_ENV}` passthrough: on a host without
+  the variable it hands the container an empty string.
+- **Auth links and tokens never reach the log of a deployed stage.** From 11.42.12 on, nest-server prints its
+  verification and reset links only in the local environments (`local`, `ci`, `e2e`); below that version it
+  prints them on every stage but `production` and `staging` without any flag, so such a project needs the
+  framework raised before a `develop` or `test` stage goes live. Set no `LT_LOG_AUTH_URLS=1` on a deployed
+  stage: versions that honour it print the links with it on every stage but `production` and `staging`.
 
 #### Database Naming Convention
 
@@ -365,6 +386,9 @@ When diagnosing issues, follow this exact order:
 | MongoDB connection refused | Check `mongo` health, verify `MONGO_URI` | Ensure `depends_on` with health condition |
 | MODULE_NOT_FOUND on `node dist/main.js` in CI | tsc preserves source layout, entry is `dist/src/main.js` | Update Dockerfile + `.gitlab-ci.yml` + docker-compose to `dist/src/main.js` (lt-Stack uses tsc, not `nest build`) |
 | E2E `User not found in DB after sign-up` / `ECONNREFUSED 127.0.0.1:27017` | Test helpers and API connect to different databases or different hosts | Align `E2E_MONGO_URI` with `config.env.ts` (e.g. `NODE_ENV=ci` → `offers-ci`); replace `127.0.0.1` with the service alias (`mongo`) in CI; remove hardcoded URIs in test helpers, read from `process.env.E2E_MONGO_URI` |
+| API exits at boot: `NODE_ENV='<x>' has no block in src/config.env.ts` | `NODE_ENV` names an environment the config does not know (`development`, a renamed stage) | Use a known block name, or add a block for the stage to `src/config.env.ts` |
+| API exits at boot: `NODE_ENV is set but empty` | `NODE_ENV=${NODE_ENV}` in compose on a host without the variable | Write the value, or leave the key out and rely on the image default |
+| Boot line reads `Configured for: local` on a deployed stage, with `(requested: <x>)` for an unknown value or without it for an empty one | A project without the starter's refusal fell back to the `local` block | Add the block and the refusal from nest-server-starter's `src/config.env.ts` |
 | Hot reload not working | Check volume mounts in compose file | Verify source path matches container path |
 
 ### Phase 7: Verification

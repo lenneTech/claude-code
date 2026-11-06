@@ -187,7 +187,7 @@ Each NODE_ENV value selects a deployment target, and the names are easy to misre
 │  Local Development:                                                        │
 │  ├── Database: mongodb://localhost:27017/app-dev                           │
 │  ├── Port: 3000 (API), 3001 (App)                                          │
-│  └── NODE_ENV=develop (or unset)                                           │
+│  └── NODE_ENV unset (= local)                                              │
 │                                                                            │
 │  Local Testing (vitest):                                                   │
 │  ├── Database: mongodb://localhost:27017/app-e2e (SEPARATE!)               │
@@ -219,7 +219,7 @@ Each NODE_ENV value selects a deployment target, and the names are easy to misre
 ```json
 {
   "scripts": {
-    "start:dev": "NODE_ENV=develop nest start --watch",
+    "start:dev": "nest start --watch",
     "test": "NODE_ENV=e2e vitest run",
     "test:watch": "NODE_ENV=e2e vitest",
     "test:cov": "NODE_ENV=e2e vitest run --coverage",
@@ -266,14 +266,23 @@ Each NODE_ENV value selects a deployment target, and the names are easy to misre
 ```typescript
 import { ConfigEnv } from '@lenne.tech/nest-server';
 
-// Environment-specific configuration
-// NODE_ENV values: e2e (local tests), ci (CI/CD tests), develop, test (staging), production
+// Environment-specific configuration: one block per NODE_ENV value
+// local (development, NODE_ENV unset), e2e (local tests), ci (CI/CD tests), develop (dev server),
+// test (staging), production. A stage with a name of its own gets a block, it does not rename NODE_ENV.
 const envConfig: Record<string, Partial<ConfigEnv>> = {
-  develop: {
+  local: {
+    // Local development (NODE_ENV unset)
     mongoose: {
       uri: 'mongodb://localhost:27017/app-dev',
     },
     port: 3000,
+  },
+  develop: {
+    // Deployed dev server
+    mongoose: {
+      uri: process.env.MONGODB_URI,
+    },
+    port: parseInt(process.env.PORT) || 3000,
   },
   e2e: {
     // Local test execution (vitest)
@@ -304,7 +313,12 @@ const envConfig: Record<string, Partial<ConfigEnv>> = {
 };
 
 export function getConfig(): ConfigEnv {
-  const env = process.env.NODE_ENV || 'develop';
+  // Unset means local. An empty value or one without a block is refused: falling back to the
+  // local block would boot a deployed stage with local settings.
+  const env = process.env.NODE_ENV ?? 'local';
+  if (!env.trim() || !Object.hasOwn(envConfig, env)) {
+    throw new Error(`NODE_ENV='${env}' has no block in src/config.env.ts`);
+  }
   return {
     ...defaultConfig,
     ...envConfig[env],

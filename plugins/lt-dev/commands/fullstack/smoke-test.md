@@ -189,6 +189,13 @@ skill `deploying-to-turboops`):
     (`docker service logs <stack>_<hash>-api` through `exec_in_container`, service name from
     `docker service ls --filter name=<stack>`) or the inbox. Observed 2026-10-11: 201 on the sign-up while the mail
     failed with a STARTTLS 502 (see Phase 4, step 6).
+3c. **The API does not boot as `local`, and no auth link reaches its log.** In the api service logs of each stage
+    (same route as 3b), the boot line reads `Configured for: develop` on dev and `Configured for: production` on
+    production. `Configured for: local`, with or without `(requested: …)`, means the stage runs on the local block
+    (public dummy secrets, open first-run setup, `GET /config`) and is a Critical base-repo finding, as is a
+    restart loop with `has no block in src/config.env.ts` or `NODE_ENV is set but empty` (`deploying-to-turboops`
+    Trap 9). After the 3b sign-up, the same logs carry no `[EMAIL VERIFICATION]` or `[PASSWORD RESET]` line:
+    those links hold a live token and are printed only in the local environments.
 4. 404 + `TRAEFIK DEFAULT CERT` ⇒ a server with its own Traefik: run the label pass from `deploying-to-turboops` Trap 5, and repeat it after **every** further deploy.
 
 ### Phase 6 — MR rounds (× `--rounds`)

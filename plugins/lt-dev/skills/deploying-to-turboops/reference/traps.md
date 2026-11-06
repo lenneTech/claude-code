@@ -265,6 +265,20 @@ from the old stage (`list_backup_schedules`) and recreate it on the new one with
 `create_backup_schedule` before the old stage is removed — otherwise the first
 backup of the moved database is the one nobody configured.
 
+### Trap 9 — a `NODE_ENV` the API's config has no block for
+
+The API reads `NODE_ENV` from the stage's env, or from the image default (`ENV NODE_ENV=production` in the
+runner stage). `src/config.env.ts` holds one block per value, and nest-server-starter's refuses to boot on a
+value without a block or an empty one. Only an unset `NODE_ENV` means `local`.
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| API container restarts, log: `NODE_ENV='<x>' has no block in src/config.env.ts (known: …)` | The stage sets a value the config does not know (`development`, `staging` without a block) | Set a known block name, or add a block (`staging: deployedConfig('staging')`) and redeploy. Do not rename `NODE_ENV` to fit a block: libraries read the value themselves |
+| API container restarts, log: `NODE_ENV is set but empty` | The deployed compose passes `NODE_ENV=${NODE_ENV}` and the host has no such variable | Write the value in the compose, or leave the key out for the image default |
+| API runs, but its boot line reads `Configured for: local`, with `(requested: <x>)` for an unknown value or without it for an empty one | A project without the refusal fell back to the `local` block: public dummy secrets, an open first-run setup and `GET /config` on a deployed stage | Treat it as an incident: take the stage offline, add the block and the refusal from nest-server-starter's `src/config.env.ts`, rotate whatever the stage handed out |
+
+After every deploy, the API's boot line `Configured for: <env>` names the stage's env, never `local`.
+
 ### CI completeness (mirrors `pnpm run check`)
 
 A complete pipeline is not just lint + build. In addition to `lint`, `api:test`,

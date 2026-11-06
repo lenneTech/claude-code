@@ -93,6 +93,7 @@ For each Dockerfile in the diff:
 - [ ] **HEALTHCHECK** directive present
 - [ ] **Minimal final image** — no dev dependencies, no source code in runtime stage
 - [ ] **EXPOSE** matches service port convention (API: 3000, App: 3001)
+- [ ] **`ENV NODE_ENV=production` in the API's runtime stage** — an image started without the variable then runs as production. The starter refuses a `NODE_ENV` without a block in `src/config.env.ts`; a project without that refusal boots on the `local` block (public dummy secrets, open first-run setup, `GET /config`)
 - [ ] **API entry path consistency (lt-Stack)** — `nest-server-starter` builds with `tsc -p tsconfig.build.json`, so the entry lives at `dist/src/main.js` (not `dist/main.js`). The Dockerfile `CMD`, any docker-compose `command:` override and every CI invocation (`.gitlab-ci.yml`, GitHub workflows) must agree. Mismatches surface as a silent `MODULE_NOT_FOUND` and a ready-probe time-out — not a clear error. Verify with: `grep -rn "node dist/" Dockerfile docker-compose*.yml .gitlab-ci.yml .github/workflows/ 2>/dev/null`.
 
 #### Development Dockerfiles
@@ -129,6 +130,7 @@ For each Dockerfile in the diff:
 - [ ] Resource limits (`deploy.resources.limits.memory`)
 - [ ] Health checks on all services
 - [ ] No inline secrets in `environment:`
+- [ ] **`NODE_ENV` of the API written out or left out, never `NODE_ENV=${NODE_ENV}`** — on a host without the variable the passthrough hands the container an empty string, which the starter refuses and an older project answers with the `local` block. Verify with `grep -rn 'NODE_ENV.*\${' docker-compose*.yml compose*.yml 2>/dev/null`
 
 **Scoring:**
 
@@ -174,6 +176,8 @@ For any CI/CD configuration in the diff:
 - [ ] JWT/auth secrets >= 64 characters in `.env.example` placeholder
 - [ ] Standard variables present: `NODE_ENV`, `MONGO_URI`, `JWT_SECRET`, `BETTER_AUTH_SECRET`, `API_URL`, `PORT`
 - [ ] `BETTER_AUTH_BASE_PATH=/iam`
+- [ ] **Every `NODE_ENV` a stage, a compose file or a CI job sets has a block in `src/config.env.ts`** (`local`, `e2e`, `ci`, `develop`, `test`, `production`, or one the project added). A stage with a name of its own gets a block (`staging: deployedConfig('staging')`) instead of a renamed `NODE_ENV`, because libraries read the value themselves. A value without a block (`development`, `dev`) stops the starter at boot; an older project falls back to the `local` block on a deployed stage, which is Critical
+- [ ] **No auth links in a deployed stage's log** — a verification or reset link carries a live token. nest-server below 11.42.12 prints them on every stage but `production` and `staging` without any flag, so on such a project the finding is the framework version (Critical once a `develop` or `test` stage holds real users). On any version, `LT_LOG_AUTH_URLS=1` in a deployed stage's env is the same finding: versions that honour it print the links with it on every stage but `production` and `staging`
 
 ```bash
 # Check .env in git
