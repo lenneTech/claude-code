@@ -194,6 +194,16 @@
       "name": "the starter never ships a local ng-base link; the lockfile check reads the two lines after the package name",
       "phrase": "grep -A2 -E \"@lenne.tech/ng-base\" pnpm-lock.yaml",
       "files": ["skills/maintaining-lt-stack/recipes.md"]
+    },
+    {
+      "name": "rolling back an ng-base sync reverts the sync commit too; A..B leaves A out and the core stays on the new version",
+      "phrase": "git revert --no-edit <sync-commit>^..<vendor-md-commit>",
+      "files": ["skills/ng-base-core-vendoring/SKILL.md"]
+    },
+    {
+      "name": "the ng-base updater adds optional peers too, as the CLI does, because the app's typecheck compiles every entry point in src/core/",
+      "phrase": "**optional peers included**",
+      "files": ["agents/ng-base-core-updater.md"]
     }
   ],
   "forbidden": [

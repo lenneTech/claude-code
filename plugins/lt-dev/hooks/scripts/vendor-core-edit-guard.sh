@@ -2,8 +2,9 @@
 # PostToolUse hook (Write|Edit): remind about the Vendor Modification Policy
 # when a file inside a vendored framework core was just edited.
 #
-# A vendored core (backend: src/core/, frontend: app/core/) mirrors upstream
-# @lenne.tech/nest-server or @lenne.tech/nuxt-extensions. It is a comprehension
+# A vendored core (backend: src/core/, Nuxt frontend: app/core/, Angular frontend: src/core/ of the
+# app) mirrors upstream @lenne.tech/nest-server, @lenne.tech/nuxt-extensions or @lenne.tech/ng-base.
+# It is a comprehension
 # aid, NOT a fork: it may only be edited for changes that are generally useful
 # to every consumer — and those changes MUST flow back upstream so they survive
 # the next sync. Project-specific code belongs OUTSIDE the core.
@@ -51,10 +52,19 @@ emit() {
   exit 0
 }
 
-# ── Backend vendored core: …/src/core/… with an adjacent VENDOR.md ──
+# ── …/src/core/… with an adjacent VENDOR.md: the backend core, or an Angular app's ng-base core ──
+# Both cores live under src/core/ (projects/api/src/core/ and projects/app/src/core/), so the path
+# alone cannot tell them apart. VENDOR.md names the package it mirrors: only a file that names
+# @lenne.tech/ng-base and not @lenne.tech/nest-server is the Angular core; every other VENDOR.md
+# (the nest-server baseline, an empty or older file) keeps the backend reminder.
 case "$FILE_PATH" in
   */src/core/*)
     core_root="${FILE_PATH%%/src/core/*}/src/core"
+    if [ -f "$core_root/VENDOR.md" ] \
+      && grep -q '@lenne.tech/ng-base' "$core_root/VENDOR.md" 2>/dev/null \
+      && ! grep -q '@lenne.tech/nest-server' "$core_root/VENDOR.md" 2>/dev/null; then
+      emit "You edited the VENDORED @lenne.tech/ng-base core (${core_root}/). Vendor Modification Policy: (1) FIRST verify a newer upstream version doesn't already contain this fix/optimization — compare the baseline in src/core/VENDOR.md against the latest @lenne.tech/ng-base release AND the upstream main branch, and read the upstream version of the file you changed; if it is already fixed upstream, revert your hand-patch and adopt it via /lt-dev:frontend:update-ng-base-core instead (a divergent local patch conflicts on the next sync and often reimplements it worse). (2) Only edit src/core/ for changes generally useful to EVERY consumer (bugfixes, security, broad enhancements, SSR fixes) — project-specific logic belongs OUTSIDE the core (src/app/, the app's own providers and components). (3) If the fix is genuinely missing upstream and generally useful, log it in src/core/VENDOR.md and run /lt-dev:frontend:contribute-ng-base-core so it survives the next sync. See the ng-base-core-vendoring skill."
+    fi
     if [ -f "$core_root/VENDOR.md" ]; then
       emit "You edited the VENDORED @lenne.tech/nest-server core (${core_root}/). Vendor Modification Policy: (1) FIRST verify a newer upstream version doesn't already contain this fix/optimization — compare the baseline in src/core/VENDOR.md against the latest @lenne.tech/nest-server release AND the upstream develop branch, and read the upstream version of the file you changed; if it is already fixed upstream, revert your hand-patch and adopt it via /lt-dev:backend:update-nest-server-core instead (a divergent local patch conflicts on the next sync and often reimplements it worse). (2) Only edit src/core/ for changes generally useful to EVERY consumer (bugfixes, security, broad enhancements) — project-specific logic belongs OUTSIDE the core (inheritance, extension, ICoreModuleOverrides). (3) If the fix is genuinely missing upstream and generally useful, log it in src/core/VENDOR.md and run /lt-dev:backend:contribute-nest-server-core so it survives the next sync. See the nest-server-core-vendoring skill."
     fi

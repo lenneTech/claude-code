@@ -113,6 +113,59 @@ EOF
 assert_silent "$out" "respects LT_SKIP_VENDOR_CORE_GUARD"
 cleanup
 
+assert_not_contains() {
+  local actual="$1" needle="$2" label="$3"
+  if echo "$actual" | grep -q "$needle"; then
+    FAIL=$((FAIL + 1)); echo "  ✗ $label"
+    echo "    expected NOT to contain: $needle"
+  else
+    PASS=$((PASS + 1)); echo "  ✓ $label"
+  fi
+}
+
+# --- Angular: the ng-base core also lives under src/core/, and VENDOR.md tells it apart ---
+echo "Angular vendored ng-base core edit"
+setup_tmp
+mkdir -p "$TMP/projects/app/src/core/auth"
+printf '# Vendored @lenne.tech/ng-base\n\nBaseline: 22.0.0\n' > "$TMP/projects/app/src/core/VENDOR.md"
+f="$TMP/projects/app/src/core/auth/auth.service.ts"; touch "$f"
+out=$(run_hook "$f")
+assert_contains "$out" "VENDORED @lenne.tech/ng-base" "detects the Angular core by its VENDOR.md"
+assert_contains "$out" "contribute-ng-base-core" "names the ng-base contribute command"
+assert_contains "$out" "update-ng-base-core" "names the ng-base update command"
+assert_not_contains "$out" "nest-server" "does not call the Angular core the backend core"
+cleanup
+
+echo "Backend core with a VENDOR.md naming nest-server stays the backend core"
+setup_tmp
+mkdir -p "$TMP/projects/api/src/core/common"
+printf '# Vendored @lenne.tech/nest-server\n\nBaseline: 12.5.0\n' > "$TMP/projects/api/src/core/VENDOR.md"
+f="$TMP/projects/api/src/core/common/x.ts"; touch "$f"
+out=$(run_hook "$f")
+assert_contains "$out" "VENDORED @lenne.tech/nest-server" "backend core unchanged"
+assert_not_contains "$out" "ng-base" "backend reminder does not mention ng-base"
+cleanup
+
+echo "A VENDOR.md naming both packages is the backend core"
+setup_tmp
+mkdir -p "$TMP/projects/api/src/core"
+printf 'Upstream: @lenne.tech/nest-server (see also @lenne.tech/ng-base)\n' > "$TMP/projects/api/src/core/VENDOR.md"
+f="$TMP/projects/api/src/core/y.ts"; touch "$f"
+out=$(run_hook "$f")
+assert_contains "$out" "VENDORED @lenne.tech/nest-server" "nest-server wins when both are named"
+cleanup
+
+echo "Nuxt core reminder is unchanged"
+setup_tmp
+mkdir -p "$TMP/projects/app/app/core/runtime"
+printf '# Vendored @lenne.tech/nuxt-extensions\n' > "$TMP/projects/app/app/core/VENDOR.md"
+f="$TMP/projects/app/app/core/runtime/z.ts"; touch "$f"
+out=$(run_hook "$f")
+assert_contains "$out" "VENDORED @lenne.tech/nuxt-extensions" "Nuxt core still detected"
+assert_contains "$out" "contribute-nuxt-extensions-core" "Nuxt contribute command unchanged"
+assert_not_contains "$out" "ng-base" "Nuxt reminder does not mention ng-base"
+cleanup
+
 echo ""
 echo "─────────────────────────────────────────"
 echo "Total: $((PASS + FAIL)) | Passed: $PASS | Failed: $FAIL"

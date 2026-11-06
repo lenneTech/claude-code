@@ -261,19 +261,18 @@ and `pnpm-lock.yaml` at the root and no `*-template/` folder.
 3. **Gate: the starter resolves ng-base from the registry.** Local integration may run on an injected
    `file:` dependency (`"file:../ng-base/dist/ng-base"` plus `dependenciesMeta.injected`), and that must never
    ship: every project cloned from the template would point at a folder that does not exist there. Before the
-   tag, all three hold, otherwise nothing is released:
+   tag, both hold, otherwise nothing is released:
 
    ```bash
-   node -e 'const p=require("./package.json"); const v=(p.dependencies||{})["@lenne.tech/ng-base"];
-     if (!/^\d+\.\d+\.\d+$/.test(v||"")) { console.error("ng-base pin is not a published version: "+v); process.exit(1) }
-     if ((p.dependenciesMeta||{})["@lenne.tech/ng-base"]) { console.error("dependenciesMeta still injects ng-base"); process.exit(1) }'
-   # the lockfile names the package on one line and its specifier and version on the next two
+   pnpm run check:release   # LT_RELEASE=true check plus check:baseline; scripts/check-ng-base-pin.mjs then
+                            # fails on file:, link:, workspace:, a range and dependenciesMeta.injected
+   # second safeguard: the lockfile names the package on one line, its specifier and version on the next two
    if grep -A2 -E "@lenne.tech/ng-base" pnpm-lock.yaml | grep -qE "file:|link:|workspace:"; then
      echo "pnpm-lock.yaml still resolves ng-base locally"; false; fi
-   pnpm run check                                                                    # green against that version
    ```
 
-   The pinned version answers 200 on the version-specific endpoint (step 0).
+   `pnpm run check` alone only warns about a local pin; `check:release` is the strict form CI runs. The pinned
+   version answers 200 on the version-specific endpoint (step 0).
 4. Stage the paths this update changed (`git add <paths>`, never `git add .`), with `CHANGELOG.md` kept out
    of this content commit (the ng-base-starter CHANGELOG rule above), commit, then the release commit, tag
    and two-step push as in "Release commit for the templates" above.
