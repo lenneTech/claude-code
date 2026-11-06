@@ -242,6 +242,10 @@ minimumReleaseAgeExclude:
   - '@lenne.tech/bug.lt'
 ```
 
+An Angular app on `@lenne.tech/ng-base` (`angular.json`) adds `'@lenne.tech/ng-base'` to that list: the bug.lt
+reporter ships inside it, from the same pipeline. A `'@lenne.tech/*'` entry, as ng-base-starter ships it, already
+covers it. A Nuxt project does not add it.
+
 **A version-bound entry cannot survive its own purpose.** It stops doing anything the moment
 that version passes the 24-hour window or leaves the tree, and then it sits there reading like
 standing policy. This is the same decay as a stale `ignoreGhsas` above, with an even shorter fuse:

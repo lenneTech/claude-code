@@ -254,6 +254,16 @@
       "name": "dark-mode token overrides go under :root.dark, which is the selector ng-base uses; a plain .dark loses",
       "phrase": "`:root.dark`",
       "files": ["commands/frontend/figma-init.md"]
+    },
+    {
+      "name": "Nuxt gate: ng-base joins the own-package release-age exclusion only in an Angular app",
+      "phrase": "A Nuxt project does not add it.",
+      "files": ["skills/maintaining-npm-packages/SKILL.md"]
+    },
+    {
+      "name": "the bug.lt Linear credentials stay server-side in an Angular app",
+      "phrase": "never as `NG_PUBLIC_*`",
+      "files": ["skills/developing-lt-angular-frontend/SKILL.md"]
     }
   ],
   "forbidden": [

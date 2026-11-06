@@ -115,6 +115,32 @@ await this.auth.twoFactor.verifyTotp({ code });    // sets the user on success
 await this.auth.authenticateWithPasskey();
 ```
 
+## Bug Reporter (bug.lt)
+
+ng-base carries the Angular counterpart of `@lenne.tech/bug.lt`; there is no separate package to install.
+
+- **`app.config.ts`:** `provideLtBug(options?)` from `@lenne.tech/ng-base/bug/provide`, the light entry. Never import
+  `@lenne.tech/ng-base/bug` there: it would pull the reporter into the initial bundle of every visitor.
+- **Shell:** `LtBugReport` from `@lenne.tech/ng-base/bug` in its `imports`,
+  `protected readonly bugActive = inject(LT_BUG_ACTIVE);` (from `…/bug/provide`) and in its template
+  `@if (bugActive) { @defer (on immediate) { <lt-bug-report /> } }`. `<lt-bug-report>` starts the capture when it is
+  created, so production never loads it. Styles: `theme.css` includes them; next to `core.css`, as in ng-base-starter,
+  add `@import '@lenne.tech/ng-base/ui/styles/components/lt-bug-report.css';` to `src/styles.css` (vendored app:
+  `./core/ui/styles/components/lt-bug-report.css`). Screenshots need the optional peer `modern-screenshot`; without
+  it the report goes out without one.
+- **From code:** `LtBugReportService` from `@lenne.tech/ng-base/bug`: `open()`, `reportError(error, source?)`,
+  `submit(report)`.
+- **Server:** `ltBugReport()` from `@lenne.tech/ng-base/bug/server` answers `POST /_bug-lt/report` and files a
+  Linear issue. Register it in `src/server.ts` before `express.json()` (whose 100 kB default rejects large reports)
+  and before the Angular handler. The Linear credentials exist only on the server: `NG_LINEAR_API_KEY`,
+  `NG_LINEAR_TEAM_NAME`, `NG_LINEAR_PROJECT_NAME`, never as `NG_PUBLIC_*`.
+- **Active or not, decided at runtime, so one build serves every stage:** `NG_PUBLIC_LT_BUG_ENABLED` wins on both
+  sides (per side: `enabled` in `provideLtBug()` or `ltBugReport()`). Otherwise `NG_PUBLIC_APP_ENV` `production` (or
+  `prod`) switches it off and any other stage label on. Without a label both fail closed: the browser part runs only
+  in dev mode, while the endpoint answers 404 even locally, so set `NG_PUBLIC_APP_ENV=local` for `ng serve`. Further
+  browser options per stage: `NG_PUBLIC_LT_BUG_AUTO_SHOW`, `…_AUTO_OPEN_ON_ERROR`, `…_ENABLE_SCREENSHOT`,
+  `…_POSITION`, `…_BUTTON_COLOR`, `…_BUTTON_TEXT`.
+
 ## Tests
 
 Test-first (`building-stories-with-tdd`). Component and service specs next to the code (`*.spec.ts`, `ng test`
