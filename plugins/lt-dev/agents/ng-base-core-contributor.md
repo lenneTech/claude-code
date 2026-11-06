@@ -3,7 +3,7 @@ name: ng-base-core-contributor
 description: Prepares upstream PR drafts for @lenne.tech/ng-base from substantial local changes in a vendored Angular core (src/core/). Never pushes. Reverse of ng-base-core-updater.
 model: inherit
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch
-skills: ng-base-core-vendoring
+skills: ng-base-core-vendoring, developing-lt-angular-frontend
 memory: project
 maxTurns: 100
 ---

@@ -1,6 +1,6 @@
 ---
 description: Migrate Nuxt env variables to NUXT_ prefix convention with automatic useRuntimeConfig() mapping
-allowed-tools: Read, Grep, Glob, Edit, Write, Bash(npm run lint:*), Bash(npm run build:*), Bash(pnpm run lint:*), Bash(pnpm run build:*), Bash(yarn run lint:*), Bash(yarn run build:*)
+allowed-tools: Read, Grep, Glob, Edit, Write, Bash(npm run lint:*), Bash(npm run build:*), Bash(pnpm run lint:*), Bash(pnpm run build:*), Bash(yarn run lint:*), Bash(yarn run build:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh":*)
 disable-model-invocation: true
 ---
 
@@ -20,6 +20,8 @@ Migrate `.env` and `.env.example` in a Nuxt frontend project so all environment 
 |---------|---------|
 | **Skill**: `developing-lt-frontend` | Nuxt frontend patterns and expertise |
 | **Command**: `/lt-dev:review` | Review migration changes |
+
+Angular apps (`angular.json`) take the branch in [Angular Apps](#angular-apps) at the end.
 
 ---
 
@@ -145,3 +147,25 @@ Fix all errors and warnings.
 - [ ] Docker, CI/CD, and deployment env files use updated variable names
 - [ ] `pnpm run lint` passes
 - [ ] `pnpm run build` passes
+
+## Angular Apps
+
+Run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"` in the project root first. On `frontend: nuxt`, or no
+answer, the procedure above applies as written. On `frontend: angular` the app runs on `@lenne.tech/ng-base`, whose
+convention is the `NG_*` runtime config: the SSR server reads every value per request and writes the public half into
+each HTML response, so one image runs on every stage. The steps above do not apply; migrate this way instead:
+
+1. **Inventory:** `.env`, `.env.example`, every `process.env` read under `src/app/`, every `environment*.ts` file
+   and the `fileReplacements` in `angular.json`. Categorize each value as public (`NG_PUBLIC_*`, reaches the
+   browser) or server-only (`NG_*`) and present the table before changing anything.
+2. **Rename** in `.env`, `.env.example`, Docker, CI and deployment env files. The ng-base names come first
+   (`NG_PUBLIC_SITE_URL`, `NG_PUBLIC_API_URL` / `NG_API_URL`, `NG_PUBLIC_APP_ENV` …; the table is in the app's
+   `CLAUDE.md`, section "Runtime configuration"); a value of the app's own keeps its meaning under an `NG_` name.
+3. **Wire the app's own values** through `extend` of `ltAngularRequestHandler` in `src/server.ts` (the starter
+   does it in `src/server/starter-runtime-config.ts`), never through a second mechanism.
+4. **Read them** in code via `inject(LT_RUNTIME_CONFIG)` from `@lenne.tech/ng-base`, API URLs via `LtApiUrlService`.
+   Remove every `process.env` read from `src/app/`, every `environment*.ts` file and its `fileReplacements`.
+5. **Validate:** `pnpm run check` (it builds and starts the SSR server), then load one page and confirm the
+   `<script id="ng-runtime-config">` block carries the public values and no server-only one.
+
+The Angular reference is `${CLAUDE_PLUGIN_ROOT}/skills/developing-lt-angular-frontend/SKILL.md`.

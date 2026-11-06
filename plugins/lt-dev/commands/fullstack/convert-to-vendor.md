@@ -1,7 +1,7 @@
 ---
 description: Convert an existing npm-mode fullstack project (backend + frontend) to vendor mode with automatic migration guide and changelog application. Detects version gaps and applies all breaking-change migrations for both sides.
 argument-hint: "[--dry-run] [--skip-backend] [--skip-frontend] [--api-target-version vX.Y.Z] [--app-target-version X.Y.Z]"
-allowed-tools: Read, Grep, Glob, Bash(lt:*), Bash(node:*), Bash(pnpm:*), Bash(pnpm run:*), Bash(npm:*), Bash(npm run:*), Bash(yarn:*), Bash(yarn run:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(test:*), Agent, AskUserQuestion
+allowed-tools: Read, Grep, Glob, Bash(lt:*), Bash(node:*), Bash(pnpm:*), Bash(pnpm run:*), Bash(npm:*), Bash(npm run:*), Bash(yarn:*), Bash(yarn run:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(test:*), Agent, AskUserQuestion, Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh":*), Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/ng-base-paths.mjs:*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/ng-base-paths.mjs":*)
 disable-model-invocation: true
 ---
 
@@ -224,6 +224,24 @@ and keeps the vendor baseline detection consistent across both sides.
     - Summary of both agent runs (applied migrations, applied changelog entries)
     - List of `VENDOR.md` files and "Local changes" tables to review
     - Suggested next steps: inspect diff, run tests, commit changes
+
+## Angular Apps
+
+The frontend side also converts an Angular app on `@lenne.tech/ng-base`. Run
+`bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh" projects/app` (or `packages/app`) in Phase 1: on
+`frontend: nuxt`, or no answer, everything above applies as written. On `frontend: angular`:
+
+- **Prerequisite:** `@lenne.tech/ng-base` in the app's `package.json` and no `src/core/VENDOR.md` naming ng-base.
+- **Phase 3:** the same `lt fullstack convert-mode --to vendor` call copies ng-base into `projects/app/src/core/`
+  with a `VENDOR.md`, maps every entry point in `tsconfig.json` and adds the library's dependencies. For
+  `--app-target-version`, pass the ng-base tag **with** its `v` as `--frontend-framework-upstream-branch v22.0.0`;
+  without it the CLI clones the tag of the pinned version.
+- **Phase 5:** `lt-dev:vendor-mode-converter-frontend` gets `Frontend framework: angular` in its prompt and follows
+  its "Angular Apps" section; the gate is `node "${CLAUDE_PLUGIN_ROOT}/scripts/ng-base-paths.mjs" projects/app --check`
+  plus the app's `pnpm run check`.
+
+Later syncs: `/lt-dev:frontend:update-ng-base-core`; local core changes upstream:
+`/lt-dev:frontend:contribute-ng-base-core`.
 
 ## Important
 

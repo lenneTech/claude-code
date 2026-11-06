@@ -32,6 +32,21 @@ The `lt` CLI's `convertToVendorMode()` performs only structural transformation:
 
 It does **NOT** apply code changes from changelogs/releases. If the project's npm version (e.g., 1.3.0) is behind the vendored target (e.g., latest = 1.5.3), the project code still uses old patterns. This agent closes that gap by detecting the version jump and applying all relevant changelog changes after the CLI conversion.
 
+## Angular Apps
+
+Detect the app's line with `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"`. On `frontend: nuxt`, or no
+answer, everything below applies as written. On `frontend: angular` the lt CLI converts `@lenne.tech/ng-base`:
+`lt frontend convert-mode --to vendor` (or `lt fullstack convert-mode` from the monorepo root) copies the library
+into `src/core/` with a `VENDOR.md`, maps every entry point in `tsconfig.json`, points stylesheet imports at
+`src/core/` and adds the library's dependencies; `--to npm` reverses it. No import is rewritten. Afterwards verify:
+
+- `node "${CLAUDE_PLUGIN_ROOT}/scripts/ng-base-paths.mjs" . --check` exits 0
+- the app's `pnpm run check` is green
+- before `--to npm`, local core changes went upstream first (`/lt-dev:frontend:contribute-ng-base-core`); the CLI
+  warns about them
+
+Further syncs of a vendored ng-base are `/lt-dev:frontend:update-ng-base-core` and its agent, not this one.
+
 ## Operating Modes
 
 Detect mode from initial prompt arguments:

@@ -16,7 +16,7 @@ The plugin's `detect-lt-dev` hook injects a context block on every prompt in the
 
 1. **"Active lt-dev project" with `session: yes`** — Project registered AND running. Use the URLs from the block. Do nothing extra; for browser tests / API calls use the URLs as-is.
 2. **"Active lt-dev project" with `session: no`** — Project registered, **not** running. For the **Playwright/E2E suite** run `lt dev test` (isolated parallel stack on a dedicated `<slug>-test` DB — never touches dev data, auto-teardown). For **manual browser tests, Chrome DevTools MCP, or API probes**, run `lt dev up` first. The "lt-dev ticket worktree … stack not up yet" block is this case for an isolated per-ticket stack: run `lt dev up` in that worktree.
-3. **"lt-Stack project detected — not yet migrated"** — The repo uses `@lenne.tech/*` packages but has no registry entry. When it has the layout `lt dev` serves (a `projects/api/` or `projects/app/` directory, or at the root `src/config.env.ts` or `nest-cli.json` (API) or `nuxt.config.ts` (app)), run `lt dev init` (idempotent, safe — patches legacy ports, registers, updates CLAUDE.md), then `lt dev up`; do not start `pnpm dev` / `pnpm start` as a workaround. Without that layout (a library, the lt CLI, a plugin repo) the block is a misdetection, and `lt dev init` would stop with "No lt project detected at this path": continue as case 4.
+3. **"lt-Stack project detected — not yet migrated"** — The repo uses `@lenne.tech/*` packages but has no registry entry. When it has the layout `lt dev` serves (a `projects/api/` or `projects/app/` directory, or at the root `src/config.env.ts` or `nest-cli.json` (API) or `nuxt.config.ts` or `angular.json` (app)), run `lt dev init` (idempotent, safe — patches legacy ports, registers, updates CLAUDE.md), then `lt dev up`; do not start `pnpm dev` / `pnpm start` as a workaround. Without that layout (a library, the lt CLI, a plugin repo) the block is a misdetection, and `lt dev init` would stop with "No lt project detected at this path": continue as case 4.
 4. **No block** — A project `lt dev` does not serve. Use the classic `run_in_background: true` + `pkill` pattern documented below. Exception: in a subagent that is not an lt-dev agent (general-purpose, Explore, another plugin's agent) the block never arrives, so its absence proves nothing. There, check yourself what the hook checks: the case 3 layout plus lt evidence (an `lt.config.json`, an `@lenne.tech/*` dependency in `package.json` or `projects/api|app/package.json`, or a root package named `@lenne.tech/*` or after an lt starter); a plain Nuxt or NestJS app without it stays on the classic pattern. With both, run `lt dev status`: a registered project prints its URLs (and "no `lt dev up` session active" when it is down, then continue as case 2), while "Not registered" means case 3.
 
 If `lt dev up` later complains that Caddy is missing or the daemon is not running, run `lt dev install` first. One-time per machine:
@@ -55,11 +55,13 @@ lt dev tunnel       # Foreground Cloudflare Quick Tunnel — expose the App publ
 - `lt dev up` writes a `<root>/.lt-dev/.env` bridge file containing `NUXT_PUBLIC_SITE_URL`, `NUXT_PUBLIC_API_URL`, storage prefix, DB URI, and `NODE_EXTRA_CA_CERTS` (Caddy root CA path).
 - `lt dev init` injects a tiny `// >>> lt-dev:bridge >>>` block at the top of `playwright.config.ts` that auto-loads this file. Result: any Playwright invocation (`pnpm test:e2e`, `npx playwright test`, VS Code Playwright Extension, JetBrains test runner) automatically picks up the active URLs and trusts the local CA — no parent-shell env required.
 - Existing env-aware patterns (`process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3001'`) keep working as fallback when `lt dev` is not active (CI, classic local dev).
+- Angular apps (`angular.json`, `@lenne.tech/ng-base`): the bridge carries the same values as `NG_PUBLIC_SITE_URL`, `NG_PUBLIC_API_URL`, `NG_API_URL` and `NG_PUBLIC_STORAGE_PREFIX`. ng-base-starter's `playwright.config.ts` reads `process.env.NG_PUBLIC_SITE_URL || 'http://localhost:3001'` and starts no web server of its own while `LT_DEV_ACTIVE` is set.
 
 **`lt dev test` — ISOLATED parallel E2E stack (preferred for the suite):** spins up a SECOND, fully separate stack that runs PARALLEL to — and never touches — your `lt dev up` dev session:
 - Own URLs (`<slug>-test.localhost` / `api.<slug>-test.localhost`), own internal ports + Caddy block, and a **dedicated DB `<slug>-test`** — separate from both the dev DB (`<slug>-local`) and the API-test DB (`<slug>-e2e`).
 - Playwright's `global-setup` resets that dedicated DB **once, before the first test** — so a developer keeps working in their own environment while E2E runs, a run never pollutes dev data, and tests may build on each other within the run.
 - The test API runs COMPILED (`node dist`) for stable long suites; the App is a Nuxt dev server. A separate `.lt-dev/.env.test` bridge carries the test URLs + DB.
+- An Angular app runs BUILT: the CLI runs its `build` script with `NG_OUTPUT_DIR=.output-test` and starts `node .output-test/server/index.mjs` (the shim ng-base-starter's `scripts/build.mjs` writes), falling back to `pnpm dev` when no build output exists.
 - **Auto-teardown** at the end — processes, Caddy block, env bridge, session file, registry entry all removed (residue-free) — with a Ctrl-C signal trap and a stale-session reclaim on the next run.
 
 ```bash
@@ -82,6 +84,7 @@ lt dev test -- --ui login.spec.ts # forward args to Playwright
 - Stable URLs per project (`https://crm.localhost`, `https://api.crm.localhost`) — bookmarks, IDE-run-configs, and Chrome DevTools MCP commands stay valid across restarts.
 - Cross-wiring impossible: API only trusts its own App origin (Better Auth `trustedOrigins` derived from `APP_URL`), App only talks to its own API (`BASE_URL`), localStorage is namespaced by `NUXT_PUBLIC_STORAGE_PREFIX=<slug>`, MongoDB is namespaced by `NSC__MONGOOSE__URI`.
 - HTTPS locally with cookie-domain `.<slug>.localhost` makes WebAuthn/Passkey-style auth realistic without same-origin tricks. The Vite-API-Proxy is OFF under `lt dev up` (`NUXT_PUBLIC_API_PROXY=false`).
+- Angular apps get the same values under `NG_*`: `NG_PUBLIC_STORAGE_PREFIX=<slug>` namespaces storage, and `NG_PUBLIC_API_PROXY=false` idles the `ng serve` proxy in `proxy.conf.mjs`. `lt dev up` exports both sets to every app.
 - Spawned processes are detached; logs go to `<project>/.lt-dev/{api,app}.log` so the Claude Code session does not block. Previous logs are rotated to `<name>.log.1` on each `lt dev up`; only one prior generation is kept (bounded disk usage even across long `up`/`down` cycles).
 - Clean stop path via `lt dev down` (process-group SIGTERM, Caddy block removed, no orphaned children).
 
@@ -89,7 +92,7 @@ lt dev test -- --ui login.spec.ts # forward args to Playwright
 
 **Sharing a running project externally (mobile preview, webhook target, teammate review):** `lt dev tunnel` — opens a Cloudflare Quick Tunnel to the App, prints a public `https://*.trycloudflare.com` URL, runs in the foreground until Ctrl-C. `lt dev tunnel --api` exposes the API instead (start a second one in parallel for full external usage). Requires `cloudflared` on PATH (`brew install cloudflared`). Auth cookies on `*.localhost` are NOT valid on the tunnel URL — Better-Auth's `trustedOrigins` must include the random tunnel URL for login flows to succeed.
 
-**One-time setup for an existing project:** run `lt dev init` once. Idempotent — patches legacy hardcoded ports in `config.env.ts` / `nuxt.config.ts` / `playwright.config.ts` to env-aware variants (defaults preserved), registers the project in `~/.lenneTech/projects.json`, updates the project's `CLAUDE.md` with the URL block, and rewrites a leftover `lt-monorepo` package name to the directory basename so each project gets its own `<slug>.localhost` (relevant when the user `git clone`d the template directly instead of running `lt fullstack init`).
+**One-time setup for an existing project:** run `lt dev init` once. Idempotent — patches legacy hardcoded ports in `config.env.ts` / `nuxt.config.ts` / `playwright.config.ts` to env-aware variants (defaults preserved), registers the project in `~/.lenneTech/projects.json`, updates the project's `CLAUDE.md` with the URL block, and rewrites a leftover `lt-monorepo` package name to the directory basename so each project gets its own `<slug>.localhost` (relevant when the user `git clone`d the template directly instead of running `lt fullstack init`). An Angular app has no `nuxt.config.ts` to patch: its `scripts/dev.mjs` already reads `PORT` and `HOST`, its `playwright.config.ts` gets the same bridge block, and the `CLAUDE.md` block names the `NG_*` variables.
 
 **If the prompt contains "Active lt-dev project" context, start the stack with `lt dev up`, not with `pnpm dev` / `pnpm start` directly.** The injected context block lists the actual URLs for the current project. If session is `no`, run `lt dev up` first; the URLs only resolve while the Caddy block + processes are active.
 
@@ -132,7 +135,7 @@ The Chrome DevTools MCP (`mcp__…_chrome-devtools__*`) drives a **real Chrome i
 
 1. **Start with `run_in_background: true`** — Claude Code tracks the process and surfaces its output on demand.
 2. **Wait for readiness before interacting** — poll for the port/log signal (`curl http://localhost:3000/health`, `pgrep -f "nest start"`, or a log line in the Bash output) instead of blind `sleep`.
-3. **Stop the process after the test/validation** — use `pkill -f "<process-name>"` (e.g. `pkill -f "nuxt dev"`, `pkill -f "nest start"`, `pkill -f "build --watch"`).
+3. **Stop the process after the test/validation** — use `pkill -f "<process-name>"` (e.g. `pkill -f "nuxt dev"`, `pkill -f "nest start"`, `pkill -f "build --watch"`; an Angular dev server: `pkill -f "@angular/cli/bin/ng.js serve"`, the command `scripts/dev.mjs` spawns).
 4. **Ask before leaving a server running** — if the user might want to continue interactive debugging, confirm explicitly rather than assuming.
 
 ## Waiting is work — do not hand the turn back for it
@@ -199,6 +202,7 @@ Orphaned dev servers block the Claude Code main loop. The session appears to han
 
 - **building-stories-with-tdd** — Step 3 (Run Tests) and Step 5b (Final Validation) both may start servers. Apply these rules before entering the iteration loop and before final sign-off.
 - **developing-lt-frontend** — Use `lt dev up` (preferred) or `nuxt dev` (fallback) for Chrome DevTools MCP debugging, `npx playwright test` for E2E. Playwright reads `NUXT_PUBLIC_SITE_URL` so it follows whatever URL `lt dev up` exports.
+- **developing-lt-angular-frontend** — Angular apps: `lt dev up` (preferred) or `pnpm run dev` (fallback: `node scripts/dev.mjs`, `ng serve` on `PORT`, default 3001, which refuses a busy port instead of moving to another one), `lt dev test` or `pnpm run test:e2e` for E2E. Playwright reads `NG_PUBLIC_SITE_URL`. Conventions: `${CLAUDE_PLUGIN_ROOT}/skills/developing-lt-angular-frontend/SKILL.md`.
 - **generating-nest-servers** — Use `lt dev up` (preferred) or `nest start` (fallback) for manual API probing, E2E runs against a live API.
 - **contributing-to-lt-framework** — both `pnpm build --watch` (framework side) and `pnpm dev` (starter side) run in parallel. Track and clean up both.
 

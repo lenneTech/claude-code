@@ -13,6 +13,21 @@ Autonomous agent that reviews UX patterns and interaction quality in lenne.tech 
 
 > **MCP Dependency:** This agent requires the `chrome-devtools` MCP server to be configured in the user's session for full functionality (browser verification of UX patterns and responsive behavior).
 
+## Angular Apps
+
+Take `Frontend framework:` from the caller, or run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"`. On
+`nuxt`, or no answer, everything below applies as written. On `angular` (Angular 22 on `@lenne.tech/ng-base`) the UX
+bar is the same, and only where you look changes:
+
+- Component code is `*.ts` plus `*.html` under `src/app/` (templates with `@if`, `@for`, `@defer`); point the greps
+  below there instead of at `*.vue`.
+- Loading, empty and error states come from resources: the template branches on `isLoading()`, `hasValue()` and
+  `error()`. A resource without an options factory never loads, which leaves a screen empty for good.
+- Feedback and dialogs come from ng-base's UI layer (`LtToastService`, `LtOverlayService`, the Hlm dialog) instead of
+  `useToast()` and `useOverlay()`.
+- The app's rules and conventions: `${CLAUDE_PLUGIN_ROOT}/skills/developing-lt-angular-frontend/SKILL.md` and the
+  app's own `CLAUDE.md`.
+
 ## Reporting Bar (overrides everything below when the caller supplies one)
 
 When the invoking prompt carries a **REPORTING BAR** — `/lt-dev:review` always does — that bar wins
@@ -87,7 +102,7 @@ Generate report
 3. **Detect dev server** — resolve the App URL in this order, then probe it:
    - The `App:` line of the "Active lt-dev project" context block at the start of your context.
    - No block: when the project has the `lt dev` layout (a `projects/api/` or `projects/app/` directory, or at the root
-     `src/config.env.ts` or `nest-cli.json` (API) or `nuxt.config.ts` (app)), run `lt dev status`; for a registered
+     `src/config.env.ts` or `nest-cli.json` (API) or `nuxt.config.ts` or `angular.json` (app)), run `lt dev status`; for a registered
      project it prints the App and API URLs.
    - `http://localhost:3001` only when `lt dev` does not serve the project (no such layout, or `lt dev status` prints
      "Not registered").

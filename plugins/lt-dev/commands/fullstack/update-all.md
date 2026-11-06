@@ -1,7 +1,7 @@
 ---
 description: Comprehensive fullstack update -- updates backend and frontend frameworks (mode-aware for npm/vendor), applies migrations, updates all packages, syncs CLAUDE.md, and validates everything
 argument-hint: "[--dry-run] [--skip-backend] [--skip-frontend] [--skip-packages]"
-allowed-tools: Read, Grep, Glob, Bash(npm run:*), Bash(pnpm run:*), Bash(yarn run:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(rm:*), Write, Edit, Agent, AskUserQuestion, WebFetch, Skill(lt-dev:fullstack:sync-claude-md), SendMessage, Bash(node -e:*), Bash(rm -rf /tmp/nest-server-*), Bash(rm -rf /tmp/nuxt-extensions-*)
+allowed-tools: Read, Grep, Glob, Bash(npm run:*), Bash(pnpm run:*), Bash(yarn run:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(rm:*), Write, Edit, Agent, AskUserQuestion, WebFetch, Skill(lt-dev:fullstack:sync-claude-md), SendMessage, Bash(node -e:*), Bash(rm -rf /tmp/nest-server-*), Bash(rm -rf /tmp/nuxt-extensions-*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh":*)
 disable-model-invocation: true
 ---
 
@@ -151,6 +151,13 @@ it changed (or skipped) in the final report's summary.
      fi
    fi
    ```
+
+   **Angular app:** first run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"`. On `frontend: nuxt`, or no
+   answer, the block above applies as written. On `frontend: angular`, take `FRONTEND_PATH` from its `app:` line and
+   `FRONTEND_MODE` from its `mode:` line (`vendor` for a `src/core/VENDOR.md` naming `@lenne.tech/ng-base`), and the
+   frontend package is `@lenne.tech/ng-base`: for a vendored one spawn `lt-dev:ng-base-core-updater` where the
+   Nuxt path spawns `lt-dev:nuxt-extensions-core-updater` (the agent `/lt-dev:frontend:update-ng-base-core` runs),
+   an npm one goes through the `fullstack-updater` agent's "Angular Apps" section.
 
 5. **Get current and target versions for each detected side.**
 

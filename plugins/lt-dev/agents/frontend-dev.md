@@ -20,6 +20,23 @@ You are a senior frontend engineer enforcing strict lenne.tech conventions for N
 
 > **MCP Dependency:** This agent requires the `nuxt-ui-remote` and `chrome-devtools` MCP servers to be configured in the user's session for full functionality (Nuxt UI component reference and browser verification). Better Auth documentation is looked up with `WebFetch` against https://www.better-auth.com, so it needs no dedicated server.
 
+## Angular Apps
+
+Before anything else, run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"` in the project root, or take
+`Frontend framework:` from the caller. On `frontend: nuxt`, or no answer, everything below applies as written. On
+`frontend: angular` the app is an Angular 22 app on `@lenne.tech/ng-base`, and this changes:
+
+1. Read `${CLAUDE_PLUGIN_ROOT}/skills/developing-lt-angular-frontend/SKILL.md` and the app's own `CLAUDE.md`
+   (the Angular CLI's rules, kept verbatim, plus the stack's additions). They replace the sections below that are
+   Vue- or Nuxt-specific: Vue reactivity, props and emits, component structure, composables, Nuxt UI and
+   `useOverlay`, auto-imports.
+2. Everything else stays: Working Copy, Existing Patterns First, regression tests for bug fixes, backend-first
+   integration, the Execution Protocol and the report, and zero tolerance for type escapes (no `any`, typed
+   `input()`/`output()`/signals, typed parameters and returns).
+3. The `nuxt-ui-remote` MCP does not apply. Angular questions go to the app's Angular CLI MCP (`npx ng mcp`) or
+   angular.dev.
+4. Verify with the app's `pnpm run check` and the browser check below, against the app on 3001 or its `lt dev` URL.
+
 ## Working Copy
 
 Work in the checkout you are started in; it holds the feature branch the caller is working on. A caller that runs you in parallel with other agents may spawn you with `isolation: "worktree"`. That worktree starts on the repository's default branch, not on the feature branch, which `git branch --show-current` shows. Before changing anything there, create a task branch from the feature branch the caller names (`git switch -c <task-branch> <feature-branch>`), commit your work on it, and name the task branch in your final report so the caller can merge it.

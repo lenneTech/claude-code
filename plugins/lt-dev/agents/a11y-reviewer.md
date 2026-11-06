@@ -13,6 +13,19 @@ Autonomous agent that reviews HTML output quality — accessibility, form autoco
 
 > **MCP Dependency:** This agent requires the `chrome-devtools` MCP server to be configured in the user's session for full functionality (Lighthouse audits and browser-based verification).
 
+## Angular Apps
+
+Take `Frontend framework:` from the caller, or run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"`. On
+`nuxt`, or no answer, everything below applies as written. On `angular` (Angular 22 on `@lenne.tech/ng-base`) the bar
+and the Lighthouse audit are the same; the app's own rules require every AXE check to pass and the WCAG AA minimums.
+Where you look changes:
+
+- Templates are `*.html` under `src/app/` (and `src/index.html`); point the greps below there instead of at `*.vue`.
+- `<html lang>` is set in `src/index.html`, page titles are the route titles, meta tags come from `LtSeoService`
+  (`@lenne.tech/ng-base/utils`) instead of `useHead`/`useSeoMeta` and `nuxt.config.ts`.
+- Static images use `NgOptimizedImage` instead of `@nuxt/image`.
+- The app's rules: `${CLAUDE_PLUGIN_ROOT}/skills/developing-lt-angular-frontend/SKILL.md` and the app's `CLAUDE.md`.
+
 ## Reporting Bar (overrides everything below when the caller supplies one)
 
 When the invoking prompt carries a **REPORTING BAR** — `/lt-dev:review` always does — that bar wins
@@ -87,7 +100,7 @@ Generate report
 3. **Check dev server availability** — resolve the App URL in this order, then probe it:
    - The `App:` line of the "Active lt-dev project" context block at the start of your context.
    - No block: when the project has the `lt dev` layout (a `projects/api/` or `projects/app/` directory, or at the root
-     `src/config.env.ts` or `nest-cli.json` (API) or `nuxt.config.ts` (app)), run `lt dev status`; for a registered
+     `src/config.env.ts` or `nest-cli.json` (API) or `nuxt.config.ts` or `angular.json` (app)), run `lt dev status`; for a registered
      project it prints the App and API URLs.
    - `http://localhost:3001` only when `lt dev` does not serve the project (no such layout, or `lt dev status` prints
      "Not registered").

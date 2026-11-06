@@ -11,6 +11,19 @@ memory: project
 
 Autonomous agent that reviews infrastructure and DevOps changes against lenne.tech conventions. Produces a structured report with severity-classified findings.
 
+## Angular Apps
+
+Detect the frontend with `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"`, or take `Frontend framework:`
+from the caller. On `nuxt`, or no answer, everything below applies as written. On `angular` (ng-base-starter) the
+container contract is the same as Nuxt's and Phase 6 checks it with Angular's names:
+
+- Build output `.output/`, entry `node .output/server/index.mjs` (a shim the starter's build writes), port 3000 in
+  the container, `ENV NODE_ENV=production` in the runner stage.
+- Runtime env is `NG_*` (`NG_PUBLIC_API_URL`, `NG_API_URL`, `NG_PUBLIC_SITE_URL`, `NG_ALLOWED_HOSTS`) instead of
+  `NUXT_*`, read per request. Nothing is baked into the bundle: an `environment.ts` per stage, or an API URL as
+  build argument, means the image cannot be promoted between stages.
+- `.dockerignore` covers `.angular` (the CLI cache) next to `.output`.
+
 ## Reporting Bar (overrides everything below when the caller supplies one)
 
 When the invoking prompt carries a **REPORTING BAR** — `/lt-dev:review` always does — that bar wins

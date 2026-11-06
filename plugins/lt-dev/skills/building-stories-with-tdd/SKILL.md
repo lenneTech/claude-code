@@ -13,7 +13,7 @@ You are an expert in Test-Driven Development (TDD) for NestJS applications using
 - **Detect the test framework BEFORE writing the first test** — Projects use either Vitest or Jest. Vitest uses globals (`describe`, `it`, `expect`) without imports; Jest requires `import { describe, it, expect } from '@jest/globals'`. Mixing styles produces misleading error messages ("global not defined") that look like runtime failures. Check `vitest.config.ts` vs `jest.config.ts` first.
 - **Test data emails use `@test.com`** — The cleanup regex in `TestHelper` uses `@test.com` as its deletion filter. Using `@example.com` or `@user.de` for test data leaves records in the test DB after the run ends, polluting subsequent test runs. This applies to both backend story tests and frontend Playwright fixtures.
 - **Never use `declare` on test-created Models** — Same gotcha as `generating-nest-servers`: `declare` removes the field at compile-time, so Typegoose decorators are lost. Test data that persists "successfully" but is missing fields in DB queries almost always traces back to a `declare`.
-- **Story test files must be in `tests/stories/`** — The runner auto-discovers from this path. Placing them in `tests/` or `src/__tests__/` means they silently don't run. Backend: `projects/api/tests/stories/<feature>.e2e-spec.ts`. Frontend E2E: `projects/app/tests/<feature>.spec.ts`.
+- **Story test files must be in `tests/stories/`** — The runner auto-discovers from this path. Placing them in `tests/` or `src/__tests__/` means they silently don't run. Backend: `projects/api/tests/stories/<feature>.e2e-spec.ts`. Frontend E2E: `projects/app/tests/<feature>.spec.ts`; in an Angular app (ng-base-starter) Playwright's `testDir` is `tests/e2e/`, so `projects/app/tests/e2e/<feature>.spec.ts`.
 - **Iterate through the full test loop, not individual fixes** — When a test fails, the instinct is to fix just that assertion. In TDD with generated code, re-run the FULL test suite after any implementation change. A passing test can break a previously-passing one through Model/Service changes that don't generate compile errors.
 - **A Playwright spec that asserts "no errors on the page" must watch `pageerror`, not only `console`** — An uncaught exception or an unhandled promise rejection reaches Playwright through `page.on('pageerror')`. It never appears on `page.on('console')`: Chromium reports it via `Runtime.exceptionThrown`, a different channel from `consoleAPICalled`. Observed cost: a missing `const route = useRoute()` in a Nuxt page component threw a `ReferenceError` on every public page view, killing all client-side analytics and an anchor-jump feature, and it passed a 112-test suite — including the test written specifically to assert the page was clean. The browser console showed `Uncaught (in promise)` the entire time, and nothing else in the chain would have caught it either: a Nuxt `check` chain has no typecheck step, `oxlint` does not flag an undefined identifier, and `nuxt build` does not type-check. Register both listeners, and pair them with an assertion on the *effect* (the request that should go out, the element that should move) — that one fails for the right reason even when the error channel is wrong.
 - **A test that passes with and without the feature is worse than no test** — After a story goes green, disable the mechanism it covers (comment the call, invert the condition) and confirm the test fails. Two cases where this pays: a browser behaviour that masks the implementation (a fragment jump the browser performs anyway, so the spec was pinning Chromium rather than the code), and an error path tested only in its harmless variant (a mail send that *rejects* returns instantly — the failure that hurts is one that *hangs*, and only that one needs the timeout assertion).
@@ -24,6 +24,7 @@ You are an expert in Test-Driven Development (TDD) for NestJS applications using
 TDD works in the **Lerna fullstack monorepo** created via `lt fullstack init`:
 - **Backend tests** (`projects/api/tests/stories/`): API tests for `nest-server-starter` / `@lenne.tech/nest-server`, plus MCP tests (`tools/list` per role, `tools/call` allowed and refused) when the project has MCP enabled, see `generating-nest-servers/reference/mcp-integration.md` → "Automated MCP tests"
 - **Frontend E2E tests** (`projects/app/tests/`): Playwright tests for `nuxt-base-starter` / `@lenne.tech/nuxt-extensions`
+- **Angular frontend tests** (`projects/app/` with `angular.json`, `ng-base-starter` / `@lenne.tech/ng-base`): Playwright E2E in `tests/e2e/` (`pnpm run test:e2e`, or `lt dev test`); component and service specs beside the code (`src/**/*.spec.ts`, run by `ng test`) and tooling tests in `tests/unit/` (plain Vitest), both run by `pnpm test`. Conventions: `${CLAUDE_PLUGIN_ROOT}/skills/developing-lt-angular-frontend/SKILL.md`
 
 ## When to Use This Skill
 
@@ -127,6 +128,7 @@ afterAll(async () => {
 | "Fix this service bug" | generating-nest-servers |
 | "Generate tests for existing code" | /test-generate command |
 | "Build a Vue page" | developing-lt-frontend |
+| "Build an Angular component" | developing-lt-angular-frontend |
 
 ## Related Skills & Commands
 
@@ -138,6 +140,7 @@ afterAll(async () => {
 - `generating-nest-servers` skill - For code implementation (modules, objects, properties)
 - `using-lt-cli` skill - For Git operations and project initialization
 - `developing-lt-frontend` skill - For frontend E2E tests and implementation
+- `developing-lt-angular-frontend` skill - For the same in an Angular app (`angular.json`)
 - `coordinating-agent-teams` skill - For parallel test writing in fullstack projects
 - `/lt-dev:create-ticket` command - Create any ticket type (Story, Task, Bug)
 - `/lt-dev:create-story` command - Create a story, then implement with TDD

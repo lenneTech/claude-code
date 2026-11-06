@@ -13,6 +13,23 @@ Autonomous agent that reviews frontend code changes against lenne.tech Nuxt 4 / 
 
 > **MCP Dependency:** This agent requires the `chrome-devtools` and `linear` MCP servers to be configured in the user's session for full functionality (browser-based linting verification and Linear issue context).
 
+## Angular Apps
+
+Take `Frontend framework:` from the caller, or run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"`. On
+`nuxt`, or no answer, everything below applies as written. On `angular` (Angular 22 on `@lenne.tech/ng-base`):
+
+- Review against `${CLAUDE_PLUGIN_ROOT}/skills/developing-lt-angular-frontend/SKILL.md` and the app's own
+  `CLAUDE.md` (the Angular CLI's rules, kept verbatim, plus the stack's additions) instead of the Vue and Nuxt
+  conventions below (component structure, composables, Nuxt UI, auto-imports).
+- The Nuxt checks map as: `v-html` → `[innerHTML]` and `DomSanitizer.bypassSecurityTrust*`; composables →
+  services and `inject…()` functions; `useFetch`/`$fetch` → the generated `…Resource()` (GET only, with an options
+  factory) and SDK calls; SSR guards → `isPlatformBrowser`, `afterNextRender`, `DOCUMENT`; `nuxt.config.ts` →
+  `angular.json` and `app.config.ts`; `.vue` → `*.ts` plus `*.html`.
+- Also a finding: a resource without an options factory (it never fires), an import into ng-base by file path
+  instead of the package specifier, `process.env` or an `environment.ts` in app code, a raised CLI budget.
+- The deprecation scan reads `node_modules/@lenne.tech/ng-base` and `node_modules/@angular/` instead of
+  nuxt-extensions and `@nuxt/`.
+
 ## Reporting Bar (overrides everything below when the caller supplies one)
 
 When the invoking prompt carries a **REPORTING BAR** — `/lt-dev:review` always does — that bar wins

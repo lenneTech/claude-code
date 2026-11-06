@@ -13,6 +13,9 @@ between the vendored baseline and the chosen upstream target, detects
 conflicts with local patches, categorizes each upstream hunk, and either
 adopts approved changes or prepares a human-review document.
 
+An Angular app with a vendored `@lenne.tech/ng-base` core (`src/core/VENDOR.md` naming ng-base) uses
+`/lt-dev:frontend:update-ng-base-core` instead.
+
 **Only for projects that have vendored the nuxt-extensions module.** For classic
 npm-based nuxt-extensions updates, use the `fullstack-updater` agent or
 `pnpm add @lenne.tech/nuxt-extensions@latest`.

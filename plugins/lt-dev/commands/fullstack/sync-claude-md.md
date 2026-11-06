@@ -1,6 +1,6 @@
 ---
 description: Sync CLAUDE.md files from lenne.tech starter templates into an existing fullstack project
-allowed-tools: Read, Write, Edit, Grep, Glob, Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(base64:*), WebFetch, AskUserQuestion
+allowed-tools: Read, Write, Edit, Grep, Glob, Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(base64:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh":*), Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/select-frontend-blocks.mjs:*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/select-frontend-blocks.mjs":*), WebFetch, AskUserQuestion
 disable-model-invocation: false
 ---
 
@@ -21,8 +21,12 @@ Fetches the latest CLAUDE.md files from lenne.tech starter repositories and inte
 | Source Repository | Branch | Target Path |
 |-------------------|--------|-------------|
 | `lenneTech/lt-monorepo` → `CLAUDE.md` | `main` | `./CLAUDE.md` (project root) |
-| `lenneTech/nuxt-base-starter` → `nuxt-base-template/CLAUDE.md` | `main` | `./projects/app/CLAUDE.md` |
+| Nuxt app: `lenneTech/nuxt-base-starter` → `nuxt-base-template/CLAUDE.md` | `main` | `./projects/app/CLAUDE.md` |
+| Angular app: `lenneTech/ng-base-starter` → `CLAUDE.md` (the starter is flat, its root is the app) | `main` | `./projects/app/CLAUDE.md` |
 | `lenneTech/nest-server` → `CLAUDE.md` | `develop` | `./projects/api/CLAUDE.md` |
+
+Which app row applies follows from Phase 1: an Angular app never receives the Nuxt starter's
+CLAUDE.md, and a Nuxt app is synced exactly as before.
 
 ## Turn Endings
 
@@ -46,22 +50,30 @@ The run stops at the handoff points this command defines: the Phase 4 question f
 3. **Detect project metadata** for template variable replacement in the monorepo CLAUDE.md:
    - `PROJECT_NAME`: Read from root `package.json` → `name` field. Fallback: directory name.
    - `PROJECT_DIR`: Use the directory name of the project root.
-   - `FRONTEND_FRAMEWORK`: Check `${APP_DIR}/package.json` for framework. Default: `Nuxt 4`.
+   - `FRONTEND`: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh" .` answers `frontend: nuxt` or
+     `frontend: angular` (Nuxt is checked first). On `frontend: none` with an `${APP_DIR}`, treat it as `nuxt`,
+     the template's default.
+   - `FRONTEND_FRAMEWORK`: `Nuxt 4` for `nuxt` (the default, as before); for `angular`, `Angular <major>` with
+     the major of `@angular/core` in `${APP_DIR}/package.json` (`Angular 22`).
    - `API_MODE`: Check `${API_DIR}/package.json` or config for GraphQL vs REST. If `@nestjs/graphql` is a dependency → `GraphQL + REST`, otherwise `REST`.
 
 ### Phase 2: Fetch Latest CLAUDE.md Files
 
-Fetch all three files from GitHub using the GitHub API:
+Fetch the three files from GitHub using the GitHub API, the app file for the detected `FRONTEND`:
 
 ```bash
 gh api repos/lenneTech/lt-monorepo/contents/CLAUDE.md --jq '.content' | base64 -d
+# FRONTEND=nuxt
 gh api repos/lenneTech/nuxt-base-starter/contents/nuxt-base-template/CLAUDE.md --jq '.content' | base64 -d
+# FRONTEND=angular
+gh api repos/lenneTech/ng-base-starter/contents/CLAUDE.md --jq '.content' | base64 -d
 gh api repos/lenneTech/nest-server/contents/CLAUDE.md?ref=develop --jq '.content' | base64 -d
 ```
 
 If `gh` is not available, fall back to WebFetch with raw GitHub URLs:
 - `https://raw.githubusercontent.com/lenneTech/lt-monorepo/main/CLAUDE.md`
-- `https://raw.githubusercontent.com/lenneTech/nuxt-base-starter/main/nuxt-base-template/CLAUDE.md`
+- `https://raw.githubusercontent.com/lenneTech/nuxt-base-starter/main/nuxt-base-template/CLAUDE.md` (Nuxt) or
+  `https://raw.githubusercontent.com/lenneTech/ng-base-starter/main/CLAUDE.md` (Angular)
 - `https://raw.githubusercontent.com/lenneTech/nest-server/develop/CLAUDE.md`
 
 ### Phase 3: Process Each Target
@@ -70,13 +82,21 @@ For each of the three targets (root, app, api), execute the integration logic:
 
 #### 3a: Root CLAUDE.md (`./CLAUDE.md`)
 
-1. **Replace template variables** in the fetched monorepo CLAUDE.md:
+1. **Keep this project's frontend block.** The template wraps frontend-specific text in
+   `<!-- lt:frontend nuxt -->…<!-- /lt:frontend -->` and `<!-- lt:frontend angular -->…<!-- /lt:frontend -->`,
+   the markers `lt fullstack init` reads. Pass the fetched file through
+   `node "${CLAUDE_PLUGIN_ROOT}/scripts/select-frontend-blocks.mjs" <FRONTEND>` (file on stdin, result on
+   stdout): it keeps the block of `FRONTEND`, drops the others and removes the marker lines, and a template
+   without markers comes out unchanged. Exit code 3 means a malformed template: stop and report it instead of
+   merging anything.
+
+2. **Replace template variables** in the result:
    - `{{PROJECT_NAME}}` → detected project name
    - `{{PROJECT_DIR}}` → detected directory name
    - `{{FRONTEND_FRAMEWORK}}` → detected framework (e.g., `Nuxt 4`)
    - `{{API_MODE}}` → detected API mode (e.g., `GraphQL + REST` or `REST`)
 
-2. **Check if `./CLAUDE.md` already exists:**
+3. **Check if `./CLAUDE.md` already exists:**
    - **Does NOT exist** → Write the processed template directly.
    - **Already exists** → Merge (see Phase 4).
 

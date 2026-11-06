@@ -1,6 +1,6 @@
 ---
 description: Generate Docker setup for development and production
-allowed-tools: Read, Write, Edit, Glob, Grep, Agent, Bash(docker:*), Bash(docker-compose:*), Bash(curl:*), Bash(ls:*), Bash(mkdir:*), Bash(cp:*), Bash(cat:*), Bash(git:*)
+allowed-tools: Read, Write, Edit, Glob, Grep, Agent, Bash(docker:*), Bash(docker-compose:*), Bash(curl:*), Bash(ls:*), Bash(mkdir:*), Bash(cp:*), Bash(cat:*), Bash(git:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh":*)
 disable-model-invocation: true
 ---
 
@@ -37,6 +37,9 @@ Create a complete Docker setup for this project with the following requirements:
 5. Identify if SSR is being used
 6. Find out which ports the app(s) use
 7. Check if a database is already configured (Prisma, Drizzle, TypeORM, etc.)
+8. Run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"` for the lt frontend line. On `frontend: angular`
+   the app is an Angular app on `@lenne.tech/ng-base` (ng-base-starter), and section 9 of Phase 2 applies on top
+   of everything else. On `nuxt`, `none` or no answer, everything below applies as written.
 
 ### Step 2: Delegate the configuration to the devops agent
 
@@ -294,6 +297,43 @@ Create a `DOCKER.md` with:
 - Service URLs and ports
 - Common problems & solutions
 - How to add new services
+
+### 9. Angular Apps (ng-base-starter)
+
+Only on `frontend: angular` from Phase 1, step 8. Pass the answer to the `lt-dev:devops` agent together with the
+rest of the analysis. The sections above stay the acceptance criteria; this one replaces their Nuxt-specific
+examples for the app service.
+
+- **Production image:** ng-base-starter ships a multi-stage `Dockerfile` (deps, builder, runner on a digest-pinned
+  `node:24-alpine`, non-root `nodejs` user, `HEALTHCHECK` with busybox `wget` on `http://127.0.0.1:3000/`,
+  `CMD ["node", ".output/server/index.mjs"]`). Keep it instead of writing another one. It builds standalone
+  (`APP_DIR=.`) and in a monorepo from the repository root (`--build-arg APP_DIR=projects/app`), and it takes the
+  commit as `APP_VERSION_COMMIT`; the lt-monorepo `docker-compose.yml` already passes both.
+- **Ports:** the built server listens on `PORT` (3000 in the image); a local compose file maps host 3001 to
+  container 3000, so the app keeps the port the API trusts (`http://localhost:3001`; another origin fails 2FA and passkeys with
+  `403 INVALID_ORIGIN`).
+- **Runtime config, never build args:** the SSR server reads every `NG_*` value at request time and writes the
+  public ones into the page, so one image serves every stage. The SSR side reaches the API as
+  `NG_API_URL=http://api:3000` (never sent to the browser), the browser as `NG_PUBLIC_API_URL` on the host
+  (`http://localhost:3000`). With `NG_PUBLIC_API_PROXY=true` the server proxies `/api/*` to `NG_API_URL` instead
+  (the counterpart of Option C); set it to `false` when the browser calls the API directly.
+- **Host guard:** Angular's SSR engine answers `400 Bad Request` to every `Host` it does not know. `angular.json`
+  allows `localhost`, `127.0.0.1` and `*.localhost`; any other host comes from `NG_PUBLIC_SITE_URL` (required
+  outside local) or the comma-separated `NG_ALLOWED_HOSTS`.
+- **Dev service with hot reload:** `pnpm run dev` (`scripts/dev.mjs`) runs `ng serve` on `PORT` (default 3001) and
+  `HOST`; inside a container it needs `HOST=0.0.0.0` (the starter's `start:extern` script). It refuses a busy port
+  instead of moving to another one, and it loads `.env` when present.
+- **`.dockerignore`:** add `**/.angular` and `**/.output*` next to the list in section 7. Docker reads only the
+  file at the build context root, so in a monorepo the root file counts and every pattern needs the `**/` prefix;
+  ng-base-starter's own `.dockerignore` shows the full list.
+- **Checks in Phase 3:** the runner image has no `curl`, so the SSR check runs
+  `wget -qO- http://api:3000/health-check` inside the app container. The API's `NODE_ENV` rules from sections 1, 2 and 6 apply unchanged.
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| App answers `400 Bad Request` for its domain, the container is healthy | Host not in the SSR engine's allowed hosts | Set `NG_PUBLIC_SITE_URL` to the site URL, or add the host to `NG_ALLOWED_HOSTS` |
+| `[@lenne.tech/ng-base] No API URL configured` in the logs | `NG_PUBLIC_API_URL` (browser) or `NG_API_URL` (SSR) missing | Set both on the app service |
+| `dev: port 3001 is already in use` | Another process holds the dev port | Free the port; never move the app to another one |
 
 ---
 

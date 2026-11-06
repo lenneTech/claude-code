@@ -10,7 +10,7 @@
     {
       "name": "lt-dev",
       "source": "./plugins/lt-dev",
-      "description": "Skills, Commands & Hooks for Nuxt 4, NestJS, TDD and CLI tools"
+      "description": "Skills, Commands & Hooks for Nuxt 4, Angular 22, NestJS, TDD and CLI tools"
     },
     {
       "name": "lt-offers",

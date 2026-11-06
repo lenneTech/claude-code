@@ -41,7 +41,7 @@ Security takes precedence over convenience, without exceptions.
 | Layer | Technology | Infrastructure Constraint |
 |-------|-----------|--------------------------|
 | Backend | NestJS + @lenne.tech/nest-server | Port 3000, `projects/api/` |
-| Frontend | Nuxt 4 | Port 3001, `projects/app/` |
+| Frontend | Nuxt 4, or Angular 22 on `@lenne.tech/ng-base` | Port 3001, `projects/app/`; both build to `.output/` and start with `node .output/server/index.mjs` on port 3000 in the container; Angular reads `NG_*` env instead of `NUXT_*` (detect the line with `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"`) |
 | Database | MongoDB 7 | Port 27017, named volume for data |
 | Auth | Better Auth | Base path `/iam`, httpOnly cookies |
 | Package Manager | Detect from lockfile | pnpm-lock.yaml / yarn.lock / package-lock.json |

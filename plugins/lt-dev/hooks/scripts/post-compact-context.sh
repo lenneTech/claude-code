@@ -66,7 +66,7 @@ for dir in "$PROJECT_DIR" "$PROJECT_DIR/projects/api" "$PROJECT_DIR/packages/api
   fi
 done
 
-# Detect frontend (Nuxt / nuxt-extensions)
+# Detect frontend (Nuxt / nuxt-extensions first, then Angular / ng-base)
 for dir in "$PROJECT_DIR" "$PROJECT_DIR/projects/app" "$PROJECT_DIR/packages/app"; do
   if [ -f "$dir/package.json" ]; then
     REL_DIR="${dir#$PROJECT_DIR/}"
@@ -76,6 +76,15 @@ for dir in "$PROJECT_DIR" "$PROJECT_DIR/projects/app" "$PROJECT_DIR/packages/app
       break
     elif [ -f "$dir/nuxt.config.ts" ]; then
       CONTEXT_LINES+=("Frontend: Nuxt project detected (${REL_DIR})")
+      break
+    elif [ -f "$dir/src/core/VENDOR.md" ] && grep -q "@lenne.tech/ng-base" "$dir/src/core/VENDOR.md"; then
+      CONTEXT_LINES+=("Frontend: Angular with @lenne.tech/ng-base, vendored in src/core (${REL_DIR})")
+      break
+    elif grep -q "@lenne.tech/ng-base" "$dir/package.json"; then
+      CONTEXT_LINES+=("Frontend: Angular with @lenne.tech/ng-base (${REL_DIR})")
+      break
+    elif [ -f "$dir/angular.json" ]; then
+      CONTEXT_LINES+=("Frontend: Angular project detected (${REL_DIR})")
       break
     fi
   fi

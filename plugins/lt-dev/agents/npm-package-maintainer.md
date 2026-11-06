@@ -55,6 +55,19 @@ runs before handing over to you.
 - "pre-release", "before release" → PRE-RELEASE MODE
 - Otherwise → FULL MODE (default)
 
+## Angular Apps
+
+Detect the frontend with `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"`. On `nuxt`, or no answer,
+everything below applies as written. On `angular`:
+
+- `@angular/*` and `@angular/cli` move together through `ng update` (`pnpm exec ng update @angular/core@<v>
+  @angular/cli@<v>`), never one package at a time; stay within the major `@lenne.tech/ng-base` supports (its major
+  is the Angular major). After an `ng update`, run `pnpm run check:baseline`.
+- `@lenne.tech/ng-base` is pinned exactly; raise it to the version the ng-base-starter pins. A vendored ng-base
+  (`mode: vendor`) is updated by `/lt-dev:frontend:update-ng-base-core`, not here.
+- `better-auth` and its companions move only together with the API (the same range as nest-server).
+- Framework configs to check for a package name: `angular.json` instead of `nuxt.config.*`.
+
 ## Strategic Goals (Prioritized)
 
 ### Priority 1: MINIMIZE PACKAGES (Highest Priority)

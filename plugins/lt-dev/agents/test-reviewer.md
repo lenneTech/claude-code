@@ -11,6 +11,17 @@ memory: project
 
 Autonomous agent that reviews test quality and coverage against lenne.tech conventions. Produces a structured report with fulfillment grades per dimension.
 
+## Angular Apps
+
+Take `Frontend framework:` from the caller, or run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"`. On
+`nuxt`, or no answer, everything below applies as written. On `angular` (Angular 22 on `@lenne.tech/ng-base`):
+
+- Component and service specs sit next to the code (`login-page.ts` → `login-page.spec.ts`, run by `ng test` on
+  Vitest); tooling and contract tests in `tests/unit/`; Playwright E2E against a real nest-server-starter, using
+  the helpers from `@lenne.tech/ng-base/testing`. Map spec lookups from `*.ts`/`*.html` instead of `*.vue`.
+- AI streams are `injectLtAiChat()`; the abort and stream tests below apply to it as to `useLtAi*`.
+- The app's rules: `${CLAUDE_PLUGIN_ROOT}/skills/developing-lt-angular-frontend/SKILL.md`.
+
 ## Reporting Bar (overrides everything below when the caller supplies one)
 
 When the invoking prompt carries a **REPORTING BAR** — `/lt-dev:review` always does — that bar wins

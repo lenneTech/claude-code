@@ -146,7 +146,7 @@
     },
     {
       "name": "the layout lt dev init accepts; has_dev_layout() in hooks/scripts/detect-lt-dev.sh checks the same files",
-      "phrase": "`src/config.env.ts` or `nest-cli.json` (API) or `nuxt.config.ts` (app)",
+      "phrase": "`src/config.env.ts` or `nest-cli.json` (API) or `nuxt.config.ts` or `angular.json` (app)",
       "files": [
         "skills/managing-dev-servers/SKILL.md",
         "skills/validating-changes-in-browser/SKILL.md",
@@ -204,6 +204,56 @@
       "name": "the ng-base updater adds optional peers too, as the CLI does, because the app's typecheck compiles every entry point in src/core/",
       "phrase": "**optional peers included**",
       "files": ["agents/ng-base-core-updater.md"]
+    },
+    {
+      "name": "Nuxt gate: an agent with an Angular branch keeps its Nuxt path exactly as written",
+      "phrase": "On `nuxt`, or no answer, everything below applies as written.",
+      "files": ["agents/a11y-reviewer.md", "agents/code-reviewer.md", "agents/devops-reviewer.md", "agents/frontend-reviewer.md", "agents/npm-package-maintainer.md", "agents/performance-reviewer.md", "agents/security-reviewer.md", "agents/test-reviewer.md", "agents/ux-reviewer.md"]
+    },
+    {
+      "name": "Nuxt gate: frontend-dev and the frontend vendor converter keep their Nuxt path exactly as written",
+      "phrase": "On `frontend: nuxt`, or no answer, everything below applies as written.",
+      "files": ["agents/frontend-dev.md", "agents/vendor-mode-converter-frontend.md"]
+    },
+    {
+      "name": "Nuxt gate: every other Angular branch names the Nuxt fallback, so a Nuxt project or a failed detection never takes it",
+      "phrase": "or no answer,",
+      "files": ["agents/fullstack-updater.md", "commands/docker/gen-setup.md", "commands/frontend/convert-to-npm.md", "commands/frontend/convert-to-vendor.md", "commands/frontend/env-migrate.md", "commands/frontend/figma-init.md", "commands/frontend/figma-to-code.md", "commands/fullstack/convert-to-npm.md", "commands/fullstack/convert-to-vendor.md", "commands/fullstack/update-all.md", "commands/fullstack/update.md", "commands/refactor-frontend.md"]
+    },
+    {
+      "name": "Nuxt gate: the Nuxt frontend agents keep their Nuxt skill preload; the Angular skill is read on the Angular branch only",
+      "phrase": "skills: developing-lt-frontend",
+      "files": ["agents/a11y-reviewer.md", "agents/frontend-dev.md", "agents/frontend-reviewer.md", "agents/ux-reviewer.md"]
+    },
+    {
+      "name": "Nuxt gate: the smoke test runs Nuxt unless --frontend=angular is passed",
+      "phrase": "Without the flag, or with `--frontend=nuxt`, the run scaffolds a Nuxt app and every step below applies as written.",
+      "files": ["commands/fullstack/smoke-test.md"]
+    },
+    {
+      "name": "Nuxt gate: the default smoke run scaffolds Nuxt",
+      "phrase": "lt fullstack init --name <name> --frontend nuxt --api-mode Rest",
+      "files": ["commands/fullstack/smoke-test.md"]
+    },
+    {
+      "name": "an Angular smoke run proves the frontend core is really vendored, because lt fullstack init only warns when the conversion fails",
+      "phrase": "grep -q '@lenne.tech/ng-base' projects/app/src/core/VENDOR.md",
+      "files": ["commands/fullstack/smoke-test.md"]
+    },
+    {
+      "name": "Nuxt gate: /lt-dev:review keeps classifying a Nuxt app the detector does not find (nuxt-base-starter keeps its app in nuxt-base-template/) as Frontend",
+      "phrase": "On `frontend: none` the package rule still applies",
+      "files": ["commands/review.md"]
+    },
+    {
+      "name": "a vendored Angular app imports ng-base styles from ./core/; the package form fails ng build there",
+      "phrase": "`@import './core/ui/styles/components/<name>.css'` in a vendored app",
+      "files": ["commands/frontend/figma-init.md", "commands/frontend/figma-to-code.md"]
+    },
+    {
+      "name": "dark-mode token overrides go under :root.dark, which is the selector ng-base uses; a plain .dark loses",
+      "phrase": "`:root.dark`",
+      "files": ["commands/frontend/figma-init.md"]
     }
   ],
   "forbidden": [

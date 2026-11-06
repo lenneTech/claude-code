@@ -14,6 +14,9 @@ upstream-candidate or project-specific, cherry-pick candidates onto prepared
 branches in a local clone of upstream, and generate PR drafts for human
 review.
 
+An Angular app with a vendored `@lenne.tech/ng-base` core (`src/core/VENDOR.md` naming ng-base) uses
+`/lt-dev:frontend:contribute-ng-base-core` instead.
+
 **Never auto-pushes.** Every candidate becomes a prepared branch + PR body
 that the human explicitly reviews and submits via normal GitHub flow.
 

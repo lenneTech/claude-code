@@ -62,6 +62,8 @@ Never assume the layout. Determine, with Bash/Glob:
 | `@lenne.tech/nest-server` in `projects/api/package.json` | API is **npm mode** |
 | `projects/app/app/core/` exists | APP is **vendor mode** |
 | `@lenne.tech/nuxt-extensions` in `projects/app/package.json` | APP is **npm mode** |
+| `projects/app/angular.json` plus `projects/app/src/core/VENDOR.md` naming ng-base | APP is an **Angular app in vendor mode** |
+| `projects/app/angular.json` plus `@lenne.tech/ng-base` in `projects/app/package.json` | APP is an **Angular app in npm mode** |
 
 A project can be vendor on one side and npm on the other. Report the detected
 topology before doing anything.
@@ -70,6 +72,7 @@ topology before doing anything.
 ```bash
 npm view @lenne.tech/nest-server version
 npm view @lenne.tech/nuxt-extensions version
+npm view @lenne.tech/ng-base version        # Angular apps only
 ```
 
 ## Phase 1 — Framework updates
@@ -84,6 +87,8 @@ not touch `src/core/` / `app/core/`.
 | API | npm | minor / patch | raise in `package.json` directly, migration guides not needed |
 | APP | vendor | any | `lt-dev:nuxt-extensions-core-updater` agent |
 | APP | npm | any | raise in `package.json` directly; read the package CHANGELOG for breaking changes first |
+| APP (Angular) | vendor | any | `lt-dev:ng-base-core-updater` agent |
+| APP (Angular) | npm | any | raise `@lenne.tech/ng-base` in `package.json` (exact pin); its major is the Angular major, so a major jump runs `ng update @angular/core@<major> @angular/cli@<major>` first; read the ng-base CHANGELOG |
 
 For npm-mode minor/patch bumps, read the framework CHANGELOG and check whether the
 breaking changes listed actually touch this project (grep for the renamed symbols)
@@ -109,6 +114,9 @@ node -e "const p=require('@lenne.tech/nest-server/package.json');
     if (k.startsWith('@nestjs/')) console.log(k, v);"
 ```
 
+In an Angular app the framework is `@lenne.tech/ng-base`: read its `peerDependencies` the same way and align
+`@angular/*` and the other shared peers to them.
+
 Align every shared package (`@nestjs/*`, `nuxt`, `vue`, …) to the framework's
 version, then `pnpm install` and **build both projects** before moving on.
 
@@ -119,7 +127,7 @@ explicitly:
 
 - the framework versions that are now in place (it must not fight them),
 - that overrides are **raised, never deleted** (see the agent's Priority 4),
-- that it must not touch `src/core/` or `app/core/` in vendor projects.
+- that it must not touch `src/core/` or `app/core/` in vendor projects (an Angular app's core is `src/core/` too).
 
 Every agent's final message, here and in Phase 1, is its report, not proof that the task is done. Compare it against the task given; when items are still open and no blocker is named, resume the same agent via `SendMessage` to its agent id, naming the open items. After two or three continuations on the same task, stop and report the gap instead.
 

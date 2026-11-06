@@ -25,6 +25,28 @@ All references in this skill are to the public lenne.tech repos. **Never referen
 - App framework: <https://github.com/lenneTech/nuxt-extensions>
 - Monorepo template: <https://github.com/lenneTech/lt-monorepo>
 - CLI: <https://github.com/lenneTech/cli>
+- Angular app starter: <https://github.com/lenneTech/ng-base-starter>
+- Angular app framework: <https://github.com/lenneTech/ng-base>
+
+## Angular Apps (`angular.json`, `@lenne.tech/ng-base`)
+
+The App parts of the checklist (Phase 4, and the app halves of Phases 5 and 6) are written for Nuxt.
+An Angular app takes its baseline from ng-base-starter instead:
+
+- **An app on ng-base-starter 22.x already has the baseline.** Vitest for component and service
+  specs through `ng test` (`@angular/build:unit-test`) and for tooling tests in `tests/unit/` through
+  plain `vitest run`; oxlint plus angular-eslint for templates (`lint`: `oxlint --type-aware … && eslint src`);
+  oxfmt; the `check` wrapper `node scripts/check.mjs` over the `check:raw` chain; and
+  `scripts/check-server-start.mjs`, which boots `.output-check/server/index.mjs` with the port in
+  `PORT`. Align a file that drifted with the starter's current version (`checking-upstream-first`),
+  not with the Nuxt deltas of Phase 4.
+- **An app on ng-base-starter 14.x (Angular 14, Karma/Jasmine, eslint, prettier) does not migrate in
+  place.** ng-base-starter 22.0.0 is a rebuild; its `migration-guides/14.x-to-22.0.0.md` generates a
+  fresh project (`lt fullstack init --frontend angular`) and carries the features over. That is a
+  project of its own, not a toolchain phase.
+- The API phases (2, 3, 5 to 9) and the monorepo phases (10, 11) apply unchanged.
+
+Angular code conventions: `${CLAUDE_PLUGIN_ROOT}/skills/developing-lt-angular-frontend/SKILL.md`.
 
 ## The Migration Checklist (full pipeline)
 
@@ -72,7 +94,7 @@ After all phases, all three must hold:
 | "Bump nest-server to a newer minor" | `nest-server-updating` |
 | "Update all packages" / "audit + fix" | `maintaining-npm-packages` |
 | "Run my check pipeline" / "check failed" | `running-check-script` (this skill cross-references it) |
-| "Build a new feature" / "add a service" | `generating-nest-servers` or `developing-lt-frontend` |
+| "Build a new feature" / "add a service" | `generating-nest-servers` or `developing-lt-frontend` (Angular: `developing-lt-angular-frontend`) |
 
 ## Related Skills & Commands
 

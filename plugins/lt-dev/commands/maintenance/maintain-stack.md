@@ -92,7 +92,9 @@ pass the review gate as in Phase 1, follow the commit convention, release.
 
 Run `/lt-dev:fullstack:smoke-test` (via the `Skill` tool: `lt-dev:fullstack:smoke-test`) with `--rounds=<--smoke-rounds>` (default 1)
 to completion. The test clones the freshly released states from GitHub, so it
-validates exactly what customers get.
+validates exactly what customers get. When the round released `ng-base` or
+`ng-base-starter`, a second run with `--frontend=angular` follows the default
+Nuxt run, which stays the gate for every round.
 
 ### Phase 5 — Findings → patch releases (loop)
 

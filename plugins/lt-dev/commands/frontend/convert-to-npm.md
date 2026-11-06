@@ -1,6 +1,6 @@
 ---
 description: Convert an existing vendor-mode frontend project back to npm mode (@lenne.tech/nuxt-extensions as dependency)
-allowed-tools: Bash(lt:*), Bash(node:*), Bash(pnpm:*), Bash(pnpm run:*), Bash(npm:*), Bash(npm run:*), Bash(yarn:*), Bash(yarn run:*), Bash(git:*), Bash(ls:*), Bash(test:*), Bash(cat:*), Read, Grep, Glob, AskUserQuestion
+allowed-tools: Bash(lt:*), Bash(node:*), Bash(pnpm:*), Bash(pnpm run:*), Bash(npm:*), Bash(npm run:*), Bash(yarn:*), Bash(yarn run:*), Bash(git:*), Bash(ls:*), Bash(test:*), Bash(cat:*), Read, Grep, Glob, AskUserQuestion, Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh":*)
 disable-model-invocation: true
 ---
 
@@ -8,6 +8,15 @@ disable-model-invocation: true
 
 Converts the current frontend project from vendored module mode (`app/core/`) back
 to the classic npm mode (`@lenne.tech/nuxt-extensions` as dependency).
+
+
+## Angular Apps
+
+Run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"` first: on `frontend: nuxt`, or no answer, everything
+below applies as written. On `frontend: angular` the vendored library is `@lenne.tech/ng-base` in `src/core/`: read
+the baseline from `src/core/VENDOR.md`, suggest `/lt-dev:frontend:contribute-ng-base-core` when it lists local
+changes, then `lt frontend convert-mode --to npm --version <version> --noConfirm` removes `src/core/` and the
+`tsconfig.json` mapping and restores the exact `@lenne.tech/ng-base` pin. Finish with the app's `pnpm run check`.
 
 ## Execution
 

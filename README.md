@@ -1,7 +1,7 @@
 # lenne.Tech Claude Code Plugins
 
 The `lenne-tech` marketplace: Claude Code plugins for development in the lenne.Tech stack (NestJS with
-`@lenne.tech/nest-server`, Nuxt 4 with `@lenne.tech/nuxt-extensions`, the `lt` CLI), plus tools for offers, project
+`@lenne.tech/nest-server`, Nuxt 4 with `@lenne.tech/nuxt-extensions` or Angular 22 with `@lenne.tech/ng-base`, the `lt` CLI), plus tools for offers, project
 showcases and everyday work.
 
 ## Plugins

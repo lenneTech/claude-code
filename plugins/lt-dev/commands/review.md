@@ -1,7 +1,7 @@
 ---
 description: Code review of what the current diff changed. Reports only proven Critical and High defects, plus security risks with a demonstrated attack path, and fixes them automatically, running the check script with auto-fix. Anything below that bar is dropped.
 argument-hint: "[issue-id] [--base=main] [--repo=<path>]"
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Bash(jq:*), Bash(cat:*), Bash(ls:*), Bash(test:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Agent, Skill(security-review), AskUserQuestion, ListAgents, SendMessage, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__save_issue_label, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document, Bash(curl:*), Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs:*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh":*)
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Bash(jq:*), Bash(cat:*), Bash(ls:*), Bash(test:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Agent, Skill(security-review), AskUserQuestion, ListAgents, SendMessage, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__save_issue_label, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document, Bash(curl:*), Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs:*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh":*)
 disable-model-invocation: false
 ---
 
@@ -246,15 +246,22 @@ This command runs to completion without check-ins. A message without a tool call
    # Backend files
    git diff <base-branch>...HEAD --name-only | grep -E "projects/api/|packages/api/|src/server/" | head -50
    # Frontend files
-   git diff <base-branch>...HEAD --name-only | grep -E "projects/app/|packages/app/|app/components/|app/pages/|app/composables/|\.vue$" | head -50
+   git diff <base-branch>...HEAD --name-only | grep -E "projects/app/|packages/app/|app/components/|app/pages/|app/composables/|\.vue$|src/app/|\.component\.(ts|html)$" | head -50
    # Infrastructure files
    git diff <base-branch>...HEAD --name-only | grep -E "Dockerfile|docker-compose|\.env|\.dockerignore|\.gitlab-ci|\.github/workflows|Jenkinsfile" | head -50
    ```
 
 3. **Detect project type:**
    - `@lenne.tech/nest-server` in package.json → **Backend**
-   - `nuxt` or `@lenne.tech/nuxt-extensions` → **Frontend**
-   - Both → **Fullstack**
+   - Frontend: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh" <repo root>` answers `frontend: nuxt`
+     (a `nuxt` or `@lenne.tech/nuxt-extensions` project, checked first) → **Frontend**, framework **Nuxt**;
+     `frontend: angular` (`angular.json`, `@angular/core` or `@lenne.tech/ng-base`) → **Frontend**, framework
+     **Angular**. Keep the answer as `FRONTEND_FRAMEWORK` (`nuxt` / `angular`) and its `app:` line as the app
+     root. On `frontend: none` the package rule still applies: a `nuxt` or `@lenne.tech/nuxt-extensions`
+     dependency in the root `package.json` or in the `package.json` above the changed frontend files (such as
+     `nuxt-base-template/package.json` in nuxt-base-starter) → **Frontend**, framework **Nuxt**, with that
+     directory as the app root.
+   - Backend and Frontend → **Fullstack**
    - Neither → **Generic**
 
 4. **Determine which reviewers to spawn:**
@@ -693,12 +700,15 @@ Review the frontend code changes on the current branch with browser testing.
 Base branch: <base-branch>
 App root: <path to app project>
 App URL: http://localhost:3001
+Frontend framework: <FRONTEND_FRAMEWORK: nuxt | angular>
 Issue ID: <issue-id or "none">
 Changed files:
 <list of frontend files>
 
 Check TypeScript strictness, composable patterns, SSR safety, and API integration.
 Use Chrome DevTools MCP to navigate to affected pages and verify they actually render.
+On `angular`, apply your Angular section instead of the Nuxt rules: `[innerHTML]` and
+`bypassSecurityTrust*` stand in for `v-html`, services and `inject…()` functions for composables.
 
 Under the bar above, the frontend findings that survive are almost always one of these:
 - the page or component throws, fails to render, or logs an error in the console (Critical)
@@ -724,6 +734,7 @@ Review UX patterns on the current branch with browser testing.
 
 Base branch: <base-branch>
 App URL: http://localhost:3001
+Frontend framework: <FRONTEND_FRAMEWORK: nuxt | angular>
 Changed files:
 <list of frontend files>
 
@@ -754,6 +765,7 @@ Review accessibility, form autocomplete, and SEO on the current branch with brow
 
 Base branch: <base-branch>
 App URL: http://localhost:3001
+Frontend framework: <FRONTEND_FRAMEWORK: nuxt | angular>
 Changed files:
 <list of frontend files>
 

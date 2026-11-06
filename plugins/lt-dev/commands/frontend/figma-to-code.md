@@ -1,7 +1,7 @@
 ---
 description: Implement Figma designs as Nuxt 4 pages using project-local config
 argument-hint: "[section-name-or-node-id] [--screen name] [--team] [--globals]"
-allowed-tools: Bash(pnpm run:*), Bash(npm run:*), Bash(yarn run:*), Bash(npx:*), Bash(git:*), Bash(ls:*), Bash(cat:*), Bash(find:*), Read, Write, Edit, Glob, Grep, AskUserQuestion, Agent, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_screenshot, mcp__plugin_figma_figma__get_variable_defs, mcp__plugin_lt-dev_nuxt-ui-remote__search-components, mcp__plugin_lt-dev_nuxt-ui-remote__get-component, mcp__plugin_lt-dev_nuxt-ui-remote__get-component-metadata, mcp__plugin_lt-dev_nuxt-ui-remote__search-composables, mcp__plugin_lt-dev_nuxt-ui-remote__list-examples, mcp__plugin_lt-dev_nuxt-ui-remote__get-example
+allowed-tools: Bash(pnpm run:*), Bash(npm run:*), Bash(yarn run:*), Bash(npx:*), Bash(git:*), Bash(ls:*), Bash(cat:*), Bash(find:*), Read, Write, Edit, Glob, Grep, AskUserQuestion, Agent, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_design_context, mcp__plugin_figma_figma__get_screenshot, mcp__plugin_figma_figma__get_variable_defs, mcp__plugin_lt-dev_nuxt-ui-remote__search-components, mcp__plugin_lt-dev_nuxt-ui-remote__get-component, mcp__plugin_lt-dev_nuxt-ui-remote__get-component-metadata, mcp__plugin_lt-dev_nuxt-ui-remote__search-composables, mcp__plugin_lt-dev_nuxt-ui-remote__list-examples, mcp__plugin_lt-dev_nuxt-ui-remote__get-example, Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh":*)
 disable-model-invocation: true
 ---
 
@@ -14,6 +14,9 @@ Implement Figma designs as Nuxt 4 / Nuxt UI pages using the project-local config
 Run these commands first if not done:
 1. `/lt-dev:frontend:figma-research <figma-url>` — discover Figma structure
 2. `/lt-dev:frontend:figma-init <figma-url>` — extract design system (colors, spacing, layouts)
+
+Then run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"` in the project root. On `frontend: nuxt`, or no
+answer, every step applies as written; on `frontend: angular`, [Angular Apps](#angular-apps) says what changes.
 
 ## Input
 
@@ -271,6 +274,26 @@ Naechste Schritte:
 2. Browser-Test via Chrome DevTools   -- Visuellen Vergleich mit Figma
 3. /lt-dev:review                     -- Code Review starten
 ```
+
+## Angular Apps
+
+Applies when the project check in Prerequisites reported `frontend: angular` (an Angular 22 app on
+`@lenne.tech/ng-base`). The Figma steps stay as written; what gets generated changes:
+
+- **Screens** become route components: `src/app/<area>/<view>-page.ts` plus `<view>-page.html`, registered in
+  `src/app/app.routes.ts` (lazy, like the starter's pages; render mode in `app.routes.server.ts`), standalone with `input()`/`output()`, signals and native control flow. Components go to
+  `src/app/<feature>/<name>.ts` plus `<name>.html`, overlays open through `LtOverlayService` from `@lenne.tech/ng-base/ui` (Helm dialog underneath).
+- **Component reference:** the NuxtUI MCP does not apply. Read the component API from ng-base
+  (`ui/src/lib/helm/<name>/` and the lt components) or the app's existing templates, and add the component's
+  stylesheet import to `src/styles.css` in the form the file already uses:
+  `@import '@lenne.tech/ng-base/ui/styles/components/<name>.css'` in npm mode,
+  `@import './core/ui/styles/components/<name>.css'` in a vendored app, where the package form fails `ng build`.
+- **Data:** the generated hey-api client (GET resources or SDK functions), never mock data.
+- **Post-Implementation:** `pnpm run lint:fix`, then `pnpm run typecheck` (`ngc` over `tsconfig.app.json`, which
+  checks the templates too) and `pnpm run check`.
+
+The conventions are in `${CLAUDE_PLUGIN_ROOT}/skills/developing-lt-angular-frontend/SKILL.md` and the app's own
+`CLAUDE.md`. Team mode passes `Frontend framework: angular` in every spawn prompt.
 
 ## Important Notes
 

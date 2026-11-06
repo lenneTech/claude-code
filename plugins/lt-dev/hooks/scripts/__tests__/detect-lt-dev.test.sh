@@ -277,6 +277,33 @@ echo '{"name":"shop","dependencies":{"nuxt":"^4"}}' > "$PROJ/package.json"
 out=$(run_hook "$PROJ" "$REGISTRY")
 assert_silent "$out" "plain Nuxt app is silent"
 cleanup
+setup_tmp
+echo '{"name":"dashboard","dependencies":{"@angular/core":"^22"}}' > "$PROJ/package.json"
+echo '{}' > "$PROJ/angular.json"
+out=$(run_hook "$PROJ" "$REGISTRY")
+assert_silent "$out" "plain Angular app is silent"
+cleanup
+
+# --- Case 14b: an Angular app on ng-base is an lt dev project, as the CLI serves angular.json ---
+echo "Case 14b: standalone Angular app on @lenne.tech/ng-base"
+setup_tmp
+echo '{"name":"ng-base-starter","dependencies":{"@angular/core":"^22","@lenne.tech/ng-base":"22.0.0"}}' > "$PROJ/package.json"
+echo '{}' > "$PROJ/angular.json"
+out=$(run_hook "$PROJ" "$REGISTRY")
+assert_contains "$out" "not yet migrated" "Angular app on ng-base recognised by angular.json"
+cleanup
+setup_tmp
+echo '{"name":"ng-base-starter"}' > "$PROJ/package.json"
+echo '{}' > "$PROJ/angular.json"
+out=$(run_hook "$PROJ" "$REGISTRY")
+assert_contains "$out" "not yet migrated" "ng-base-starter template recognised by its package name"
+cleanup
+setup_tmp
+echo '{"name":"nuxt-base-starter"}' > "$PROJ/package.json"
+: > "$PROJ/nuxt.config.ts"
+out=$(run_hook "$PROJ" "$REGISTRY")
+assert_contains "$out" "not yet migrated" "nuxt-base-starter template recognised by its package name"
+cleanup
 
 # --- Case 15: a ticket worktree of an lt-monorepo-named project takes the main worktree's name ---
 # The CLI's fallback is the folder of the MAIN git worktree (dev-identity.ts#mainWorktreeDir),

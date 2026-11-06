@@ -1,7 +1,7 @@
 ---
 description: Convert an existing npm-mode frontend project to vendor mode for @lenne.tech/nuxt-extensions with automatic changelog application.
 argument-hint: "[--dry-run] [--target-version X.Y.Z]"
-allowed-tools: Agent, Bash(node -e:*), Bash(gh api:*), Bash(lt frontend convert-mode:*)
+allowed-tools: Agent, Bash(node -e:*), Bash(gh api:*), Bash(lt frontend convert-mode:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh":*), Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/ng-base-paths.mjs:*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/ng-base-paths.mjs":*)
 disable-model-invocation: true
 ---
 
@@ -13,6 +13,18 @@ to having the module source vendored directly at `app/core/`.
 **Key feature:** Automatically detects the version gap between the project's current
 npm version and the target vendor version, then fetches and applies all relevant
 changelog/release changes -- so the project code is updated to match the vendored module version.
+
+
+## Angular Apps
+
+The same command converts an Angular app on `@lenne.tech/ng-base`. Run
+`bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"` first: on `frontend: nuxt`, or no answer, everything below
+applies as written. On `frontend: angular`, `lt frontend convert-mode --to vendor` copies the library into
+`src/core/` with a `VENDOR.md`, maps every entry point in `tsconfig.json`, points stylesheet imports at `src/core/`
+and adds the library's dependencies; no import is rewritten. The agent follows its "Angular Apps" section and
+verifies with `node "${CLAUDE_PLUGIN_ROOT}/scripts/ng-base-paths.mjs" . --check` and the app's `pnpm run check`. Local
+core changes later go upstream with `/lt-dev:frontend:contribute-ng-base-core`, syncs come from
+`/lt-dev:frontend:update-ng-base-core`.
 
 ## Before You Convert -- Vendor Modification Policy
 

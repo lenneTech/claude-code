@@ -1,6 +1,6 @@
 ---
 name: contributing-to-lt-framework
-description: 'Guides development on the lenne.tech framework libraries themselves (@lenne.tech/nest-server, @lenne.tech/nuxt-extensions) and testing those changes in a starter via `pnpm link`, with build/watch loop and rollback. Activates on "Grund-Repo", "pnpm link", "test framework locally", or when a bug found in a project belongs in a base repo. NOT for using the frameworks inside a project (use generating-nest-servers or developing-lt-frontend). NOT for vendored cores (use nest-server-core-vendoring or nuxt-extensions-core-vendoring). NOT for version upgrades (use nest-server-updating).'
+description: 'Guides development on the lenne.tech framework libraries themselves (@lenne.tech/nest-server, nuxt-extensions, ng-base) and testing those changes in a starter via `pnpm link` (ng-base: injected file dependency), with build/watch loop and rollback. Activates on "Grund-Repo", "pnpm link", "test framework locally", or when a bug found in a project belongs in a base repo. NOT for using the frameworks inside a project (use generating-nest-servers or developing-lt-frontend). NOT for vendored cores (use nest-server-core-vendoring or nuxt-extensions-core-vendoring). NOT for version upgrades (use nest-server-updating).'
 allowed-tools: Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh":*)
 ---
 
@@ -29,14 +29,16 @@ Framework-level development happens in the **framework repositories**, not in co
 
 ## The Base Repos ("Grund-Repos")
 
-When the user says **"Grund-Repos"** (or "base repos" / "the foundation repos"), they mean **exactly these seven** — the repositories every customer project inherits from:
+When the user says **"Grund-Repos"** (or "base repos" / "the foundation repos"), they mean **exactly these nine**, plus the private marketplace `claude-code-internal` — the repositories every customer project inherits from:
 
 | Repo | Role |
 |------|------|
 | `nest-server` | Backend framework source |
 | `nest-server-starter` | Backend template → `projects/api` |
-| `nuxt-extensions` | Frontend library source |
-| `nuxt-base-starter` | Frontend template → `projects/app` |
+| `nuxt-extensions` | Frontend library source, Nuxt line |
+| `nuxt-base-starter` | Frontend template, Nuxt line → `projects/app` |
+| `ng-base` | Frontend library source, Angular line (`@lenne.tech/ng-base`) |
+| `ng-base-starter` | Frontend template, Angular line → `projects/app` (`lt fullstack init --frontend angular`) |
 | `lt-monorepo` | Fullstack monorepo template |
 | `cli` | The `lt` command line (`lt dev`, `lt ticket`, `lt fullstack`, …) |
 | `lt-dev` | This Claude Code plugin (`claude-code/plugins/lt-dev`) — commands, agents, skills |
@@ -203,6 +205,44 @@ pnpm install
 
 - Commit framework changes inside `$FRAMEWORK_DIR`
 - Open a PR against `lenneTech/nuxt-extensions`
+
+## Workflow C — Angular Framework (`@lenne.tech/ng-base`)
+
+Let `$FRAMEWORK_DIR` = path to the `ng-base` clone and `$STARTER_DIR` = path to the `ng-base-starter` clone (flat:
+its root is the app).
+
+### 1. Integrate the framework as an injected file dependency, never `pnpm link`
+
+A linked `dist` resolves `@angular/core` from ng-base's own `node_modules`, so two Angular copies run and SSR fails
+with `NG0203`; `--preserve-symlinks` breaks the Angular CLI itself. Vue tolerates the link, Angular does not.
+
+```bash
+cd "$FRAMEWORK_DIR" && pnpm install && pnpm run build        # writes dist/ng-base
+cd "$STARTER_DIR"
+# package.json:  "@lenne.tech/ng-base": "file:../ng-base/dist/ng-base"
+#                "dependenciesMeta": { "@lenne.tech/ng-base": { "injected": true } }
+pnpm install
+```
+
+### 2. Iterate
+
+After every ng-base build, `pnpm install` in the starter again: an injected dependency is a copy, not a link, so it
+does not see a rebuild on its own. Run the starter with `lt dev up` (or `pnpm run dev`, port 3001).
+
+### 3. Validate
+
+`pnpm run check` in ng-base (library gate) and in the starter, plus the starter's E2E (`pnpm run test:e2e`) when the
+change touches auth or SSR.
+
+### 4. Restore the pin
+
+Before anything is committed in the starter, put back the exact published pin (`"@lenne.tech/ng-base": "X.Y.Z"`),
+drop the `dependenciesMeta` entry and run `pnpm install`. A local pin never ships: `pnpm run check:release` refuses
+it, and the release recipe checks the lockfile too (`maintaining-lt-stack`, ng-base-starter).
+
+### 5. Prepare the upstream PR
+
+ng-base has only `main`: a draft PR into `main`, with specs. Never tag: a `v*` tag publishes the package.
 
 ## Common Pitfalls
 

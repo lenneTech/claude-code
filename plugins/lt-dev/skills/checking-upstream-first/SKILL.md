@@ -46,6 +46,17 @@ Both halves of the stack are affected the same way — the frontend is not the e
 - `.env.example`, `server/**` (Nitro routes and plugins), `app/middleware/**`, `app/layouts/**`
 - Anything under a vendored `app/core/`
 
+**Angular frontend, `projects/app/` with `angular.json` (from `ng-base-starter`, `ng-base`):**
+
+- `Dockerfile`, `.dockerignore`
+- `angular.json`, `src/server.ts`, `src/main.ts`, `src/main.server.ts`, `src/app/app.config.ts`,
+  `src/app/app.config.server.ts`, `src/app/app.routes.server.ts`, `proxy.conf.mjs`, `openapi-ts.config.ts`
+- `tsconfig*.json`, `.oxlintrc.json`, `.oxfmtrc.jsonc`, `eslint.config.js`, `vitest.config.ts`, `playwright.config.ts`
+- `scripts/**` (`check.mjs`, `check-server-start.mjs`, `check-ng-base-pin.mjs`, `dev.mjs`, `build.mjs`,
+  `generate-types.mjs`, `resolve-api-url.mjs`), the `check:*` chain in `package.json`
+- `.env.example`, `src/server/**`
+- Anything under a vendored `src/core/` whose `VENDOR.md` names `@lenne.tech/ng-base`
+
 **Monorepo root (from `lt-monorepo`):** `docker-compose.yml`, the root `package.json` scripts,
 `scripts/**`.
 
@@ -87,6 +98,10 @@ ls projects/api/src/core/modules/ 2>/dev/null || \
 # frontend — every composable and component it ships
 ls projects/app/app/core/runtime/composables/ projects/app/app/core/runtime/components/ 2>/dev/null || \
   ls projects/app/node_modules/@lenne.tech/nuxt-extensions/dist/runtime/composables/
+
+# Angular frontend — every entry point ng-base ships (vendored, else npm), then list the one you need
+find projects/app/src/core -name ng-package.json 2>/dev/null || \
+  node -p 'Object.keys(require("./projects/app/node_modules/@lenne.tech/ng-base/package.json").exports).join("\n")'
 
 # and what is already wired up in THIS project
 grep -n "Module.forRoot()" projects/api/src/server/server.module.ts
@@ -139,7 +154,7 @@ the case most likely to be missed.
 
 For anything in the lt stack, check whether a base repo already solved it before solving it in
 a customer project — `nest-server`, `nest-server-starter`, `nuxt-extensions`,
-`nuxt-base-starter`, `lt-monorepo`, `cli`. A fix that belongs in a base repo and lands in a
+`nuxt-base-starter`, `lt-monorepo`, `cli`, and for an Angular app `ng-base` and `ng-base-starter`. A fix that belongs in a base repo and lands in a
 customer project instead is inherited by nobody and re-discovered by everybody.
 
 **Know which repo the file came from.** Backend and frontend have separate lineages, and the
@@ -152,6 +167,8 @@ frontend one is the one people forget. All repos are public under
 | `projects/api/src/core/**` (vendored) | [nest-server](https://github.com/lenneTech/nest-server) | `develop` | `src/core/**` — plus the flatten-fix, see `nest-server-core-vendoring` |
 | `projects/app/**` | [nuxt-base-starter](https://github.com/lenneTech/nuxt-base-starter) | `main` | same path, but **under `nuxt-base-template/`**, not at the repo root |
 | `projects/app/app/core/**` (vendored) | [nuxt-extensions](https://github.com/lenneTech/nuxt-extensions) | `main` | `src/runtime/**` — flat, no rewriting, see `nuxt-extensions-core-vendoring` |
+| `projects/app/**` of an Angular app (`angular.json`) | [ng-base-starter](https://github.com/lenneTech/ng-base-starter) | `main` | same path, **at the repo root**: the starter is flat, and its `.github/`, `CHANGELOG.md`, `extras/` and `migration-guides/` stay in the starter |
+| `projects/app/src/core/**` of an Angular app (vendored, `VENDOR.md` names `@lenne.tech/ng-base`) | [ng-base](https://github.com/lenneTech/ng-base) | `main` | `projects/ng-base/**`, copied without import rewriting, see `ng-base-core-vendoring` |
 | monorepo root (`docker-compose.yml`, root `package.json`, root `scripts/**`) | [lt-monorepo](https://github.com/lenneTech/lt-monorepo) | `main` | same path, at the repo root |
 
 **Read GitHub, not a local checkout.** Not everyone has the base repos cloned, those who do keep
@@ -168,6 +185,14 @@ curl -fsSL https://raw.githubusercontent.com/lenneTech/nest-server-starter/main/
 # frontend: note the nuxt-base-template/ segment
 curl -fsSL https://raw.githubusercontent.com/lenneTech/nuxt-base-starter/main/nuxt-base-template/<file> \
   | diff - projects/app/<file>
+
+# Angular frontend: the starter is flat, no template segment
+curl -fsSL https://raw.githubusercontent.com/lenneTech/ng-base-starter/main/<file> \
+  | diff - projects/app/<file>
+
+# vendored ng-base: projects/ng-base/ in the library repo is src/core/ in the app
+curl -fsSL https://raw.githubusercontent.com/lenneTech/ng-base/main/projects/ng-base/<path> \
+  | diff - projects/app/src/core/<path>
 ```
 
 `curl -fsSL` fails loudly on a 404 instead of piping a GitHub error page into the diff.
@@ -177,6 +202,7 @@ To find out what a repo actually contains, list it and search it rather than gue
 ```bash
 gh api repos/lenneTech/nest-server-starter/contents/scripts --jq '.[].name'
 gh api repos/lenneTech/nuxt-base-starter/contents/nuxt-base-template/scripts --jq '.[].name'
+gh api repos/lenneTech/ng-base-starter/contents/scripts --jq '.[].name'
 gh search code --repo lenneTech/nest-server-starter "<the symbol you care about>"
 ```
 
@@ -284,7 +310,7 @@ rewrite cycle.
 ## Related Skills
 
 - `maintaining-npm-packages` skill. Routine version bumps and audits; reach for it when the check says "fixed in a newer version" and the upgrade is the whole fix.
-- `contributing-to-lt-framework` skill. When the problem belongs in nest-server or nuxt-extensions, the base-repo round trip that lands the fix there instead of in the project.
+- `contributing-to-lt-framework` skill. When the problem belongs in nest-server, nuxt-extensions or ng-base, the base-repo round trip that lands the fix there instead of in the project.
 - `nest-server-updating` skill. When the fix is in a newer `@lenne.tech/nest-server` and the project has to follow its migration guides.
 - `managing-agent-memory` skill. Where a finding that will matter again is recorded (see "Record the Finding").
 - `building-stories-with-tdd` skill. Runs this check as a gate before its implementation step wraps a dependency's behaviour.

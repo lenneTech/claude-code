@@ -1,7 +1,7 @@
 ---
 description: Extract design system from Figma (colors, spacing, radius, fonts, global components) and configure NuxtUI + Tailwind v4 theme
 argument-hint: "[figma-url-or-node-id] [--force]"
-allowed-tools: Bash(pnpm run:*), Bash(npm run:*), Bash(yarn run:*), Bash(npx:*), Bash(git:*), Bash(ls:*), Bash(cat:*), Bash(find:*), Read, Write, Edit, Glob, Grep, AskUserQuestion, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_variable_defs, mcp__plugin_figma_figma__get_screenshot, mcp__plugin_figma_figma__get_design_context
+allowed-tools: Bash(pnpm run:*), Bash(npm run:*), Bash(yarn run:*), Bash(npx:*), Bash(git:*), Bash(ls:*), Bash(cat:*), Bash(find:*), Read, Write, Edit, Glob, Grep, AskUserQuestion, mcp__plugin_figma_figma__get_metadata, mcp__plugin_figma_figma__get_variable_defs, mcp__plugin_figma_figma__get_screenshot, mcp__plugin_figma_figma__get_design_context, Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh":*)
 disable-model-invocation: true
 ---
 
@@ -39,6 +39,8 @@ You receive: `$ARGUMENTS`
 1. Check if Figma MCP tools are available
 2. Check if `.claude/figma-project.json` exists (run `/lt-dev:frontend:figma-research` first if not)
 3. Check if design system is already configured (unless `--force`)
+4. Run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"` in the project root. On `frontend: nuxt`, or no
+   answer, every step applies as written; on `frontend: angular`, Steps 6 to 8 follow [Angular Apps](#angular-apps)
 
 ```
 Falls .claude/figma-project.json nicht existiert:
@@ -453,6 +455,31 @@ Naechste Schritte:
 3. /lt-dev:frontend:figma-to-code <section>          -- Einzelne Screens implementieren
 4. /lt-dev:frontend:figma-to-code <section> --team   -- Mit Agent-Team implementieren
 ```
+
+## Angular Apps
+
+Applies when Step 1 reported `frontend: angular` (an Angular 22 app on `@lenne.tech/ng-base`). Steps 2 to 5 and 9
+to 10 stay as written; Steps 6 to 8 change, because the theme and the components live elsewhere:
+
+- **Theme (Steps 6 and 7):** there is no `app.config.ts` theme and no NuxtUI. The tokens go into the app's
+  `src/styles.css`, **after** the ng-base imports: color scales as `--color-primary-50` … `--color-primary-950`
+  (and `secondary`, `neutral` …) in an `@theme` block, the semantic tokens (`--primary`, `--primary-foreground`,
+  `--radius`, `--font-sans`, …) in `:root` and `:root.dark` (ng-base defines its dark tokens under `:root.dark`, which a plain `.dark` never
+  overrides). ng-base's `ui/styles/core.css` and `palette.css` define
+  the same names, so an override after the import is the whole mechanism. Never edit ng-base's styles, nor a
+  vendored copy under `src/core/ui/styles/`.
+- **Global components (Step 8):** layouts as `src/app/layout/<name>-layout.ts` plus `<name>-layout.html`, other
+  components as `src/app/<feature>/<name>.ts` plus `<name>.html` (standalone, `input()`/`output()`, signals),
+  overlays opened through `LtOverlayService` from `@lenne.tech/ng-base/ui` (Helm dialog underneath). Every ng-base
+  UI component a template uses needs its stylesheet import in `src/styles.css`, in the form the file already uses:
+  `@import '@lenne.tech/ng-base/ui/styles/components/<name>.css'` in npm mode,
+  `@import './core/ui/styles/components/<name>.css'` in a vendored app (`src/core/VENDOR.md` naming ng-base),
+  where the package form fails `ng build`. The starter's `tests/unit/styles-contract.test.ts` names a missing one.
+- **`figma-project.json`:** `targetPath` values use these paths.
+- **Validate:** `pnpm run lint:fix`, then `pnpm run check`.
+
+The Angular conventions are in `${CLAUDE_PLUGIN_ROOT}/skills/developing-lt-angular-frontend/SKILL.md` and the app's
+own `CLAUDE.md`.
 
 ## Important Rules
 

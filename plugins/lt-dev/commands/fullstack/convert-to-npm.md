@@ -1,7 +1,7 @@
 ---
 description: Convert an existing vendor-mode fullstack project (backend + frontend) back to npm mode — restores @lenne.tech/nest-server and @lenne.tech/nuxt-extensions as npm dependencies.
 argument-hint: "[--skip-backend] [--skip-frontend] [--api-version vX.Y.Z] [--app-version X.Y.Z]"
-allowed-tools: Read, Grep, Glob, Bash(lt:*), Bash(node:*), Bash(pnpm:*), Bash(pnpm run:*), Bash(npm:*), Bash(npm run:*), Bash(yarn:*), Bash(yarn run:*), Bash(git:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(test:*), AskUserQuestion
+allowed-tools: Read, Grep, Glob, Bash(lt:*), Bash(node:*), Bash(pnpm:*), Bash(pnpm run:*), Bash(npm:*), Bash(npm run:*), Bash(yarn:*), Bash(yarn run:*), Bash(git:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(test:*), AskUserQuestion, Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh":*)
 disable-model-invocation: true
 ---
 
@@ -91,6 +91,20 @@ as npm dependencies and removes the vendored source trees
    - Frontend (unless skipped): `pnpm install && pnpm run build && pnpm run lint`
 
 9. **Report results** and suggest next steps (run tests, commit changes).
+
+## Angular Apps
+
+The frontend side also reverts an Angular app with a vendored ng-base core. Run
+`bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh" projects/app` (or `packages/app`) first: on
+`frontend: nuxt`, or no answer, everything above applies as written. On `frontend: angular`:
+
+- **Prerequisite:** `projects/app/src/core/VENDOR.md` naming ng-base; its `Baseline-Version` is the default target.
+- **Upstream first:** local core changes go upstream via `/lt-dev:frontend:contribute-ng-base-core` before the core
+  is deleted.
+- **Conversion:** the same `lt fullstack convert-mode --to npm` call removes `src/core/` and its `tsconfig.json`
+  paths and restores `@lenne.tech/ng-base` as an exact pin; `--frontend-framework-version <X.Y.Z>` (no `v`, it is
+  the npm version) overrides the baseline.
+- **Validate:** no `src/core` path left in `tsconfig.json`, then the app's `pnpm run check`.
 
 ## Important
 

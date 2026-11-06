@@ -270,7 +270,7 @@ Invoke the `lt-dev:take-ticket` skill via the `Skill` tool, the equivalent of:
 
 What reaches the ticket is the state that produced the result, never the way there: a decision revised along the way appears only in its final form, a dropped one not at all ([`writing-linear-comments`](${CLAUDE_PLUGIN_ROOT}/skills/writing-linear-comments/SKILL.md#decisions-and-assumptions-for-the-product-owner)).
 
-**Base-repo gate (`checking-upstream-first`).** Before touching anything that ORIGINALLY CAME FROM a base repo, look at what that repo carries today. Projects are born as a copy of a template and then stand still while the template moves on, so the file in front of you is the template as it was on project-creation day — not as it is now. This covers far more than workarounds, and it covers **both halves of the stack**: a bug in `Dockerfile`, `.gitlab-ci.yml`, `tsconfig*.json`, `scripts/**` or a `check:*` chain is a base-repo question first and a project question second — on the backend (`docker-entrypoint.sh`, `nest-cli.json`, `src/config.env.ts`, `migrations/**`, a vendored `src/core/`) exactly as on the frontend (`nuxt.config.ts`, `app/app.config.ts`, `openapi-ts.config.ts`, `playwright.config.ts`, `server/**`, a vendored `app/core/`).
+**Base-repo gate (`checking-upstream-first`).** Before touching anything that ORIGINALLY CAME FROM a base repo, look at what that repo carries today. Projects are born as a copy of a template and then stand still while the template moves on, so the file in front of you is the template as it was on project-creation day — not as it is now. This covers far more than workarounds, and it covers **both halves of the stack**: a bug in `Dockerfile`, `.gitlab-ci.yml`, `tsconfig*.json`, `scripts/**` or a `check:*` chain is a base-repo question first and a project question second — on the backend (`docker-entrypoint.sh`, `nest-cli.json`, `src/config.env.ts`, `migrations/**`, a vendored `src/core/`) exactly as on the frontend (`nuxt.config.ts`, `app/app.config.ts`, `openapi-ts.config.ts`, `playwright.config.ts`, `server/**`, a vendored `app/core/`; in an Angular app `angular.json`, `src/app/app.config*.ts`, `src/server.ts`, a vendored `src/core/`).
 
 Read the base repo on GitHub, not a local checkout — not everyone has the repos cloned, clones sit in different places, and a clone is only as current as its last pull:
 
@@ -280,6 +280,9 @@ curl -fsSL https://raw.githubusercontent.com/lenneTech/nest-server-starter/main/
 
 # frontend — nuxt-base-starter (main), everything under nuxt-base-template/; vendored app/core/ comes from nuxt-extensions (main)
 curl -fsSL https://raw.githubusercontent.com/lenneTech/nuxt-base-starter/main/nuxt-base-template/<file> | diff - projects/app/<file>
+
+# Angular frontend (angular.json) — ng-base-starter (main), flat: the repo root is the app; vendored src/core/ comes from ng-base (main, projects/ng-base/)
+curl -fsSL https://raw.githubusercontent.com/lenneTech/ng-base-starter/main/<file> | diff - projects/app/<file>
 
 # list a directory instead of guessing filenames
 gh api repos/lenneTech/<repo>/contents/<dir> --jq '.[].name'

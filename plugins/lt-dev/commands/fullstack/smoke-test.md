@@ -1,6 +1,6 @@
 ---
 description: End-to-end smoke test of the lt stack. Creates a vendor-mode fullstack project, validates it locally, deploys it through GitLab and TurboOps (dev and production), verifies both stages online, fixes errors in the base repos and cleans up everything.
-argument-hint: '[--name=<name>] [--domain=<smoke-domain>] [--group=<gitlab-group>] [--server=<turboops-server>] [--rounds=1] [--keep] [--skip-deploy] [--skip-cleanup]'
+argument-hint: '[--name=<name>] [--frontend=nuxt|angular] [--domain=<smoke-domain>] [--group=<gitlab-group>] [--server=<turboops-server>] [--rounds=1] [--keep] [--skip-deploy] [--skip-cleanup]'
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, ToolSearch
 disable-model-invocation: false
 ---
@@ -35,6 +35,14 @@ belongs in `nest-server` / `nest-server-starter` / `nuxt-extensions` /
 `nuxt-base-starter` / `lt-monorepo` / `cli` / `lt-dev` (uncommitted, current
 branch), not in the throwaway project. The goal: a fresh project works without
 any rework.
+
+### Frontend: Nuxt by default, Angular on `--frontend=angular`
+
+Without the flag, or with `--frontend=nuxt`, the run scaffolds a Nuxt app and every step below applies as
+written. `--frontend=angular` scaffolds the Angular line (ng-base-starter with a vendored `@lenne.tech/ng-base`)
+on the same backend and runs the same phases; only the steps marked **On `--frontend=angular`** differ, and each
+of them sits next to the unchanged Nuxt text. In that run the frontend findings belong in `ng-base` /
+`ng-base-starter` instead of `nuxt-extensions` / `nuxt-base-starter`.
 
 **Reference run:** 2026-07-17 (`lt-smoke-test`). Findings: duplicate unhead
 version (SSR 500 in the built app), standalone-layout assumptions in the pnpm
@@ -122,11 +130,36 @@ lt fullstack init --name <name> --frontend nuxt --api-mode Rest \
 cd <name> && git add -A && git commit -m "chore: lt dev URL blocks"
 ```
 
+**On `--frontend=angular`:**
+
+```bash
+SMOKE_DIR="${LT_SMOKE_DIR:-$HOME/lt-smoke}"
+mkdir -p "$SMOKE_DIR" && cd "$SMOKE_DIR"
+lt fullstack init --name <name> --frontend angular --api-mode Rest \
+  --framework-mode vendor --frontend-framework-mode vendor --noConfirm
+cd <name>
+test -f projects/app/angular.json                                            # ng-base-starter, not a Nuxt app
+grep -q '@lenne.tech/ng-base' projects/app/src/core/VENDOR.md                 # the frontend core really is vendored
+node "${CLAUDE_PLUGIN_ROOT}/scripts/ng-base-paths.mjs" projects/app --check   # tsconfig paths match the core
+git add -A && git commit -m "chore: lt dev URL blocks"
+```
+
+The three checks run before anything else, because `lt fullstack init` only warns and continues in npm mode when
+the frontend vendor conversion fails, and a CLI without the ng-base vendor conversion leaves no `src/core/` at
+all. Either one is a `cli` finding; the run never goes on in npm mode. `ng-base-paths.mjs --check` exits 1 with
+the missing, stale or wrong `paths` keys, which the CLI derives from every `ng-package.json` in the core.
+
 ### Phase 2 — Local validation (error ⇒ base-repo fix, then continue)
 
 1. `lt dev up` → probe both URLs (`https://<slug>.localhost`, `https://api.<slug>.localhost/health-check`).
 2. `lt dev test` — **all** Playwright E2E tests must pass (25/25 in the starter state of 2026-07). The test stack runs the **built** app, which is exactly where build-only errors show up (e.g. SSR 500 from a duplicate unhead version) that dev mode swallows.
+   **On `--frontend=angular`:** every spec under the starter's `tests/e2e/` must pass. The test stack builds the app
+   into its own `NG_OUTPUT_DIR` and starts it through the `.output/server/index.mjs` shim that ng-base-starter's
+   `scripts/build.mjs` writes, so a server that fails only when built shows up here as well.
 3. `pnpm run check` — fully green including audit (0 vulns) and a **clean** lint (0 warnings; a flood of warnings in the vendored core means a gap in the starter's oxlintrc).
+   **On `--frontend=angular`:** the app lints with `oxlint --type-aware` plus `eslint src`, and the vendored core sits
+   in `projects/app/src/core/`; a flood of warnings from there means a gap in ng-base-starter's `.oxlintrc.json` or
+   `eslint.config.js`.
 4. Fix each finding right away in the matching base repo, in its local clone. The path differs per machine, so search for it (`find "$HOME" -maxdepth 5 -type d -name nest-server-starter -not -path '*/node_modules/*'`) or ask instead of guessing. Mirror the fix into the smoke project and repeat the step until it is green. Commit nothing in the base repos, because the user reviews the changes.
 
 ### Phase 3 — GitLab
@@ -166,6 +199,13 @@ skill `deploying-to-turboops`):
    - TurboOps rewrites the host `<stack>_mongo` to the service's real name `<stack>_<hash>-mongo` at deploy time
      (`printenv` in the api container shows it); the bare stack name does not resolve. Write the URI with
      `<stack>_mongo` as above.
+   - **On `--frontend=angular`** the app service gets the `NG_*` set instead of the `NUXT_*` one, the list
+     `lt deployment create` prints for an Angular app: `NG_PUBLIC_APP_ENV` (develop/production), `NG_API_URL`,
+     `NG_PUBLIC_API_URL`, `NG_PUBLIC_SITE_URL`, `NG_PUBLIC_API_PROXY=false`. The SSR server reads them at request
+     time, so the same image serves both stages. `NG_PUBLIC_SITE_URL` is mandatory here: Angular's SSR engine
+     answers `400 Bad Request` to every host it does not know, and a stage domain becomes known only through this
+     variable (or `NG_ALLOWED_HOSTS`). Any `NG_PUBLIC_APP_ENV` other than `production` makes the site noindex and
+     switches the bug reporter on, so production gets exactly `production`.
 7. `lt deployment create --noConfirm` in the project → commit `.turboops.json`.
 
 ### Phase 5 — Baseline deploys + online check
@@ -183,6 +223,8 @@ skill `deploying-to-turboops`):
    broken template and is the opposite. Protect first, then run
    `git branch main dev && git push -u origin main` → deploy-prod.
 3. **Probe the real URLs after every deploy.** A green `--wait` does not prove reachability (Trap 5): app 200/302, `api.<domain>/health-check` 200, `/meta` commit == CI SHA, cert issuer Let's Encrypt.
+   **On `--frontend=angular`:** a `400` from the app while its container is healthy is the SSR host guard:
+   `NG_PUBLIC_SITE_URL` is missing on that stage or names another host (step 6 of Phase 4).
 3b. **Sign-up deep check with a run-unique email** (e.g. `smoke-test+<runid>@lenne.tech`): orphaned `<stack>_mongo_data` volumes from earlier runs (see Phase 7, step 5b; they survive stage deletion) are reused by the new stack. A fixed test email then wrongly returns `400 Email already registered`, although the API is healthy.
     **The 201 does not prove that the mail went out.** The API answers `201` with `emailVerificationRequired: true`
     before nodemailer has sent anything. After the sign-up, check the api service logs for `Failed to send`
@@ -202,6 +244,8 @@ skill `deploying-to-turboops`):
 
 Per round:
 1. Feature branch from `dev` with a visible change (e.g. a badge `SMOKE-R<n>` with `data-testid="smoke-marker"` on the landing page).
+   **On `--frontend=angular`:** the landing page is `projects/app/src/app/home/home-page.html`. Its route renders on
+   the server (`RenderMode.Server` in `app.routes.server.ts`), so the `curl … | grep` check in step 3 sees the badge.
 2. `glab mr create --source-branch … --target-branch dev` → `glab mr merge --auto-merge --remove-source-branch`.
 
    **Wait until the MR pipeline is running, then set `--auto-merge`.** The flag is
@@ -282,16 +326,24 @@ pipeline/deploy times, online verifications, open infrastructure
 recommendations (e.g. Traefik migration of the target server). Base-repo changes
 stay uncommitted for review.
 
+**On `--frontend=angular`** the report names the frontend in its first line, so an Angular run is never read as
+the Nuxt release gate.
+
 ## Flags
 
 - `--keep` — skip the cleanup (debugging); project and stages stay up.
 - `--skip-deploy` — phases 0–2 only (local validation), no GitLab/TurboOps.
 - `--skip-cleanup` — like `--keep`, but the report lists the remaining resources explicitly.
 - `--rounds=<n>` — number of MR rounds (default 1; the reference run did 2).
+- `--frontend=<nuxt|angular>` — frontend of the scaffolded project (default `nuxt`). `angular` scaffolds
+  ng-base-starter with a vendored `@lenne.tech/ng-base` and follows the steps marked **On `--frontend=angular`**;
+  everything else is the same run.
 
 ## Related Skills / Commands
 
 - Skill `deploying-to-turboops` — deploy contract, token API, compose upload, **Trap 5** (a server with its own Traefik).
 - Skill `using-lt-cli` — `lt fullstack init`, `lt dev`, `--noConfirm` rule.
 - Skill `validating-ci-pipelines-locally` — reproduce the pipeline locally before pushing.
+- Skills `developing-lt-angular-frontend` and `ng-base-core-vendoring` — the Angular app and its vendored core, for
+  the findings of a `--frontend=angular` run.
 - `/lt-dev:production-ready` — the in-depth release gate for real projects (not for the throwaway smoke test).

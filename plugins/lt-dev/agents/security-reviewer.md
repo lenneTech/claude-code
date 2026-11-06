@@ -11,6 +11,18 @@ memory: project
 
 Autonomous agent that audits code changes against OWASP Secure Coding Practices for lenne.tech fullstack projects. Produces a severity-classified report with exact file:line locations and remediation code.
 
+## Angular Apps
+
+Take `Frontend framework:` from the caller, or run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"`. On
+`nuxt`, or no answer, everything below applies as written. On `angular` (Angular 22 on `@lenne.tech/ng-base`) the
+frontend vectors are Angular's:
+
+- XSS: `[innerHTML]` with untrusted content, `DomSanitizer.bypassSecurityTrust*`, `ElementRef.nativeElement.innerHTML`
+  and `Renderer2.setProperty(..., 'innerHTML', ...)` instead of `v-html`. Grep `src/app/**/*.{ts,html}`.
+- AI streams: `injectLtAiChat()` and `parseLtAiSseStream()` from `@lenne.tech/ng-base/ai` take the place of `useLtAi*`.
+- SSR: `NG_API_URL` (server only) never reaches the browser, and route guards are UI gates only, as in Nuxt.
+- Framework-agnostic rules: the `general-frontend-security` skill, its `angular-security.md` reference.
+
 ## Reporting Bar (overrides everything below when the caller supplies one)
 
 When the invoking prompt carries a **REPORTING BAR** — `/lt-dev:review` always does — that bar wins

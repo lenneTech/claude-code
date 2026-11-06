@@ -247,6 +247,26 @@ Each NODE_ENV value selects a deployment target, and the names are easy to misre
 }
 ```
 
+#### Frontend, Angular app (projects/app/package.json from ng-base-starter)
+
+```json
+{
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "test": "pnpm run test:unit",
+    "test:unit": "ng test --watch=false && vitest run",
+    "test:e2e": "playwright test",
+    "test:all": "pnpm run test:unit && pnpm run test:e2e",
+    "generate-types": "node scripts/generate-types.mjs"
+  }
+}
+```
+
+`dev` runs `ng serve` on `PORT` (default 3001) and refuses a busy port. `test:unit` runs the component
+and service specs (`src/**/*.spec.ts`) through the Angular builder, then the tooling tests in `tests/unit/`;
+Playwright specs live in `tests/e2e/`. `generate-types` writes the hey-api client to `src/api-client/` from
+`NG_API_URL` and has no default URL.
+
 #### Root (package.json) - Monorepo
 
 ```json
@@ -513,6 +533,9 @@ test.describe('Product Management', () => {
 pnpm run test:e2e
 ```
 
+In an Angular app (`angular.json`) the `developing-lt-angular-frontend` skill takes this role (standalone
+components, signals, Signal Forms, hey-api resources); the commands above stay the same.
+
 ### Step 5: Browser Debugging
 
 **For direct browser testing and debugging, always use the Chrome DevTools MCP (`mcp__plugin_lt-dev_chrome-devtools__*`) unless the user explicitly requests otherwise.** The Playwright-based Browser MCP (`mcp__MCP_DOCKER__browser_*`) is used for creating and running Playwright E2E tests.
@@ -594,5 +617,5 @@ pnpm test && pnpm run test:e2e
 
 - **Backend TDD:** `workflow.md` (detailed 7-step process)
 - **Backend Test Patterns:** `examples.md`, `reference.md`
-- **Frontend E2E Testing:** `developing-lt-frontend` skill -> `reference/e2e-testing.md`
+- **Frontend E2E Testing:** `developing-lt-frontend` skill -> `reference/e2e-testing.md`; Angular apps: `developing-lt-angular-frontend` skill -> "Tests"
 - **Security in Tests:** `security-review.md`

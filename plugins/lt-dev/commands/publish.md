@@ -318,7 +318,9 @@ A restart of Claude Code is required — running sessions keep the old version.
    repos it is `claude plugin validate` per changed plugin. With
    `--smoke-test`, run `/lt-dev:fullstack:smoke-test` afterwards (recommended
    when the change touches scaffold-critical paths: build wiring, auth, SSR,
-   deploy contract). The smoke test does not apply to marketplace repos.
+   deploy contract). For `ng-base` and `ng-base-starter` it runs with
+   `--frontend=angular`; every other repo keeps the default Nuxt run. The smoke
+   test does not apply to marketplace repos.
 7. **Report**: versions old→new per repo, release links, the review result
    per repo, the route per downstream repo (checkout, worktree with `CLAIM` and
    `LANDED`, or handed over to `<session>` together with the line its user types),

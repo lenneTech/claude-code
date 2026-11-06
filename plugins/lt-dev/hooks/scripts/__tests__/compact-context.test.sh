@@ -128,6 +128,28 @@ OUT=$(payload compact "$HPROJ" | env CLAUDE_PROJECT_DIR="$HPROJ" LT_DEV_REGISTRY
 assert_contains "$OUT" "Branch: feature/DEV-12_x.y" "an ordinary branch name is shown"
 assert_contains "$OUT" "nest-server v11.2.0-beta.1+build.5 (projects/api)" "a semver with pre-release and build metadata is shown"
 
+echo "Frontend line: the Nuxt line is unchanged, Angular is named"
+APP="$PROJ/projects/app"
+echo '{"dependencies":{"@lenne.tech/nuxt-extensions":"1.25.0"}}' > "$APP/package.json"
+OUT=$(payload compact "$PROJ" | run_hook)
+assert_contains "$OUT" "Frontend: Nuxt 4 with @lenne.tech/nuxt-extensions (projects/app)" "Nuxt app keeps its line"
+assert_not_contains "$OUT" "Angular" "a Nuxt app is never reported as Angular"
+echo '{"name":"app"}' > "$APP/package.json"; : > "$APP/nuxt.config.ts"
+OUT=$(payload compact "$PROJ" | run_hook)
+assert_contains "$OUT" "Frontend: Nuxt project detected (projects/app)" "vendored Nuxt app (no dependency) keeps its line"
+rm -f "$APP/nuxt.config.ts"
+echo '{"dependencies":{"@angular/core":"^22","@lenne.tech/ng-base":"22.0.0"}}' > "$APP/package.json"
+OUT=$(payload compact "$PROJ" | run_hook)
+assert_contains "$OUT" "Frontend: Angular with @lenne.tech/ng-base (projects/app)" "Angular app on ng-base (npm)"
+echo '{"dependencies":{"@angular/core":"^22"}}' > "$APP/package.json"
+mkdir -p "$APP/src/core"; echo '# @lenne.tech/ng-base, baseline 22.0.0' > "$APP/src/core/VENDOR.md"
+OUT=$(payload compact "$PROJ" | run_hook)
+assert_contains "$OUT" "Angular with @lenne.tech/ng-base, vendored in src/core (projects/app)" "Angular app with vendored ng-base"
+rm -rf "$APP/src"; echo '{}' > "$APP/angular.json"
+OUT=$(payload compact "$PROJ" | run_hook)
+assert_contains "$OUT" "Frontend: Angular project detected (projects/app)" "plain Angular app"
+rm -f "$APP/angular.json" "$APP/package.json"
+
 echo ""
 echo "─────────────────────────────────────────"
 echo "Total: $((PASS + FAIL)) | Passed: $PASS | Failed: $FAIL"

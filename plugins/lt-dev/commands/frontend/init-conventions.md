@@ -17,6 +17,11 @@ Add a `## Code Conventions` section to the project's CLAUDE.md. If CLAUDE.md doe
 
 ## Steps
 
+0. **Angular apps:** when the frontend has an `angular.json` and depends on `@lenne.tech/ng-base` (or carries a
+   vendored `src/core/VENDOR.md` naming ng-base), this template does not apply: it encodes Nuxt and Vue rules. The
+   Angular app's `CLAUDE.md` already holds its conventions (the Angular CLI's rules, kept verbatim, plus the
+   stack's additions from ng-base-starter). When that block is missing or outdated, point the user to
+   `/lt-dev:fullstack:sync-claude-md`, which syncs it from ng-base-starter, and stop. Otherwise continue with step 1.
 1. **Find CLAUDE.md**: Check for `CLAUDE.md` in the project root
 2. **Check existing conventions**: If CLAUDE.md exists, check if `## Code Conventions` already exists
    - If it exists → show the user and ask if they want to replace or extend

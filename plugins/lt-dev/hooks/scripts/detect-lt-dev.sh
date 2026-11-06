@@ -105,14 +105,15 @@ slug_for() {
 
 # The layout `lt dev` serves, as the lt CLI decides it (src/lib/dev-project.ts#resolveLayout,
 # src/lib/dev-identity.ts#detectStandaloneKind): a projects/api or projects/app directory, or
-# at the root src/config.env.ts or nest-cli.json (API) or nuxt.config.ts (App). Anywhere else
-# `lt dev init` stops with "No lt project detected at this path".
+# at the root src/config.env.ts or nest-cli.json (API) or nuxt.config.ts or angular.json (App).
+# Anywhere else `lt dev init` stops with "No lt project detected at this path".
 # Observed 2026-10-18: the claude-code plugin marketplace (package `@lenne.tech/claude-code`)
 # got 'run lt dev init' on every prompt; lt dev init refuses it.
 has_dev_layout() {
   local p="$1"
   [ -d "$p/projects/api" ] || [ -d "$p/projects/app" ] \
-    || [ -f "$p/src/config.env.ts" ] || [ -f "$p/nest-cli.json" ] || [ -f "$p/nuxt.config.ts" ]
+    || [ -f "$p/src/config.env.ts" ] || [ -f "$p/nest-cli.json" ] || [ -f "$p/nuxt.config.ts" ] \
+    || [ -f "$p/angular.json" ]
 }
 
 # Detect whether this is an lt-Stack project `lt dev init` can serve: the layout above, plus
@@ -120,7 +121,7 @@ has_dev_layout() {
 #   - package.json deps for @lenne.tech/*
 #   - lt.config.json presence
 #   - subprojects/api or subprojects/app each with @lenne.tech/* deps (monorepo)
-#   - lt-monorepo / nest-server-starter / nuxt-base-starter / @lenne.tech/* as package name
+#   - lt-monorepo / nest-server-starter / nuxt-base-starter / ng-base-starter / @lenne.tech/* as package name
 is_lt_project() {
   local p="$1"
   has_dev_layout "$p" || return 1
@@ -133,7 +134,7 @@ is_lt_project() {
     local name
     name=$(jq -r '.name // empty' "$p/package.json" 2>/dev/null)
     case "$name" in
-      lt-monorepo|nest-server-starter|nuxt-base-starter|@lenne.tech/*) return 0 ;;
+      lt-monorepo|nest-server-starter|nuxt-base-starter|ng-base-starter|@lenne.tech/*) return 0 ;;
     esac
   fi
   return 1

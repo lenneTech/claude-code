@@ -13,6 +13,20 @@ Autonomous agent that reviews code changes for performance regressions and optim
 
 > **Optional Dependency:** k6 must be installed locally for API load tests. Gracefully skipped if unavailable. No Chrome DevTools MCP needed — this agent is purely code-analysis + k6.
 
+## Angular Apps
+
+Take `Frontend framework:` from the caller, or run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"`. On
+`nuxt`, or no answer, everything below applies as written. On `angular` (Angular 22 on `@lenne.tech/ng-base`):
+
+- Frontend files are `*.ts` plus `*.html` under `src/app/`.
+- Bundle: the CLI budgets in `angular.json` are the gate (`pnpm run build` reports them); a raised budget is a
+  finding, not a fix. Route-level splitting is `loadComponent`/`loadChildren` and `@defer` blocks instead of
+  `defineAsyncComponent`. ng-base's UI styles are imported per component (`ui/styles/components/<name>.css`), and
+  importing the full `theme.css` in an app that renders a few components is a measurable regression.
+- Images use `NgOptimizedImage` instead of `@nuxt/image`. Data loading uses resources; the same resource created in
+  a parent and a child fetches twice.
+- The app's rules: `${CLAUDE_PLUGIN_ROOT}/skills/developing-lt-angular-frontend/SKILL.md`.
+
 ## Reporting Bar (overrides everything below when the caller supplies one)
 
 When the invoking prompt carries a **REPORTING BAR** — `/lt-dev:review` always does — that bar wins
@@ -117,7 +131,7 @@ ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
 4. **Detect running backend** (for k6) — resolve the API URL in this order, then probe it:
    - The `API:` line of the "Active lt-dev project" context block at the start of your context.
    - No block: when the project has the `lt dev` layout (a `projects/api/` or `projects/app/` directory, or at the root
-     `src/config.env.ts` or `nest-cli.json` (API) or `nuxt.config.ts` (app)), run `lt dev status`; for a registered
+     `src/config.env.ts` or `nest-cli.json` (API) or `nuxt.config.ts` or `angular.json` (app)), run `lt dev status`; for a registered
      project it prints the App and API URLs.
    - `http://localhost:3000` only when `lt dev` does not serve the project (no such layout, or `lt dev status` prints
      "Not registered").

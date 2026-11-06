@@ -1,7 +1,7 @@
 ---
 description: Sync fullstack project with latest nest-server-starter and nuxt-base-starter
 argument-hint: "[--dry-run] [--skip-backend] [--skip-frontend]"
-allowed-tools: Read, Grep, Glob, Bash(npm run:*), Bash(pnpm run:*), Bash(yarn run:*), Bash(pnpm list:*), Bash(npm list:*), Bash(yarn list:*), Bash(pnpm view:*), Bash(npm view:*), Bash(yarn info:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(npx npm-check-updates:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(rm:*), Write, Edit, Agent, AskUserQuestion, WebFetch, SendMessage, Bash(node -e:*)
+allowed-tools: Read, Grep, Glob, Bash(npm run:*), Bash(pnpm run:*), Bash(yarn run:*), Bash(pnpm list:*), Bash(npm list:*), Bash(yarn list:*), Bash(pnpm view:*), Bash(npm view:*), Bash(yarn info:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(npx npm-check-updates:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(rm:*), Write, Edit, Agent, AskUserQuestion, WebFetch, SendMessage, Bash(node -e:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh":*)
 disable-model-invocation: true
 ---
 
@@ -101,6 +101,15 @@ After the plan approval, this command runs to completion without check-ins. A me
    ```
    If a `VENDOR.md` is found, that side is in vendor mode. The corresponding
    npm package will NOT be in `package.json`. Note this for Phase 4/5 agent selection.
+
+   **Frontend line.** `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"` answers `frontend: nuxt` or
+   `frontend: angular` with the app, the library, the mode and the core path (Nuxt is checked first). On
+   `frontend: nuxt`, or no answer, steps 3 to 5 apply as written. On `frontend: angular` the frontend is
+   `@lenne.tech/ng-base` instead of nuxt-extensions: take app, mode and core from that answer (a vendored ng-base
+   sits in `<app>/src/core/`, which the `*/app/core/*` search above does not see), read the version with
+   `pnpm list @lenne.tech/ng-base --depth=0` (npm mode) or the `Baseline-Version` in `src/core/VENDOR.md` (vendor
+   mode), and the frontend phase follows the "Angular Apps" section of the `fullstack-updater` agent; in vendor
+   mode spawn `lt-dev:ng-base-core-updater` where the Nuxt path spawns `lt-dev:nuxt-extensions-core-updater`.
 
 5. **Get current and target versions:**
    ```bash

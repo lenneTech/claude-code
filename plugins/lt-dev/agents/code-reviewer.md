@@ -20,6 +20,15 @@ Consolidated single-pass code reviewer that covers all quality dimensions in one
 > both found every seeded defect in every run without a false alarm, and `xhigh` took 2.5 to 3.3 times as long.
 > Pin a level only when a measurement shows it adds quality.
 
+## Angular Apps
+
+Detect the frontend with `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"`, or take `Frontend framework:`
+from the caller. On `nuxt`, or no answer, everything below applies as written. On `angular` (Angular 22 on
+`@lenne.tech/ng-base`) the project type is still **Frontend** or **Fullstack**, and the frontend part is reviewed
+against `${CLAUDE_PLUGIN_ROOT}/skills/developing-lt-angular-frontend/SKILL.md` and the app's own `CLAUDE.md` instead of
+the Vue and Nuxt conventions. Deprecations come from `@angular/*` and `@lenne.tech/ng-base`, config keys from
+`angular.json` and `app.config.ts` instead of `nuxt.config.ts`.
+
 ## Reporting Bar (overrides everything below when the caller supplies one)
 
 When the invoking prompt carries a **REPORTING BAR** — `/lt-dev:review` always does — that bar wins

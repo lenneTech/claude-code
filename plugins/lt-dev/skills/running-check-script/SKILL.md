@@ -116,7 +116,7 @@ If a project's `check` exits non-zero:
 
 **One narrow exception, and it is about collision rather than scope.** Point 2 stands: a pre-existing error gets fixed, because a red `check` blocks the next person regardless of who wrote it. What point 2 does not cover is an error inside *uncommitted work another live session is mid-slice on* — reshaping that is not a scope question, it is two sessions editing one file, and the peer returns to a rewritten refactor having lost more time than the fix saved. Where the tree is dirty and `bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh"` attributes the failing path to a live peer: fix it if it is trivial and self-contained (a missing import, a format violation, a stray `console.log`), and otherwise report it as a blocker naming the author, plus one `SOLVED` carrying the diagnosis so they can fix their own work in one step. Nobody live, or nothing attributable: point 2 applies unchanged.
 
-**STALLED is a signal to change approach, not permission to stop.** The count stops falling when the same fix is being retried, so the next iteration has to attack the error differently: read the failing file in full rather than patching around the reported line, check whether two errors share one cause, look at how a working sibling module solves the same thing, run the failing step alone to see output the aggregate run swallowed, check whether it is one of the known hazards in Steps 6.5 to 6.8. Only when a genuinely different approach has been tried and the count still holds does the residual classification in Step 5 apply — and in **Blocking** mode, everything except an exhausted-ladder dependency vulnerability still stops the workflow.
+**STALLED is a signal to change approach, not permission to stop.** The count stops falling when the same fix is being retried, so the next iteration has to attack the error differently: read the failing file in full rather than patching around the reported line, check whether two errors share one cause, look at how a working sibling module solves the same thing, run the failing step alone to see output the aggregate run swallowed, check whether it is one of the known hazards in Steps 6.5 to 6.9. Only when a genuinely different approach has been tried and the count still holds does the residual classification in Step 5 apply — and in **Blocking** mode, everything except an exhausted-ladder dependency vulnerability still stops the workflow.
 
 ### Step 4 — Audit findings: mandatory fix escalation ladder
 
@@ -264,6 +264,8 @@ The starter `check` pipeline ends by booting the production build, waiting for i
    rm -f $'\x1b[33m'*$'\x1b[39m'
    ```
 
+**Angular apps (`angular.json`, ng-base-starter):** the chain builds into `.output-check` (`build:check`) and boots it with `cross-env NG_OUTPUT_DIR=.output-check node scripts/check-server-start.mjs`. The port goes into `PORT`, which `src/server.ts` parses as an integer, so hazard 1 is Nuxt-only; `NG_API_URL` / `NG_PUBLIC_API_URL` point at a closed port so SSR fetches fail fast. `Server booted but GET / did not render` is an SSR render error: read the server output the script prints.
+
 Details live in the `modernizing-toolchain` skill (Phase 6).
 
 ### Step 6.6 — API tests fail only inside `check`? Suspect a shared test database
@@ -364,6 +366,10 @@ The `nest-server-starter` unit row is the cautionary one, and it is worth readin
 **`silent: true` is not a middle ground.** Without the intercept vitest no longer owns the console and has nothing left to suppress.
 
 **If the lines turn out to be unwanted, clean up the logs instead of setting the flag.** A targeted `vi.spyOn(console, 'debug').mockImplementation(() => {})` in the test setup silences only the noisy channels and leaves every other file its attribution — that is exactly why `nuxt-base-template` measures 0 on both numbers. Keep the flag only where the lines are wanted diagnostics (an e2e suite that gets read on failure) and the cost balance is favourable.
+
+### Step 6.9 — Angular app: the `@lenne.tech/ng-base` pin
+
+An Angular app's `check` chain runs `node scripts/check-ng-base-pin.mjs`. It warns and passes in a plain local `check`, and fails when `CI` is set or under `LT_RELEASE=true` (what `check:release` sets), whenever the dependency is not an exact `x.y.z` version (`file:`, `link:`, `workspace:`, a range) or `dependenciesMeta["@lenne.tech/ng-base"].injected` is set. That state is the injected local build used to test an unreleased ng-base (`contributing-to-lt-framework`); the fix is the exact released version plus `pnpm install`, never a looser guard. A vendored core (`src/core/VENDOR.md`) has no dependency to pin and passes.
 
 ### Step 7 — Test-duplication avoidance
 

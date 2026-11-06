@@ -3,7 +3,7 @@ name: ng-base-core-updater
 description: 'Syncs upstream @lenne.tech/ng-base into a vendored Angular core (src/core/): hunks sorted against local patches, tsconfig paths re-derived, approved changes applied. NOT for npm mode.'
 model: inherit
 tools: Bash, Read, Grep, Glob, Write, Edit, WebFetch
-skills: ng-base-core-vendoring
+skills: ng-base-core-vendoring, developing-lt-angular-frontend
 memory: project
 maxTurns: 100
 ---

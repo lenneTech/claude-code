@@ -1,7 +1,7 @@
 ---
 description: Refactor entire frontend app to match frontend-dev agent guidelines using parallel agent teams
 argument-hint: "[--scope=all|pages|components|composables] [--dry-run]"
-allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(wc:*), Bash(find:*), Bash(git:*), Bash(echo:*), Bash(pnpm run format:*), Bash(npm run format:*), Bash(yarn run format:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Agent, AskUserQuestion, Skill(lt-dev:review), SendMessage
+allowed-tools: Read, Grep, Glob, Bash(ls:*), Bash(wc:*), Bash(find:*), Bash(git:*), Bash(echo:*), Bash(pnpm run format:*), Bash(npm run format:*), Bash(yarn run format:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Agent, AskUserQuestion, Skill(lt-dev:review), SendMessage, Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh":*)
 disable-model-invocation: true
 ---
 
@@ -74,6 +74,15 @@ ls -d projects/app packages/app 2>/dev/null
 ```
 
 If no frontend project found → stop and inform the user.
+
+Then tell the framework apart:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"
+```
+
+On `frontend: nuxt`, or no answer, every step below applies as written. On `frontend: angular`, the section
+[Angular apps](#angular-apps) under step 6 replaces the Vue-specific parts.
 
 ### 3. Inventory Analysis
 
@@ -265,6 +274,65 @@ stay identical, because this refactor is verified by comparing behaviour before 
 Files: <list of files for this batch>
 Work exclusively in these files. Do NOT modify files outside your batch.
 ```
+
+### Angular apps
+
+Applies only when step 2 reported `frontend: angular`. The goal, the batch plan, the team shape, verification, review
+and report stay as above; these parts change:
+
+- **Inventory (step 3):** components are the `.ts` files under `<app-root>/src/app/` that declare `@Component`
+  (the starter names them `<name>.ts` with a sibling `<name>.html`, no `.component` suffix), pages are the
+  components the route files (`app.routes.ts`, `*.routes.ts`) load, and services are the `@Injectable` classes
+  outside `src/core/` (a vendored core is upstream code, never refactored here). Quick violation greps:
+  `console.`, `any`, `*ngIf`, `*ngFor`, `ngClass`, `ngStyle`, `@Input(`, `@Output(`, `constructor(private`,
+  `ChangeDetectionStrategy.OnPush`, `subscribe(` in components.
+- **Role block:** replace it with this one; `<role block>` in the teammate prompts then means this text, and the
+  Vue checklist in the teammate prompt is replaced by the checklist below.
+
+```
+## Role
+You are the frontend engineer for this refactor (Angular 22 on @lenne.tech/ng-base, strict TypeScript).
+Start by reading ${CLAUDE_PLUGIN_ROOT}/skills/developing-lt-angular-frontend/SKILL.md and the app's own
+CLAUDE.md (the Angular CLI's rules plus the stack's additions); they are the reference for every
+convention below. The section "Angular Apps" in ${CLAUDE_PLUGIN_ROOT}/agents/frontend-dev.md says
+which frontend-dev rules still apply.
+
+Rules this refactor depends on:
+- Existing patterns first: read src/app/shared/ and the feature folders and match the established
+  pattern; introduce a new one only where none covers the case.
+- Backend DTOs and API calls come from the generated hey-api client; a manual DTO interface is never
+  a workaround.
+- Zero implicit any: typed input()/output()/model(), typed signals and computed(), explicit
+  parameter and return types.
+- UI text stays in the project's existing UI language; code, names and comments are English.
+- A failing test is fixed at its root cause, pre-existing failures included; the assertions stay as
+  they are, because they pin the behaviour this refactor keeps.
+
+## Refactor Checklist
+- [ ] Standalone components; no explicit `standalone: true`, no explicit OnPush (both are defaults)
+- [ ] input()/output()/model() instead of @Input/@Output; inject() instead of constructor injection
+- [ ] Signals for local state, computed() for derived state, set/update instead of mutate
+- [ ] Native control flow (@if, @for with track, @switch); class/style bindings instead of ngClass/ngStyle
+- [ ] Split components whose template exceeds about 50 lines; logic that serves several components
+      moves into a service or a function
+- [ ] Forms: Signal Forms with the feature's Valibot schema; reactive forms where Signal Forms do not fit
+- [ ] Loading, empty and error states where missing; feedback via the ng-base toast, in the UI language
+- [ ] Data via the generated GET resources or the SDK functions, never a hand-written HttpClient call
+- [ ] SSR safety: no window/document/localStorage outside afterNextRender or a platform check
+- [ ] Accessibility: semantic elements (<button>, not a clickable <div>), labels, focus handling
+- [ ] No console.* left in components or services
+- [ ] Styling: Tailwind utility classes and the ng-base UI components; no new component styles where
+      a utility covers it
+
+## After Refactoring
+1. Run: pnpm run lint:fix && pnpm run format
+2. Run: pnpm run build
+3. Fix any errors before reporting done
+4. List ALL files created, modified, or moved
+```
+
+- **Verification:** the same four checks, with the Angular app's scripts (`check` where it exists, it chains
+  them).
 
 ---
 

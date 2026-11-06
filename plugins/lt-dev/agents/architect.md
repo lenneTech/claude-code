@@ -44,6 +44,17 @@ Every architecture uses exactly this stack, without alternatives or substitution
 | Infrastructure | Docker Compose | Hot reload in dev |
 | Package Manager | Detect from lockfile | pnpm/yarn/npm |
 
+### Angular line
+
+A project's frontend line is fixed when it is created (`lt fullstack init --frontend nuxt|angular`) and an existing
+project keeps it. Run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"`: on `frontend: nuxt`, or no answer,
+the table above applies. On `frontend: angular` the frontend rows are Angular 22 on `@lenne.tech/ng-base`
+(standalone components, signals, OnPush and zoneless by default), the ng-base UI layer (Spartan) with Tailwind,
+Signal Forms with Valibot, `LtAuthService`/`LtAuthStore` (base path `/iam`), and `LtOverlayService` for dialogs.
+Blueprint paths follow the app's layout: `src/app/<feature>/<name>-page.ts` with its `.html`, routes in
+`src/app/app.routes.ts`, generated API types in `src/api-client/`. Read
+`${CLAUDE_PLUGIN_ROOT}/skills/developing-lt-angular-frontend/SKILL.md` before planning the frontend part.
+
 ## Execution Protocol
 
 ### Phase 1: Codebase Analysis

@@ -1,6 +1,6 @@
 # lt-dev Plugin
 
-lenne.Tech Development Skills, Commands and Hooks for Claude Code - Frontend (Nuxt 4), Backend (NestJS), TDD and CLI Tools.
+lenne.Tech Development Skills, Commands and Hooks for Claude Code - Frontend (Nuxt 4 or Angular 22), Backend (NestJS), TDD and CLI Tools.
 
 ## Installation
 
@@ -21,7 +21,8 @@ These plugins enhance the experience when working with this plugin:
 ## Features
 
 - **Backend Development**: NestJS with @lenne.tech/nest-server (supports both npm-mode and vendored-mode projects — see below)
-- **Frontend Development**: Nuxt 4 with Nuxt UI
+- **Frontend Development**: Nuxt 4 with Nuxt UI, or Angular 22 with `@lenne.tech/ng-base` (skill `developing-lt-angular-frontend`). Nuxt stays the default; reviewers, agents and commands tell the two apart through `scripts/detect-frontend.sh` and keep the Nuxt path unchanged
+- **Vendored Angular core**: `/lt-dev:frontend:update-ng-base-core` syncs a vendored ng-base core (`src/core/`) from upstream, `/lt-dev:frontend:contribute-ng-base-core` prepares local core changes as a draft PR (skill `ng-base-core-vendoring`)
 - **TDD Workflows**: Test-Driven Development with story-based implementation
 - **Nest-Server Updates**: Automated migration guides and stepwise upgrades (auto-delegates to `nest-server-core-updater` in vendored projects)
 - **Fullstack Updates**: Synchronize projects with latest starter templates
@@ -35,7 +36,7 @@ These plugins enhance the experience when working with this plugin:
 - **Frontend Security**: OWASP-based security auditing (XSS, CSRF, CSP)
 - **Agent Teams**: Parallel workflow coordination for complex tasks
 - **Plugin Development**: Claude Code plugin best practices and validation
-- **Framework Contribution**: Local `pnpm link` workflow for modifying `@lenne.tech/nest-server` / `@lenne.tech/nuxt-extensions` and validating changes from a starter
+- **Framework Contribution**: Local `pnpm link` workflow for modifying `@lenne.tech/nest-server` / `@lenne.tech/nuxt-extensions` / `@lenne.tech/ng-base` (there via an injected file dependency) and validating changes from a starter
 - **Dev Server Lifecycle**: Enforced `run_in_background` / `pkill` contract to prevent orphaned processes across TDD, framework linking, and MCP-driven debugging
 - **Alignment before code**: A grilling loop that looks facts up in the codebase rather than asking, works every open decision through a brief (current code, planned change, quoted sources, options with their impact, recommendation), implements what the ticket states as written, settles gaps the evidence makes unambiguous, and asks the developer about everything imprecise, contradictory, or unclear — wired into ticket creation, planning, and the implementation flow
 - **Parallel sessions**: Coordination rules for several sessions working one project or the base repos at once. Linear and Git stay the claim protocol, `ListAgents` gives the live picture for free, and a cross-session message is spent only where it changes what the other session does next: a warning, a claim, a diagnosis worth handing over, or a question the peer answers cheaply

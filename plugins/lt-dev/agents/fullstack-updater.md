@@ -26,6 +26,23 @@ Autonomous execution agent for updating lenne.tech fullstack projects by synchro
 | **Agent**: `lt-dev:nest-server-updater` | Backend update (spawned by `/lt-dev:fullstack:update` command) |
 | **Agent**: `lt-dev:npm-package-maintainer` | Package optimization (spawned by `/lt-dev:fullstack:update` command) |
 
+## Angular Apps
+
+Detect the app's line with `bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh"`. On `frontend: nuxt`, or no
+answer, every phase below applies as written. On `frontend: angular` the backend phases are unchanged, and the
+frontend phases compare against **ng-base-starter** (`github.com/lenneTech/ng-base-starter`, flat: its repository
+root is the app) instead of nuxt-base-starter:
+
+- **Framework, npm mode:** raise `@lenne.tech/ng-base` to the exact version ng-base-starter pins, then
+  `pnpm install`. Read the ng-base CHANGELOG and `migration-guides/` for every version in between.
+- **Framework, vendor mode:** delegate to `/lt-dev:frontend:update-ng-base-core`.
+- **Angular itself:** an Angular move goes through `pnpm exec ng update @angular/core@<v> @angular/cli@<v>` to the
+  version the starter runs, never a hand-edited version range, followed by `pnpm run check:baseline`.
+- **Template drift:** compare `package.json` scripts, `angular.json`, `scripts/`, `src/server.ts` and the config
+  files with ng-base-starter's; adopt upstream changes while keeping the project's own steps.
+- **CLAUDE.md:** `/lt-dev:fullstack:sync-claude-md`, which takes the app's file from ng-base-starter.
+- **Validation:** the app's `pnpm run check`.
+
 ## Operating Modes
 
 Detect mode from initial prompt arguments:

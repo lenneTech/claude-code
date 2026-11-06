@@ -212,16 +212,18 @@ lt fullstack init \
 **Creates:**
 ```
 MyAngularApp/
-├── frontend/              # Angular 18+ application
-│   ├── src/
-│   ├── angular.json
-│   └── package.json
 ├── projects/
-│   └── api/              # NestJS backend (@lenne.tech/nest-server)
+│   ├── api/              # NestJS backend (@lenne.tech/nest-server)
+│   │   ├── src/
+│   │   │   └── server/
+│   │   │       ├── modules/
+│   │   │       └── common/
+│   │   └── package.json
+│   └── app/              # Angular 22 app from ng-base-starter (SSR, @lenne.tech/ng-base)
 │       ├── src/
-│       │   └── server/
-│       │       ├── modules/
-│       │       └── common/
+│       │   ├── app/
+│       │   └── core/     # vendored ng-base with VENDOR.md (vendor mode, the default)
+│       ├── angular.json
 │       └── package.json
 ├── package.json          # Root workspace config
 ├── .gitignore
@@ -232,9 +234,11 @@ MyAngularApp/
 ```bash
 cd MyAngularApp
 pnpm install              # Install all dependencies
+lt dev init && lt dev up  # API + App behind Caddy (https://<slug>.localhost)
+# Or on the classic ports:
 cd projects/api && pnpm start  # Start backend (port 3000)
 # In another terminal:
-cd frontend && pnpm start      # Start frontend (port 4200)
+cd projects/app && pnpm start  # Start frontend (ng serve, port 3001)
 ```
 
 #### Local Development Angular App
@@ -334,6 +338,21 @@ lt fullstack init --name MyApp --frontend angular --git true \
 3. Safe for production projects starting from local template
 
 **Use case:** Starting project from customized template, offline development
+
+#### Local ng-base (Angular)
+```bash
+# Vendor mode: copy the source of a local ng-base working tree into projects/app/src/core/
+lt fullstack init --name TestApp --frontend angular --git false --noConfirm \
+  --frontend-framework-copy <path/to/ng-base>
+
+# npm mode: injected file: dependency on that checkout's build (dist/ng-base);
+# build ng-base first, a checkout without a build is refused
+lt fullstack init --name TestApp --frontend angular --git false --noConfirm \
+  --frontend-framework-mode npm --frontend-framework-copy <path/to/ng-base>
+```
+
+**Use case:** Testing unreleased ng-base changes in a fresh app. Never `pnpm link` ng-base: two
+`@angular/core` copies break SSR with `NG0203`.
 
 #### Auto-Detection of Nuxt Subdirectory
 ```bash
@@ -457,10 +476,11 @@ pnpm start
 # API runs on http://localhost:3000
 
 # Terminal 2: Start frontend
-cd frontend
+cd projects/app
 pnpm start
-# Frontend runs on http://localhost:4200
-# Auto-proxies API calls to backend
+# Frontend runs on http://localhost:3001 (a busy port is refused, not moved:
+# the API trusts exactly this origin)
+# With NG_PUBLIC_API_PROXY=true (.env.example), proxy.conf.mjs forwards /api and /iam to the API
 
 # Terminal 3: Development
 cd projects/api
