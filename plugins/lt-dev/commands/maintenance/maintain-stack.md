@@ -11,7 +11,7 @@ Orchestrates stack-wide maintenance following the skill **`maintaining-lt-stack`
 The skill is the single source of truth for order, recipes, wait patterns and
 pitfalls, so load it first. This command describes only the orchestration.
 
-**Why unrestricted `Bash`:** this command drives six repos through `git`, `gh`,
+**Why unrestricted `Bash`:** this command drives eight repos through `git`, `gh`,
 `glab`, `npm`/`pnpm`/`yarn`, `node`, the `turbo` CLI and `mongosh` across two
 release waves plus the smoke-test gate — the CLI surface is too broad and too
 repo-dependent to enumerate as individual patterns.
@@ -43,13 +43,13 @@ This command runs to completion without check-ins. A message without a tool call
   the `IdentityAgent` from `~/.ssh/config`. With 1Password setups it is therefore
   always a false negative, and it used to force needless HTTPS pushes. The skill
   explains the details.
-- All 6 repos: correct branch (nest-server: `develop`, all others `main`), clean
+- All 8 stack repos (ng-base and ng-base-starter included): correct branch (nest-server: `develop`, all others `main`), clean
   working tree, up to date via `git pull`. A dirty repo stops the run with a list
   of findings, because foreign changes must never be swept into release commits.
 - Smoke-test prerequisites (the Phase 0 table in the smoke-test command), unless
   `--skip-smoke-test` is set.
 
-### Phase 1 — Wave 1 (nuxt-extensions ∥ nest-server ∥ lt-monorepo ∥ cli)
+### Phase 1 — Wave 1 (nuxt-extensions ∥ ng-base ∥ nest-server ∥ lt-monorepo ∥ cli)
 
 Per repo: the `lt-dev:npm-package-maintainer` agent (FULL, without commit), then
 the skill's review gate, then the orchestrator commits, versions and releases
@@ -74,17 +74,19 @@ without a new one this round its changes are committed and pushed with
 
 ### Phase 2 — npm propagation
 
-Poll `npm view <pkg> version` (30 s interval, 15 min timeout) for
-`@lenne.tech/nuxt-extensions`, `@lenne.tech/nest-server` and `@lenne.tech/cli`.
+Poll the version-specific endpoint `https://registry.npmjs.org/<pkg>/<version>` until it answers 200
+(30 s interval, 15 min timeout; `npm view` reads a cache that lags minutes behind, see the skill) for
+`@lenne.tech/nuxt-extensions`, `@lenne.tech/ng-base` (version without the tag's `v`),
+`@lenne.tech/nest-server` and `@lenne.tech/cli`.
 On timeout, check `gh run list --workflow publish.yml` and fix the action
 failure (re-run). Do not stack a new tag on top.
 
-### Phase 3 — Wave 2 (nuxt-base-starter ∥ nest-server-starter)
+### Phase 3 — Wave 2 (nuxt-base-starter ∥ ng-base-starter ∥ nest-server-starter)
 
-Follow the skill recipe: raise the dependency version, run `pnpm run update`
-plus the migration guides (nest-server-starter), run the maintenance agent, run
-`check` twice (repo root and template), pass the review gate as in Phase 1,
-follow the commit convention, release.
+Follow the skill recipe: raise the dependency version (ng-base-starter pins `@lenne.tech/ng-base`
+exactly), run `pnpm run update` plus the migration guides (nest-server-starter), run the maintenance
+agent, run `check` (nuxt-base-starter twice, repo root and template; ng-base-starter once, it is flat),
+pass the review gate as in Phase 1, follow the commit convention, release.
 
 ### Phase 4 — Release gate: smoke test
 

@@ -78,9 +78,9 @@ Part of the [`maintaining-lt-stack`](SKILL.md) skill. Where a step says "see the
 > Carrying a red evidence run into the next release is a legitimate decision; making it silently
 > is not. Name the failing mutation, then decide.
 
-### Release commit for the templates (lt-monorepo, nuxt-base-starter)
+### Release commit for the templates (lt-monorepo, nuxt-base-starter, ng-base-starter; also ng-base)
 
-Both templates are released by hand, without a release tool: the version jump is
+These repos are released by hand, without a release tool: the version jump is
 `/lt-dev:publish`'s decision (`--release-as`, otherwise derived from the diff), and the
 CHANGELOG section is written directly.
 
@@ -116,8 +116,19 @@ CHANGELOG section is written directly.
      sections in this order, each only when it has entries: Features, Bug Fixes,
      Performance, Refactoring, Documentation, CI/CD, Build System, Tests, Chores.
      `style` commits stay out.
+   - **ng-base-starter:** headed as in nuxt-base-starter, with compare links to `lenneTech/ng-base-starter`.
+     Its `.github/workflows/release.yml` diffs against `HEAD~1:CHANGELOG.md`, so the release notes are
+     exactly the lines that are new in the release commit, and a line that was already committed never
+     reaches them, wherever it moves. Renaming an `## Unreleased` heading, or moving its entries under a new
+     heading, adds the heading line and nothing else. So `CHANGELOG.md` stays out of every commit before the
+     release commit; where `Unreleased` entries were committed earlier, the content commit removes them, and
+     the release commit writes them under the version heading.
+   - **ng-base:** Keep a Changelog, every release, patches included, headed `## [X.Y.Z] - YYYY-MM-DD`
+     (the repo's own format). Its `publish.yml` cuts the release notes from exactly that `## [X.Y.Z]`
+     section; a `### [X.Y.Z]` heading yields none, and the release reads only "See CHANGELOG.md".
 3. **Commit, tag, push.** Stage exactly the release files (`git add package.json
-   CHANGELOG.md`, in lt-monorepo plus `scripts/check.mjs`), then:
+   CHANGELOG.md`, in lt-monorepo plus `scripts/check.mjs`, in ng-base plus every file
+   `pnpm run version:sync` wrote, see the ng-base recipe), then:
 
    ```bash
    git commit -m "chore(release): X.Y.Z"
@@ -200,6 +211,74 @@ CHANGELOG section is written directly.
    from the exit code of your own `create` call: it reports failure on a release
    that exists, and a session reading that as "the release did not happen" will
    try to fix a release that is already live. Measured 2026-09-04 on v2.25.1.
+
+### ng-base (npm package `@lenne.tech/ng-base`; Angular frontend library, consumed by ng-base-starter)
+
+> **The MAJOR digit is the Angular major** (`22.x` is Angular 22), the way nuxt-extensions' tracks Nuxt.
+> **The tag carries a `v`, the npm version does not:** tag `v22.0.0`, package `22.0.0`, unlike
+> nuxt-extensions' bare `1.25.0`. Vendor mode clones the tag `v<version>`, so a missing or
+> differently spelled tag breaks every vendored project's update.
+
+**The repo states its own recipe** in the header comment of `.github/workflows/publish.yml`. Read it first:
+where it differs from the steps below, the workflow wins, because it is what runs on the tag.
+
+1. Maintenance (`/lt-dev:maintenance:maintain`, when the step-2 answer asks for it) → `pnpm i` →
+   `pnpm run check` green. Then commit the release content: stage the paths the release carries, the
+   lockfile included (`git add <paths>`, never `git add .`: the checkout can hold a live session's
+   uncommitted work), with a conventional message. `publish.yml` installs with a frozen lockfile and checks
+   the tagged commit, so whatever stays uncommitted is not in the release.
+2. **Version.** Raise `version` in the root `package.json`, then `pnpm run version:sync`. It writes the
+   version into `projects/ng-base/package.json` (the manifest published from `dist/ng-base`) **and** into the
+   `LT_NG_BASE_VERSION` constant in the library's `version.ts`. `pnpm run version:check` confirms all of them
+   agree, and `git status --short` then lists every file the sync changed: all of them go into the release
+   commit. A `version.ts` left out keeps the local `check` green (the synced file sits in the working tree)
+   while `publish.yml`'s `check:raw` fails on the tag, after the tag is already public.
+3. CHANGELOG section (`## [X.Y.Z] - YYYY-MM-DD`), commit, annotated tag `vX.Y.Z` and the two-step push as in
+   "Release commit for the templates" above. Before the tag, `git status --short` shows no version file left
+   behind.
+4. **Then stop: the tag does the rest.** On `v*`, `.github/workflows/publish.yml` checks that the tag matches
+   the version, runs `check:raw`, publishes `dist/ng-base` to npm with provenance, and creates the GitHub
+   release from the CHANGELOG section. A `gh release create` of your own would collide with it. Verify with
+   `gh run list --workflow publish.yml` green, `gh release view vX.Y.Z`, and
+   `curl -s -o /dev/null -w '%{http_code}' https://registry.npmjs.org/@lenne.tech/ng-base/X.Y.Z` answering
+   200 (version without `v`). A run that failed for a passing reason (runner, registry) is re-run; one
+   that failed on the tagged content cannot pass on a re-run and needs the fix in the next patch version.
+   A published tag is never moved or deleted: vendored projects may already have cloned it.
+
+### ng-base-starter (template; consumes ng-base)
+
+Released like nuxt-base-starter: an annotated tag `vX.Y.Z` plus a GitHub release, no npm package. Its
+version is SemVer of its own within the Angular major (it starts at `22.0.0`), with no lock-step to
+ng-base. Unlike nuxt-base-starter it is **flat**: the repository root is the app, with `package.json`
+and `pnpm-lock.yaml` at the root and no `*-template/` folder.
+
+0. **Wait** until `@lenne.tech/ng-base@<version>` resolves on the version-specific endpoint (see the
+   propagation rule above).
+1. Pin the new version **exactly** (`"@lenne.tech/ng-base": "X.Y.Z"`, no range) in the root
+   `package.json`, then `pnpm i`.
+2. Maintenance (`/lt-dev:maintenance:maintain`, when the step-2 answer asks for it) → `pnpm run check`
+   green, and `pnpm run test:e2e` before UI-library bumps, as in nuxt-base-starter.
+3. **Gate: the starter resolves ng-base from the registry.** Local integration may run on an injected
+   `file:` dependency (`"file:../ng-base/dist/ng-base"` plus `dependenciesMeta.injected`), and that must never
+   ship: every project cloned from the template would point at a folder that does not exist there. Before the
+   tag, all three hold, otherwise nothing is released:
+
+   ```bash
+   node -e 'const p=require("./package.json"); const v=(p.dependencies||{})["@lenne.tech/ng-base"];
+     if (!/^\d+\.\d+\.\d+$/.test(v||"")) { console.error("ng-base pin is not a published version: "+v); process.exit(1) }
+     if ((p.dependenciesMeta||{})["@lenne.tech/ng-base"]) { console.error("dependenciesMeta still injects ng-base"); process.exit(1) }'
+   # the lockfile names the package on one line and its specifier and version on the next two
+   if grep -A2 -E "@lenne.tech/ng-base" pnpm-lock.yaml | grep -qE "file:|link:|workspace:"; then
+     echo "pnpm-lock.yaml still resolves ng-base locally"; false; fi
+   pnpm run check                                                                    # green against that version
+   ```
+
+   The pinned version answers 200 on the version-specific endpoint (step 0).
+4. Stage the paths this update changed (`git add <paths>`, never `git add .`), with `CHANGELOG.md` kept out
+   of this content commit (the ng-base-starter CHANGELOG rule above), commit, then the release commit, tag
+   and two-step push as in "Release commit for the templates" above.
+5. **Then stop: the GitHub release makes itself** from the tag (`.github/workflows/release.yml`), as in
+   nuxt-base-starter step 5. Verify with `gh release view vX.Y.Z` and the workflows green.
 
 ### nest-server-starter (template; consumes nest-server)
 

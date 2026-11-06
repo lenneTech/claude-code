@@ -6,7 +6,8 @@ allowed-tools: Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh:*), 
 
 # Maintaining the lt Stack (all base repos)
 
-The seven base repos are maintained and released in dependency order. Canonical
+The eight stack repos (two frontend lines, Nuxt and Angular, on one backend) are maintained and
+released in dependency order; the two marketplace repos release on their own. Canonical
 source is [github.com/lenneTech](https://github.com/lenneTech); releasing needs a
 local clone of each, and that checkout path differs per machine — locate it instead
 of assuming one:
@@ -23,13 +24,13 @@ packages published, templates tagged — proven by a full
 ## Dependency graph (dictates the order)
 
 ```
-Wave 1 (parallelizable):   nuxt-extensions   nest-server   lt-monorepo   cli
-                                 │                │
-                                 ▼ (wait for npm publish!)
-Wave 2 (parallelizable):   nuxt-base-starter  nest-server-starter
+Wave 1 (parallelizable):   nuxt-extensions   ng-base           nest-server           lt-monorepo   cli
+                                 │                │                  │
+                                 ▼                ▼                  ▼     (wait for npm publish!)
+Wave 2 (parallelizable):   nuxt-base-starter  ng-base-starter   nest-server-starter
                                  │
                                  ▼
-Validation:                /lt-dev:fullstack:smoke-test  (exercises ALL repos live)
+Validation:                /lt-dev:fullstack:smoke-test  (exercises ALL repos live; Nuxt run by default)
                                  │
                                  ▼
 Wave 3 (only on findings): patch fixes → re-release affected repos (nest-server-starter: push only)
@@ -55,7 +56,7 @@ identical, which is why the endpoint is the one to ask.
 
 ## Running the waves across parallel sessions
 
-The waves above say "parallelizable" and that is meant literally: one Claude Code session per repo, in its own terminal, is how a stack release actually goes fast. Wave 1 holds four independent repos and Wave 2 two more, so the wall-clock floor is one repo's release, not six in sequence.
+The waves above say "parallelizable" and that is meant literally: one Claude Code session per repo, in its own terminal, is how a stack release actually goes fast. Wave 1 holds five independent repos and Wave 2 three more, so the wall-clock floor is one repo's release, not eight in sequence.
 
 That only works if the sessions coordinate on four things. All of it runs on the [`coordinating-peer-sessions`](${CLAUDE_SKILL_DIR}/../coordinating-peer-sessions/SKILL.md) protocol, and the split by repository is exactly the boundary that protocol asks for: no two sessions ever touch one working tree.
 
@@ -334,15 +335,15 @@ What does **not** go over messages: which repos exist and in which order they go
 
 ## Recipes per repo
 
-Read [recipes.md](recipes.md) before releasing any single repo: it holds the numbered release steps and version-number rules for nuxt-extensions, nest-server (incl. the `publish.yml` job split), lt-monorepo, lt CLI, nuxt-base-starter, nest-server-starter, and the two marketplace repos (`claude-code`, `claude-code-internal`).
+Read [recipes.md](recipes.md) before releasing any single repo: it holds the numbered release steps and version-number rules for nuxt-extensions, nest-server (incl. the `publish.yml` job split), lt-monorepo, lt CLI, nuxt-base-starter, ng-base, ng-base-starter, nest-server-starter, and the two marketplace repos (`claude-code`, `claude-code-internal`).
 
 ## Single-repo fast path (`/lt-dev:publish`)
 
 The same recipes serve a second entry point: publish ONE repo's changes
 quickly and update only its downstream chain (nest-server →
-nest-server-starter; nuxt-extensions → nuxt-base-starter). The target repo
+nest-server-starter; nuxt-extensions → nuxt-base-starter; ng-base → ng-base-starter). The target repo
 is auto-detected from the current working directory (origin remote matched
-against the six stack repos plus the two marketplace repos) or passed
+against the eight stack repos plus the two marketplace repos) or passed
 explicitly. Differences to the full
 cycle: uncommitted changes in the source repo are the payload (not a
 preflight error — but stop on unrelated-looking files), except in

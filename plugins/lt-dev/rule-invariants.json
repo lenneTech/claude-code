@@ -174,6 +174,26 @@
       "name": "the auth-link log gate both reviewers check: config env local AND raw NODE_ENV unset (undefined, not empty) or local",
       "phrase": "isLocalEnv(env) && (process.env.NODE_ENV === undefined || isLocalEnv(process.env.NODE_ENV))",
       "files": ["agents/security-reviewer.md", "agents/backend-reviewer.md"]
+    },
+    {
+      "name": "the ng-base release commit carries every file version:sync wrote (version.ts too), or publish.yml's check:raw fails on a tag that is already public",
+      "phrase": "every file `pnpm run version:sync` wrote",
+      "files": ["skills/maintaining-lt-stack/recipes.md"]
+    },
+    {
+      "name": "ng-base's publish.yml cuts the release notes from the `## [X.Y.Z]` section only; a `###` heading yields none",
+      "phrase": "headed `## [X.Y.Z] - YYYY-MM-DD`",
+      "files": ["skills/maintaining-lt-stack/recipes.md"]
+    },
+    {
+      "name": "ng-base-starter's release.yml publishes only lines that are new in the release commit, so the CHANGELOG reaches no earlier commit",
+      "phrase": "`CHANGELOG.md` stays out of every commit before the release commit",
+      "files": ["skills/maintaining-lt-stack/recipes.md"]
+    },
+    {
+      "name": "the starter never ships a local ng-base link; the lockfile check reads the two lines after the package name",
+      "phrase": "grep -A2 -E \"@lenne.tech/ng-base\" pnpm-lock.yaml",
+      "files": ["skills/maintaining-lt-stack/recipes.md"]
     }
   ],
   "forbidden": [

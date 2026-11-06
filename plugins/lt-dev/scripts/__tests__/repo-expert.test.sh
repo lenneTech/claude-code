@@ -64,6 +64,7 @@ assert_contains "$out" "verdict: SELF" "a session in the target repository is it
 echo "messaging unavailable"
 out="$(env -u CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_PID=$$ CLAUDE_PROJECT_DIR="$MINE" bash -c "cd '$MINE' && bash '$SCRIPT' '$TARGET' 2>&1")"
 assert_contains "$out" "verdict: UNKNOWN" "without cross-session messaging the answer is unknown, never NONE"
+assert_contains "$out" "not ng-base-starter-67" "the name hint does not hand ng-base to a session of a repository whose name only starts with it"
 out="$(env -u CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_PID=$$ CLAUDE_PROJECT_DIR="$TARGET" bash -c "cd '$TARGET' && bash '$SCRIPT' '$TARGET' 2>&1")"
 assert_contains "$out" "verdict: SELF" "being in the target needs no peer scan"
 

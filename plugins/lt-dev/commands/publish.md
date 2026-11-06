@@ -1,6 +1,6 @@
 ---
-description: Publish the current (or a named) lt base repo as a new version, optionally maintaining dependencies first, then update and release its downstream base repos (nest-server-starter, nuxt-base-starter). Smoke test opt-in via --smoke-test.
-argument-hint: '[nest-server|nuxt-extensions|lt-monorepo|cli|nuxt-base-starter|nest-server-starter|claude-code|claude-code-internal] [--release-as=patch|minor|major] [--skip-downstream] [--maintenance|--skip-maintenance] [--smoke-test] [--dry-run]'
+description: Publish the current (or a named) lt base repo as a new version, optionally maintaining dependencies first, then update and release its downstream base repos (nest-server-starter, nuxt-base-starter, ng-base-starter). Smoke test opt-in via --smoke-test.
+argument-hint: '[nest-server|nuxt-extensions|ng-base|lt-monorepo|cli|nuxt-base-starter|ng-base-starter|nest-server-starter|claude-code|claude-code-internal] [--release-as=patch|minor|major] [--skip-downstream] [--maintenance|--skip-maintenance] [--smoke-test] [--dry-run]'
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, ListAgents, SendMessage, TaskStop, Skill(lt-dev:review), Skill(lt-dev:git:commit-message), Skill(lt-dev:plugin:check), Skill(lt-dev:maintenance:maintain), Skill(lt-dev:fullstack:smoke-test), ToolSearch
 disable-model-invocation: true
 ---
@@ -13,7 +13,7 @@ likewise on the latest dependency state. All recipes, wait patterns and
 gates come from the skill **`maintaining-lt-stack`** (load it first); this
 command only narrows the orchestration to a single chain.
 
-**Why unrestricted `Bash`:** this command releases across up to eight base
+**Why unrestricted `Bash`:** this command releases across up to ten base
 repos with different toolchains and recipes — `git`, `gh`, `npm`/`pnpm`/`yarn`
 scripts, `node`, and the secrets-scan hooks — and the exact commands depend on
 which repo Step 0 resolves to, so a fixed allowlist would not cover every
@@ -37,7 +37,8 @@ Commands named below as `/lt-dev:<name>` are invoked through the `Skill` tool in
 
 Without an argument, detect which base repo the current working directory
 belongs to (walk up to the git root, match the `origin` remote against
-`lenneTech/{nest-server,nuxt-extensions,lt-monorepo,cli,nuxt-base-starter,nest-server-starter,claude-code}`
+`lenneTech/{nest-server,nuxt-extensions,ng-base,lt-monorepo,cli,nuxt-base-starter,ng-base-starter,nest-server-starter,claude-code}`
+(match the whole repository name: `ng-base-starter` is not `ng-base`)
 or the private marketplace `claude-code-internal` (an `origin` on the self-hosted GitLab ending in `/claude-code-internal.git`);
 fall back to the directory name). If the cwd is NOT a base repo, stop and
 list the valid targets — never guess. An explicit argument always wins.
@@ -58,8 +59,8 @@ State the resolution in the report ("lt-dev → releasing claude-code"), since a
 marketplace release always bumps ALL of its plugins in lock-step, not just the
 named one. If that is not wanted, the change has to be split across releases.
 
-With these two repos, all eight base repos per the user's CLAUDE.md are
-covered: the six stack repos plus both marketplaces.
+With these two repos, all ten base repos are covered: the eight stack repos (the Nuxt and the
+Angular frontend line among them) plus both marketplaces.
 
 Then summarize what would be published: commits ahead of the remote plus
 uncommitted changes (`git status` + `git log @{u}..`). This summary goes
@@ -71,6 +72,7 @@ into the release notes analysis and the final report.
 |---|---|
 | `nest-server` | `nest-server-starter`, mandatory (lock-step version, `pnpm run update`, migration guides); a release from `release/11.x` goes to the starter's `release/11.x` |
 | `nuxt-extensions` | `nuxt-base-starter` (bump dep in `nuxt-base-template/`) |
+| `ng-base` | `ng-base-starter` (bump `@lenne.tech/ng-base` once the version resolves on npm, per the skill's ng-base-starter recipe) |
 | `lt-monorepo`, `cli`, starters | none (chain ends there) |
 | `claude-code`, `claude-code-internal` | none — consumers pull via `lt claude plugins` |
 

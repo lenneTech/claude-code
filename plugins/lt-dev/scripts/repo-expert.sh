@@ -28,8 +28,9 @@
 #   UNKNOWN            peers cannot be scanned (cross-session messaging unavailable, native
 #                      Windows), the scan was cut off at LIVE_PEERS_MAX_SCAN (default 64), or a
 #                      live peer's directory is unreadable: check ListAgents,
-#                      whose generated names usually start with the session's directory name,
-#                      and ask the user when a row could be the expert
+#                      whose generated names are the session's directory name plus a short
+#                      suffix without a further dash (ng-base-57 works in ng-base,
+#                      ng-base-starter-67 does not), and ask the user when a row could be the expert
 #
 # Repositories are compared by their common git directory, so a peer in another worktree of
 # the same repository (an `lt ticket` worktree, say) counts as working in the same project.
@@ -119,7 +120,7 @@ if [ "$experts" -gt 0 ]; then
   echo "A live session works in this repository and this one does not: ask the user whether to hand the change over to it (match the pid to its ListAgents name by uptime) before implementing it here."
 elif [ "$scan_possible" -eq 0 ] || [ "$unreadable" -gt 0 ] || [ "$truncated" -eq 1 ]; then
   echo "verdict: UNKNOWN"
-  echo "Live sessions could not be fully resolved. Check ListAgents: a row whose name starts with this repository's directory name is probably its expert, and then the handover is the user's question."
+  echo "Live sessions could not be fully resolved. Check ListAgents: a row named after this repository's directory plus a short suffix without a further dash is probably its expert (ng-base-57 for ng-base, not ng-base-starter-67), and then the handover is the user's question."
 else
   echo "verdict: NONE"
   echo "No live session works in this repository: implement, and claim the work in the ledger first."

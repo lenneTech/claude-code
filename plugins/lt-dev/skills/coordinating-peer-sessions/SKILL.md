@@ -100,7 +100,7 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh" <path the change touches>
 | `SELF` | This session works in that repository itself (a worktree of it counts) | It is an expert there: implement. Peers in the same repository are experts too and coordinate as usual (ledger, `CLAIM`) |
 | `HANDOVER-QUESTION` | A live session works in that repository and this one does not | **Ask the user** via `AskUserQuestion` whether the change goes to that session, before writing anything. Recommend the handover |
 | `NONE` | Nobody live works there | Implement, claiming the work in the ledger first |
-| `UNKNOWN` | Peers could not be scanned (messaging unavailable, native Windows) or one is unreadable | Check `ListAgents`: generated names start with the session's directory name, so a row named after the repository is probably its expert. Then ask as for `HANDOVER-QUESTION` |
+| `UNKNOWN` | Peers could not be scanned (messaging unavailable, native Windows) or one is unreadable | Check `ListAgents`: generated names are the session's directory name plus a short suffix without a further dash, so a row named after the repository that way is probably its expert (`ng-base-57` works in `ng-base`, `ng-base-starter-67` does not). Then ask as for `HANDOVER-QUESTION` |
 
 The question names the expert session (match the script's pid to its `ListAgents` row by uptime) and what would be handed over. It is asked even in an otherwise unattended run, because only the user redistributes work between sessions. The answer decides the rest:
 
