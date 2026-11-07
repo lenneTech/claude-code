@@ -11,6 +11,30 @@
   ],
   "phrases": [
     {
+      "name": "a hasBin repair in a pnpm workspace needs -r at the root, without it pnpm answers Already up to date and repairs nothing",
+      "phrase": "pnpm -r update <pkg> --depth Infinity",
+      "files": [
+        "agents/npm-package-maintainer.md",
+        "skills/maintaining-npm-packages/SKILL.md"
+      ]
+    },
+    {
+      "name": "the hasBin check after a lockfile change reports only entries whose version stayed, so an update that moves versions is not a false alarm",
+      "phrase": "kept their version but lost `hasBin`",
+      "files": [
+        "agents/npm-package-maintainer.md",
+        "skills/maintaining-npm-packages/SKILL.md"
+      ]
+    },
+    {
+      "name": "pnpm install --fix-lockfile strips hasBin before pnpm 11.28.6, so both the skill and the maintainer agent name that floor",
+      "phrase": "pnpm 11.28.6 or later",
+      "files": [
+        "agents/npm-package-maintainer.md",
+        "skills/maintaining-npm-packages/SKILL.md"
+      ]
+    },
+    {
       "name": "broken callers are in the review's scope, in the command and in the reviewers' bar",
       "phrase": "untouched caller",
       "files": [

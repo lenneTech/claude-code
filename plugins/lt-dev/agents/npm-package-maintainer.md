@@ -182,6 +182,7 @@ release carries the fix yet, report it as blocked — do not force it.
 9. **Coupled artifacts move in lockstep**: some packages have a pinned twin OUTSIDE `package.json` that must be bumped in the same change, or a green local suite hides a red CI:
    - **`@playwright/test` → the Playwright CI image.** When you bump `@playwright/test`, grep every CI file (`.gitlab-ci.yml`, `.github/workflows/*.yml`) for `mcr.microsoft.com/playwright:vX.Y.Z-noble` and set the tag to the SAME version. The prebuilt image ships the browser binaries and the GitLab job runs no `playwright install`, so a stale image fails the WHOLE E2E suite at browser launch — and `pnpm test` alone never catches it because it doesn't run Playwright. Starters ship `scripts/check-playwright-image.mjs` (wired into `check` + the CI `lint` job) that asserts this; run it after the bump. Hit live in lt-crm (1.60.0→1.61.1 bump left the image at v1.60.0/v1.58.0 → red pipeline, no code fault).
    - General rule: after any dep bump, if a matching version string exists in a Dockerfile, CI image tag, or `.tool-versions`-style pin, update it too.
+10. **Lockfile bins stay linked** (pnpm): a lockfile that no longer matches its manifest is repaired with a plain `pnpm install`. `pnpm install --fix-lockfile` is only for a lockfile pnpm rejects as broken, and only on pnpm 11.28.6 or later: before that it strips `hasBin` from the entries it reuses while every install stays green. A `packageManager` below `pnpm@11.28.6` is raised in this run; a newer pnpm on the machine does not count, because inside the project pnpm runs the version `packageManager` pins. Phase 8 proves it with the `hasBin` check.
 
 ## Execution Protocol
 
@@ -662,6 +663,15 @@ pnpm test
 
 **The task completes only once both `pnpm run build` and `pnpm test` pass.**
 
+**pnpm projects: no lockfile entry lost `hasBin`.** Next to every `pnpm-lock.yaml` this run changed, run the check from
+the skill section "A Lockfile Entry Can Lose `hasBin`". It lists the entries that kept their version but lost `hasBin`
+since the last commit, and its output must be empty. Each listed entry is re-resolved with
+`pnpm update <pkg> --depth Infinity`, in a pnpm workspace with `pnpm -r update <pkg> --depth Infinity` at the root
+(without `-r` a workspace answers "Already up to date" and repairs nothing; in a single project `pnpm -r update <pkg>` repairs nothing).
+The check then runs again, and the report names the repaired entries. A build and a
+test suite are no evidence here: the install stays green, and the missing link first fails in an install script, in
+CI.
+
 ### Phase 9: Artifact Cleanup
 
 **Goal**: Remove any temporary files created during the maintenance process (especially in `tests/` folder).
@@ -820,6 +830,7 @@ Provide comprehensive report after all optimizations:
 - Tests: X/Y passing (100%) ✅
 - Build: ✅
 - Vulnerabilities: 0 ✅
+- Lockfile bins (pnpm): no entry lost `hasBin` ✅ (repaired: [entries] or none)
 - Updated: X/Y packages (Z%)
 - Blocked: X/Y packages (documented)
 
@@ -887,6 +898,7 @@ Before declaring success, verify all of these:
 - [ ] `pnpm run build` passes (exit code 0)
 - [ ] `pnpm test` passes (all tests green)
 - [ ] `pnpm audit` shows 0 vulnerabilities
+- [ ] pnpm: the `hasBin` check prints nothing for every lockfile this run changed, and no `install --fix-lockfile` ran below pnpm 11.28.6
 - [ ] Source code changes minimized
 - [ ] Final `pnpm dlx npm-check-updates` shows only blockers or empty
 - [ ] Temporary artifacts (.txt, .log files) cleaned up

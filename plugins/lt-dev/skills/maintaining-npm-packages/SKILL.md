@@ -17,6 +17,7 @@ paths:
 - **`pnpm audit --fix --force` can cause major version jumps** — Step 3 of the escalation ladder is destructive. It will happily upgrade a transitive dependency from `^1.x` to `3.x` if that closes the CVE. Always verify `pnpm run build` and the full test suite after using it, and prefer a scoped override for transitives where a compatible patch exists.
 - **Deprecated packages in `devDependencies` often lag** — `@types/*` packages in particular remain flagged as deprecated for months after the upstream merges types natively. Don't remove them blindly — check the affected imports still resolve via the new inline types before deleting.
 - **`packageManager` field locks pnpm/npm/yarn version** — When running maintenance across a monorepo, the `packageManager: "pnpm@X.Y.Z"` field in the root `package.json` pins the exact version. Upgrading pnpm without also bumping this field causes CI and local runs to diverge silently.
+- **A lockfile entry can lose `hasBin` while every install stays green** — `pnpm install --fix-lockfile` before pnpm 11.28.6 strips it from entries it reuses, and those packages' executables are never linked again (`node-gyp-build: not found` in CI). Run the `hasBin` check after every run that rewrote a lockfile; see "A Lockfile Entry Can Lose `hasBin`" below.
 
 ## When to Use This Skill
 
@@ -282,6 +283,74 @@ Reset the lockfile to its committed state instead, make every manifest change, t
 the window is for. If such an exception is ever unavoidable it carries a date, a reason, and a
 removal condition, and then somebody has to actually re-read it, which is exactly what failed
 twice above.
+
+## A Lockfile Entry Can Lose `hasBin` (Critical)
+
+`hasBin: true` on an entry in `pnpm-lock.yaml` is what makes pnpm link that package's executables. An entry
+without it still installs, `--frozen-lockfile` included, but its executable is never linked, and the first install
+script that calls it fails far from the cause: bcrypt's `node-gyp-build: not found` in CI is the typical symptom.
+
+**Cause:** `pnpm install --fix-lockfile` clears `hasBin` and `deprecated` on every entry before it re-resolves, and
+pnpm 11 reuses unchanged entries without reading their manifest, so only the re-resolved entries get the fields back.
+Fixed in **pnpm 11.28.6** ([pnpm/pnpm#6600](https://github.com/pnpm/pnpm/issues/6600),
+[pnpm/pnpm#6784](https://github.com/pnpm/pnpm/pull/6784)); the bug goes back to pnpm 8.
+
+Measured 2026-11-07 in a throwaway project with `bcrypt`:
+
+| pnpm | Sequence | Result |
+|---|---|---|
+| 11.28.5 | manifest change, then `install --fix-lockfile` | `hasBin` entries 3 → 1; a clean frozen install has no `node-gyp-build` link for bcrypt |
+| 11.28.5 | `update --depth Infinity` in a single project (13 versions moved), `update -r --depth Infinity` in a workspace with overrides | every `hasBin` kept |
+| 11.28.10, 11.28.11 | the same `install --fix-lockfile` | every `hasBin` kept |
+
+Reported from a project rollout the same day: after `update --depth Infinity` and `install --fix-lockfile` on
+pnpm 11.28.5 the lockfile went from 112 `hasBin` entries to 29, and every CI install failed on bcrypt. Replayed on
+that commit's parent with its manifest changes, one command at a time (112 entries before):
+
+| pnpm | Command | `hasBin` entries after |
+|---|---|---|
+| 11.28.5 | `update --depth Infinity` / `update -r --depth Infinity` / plain `install` | 115 / 117 / 113 |
+| 11.28.5 | `install --fix-lockfile` | 35 |
+| 11.28.5 | `update --depth Infinity`, then `install --fix-lockfile` | 5 |
+| 11.28.10 (`packageManager` raised) | `install --fix-lockfile` | 113 |
+
+The loss comes from `--fix-lockfile`, and an update before it widens it; the check below catches it either way.
+
+1. **pnpm at 11.28.6 or later, through `packageManager`.** A `packageManager` field below `pnpm@11.28.6` is raised in
+   the same maintenance run; nuxt-base-starter's field is the reference. A newer pnpm on the machine changes nothing
+   while the pin stays low: inside the project pnpm runs the pinned version (measured: `npx pnpm@11.28.10 --version`
+   printed `11.28.5` there).
+2. **A plain `pnpm install` repairs a lockfile that no longer matches its manifest.** `--fix-lockfile` is for a
+   lockfile pnpm rejects as broken, and only on pnpm 11.28.6 or later.
+3. **After every run that rewrote a lockfile, run the check** next to each `pnpm-lock.yaml` the run changed. It lists
+   the entries that kept their version but lost `hasBin` since the last commit; a package that changed version or left
+   the tree is not listed. Empty output is the pass:
+
+   ```bash
+   hasbin() { awk '/^packages:/{p=1;next} /^[^ ]/{p=0} p&&/^  [^ ]/{k=$1} p&&/^    hasBin: true/{print k}' | sort -u; }
+   entries() { awk '/^packages:/{p=1;next} /^[^ ]/{p=0} p&&/^  [^ ]/{print $1}' | sort -u; }
+   comm -23 <(git show HEAD:./pnpm-lock.yaml | hasbin) <(hasbin < pnpm-lock.yaml) | comm -12 - <(entries < pnpm-lock.yaml)
+   ```
+
+4. **Repair re-resolves the listed entries.** A plain `pnpm install` and `--fix-lockfile` keep the damaged entry, on
+   11.28.10 as well (measured), so neither brings `hasBin` back. What does, measured on 11.28.10. In a pnpm
+   workspace (`pnpm-workspace.yaml`, one lockfile at the root) the `update` routes run at the root with `-r`: without
+   it they answer "Already up to date" and repair nothing, while in a single project `pnpm -r update <pkg>` repairs
+   nothing.
+
+   | Route | Effect |
+   |---|---|
+   | `pnpm update <pkg> --depth Infinity` per listed entry; in a workspace `pnpm -r update <pkg> --depth Infinity` | re-resolves exactly those, within their ranges; the route inside a maintenance run |
+   | the last good lockfile (`git show <commit>:./pnpm-lock.yaml > pnpm-lock.yaml`), then the change again with a plain `pnpm install` | every entry restored, smallest diff; for damage that is already committed |
+   | `pnpm update --depth Infinity`; in a workspace `pnpm -r update --depth Infinity` | every entry restored, and every package moves within its range |
+
+   Temporary overrides that force the listed packages to re-resolve work too, and they repaired the reported
+   project; they come out again in the same change. A damage that is already committed does not show in the diff
+   against `HEAD`; the commit that brought it in is where the count drops:
+
+   ```bash
+   git log --format=%h -20 -- pnpm-lock.yaml | while read h; do echo "$h $(git show "$h:./pnpm-lock.yaml" | grep -c 'hasBin: true')"; done
+   ```
 
 ## Vulnerability Resolution Workflow
 
