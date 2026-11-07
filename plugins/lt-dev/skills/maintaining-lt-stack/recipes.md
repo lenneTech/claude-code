@@ -8,9 +8,12 @@ Part of the [`maintaining-lt-stack`](SKILL.md) skill. Where a step says "see the
 
 > **Picking the number: a breaking change is a MINOR here, never a major.**
 > Same rule as nest-server below, different anchor: the MAJOR digit tracks the **Nuxt**
-> major this module targets — `1.x` is Nuxt 4 — so it moves when, and only when, Nuxt
-> moves. Everything of our own ships in a minor, breaking changes included: a removed
-> composable, a changed option shape, a **narrowed peer range**.
+> major this module targets — `4.x` is Nuxt 4 — so it moves when, and only when, Nuxt
+> moves (SKILL.md, "Version scheme", rule 1; the series went from `1.28.0` straight to
+> `4.0.0`, read versions across that jump as the same section says). Everything of our own
+> that consumers have to act on ships in a minor, breaking changes included: a removed
+> composable, a changed option shape, a **narrowed peer range**. What they can adopt as is
+> ships in a patch.
 >
 > This half was unwritten until 1.15.0 narrowed `better-auth` from `>=1.0.0` to
 > `>=1.7.1 <1.8.0` — an install-breaking change for anyone below the floor, shipped as a
@@ -18,7 +21,8 @@ Part of the [`maintaining-lt-stack`](SKILL.md) skill. Where a step says "see the
 > the anchor is what overrides it, and the anchor only holds if it is written down.
 >
 > The `### Breaking` CHANGELOG heading plus a `migration-guides/` entry carry the warning
-> instead. Say up front that the minor contains breaking changes and why the digit stays.
+> instead; for a minor the guide is mandatory. Say up front that the minor contains breaking
+> changes and why the digit stays.
 
 1. Maintenance (`/lt-dev:maintenance:maintain`) → `pnpm i` → `pnpm run check` green.
 2. New version in `package.json`, `pnpm i`.
@@ -40,7 +44,8 @@ Part of the [`maintaining-lt-stack`](SKILL.md) skill. Where a step says "see the
 >
 > The migration guide (step 3) is what carries the weight instead: say up front that the
 > minor contains breaking changes and why the digit stays, so nobody reads the version number
-> as a promise it does not make.
+> as a promise it does not make. MINOR and PATCH mean what SKILL.md, "Version scheme", rule 1
+> says; this package's `.claude/rules/versioning.md` is the model for that section.
 
 1. Work on `develop`. Maintenance (`/lt-dev:maintenance:maintain`) → `pnpm i` → `pnpm run check` green.
 2. New version in `package.json`, `pnpm i`.
@@ -80,9 +85,19 @@ Part of the [`maintaining-lt-stack`](SKILL.md) skill. Where a step says "see the
 
 ### Release commit for the templates (lt-monorepo, nuxt-base-starter, ng-base-starter; also ng-base)
 
-These repos are released by hand, without a release tool: the version jump is
-`/lt-dev:publish`'s decision (`--release-as`, otherwise derived from the diff), and the
-CHANGELOG section is written directly.
+These repos are released by hand, without a release tool, and the CHANGELOG section is
+written directly. Where the number comes from depends on the repo (SKILL.md, "Version scheme"):
+
+- **nuxt-base-starter, ng-base-starter:** nobody chooses it. The version is the version of the
+  library the starter pins (`@lenne.tech/nuxt-extensions`, `@lenne.tech/ng-base`), and a release
+  happens only for a new library version. A starter change without one is committed and pushed
+  to `main` with `version` unchanged, without a release commit or tag (rule 2). The commit that
+  raises the pin raises the root `version` with it, in the same PR where the change goes through
+  one, so no commit on `main` ever has the two apart. Step 1 below is then already done, and the
+  release commit adds only the CHANGELOG section before the tag.
+- **lt-monorepo, ng-base:** `/lt-dev:publish` proposes it from the diff (`--release-as`
+  overrides), MINOR for what consumers have to act on, PATCH for what they can adopt as is;
+  ng-base's MAJOR is the Angular major, lt-monorepo's stays (rules 1 and 3).
 
 1. **Version.** Raise `version` in the root `package.json` to `X.Y.Z`. lt-monorepo
    carries it a second time, in the `// @lt-check-wrapper X.Y.Z` line at the top of
@@ -128,7 +143,8 @@ CHANGELOG section is written directly.
      section; a `### [X.Y.Z]` heading yields none, and the release reads only "See CHANGELOG.md".
 3. **Commit, tag, push.** Stage exactly the release files (`git add package.json
    CHANGELOG.md`, in lt-monorepo plus `scripts/check.mjs`, in ng-base plus every file
-   `pnpm run version:sync` wrote, see the ng-base recipe), then:
+   `pnpm run version:sync` wrote, see the ng-base recipe; in the two starters only
+   `CHANGELOG.md`, their version came with the pin), then:
 
    ```bash
    git commit -m "chore(release): X.Y.Z"
@@ -143,6 +159,9 @@ CHANGELOG section is written directly.
 
 ### lt-monorepo (template, not an npm package)
 
+Version per SKILL.md, "Version scheme", rule 3: the MAJOR stays, MINOR or PATCH by what the
+release asks of projects that update.
+
 1. Maintenance (`/lt-dev:maintenance:maintain`) → `pnpm run check` green.
 2. `git add . && git commit -am 'MESSAGE'`.
 3. Release commit, tag and push as in "Release commit for the templates" above
@@ -154,6 +173,9 @@ CHANGELOG section is written directly.
    of creating a lightweight tag on the remote.
 
 ### lt CLI (npm package `@lenne.tech/cli`)
+
+Version per SKILL.md, "Version scheme", rule 3: the MAJOR stays, MINOR or PATCH by what the
+release asks of its users.
 
 1. Maintenance (`/lt-dev:maintenance:maintain`) → `npm run check` green (note: npm, not pnpm; the
    audit gate aborts on ANY finding — fix via `overrides` + the `//overrides`
@@ -171,16 +193,33 @@ CHANGELOG section is written directly.
 
 ### nuxt-base-starter (template; consumes nuxt-extensions)
 
+**The starter follows nuxt-extensions, release for release** (SKILL.md, "Version scheme",
+rule 2): its root `version` equals the `@lenne.tech/nuxt-extensions` version that
+`nuxt-base-template/package.json` pins, every nuxt-extensions version gets its starter release,
+and a starter change without one is pushed to `main` with `version` unchanged, no release
+commit and no tag. `nuxt-base-template/package.json` keeps its own `version` (`0.0.1`): it
+belongs to the generated project, not to the starter.
+
 0. **Wait** until `@lenne.tech/nuxt-extensions@<version>` resolves — version-specific
    endpoint, see the propagation rule above (`npm view` reads a lagging cache).
-1. Bump the dependency in `nuxt-base-template/package.json`.
+1. Pin the dependency **exactly** in `nuxt-base-template/package.json`
+   (`"@lenne.tech/nuxt-extensions": "X.Y.Z"`, no range) and set the root `version` to the same
+   `X.Y.Z`, in the same commit (the same PR). `scripts/starter-version.test.mjs` in the repo root,
+   part of `check`, fails whenever the two differ; it sits outside `nuxt-base-template/` because
+   `lt fullstack init` copies only that folder, and a generated project's version differs on
+   purpose. The one-liner checks it without a full `check` run:
+
+   ```bash
+   node -e "const r=require('./package.json'),t=require('./nuxt-base-template/package.json');process.exit(r.version===t.dependencies['@lenne.tech/nuxt-extensions']?0:1)" && echo "version matches" || echo "MISMATCH"
+   ```
 2. Maintenance (`/lt-dev:maintenance:maintain`) → repo root: `pnpm i` + `pnpm run check`; additionally
    `cd nuxt-base-template && pnpm i && pnpm run check`.
 3. Optional but recommended before UI-lib bumps: `pnpm run test:e2e` in the
    template (Playwright is NOT part of `check`).
 4. Stage the paths this update changed (`git add <paths>`, never `git add .`: the checkout can
-   hold a live session's uncommitted work) → commit (message from diff analysis) → release
-   commit, tag and push as in "Release commit for the templates" above. The push of commit
+   hold a live session's uncommitted work) → commit (message from diff analysis; it carries the
+   pin and the root `version` from step 1) → release commit with only the CHANGELOG section, tag
+   and push as in "Release commit for the templates" above. The push of commit
    and tag goes **in two steps**, never as one combined `git push --follow-tags`:
 
    ```bash
@@ -214,7 +253,8 @@ CHANGELOG section is written directly.
 
 ### ng-base (npm package `@lenne.tech/ng-base`; Angular frontend library, consumed by ng-base-starter)
 
-> **The MAJOR digit is the Angular major** (`22.x` is Angular 22), the way nuxt-extensions' tracks Nuxt.
+> **The MAJOR digit is the Angular major** (`22.x` is Angular 22), the way nuxt-extensions' tracks Nuxt;
+> MINOR and PATCH as in SKILL.md, "Version scheme", rule 1, with a guide in `migration-guides/` for every minor.
 > **The tag carries a `v`, the npm version does not:** tag `v22.0.0`, package `22.0.0`, unlike
 > nuxt-extensions' bare `1.25.0`. Vendor mode clones the tag `v<version>`, so a missing or
 > differently spelled tag breaks every vendored project's update.
@@ -247,15 +287,24 @@ where it differs from the steps below, the workflow wins, because it is what run
 
 ### ng-base-starter (template; consumes ng-base)
 
-Released like nuxt-base-starter: an annotated tag `vX.Y.Z` plus a GitHub release, no npm package. Its
-version is SemVer of its own within the Angular major (it starts at `22.0.0`), with no lock-step to
-ng-base. Unlike nuxt-base-starter it is **flat**: the repository root is the app, with `package.json`
-and `pnpm-lock.yaml` at the root and no `*-template/` folder.
+Released like nuxt-base-starter: an annotated tag `vX.Y.Z` plus a GitHub release, no npm package. **It
+follows ng-base, release for release** (SKILL.md, "Version scheme", rule 2): its `version` equals the
+`@lenne.tech/ng-base` version it pins, every ng-base version gets its starter release, and a starter change
+without one is pushed to `main` with `version` unchanged, no release commit and no tag. The one exception
+is inherited: `v22.0.3` from its earlier own numbering next to ng-base `22.0.2`, closed by ng-base's next
+release (at least `22.0.4`, a patch skips `22.0.3`) and the starter release that follows it. Unlike
+nuxt-base-starter it is **flat**: the repository root is the app, with `package.json` and `pnpm-lock.yaml`
+at the root and no `*-template/` folder.
 
 0. **Wait** until `@lenne.tech/ng-base@<version>` resolves on the version-specific endpoint (see the
    propagation rule above).
 1. Pin the new version **exactly** (`"@lenne.tech/ng-base": "X.Y.Z"`, no range) in the root
-   `package.json`, then `pnpm i`.
+   `package.json`, set the root `version` to the same `X.Y.Z` in the same commit (the same PR), then
+   `pnpm i`. `node -p "const p=require('./package.json');p.version===p.dependencies['@lenne.tech/ng-base']"`
+   prints `true`. A guard like nuxt-base-starter's `starter-version.test.mjs` fits here only in a path
+   `lt fullstack init` strips from Angular apps (`.github`, `CHANGELOG.md`, `extras`, `migration-guides`,
+   the CLI's `ANGULAR_STARTER_REPO_ONLY`): the repository root is the app, so a check under `scripts/`
+   would travel into every generated project and fail on its correctly different version.
 2. Maintenance (`/lt-dev:maintenance:maintain`, when the step-2 answer asks for it) → `pnpm run check`
    green, and `pnpm run test:e2e` before UI-library bumps, as in nuxt-base-starter.
 3. **Gate: the starter resolves ng-base from the registry.** Local integration may run on an injected
@@ -274,15 +323,17 @@ and `pnpm-lock.yaml` at the root and no `*-template/` folder.
    `pnpm run check` alone only warns about a local pin; `check:release` is the strict form CI runs. The pinned
    version answers 200 on the version-specific endpoint (step 0).
 4. Stage the paths this update changed (`git add <paths>`, never `git add .`), with `CHANGELOG.md` kept out
-   of this content commit (the ng-base-starter CHANGELOG rule above), commit, then the release commit, tag
-   and two-step push as in "Release commit for the templates" above.
+   of this content commit (the ng-base-starter CHANGELOG rule above) and the pin and root `version` from
+   step 1 in it, commit, then the release commit with only the CHANGELOG section, tag and two-step push as
+   in "Release commit for the templates" above.
 5. **Then stop: the GitHub release makes itself** from the tag (`.github/workflows/release.yml`), as in
    nuxt-base-starter step 5. Verify with `gh release view vX.Y.Z` and the workflows green.
 
 ### nest-server-starter (template; consumes nest-server)
 
 **The starter follows nest-server, release for release** (Kai, 2026-11-03; the starter's
-`CLAUDE.md` states the same rule):
+`CLAUDE.md` states the same rule, and SKILL.md, "Version scheme", rule 2 extends it to every
+starter):
 
 1. **Same number.** `version` equals the `@lenne.tech/nest-server` version (step 1).
 2. **Every nest-server version gets its starter version.** Each version published to npm is
@@ -351,10 +402,14 @@ code, and nothing consumes them via npm. Both use the same one-step release,
 **always through the npm script**, never a hand-made version edit or commit:
 
 ```bash
-npm run version:patch "<commit message>"   # or version:minor / version:major
+npm run version:patch "<commit message>"   # or version:minor
 ```
 
-`scripts/bump-version.ts` bumps `package.json`, `.claude-plugin/marketplace.json`
+Patch or minor per SKILL.md, "Version scheme", rule 3: minor when users have to act after
+`lt claude plugins` (a command, flag or skill renamed or removed, a permission pattern gone, a
+workflow that behaves differently, a companion plugin newly required), and the message then opens
+with what they have to do; patch for what they get without doing anything. `version:major` only on
+the user's explicit decision. `scripts/bump-version.ts` bumps `package.json`, `.claude-plugin/marketplace.json`
 and every `plugins/*/plugin.json` to the same version, commits, tags `vX.Y.Z`
 and pushes — a complete release, so run it only when everything is final. The
 message is mandatory: it becomes the commit body and the tag annotation. Quote

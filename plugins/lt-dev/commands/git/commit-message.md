@@ -51,4 +51,14 @@ Then assess the semver impact:
 - **minor**: New features, new capabilities, behavioral changes — backward compatible
 - **major**: Breaking changes, removed features, changed APIs — not backward compatible
 
+**In an lt base repo the stack's version scheme replaces these three lines** (skill `maintaining-lt-stack`,
+"Version scheme"). This covers nest-server, nuxt-extensions, ng-base, the three starters, cli, lt-monorepo and both
+marketplaces:
+
+- **patch**: an improvement or extension consumers can adopt as is
+- **minor**: a change consumers have to take into account when migrating (behaviour, code or configuration), breaking
+  changes included
+- **major**: never for a change of our own. In nest-server, nuxt-extensions and ng-base it follows the NestJS, Nuxt or
+  Angular major; a starter always carries its library's version; in the other repos only the user decides one
+
 Then add: "**Copy your preferred message to use with `git commit -am \"...\"`**"

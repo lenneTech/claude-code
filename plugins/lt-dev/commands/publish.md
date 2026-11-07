@@ -71,25 +71,51 @@ into the release notes analysis and the final report.
 | Source repo | Downstream updated afterwards |
 |---|---|
 | `nest-server` | `nest-server-starter`, mandatory (lock-step version, `pnpm run update`, migration guides); a release from `release/11.x` goes to the starter's `release/11.x` |
-| `nuxt-extensions` | `nuxt-base-starter` (bump dep in `nuxt-base-template/`) |
-| `ng-base` | `ng-base-starter` (bump `@lenne.tech/ng-base` once the version resolves on npm, per the skill's ng-base-starter recipe) |
+| `nuxt-extensions` | `nuxt-base-starter`, mandatory (lock-step version, exact pin in `nuxt-base-template/`) |
+| `ng-base` | `ng-base-starter`, mandatory (lock-step version, exact pin of `@lenne.tech/ng-base` once it resolves on npm, per the skill's ng-base-starter recipe) |
 | `lt-monorepo`, `cli`, starters | none (chain ends there) |
 | `claude-code`, `claude-code-internal` | none — consumers pull via `lt claude plugins` |
 
-**nest-server-starter has no releases of its own.** Its version is always the nest-server
-version it pins, every nest-server version gets one, and nothing else raises it (skill recipe,
-nest-server-starter). Two consequences for this command:
+**Starters have no releases of their own.** nest-server-starter, nuxt-base-starter and
+ng-base-starter always carry the version of the library they pin (`@lenne.tech/nest-server`,
+`@lenne.tech/nuxt-extensions`, `@lenne.tech/ng-base`), every library version gets its starter
+release, and nothing else raises it (skill, "Version scheme", rule 2). The commit that raises the
+pin raises the starter's `version` with it, in the same PR where the change goes through one:
+nuxt-base-starter's `scripts/starter-version.test.mjs` fails `check` on any commit that has them
+apart. The release commit of nuxt-base-starter and ng-base-starter then adds only the CHANGELOG
+section before the tag; nest-server-starter has no release commit, its one bump commit
+`Updated to nest-server version <X.Y.Z>` is tagged by `tag.yml`. Two consequences for this
+command:
 
-- **After a nest-server release the starter release is part of the job.** `--skip-downstream`
+- **After a library release the starter release is part of the job.** `--skip-downstream`
   leaves the starter without that version: the report names the gap, and the next run closes
   it before releasing anything newer.
-- **`nest-server-starter` as the target** first compares its pinned `@lenne.tech/nest-server`
-  with the newest version on npm for its line (`latest` for `main`, `latest-11` for
-  `release/11.x`). A newer version there makes this run the lock-step bump of step 5, one bump
-  and one push per missing version, oldest first. Otherwise the change is an interim one: never
-  raise `version` and refuse `--release-as`; it passes the step 2b review, is committed with a
-  normal message and pushed, with no release and no tag. It ships under the next nest-server
-  version.
+- **A starter as the target** first compares its pinned library with the newest version on npm
+  for its line (`latest` for `main`; nest-server-starter's `release/11.x` follows `latest-11`).
+  A newer version there makes this run the lock-step bump of step 5, one bump and one push per
+  missing version, oldest first. Otherwise the change is an interim one: never raise `version`
+  and refuse `--release-as`; it passes the step 2b review, is committed with a normal message
+  and pushed, with no release commit, no release and no tag. It ships with the next library
+  version. The one inherited mismatch, ng-base-starter `v22.0.3` next to ng-base `22.0.2`, stays
+  until ng-base's next release, which is at least `22.0.4` (a patch skips `22.0.3`); its starter
+  release brings the two back in step.
+
+## Choosing the version
+
+Every version this command proposes follows the skill's "Version scheme". Decide it before the
+version bump, from the step 0 summary and the step 2b review diff, and state it with its reason
+in the step 7 report and in the `--dry-run` plan (`minor: useLtAuth drops the legacy option, see
+the migration guide`).
+
+| Target | MAJOR | MINOR or PATCH |
+|---|---|---|
+| Library: `nest-server`, `nuxt-extensions`, `ng-base` | the core package's major in the release manifest (`@nestjs/core` in `dependencies`, `nuxt` in `peerDependencies`, `@angular/core` in the root `dependencies`); when it differs from the current MAJOR the version is `<major>.0.0`, otherwise the MAJOR stays | MINOR when consumers have to take something into account when migrating (behaviour, code or configuration: a removed or renamed export, a changed signature or default, a new required setting, a narrowed peer range or raised peer floor), with the migration guide saying so first; PATCH for what they can adopt as is, a dependency-only change included unless it asks something of them |
+| Starter | always the library's version (section above) | never chosen |
+| `cli`, `lt-monorepo`, `claude-code`, `claude-code-internal` | stays; only an explicit decision by the user raises it | as for libraries |
+
+Read the core major with `node -p "require('./package.json').dependencies['@nestjs/core']"` (the
+field per row above) instead of trusting the current version. A breaking change of our own is a
+MINOR in every repo; when the diff tempts towards a major, that is the case the scheme exists for.
 
 ## Marketplace repos (`claude-code`, `claude-code-internal`)
 
@@ -97,7 +123,7 @@ Both marketplaces release identically — **always via the npm script**, never b
 editing versions or crafting the commit by hand:
 
 ```bash
-npm run version:patch "<commit message>"    # or version:minor / version:major
+npm run version:patch "<commit message>"    # or version:minor ("Choosing the version")
 ```
 
 `scripts/bump-version.ts` bumps `package.json`, `.claude-plugin/marketplace.json`
@@ -247,7 +273,8 @@ A restart of Claude Code is required — running sessions keep the old version.
 3. **Release source repo** per skill recipe — for `claude-code` /
    `claude-code-internal` use the marketplace section above instead — (version bump, commit convention,
    PR flow for nest-server incl. migration guide, `gh release create`,
-   consumer-oriented English notes, no time estimates). For the commit message,
+   consumer-oriented English notes, no time estimates), with the version from "Choosing the
+   version" above. For the commit message,
    follow the repo convention (`NEW_VERSION: MESSAGE` for npm packages,
    conventional-commits for templates); `/lt-dev:git:commit-message` is the
    recommended helper for the wording, but skip it when the change already
@@ -259,8 +286,9 @@ A restart of Claude Code is required — running sessions keep the old version.
    (`https://registry.npmjs.org/<pkg>/<version>` answers 200), never `npm view`, which reads a
    cache that lags minutes behind a publish (skill rule).
 5. **Update downstream** (unless `--skip-downstream`): bump to the new
-   version per its recipe (lock-step + migration guides for
-   nest-server-starter), then **apply the step-2 answer here too** — run
+   version per its recipe (lock-step: the starter's `version` and its exact
+   library pin both become the new library version, in one commit; plus the
+   migration guides for nest-server-starter), then **apply the step-2 answer here too** — run
    `/lt-dev:maintenance:maintain` (latest frameworks + packages) only when the
    gate was answered "Maintain first" (or `--maintenance` was passed); on
    "Publish directly" / `--skip-maintenance` do the lock-step bump WITHOUT the
@@ -328,20 +356,22 @@ A restart of Claude Code is required — running sessions keep the old version.
    deploy contract). For `ng-base` and `ng-base-starter` it runs with
    `--frontend=angular`; every other repo keeps the default Nuxt run. The smoke
    test does not apply to marketplace repos.
-7. **Report**: versions old→new per repo, release links, the review result
+7. **Report**: versions old→new per repo with the reason for the jump ("Choosing the version"), release links, the review result
    per repo, the route per downstream repo (checkout, worktree with `CLAIM` and
    `LANDED`, or handed over to `<session>` together with the line its user types),
-   what was NOT released and why (for nest-server with `--skip-downstream`: the starter
+   what was NOT released and why (for a library with `--skip-downstream`: the starter
    version now missing), leftovers (none expected — this flow creates no test
    systems unless `--smoke-test` ran, which cleans up after itself).
 
 ## Flags
 
 - `--release-as=…` — force the version jump for the source repo (default:
-  derived from the diff). Refused for `nest-server-starter`, whose version only
-  follows nest-server.
-- `--skip-downstream` — publish the source repo only. For nest-server this leaves
-  the starter version missing, which the report names and the next run closes.
+  "Choosing the version"). Refused for the three starters, whose version only
+  follows their library. `major` is refused for a library whose core package
+  keeps its major, and for `cli`, `lt-monorepo` and the marketplaces it needs the
+  user's explicit decision; a session never adds it on its own.
+- `--skip-downstream` — publish the source repo only. For a library this leaves
+  its starter version missing, which the report names and the next run closes.
 - **Maintenance is interactive by default** — the command ASKS whether to
   refresh dependencies before publishing (see Flow step 2), and the answer
   applies to the WHOLE chain. The two flags below only pre-answer that question
@@ -353,7 +383,7 @@ A restart of Claude Code is required — running sessions keep the old version.
     on every downstream repo, no ask.
 - `--smoke-test` — run the full smoke-test gate after the chain.
 - `--dry-run` — analyze and print the plan (target repo, change summary,
-  planned versions), no writes/releases.
+  planned versions with their reason), no writes/releases.
 
 ## Related
 

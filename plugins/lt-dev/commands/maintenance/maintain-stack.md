@@ -58,8 +58,10 @@ following the skill recipe. The review gate is `/lt-dev:review --base=<tag>
 `git describe --tags --abbrev=0 origin/main`; a finding it could not fix stops
 that repo's release and every repo downstream of it. Repos may run in parallel
 (separate directories), the reviews one repo at a time, since each fans out its
-own reviewer fleet; run at most 2 CPU-heavy `check` runs at once. `--release-as` sets the version bump (default: derive it
-from the diff; dependency-only changes ⇒ patch).
+own reviewer fleet; run at most 2 CPU-heavy `check` runs at once. `--release-as` sets the version bump (default: the
+skill's "Version scheme", applied as in `/lt-dev:publish` "Choosing the version": MINOR for what consumers have to act on,
+PATCH for what they can adopt as is, dependency-only changes included unless they ask something of consumers; a library's
+MAJOR only with its core package).
 
 A maintainer agent's final message is its report, not proof that the task is done. Compare it against the task given; when items are still open and no blocker is named, resume the same agent via `SendMessage` to its agent id, naming the open items. After two or three continuations on the same task, stop and report the gap instead.
 
@@ -68,9 +70,9 @@ A maintainer agent's final message is its report, not proof that the task is don
 working tree and no commits since the last released version). Never mint a
 version without any change. Every real repo change (dependencies, code,
 scripts, lockfile, tooling pins) justifies a new version, except in
-nest-server-starter: its version moves only with a nest-server version, so
-without a new one this round its changes are committed and pushed with
-`version` unchanged, no release and no tag (skill recipe).
+the starters: a starter's version moves only with its library's version, so
+without a new library version this round its changes are committed and pushed
+with `version` unchanged, no release and no tag (skill, "Version scheme").
 
 ### Phase 2 — npm propagation
 
@@ -86,7 +88,8 @@ failure (re-run). Do not stack a new tag on top.
 Follow the skill recipe: raise the dependency version (ng-base-starter pins `@lenne.tech/ng-base`
 exactly), run `pnpm run update` plus the migration guides (nest-server-starter), run the maintenance
 agent, run `check` (nuxt-base-starter twice, repo root and template; ng-base-starter once, it is flat),
-pass the review gate as in Phase 1, follow the commit convention, release.
+pass the review gate as in Phase 1, set the starter's `version` to the library version it now pins
+exactly (lock-step for all three starters), follow the commit convention, release.
 
 ### Phase 4 — Release gate: smoke test
 
@@ -102,10 +105,10 @@ Fix each smoke-test finding in the base repo that **caused** it, never only in
 the throwaway project. Release it as a patch using the repo recipe, after the
 review gate (Phase 1), wait for npm
 propagation and repeat the smoke-test phase until no findings remain (at most 3
-iterations, then report the open items). A fix in nest-server-starter passes the
-same review gate but gets no patch release: its version moves only with a
-nest-server version, so it is committed and pushed with `version` unchanged, no
-bump and no tag (skill recipe), and the push is what the next smoke round clones.
+iterations, then report the open items). A fix in a starter passes the
+same review gate but gets no patch release: a starter's version moves only with
+its library's version, so it is committed and pushed with `version` unchanged, no
+bump and no tag (skill, "Version scheme"), and the push is what the next smoke round clones.
 
 ### Phase 6 — Cleanliness + report
 
@@ -125,7 +128,8 @@ bump and no tag (skill recipe), and the push is what the next smoke round clones
   pulls in its npm package as a prerequisite.
 - `--skip-smoke-test` — maintenance and releases only (e.g. a pure security fix).
 - `--smoke-rounds=<n>` — MR rounds in the smoke test (default 1).
-- `--release-as=patch|minor|major` — force the version bump instead of deriving it.
+- `--release-as=patch|minor|major` — force the version bump instead of deriving it. Never applies to the
+  starters; `major` only where the skill's "Version scheme" allows one.
 - `--dry-run` — analyse and print the plan only; no writes, no releases.
 
 ## Related

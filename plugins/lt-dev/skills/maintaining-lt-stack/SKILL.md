@@ -33,7 +33,7 @@ Wave 2 (parallelizable):   nuxt-base-starter  ng-base-starter   nest-server-star
 Validation:                /lt-dev:fullstack:smoke-test  (exercises ALL repos live; Nuxt run by default)
                                  │
                                  ▼
-Wave 3 (only on findings): patch fixes → re-release affected repos (nest-server-starter: push only)
+Wave 3 (only on findings): patch fixes → re-release affected repos (starters: push only)
 ```
 
 **Rule:** A starter is only updated once its npm package actually resolves on
@@ -53,6 +53,55 @@ published yet" while `@lenne.tech/nest-server@11.41.0` had been up the whole
 time — the version-specific endpoint answered 200 immediately. From the
 caller's side "not there yet" and "the instrument is reading a cache" look
 identical, which is why the endpoint is the one to ask.
+
+## Version scheme (all base repos)
+
+One scheme for every base repo, decided by Kai on 2026-11-07, with nest-server's
+`.claude/rules/versioning.md` as the model. Whoever proposes a version follows it:
+`/lt-dev:publish`, `/lt-dev:maintenance:maintain-stack`, `/lt-dev:git:commit-message`, every agent.
+Ordinary semver reflexes do not apply here, above all "breaking means major".
+
+**1. Libraries with a core package:** nest-server (NestJS), nuxt-extensions (Nuxt), ng-base (Angular).
+
+- **MAJOR** is the core package's major: `@nestjs/core` in nest-server's `dependencies`, `nuxt` in
+  nuxt-extensions' `peerDependencies`, `@angular/core` in ng-base's root `dependencies`. It moves with the
+  core package and only with it, never for a breaking change of our own. A new core major starts the
+  library at `<major>.0.0`.
+- **MINOR** is a change consumers have to take into account when migrating: behaviour, code or
+  configuration. Examples: a removed or renamed export, a changed signature or default, a new required
+  setting or env var, a narrowed peer range or a raised peer floor. The migration guide is mandatory, and its
+  first lines say what the consumer has to do.
+- **PATCH** is an improvement or extension consumers can adopt as is: a bug fix, a new optional feature, a
+  dependency update that asks nothing of them.
+
+**2. Starters:** nest-server-starter, nuxt-base-starter, ng-base-starter. A starter always has the
+version of the library it builds on (Kai). Every library version gets its starter release,
+also when the bump is the only change. A starter's version moves only with its library's version: a
+change to the starter alone is committed and pushed to `main` with `version` unchanged (no release, no
+tag) and ships with the next library release. `lt fullstack init` clones `main`, so new projects get it
+at once. One inherited gap stays as it is: ng-base-starter `v22.0.3` from its earlier own numbering,
+next to ng-base `22.0.2`. ng-base's next release is therefore at least `22.0.4` (a patch skips `22.0.3`,
+because a starter tag is never set twice), and from its starter release on the two are back in step.
+
+**3. Repos without a core package:** cli, lt-monorepo, claude-code (lt-dev and its sibling plugins,
+which share one version), claude-code-internal. MAJOR stays: neither a breaking change nor a derived
+proposal raises it, only an explicit decision by the user. MINOR and PATCH mean the same as for libraries.
+A MINOR's release notes (for the marketplaces, the bump message) open with what consumers have to do.
+
+**4. Consumers pin exactly.** Because a MINOR can be breaking, every starter and every project pins
+`@lenne.tech/nest-server`, `@lenne.tech/nuxt-extensions` and `@lenne.tech/ng-base` to one version
+(`"12.7.2"`, never `^12.7.2` or `~12.7.2`). A range pulls a breaking minor in on the next install,
+without anyone deciding it. Updaters write the pin exactly and report a range they find. An update
+applies every migration guide between the current and the target version, in order; for nest-server
+it also installs minor by minor (`nest-server-updating`).
+
+**Reading versions across the nuxt-extensions jump.** nuxt-extensions went from `1.28.0` straight to
+`4.0.0` when its MAJOR was tied to Nuxt 4, and nuxt-base-starter from `2.38.5` to `4.0.0` with it.
+nuxt-extensions `2.x` and `3.x` never existed, and every `1.x` predates `4.0.0`: a note such as "since
+nuxt-extensions 1.7.0" in an agent or skill is historical and holds for all of `4.x`. A stepwise update
+takes `1.28.0 → 4.0.0` as one step with that release's migration guide; there are no `2.x` or `3.x`
+guides to look for. nuxt-base-starter's `2.x` is its earlier own numbering and says nothing about the
+nuxt-extensions version it pinned.
 
 ## Running the waves across parallel sessions
 
@@ -203,10 +252,10 @@ What does **not** go over messages: which repos exist and in which order they go
   all. ANY actual repo change — dependency bumps, code, scripts, lockfile,
   tooling pins — justifies a new version; do not second-guess whether a
   change is "release-worthy". An unchanged repo is reported as
-  "already current — no release" and skipped. The one exception is
-  nest-server-starter: its version moves only with a nest-server version, so its
+  "already current — no release" and skipped. The starters are the one
+  exception: a starter's version moves only with its library's version, so its
   own changes are committed and pushed without a release and ship under the next
-  one ([recipes.md](recipes.md), nest-server-starter).
+  one ("Version scheme" above, rule 2).
   The reference is the PUBLISHED ARTIFACT: for npm packages, commits that
   cannot reach the tarball (outside the package.json `files` set — e.g.
   `.claude/agent-memory/**`, CI config) do not trigger a release of their
@@ -303,9 +352,9 @@ What does **not** go over messages: which repos exist and in which order they go
 - **Version convention for npm packages:** set the version manually in
   `package.json`, then `pnpm i`/`npm i` (lockfile!), commit message exactly
   `NEW_VERSION: COMMIT_MESSAGE` (e.g. `1.11.0: update deps, fix X`).
-- **nest-server-starter has no numbering of its own:** its `version` is always the
-  nest-server version it pins. Every nest-server version gets one, and nothing else
-  raises it ([recipes.md](recipes.md), nest-server-starter).
+- **Starters have no numbering of their own:** a starter's `version` is always the
+  version of the library it pins. Every library version gets one, and nothing else
+  raises it ("Version scheme" above, rule 2).
 - **Commit message:** the CONVENTION is non-negotiable — `NEW_VERSION: MESSAGE`
   for npm packages, conventional-commits for templates (the release commit
   groups their CHANGELOG section by type, see [recipes.md](recipes.md)), and the fixed
@@ -364,11 +413,11 @@ conventions, propagation waits — applies unchanged.
 After wave 2, run `/lt-dev:fullstack:smoke-test` (full run incl.
 TurboOps deploy + online checks + residue-free cleanup). Every finding is a
 base-repo fix → patch the causing repo → run its recipe again (patch
-release) → repeat the smoke-test phase until clean. A fix in
-nest-server-starter gets no patch release: its version moves only with a
-nest-server version, so the fix is committed and pushed with `version`
-unchanged, no bump and no tag ([recipes.md](recipes.md), nest-server-starter),
-and the push is what the next smoke round clones.
+release) → repeat the smoke-test phase until clean. A fix in a starter
+gets no patch release: a starter's version moves only with its library's
+version, so the fix is committed and pushed with `version` unchanged, no
+bump and no tag ("Version scheme" above, rule 2), and the push is what the
+next smoke round clones.
 
 The smoke test clones the templates from GitHub (`main`), so fixes take
 effect only after commit+push/release of the affected repo, never from the

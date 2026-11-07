@@ -127,7 +127,7 @@ SMOKE_DIR="${LT_SMOKE_DIR:-$HOME/lt-smoke}"   # no fixed workspace path — diff
 mkdir -p "$SMOKE_DIR" && cd "$SMOKE_DIR"
 lt fullstack init --name <name> --frontend nuxt --api-mode Rest \
   --framework-mode vendor --frontend-framework-mode vendor --noConfirm
-cd <name> && git add -A && git commit -m "chore: lt dev URL blocks"
+cd <name> && git add -A && { git diff --cached --quiet || git commit -m "chore: lt dev URL blocks"; }
 ```
 
 **On `--frontend=angular`:**
@@ -141,8 +141,11 @@ cd <name>
 test -f projects/app/angular.json                                            # ng-base-starter, not a Nuxt app
 grep -q '@lenne.tech/ng-base' projects/app/src/core/VENDOR.md                 # the frontend core really is vendored
 node "${CLAUDE_PLUGIN_ROOT}/scripts/ng-base-paths.mjs" projects/app --check   # tsconfig paths match the core
-git add -A && git commit -m "chore: lt dev URL blocks"
+git add -A && { git diff --cached --quiet || git commit -m "chore: lt dev URL blocks"; }
 ```
+
+The commit is skipped when there is nothing to commit: `lt fullstack init` may already have committed the URL
+blocks, and a bare `git commit` would then fail the step with "nothing to commit".
 
 The three checks run before anything else, because `lt fullstack init` only warns and continues in npm mode when
 the frontend vendor conversion fails, and a CLI without the ng-base vendor conversion leaves no `src/core/` at
@@ -153,7 +156,10 @@ the missing, stale or wrong `paths` keys, which the CLI derives from every `ng-p
 
 1. `lt dev up` → probe both URLs (`https://<slug>.localhost`, `https://api.<slug>.localhost/health-check`).
 2. `lt dev test` — **all** Playwright E2E tests must pass (25/25 in the starter state of 2026-07). The test stack runs the **built** app, which is exactly where build-only errors show up (e.g. SSR 500 from a duplicate unhead version) that dev mode swallows.
-   **On `--frontend=angular`:** every spec under the starter's `tests/e2e/` must pass. The test stack builds the app
+   **On `--frontend=angular`:** every spec under the starter's `tests/e2e/` must pass or be skipped by a condition the
+   spec itself declares. The `ssr-proxy-headers.spec.ts` tests skip under `lt dev test`
+   (`test.skip(!!process.env['LT_DEV_ACTIVE'], …)`), because Caddy sets the forwarded headers itself; the starter's CI
+   and the online check cover them. A failure, or a skip the spec does not declare, is a finding. The test stack builds the app
    into its own `NG_OUTPUT_DIR` and starts it through the `.output/server/index.mjs` shim that ng-base-starter's
    `scripts/build.mjs` writes, so a server that fails only when built shows up here as well.
 3. `pnpm run check` — fully green including audit (0 vulns) and a **clean** lint (0 warnings; a flood of warnings in the vendored core means a gap in the starter's oxlintrc).
@@ -187,7 +193,7 @@ skill `deploying-to-turboops`):
    images would go into one namespace while the other project would be deployed. The ID from
    `create_deployment_project` is not needed here.
 3. `create_deployment_stage` ×2: `dev` (development, `dev.<domain>`, branch `dev`) + `production` (production, `<domain>`, branch `main`) on the target server; set the branch via `update_stage_settings`.
-4. Upload the compose file: `POST /cli/deployment/projects/<id>/compose` → registers all 3 services on both stages (defuses the single-service trap before the first deploy).
+4. Upload the compose file with the MCP tool `upload_project_compose` (the project and the content of `docker-compose.yml`) → registers all 3 services on both stages (defuses the single-service trap before the first deploy).
 5. `update_service_domain` per stage: `api` → `api.<stage-domain>` (the app runs on the stage root primary).
 6. Set the stage ENVs **service-scoped** (`update_deployment_envs` with `serviceName`): mongo = `MONGO_INITDB_ROOT_USERNAME`, `MONGO_INITDB_ROOT_PASSWORD` (generated per run as hex, e.g. `openssl rand -hex 24`: base64 output, `lt server createSecret` included, contains `/`, and the driver rejects the URI with `Password contains unescaped characters` unless it is percent-encoded); api = `NODE_ENV` (develop/production), `NSC__BASE_URL`, `NSC__APP_URL`, `NSC__MONGOOSE__URI=mongodb://<user>:<password>@<stack>_mongo:27017/<db>?authSource=admin` (stack-qualified, with the credentials `lt deployment create` recommends), `NSC__BETTER_AUTH__SECRET`, `NSC__AI__ENCRYPTION_SECRET`, `NSC__EMAIL__SMTP__*`, `NSC__EMAIL__DEFAULT_SENDER__EMAIL`, `SMTP_PORT`, `SMTP_REQUIRE_TLS`; app = `NUXT_PUBLIC_APP_ENV`, `NUXT_API_URL`, `NUXT_PUBLIC_API_URL`, `NUXT_PUBLIC_SITE_URL`, `NUXT_PUBLIC_API_PROXY=false`. The required list comes from the fail-fast guard in `projects/api/src/config.env.ts` (`REQUIRED_DEPLOYED_ENV_VARS`).
    - The Mongo root user is created only on an **empty** data directory, so it needs a fresh `<stack>_mongo_data`
@@ -246,37 +252,36 @@ Per round:
 1. Feature branch from `dev` with a visible change (e.g. a badge `SMOKE-R<n>` with `data-testid="smoke-marker"` on the landing page).
    **On `--frontend=angular`:** the landing page is `projects/app/src/app/home/home-page.html`. Its route renders on
    the server (`RenderMode.Server` in `app.routes.server.ts`), so the `curl … | grep` check in step 3 sees the badge.
-2. `glab mr create --source-branch … --target-branch dev` → `glab mr merge --auto-merge --remove-source-branch`.
+2. `glab mr create --source-branch … --target-branch dev` → wait for the green MR pipeline → `glab mr merge <iid> --auto-merge=false --remove-source-branch --yes`.
 
-   **Wait until the MR pipeline is running, then set `--auto-merge`.** The flag is
-   no guarantee: if `glab` finds no running pipeline when the command is issued, it
-   reports `! No pipeline running on <branch>` and merges **immediately and ungated**.
-   The tests then never checked the merge, although the command looks as if it waits.
-   The run on 2026-09-01 did exactly that; on 2026-09-02, after a short wait, GitLab
-   acknowledged with `✓ Will auto-merge`, and the merge really did wait for the green
-   pipeline. The only difference is the timing between MR and command.
+   **Merge only once the MR pipeline is green, and with `--auto-merge=false`.** `--auto-merge` is no
+   guarantee: if `glab` finds no running pipeline when the command is issued, it reports
+   `! No pipeline running on <branch>` and merges **immediately and ungated**. The tests then never
+   checked the merge, although the command looks as if it waits. The run on 2026-09-01 did exactly
+   that; on 2026-09-02, after a short wait, the same command waited for the green pipeline. The
+   only difference was the timing between MR and command, so the run waits for the green pipeline
+   itself and then merges without auto-merge, which leaves no race.
 
    Poll the **MR's** pipelines, not the branch's: the template's test jobs run `only:
    [merge_requests, dev, main]`, so pushing a feature branch creates no pipeline at all.
    The one to wait for is the `merge_request_event` pipeline on
    `refs/merge-requests/<iid>/head`, which `pipelines?ref=<branch>` never returns
-   (verified 2026-09-28). Count only pipelines with `source == "merge_request_event"`:
+   (verified 2026-09-28). Look only at pipelines with `source == "merge_request_event"`:
    for an MR from `dev` (step 4) the same endpoint also lists the `dev` branch pipeline,
    which would end the wait too early (observed 2026-10-11):
 
    ```bash
-   for i in $(seq 1 30); do
-     n=$(glab api "projects/<id>/merge_requests/<iid>/pipelines" \
-       | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>console.log(JSON.parse(d).filter(p=>p.source==="merge_request_event").length))')
-     [ "$n" != "0" ] && break; sleep 5
+   st=none
+   for i in $(seq 1 120); do
+     st=$(glab api "projects/<id>/merge_requests/<iid>/pipelines" \
+       | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{const p=JSON.parse(d).filter(p=>p.source==="merge_request_event")[0];console.log(p?p.status:"none")})')
+     case "$st" in success|failed|canceled|skipped) break ;; esac
+     sleep 15
    done
-   glab mr merge <iid> --auto-merge --remove-source-branch --yes
+   [ "$st" = success ] && glab mr merge <iid> --auto-merge=false --remove-source-branch --yes || echo "MR pipeline: $st"
    ```
 
-   Check instead of assuming: `✓ Will auto-merge` in the output, or
-   `auto_merge_enabled: true` on the MR. A direct `merged` without a prior pipeline is
-   the ungated case. (A 405 `Method Not Allowed` on a direct merge, by contrast, is a
-   good sign: it means the project enforces a green pipeline before merging.)
+   A red, canceled or skipped MR pipeline is a finding (Phase 2 rule), not a reason to merge anyway.
 3. Wait for the dev pipeline → label pass if needed → online check: marker via `curl -s https://dev.<domain>/ | grep SMOKE-R<n>` + `/meta` commit == new SHA.
 4. MR `dev` → `main`: **never with `--remove-source-branch`, and switch the project default off before merging.**
    The GitLab project default "Delete source branch by default" sets `force_remove_source_branch=true` on the MR, and
@@ -284,8 +289,9 @@ Per round:
    ```bash
    GITLAB_HOST=<gitlab-host> glab api --method PUT "projects/<id>/merge_requests/<iid>" -f remove_source_branch=false
    ```
-   Then auto-merge (same pipeline wait as in step 2, filtered on `merge_request_event`), wait for deploy-prod → label
-   pass if needed → same online check on `<domain>`.
+   Then wait for the green `merge_request_event` pipeline as in step 2 and merge with
+   `glab mr merge <iid> --auto-merge=false --yes` (no `--remove-source-branch`), wait for deploy-prod → label pass
+   if needed → same online check on `<domain>`.
 
 ### Phase 7 — Cleanup (complete, in this order)
 

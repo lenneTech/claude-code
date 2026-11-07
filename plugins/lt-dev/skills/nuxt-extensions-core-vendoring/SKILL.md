@@ -278,7 +278,10 @@ commits; it is documented nowhere else):
 
 - **One single commit per PR**, subject = `<target-version>: <what + why>`
   (e.g. `1.8.5: accept the nest-server roles: string[] shape in isAdmin …`).
-- The commit **bumps `package.json` itself** (patch for a bugfix).
+- The commit **bumps `package.json` itself**, by the stack's version scheme (skill
+  `maintaining-lt-stack`, "Version scheme"): patch for what consumers adopt as is (a bugfix,
+  an optional addition), minor plus a `migration-guides/` entry for anything they have to act
+  on, never a major (that digit is the Nuxt major).
 - The commit carries **src + tests only — NO `CHANGELOG.md` entry.** The maintainer
   adds it separately as `docs: add <version> changelog entry` on `main` after the
   merge. Adding one in the PR duplicates that and causes review churn.

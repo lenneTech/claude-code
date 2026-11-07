@@ -230,7 +230,9 @@ Target nuxt-extensions version: <target-version>
 Backend path: <backend-path> (for generate-types, only if api-client is imported)
 
 Execute frontend update:
-1. Install @lenne.tech/nuxt-extensions@latest
+1. Install @lenne.tech/nuxt-extensions exactly at the version nuxt-base-starter pins
+   (`pnpm add --save-exact @lenne.tech/nuxt-extensions@<target-version>`, never `@latest`: that writes a
+   caret range, and a minor can be breaking)
 2. Sync with nuxt-base-starter (config, components, middleware)
 3. Detect whether the frontend imports the generated api-client:
      grep -REq "from ['\"](~|\.|app)/api-client" app/

@@ -38,10 +38,14 @@ Modes can be combined: `--dry-run --target-version 12.0.0`
 
 1. **Full Automation**: Complete without developer interaction
 2. **Stepwise Updates**: Minor AND Major versions require stepwise updates (Minor = Major in this package)
-3. **Unlimited Iterations**: Keep fixing until tests pass
-4. **Monorepo Support**: Update all subprojects in a single run (sequentially to avoid lockfile conflicts)
-5. **Migration Guide Priority**: Follow guides exactly (with fallback if unavailable)
-6. **Progress Visibility**: Work through the phases in order; the final report states each phase's outcome
+3. **Exact Pin**: `@lenne.tech/nest-server` is pinned to one version (`"12.7.2"`, never `^12.7.2` or `~12.7.2`).
+   A minor can be breaking (skill `maintaining-lt-stack`, "Version scheme"), so a range pulls one in on the next
+   install without anyone deciding it. A range found in the project is replaced by the exact pin and named in
+   the report
+4. **Unlimited Iterations**: Keep fixing until tests pass
+5. **Monorepo Support**: Update all subprojects in a single run (sequentially to avoid lockfile conflicts)
+6. **Migration Guide Priority**: Follow guides exactly (with fallback if unavailable)
+7. **Progress Visibility**: Work through the phases in order; the final report states each phase's outcome
 
 ---
 
@@ -288,7 +292,8 @@ that differs or is missing, together with the `update` and `update:all` entries 
 
    ```bash
    # Step 1: Update @lenne.tech/nest-server version in package.json to target version
-   # Use Edit tool to change: "@lenne.tech/nest-server": "^X.Y.Z" → "@lenne.tech/nest-server": "^A.B.C"
+   # Use Edit tool to change: "@lenne.tech/nest-server": "X.Y.Z" → "@lenne.tech/nest-server": "A.B.C"
+   # Exact version, no ^ or ~ (Operating Principle 3); a range found here becomes the exact pin
    ```
 
 2. **Execute update:**

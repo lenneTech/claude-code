@@ -18,7 +18,8 @@ An Angular app with a vendored `@lenne.tech/ng-base` core (`src/core/VENDOR.md` 
 
 **Only for projects that have vendored the nuxt-extensions module.** For classic
 npm-based nuxt-extensions updates, use the `fullstack-updater` agent or
-`pnpm add @lenne.tech/nuxt-extensions@latest`.
+`pnpm add --save-exact @lenne.tech/nuxt-extensions@<version>` with the version nuxt-base-starter pins
+(an exact pin: a minor can be breaking, skill `maintaining-lt-stack`, "Version scheme").
 
 ## Usage
 
@@ -119,7 +120,8 @@ nuxt-extensions tags have NO v-prefix (e.g., 1.5.3 not v1.5.3).
 No flatten-fix is needed -- direct 1:1 file mapping between upstream and vendor.
 
 If the project is NOT vendored (no app/core/VENDOR.md), abort immediately and tell
-the user to use pnpm add @lenne.tech/nuxt-extensions@latest instead.
+the user to use pnpm add --save-exact @lenne.tech/nuxt-extensions@<version> (the version
+nuxt-base-starter pins) instead.
 ```
 
 **Cleanup:** the agent removes its run directory before its final message. When

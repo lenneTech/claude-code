@@ -28,20 +28,35 @@
       ]
     },
     {
-      "name": "nest-server-starter is the exception to \"No change → no release\" in both release gates: its version follows nest-server only",
-      "phrase": "its version moves only with a nest-server version",
+      "name": "the starters are the exception to \"No change → no release\" in both release gates: a starter's version follows its library only",
+      "phrase": "a starter's version moves only with its library's version",
       "files": [
         "skills/maintaining-lt-stack/SKILL.md",
         "commands/maintenance/maintain-stack.md"
       ]
     },
     {
-      "name": "a smoke-test fix in nest-server-starter is pushed without a release, in the skill's smoke gate and in maintain-stack Phase 5",
+      "name": "a smoke-test fix in a starter is pushed without a release, in the skill's smoke gate and in maintain-stack Phase 5",
       "phrase": "gets no patch release",
       "files": [
         "skills/maintaining-lt-stack/SKILL.md",
         "commands/maintenance/maintain-stack.md"
       ]
+    },
+    {
+      "name": "updaters pin the lenne.tech frameworks exactly and replace a range they find, because a minor can be breaking",
+      "phrase": "A range found in the project is replaced by the exact pin",
+      "files": ["agents/nest-server-updater.md", "agents/fullstack-updater.md"]
+    },
+    {
+      "name": "the frontend updater installs nuxt-extensions with an exact pin, never @latest into a caret range",
+      "phrase": "pnpm add --save-exact @lenne.tech/nuxt-extensions@<target>",
+      "files": ["agents/fullstack-updater.md"]
+    },
+    {
+      "name": "/lt-dev:publish refuses --release-as for every starter, not only nest-server-starter",
+      "phrase": "Refused for the three starters, whose version only follows their library",
+      "files": ["commands/publish.md"]
     },
     {
       "name": "native SQL on MySQL / MariaDB filters by the request's tenant on tenant_id, in the database reference and both reviewers",
@@ -383,6 +398,21 @@
         "skills/*/*.md",
         "skills/*/reference/*.md"
       ]
+    },
+    {
+      "name": "a caret or tilde pin for a lenne.tech framework in update instructions (a minor can be breaking)",
+      "pattern": "\"@lenne\\.tech/(nest-server|nuxt-extensions|ng-base)\": ?\"[\\^~]",
+      "files": ["agents/nest-server-updater.md", "agents/fullstack-updater.md", "skills/nest-server-updating/SKILL.md"]
+    },
+    {
+      "name": "an update instruction that installs a lenne.tech framework @latest, which pnpm writes as a caret range",
+      "pattern": "@lenne\\.tech/(nest-server|nuxt-extensions|ng-base)@latest",
+      "files": ["commands/fullstack/update.md", "commands/fullstack/update-all.md", "commands/frontend/update-nuxt-extensions-core.md"]
+    },
+    {
+      "name": "starter numbering and nuxt-extensions majors from before the stack version scheme",
+      "pattern": "SemVer of its own|no lock-step to ng-base|`1\\.x` is Nuxt 4|the version jump is\\s*$",
+      "files": ["skills/maintaining-lt-stack/recipes.md"]
     }
   ],
   "contracts": [
@@ -412,6 +442,32 @@
       "terms": [
         "**< 20 changed lines AND <= 2 changed files**"
       ]
+    },
+    {
+      "name": "the stack version scheme other elements point to by section and rule number",
+      "provider": "skills/maintaining-lt-stack/SKILL.md",
+      "consumers": [
+        "skills/maintaining-lt-stack/recipes.md",
+        "commands/publish.md",
+        "commands/maintenance/maintain-stack.md",
+        "commands/git/commit-message.md",
+        "agents/nest-server-updater.md",
+        "agents/fullstack-updater.md"
+      ],
+      "terms": [
+        "## Version scheme (all base repos)",
+        "**1. Libraries with a core package:**",
+        "**2. Starters:**",
+        "**3. Repos without a core package:**",
+        "**4. Consumers pin exactly.**",
+        "**Reading versions across the nuxt-extensions jump.**"
+      ]
+    },
+    {
+      "name": "/lt-dev:publish's version section, which maintain-stack names for its default",
+      "provider": "commands/publish.md",
+      "consumers": ["commands/maintenance/maintain-stack.md"],
+      "terms": ["## Choosing the version"]
     }
   ]
 }

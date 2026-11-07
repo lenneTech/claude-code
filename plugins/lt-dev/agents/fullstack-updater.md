@@ -64,6 +64,11 @@ Modes can be combined: `--dry-run --skip-backend`
 4. **Progress Visibility**: Work through the phases in order; the final report states each phase's outcome
 5. **Starter-Driven**: Changes are derived from starter repository diffs
 6. **Unlimited Iterations**: Keep fixing until all validations pass
+7. **Exact Framework Pins**: `@lenne.tech/nest-server`, `@lenne.tech/nuxt-extensions` and `@lenne.tech/ng-base`
+   are pinned to one version (`"4.0.0"`, never `^4.0.0` or `~4.0.0`), the way the starters pin them. A minor of
+   these packages can be breaking (skill `maintaining-lt-stack`, "Version scheme"), and a range pulls it in on the
+   next install without anyone deciding it. A range found in the project is replaced by the exact pin and named
+   in the report
 
 ---
 
@@ -403,10 +408,12 @@ Skip steps 1-2 below and proceed to step 3 (apply starter changes).
 
 **If npm mode (default):**
 
-1. **Update @lenne.tech/nuxt-extensions:**
+1. **Update @lenne.tech/nuxt-extensions** to the exact version nuxt-base-starter pins, and read the
+   nuxt-extensions CHANGELOG and every guide in its `migration-guides/` between the current and the target
+   version (a minor can be breaking; `1.28.0 → 4.0.0` is one step, there are no `2.x` or `3.x` guides):
    ```bash
    cd <frontend-path>
-   pnpm add @lenne.tech/nuxt-extensions@latest
+   pnpm add --save-exact @lenne.tech/nuxt-extensions@<target>
    ```
 
 2. **Apply nuxt-base-starter changes:**
@@ -614,6 +621,7 @@ Your final message is the report the caller acts on. Write it when every phase i
    |-------|-------|
    | Backend | X.Y.Z → A.B.C |
    | Frontend | X.Y.Z → A.B.C |
+   | Framework pins | exact / ranges replaced: [list] |
    | Mode | Full / Skip Backend / Skip Frontend |
    | Duration | ~X minutes |
    | Run directories | /tmp/fullstack-update.k3J9aQ removed |

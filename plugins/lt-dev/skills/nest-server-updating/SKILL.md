@@ -204,9 +204,10 @@ The `pnpm run update` script requires this order:
    `update:all` entries of its `package.json`. Copying `sync-packages.mjs` alone breaks on its
    missing import. A change the project made to its own copy is named in the report.
 
-1. **First:** Update the version in `package.json` to the desired target version
+1. **First:** Update the version in `package.json` to the desired target version, exactly
+   (no `^` or `~`: a minor can be breaking, and a range would pull the next one in unasked)
    ```
-   "@lenne.tech/nest-server": "^X.Y.Z"
+   "@lenne.tech/nest-server": "X.Y.Z"
    ```
 
 2. **Then:** Run the update script
