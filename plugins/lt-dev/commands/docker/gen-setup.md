@@ -105,7 +105,9 @@ Add these only in the override:
 **Database** (choose based on project or PostgreSQL as default):
 
 - PostgreSQL/MySQL/MongoDB
-- Persistent volume for data
+- Persistent named volume on the image's data directory (MongoDB `/data/db`, MySQL `/var/lib/mysql`, PostgreSQL
+  18+ `/var/lib/postgresql`; the 18 image refuses to start with a mount on the older `/var/lib/postgresql/data`,
+  measured 2026-11-07), so the stop in Phase 5, which removes anonymous volumes, keeps the data
 - Initialization scripts directory
 - Configure health check
 
@@ -283,10 +285,15 @@ db-reset:
 	sleep 5
 	docker compose exec app pnpm run db:migrate
 
+# clean: this project's containers, network, anonymous volumes and the images compose built for it.
+# Named volumes (the local database) stay; db-reset deletes them on purpose.
 clean:
-	docker compose down -v --remove-orphans
-	docker system prune -f
+	docker compose rm -fsv
+	docker compose down --remove-orphans --rmi local
 ```
+
+`clean` stays inside the project: a `docker system prune` there would delete the stopped containers, networks,
+dangling images and build cache of every other project and session on the machine.
 
 ### 8. Documentation
 
@@ -349,14 +356,29 @@ fi
 ```
 
 ### Step 2: Start Docker Setup
-```bash
-# Stop and remove old containers and volumes
-docker compose down -v --remove-orphans
 
-# Build and start fresh
+Containers of an earlier setup belong to the developer. Note whether `docker compose ps -q` lists any (Phase 5
+asks about the stack with that in mind), then stop them with a plain `down`, which keeps every volume and with it
+the local database. `rm -fsv` is not for these containers: an earlier setup may keep its database in an anonymous
+volume.
+
+```bash
+# Stop containers of an earlier setup; all volumes stay
+docker compose down --remove-orphans
+
+# Build and start
 docker compose build --no-cache
 docker compose up -d
 ```
+
+From here on the stack counts as started by this run, and Phase 5 ends it, following
+[`managing-dev-servers`](${CLAUDE_PLUGIN_ROOT}/skills/managing-dev-servers/SKILL.md) → "Docker resources,
+worktrees and clones: remove exactly what you created".
+
+Deleting data is a separate step that waits for the user's yes. When an existing volume blocks the new setup (a
+database initialised with other credentials; init scripts run only on an empty data directory), list the
+project's volumes with `docker compose volumes`, name the one in the way and what it holds, and after a yes remove
+only that one with `docker volume rm <name>`.
 
 ### Step 3: Wait for Startup
 ```bash
@@ -482,7 +504,7 @@ WHILE errors exist AND attempts < 5:
 | API exits: `NODE_ENV is set but empty` | `NODE_ENV=${NODE_ENV}` in compose on a host without the variable | Write the value, or remove the key |
 | Container won't start | Syntax error in code | Check logs, fix code |
 | Container crash loop | Wrong Node version | Adjust Node version in Dockerfile |
-| "Module not found" | node_modules problem | Delete volume, rebuild |
+| "Module not found" | node_modules problem | Delete the service's node_modules volume (below), rebuild |
 | "EADDRINUSE" / Port in use | Port already used | Change port in compose |
 | "ECONNREFUSED" to DB | DB not ready yet | Add depends_on + healthcheck |
 | "ECONNREFUSED api:3000" in browser | SSR URL problem | Change client URL to localhost |
@@ -493,12 +515,15 @@ WHILE errors exist AND attempts < 5:
 ### Specific Fixes
 
 **node_modules Problem:**
+
+`docker volume ls` lists the volumes of every project and session on the daemon; `docker compose volumes` lists
+this project's only, and for one service only while its container exists (a Compose without that subcommand:
+`docker volume ls --filter label=com.docker.compose.project=<project>`):
 ```bash
-# Identify and delete volume
-docker compose down
-docker volume ls | grep node_modules
-docker volume rm <volume_name>
-docker compose up -d --build
+docker compose volumes <service>         # e.g. <project>_<service>-node-modules
+docker compose rm -fsv <service>         # this service's container and its anonymous volumes; the DB keeps running
+docker volume rm <project>_<service>-node-modules
+docker compose up -d --build <service>
 ```
 
 **DB Connection Timing:**
@@ -558,7 +583,7 @@ When all checks pass, output the following summary:
 ║                                                              ║
 ║  Commands:                                                   ║
 ║  ├── Logs:        docker compose logs -f                     ║
-║  ├── Stop:        docker compose down                        ║
+║  ├── Stop:        docker compose stop                        ║
 ║  ├── Rebuild:     docker compose up -d --build               ║
 ║  └── Shell:       docker compose exec app sh                 ║
 ║                                                              ║
@@ -590,11 +615,26 @@ Fixed Issues:
    [Fix]: Added healthcheck and depends_on condition
 ```
 
+### Stack After the Run
+
+The run ends here whatever the outcome, also after the fix loop ran out of attempts. Ask the user whether the
+stack keeps running (recommended when containers of the project were running before Step 2 of Phase 3, or when
+they want to try hot reload), and stop it otherwise; on an abort, stop it without asking:
+
+```bash
+docker compose rm -fsv && docker compose down --remove-orphans
+```
+
+That drops the containers, their anonymous volumes and the network and keeps the named volumes with the
+database. A plain `down` would leave the anonymous volumes behind, and a service with a restart policy keeps
+coming back on every Docker restart while the stack is up. The final message says whether the stack is still
+running.
+
 ---
 
 ## Important Notes
 
 1. **Test Hot Reload**: After setup, make a small change and verify it's picked up live
 2. **node_modules Sync**: On package.json changes, always run `docker compose up -d --build`
-3. **Volumes on Problems**: If problems persist, `docker compose down -v` (removes the volumes, including local DB data) and restart fresh
+3. **Volumes on Problems**: `docker compose down -v` deletes every named volume of the project, the local database included, so it runs only after the user's explicit yes; removing just the volume in the way (Phase 3, Step 2) is usually enough
 4. **SSR Debug**: For API issues, check both the browser console and the server logs

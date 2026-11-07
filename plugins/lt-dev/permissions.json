@@ -67,7 +67,9 @@
     "Bash(which:*)",
     "Bash(yarn dlx ncu:*)",
     "Bash(yarn run test\\:e2e:*)",
-    "Bash(yq:*)"
+    "Bash(yq:*)",
+    "Bash(docker compose down:*)",
+    "Bash(docker-compose down:*)"
   ],
   "permissions": [
     {
@@ -1376,17 +1378,6 @@
       ]
     },
     {
-      "pattern": "Bash(docker compose down:*)",
-      "description": "Run and inspect the project's own compose stack; docker compose exec/run and -f with another file are granted per turn by the commands that need them",
-      "usedBy": [
-        "devops",
-        "devops-reviewer",
-        "validating-ci-pipelines-locally",
-        "production-readiness-orchestrator",
-        "production-ready"
-      ]
-    },
-    {
       "pattern": "Bash(docker compose restart:*)",
       "description": "Run and inspect the project's own compose stack; docker compose exec/run and -f with another file are granted per turn by the commands that need them",
       "usedBy": [
@@ -1428,15 +1419,6 @@
     },
     {
       "pattern": "Bash(docker-compose up:*)",
-      "description": "The same compose subcommands for projects on the legacy docker-compose binary",
-      "usedBy": [
-        "validating-ci-pipelines-locally",
-        "production-readiness-orchestrator",
-        "production-ready"
-      ]
-    },
-    {
-      "pattern": "Bash(docker-compose down:*)",
       "description": "The same compose subcommands for projects on the legacy docker-compose binary",
       "usedBy": [
         "validating-ci-pipelines-locally",

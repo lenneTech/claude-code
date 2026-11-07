@@ -14,9 +14,10 @@ Each rule exists because the opposite already went wrong, or would on a machine 
    in `~/.lt-showroom/<slug>/checkout`, and everything it changes disappears with it.
 2. **Nothing leaves the clone.** No push, no change to any repository: showroom work never alters a project.
    `clone` gives every remote a push URL no transport accepts, which covers the `lt ticket` worktree too.
-3. **Stop only what this run started.** Processes, the `lt ticket` stack, Compose projects, containers and volumes are
-   recorded in the run's `session.json` and torn down from there. Never `pkill` by name, never `kill` by port, never
-   `docker compose down` without the run's own project name: each of those hits processes of other sessions.
+3. **Stop only what this run started.** Processes, the `lt ticket` stack, Compose projects with the images they
+   build, containers and volumes are recorded in the run's `session.json` and torn down from there. Never `pkill` by
+   name, never `kill` by port, never `docker compose down` without the run's own project name: each of those hits
+   processes of other sessions.
 4. **Seed only into the run's own database, after proving it is local.** Never into a database that already existed,
    never into a remote one, never with production data or a dump.
 5. **Local demo data is the run's own; live data never is.** In the run's database records may be created and
@@ -46,8 +47,10 @@ write the full path in each call (or set `S=…` within the same call).
 | `start <slug> --source <path-or-url>` | Opens the run; cleans an abandoned earlier run of the same slug; refuses (exit 3) while another live Claude session runs it, and `SLUG_TAKEN` (exit 5) when the folder holds another project's run, or deliverables of a run whose source is not recorded: its manifest, analysis and screenshots stay untouched, and `slug <source>` names the right folder |
 | `clone <slug> <path-or-url> [--ref <branch>]` | Clones the remote's default branch (falls back to the local checkout when the remote is unreachable), disables pushing, records the commit and the repository the folder belongs to; `SLUG_TAKEN` (exit 5) like `start` |
 | `run <slug> <name> --cwd <dir> [--env K=V]… -- <cmd…>` | Starts a dev server or worker in its own process group, logs to `logs/<name>.log` |
-| `compose-file <slug> --cwd <dir> [--files a.yml,b.yml]` | Writes an isolated copy of the Compose project and records it: fixed volume, network and container names dropped, bind mounts outside the clone refused (exit 2) |
-| `record <slug> lt-ticket\|compose\|container\|volume <value> [--cwd <dir>]` | Records a stack the run started by other means |
+| `compose-file <slug> --cwd <dir> [--files a.yml,b.yml]` | Writes an isolated copy of the Compose project and records it: fixed volume, network and container names dropped, every service with `build:` built as `showroom-<slug>-<service>`, bind mounts outside the clone refused (exit 2) |
+| `record <slug> lt-ticket\|compose\|container\|volume <value> [--cwd <dir>]` | Records a stack the run starts by other means; a fixed name can be recorded before the resource exists |
+| `compose <slug> up\|ps\|logs [--service <name>] [--tail <n>]` | Runs the recorded Compose project under its own `-p` and isolated `-f`; the command grants only the script, since a `docker compose -p showroom-*` grant would admit any further argument |
+| `db <slug> mongo\|postgres\|mysql\|redis [--port <n>]` | Records, then starts the run's own database container `showroom-<slug>-<engine>` with fixed flags on 127.0.0.1; prints name, port and URL |
 | `check-db --scan <dir>` / `check-db <uri>…` | Exit 2 unless every database URI points at this machine or a service of the run's own Compose project |
 | `connections <slug>` | Exit 2 if a process of the run holds a connection to a remote database port |
 | `wait-http <url>` | Waits until a local URL answers below 500 |
@@ -107,7 +110,7 @@ run's database or a free port is all allowed there, and all of it disappears wit
 | Type | Detection (in the clone) | Start |
 |---|---|---|
 | **lt project** | `projects/api` + `projects/app`, or a standalone API/App on the current lt stack; `lt dev doctor` passes | `TMPDIR=/tmp lt ticket start showroom --base origin/<branch> --noConfirm --no-up` in `checkout/`, then `node "$S" record "$SLUG" lt-ticket showroom --cwd <checkout>`, then `TMPDIR=/tmp lt dev up --no-prune` in the worktree; URLs from `lt dev status` there |
-| **Compose stack** | A compose file that defines the app services | `node "$S" compose-file <slug> --cwd <checkout>` (records the project), then the `docker compose -p showroom-<slug> -f <file> up -d` it prints |
+| **Compose stack** | A compose file that defines the app services | `node "$S" compose-file <slug> --cwd <checkout>` (records the project), then the `node "$S" compose <slug> up` it prints; `compose <slug> ps` and `compose <slug> logs [--service <name>]` show its state |
 | **Lerna monorepo** (older lt stack) | `lerna.json` | Install (`npm run init` or `npm install`), database of the run (below), then `run … app -- npm run start` |
 | **pnpm workspace** without lt dev | `pnpm-workspace.yaml` | `pnpm install`, database of the run, `run … app -- pnpm run start` |
 | **Single frontend** | `nuxt.config.*`, `next.config.*`, `vite.config.*` | `run … app --env PORT=<free-port> -- <pm> run dev` |
@@ -124,6 +127,13 @@ that crashes Nuxt SSR under `lt dev`.
 Restart a crashed lt stack inside the worktree with `TMPDIR=/tmp lt dev up --no-prune`. A bare `lt dev up` also
 prunes orphaned databases and registry entries of the developer's other environments; that housekeeping is the
 developer's, and a screenshot run changes only what it started.
+
+A Compose service with `build:` tags its build with its `image:` name, and that name may be the developer's own local
+image (`myapp-api:latest`): the run's build would take the tag over, so the developer's next start would run the
+clone's code, and removing the run's image would delete theirs. `compose-file` therefore names every build
+`showroom-<slug>-<service>` and sets `pull_policy: build`, so each `up` builds from the clone; a service that shared
+the build follows the rename. Cleanup removes exactly these images and the run's builds a rebuild left without a name.
+Pulled images (services with only `image:`) stay, because other projects use them too.
 
 ### Nothing Leaves the Machine, Nothing Is Hogged
 
@@ -150,7 +160,7 @@ belongs to someone else and keeps running.
 |---|---|
 | lt ticket | `<base>-showroom` on 127.0.0.1, created empty, dropped by `lt ticket stop` |
 | Compose | The database service of the Compose project, started from the `compose-file` copy; its volumes go with `cleanup` |
-| Everything else | A container of its own: `docker run -d --name showroom-<slug>-mongo -p 127.0.0.1:<free-port>:27017 mongo:7`, then `record … container showroom-<slug>-mongo`; point the clone's config or env at it |
+| Everything else | A container of its own: `node "$S" db <slug> mongo` (also `postgres`, `mysql`, `redis`) records `showroom-<slug>-<engine>` first, so a crash before the start still leaves a name cleanup knows, then starts it with fixed flags on 127.0.0.1 and a free port and prints the connection URL; point the clone's config or env at it. A `docker run` of the run's own choosing could carry a bind mount such as `-v /:/host`, so the command grants only the script |
 
 Never use a database that existed before the run. A Compose file whose volume has a fixed `name:` (or is `external`)
 would mount the developer's real volume under any project name, and a seed that empties collections first would wipe
@@ -342,8 +352,9 @@ Always, also after a failure:
 1. Close the browser page the run opened (`close_page`).
 2. `node "$S" cleanup "$SLUG"`: stops the recorded processes (by process group, checked against their start time),
    runs `lt ticket stop showroom --force --noConfirm` (which also drops the run's database), takes the Compose project
-   down with its volumes, removes the run's containers, and deletes everything in the work folder except
-   `screenshots/` and `manifest.json`, plus the run's capture folder in the temp folder.
+   down with its volumes and the images it built, removes the run's containers with their anonymous volumes, and
+   deletes everything in the work folder except `screenshots/`, `manifest.json` and `analysis.json`, plus the run's
+   capture folder in the temp folder.
 3. Exit 0 and an empty `leftovers` list mean done. Anything listed is reported verbatim with the command that removes it.
 4. If the source was a local checkout, `node "$S" verify-source "$SLUG"` exits 0: its HEAD and `git status` are
    what `start` recorded.
@@ -367,6 +378,7 @@ ends, or explicitly with `/lt-showroom:showroom:screenshot <source> --cleanup`.
 | Capture fails | Continue with the remaining features, report the missing ones |
 | `manifest add` refuses the size | Set the emulation again, reload, capture again |
 | Cleanup lists leftovers | Report them with exact commands; never widen the cleanup to processes the run did not start |
+| Cleanup lists an image as "left alone" | The stack ran from the project's own compose file, so the run's build carries the project's image name, possibly the developer's tag. Report the name; the developer rebuilds their image, the run never removes it |
 
 ## Libraries and Frameworks
 

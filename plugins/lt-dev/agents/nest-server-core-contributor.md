@@ -174,12 +174,16 @@ For each remaining commit, run heuristics:
 
 ### Phase 5: Check Upstream for Duplicates
 
-For each upstream-candidate, check if the change already exists upstream:
+For each upstream-candidate, check if the change already exists upstream. Clone upstream HEAD into a
+directory of this run's own, created in a call of its own; write the path it prints into every later
+call (shell variables do not survive between Bash calls):
 
 ```bash
-# Clone upstream HEAD
-rm -rf /tmp/nest-server-head
-git clone --depth 50 https://github.com/lenneTech/nest-server /tmp/nest-server-head
+mktemp -d /tmp/nest-server-head.XXXXXX   # prints the clone directory, e.g. /tmp/nest-server-head.k3J9aQ
+```
+
+```bash
+git clone --depth 50 https://github.com/lenneTech/nest-server <head-dir>
 
 # For each candidate, diff the vendored file against upstream HEAD
 for file in $CANDIDATE_FILES; do
@@ -191,11 +195,19 @@ for file in $CANDIDATE_FILES; do
     *) UPSTREAM_PATH=src/core/${file#projects/api/src/core/} ;;
   esac
   # Diff (ignoring the flatten-fix re-exports in index.ts / core.module.ts)
-  diff <(sed 's|from .\./|from ./core/|g' "$file") "/tmp/nest-server-head/$UPSTREAM_PATH" || echo "DIFFERS"
+  diff <(sed 's|from .\./|from ./core/|g' "$file") "<head-dir>/$UPSTREAM_PATH" || echo "DIFFERS"
 done
 ```
 
 If the change **is already upstream**, mark as "already applied" and skip.
+
+**The clone is the hand-off.** Its `contribute/*` branches and `.git/PR-DRAFTS` are what the user
+pushes, so it stays after the run, and the report names it with the command to delete it once every
+branch is pushed. A fresh directory per run keeps an earlier run's unpushed branches and drafts, and a
+parallel session's clone, intact, so an existing `/tmp/nest-server-head*` is neither removed nor
+reused. A run that prepares no branch (`--dry-run`, no candidate left after this phase, or a stop
+before the first branch) removes the clone with `rm -rf <head-dir>` before its report. The
+`managing-dev-servers` skill, section Docker resources, worktrees and clones, has the shared rule.
 
 ### Phase 6: Clone Upstream + Prepare Branches
 
@@ -204,7 +216,7 @@ For each remaining candidate:
 ```bash
 BRANCH_NAME="contribute/$(echo "$COMMIT_SUBJECT" | sed 's/[^a-zA-Z0-9]/-/g' | tr '[:upper:]' '[:lower:]' | head -c 50)"
 
-cd /tmp/nest-server-head
+cd <head-dir>
 git checkout -b "$BRANCH_NAME" main
 
 # Map each changed vendor file to its upstream path and apply the diff
@@ -257,7 +269,7 @@ not specific to any particular project.
 🤖 Generated with Claude Code via `lt-dev:nest-server-core-contributor`
 ```
 
-Save to `/tmp/nest-server-head/.git/PR-DRAFTS/<branch-name>.md`.
+Save to `<head-dir>/.git/PR-DRAFTS/<branch-name>.md`.
 
 ### Phase 8: Present Summary for Human Review
 
@@ -273,22 +285,25 @@ Your final message is the report the caller acts on. Write it when every phase i
 **Upstream-candidates:** 4
 **Already in upstream:** 1
 **Ready for PR:** 3
+**Upstream clone:** `/tmp/nest-server-head.k3J9aQ` (kept: holds the branches and drafts; removed when nothing was prepared)
 
 ## PR Drafts Ready
 
 ### 1. `contribute/fix-server-options-jsontransport-type`
 **Original commit:** `e9c3aa7` (2026-04-11)
 **Summary:** Widen IServerOptions.smtp union to include JSONTransport.Options
-**Branch prepared in:** `/tmp/nest-server-head` @ `contribute/fix-server-options-jsontransport-type`
-**PR body:** `/tmp/nest-server-head/.git/PR-DRAFTS/contribute-fix-server-options-jsontransport-type.md`
+**Branch prepared in:** `/tmp/nest-server-head.k3J9aQ` @ `contribute/fix-server-options-jsontransport-type`
+**PR body:** `/tmp/nest-server-head.k3J9aQ/.git/PR-DRAFTS/contribute-fix-server-options-jsontransport-type.md`
 
 Next steps:
-  cd /tmp/nest-server-head
+  cd /tmp/nest-server-head.k3J9aQ
   git push origin contribute/fix-server-options-jsontransport-type
   gh pr create --title "..." --body-file .git/PR-DRAFTS/...
 
 ### 2. ... (next candidate)
 ...
+
+Once every branch is pushed: `rm -rf /tmp/nest-server-head.k3J9aQ`
 
 ## Project-Specific (Not Contributed)
 These stay in the vendor as documented in VENDOR.md:

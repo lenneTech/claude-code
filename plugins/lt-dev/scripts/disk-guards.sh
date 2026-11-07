@@ -3,6 +3,8 @@
 #
 #   pnpm-store-guard  prunes the pnpm store above 15 GB, at most every 14 days
 #   mongo-log-guard   rotates a Homebrew MongoDB log above 1 GB (only installed when one exists)
+#   docker-image-guard  removes registry images no container uses, at most every 7 days; never a
+#                       local build (only installed where a docker CLI exists)
 #
 # The guard scripts are COPIED to ~/.local/share/lt-dev/guards, together with the two libraries
 # they source. A LaunchAgent must not point into the plugin cache: its path contains the plugin
@@ -17,7 +19,7 @@ SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEST="$HOME/.local/share/lt-dev/guards"
 AGENTS="$HOME/Library/LaunchAgents"
 HOUR="${LT_DISK_GUARD_HOUR:-13}"
-GUARDS="pnpm-store-guard mongo-log-guard"
+GUARDS="pnpm-store-guard mongo-log-guard docker-image-guard"
 
 action="${1:-status}"
 dry_run=0; [ "${2:-}" = "--dry-run" ] && dry_run=1
@@ -33,6 +35,7 @@ plist() { echo "$AGENTS/$(label "$1").plist"; }
 applies() {  # applies <guard> — whether the guard has anything to watch on this machine
   case "$1" in
     mongo-log-guard) [ -f /opt/homebrew/var/log/mongodb/mongo.log ] || [ -f /usr/local/var/log/mongodb/mongo.log ] ;;
+    docker-image-guard) command -v docker >/dev/null 2>&1 || [ -x "$HOME/.docker/bin/docker" ] || [ -x /usr/local/bin/docker ] ;;
     *) return 0 ;;
   esac
 }

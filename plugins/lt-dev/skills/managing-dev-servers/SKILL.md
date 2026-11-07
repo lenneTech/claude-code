@@ -131,6 +131,47 @@ The Chrome DevTools MCP (`mcp__…_chrome-devtools__*`) drives a **real Chrome i
 - When the browser work for the current task is finished, close every page you opened via `close_page` so the MCP can release the Chrome instance. **A browser must never linger idle after a test walk** — that is wasted memory for the rest of the session.
 - Do this **even when you leave the dev server (`lt dev up`) running** for the user's own re-test: the user opens their own browser against the live stack, so Claude's automation browser has no reason to stay open. Server-lifecycle and browser-lifecycle are decided independently.
 
+## Docker resources, worktrees and clones: remove exactly what you created
+
+Containers, images, volumes, networks, worktrees and throwaway clones follow the dev-server
+contract: whatever a command, skill or agent creates for its own work is removed when that work
+ends, on success and on failure, and nothing else is touched. Every session on the machine
+shares one Docker daemon, so a prune or a removal by name pattern takes down a peer's stack
+mid-run. Left alone, the rest piles up: on one developer Mac, 57 anonymous volumes (10.6 GB),
+containers stopped for six days, throwaway probe builds and 4.2 GB of agent worktrees
+(observed 2026-11-03 to 11-07).
+
+| Created for the run | Create it as | Remove it with |
+|---|---|---|
+| one-off container | `docker run --rm …` | nothing more |
+| detached container | `docker run -d --name <purpose>-<run> …` | `docker rm -f -v <purpose>-<run>`: without `-v` the anonymous volumes an image declares stay (`mongo:7` declares two) |
+| throwaway stack | `docker compose -p <purpose>-<run> … up -d` | `docker compose -p <purpose>-<run> down -v --remove-orphans` |
+| the project's own stack, started to verify | `docker compose ps -a -q` first, to know what existed; then `docker compose up -d` | back to the state before: a stack that was running keeps running, one whose containers existed stopped gets `docker compose stop`, and only containers this run created go with `docker compose rm -fsv`, then `docker compose down --remove-orphans`. That drops their anonymous volumes, which hold nothing older than the run, and keeps the named volumes with the developer's data (measured 2026-11-07) |
+| probe or test image | `docker build -t <purpose>-<run> …`; never untagged, an untagged build has no name to remove it by | `docker image rm <purpose>-<run>` |
+| worktree or clone | in a `mktemp -d` directory | `git worktree remove --force <dir>` or `rm -rf <dir>` |
+
+`<run>` is unique per run, e.g. `run="$(date +%s)-$$"`. A plain `docker compose down` leaves
+the anonymous volumes behind, which is where most of the 57 came from.
+
+Put the removal in a `trap` in the same Bash call that creates the resource, so a failing
+build or test still cleans up:
+
+```bash
+run="probe-$(date +%s)-$$"
+trap 'docker image rm "$run" >/dev/null 2>&1' EXIT
+docker build -t "$run" -f Dockerfile.probe . && docker run --rm "$run" node --version
+```
+
+When the resource has to outlive one Bash call (a stack the next steps test against), note its
+name and remove it in the closing step whatever the outcome; the final report names anything
+left running on purpose.
+
+Machine-wide cleanup is not part of a task: no `docker system prune`, `docker image prune -a`,
+`docker volume prune` or `docker builder prune`, no removal by image or name pattern, and no
+`docker compose down` without the run's own `-p`. The `cleaning-up-disk-space` skill does that
+through its scripts, and its `docker-image-guard` removes unused registry images weekly. Build
+cache stays under Docker's own size limit.
+
 ## Correct Pattern (for non-lt projects, or when `lt dev` is not applicable)
 
 1. **Start with `run_in_background: true`** — Claude Code tracks the process and surfaces its output on demand.
@@ -231,6 +272,7 @@ Before reporting a task complete:
 - [ ] All background servers started via `run_in_background: true` have been terminated with `pkill`
 - [ ] `pgrep -f "nuxt dev"` and `pgrep -f "nest start"` (and any `build --watch`) return no matches — or the user has been asked and agreed to leave them running
 - [ ] The active project's URLs are free (use `lt dev status` for lt-projects, `lsof -i :3000 -i :3001` for the default fallback) unless the user asked for a running server
+- [ ] Every container (removed with `-v`), stack, image, worktree and clone this task created is gone (`docker ps -a --filter name=<run>`, `docker image ls <purpose>-<run>`, `git worktree list`), and nothing this task did not create was removed
 
 ## Related Skills
 
@@ -239,4 +281,5 @@ Before reporting a task complete:
 - `running-load-tests-with-k6` skill. Starts the API by these rules before a k6 run and stops it afterwards.
 - `validating-ci-pipelines-locally` skill. When a local pipeline job needs a running API.
 - `validating-production-readiness` skill. Health and lifecycle checks against a running stack.
+- `cleaning-up-disk-space` skill. Machine-wide cleanup and the disk guards, which a task leaves to it.
 - The development skills that start servers (`building-stories-with-tdd`, `developing-lt-frontend`, `generating-nest-servers`, `contributing-to-lt-framework`) are covered under Integration Points above.

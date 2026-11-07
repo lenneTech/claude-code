@@ -53,8 +53,9 @@ npm-based nest-server updates, use `/lt-dev:backend:update-nest-server`.
 
 1. **Verify vendored state** — confirm `src/core/VENDOR.md` exists and
    `@lenne.tech/nest-server` is **not** in package.json
-2. **Fetch upstream baseline and target** — clone both into `/tmp` at the
-   recorded baseline SHA and the chosen target ref
+2. **Fetch upstream baseline and target** — clone both into a run directory of
+   the agent's own under `/tmp` at the recorded baseline SHA and the chosen
+   target ref; the agent removes it when the sync ends
 3. **Generate diffs** — upstream delta, local changes, and the intersection
 4. **Categorize hunks** — clean pick / conflict / not applicable
 5. **Present curation proposal** — structured review document for human approval
@@ -106,7 +107,7 @@ Parse the arguments for:
 - --no-maintain: If present, skip the full npm maintenance pass (only raise packages to the upstream baseline)
 
 After adopting core changes, raise the project's npm packages to at least the
-versions the upstream target (/tmp/nest-server-target/package.json) declares,
+versions the upstream target (the target clone's package.json) declares,
 add any missing runtime helpers, then — unless --no-maintain or --dry-run —
 run a full dependency refresh via /lt-dev:maintenance:maintain before validating.
 
@@ -120,3 +121,9 @@ common/interfaces/core-persistence-model.interface.ts.
 If the project is NOT vendored (no VENDOR.md), abort immediately and tell
 the user to use /lt-dev:backend:update-nest-server instead.
 ```
+
+**Cleanup:** the agent removes its run directory before its final message. When
+it pauses for review and the sync ends there (the user rejects it or does not
+continue), remove the directory its pause message names, by that exact path
+(`rm -rf /tmp/nest-server-sync.k3J9aQ`). Never by a pattern: a parallel session
+may be syncing another project from a `/tmp/nest-server-*` folder of its own.

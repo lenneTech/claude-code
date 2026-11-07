@@ -59,7 +59,7 @@ Before making any changes, understand what exists.
 2. Detect CI/CD platform:   ls .gitlab-ci.yml .github/workflows/ Jenkinsfile bitbucket-pipelines.yml 2>/dev/null
 3. Detect package manager:  ls pnpm-lock.yaml yarn.lock package-lock.json 2>/dev/null
 4. Project structure:       ls -d projects/api projects/app packages/api packages/app 2>/dev/null
-5. Running state:           docker compose ps 2>/dev/null
+5. Running state:           docker compose ps -a 2>/dev/null   (note it: Phase 7 restores this state)
 6. Current logs:            docker compose logs --tail=20 2>/dev/null
 7. Read existing configs:   docker-compose.yml, Dockerfiles, .env.example, .dockerignore
 8. Check .gitignore:        Verify .env is excluded
@@ -382,7 +382,7 @@ When diagnosing issues, follow this exact order:
 | Build fails | `docker compose build --no-cache <service>` | Verify Dockerfile, base image |
 | Network issues | `docker compose exec <a> wget http://<b>:port` | Check `depends_on`, service names |
 | Volume permissions | `docker compose exec <service> ls -la /data` | Verify USER matches volume owner |
-| Port conflict | `lsof -i :3000` | Kill process or change port mapping |
+| Port conflict | `lsof -i :3000` names the owner; for a published Docker port it shows the Docker backend, and `docker ps --filter publish=3000` names the container | Stop the owner only when this run started it; a process or container it did not start (the developer's own server, a peer session's stack) stays and goes into the report. Otherwise change the port mapping |
 | MongoDB connection refused | Check `mongo` health, verify `MONGO_URI` | Ensure `depends_on` with health condition |
 | MODULE_NOT_FOUND on `node dist/main.js` in CI | tsc preserves source layout, entry is `dist/src/main.js` | Update Dockerfile + `.gitlab-ci.yml` + docker-compose to `dist/src/main.js` (lt-Stack uses tsc, not `nest build`) |
 | E2E `User not found in DB after sign-up` / `ECONNREFUSED 127.0.0.1:27017` | Test helpers and API connect to different databases or different hosts | Align `E2E_MONGO_URI` with `config.env.ts` (e.g. `NODE_ENV=ci` → `offers-ci`); replace `127.0.0.1` with the service alias (`mongo`) in CI; remove hardcoded URIs in test helpers, read from `process.env.E2E_MONGO_URI` |
@@ -406,7 +406,17 @@ Before completing any infrastructure task:
 8. .env in .gitignore:          grep "\.env" .gitignore
 9. .env.example complete:       All vars documented with placeholders only
 10. Volume persistence:         Database data survives restart
+11. Stop what this run started: docker compose rm -fsv && docker compose down --remove-orphans
 ```
+
+Step 11 runs whatever the outcome, also after a failed check: the stack started in step 1 is the project's own,
+started to verify, and with `restart: unless-stopped` it comes back on every Docker restart. It restores the state
+Phase 1, step 5 found. Containers this run created go with the command above, which drops them, their anonymous
+volumes and the network and keeps the named volumes with the developer's data. Containers that existed stopped get
+`docker compose stop` instead, since their anonymous volumes may hold older data. A stack that was running, or one
+the caller asked to keep, stays running and is named in the report. `docker compose down -v` deletes that data and is never part of a verification. The
+full rule: [`managing-dev-servers`](${CLAUDE_PLUGIN_ROOT}/skills/managing-dev-servers/SKILL.md) → "Docker
+resources, worktrees and clones: remove exactly what you created".
 
 Your final message is the report the caller acts on. Write it when every phase is done or a named blocker stops you. Interim status goes in the same message as your next tool call, so the work keeps moving.
 

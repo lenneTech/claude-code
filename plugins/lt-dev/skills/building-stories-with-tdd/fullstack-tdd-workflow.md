@@ -436,12 +436,21 @@ volumes:
 ```
 
 ```bash
-# Start test infrastructure
-docker compose -f docker-compose.test.yml up -d
+# Start the test infrastructure under a project name of its own, removed when the call ends
+proj="tdd-test-$(date +%s)-$$"
+trap 'docker compose -p "$proj" -f docker-compose.test.yml down -v --remove-orphans' EXIT
+docker compose -p "$proj" -f docker-compose.test.yml up -d
 
 # Run tests
 pnpm run test:all
 ```
+
+Without `-p`, the project name is the folder name, the same one the dev stack's `docker-compose.yml` uses, so the
+test containers join the dev project and an `--remove-orphans` from either file removes the other's containers.
+`down -v` drops `mongodb_test_data` with the stack; it holds only test data. When the stack has to outlive one Bash
+call, note `$proj` and run the `down` in a closing step whatever the tests' outcome (the `managing-dev-servers` skill,
+section Docker resources, worktrees and clones). The fixed host ports (27018, 1025, 8025) still collide when two
+sessions start this stack at the same time.
 
 ## Workflow Steps in Detail
 

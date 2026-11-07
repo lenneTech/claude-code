@@ -45,7 +45,8 @@ document.
 
 1. **Verify the vendored state:** `src/core/VENDOR.md` names `@lenne.tech/ng-base`, and the package is not an
    npm dependency of the app
-2. **Fetch upstream baseline and target** into `/tmp` (the library is `projects/ng-base/` there)
+2. **Fetch upstream baseline and target** into a run directory of the agent's own under `/tmp` (the library
+   is `projects/ng-base/` there); the agent removes it when the sync ends
 3. **Generate diffs:** upstream delta and local changes, without the files the vendor copy never carries
 4. **Categorize hunks:** clean pick, conflict, not applicable, plus added or removed entry points
 5. **Present the curation proposal** for human approval
@@ -102,3 +103,8 @@ After applying changes, re-derive the tsconfig paths with ng-base-paths.mjs unti
 If the app is NOT vendored (no src/core/VENDOR.md naming @lenne.tech/ng-base), stop immediately and tell the
 user to raise the exact pin with pnpm add @lenne.tech/ng-base@<version> instead.
 ```
+
+**Cleanup:** the agent removes its run directory before its final message. When it pauses for review and the
+sync ends there (the user rejects it or does not continue), remove the directory its pause message names, by
+that exact path (`rm -rf /tmp/ng-base-sync.k3J9aQ`). Never by a pattern: a parallel session may be syncing
+another app from a `/tmp/ng-base-*` folder of its own.

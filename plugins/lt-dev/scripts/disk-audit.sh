@@ -112,18 +112,19 @@ audit_docker() {
   sdf="$(docker system df 2>/dev/null)"
   emit "docker-build-cache" regenerable "$(to_mb "$(printf '%s\n' "$sdf" | awk '/^Build Cache/ {print $6}')")" "docker builder prune -a"
   # Images: counted, not taken from `docker system df`. Its RECLAIMABLE column reported 100 % for
-  # 15 images all used by containers (containerd image store, 2026-10-03). What `docker image
-  # prune -a` removes is every image no container — running or stopped — references.
-  local ids used iid isize img_n=0 img_mb=0
-  ids="$(docker ps -aq 2>/dev/null)"
-  # shellcheck disable=SC2086  # container ids are plain hex words
-  used="$([ -n "$ids" ] && docker inspect -f '{{.Image}}' $ids 2>/dev/null | sort -u)"
-  while IFS=$'\t' read -r iid isize; do
+  # 15 images all used by containers (containerd image store, 2026-10-03). An image counts as unused
+  # when no container, running or stopped, references it. Pulled ones come back with the next pull
+  # and form one regenerable block; a local build may be the only copy, so each is a data line.
+  local origin iid isize ntags created refs img_n=0 img_mb=0 mb note
+  while IFS=$'\t' read -r origin iid isize ntags created refs; do
     [ -n "$iid" ] || continue
-    grep -qxF "$iid" <<< "$used" && continue
-    img_n=$((img_n + 1)); img_mb=$((img_mb + $(to_mb "$isize")))
-  done < <(docker images --no-trunc --format '{{.ID}}\t{{.Size}}' 2>/dev/null | sort -u)
-  [ "$img_n" -gt 0 ] && emit "docker-images" regenerable "$img_mb" "$img_n images no container uses (shared layers make the real gain smaller); pulled or rebuilt on demand"
+    mb=$(( ${isize:-0} / 1048576 ))
+    if [ "$origin" = pulled ]; then img_n=$((img_n + 1)); img_mb=$((img_mb + mb)); continue; fi
+    if [ "${ntags:-0}" -eq 0 ]; then note="local image from $created, untagged: superseded by a later build under the same name"
+    else note="local image from $created, tagged $refs; no container uses it, and it may be the only copy of that build"; fi
+    emit "docker-image-local:$iid" data "$mb" "$note"
+  done < <(docker_unused_images)
+  [ "$img_n" -gt 0 ] && emit "docker-images" regenerable "$img_mb" "$img_n images pulled from a registry that no container uses (shared layers make the real gain smaller); pulled again on demand"
 
   docker ps -a --filter status=exited --filter status=created --filter status=dead --format '{{.ID}}\t{{.Names}}' 2>/dev/null |
     while IFS=$'\t' read -r cid cname; do
@@ -259,7 +260,8 @@ audit_tools() {
   done
 
   if [ "$(uname)" = "Darwin" ]; then
-    for g in pnpm-store-guard mongo-log-guard; do
+    for g in pnpm-store-guard mongo-log-guard docker-image-guard; do
+      [ "$g" = docker-image-guard ] && ! command -v docker >/dev/null 2>&1 && continue
       if [ -f "$HOME/Library/LaunchAgents/tech.lenne.lt-dev.$g.plist" ]; then emit "guard:$g" info 0 "installed"
       else emit "guard:$g" info 0 "missing; disk-guards.sh install keeps it from growing back"; fi
     done

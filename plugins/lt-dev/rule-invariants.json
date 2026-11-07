@@ -264,6 +264,51 @@
       "name": "the bug.lt Linear credentials stay server-side in an Angular app",
       "phrase": "never as `NG_PUBLIC_*`",
       "files": ["skills/developing-lt-angular-frontend/SKILL.md"]
+    },
+    {
+      "name": "every element that creates containers, stacks, images, worktrees or clones points at the shared cleanup rule",
+      "phrase": "Docker resources, worktrees and clones",
+      "files": [
+        "agents/devops.md",
+        "agents/fullstack-updater.md",
+        "agents/nest-server-core-contributor.md",
+        "agents/nest-server-core-updater.md",
+        "agents/nest-server-updater.md",
+        "agents/ng-base-core-contributor.md",
+        "agents/ng-base-core-updater.md",
+        "agents/nuxt-extensions-core-contributor.md",
+        "agents/nuxt-extensions-core-updater.md",
+        "agents/production-readiness-orchestrator.md",
+        "agents/vendor-mode-converter-frontend.md",
+        "commands/docker/gen-setup.md",
+        "commands/fullstack/update-all.md",
+        "commands/fullstack/update.md",
+        "commands/git/ship.md",
+        "commands/production-ready.md",
+        "commands/vibe/build-plan.md",
+        "commands/vibe/build.md",
+        "skills/building-stories-with-tdd/fullstack-tdd-workflow.md",
+        "skills/deploying-to-turboops/reference/traps.md",
+        "skills/managing-dev-servers/SKILL.md",
+        "skills/validating-ci-pipelines-locally/SKILL.md"
+      ]
+    },
+    {
+      "name": "a project stack is restored to the state it was in before the run, so its state is read with ps -a, which also lists stopped containers",
+      "phrase": "docker compose ps -a",
+      "files": [
+        "agents/devops.md",
+        "commands/vibe/build.md",
+        "commands/vibe/build-plan.md",
+        "skills/managing-dev-servers/SKILL.md"
+      ]
+    },
+    {
+      "name": "a detached container of the run goes with its anonymous volumes",
+      "phrase": "docker rm -f -v <purpose>-<run>",
+      "files": [
+        "skills/managing-dev-servers/SKILL.md"
+      ]
     }
   ],
   "forbidden": [
@@ -325,6 +370,18 @@
         "agents/backend-reviewer.md",
         "agents/devops.md",
         "skills/validating-production-readiness/SKILL.md"
+      ]
+    },
+    {
+      "name": "no machine-wide Docker prune and no removal of a fixed /tmp clone path in an element: parallel sessions share both (the managing-dev-servers rule)",
+      "pattern": "^\\s*(docker (system|image|volume|container|builder) prune|rm -rf /tmp/[a-z-]+-(baseline|target|head|ref)\\b)",
+      "files": [
+        "agents/*.md",
+        "commands/*.md",
+        "commands/*/*.md",
+        "skills/*/SKILL.md",
+        "skills/*/*.md",
+        "skills/*/reference/*.md"
       ]
     }
   ],

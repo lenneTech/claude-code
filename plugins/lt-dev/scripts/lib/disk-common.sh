@@ -114,6 +114,94 @@ store_writers() {
     }'
 }
 
+# ---------------------------------------------------------------- docker
+
+# docker_busy — command lines of running processes that pull, build or create images or
+# containers: the docker CLI and its compose / buildx plugins with such a verb, `gitlab-runner
+# exec` and `act`. An image guard skips while one runs: it could remove an image a pull has just
+# fetched, before the container that needs it exists. Read-only verbs (`exec`, `logs`, `ps`,
+# `compose logs -f` …) do not count, so a terminal that follows logs all day blocks nothing.
+# Only argv[0] is matched: the CLI and runners are single binaries, and a wrapper shell such
+# as `bash -c "docker pull x"` has the docker process as its own child line anyway.
+docker_busy() {
+  local procs
+  procs="$(ps -Ao command= 2>/dev/null)"
+  printf '%s\n' "$procs" | awk '
+    BEGIN {
+      n = split("-c --context -H --host --config -l --log-level -f --file -p --project-name --profile --env-file --project-directory --ansi --progress --parallel", v, " ")
+      for (k = 1; k <= n; k++) valued[v[k]] = 1
+      n = split("pull build bake load import run create up", b, " ")
+      for (k = 1; k <= n; k++) busy[b[k]] = 1
+      n = split("compose buildx image container", g, " ")
+      for (k = 1; k <= n; k++) group[g[k]] = 1
+    }
+    {
+      base = $1; sub(/.*\//, "", base)
+      if (base == "act") { print; next }
+      if (base == "gitlab-runner") { if ($2 == "exec") print; next }
+      if (base !~ /^(docker|com\.docker\.cli|docker-compose|docker-buildx)$/) next
+      grp = ""; verb = ""
+      for (f = 2; f <= NF; f++) {
+        if ($f ~ /^-/) { if ($f in valued) f++; continue }
+        if (grp == "" && ($f in group)) { grp = $f; continue }
+        verb = $f; break
+      }
+      if (verb in busy) print
+    }'
+}
+
+# docker_unused_images — every image no container references, running or stopped, one line each:
+#   <origin> TAB <image id> TAB <size bytes> TAB <tag count> TAB <created YYYY-MM-DD> TAB <refs>
+# <origin> is "pulled" for an image that came from a registry, "local" for everything else: a
+# build, a `docker load`, an origin Docker did not record. <refs> are the tags (or, untagged, the
+# repo@digest names) to remove the image by, space-separated.
+#
+# "From a registry" is NOT "RepoDigests set". Under the containerd image store (Docker Desktop's
+# default) a locally built image carries a RepoDigest too: measured 2026-11-07 on Docker 29.8,
+# every one of 15 images had exactly one, a `docker compose build` among them. The store records
+# the origin in Identity instead, Identity.Pull for a pull and Identity.Build for a build. With
+# the classic image store a build gets no RepoDigest, so there RepoDigests is the signal. An image
+# that was built at all, or whose origin is unknown, is "local".
+#
+# The never-empty fields come first: `read` with IFS=tab folds consecutive tabs, so an empty tag
+# list may only be followed by the digest list it stands in for.
+docker_unused_images() {
+  local containerd=0 cids used imgs rows fmt id ident ndig size ntags created tags digests refs origin
+  docker info --format '{{json .DriverStatus}}' 2>/dev/null | grep -q 'io.containerd.snapshotter' && containerd=1
+  cids="$(docker ps -aq 2>/dev/null)"
+  # shellcheck disable=SC2086  # container and image ids are plain hex words
+  used="$([ -n "$cids" ] && docker inspect -f '{{.Image}}' $cids 2>/dev/null | sort -u)"
+  imgs="$(docker images -q --no-trunc 2>/dev/null | sort -u)"
+  [ -n "$imgs" ] || return 0
+  fmt='{{.Id}}{{"\t"}}{{json .Identity}}{{"\t"}}{{len .RepoDigests}}{{"\t"}}{{.Size}}{{"\t"}}{{len .RepoTags}}{{"\t"}}{{.Created}}{{"\t"}}{{join .RepoTags " "}}{{"\t"}}{{join .RepoDigests " "}}'
+  # shellcheck disable=SC2086
+  rows="$(docker image inspect -f "$fmt" $imgs 2>/dev/null)"
+  if [ -z "$rows" ] && [ "$containerd" = 0 ]; then
+    # A Docker without the Identity field fails the whole template; the classic store needs only RepoDigests.
+    fmt="${fmt/'{{json .Identity}}'/null}"
+    # shellcheck disable=SC2086
+    rows="$(docker image inspect -f "$fmt" $imgs 2>/dev/null)"
+  fi
+  while IFS=$'\t' read -r id ident ndig size ntags created tags digests; do
+    [ -n "$id" ] || continue
+    grep -qxF "$id" <<< "$used" && continue
+    origin=local
+    case "$ident" in
+      *'"Build"'*) ;;
+      *'"Pull"'*) origin=pulled ;;
+      *) [ "$containerd" = 0 ] && [ "${ndig:-0}" -gt 0 ] 2>/dev/null && origin=pulled ;;
+    esac
+    refs="$tags"; [ -n "$refs" ] || refs="$digests"
+    printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$origin" "$id" "${size:-0}" "${ntags:-0}" "${created:0:10}" "$refs"
+  done <<< "$rows"
+}
+
+# docker_pulled_unused — "<image id> TAB <size bytes> TAB <refs>" for every unused image pulled from
+# a registry: what the image guard and the `docker-images` id remove. A local build never appears.
+docker_pulled_unused() {
+  docker_unused_images | awk -F'\t' 'BEGIN { OFS = "\t" } $1 == "pulled" && $6 != "" { print $2, $3, $6 }'
+}
+
 # ---------------------------------------------------------------- projects
 
 # git_root_of <dir> — nearest directory at or above <dir> that holds .git (dir or file).

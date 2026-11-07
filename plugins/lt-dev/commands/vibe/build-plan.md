@@ -31,7 +31,7 @@ Plan + Build in one go (no interruption).
 > under `xhigh` 3 of 4 runs passed 25 minutes without finishing; its build half matches the module and feature builds,
 > where `medium` equalled `high`. Pin a level only when a measurement shows it adds quality.
 
-**Abort handling:** If the user wants to cancel at any point (e.g., "abbrechen", "stop", "cancel"), acknowledge: "Build abgebrochen." and stop the process.
+**Abort handling:** If the user wants to cancel at any point (e.g., "abbrechen", "stop", "cancel"), acknowledge: "Build abgebrochen.", return the Docker stack to its state before the run (see "Docker Stack After the Run") and stop the process.
 
 ## Prompt
 
@@ -158,7 +158,7 @@ Guiding question for the plan: What's the cleanest, most maintainable way to bui
 
 #### Turn endings
 
-This command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; a finished plan or phase is the cue to start the next one. The run stops only at the questions this command defines (a missing spec file, the Docker question when no `docker-compose.yml` exists), when a step is blocked by something only the user can resolve (missing credentials, a spec ambiguity that changes what gets built), or before a destructive or irreversible action that needs confirmation.
+This command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; a finished plan or phase is the cue to start the next one. The run stops only at the questions this command defines (a missing spec file, the Docker question when no `docker-compose.yml` exists, the closing question on the Docker stack), when a step is blocked by something only the user can resolve (missing credentials, a spec ambiguity that changes what gets built), or before a destructive or irreversible action that needs confirmation.
 
 #### Package Manager
 
@@ -171,7 +171,8 @@ All examples use `pnpm` notation - adapt to detected package manager.
 ```
 Phase 1: Docker Setup
 1. Create docker-compose.yml with all services
-2. Verify: docker compose up -d && docker compose ps
+2. Note the stack's state before the run: docker compose ps -a (running, stopped, or no containers)
+3. Verify: docker compose up -d && docker compose ps
 
 Phase 2-3: Backend
 1. Implement backend (models, services, controllers)
@@ -225,6 +226,23 @@ Phase 9: Final Verification
 | `docker compose logs -f app` | Watch Frontend logs |
 | `docker compose restart api` | Restart API |
 | `docker compose ps` | Check running containers |
+| `docker compose rm -fsv && docker compose down --remove-orphans` | Stop the stack; keeps the named volumes with the database |
+
+#### Docker Stack After the Run
+
+The stack Phase 1 starts is the project's own, started to verify, and a service with a restart policy comes back
+on every Docker restart. At the end, and on an abort, it goes back to the state Phase 1 noted:
+
+- **Running before Phase 1:** it keeps running.
+- **Containers existed, stopped:** `docker compose stop`. Their anonymous volumes can hold the developer's older
+  data, so they are never removed.
+- **No containers before Phase 1:** ask when the completion criteria are met: "Soll der Docker-Stack weiterlaufen? Sonst stoppe ich ihn, die Datenbank bleibt erhalten.", and on an abort or when the user
+  does not want it running, stop it with the command from the table above. That drops the containers, their
+  anonymous volumes (holding nothing older than this run) and the network, and keeps the named volumes.
+
+`docker compose down -v` deletes the database and runs only after the user's explicit yes. The full rule:
+[`managing-dev-servers`](${CLAUDE_PLUGIN_ROOT}/skills/managing-dev-servers/SKILL.md) → "Docker resources,
+worktrees and clones: remove exactly what you created".
 
 #### Service URLs (Development)
 

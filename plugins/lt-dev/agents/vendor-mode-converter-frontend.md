@@ -154,12 +154,24 @@ Generate report
    the version is > `SOURCE_VERSION` AND <= `TARGET_VERSION`.
 
 3. **Fallback if no changelog found:**
-   - Compare the nuxt-extensions repo between version tags:
+   - Compare the nuxt-extensions repo between version tags, in one Bash call that removes its clone
+     on exit:
      ```bash
-     git clone --depth 50 https://github.com/lenneTech/nuxt-extensions /tmp/nuxt-extensions-ref
-     cd /tmp/nuxt-extensions-ref
-     git diff $SOURCE_VERSION..$TARGET_VERSION -- src/
+     work="$(mktemp -d /tmp/nuxt-extensions-ref.XXXXXX)"
+     trap 'rm -rf "$work"' EXIT
+     git init -q "$work/nuxt-extensions" &&
+       git -C "$work/nuxt-extensions" fetch -q --depth 1 --no-tags https://github.com/lenneTech/nuxt-extensions \
+         "refs/tags/${SOURCE_VERSION}:refs/tags/${SOURCE_VERSION}" "refs/tags/${TARGET_VERSION}:refs/tags/${TARGET_VERSION}" &&
+       git -C "$work/nuxt-extensions" diff "${SOURCE_VERSION}" "${TARGET_VERSION}" -- src/
      ```
+     It fetches exactly the two tags (nuxt-extensions tags carry no `v` prefix), however many
+     releases lie between them, so the diff never fails on a source tag outside a shallow history; it
+     compares trees and needs no history in between. The braces matter in zsh, which reads
+     `$SOURCE_VERSION:r…` as a modifier.
+     The clone lives only for this call, so a failed diff leaves nothing behind and no
+     `/tmp/nuxt-extensions-ref*` folder of another run or a parallel session is reused or removed
+     (the `managing-dev-servers` skill, section Docker resources, worktrees and clones). For another
+     look, run the block again.
    - Log warning: "No structured changelog, using git diff between tags"
 
 4. **Create ordered change plan:**

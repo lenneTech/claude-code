@@ -55,17 +55,49 @@ esac"
 stub docker "f='$TMP/docker'
 case \"\$*\" in
   info) [ \"\${DOCKER_DOWN:-0}\" = 0 ] ;;
+  'info --format'*) cat \"\$f/driver.txt\" 2>/dev/null ;;
+  *org.testcontainers*) cat \"\$f/testcontainers.txt\" 2>/dev/null ;;
+  image\ inspect*|image\ rm*) exec bash '$TMP/docker-image.sh' \"\$@\" ;;
   'system df') cat \"\$f/df.txt\" ;;
   'system df -v') cat \"\$f/df-v.txt\" ;;
   'ps -aq') cut -f1 \"\$f/containers.txt\" ;;
   ps\ -a*) cat \"\$f/stopped.txt\" ;;
   *'{{.Image}}'*) for c in \"\${@:4}\"; do awk -F'\t' -v k=\"\$c\" '\$1 == k {print \$2}' \"\$f/containers.txt\"; done ;;
-  images*) cat \"\$f/images.txt\" ;;
+  images*) case \"\$*\" in *-q*) cut -f1 \"\$f/images.txt\" ;; *) cat \"\$f/images.txt\" ;; esac ;;
   *State.FinishedAt*) awk -F'\t' -v k=\"\${@: -1}\" '\$1 == k {print \$2}' \"\$f/finished.txt\" ;;
   *State.Status*) awk -F'\t' -v k=\"\${@: -1}\" '\$1 == k {print \$2}' \"\$f/status.txt\" ;;
   'volume ls -qf dangling=true') cat \"\$f/dangling.txt\" ;;
   *) echo \"docker \$*\" >> '$TMP/calls.txt' ;;
 esac"
+# `docker image inspect` / `image rm` for the image guard: rows of image.txt are
+# id, Identity JSON, RepoDigests count, size, tag count, created, tags, digests. A removed id goes to removed.txt;
+# an id in refuse.txt is refused the way the daemon refuses an image a container uses.
+cat > "$TMP/docker-image.sh" <<'EOS'
+f="$(dirname "$0")/docker"
+case "$2" in
+  inspect)
+    if [ "$3" = -f ]; then
+      case "$4" in *Identity*) [ "${IDENTITY_UNSUPPORTED:-0}" = 1 ] && { echo 'template: cannot evaluate field Identity' >&2; exit 1; } ;; esac
+      for i in "${@:5}"; do
+        grep -qxF "$i" "$f/removed.txt" 2>/dev/null && continue
+        awk -F'\t' -v k="$i" -v fmt="$4" 'BEGIN { OFS = "\t" } $1 == k { if (fmt !~ /Identity/) $2 = "null"; print }' "$f/image.txt"
+      done
+    else
+      grep -qxF "$3" "$f/removed.txt" 2>/dev/null && exit 1
+      cut -f1 "$f/image.txt" | grep -qxF "$3"
+    fi ;;
+  rm)
+    echo "docker image rm ${*:3}" >> "$(dirname "$0")/calls.txt"
+    for r in "${@:3}"; do
+      id="$(awk -F'\t' -v r="$r" '{ n = split($7 " " $8, a, " "); for (k = 1; k <= n; k++) if (a[k] == r) { print $1; exit } }' "$f/image.txt")"
+      [ -n "$id" ] || continue
+      if grep -qxF "$id" "$f/refuse.txt" 2>/dev/null; then
+        echo "Error response from daemon: conflict: unable to remove repository reference \"$r\" (must force) - container 4f2 is using its referenced image" >&2; continue
+      fi
+      echo "Untagged: $r"; echo "$id" >> "$f/removed.txt"
+    done ;;
+esac
+EOS
 export PATH="$STUB:/usr/bin:/bin:/usr/sbin:/sbin"
 
 OLD=202401010000
@@ -114,7 +146,14 @@ printf 'c1\told_db\nc2\tfresh_db\n' > "$D/stopped.txt"
 printf 'c1\t2024-01-01T00:00:00.000000000Z\nc2\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%S).0Z" > "$D/finished.txt"
 printf 'old_db\texited\nrunning_db\trunning\n' > "$D/status.txt"
 printf 'c1\tsha256:aaa\nc2\tsha256:aaa\n' > "$D/containers.txt"
-printf 'sha256:aaa\t1.5GB\nsha256:bbb\t500MB\nsha256:ccc\t250MB\n' > "$D/images.txt"
+echo '[["driver-type","io.containerd.snapshotter.v1"]]' > "$D/driver.txt"
+{
+  printf 'sha256:aaa\t{"Pull":[{"Repository":"docker.io/library/mongo"}]}\t1\t1572864000\t1\t2026-10-01T08:00:00Z\tmongo:8\tmongo@sha256:aaa\n'
+  printf 'sha256:bbb\t{"Pull":[{"Repository":"docker.io/library/redis"}]}\t1\t524288000\t1\t2026-10-02T08:00:00Z\tredis:7\tredis@sha256:bbb\n'
+  printf 'sha256:ccc\t{"Build":[{"Ref":"b1"}]}\t1\t262144000\t1\t2026-11-01T08:00:00Z\tdemo-api:local\tdemo-api@sha256:ccc\n'
+  printf 'sha256:ddd\t{"Build":[{"Ref":"b0"}]}\t1\t104857600\t0\t2026-10-20T08:00:00Z\t\tdemo-api@sha256:ddd\n'
+} > "$D/image.txt"
+cut -f1,4 "$D/image.txt" > "$D/images.txt"
 printf 'crm_data\n%s\n' "$anon" > "$D/dangling.txt"
 
 AUDIT=(bash "$SCRIPTS/disk-audit.sh" --min-mb 0 --no-large-files --throwaway "$HOME/tests")
@@ -147,12 +186,16 @@ assert_line    "$out" $'^junk-file:~/Downloads/win.iso\tregenerable' "installer 
 assert_line    "$out" $'^jetbrains-old:~/Library/Application Support/JetBrains/WebStorm2025.3\tregenerable' "older JetBrains version"
 assert_no_line "$out" '^jetbrains-old:.*WebStorm2026\.1'$'\t' "newest JetBrains version is kept"
 assert_line    "$out" $'^docker-build-cache\tregenerable\t21180' "docker build cache reclaimable MB"
-assert_line    "$out" $'^docker-images\tregenerable\t750\t2 images' "counts only images no container references"
+assert_line    "$out" $'^docker-images\tregenerable\t500\t1 images pulled from a registry' "pulled images no container references: one regenerable block"
+assert_line    "$out" $'^docker-image-local:sha256:ccc\tdata\t250\tlocal image from 2026-11-01, tagged demo-api:local' "an unused local build is its own data line"
+assert_line    "$out" $'^docker-image-local:sha256:ddd\tdata\t100\t.*untagged: superseded' "an untagged local build is named superseded"
+assert_no_line "$out" 'docker-image-local:sha256:(aaa|bbb)' "pulled or used images are no local-build lines"
 assert_line    "$out" $'^docker-volume:crm_data\tdata\t2500' "named unused volume is data"
 assert_no_line "$out" 'docker-volume:live_data' "volume in use is not listed"
 assert_line    "$out" $'^docker-volumes-anonymous\tdata\t300\t1 anonymous' "anonymous unused volumes aggregated"
 assert_line    "$out" $'^docker-container:old_db\tregenerable' "container stopped long ago"
 assert_no_line "$out" 'docker-container:fresh_db' "container stopped today is kept"
+[ "$(uname)" = Darwin ] && assert_line "$out" $'^guard:docker-image-guard\tinfo\t0\tmissing' "audit names the docker image guard where docker exists"
 order="$(printf '%s\n' "$out" | grep -v '^#' | cut -f2 | uniq | tr '\n' ' ')"
 [ "$order" = "regenerable data info " ] && ok "sorted regenerable → data → info" || fail "sorted by class" "got: $order"
 out="$(DOCKER_DOWN=1 "${AUDIT[@]}")"
@@ -196,6 +239,18 @@ grep -q 'docker volume rm crm_data' "$TMP/calls.txt" && ok "removes an unused vo
 out="$("${CLEAN[@]}" docker-container:running_db docker-container:old_db)"
 assert_line "$out" $'^refused\tdocker-container:running_db\tstate is running' "refuses a running container"
 grep -q 'docker rm old_db' "$TMP/calls.txt" && ok "removes a stopped container" || fail "removes a stopped container"
+out="$("${CLEAN[@]}" docker-images)"
+assert_line "$out" $'^ok\tdocker-images\t1 pulled images without a container; local builds stay' "docker-images removes pulled images only"
+grep -q '^docker image rm redis:7$' "$TMP/calls.txt" && ok "removes the pulled image by its tag, unforced" || fail "removes the pulled image by its tag"
+grep -qE 'image prune|image rm .*demo-api' "$TMP/calls.txt" && fail "docker-images leaves local builds alone" || ok "docker-images leaves local builds alone"
+out="$("${CLEAN[@]}" docker-image-local:sha256:aaa docker-image-local:sha256:ccc docker-image-local:sha256:ddd)"
+assert_line "$out" $'^refused\tdocker-image-local:sha256:aaa\tnot an unused local image' "refuses a used or pulled image as local build"
+assert_line "$out" $'^ok\tdocker-image-local:sha256:ccc\tdocker image rm demo-api:local' "removes a tagged local build by its tag"
+assert_line "$out" $'^ok\tdocker-image-local:sha256:ddd\tdocker image rm demo-api@sha256:ddd' "removes an untagged local build by its digest name"
+printf '/usr/local/bin/docker build -t x .\n' > "$TMP/ps.txt"
+out="$("${CLEAN[@]}" docker-images)"
+assert_line "$out" $'^refused\tdocker-images\tDocker is pulling, building' "no image removal while a build runs"
+: > "$TMP/ps.txt"
 
 out="$("${CLEAN[@]}" pnpm-store-old:v9 pnpm-store-old:v12 pnpm-store-old:v10)"
 assert_line "$out" $'^refused\tpnpm-store-old:v9\t.*global virtual store' "keeps an older generation with links/"
@@ -233,6 +288,95 @@ out="$(PATH=/usr/bin:/bin:/usr/sbin:/sbin bash -c '. "$1/lib/disk-common.sh"
 assert_line "$out" '^path:MISS$' "path_in_use does not match its own matcher process"
 assert_line "$out" '^mention:MISS$' "proc_mentions does not match its own matcher process"
 
+# ---------------------------------------------------------------- docker image guard
+# Run from a copy laid out like the installed one, so it is tested on Linux CI too. The rule it
+# encodes: remove only images pulled from a registry that no container uses, never a local build.
+# Under the containerd store a local build carries a RepoDigest as well (2026-11-07), which is why
+# the origin comes from Identity and RepoDigests counts only on the classic store.
+echo "docker-image-guard.sh"
+GD="$TMP/guard-run"; mkdir -p "$GD/lib"
+cp "$SCRIPTS/guards/docker-image-guard.sh" "$GD/"; cp "$SCRIPTS/lib/disk-common.sh" "$GD/lib/"
+GUARD=(env LT_DISK_GUARD_PATH="$STUB:/usr/bin:/bin" bash "$GD/docker-image-guard.sh")
+STAMP_D="$HOME/.local/state/lt-dev/docker-image-guard.last-run"
+pull() { printf '{"Pull":[{"Repository":"docker.io/library/%s"}]}' "$1"; }
+images_fixture() {
+  printf 'c1\tsha256:used\n' > "$D/containers.txt"
+  : > "$D/removed.txt"; : > "$D/refuse.txt"; : > "$D/testcontainers.txt"
+  {
+    printf 'sha256:pulled\t%s\t1\t104857600\t2\t2026-11-01T00:00:00Z\tredis:7 redis:latest\tredis@sha256:pulled\n' "$(pull redis)"
+    printf 'sha256:used\t%s\t1\t52428800\t1\t2026-11-01T00:00:00Z\tpostgres:18\tpostgres@sha256:used\n' "$(pull postgres)"
+    printf 'sha256:built\t{"Build":[{"Ref":"x1"}]}\t1\t73400320\t1\t2026-11-01T00:00:00Z\tdemo-api:local\tdemo-api@sha256:built\n'
+    printf 'sha256:both\t{"Build":[{"Ref":"x2"}],"Pull":[{"Repository":"docker.io/library/node"}]}\t1\t1048576\t1\t2026-11-01T00:00:00Z\tdemo-node:1\tdemo-node@sha256:both\n'
+    printf 'sha256:loaded\tnull\t1\t1048576\t1\t2026-11-01T00:00:00Z\tloaded:1\tloaded@sha256:loaded\n'
+    printf 'sha256:untagged\t%s\t1\t2097152\t0\t2026-11-01T00:00:00Z\t\tgateway@sha256:untagged\n' "$(pull gateway)"
+    printf 'sha256:raced\t%s\t1\t1048576\t1\t2026-11-01T00:00:00Z\tmailpit:1\tmailpit@sha256:raced\n' "$(pull mailpit)"
+    printf 'sha256:local\tnull\t0\t1048576\t1\t2026-11-01T00:00:00Z\tprobe:1\t\n'
+  } > "$D/image.txt"
+  cut -f1,4 "$D/image.txt" > "$D/images.txt"
+  rm -f "$STAMP_D"; : > "$TMP/calls.txt"; : > "$TMP/ps.txt"
+}
+
+images_fixture
+echo '[["driver-type","io.containerd.snapshotter.v1"]]' > "$D/driver.txt"
+out="$(. "$SCRIPTS/lib/disk-common.sh"; docker_pulled_unused | cut -f1 | tr '\n' ' ')"
+[ "$out" = "sha256:pulled sha256:raced sha256:untagged " ] && ok "containerd store: only pulled, unused images are candidates" || fail "containerd store candidates" "got: $out"
+echo 'sha256:raced' > "$D/refuse.txt"
+out="$("${GUARD[@]}" --dry-run)"
+assert_line    "$out" 'would remove redis:7 redis:latest \(100 MB\)' "dry-run names every tag of a pulled image"
+assert_no_line "$out" 'demo-api|demo-node|loaded|postgres|probe' "dry-run never lists a build, an unknown origin or a used image"
+grep -q 'image rm' "$TMP/calls.txt" && fail "dry-run removes nothing" || ok "dry-run removes nothing"
+assert_missing "$STAMP_D" "dry-run leaves no stamp"
+out="$("${GUARD[@]}")"; debug guard "$out"
+grep -q '^docker image rm redis:7 redis:latest$' "$TMP/calls.txt" && ok "removes a pulled image by all its tags" || fail "removes a pulled image by all its tags"
+grep -q '^docker image rm gateway@sha256:untagged$' "$TMP/calls.txt" && ok "removes an untagged pulled image by its digest name" || fail "untagged image by digest"
+grep -q -- '--force\|-f ' "$TMP/calls.txt" && fail "never forces a removal" || ok "never forces a removal"
+assert_line "$out" 'kept mailpit:1: .*conflict' "an image a container started using is refused, not forced"
+assert_line "$out" 'done: removed 2 images, 102 MB by image size.*1 kept' "summary counts removed and kept images"
+assert_exists "$STAMP_D" "a completed run leaves its stamp"
+out="$("${GUARD[@]}")"
+assert_line "$out" 'last run 0 d ago \(< 7 d\) — skipped' "acts at most once a week"
+
+images_fixture
+echo '[["Root Dir","/var/lib/docker/overlay2"]]' > "$D/driver.txt"
+# On the classic store a build gets no RepoDigest.
+awk -F'\t' 'BEGIN { OFS = "\t" } $1 == "sha256:built" || $1 == "sha256:both" { $3 = 0 } { print }' "$D/image.txt" > "$D/image.tmp" && mv "$D/image.tmp" "$D/image.txt"
+out="$(IDENTITY_UNSUPPORTED=1 bash -c '. "$1/lib/disk-common.sh"; docker_pulled_unused' _ "$SCRIPTS" | cut -f1 | tr '\n' ' ')"
+[ "$out" = "sha256:loaded sha256:pulled sha256:raced sha256:untagged " ] && ok "classic store without Identity: RepoDigests decides, a build without digest stays" || fail "classic store candidates" "got: $out"
+out="$(. "$SCRIPTS/lib/disk-common.sh"; docker_pulled_unused | cut -f1 | tr '\n' ' ')"
+case "$out" in *built*|*both*) fail "classic store: a recorded build is kept" "got: $out" ;; *) ok "classic store: a recorded build is kept" ;; esac
+
+images_fixture
+echo '[["driver-type","io.containerd.snapshotter.v1"]]' > "$D/driver.txt"
+out="$(DOCKER_DOWN=1 "${GUARD[@]}")"
+assert_line "$out" 'Docker is not running — skipped' "skips while Docker is not running"
+assert_missing "$STAMP_D" "a skipped run is retried, no stamp"
+busy_case() {  # busy_case <ps line> <expect hit|miss> <name>
+  printf '%s\n' "$1" > "$TMP/ps.txt"
+  local got; got="$(. "$SCRIPTS/lib/disk-common.sh"; docker_busy)"
+  if [ "$2" = hit ]; then [ -n "$got" ] && ok "$3" || fail "$3" "not detected: $1"
+  else [ -z "$got" ] && ok "$3" || fail "$3" "false positive: $got"; fi
+}
+busy_case '/usr/local/bin/docker pull redis:7' hit "busy: docker pull"
+busy_case '/usr/local/bin/docker --context desktop-linux build -t probe:1 .' hit "busy: docker build after a global flag with a value"
+busy_case '/home/dev/.docker/cli-plugins/docker-compose compose -f a.yml -p demo up -d' hit "busy: compose plugin running up"
+busy_case '/usr/local/bin/docker buildx bake' hit "busy: buildx bake"
+busy_case 'docker run --rm grafana/k6 run -' hit "busy: docker run"
+busy_case '/opt/homebrew/bin/gitlab-runner exec docker test' hit "busy: gitlab-runner exec"
+busy_case '/opt/homebrew/bin/act -j build' hit "busy: act"
+busy_case '/usr/local/bin/docker compose -f a.yml exec app pnpm run build' miss "not busy: compose exec running a build inside a container"
+busy_case '/usr/local/bin/docker compose logs -f' miss "not busy: following logs"
+busy_case 'bash -c echo docker pull later' miss "not busy: docker named only as an argument"
+printf '/usr/local/bin/docker pull redis:7\n' > "$TMP/ps.txt"
+out="$("${GUARD[@]}")"
+assert_line "$out" 'skipped, Docker is pulling, building or creating' "guard skips during a pull"
+: > "$TMP/ps.txt"; echo 9a1 > "$D/testcontainers.txt"
+out="$("${GUARD[@]}")"
+assert_line "$out" 'Testcontainers session \(1 containers\)' "guard skips during a Testcontainers session"
+grep -q 'image rm' "$TMP/calls.txt" && fail "a skipped run removes nothing" || ok "a skipped run removes nothing"
+: > "$D/testcontainers.txt"
+out="$("${GUARD[@]}" --force)"
+assert_line "$out" 'done: removed 3 images' "--force runs regardless of the stamp"
+
 # ---------------------------------------------------------------- guards
 if [ "$(uname)" = Darwin ]; then
   echo "disk-guards.sh + guards"
@@ -244,6 +388,11 @@ if [ "$(uname)" = Darwin ]; then
   plutil -lint "$P" >/dev/null 2>&1 && ok "plist is valid" || fail "plist is valid"
   grep -q "$G/pnpm-store-guard.sh" "$P" && ok "plist points at the copy, not the plugin" || fail "plist points at the copy"
   grep -q 'launchctl bootstrap' "$TMP/calls.txt" && ok "agent loaded" || fail "agent loaded"
+  PD="$HOME/Library/LaunchAgents/tech.lenne.lt-dev.docker-image-guard.plist"
+  assert_exists "$G/docker-image-guard.sh" "docker image guard installed where a docker CLI exists"
+  plutil -lint "$PD" >/dev/null 2>&1 && ok "docker guard plist is valid" || fail "docker guard plist is valid"
+  grep -q '<integer>10</integer>' "$PD" && ok "docker guard runs five minutes after the mongo slot" || fail "docker guard minute"
+  assert_line "$out" $'^docker-image-guard\t' "status lists the docker image guard"
 
   export LT_DISK_GUARD_PATH="$STUB:/usr/bin:/bin"
   mkdir -p "$S/v10/files"; dd if=/dev/zero of="$S/v11/files/blob" bs=1048576 count=2 2>/dev/null

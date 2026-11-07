@@ -81,6 +81,7 @@ Update frontend (nuxt-extensions + starter changes)
 Modernize toolchain (jest→vitest, eslint→oxlint, prettier→oxfmt) — BOTH api AND app
 Sync CLAUDE.md from upstream starters
 Final cross-project validation (npm run check / pnpm run check from root, must be green)
+Remove the run's directories (before every turn-ending message, see Run directory cleanup)
 Generate report
 ```
 
@@ -171,20 +172,23 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
 
 ### Phase 2: Starter Repository Analysis
 
-1. **Clone starter repositories to /tmp:**
+1. **Clone the starter repositories into a run directory of this run's own:**
    ```bash
-   # Backend starter
-   git clone --depth=50 https://github.com/lenneTech/nest-server-starter.git /tmp/nest-server-starter-ref 2>/dev/null || \
-     (cd /tmp/nest-server-starter-ref && git fetch --all)
-
-   # Frontend starter
-   git clone --depth=50 https://github.com/lenneTech/nuxt-base-starter.git /tmp/nuxt-base-starter-ref 2>/dev/null || \
-     (cd /tmp/nuxt-base-starter-ref && git fetch --all)
+   mktemp -d /tmp/fullstack-update.XXXXXX   # prints the run directory, e.g. /tmp/fullstack-update.k3J9aQ
    ```
+   ```bash
+   git clone --depth=50 https://github.com/lenneTech/nest-server-starter.git <run-dir>/nest-server-starter
+   git clone --depth=50 https://github.com/lenneTech/nuxt-base-starter.git <run-dir>/nuxt-base-starter
+   ```
+   Create the directory in a call of its own and write the printed path into every later call: shell
+   variables do not survive between Bash calls. A failed clone is an error to report. The run never
+   falls back to a starter folder it did not create (`/tmp/nest-server-starter-ref`, `/tmp/*-ref`): that
+   one may be stale or a parallel session's, and a plan built on it is silently wrong. "Run directory
+   cleanup" below says when the directory goes.
 
 2. **Analyze backend starter changes:**
    ```bash
-   cd /tmp/nest-server-starter-ref
+   cd <run-dir>/nest-server-starter
    # List tags to find version boundaries
    git tag --sort=-v:refname | head -20
    # Get changes between relevant versions
@@ -194,7 +198,7 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
 
 3. **Analyze frontend starter changes:**
    ```bash
-   cd /tmp/nuxt-base-starter-ref
+   cd <run-dir>/nuxt-base-starter
    git tag --sort=-v:refname | head -20
    git log --oneline <from-tag>..<to-tag>
    git diff <from-tag>..<to-tag> -- . ':!node_modules'
@@ -333,9 +337,12 @@ asks for it.
    - Reply "no" or "cancel" to abort
    ```
 
-3. **Wait for user confirmation** before proceeding to Phase 4.
+3. **Wait for user confirmation** before proceeding to Phase 4. The question in step 2 ends the turn,
+   so the run directory goes before it (Run directory cleanup); after the approval, clone the starters
+   again as in Phase 2 step 1.
 
-**DRY-RUN MODE**: Stop here after generating UPDATE_PLAN.md. Output the plan as the final report.
+**DRY-RUN MODE**: Stop here after generating UPDATE_PLAN.md, remove the run directory, and output the
+plan as the final report.
 
 ### Phase 4: Backend Update (unless --skip-backend)
 
@@ -382,8 +389,10 @@ core update workflow:
 1. Read `VENDOR.md` for baseline version
 2. Determine latest upstream tag from `github.com/lenneTech/nuxt-extensions`
 3. Follow the `nuxt-extensions-core-updater` workflow:
-   - Clone upstream baseline and target to `/tmp/`
-   - Generate diffs (upstream-delta, local-changes)
+   - Clone upstream baseline and target into a sync directory of this run's own
+     (`mktemp -d /tmp/nuxt-extensions-sync.XXXXXX`, as that agent's Phase 3 shows); Run directory
+     cleanup removes it with the run directory
+   - Generate diffs (upstream-delta, local-changes) into that sync directory
    - Categorize hunks (clean pick / conflict / not applicable)
    - Apply approved changes (1:1 file mapping, no flatten-fix needed)
    - Validate with `nuxt build` + lint
@@ -592,7 +601,10 @@ Your final message is the report the caller acts on. Write it when every phase i
    cd <backend-path> && pnpm test
    ```
 
-2. **Generate comprehensive report:**
+2. **Remove the run's directories** (Run directory cleanup): `rm -rf <run-dir>`, and after a
+   vendor-mode Phase 5 also `rm -rf <sync-dir>`.
+
+3. **Generate comprehensive report:**
 
    ```markdown
    ## Fullstack Update Report
@@ -604,6 +616,7 @@ Your final message is the report the caller acts on. Write it when every phase i
    | Frontend | X.Y.Z → A.B.C |
    | Mode | Full / Skip Backend / Skip Frontend |
    | Duration | ~X minutes |
+   | Run directories | /tmp/fullstack-update.k3J9aQ removed |
 
    ### Backend Changes
    #### nest-server Update
@@ -650,10 +663,23 @@ Your final message is the report the caller acts on. Write it when every phase i
    - nuxt-base-starter: https://github.com/lenneTech/nuxt-base-starter
    ```
 
-3. **Clean up temporary files:**
-   ```bash
-   rm -rf /tmp/nest-server-starter-ref /tmp/nuxt-base-starter-ref
-   ```
+---
+
+## Run directory cleanup
+
+The run directory from Phase 2 belongs to this run alone. Every message that ends this agent's turn
+(the `--dry-run` plan, the plan-approval question, a question or report after an error, the Phase 7
+report) comes after removing it and names it. A run resumed after such a stop (plan approved,
+"continue with the frontend") clones again into a fresh run directory: UPDATE_PLAN.md holds what the
+analysis found, and a depth-50 clone takes seconds. A run that ends in a Phase 1 early exit has created
+nothing yet. The sync directory of a vendor-mode Phase 5 follows the `nuxt-extensions-core-updater`
+rule (its Phase 3): it goes with the run directory at the end of the run and on an error, and a review
+pause that expects to be resumed keeps it and names it in the pause message.
+
+Remove each directory by the exact path `mktemp` printed (`rm -rf /tmp/fullstack-update.k3J9aQ`),
+never by a fixed name or pattern such as `/tmp/nest-server-starter-ref` or `/tmp/*-ref`: a parallel
+session on the same machine may be working in it. The `managing-dev-servers` skill, section Docker
+resources, worktrees and clones, has the shared rule.
 
 ---
 
@@ -673,6 +699,8 @@ If blocked at any phase:
    - Create detailed error report
    - Suggest manual resolution steps
    - Offer to revert: `git checkout .`
+
+Each of these ends the turn, so the run's directories go first (Run directory cleanup).
 
 ---
 

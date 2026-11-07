@@ -64,8 +64,8 @@ gh release list --repo lenneTech/nest-server --limit 50
 # View specific release details
 gh release view v11.7.0 --repo lenneTech/nest-server
 
-# Compare reference project between versions
-cd /tmp/nest-server-starter-ref
+# Compare reference project between versions (the clone the updater made in its own run directory)
+cd <run-dir>/nest-server-starter
 git log --oneline v12.1.0..v12.2.0
 git diff v12.1.0..v12.2.0 -- package.json src/
 ```

@@ -16,6 +16,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   classifyUri,
   composeServiceNames,
+  DB_ENGINES,
+  dbRunArgs,
   isolateCompose,
   isInside,
   pidAlive,
@@ -1064,4 +1066,234 @@ test('isolateCompose: fixed volume, network and container names go; bind mounts 
   assert.equal(changes.length, 4);
   assert.deepEqual(unsafeBinds, ['services.api: /var/lib/shop -> /data']);
   assert.equal(config.volumes.data.name, 'shop_mongo_data', 'the input is not modified');
+});
+
+test('isolateCompose: a build gets the run\'s own image name, so the developer\'s tag is never rebuilt', () => {
+  const clone = path.join(TMP, 'compose-build-clone');
+  const config = {
+    name: 'showroom-shop',
+    services: {
+      api: {
+        image: 'shop-api:latest',
+        pull_policy: 'always',
+        build: { context: clone, tags: ['registry.example.com/shop/api:1.0'], cache_to: ['type=registry,ref=registry.example.com/shop/cache'] },
+      },
+      worker: { image: 'shop-api', command: ['node', 'worker.js'] },
+      Web_App: { build: { context: clone } },
+      a_b: { build: { context: clone } },
+      'a-b': { build: { context: clone } },
+      db: { image: 'mongo:7' },
+    },
+  };
+  const { config: out, changes, images } = isolateCompose(config, clone);
+  assert.equal(out.services.api.image, 'showroom-shop-api', 'the build no longer moves the developer tag shop-api:latest');
+  assert.equal(out.services.api.pull_policy, 'build', 'built from the clone, never a pulled or stale image');
+  assert.equal(out.services.api.build.tags, undefined, 'extra tags would name the build after the project again');
+  assert.equal(out.services.api.build.cache_to, undefined);
+  assert.equal(out.services.worker.image, 'showroom-shop-api', 'a service sharing the build follows the rename');
+  assert.equal(out.services.Web_App.image, 'showroom-shop-web-app');
+  assert.notEqual(out.services.a_b.image, out.services['a-b'].image, 'two services never share one run image');
+  assert.equal(out.services.db.image, 'mongo:7', 'a pulled image keeps its name');
+  assert.equal(out.services.db.pull_policy, undefined);
+  assert.deepEqual(images, ['showroom-shop-api', 'showroom-shop-web-app', out.services.a_b.image, out.services['a-b'].image]);
+  assert.ok(changes.some((c) => c === 'services.api: builds as showroom-shop-api, not as shop-api:latest'), changes.join('\n'));
+  assert.equal(config.services.api.image, 'shop-api:latest', 'the input is not modified');
+});
+
+// A `docker` on PATH that keeps containers, volumes and images in a JSON file and logs every call, so
+// cleanup can be checked against the daemon's view without touching the real one.
+const FAKE_DOCKER = path.join(TMP, 'fake-docker.mjs');
+writeFileSync(
+  FAKE_DOCKER,
+  `import { readFileSync, writeFileSync } from 'node:fs';
+const file = process.env.FAKE_DOCKER_STATE;
+const st = JSON.parse(readFileSync(file, 'utf8'));
+const argv = process.argv.slice(2);
+st.calls.push(argv);
+const ref = (r) => (r.includes('@') || /:[^/]*$/.test(r) ? r : r + ':latest');
+const filters = argv.flatMap((a, i) => (argv[i - 1] === '--filter' ? [a] : []));
+const project = filters.find((f) => f.startsWith('label=com.docker.compose.project='))?.split('=').pop();
+const findImage = (x) => st.images.find((im) => im.id === x || im.tags.includes(ref(x)));
+const lines = [];
+let code = 0;
+const [cmd, sub] = argv;
+if (cmd === 'compose' && argv.includes('config')) lines.push(JSON.stringify(st.config));
+else if (cmd === 'compose' && argv.includes('down')) {
+  const p = argv[argv.indexOf('-p') + 1];
+  st.containers = st.containers.filter((c) => c.project !== p);
+} else if (cmd === 'ps') lines.push(...st.containers.filter((c) => c.project === project).map((c) => c.id));
+else if (cmd === 'volume' && sub === 'ls') lines.push(...st.volumes.filter((v) => v.project === project).map((v) => v.name));
+else if (cmd === 'images') {
+  const mine = st.images.filter((im) => im.project === project);
+  if (filters.includes('dangling=true')) lines.push(...mine.filter((im) => im.tags.length === 0).map((im) => im.id));
+  else lines.push(...mine.flatMap((im) => im.tags));
+} else if (cmd === 'image' && sub === 'inspect') code = findImage(argv.at(-1)) ? 0 : 1;
+else if (cmd === 'image' && sub === 'rm') {
+  for (const x of argv.slice(2).filter((a) => !a.startsWith('-'))) {
+    const im = findImage(x);
+    if (!im || (im.id === x && im.tags.length > 1)) {
+      code = 1;
+      continue;
+    }
+    im.tags = im.id === x ? [] : im.tags.filter((t) => t !== ref(x));
+    if (im.tags.length === 0) st.images = st.images.filter((i) => i !== im);
+  }
+} else if (cmd === 'run') {
+  if (st.failRun) code = 1;
+  else st.containers.push({ id: 'run-' + st.containers.length, name: argv[argv.indexOf('--name') + 1], project: null });
+} else if (cmd === 'inspect') code = st.containers.some((c) => c.name === argv.at(-1) || c.id === argv.at(-1)) ? 0 : 1;
+else if (cmd === 'rm') {
+  const gone = argv.slice(1).filter((a) => !a.startsWith('-'));
+  if (!gone.every((x) => st.containers.some((c) => c.name === x || c.id === x))) code = 1;
+  st.containers = st.containers.filter((c) => !gone.includes(c.name) && !gone.includes(c.id));
+}
+writeFileSync(file, JSON.stringify(st));
+process.stdout.write(lines.length ? lines.join('\\n') + '\\n' : '');
+if (code) process.stderr.write('Error response from daemon: No such object\\n');
+process.exit(code);
+`,
+);
+
+function fakeDocker(initial) {
+  const dir = path.join(TMP, `docker-${++homeCounter}`);
+  mkdirSync(dir);
+  const stateFile = path.join(dir, 'state.json');
+  writeFileSync(stateFile, JSON.stringify({ calls: [], containers: [], volumes: [], images: [], ...initial }));
+  writeFileSync(path.join(dir, 'docker'), `#!/bin/sh\nexec "${process.execPath}" "${FAKE_DOCKER}" "$@"\n`, { mode: 0o755 });
+  const read = () => JSON.parse(readFileSync(stateFile, 'utf8'));
+  return {
+    env: { PATH: `${dir}${path.delimiter}${process.env.PATH}`, FAKE_DOCKER_STATE: stateFile },
+    read,
+    update: (fn) => {
+      const st = read();
+      fn(st);
+      writeFileSync(stateFile, JSON.stringify(st));
+    },
+  };
+}
+
+test('compose-file + cleanup: exactly the images the run built go; the developer\'s and pulled images stay', { skip: !POSIX }, async () => {
+  const home = freshHome();
+  const clone = path.join(TMP, `compose-run-${homeCounter}`);
+  mkdirSync(clone);
+  const docker = fakeDocker({
+    config: {
+      name: 'showroom-shop',
+      services: { api: { image: 'shop-api:latest', build: { context: clone } }, db: { image: 'mongo:7' } },
+    },
+    images: [
+      { id: 'dev-build', tags: ['shop-api:latest'], project: 'shop' },
+      { id: 'pulled-mongo', tags: ['mongo:7'], project: null },
+    ],
+  });
+  const { env } = docker;
+  assert.equal((await cli(['start', 'shop'], { home, env })).code, 0);
+  const cf = await cli(['compose-file', 'shop', '--cwd', clone], { home, env });
+  assert.equal(cf.code, 0, cf.stderr);
+  assert.deepEqual(JSON.parse(cf.stdout).images, ['showroom-shop-api']);
+  const written = JSON.parse(readFileSync(path.join(home, 'shop', 'compose.showroom.json'), 'utf8'));
+  assert.equal(written.services.api.image, 'showroom-shop-api');
+  assert.deepEqual(session(home, 'shop').resources.find((r) => r.type === 'compose').images, ['showroom-shop-api']);
+  // What `up -d` leaves on the daemon: the run's build, an earlier build a rebuild left without a name, a container.
+  docker.update((st) => {
+    st.images.push({ id: 'run-build', tags: ['showroom-shop-api:latest'], project: 'showroom-shop' });
+    st.images.push({ id: 'run-build-old', tags: [], project: 'showroom-shop' });
+    st.containers.push({ id: 'c1', name: 'showroom-shop-api-1', project: 'showroom-shop' });
+  });
+  const c = await cli(['cleanup', 'shop'], { home, env });
+  assert.equal(c.code, 0, c.stdout + c.stderr);
+  const st = docker.read();
+  assert.deepEqual(
+    st.images.map((im) => im.id).sort(),
+    ['dev-build', 'pulled-mongo'],
+    'the run\'s builds are gone, the developer\'s image and the pulled one stay',
+  );
+  assert.deepEqual(st.images.find((im) => im.id === 'dev-build').tags, ['shop-api:latest']);
+  const imageRms = st.calls.filter(([cmd, sub]) => cmd === 'image' && sub === 'rm');
+  assert.ok(imageRms.length > 0, 'cleanup removes images');
+  assert.ok(imageRms.every((a) => !a.includes('-f') && !a.includes('--force')), 'never forced');
+  assert.ok(!st.calls.some((a) => a.includes('prune')), 'no prune');
+  assert.ok(st.calls.some((a) => a[0] === 'compose' && a.includes('down') && a[a.indexOf('-p') + 1] === 'showroom-shop'));
+});
+
+test('cleanup: a build named by the project\'s own compose file is reported, not removed; a container recorded before it existed counts as removed', { skip: !POSIX }, async () => {
+  const home = freshHome();
+  const docker = fakeDocker({ images: [{ id: 'run-under-dev-tag', tags: ['shop-api:latest'], project: 'showroom-raw' }] });
+  const { env } = docker;
+  await cli(['start', 'raw'], { home, env });
+  await cli(['record', 'raw', 'compose', 'showroom-raw'], { home, env });
+  assert.equal((await cli(['record', 'raw', 'container', 'showroom-raw-mongo'], { home, env })).code, 0, 'record works before the container exists');
+  const c = await cli(['cleanup', 'raw'], { home, env });
+  assert.equal(c.code, 1, 'the image is a leftover');
+  const report = JSON.parse(c.stdout);
+  assert.ok(report.leftovers.some((l) => /left alone: shop-api:latest/.test(l)), c.stdout);
+  assert.ok(report.stopped.includes('container:showroom-raw-mongo'), c.stdout);
+  assert.deepEqual(docker.read().images[0].tags, ['shop-api:latest'], 'a tag the run did not choose is never removed');
+});
+
+test('dbRunArgs: fixed flags, published on 127.0.0.1 only, no mount, network or privilege flag', () => {
+  for (const engine of Object.keys(DB_ENGINES)) {
+    const { name, args } = dbRunArgs('shop', engine, 41000);
+    assert.equal(name, `showroom-shop-${engine}`);
+    assert.deepEqual(args.slice(0, 4), ['run', '-d', '--name', name]);
+    assert.equal(args[args.indexOf('-p') + 1], `127.0.0.1:41000:${DB_ENGINES[engine].port}`);
+    assert.equal(args.at(-1), DB_ENGINES[engine].image);
+    for (const flag of ['-v', '--volume', '--mount', '--network', '--net', '--privileged', '--pid', '--cap-add', '--device']) {
+      assert.ok(!args.includes(flag), `${engine}: no ${flag}`);
+    }
+  }
+});
+
+test('db: records the container before docker run, so a failed or crashed start still gets cleaned', { skip: !POSIX }, async () => {
+  const home = freshHome();
+  const docker = fakeDocker({ failRun: true });
+  const { env } = docker;
+  await cli(['start', 'dbfail'], { home, env });
+  const r = await cli(['db', 'dbfail', 'mongo', '--port', '41001'], { home, env });
+  assert.equal(r.code, 1, 'docker run failed');
+  assert.ok(session(home, 'dbfail').resources.some((x) => x.type === 'container' && x.value === 'showroom-dbfail-mongo'));
+  const c = await cli(['cleanup', 'dbfail'], { home, env });
+  assert.equal(c.code, 0, c.stdout + c.stderr);
+  assert.ok(JSON.parse(c.stdout).stopped.includes('container:showroom-dbfail-mongo'));
+});
+
+test('db: starts the engine, prints the URL, and cleanup removes exactly that container', { skip: !POSIX }, async () => {
+  const home = freshHome();
+  const docker = fakeDocker({ containers: [{ id: 'dev-db', name: 'shop-postgres-1', project: 'shop' }] });
+  const { env } = docker;
+  await cli(['start', 'dbok'], { home, env });
+  const r = await cli(['db', 'dbok', 'postgres'], { home, env });
+  assert.equal(r.code, 0, r.stderr);
+  const info = JSON.parse(r.stdout);
+  assert.equal(info.name, 'showroom-dbok-postgres');
+  assert.match(info.url, /^postgres:\/\/showroom:showroom@127\.0\.0\.1:\d+\/showroom$/);
+  assert.equal((await cli(['db', 'dbok', 'oracle'], { home, env })).code, 1, 'an engine outside the table is refused');
+  await cli(['cleanup', 'dbok'], { home, env });
+  assert.deepEqual(docker.read().containers.map((c) => c.id), ['dev-db'], 'the developer\'s container stays');
+});
+
+test('compose: fixed verbs on the recorded project under its own -p and -f; nothing else gets through', { skip: !POSIX }, async () => {
+  const home = freshHome();
+  const clone = path.join(TMP, `compose-verbs-${homeCounter}`);
+  mkdirSync(clone);
+  const docker = fakeDocker({ config: { name: 'showroom-cv', services: { api: { build: { context: clone } }, db: { image: 'mongo:7' } } } });
+  const { env } = docker;
+  await cli(['start', 'cv'], { home, env });
+  assert.equal((await cli(['compose', 'cv', 'up'], { home, env })).code, 1, 'refused before compose-file recorded a project');
+  const cf = await cli(['compose-file', 'cv', '--cwd', clone], { home, env });
+  assert.equal(cf.code, 0, cf.stderr);
+  assert.match(JSON.parse(cf.stdout).up, /screenshot-session\.mjs" compose cv up$/, 'compose-file prints the script call, not a docker command');
+  const file = path.join(home, 'cv', 'compose.showroom.json');
+  for (const verb of ['up', 'ps', 'logs']) assert.equal((await cli(['compose', 'cv', verb], { home, env })).code, 0, verb);
+  assert.equal((await cli(['compose', 'cv', 'logs', '--service', 'db', '--tail', '50'], { home, env })).code, 0);
+  assert.equal((await cli(['compose', 'cv', 'logs', '--service', '-v'], { home, env })).code, 1, 'a service outside the file is refused');
+  assert.equal((await cli(['compose', 'cv', 'run'], { home, env })).code, 1, 'a verb outside up|ps|logs is refused');
+  const calls = docker.read().calls.filter((a) => a[0] === 'compose' && !a.includes('config'));
+  const base = ['compose', '-p', 'showroom-cv', '-f', file];
+  assert.deepEqual(calls, [
+    [...base, 'up', '-d'],
+    [...base, 'ps', '-a'],
+    [...base, 'logs', '--no-color', '--tail', '200'],
+    [...base, 'logs', '--no-color', '--tail', '50', 'db'],
+  ]);
 });

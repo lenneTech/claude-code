@@ -252,12 +252,16 @@ Agent tool with subagent_type "lt-dev:production-readiness-orchestrator":
   ensure runner toolchain (gitlab-runner / act / docker-compose), parse jobs,
   resolve image+services+vars, execute each job in stage order. For failures,
   walk the remediation table; iterate. Save logs under tmp/ci-local/.
+  Before returning, also when a job stays red, remove every container,
+  compose project, volume and copy the run created (the skill's Step 9).
 
   Return:
-  - The canonical Local CI Pipeline Report block
+  - The canonical Local CI Pipeline Report block, including its Left behind: line
   - Per-job table with verdict and iterations
   - Blocking jobs with root-cause analysis
 ```
+
+A `Left behind:` entry the agent did not keep on purpose is an open item like any other: resume the agent to remove it before the workflow stops or moves on.
 
 ### Phase 8 — Browser Validation Walk
 
@@ -337,7 +341,7 @@ This mirrors the closing pattern of `/lt-dev:review`.
 - **Strict no-skip**: every test skip is a blocker. Convert or escalate, never accept.
 - **Hard stops**: Phase 1 FAIL, Phase 4 NOT-READY, Phase 6 STALLED, Phase 7 FAIL → workflow stops, report surfaced, no Phase 5/later runs.
 - **Configurable iteration cap**: `--max-iterations` (default 5) applies to every iterate-until-green loop.
-- **Long-running tasks**: k6 soak and CI compose runs use `run_in_background: true` inside the agent; the agent polls or waits for the summary file; the agent owns cleanup.
+- **Long-running tasks**: k6 soak and CI compose runs use `run_in_background: true` inside the agent; the agent polls or waits for the summary file; before it returns, also on a hard stop, it removes the servers, containers, volumes and copies it created and nothing else (its Cleanup rule; the `managing-dev-servers` skill, section Docker resources, worktrees and clones).
 - **No silent skips**: phases bypassed via `--skip-step` are listed as `Skipped? yes` in the final report and the global verdict cannot be `READY-FOR-PRODUCTION` without all 7 phases passing.
 
 ## Limitations

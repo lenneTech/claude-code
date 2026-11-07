@@ -135,22 +135,36 @@ terse to judge, a bug fix that could be either.
 
 ### Phase 5: Check Upstream for Duplicates
 
+Clone upstream into a directory of this run's own, created in a call of its own; write the path it
+prints into every later call (shell variables do not survive between Bash calls):
+
 ```bash
-rm -rf /tmp/ng-base-head
-git clone --filter=blob:none https://github.com/lenneTech/ng-base /tmp/ng-base-head
+mktemp -d /tmp/ng-base-head.XXXXXX   # prints the clone directory, e.g. /tmp/ng-base-head.k3J9aQ
+```
+
+```bash
+git clone --filter=blob:none https://github.com/lenneTech/ng-base <head-dir>
 for file in $CANDIDATE_FILES; do
-  diff "$file" "/tmp/ng-base-head/projects/ng-base/${file#src/core/}" >/dev/null && echo "SAME $file"
+  diff "$file" "<head-dir>/projects/ng-base/${file#src/core/}" >/dev/null && echo "SAME $file"
 done
 ```
 
 A change already upstream is marked "already applied" and skipped. Also check the open PRs:
 `gh pr list --repo lenneTech/ng-base --state open --search "<file or topic>"`.
 
+**The clone is the hand-off.** Its `contribute/*` branches and `.git/PR-DRAFTS` are what the user pushes, so
+it stays after the run, and the report names it with the command to delete it once every branch is pushed.
+A fresh directory per run keeps an earlier run's unpushed branches and drafts, and a parallel session's
+clone, intact, so an existing `/tmp/ng-base-head*` is neither removed nor reused. A run that prepares no
+branch (`--dry-run`, no candidate left after this phase, or a stop before the first branch) removes the
+clone with `rm -rf <head-dir>` before its report. The `managing-dev-servers` skill, section Docker
+resources, worktrees and clones, has the shared rule.
+
 ### Phase 6: Clone Upstream + Prepare Branches
 
 ```bash
 BRANCH="contribute/$(echo "$COMMIT_SUBJECT" | sed 's/[^a-zA-Z0-9]/-/g' | tr '[:upper:]' '[:lower:]' | head -c 50)"
-git -C /tmp/ng-base-head checkout -b "$BRANCH" main
+git -C <head-dir> checkout -b "$BRANCH" main
 ```
 
 Apply each candidate's `src/core/` diff to `projects/ng-base/` (1:1, Principle 6). Add or adapt the spec next
@@ -181,7 +195,7 @@ Generated with Claude Code via `lt-dev:ng-base-core-contributor`
 ```
 
 Leave the project's name out of the PR unless the user wants it there: ng-base is public. Save the body to
-`/tmp/ng-base-head/.git/PR-DRAFTS/<branch>.md`.
+`<head-dir>/.git/PR-DRAFTS/<branch>.md`.
 
 ### Phase 8: Present Summary for Human Review
 
@@ -194,17 +208,19 @@ stops you. Interim status goes in the same message as your next tool call, so th
 **Since baseline:** 22.0.0 (0f827bd...)
 **Local commits analyzed:** N · **cosmetic:** N · **project-specific:** N · **already upstream:** N
 **Ready for PR:** N
+**Upstream clone:** `/tmp/ng-base-head.k3J9aQ` (kept: holds the branches and drafts; removed when nothing was prepared)
 
 ## PR Drafts Ready
 
 ### 1. `contribute/fix-tus-upload-resume`
 **Original commit:** `e9c3aa7`
-**Branch:** `/tmp/ng-base-head` @ `contribute/fix-tus-upload-resume` (check green)
-**PR body:** `/tmp/ng-base-head/.git/PR-DRAFTS/contribute-fix-tus-upload-resume.md`
+**Branch:** `/tmp/ng-base-head.k3J9aQ` @ `contribute/fix-tus-upload-resume` (check green)
+**PR body:** `/tmp/ng-base-head.k3J9aQ/.git/PR-DRAFTS/contribute-fix-tus-upload-resume.md`
 
 Next steps (the user's):
-  git -C /tmp/ng-base-head push origin contribute/fix-tus-upload-resume
+  git -C /tmp/ng-base-head.k3J9aQ push origin contribute/fix-tus-upload-resume
   gh pr create --repo lenneTech/ng-base --draft --base main --title "..." --body-file ...
+  once every branch is pushed: rm -rf /tmp/ng-base-head.k3J9aQ
 
 ## Project-Specific (Not Contributed)
 - `a4714b4`: custom form rules (project-specific)

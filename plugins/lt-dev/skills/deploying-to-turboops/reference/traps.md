@@ -23,10 +23,19 @@ then hung forever. In a container entrypoint of the shape
 until its timeout. Fixed in `@lenne.tech/nest-server` — if a vendored core
 predates the fix, `uploadFileToGridFS` is the place to look.
 
-**Build the image locally before pushing a Dockerfile change.**
-`docker build --target deps -f projects/api/Dockerfile .` reproduces the exact
-stage CI runs in under a minute. A pipeline round trip to learn the same thing
-costs ten.
+**Build the image locally before pushing a Dockerfile change.** Building the
+deps stage reproduces the exact stage CI runs in under a minute. A pipeline
+round trip to learn the same thing costs ten.
+
+```bash
+run="deps-probe-$(date +%s)-$$"
+trap 'docker image rm "$run" >/dev/null 2>&1' EXIT
+docker build --target deps -t "$run" -f projects/api/Dockerfile .
+```
+
+The tag gives the probe image a name to remove it by: an untagged build stays
+behind as a dangling image nobody can tell apart from a peer session's (the
+`managing-dev-servers` skill, section Docker resources, worktrees and clones).
 
 
 These are empirically verified failures. The first two are **the same root cause

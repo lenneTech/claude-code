@@ -61,6 +61,7 @@ Apply code migrations
 Validate: Build
 Validate: Lint
 Validate: Tests
+Remove the run directory (on every outcome)
 Generate report
 ```
 
@@ -239,10 +240,19 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
    gh release view vX.Y.Z --repo lenneTech/nest-server
    ```
 
-4. **Analyze reference project:**
+4. **Analyze reference project** in a clone of this run's own:
    ```bash
-   git clone https://github.com/lenneTech/nest-server-starter.git /tmp/nest-server-starter-ref
+   mktemp -d /tmp/nest-server-starter-ref.XXXXXX   # prints the run directory, e.g. /tmp/nest-server-starter-ref.k3J9aQ
    ```
+   ```bash
+   git clone https://github.com/lenneTech/nest-server-starter.git <run-dir>/nest-server-starter
+   ```
+   Create the directory in a call of its own and write the printed path into every later call: shell
+   variables do not survive between Bash calls. A failed clone is an error to report; a
+   `/tmp/nest-server-starter-ref*` folder this run did not create may be stale or a parallel session's,
+   so it is neither reused nor removed. The run removes its directory with `rm -rf <run-dir>` before its
+   final message, whatever the outcome (dry-run report, Phase 7 report, Error Recovery), and the report
+   names it, as the `managing-dev-servers` skill, section Docker resources, worktrees and clones, sets out.
    - Compare package.json dependencies between version tags
    - Identify code patterns via `git diff vX.Y.Z..vA.B.C`
    - Find version-related commits via `git log --oneline vX.Y.Z..vA.B.C`
@@ -255,7 +265,7 @@ All examples below use `pnpm` notation. **Adapt all commands** to the detected p
 5. **Create migration plan:**
    Consolidate from guides, releases, and reference project.
 
-**DRY-RUN MODE**: Stop here and generate analysis report.
+**DRY-RUN MODE**: Stop here: remove the run directory, then generate the analysis report.
 
 ### Phase 3: Update Execution
 
@@ -402,7 +412,7 @@ to reflect framework changes (new conventions, updated API patterns, etc.).
 
 Your final message is the report the caller acts on. Write it when every phase is done or a named blocker stops you. Interim status goes in the same message as your next tool call, so the work keeps moving.
 
-Generate comprehensive report:
+Remove the run directory from Phase 2 (`rm -rf <run-dir>`) first, then generate the comprehensive report:
 
 ```markdown
 ## @lenne.tech/nest-server Update Report
@@ -415,6 +425,7 @@ Generate comprehensive report:
 | Update Path | X.Y.Z → ... → A.B.C |
 | Mode | Full / Dry-Run / Target Version |
 | Subprojects | N |
+| Run directory | /tmp/nest-server-starter-ref.k3J9aQ removed (or: none created) |
 
 ### Migration Guides Applied
 1. `11.6.x-to-11.7.x.md` - [key changes]
@@ -486,6 +497,8 @@ When `--dry-run` is specified, generate analysis-only report:
 
 ### Recommendation
 [Proceed / Review guides first / Manual intervention needed]
+
+Run directory: /tmp/nest-server-starter-ref.k3J9aQ removed (or: none created)
 ```
 
 ---
@@ -497,7 +510,8 @@ If blocked:
 1. Document error with full context
 2. Try alternative from reference project
 3. If truly stuck after extensive attempts:
-   - Create detailed error report
+   - Remove the run directory from Phase 2 (`rm -rf <run-dir>`)
+   - Create detailed error report, naming the directory removed
    - Suggest manual resolution steps
    - Revert changes if requested: `git checkout .`
 

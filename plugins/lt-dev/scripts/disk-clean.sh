@@ -85,7 +85,30 @@ clean_one() {
       done ;;
 
     docker-build-cache) act "$id" "docker builder prune -a" docker builder prune -a -f ;;
-    docker-images) act "$id" "docker image prune -a" docker image prune -a -f ;;
+    docker-images)
+      # Only images pulled from a registry: `docker image prune -a` would take local builds along,
+      # which may be the only copy of a build. Those are docker-image-local ids, one decision each.
+      [ -z "$(docker_busy)" ] || { report refused "$id" "Docker is pulling, building or creating right now"; return; }
+      n=0; f=0
+      while IFS=$'\t' read -r iid _ refs; do
+        [ -n "$iid" ] || continue
+        if [ "$DRY" = 1 ]; then n=$((n + 1)); continue; fi
+        # shellcheck disable=SC2086  # refs is a space-separated list of image references
+        docker image rm $refs >/dev/null 2>&1   # never forced: an image a container just took stays
+        if docker image inspect "$iid" >/dev/null 2>&1; then f=$((f + 1)); else n=$((n + 1)); fi
+      done < <(docker_pulled_unused)
+      refs=""; [ "$f" -gt 0 ] && refs=", $f kept because a container uses them now"
+      report "$([ "$DRY" = 1 ] && echo dry-run || echo ok)" "$id" "$n pulled images without a container$refs; local builds stay" ;;
+
+    docker-image-local)
+      refs="$(docker_unused_images | awk -F'\t' -v i="$target" '$1 == "local" && $2 == i { print $6; f = 1 } END { exit !f }')" \
+        || { report refused "$id" "not an unused local image (a container uses it, it was pulled, or it is gone)"; return; }
+      if [ "$DRY" = 1 ]; then report dry-run "$id" "would docker image rm ${refs:-$target}"; return; fi
+      # shellcheck disable=SC2086
+      docker image rm ${refs:-$target} >/dev/null 2>&1
+      docker image inspect "$target" >/dev/null 2>&1 && docker image rm "$target" >/dev/null 2>&1
+      if docker image inspect "$target" >/dev/null 2>&1; then report failed "$id" "docker image rm"
+      else report ok "$id" "docker image rm ${refs:-$target}"; fi ;;
 
     docker-container)
       f="$(docker inspect -f '{{.State.Status}}' "$target" 2>/dev/null)" || { report refused "$id" "not found"; return; }

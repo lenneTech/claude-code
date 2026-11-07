@@ -83,6 +83,11 @@ test('no retired rule and no exec-capable shape comes back', () => {
     /^Bash\((npx|pnpm dlx|yarn dlx|bunx|npm exec|pnpm exec|yarn exec) (?!(vitest|playwright|oxlint|oxfmt|tsc)\b)[^)]*\*/,
   ];
   assert.deepEqual(patterns.filter((p) => execShapes.some((re) => re.test(p))), [], 'exec-capable rule in the global list');
+  // A `*` standing for a word with more words after it matches any subcommand or option list in its
+  // place: `Bash(docker compose -p * down)` also approved `docker compose -p x run -v /Users:/h … down`
+  // (review of 2026-11-07). Only the words before the first `*` limit a rule.
+  const midWildcard = /^Bash\((?:.*\s)?\*\s+\S[^)]*\)$/;
+  assert.deepEqual(patterns.filter((p) => midWildcard.test(p)), [], 'a word-wide * with more words after it');
 });
 
 test('permissions.json holds no ${CLAUDE_PLUGIN_ROOT} rule', () => {

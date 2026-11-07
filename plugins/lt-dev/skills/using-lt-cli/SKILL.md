@@ -153,7 +153,7 @@ lt ticket start DEV-2200 --as cof   # override the short id; --branch / --base o
 lt ticket list                      # dashboard: every ticket env + URLs + branch + status + DB (re-view URLs anytime)
 lt ticket switch <id>               # show the worktree path + open it in $LT_EDITOR (default `code`)
 lt ticket test <id> [--shard N]     # run the E2E suite in the ticket's isolated stack/DB (delegates to lt dev test)
-lt ticket stop <id> [--drop-db]     # lt dev down + remove the worktree (branch kept); --drop-db also drops the ticket DBs
+lt ticket stop <id> [--keep-db]     # lt dev down, remove the worktree (branch kept), drop the ticket DBs; --keep-db keeps them
 ```
 
 - **Isolation:** ticket `DEV-2200` → short id `2200`; a free name is used as-is. Every ticket gets `<slug>-<id>` EVERYWHERE — URLs `<slug>-<id>.localhost` / `api.<slug>-<id>…`, dev DB `<base>-<id>`, test DB `<base>-<id>-test[-<shard>]`, own ports + Caddy block + session. The sibling worktree folder `<parent>/<slug>-<id>` matches the URL, so you always know which ticket you are in.

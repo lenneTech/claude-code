@@ -1,7 +1,7 @@
 ---
 description: Sync fullstack project with latest nest-server-starter and nuxt-base-starter
 argument-hint: "[--dry-run] [--skip-backend] [--skip-frontend]"
-allowed-tools: Read, Grep, Glob, Bash(npm run:*), Bash(pnpm run:*), Bash(yarn run:*), Bash(pnpm list:*), Bash(npm list:*), Bash(yarn list:*), Bash(pnpm view:*), Bash(npm view:*), Bash(yarn info:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(npx npm-check-updates:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(rm:*), Write, Edit, Agent, AskUserQuestion, WebFetch, SendMessage, Bash(node -e:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh":*)
+allowed-tools: Read, Grep, Glob, Bash(npm run:*), Bash(pnpm run:*), Bash(yarn run:*), Bash(pnpm list:*), Bash(npm list:*), Bash(yarn list:*), Bash(pnpm view:*), Bash(npm view:*), Bash(yarn info:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(npx npm-check-updates:*), Bash(git:*), Bash(gh:*), Bash(ls:*), Bash(find:*), Bash(cd:*), Bash(cat:*), Bash(rm:*), Bash(mktemp -d /tmp/fullstack-update.XXXXXX), Write, Edit, Agent, AskUserQuestion, WebFetch, SendMessage, Bash(node -e:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh":*)
 disable-model-invocation: true
 ---
 
@@ -124,11 +124,18 @@ After the plan approval, this command runs to completion without check-ins. A me
 
 ### Phase 2: Starter Repository Analysis
 
-1. **Clone starters to /tmp:**
+1. **Clone the starters into a run directory of this run's own:**
    ```bash
-   git clone --depth=50 https://github.com/lenneTech/nest-server-starter.git /tmp/nest-server-starter-ref 2>/dev/null
-   git clone --depth=50 https://github.com/lenneTech/nuxt-base-starter.git /tmp/nuxt-base-starter-ref 2>/dev/null
+   mktemp -d /tmp/fullstack-update.XXXXXX   # prints the run directory, e.g. /tmp/fullstack-update.k3J9aQ
    ```
+   ```bash
+   git clone --depth=50 https://github.com/lenneTech/nest-server-starter.git <run-dir>/nest-server-starter
+   git clone --depth=50 https://github.com/lenneTech/nuxt-base-starter.git <run-dir>/nuxt-base-starter
+   ```
+   Create the directory in a call of its own and write the printed path into every later call: shell
+   variables do not survive between Bash calls. A failed clone stops the run with its error. A starter
+   folder this run did not create may be stale or a parallel session's, and a plan built on it is
+   silently wrong, so the run never falls back to one.
 
 2. **Analyze changes between version tags** for both starters.
 
@@ -141,11 +148,18 @@ After the plan approval, this command runs to completion without check-ins. A me
 
 1. **Create UPDATE_PLAN.md** with version changes, breaking changes, starter drift, config changes.
 
-2. **Present plan and ask for confirmation:**
+2. **Remove the run directory** (`rm -rf <run-dir>`, the exact path from Phase 2) as soon as
+   UPDATE_PLAN.md is written, before the question. The clones serve the plan only, and the agents in
+   Phases 4 and 5 clone what they need into directories of their own, so the `--dry-run` stop, an
+   abort and the approved run all leave nothing behind. An error in Phase 2 or 3 removes it before the
+   error is reported. The `managing-dev-servers` skill, section Docker resources, worktrees and clones,
+   has the shared rule.
+
+3. **Present plan and ask for confirmation:**
    > The update plan has been generated. Please review UPDATE_PLAN.md.
    > Reply "yes" to proceed, "skip backend"/"skip frontend" for partial update, or "no" to abort.
 
-3. **Wait for user confirmation** before proceeding.
+4. **Wait for user confirmation** before proceeding.
 
 **DRY-RUN MODE:** Stop here after generating UPDATE_PLAN.md.
 
@@ -242,10 +256,11 @@ Execute frontend update:
 
 3. **Generate unified report** — see "Report Format" section below. Capture each spawned updater agent's complete output into named buffers (`backend_core_report`, `backend_npm_report`, `frontend_core_report`, `frontend_npm_report`) and embed them verbatim in the report.
 
-4. **Cleanup:**
-   ```bash
-   rm -rf /tmp/nest-server-starter-ref /tmp/nuxt-base-starter-ref
-   ```
+4. **Cleanup** (here, and wherever the run ends before Phase 6): the command's run directory went in
+   Phase 3. Each spawned agent removes the clones of its own run and names them in its report. A core
+   updater that stopped for review and was not resumed names the directory it kept: remove that one by
+   its exact path (`rm -rf /tmp/nest-server-sync.k3J9aQ`). Never remove `/tmp` folders by a fixed name
+   or a pattern: a parallel session may be working in them.
 
 ## Report Format
 

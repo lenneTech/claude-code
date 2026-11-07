@@ -300,6 +300,13 @@ A restart of Claude Code is required — running sessions keep the old version.
      git -C <checkout> worktree remove --force <worktree>   # once the push is verified on the remote
      ```
 
+     A publish that stops in this repo (a review finding it could not fix, a red `check`, a
+     failed push) removes the worktree the same way and releases the claim with the detail
+     `not released`, so neither a stray checkout nor a stale claim outlives the run. Its message to the expert
+     says the release did not happen and that main is unchanged. A worktree holding a commit
+     that never reached the remote is the one exception: it stays, and the report names its path
+     and the commit.
+
      Release the ledger claim from the checkout with the version, then send one `LANDED`:
 
      ```

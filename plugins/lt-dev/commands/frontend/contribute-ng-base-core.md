@@ -35,8 +35,9 @@ reviews every draft and pushes it.
 3. **Filter** cosmetic commits (formatting, lint, whitespace)
 4. **Categorize** the rest: upstream candidate, project-specific, unclear (asks)
 5. **Check upstream** for the same change, released or in an open PR
-6. **Prepare branches** in a clone of upstream (`/tmp/ng-base-head`), 1:1 from `src/core/` to
-   `projects/ng-base/`, with the spec each change needs, and the repo's `check` green
+6. **Prepare branches** in a fresh clone of upstream (`/tmp/ng-base-head.<id>`), 1:1 from `src/core/` to
+   `projects/ng-base/`, with the spec each change needs, and the repo's `check` green; the clone stays as the
+   hand-off, and the report says to delete it once every branch is pushed
 7. **Write PR drafts** and report them; pushing and opening the draft PR is the user's step
 
 ## Related Elements

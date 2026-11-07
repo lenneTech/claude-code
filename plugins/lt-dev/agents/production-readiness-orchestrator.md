@@ -327,12 +327,13 @@ Phase 6 must end GREEN before Phase 7 starts. If any project STALLED, surface th
 Follow the `validating-ci-pipelines-locally` skill verbatim:
 
 1. Detect the pipeline format (GitLab / GitHub / both).
-2. Verify the runner toolchain (`gitlab-runner` / `act`) is available; install if necessary; fall back to docker-compose path if not.
+2. Verify the toolchain: Docker for GitLab jobs (Path A runs the pinned runner image, Path B plain Docker Compose), `act` for GitHub Actions; install `act` if necessary.
 3. Parse `.gitlab-ci.yml` (and includes) or `.github/workflows/*.yml`. Build the job list ordered by stages / `needs:`.
 4. Resolve image + services + variables + scripts per job.
 5. Execute each job with the appropriate path (gitlab-runner exec / docker-compose / act).
 6. For failures, walk the failure-category remediation table; re-run; respect `--max-iterations`.
 7. Save logs under `tmp/ci-local/`.
+8. Run the skill's Step 9 cleanup whatever the outcome (all green, a job red at the cap, a stop), then write the report with its `Left behind:` line.
 
 Phase 7 ends with the canonical **Local CI Pipeline Report** block from the skill.
 
@@ -403,7 +404,7 @@ The `/lt-dev:production-ready` parent command merges this report with the `/lt-d
 
 - **Strict no-skip:** Every skip / xfail / suppression is a blocker. No "accepted residual" for skips.
 - **Iterate-until-green:** Each phase has its own iterate-until-green loop, capped at `--max-iterations` (default 5) globally.
-- **Long-running tasks:** k6 soak and CI compose runs use `run_in_background: true`; the agent polls or waits for the summary file; the agent is responsible for cleanup.
+- **Long-running tasks:** k6 soak and CI compose runs use `run_in_background: true`; the agent polls or waits for the summary file; what they create is removed as the Cleanup rule below says.
 - **No sub-agent spawning:** `Agent` is deliberately absent from this agent's `tools` list, so it runs every phase itself and never calls `/lt-dev:review` or another sub-agent. The parent command owns those.
-- **Stop on hard block:** A `NOT-READY` Phase 4, a `STALLED` Phase 6, or a `FAIL` Phase 1/3/7 ends the run; the agent surfaces the report and stops. The parent command decides next steps.
-- **Cleanup:** Any dev server started by this agent is stopped before the agent exits, unless the parent command explicitly opted to keep it alive.
+- **Stop on hard block:** A `NOT-READY` Phase 4, a `STALLED` Phase 6, or a `FAIL` Phase 1/3/7 ends the run; the agent runs the cleanup below first, then surfaces the report and stops. The parent command decides next steps.
+- **Cleanup:** Before the agent exits, on success and on every hard stop: each dev server it started is stopped, unless the parent command explicitly opted to keep it alive, and every container, compose project, volume, image and copy it created is removed by the name it created it under (Phase 7 through the CI skill's Step 9). Other sessions share the Docker daemon, so nothing else is touched (the `managing-dev-servers` skill, section Docker resources, worktrees and clones). The report names anything left behind.

@@ -537,6 +537,17 @@ On Option 1 — perform the merge. The merge verb comes from `MERGE_MODE` (STEP 
    never for code that still needs CI — or it does not, and it is removed or added to
    `.gitignore`. Where a push is not allowed, fold it into the next ticket's branch and say so in
    the STEP 11 summary. Note that a push to the base branch triggers its deploy like any merge.
+6. **A ticket worktree goes with its branch.** `/lt-dev:take-ticket` gives a ticket in another
+   repository its own linked worktree, `<checkout>-<issue-identifier-lower>`, when that checkout
+   was in use. When this run shipped from such a worktree (`git rev-parse --git-dir` differs from
+   `git rev-parse --git-common-dir`, and the path ends in the ticket's identifier) and the feature
+   branch was deleted in step 4, the worktree has served its purpose. The session stands in it,
+   and removing the session's own working directory breaks every later Bash call, so it is
+   removed after the user has moved the session: the STEP 11 summary names the two lines,
+   `/cd <checkout>` and `git -C <checkout> worktree remove <worktree>`. No `--force`: git
+   refuses a worktree with uncommitted work, which is the check that protects it. A worktree
+   this run did not ship from, or one a dev server still runs in, stays (the
+   `managing-dev-servers` skill, section Docker resources, worktrees and clones).
 
 ## STEP 9a — Tell peer sessions, but only when the merge changes their next move
 
@@ -730,6 +741,8 @@ Print a concise German block:
 Nächste Schritte:
 - Ticket-Status final updaten (z.B. via Linear UI oder Workflow-Automation)
 - Deployment beobachten (falls Auto-Deploy auf dev läuft)
+- Ticket-Worktree entfernen (nur nach STEP 9.6): `/cd <checkout>`, dann
+  `git -C <checkout> worktree remove <worktree>`
 ```
 
 ---

@@ -14,7 +14,7 @@ of thousands, and repeat every safety check at the moment of deletion.
 |---|---|---|
 | `scripts/disk-audit.sh` | inventory: one line per finding with id, class, size, evidence | no |
 | `scripts/disk-clean.sh` | deletes the ids it is given, after re-checking each | yes |
-| `scripts/disk-guards.sh` | installs / reports / removes the daily guards | yes (LaunchAgents) |
+| `scripts/disk-guards.sh` | installs / reports / removes the guards | yes (LaunchAgents) |
 
 ## Workflow
 
@@ -37,6 +37,7 @@ Output, tab-separated, sorted by class and size:
 docker-build-cache	regenerable	21180	docker builder prune -a
 node-modules:~/code/acme/node_modules	regenerable	1100	project untouched 151d (since 2026-05-04)
 docker-volume:crm_mongodb_data	data	361	no container uses it; may hold database data
+docker-image-local:sha256:9f1c…	data	640	local image from 2026-11-05, tagged demo-db:local; no container uses it, and it may be the only copy of that build
 project-dir:~/code/tests/demo	data	965	git=no-remote; last touched 2026-09-15
 photos-library:~/Pictures/Photos Library.photoslibrary	personal	152714	with iCloud Photos: …
 guard:pnpm-store-guard	info	0	missing; disk-guards.sh install keeps it from growing back
@@ -89,6 +90,7 @@ bash "${CLAUDE_PLUGIN_ROOT}/scripts/disk-guards.sh" install   # also: status, un
 |---|---|---|
 | `pnpm-store-guard` | daily 13:00 | prunes the pnpm store above 15 GB, at most every 14 days, never during an install |
 | `mongo-log-guard` | daily 13:05 | rotates a Homebrew MongoDB log above 1 GB via `logRotate`, keeps the newest rotated file |
+| `docker-image-guard` | daily 13:10, acts at most every 7 days | removes images pulled from a registry that no container uses, running or stopped; never a local build; skipped while Docker is off or something pulls, builds or creates |
 
 The guard scripts are copied to `~/.local/share/lt-dev/guards`, so a plugin update cannot break
 the LaunchAgents; run `install` again after an update to refresh them. macOS only.
@@ -100,7 +102,9 @@ the LaunchAgents; run `install` again after an update to refresh them. macOS onl
 | `pnpm-store:vN` | `pnpm store prune` | is the active generation; no pnpm install running |
 | `pnpm-store-old:vN` | remove the generation | older than the active one; no `links/` (global virtual store) |
 | `npm-cache`, `yarn-cache`, `bun-cache` | clear the cache | `_npx` / yarn / bun not in use |
-| `docker-build-cache`, `docker-images` | `docker builder prune -a`, `docker image prune -a` | — |
+| `docker-build-cache` | `docker builder prune -a` | — |
+| `docker-images` | `docker image rm` of every image pulled from a registry that no container uses, never forced | nothing pulls, builds or creates right now; local builds stay |
+| `docker-image-local:<image id>` | `docker image rm` of one local build (or loaded image) | still unused by any container; still not a pulled image |
 | `docker-container:<name>` | `docker rm` | still stopped |
 | `docker-volume:<name>`, `docker-volumes-anonymous` | `docker volume rm` | still attached to no container |
 | `node-modules:<path>` | remove | a `node_modules` dir below the code root; project not in use |
@@ -128,6 +132,17 @@ there — that is how dev servers of parallel sessions are protected.
   has link count 1, which is exactly what `pnpm store prune` deletes. Existing `node_modules`
   keep working; every project downloads again on its next install. Treat it as a reset, not as
   routine maintenance — that is why the guard uses a size threshold.
+- **A RepoDigest does not mean "pulled".** Under the containerd image store, Docker Desktop's
+  default, a local build carries one too: all 15 images on one Mac had exactly one, a
+  `docker compose build` among them (2026-11-07). The origin is in `docker image inspect`
+  → `Identity` (`Pull` or `Build`), and that is what the image guard reads. A stopped container
+  keeps its image, so remove stale containers first (`docker-container:` ids) when images
+  should go.
+- **Local builds are decided one by one, never by the guard.** Measured 2026-11-07 after about 50
+  builds in a week: one local build image on the machine, in use, and no untagged ones, because
+  every rebuild had replaced its predecessor. An unattended removal would gain close to nothing
+  and could delete a build nobody can reproduce, so the audit lists each unused local image as
+  `data` and `docker-images` leaves them alone.
 - **Data first gets a decision.** An unused Docker volume can be a project's only copy of its
   database. Volumes of containers removed in the same run become unused only afterwards and do
   not appear in that run's audit; they show up in the next one, as `data`.
@@ -143,6 +158,8 @@ there — that is how dev servers of parallel sessions are protected.
 | projects pinned to an older pnpm major | keep a second store generation (`v10` next to `v11`) alive | move them to the current pnpm |
 | `pnpm store prune` / `npm cache clean --force` inside a project script | empties the cache of every other project and races parallel installs | keep project scripts project-scoped |
 | test suites against a local MongoDB | connection logging fills `mongo.log` (15 GB in nine months) | `mongo-log-guard` |
+| compose stacks, CI reproductions and test suites | pull images nothing removes: 9 images (6.3 GB) were back a day after a cleanup (2026-11-03) | `docker-image-guard` |
+| probe and test builds, throwaway stacks | stay behind as images, build cache and anonymous volumes | the cleanup rule in `managing-dev-servers` |
 
 ## Related Skills
 

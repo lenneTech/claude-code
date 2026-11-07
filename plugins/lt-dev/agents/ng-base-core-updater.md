@@ -69,7 +69,7 @@ Work through these phases in order; the final report states each phase's outcome
 ```
 Phase 1: Verify the app is vendored (VENDOR.md names @lenne.tech/ng-base)
 Phase 2: Determine target version
-Phase 3: Fetch upstream baseline + target in /tmp
+Phase 3: Fetch upstream baseline + target into a run directory of its own
 Phase 4: Generate diffs (upstream-delta, local-changes)
 Phase 5: Categorize hunks (clean pick / conflict / not applicable)
 Phase 6: Present curation proposal for human review
@@ -78,6 +78,7 @@ Phase 7b: Re-derive tsconfig paths and stylesheet imports
 Phase 7c: Sync npm dependencies to the upstream baseline (+ maintenance)
 Phase 8: Validate with the app's check script
 Phase 9: Update VENDOR.md + commit
+Last: remove the run directory (on every outcome, Phase 3)
 ```
 
 ---
@@ -111,7 +112,7 @@ Check the exit code of `git ls-remote` before trusting an empty answer: a failed
 on stdout. Store as `TARGET_TAG`. Stay within the app's Angular major unless the user asked for a major move:
 the MAJOR digit of ng-base is the Angular major, and crossing it is an Angular upgrade, not a core sync.
 
-### Phase 3: Fetch Upstream in /tmp
+### Phase 3: Fetch Upstream into a Run Directory
 
 Read the baseline from `src/core/VENDOR.md`:
 
@@ -120,16 +121,30 @@ BASELINE_SHA=$(grep -oE '[a-f0-9]{40}' src/core/VENDOR.md | head -1)
 BASELINE_VERSION=$(grep -oE 'Baseline-Version[^0-9]*[0-9][^ ]*' src/core/VENDOR.md | grep -oE '[0-9][^ ]*$')
 ```
 
-Clone both:
+Create the run directory in a call of its own; it holds both clones and the Phase 4 patches:
 
 ```bash
-rm -rf /tmp/ng-base-baseline /tmp/ng-base-target
-git clone --filter=blob:none https://github.com/lenneTech/ng-base /tmp/ng-base-baseline
-git -C /tmp/ng-base-baseline checkout "$BASELINE_SHA"     # or "v$BASELINE_VERSION" when no SHA is recorded
-git clone --depth 1 --branch "$TARGET_TAG" https://github.com/lenneTech/ng-base /tmp/ng-base-target
+mktemp -d /tmp/ng-base-sync.XXXXXX   # prints the run directory, e.g. /tmp/ng-base-sync.k3J9aQ
+```
+
+Clone both into it, writing the printed path into each later call (shell variables do not survive
+between Bash calls):
+
+```bash
+git clone --filter=blob:none https://github.com/lenneTech/ng-base <run-dir>/baseline
+git -C <run-dir>/baseline checkout "$BASELINE_SHA"     # or "v$BASELINE_VERSION" when no SHA is recorded
+git clone --depth 1 --branch "$TARGET_TAG" https://github.com/lenneTech/ng-base <run-dir>/target
 ```
 
 The library is `projects/ng-base/` in both clones.
+
+**The run directory belongs to this run alone.** A failed clone is an error to report, never a reason
+to work in a `/tmp/ng-base-*` folder this run did not create, and no such folder is removed: a parallel
+session may be syncing another app from it. Remove the run directory with `rm -rf <run-dir>` before the
+run's final message, whatever the outcome (success, `--dry-run`, a stop from Error Handling). The
+Phase 6 review pause, when it expects to be resumed, keeps it and names it in the pause message, so the
+caller can remove it when the sync ends there. The `managing-dev-servers` skill, section Docker
+resources, worktrees and clones, has the shared rule.
 
 ### Phase 4: Generate Diffs
 
@@ -137,11 +152,11 @@ The library is `projects/ng-base/` in both clones.
 EXCLUDE=(-x package.json -x 'tsconfig*.json' -x '*.spec.ts' -x test-setup.ts -x 'karma.conf*' \
          -x 'vitest.config*' -x README.md -x CLAUDE.md -x AGENTS.md -x .claude -x dist -x node_modules)
 # Upstream delta: what changed upstream between baseline and target
-diff -urN "${EXCLUDE[@]}" /tmp/ng-base-baseline/projects/ng-base /tmp/ng-base-target/projects/ng-base \
-  > /tmp/ng-base-upstream-delta.patch || true
+diff -urN "${EXCLUDE[@]}" <run-dir>/baseline/projects/ng-base <run-dir>/target/projects/ng-base \
+  > <run-dir>/upstream-delta.patch || true
 # Local changes: upstream baseline against the vendored tree (VENDOR.md itself is project-only)
-diff -urN "${EXCLUDE[@]}" -x VENDOR.md /tmp/ng-base-baseline/projects/ng-base src/core \
-  > /tmp/ng-base-local-changes.patch || true
+diff -urN "${EXCLUDE[@]}" -x VENDOR.md <run-dir>/baseline/projects/ng-base src/core \
+  > <run-dir>/local-changes.patch || true
 ```
 
 ### Phase 5: Categorize Hunks
@@ -176,7 +191,8 @@ Report them (to the user, no file needed):
 
 ### Phase 6: Human Review
 
-Unless `--force` or `--dry-run`, pause and ask the user to review the report. Accept:
+Unless `--force` or `--dry-run`, pause and ask the user to review the report; the pause message names the
+run directory it keeps for the resumed run. Accept:
 
 - `approve all`: adopt all clean picks and all conflicts as upstream has them
 - `approve clean`: adopt only clean picks
@@ -211,7 +227,7 @@ package specifier fails the build, because vendor mode has no `node_modules/@len
 
 ### Phase 7c: Sync npm Dependencies to the Upstream Baseline
 
-1. Read the upstream library manifest: `cat /tmp/ng-base-target/projects/ng-base/package.json`.
+1. Read the upstream library manifest: `cat <run-dir>/target/projects/ng-base/package.json`.
 2. For every entry in its `dependencies` and `peerDependencies` the app also lists, raise the app to the
    upstream version **only when upstream is newer**; never downgrade.
 3. Add every dependency and peer the app does not declare yet, **optional peers included**: vendored code has
@@ -265,6 +281,7 @@ Update `src/core/VENDOR.md`:
 | Patch application fails | Show the conflict, ask for a manual resolution |
 | `check` red after a patch | Roll the last patch back, continue with the next |
 | Target needs a `better-auth` range the API does not meet | Stop, report the coordinated bump |
+| Any stop that ends the run | Remove the run directory, then report |
 
 ## Known Edge Cases
 
@@ -286,6 +303,7 @@ stops you. Interim status goes in the same message as your next tool call, so th
 **Status:** Success / Failed (details below)
 **Baseline:** 22.0.0 (0f827bd...)
 **Target:**   22.1.0 (abc1234...)
+**Run directory:** /tmp/ng-base-sync.k3J9aQ removed
 
 ## Summary
 - Clean picks applied: N

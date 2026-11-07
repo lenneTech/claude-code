@@ -37,15 +37,15 @@ If multiple formats exist, the consumer asks the user which to validate. If `--c
 
 | Format | Tool | Install (macOS) | Install (Linux) | Image-only fallback |
 |--------|------|-----------------|------------------|----------------------|
-| GitLab | `gitlab-runner` | `brew install gitlab-runner` | `curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh \| sudo bash; sudo apt-get install gitlab-runner` | `docker run --rm -v $(pwd):/builds gitlab/gitlab-runner exec docker <job>` |
+| GitLab | `gitlab-runner exec` (Runner 16.x only) | none: a current `brew install gitlab-runner` has no `exec` | none: the same holds for the apt package | `gitlab/gitlab-runner:v16.10.1`, see Path A |
 | GitHub Actions | `act` | `brew install act` | `curl -L https://raw.githubusercontent.com/nektos/act/master/install.sh \| sudo bash` | n/a |
 
-If the local toolchain cannot be installed, fall back to the image-only path. If even that is impossible (no Docker), the consumer must classify Phase 7 as **BLOCKED — runner toolchain unavailable** and stop.
+GitLab jobs need only Docker: Path A runs the pinned runner image, Path B plain Docker Compose. Without Docker, the consumer must classify Phase 7 as **BLOCKED — runner toolchain unavailable** and stop.
 
 Verification:
 
 ```bash
-gitlab-runner --version
+gitlab-runner --version    # optional: an installed runner serves Path A only at 16.x
 act --version
 docker info >/dev/null 2>&1
 ```
@@ -132,27 +132,50 @@ If a job inherits from `default:` or extends another job, resolve the merged res
 
 ## Step 5 — Execute the job locally
 
-### Path A — `gitlab-runner exec docker` (preferred, full fidelity)
+### Path A — `gitlab-runner exec docker` (the real runner, committed `HEAD`)
+
+`exec` exists only up to GitLab Runner 16.x; 17.0 removed it ("Remove `gitlab-runner exec` command !4740"), so a
+current install has none. Run it from the pinned image. The runner starts the job and service containers on the host
+daemon through the socket, and mounts the checkout by its host path, so the path inside must be the same:
 
 ```bash
-gitlab-runner exec docker <job-name> \
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:$PWD" -w "$PWD" \
+  gitlab/gitlab-runner:v16.10.1 exec docker <job-name> \
   --docker-pull-policy if-not-present \
-  --env CI_PROJECT_DIR=/builds/project \
-  --env-file .env.ci  # only if you genuinely need extra env; never commit this file
+  --env CI_COMMIT_REF_NAME=local   # one --env NAME=value per extra variable; exec has no env-file flag
 ```
+
+An installed 16.x runner takes the same arguments (`gitlab-runner exec docker <job-name> …`). The pin is 16.10.1
+because 16.11's `exec` reads `extensions.objectFormat` through `git config` and aborts in every repository that does
+not set it.
 
 Caveats:
 
-- `gitlab-runner exec docker` does not natively support `services:` in newer runner versions (deprecated in 16+). For modern runners, use Path B.
+- `exec` tests the committed `HEAD`: it clones from the checkout (mounted read-only, so it writes nothing there) and
+  leaves uncommitted changes out. It reads `.gitlab-ci.yml` without resolving `include:`, `extends:` or `rules:`, and
+  it does start `services:`. A job built from those keywords, or a run that has to include uncommitted fixes, goes
+  through Path B.
 - Cache and artifacts are best-effort — they do not round-trip through GitLab's storage.
 - `CI_*` predefined variables are partially populated; some integration tests that branch on `CI_COMMIT_REF_NAME` etc may need explicit `--env CI_COMMIT_REF_NAME=local`.
+- Cleanup is the runner's own: it removes its job, service and helper containers and its build volume when the job
+  ends, green, red or stopped with `kill -INT` (measured 2026-11-07 with 16.10.1: nothing left, also for a job with
+  `cache:`), so the job cache does not outlive the run. Leave out `--docker-volumes /cache`: it creates a
+  `runner--project-0-concurrent-0-cache-<hash>` volume that every local `exec` run on the machine shares and nothing
+  removes. A natively installed runner stopped with `kill -9` skips its cleanup, and its containers carry only labels a
+  peer's local run carries too (`com.gitlab.gitlab-runner.managed=true`), so list them and name them in the report
+  instead of removing them by label. The pulled runner, helper and job images stay for the next run; the
+  `cleaning-up-disk-space` skill's image guard removes them once unused.
 
-### Path B — Manual reproduction with Docker Compose (modern runner, full services support)
+### Path B — Docker Compose on a throwaway copy (any job, uncommitted changes included)
 
-When `gitlab-runner exec` cannot mount the services, build a minimal `docker-compose.ci.yml` per pipeline run:
+When Path A does not fit, generate a minimal compose file per job run. It lives outside the checkout, runs under a
+project name of its own, and mounts a throwaway copy of the checkout. The job's install writes Linux `node_modules`,
+`dist` and `coverage` into whatever it mounts, which in the developer's checkout would replace the native binaries
+their dev server needs; and without its own `-p` the stack takes the folder name as project name and joins the
+developer's compose stack, where an `--remove-orphans` from either side removes the other's containers.
 
 ```yaml
-# docker-compose.ci.yml (generated on the fly, do not commit)
+# "$ci_dir/docker-compose.ci.yml": generated per job run, never in the checkout
 services:
   mongo:
     image: mongo:7.0
@@ -167,7 +190,7 @@ services:
       redis: { condition: service_healthy }
     working_dir: /builds/project
     volumes:
-      - .:/builds/project
+      - ./src:/builds/project   # the throwaway copy next to this file
     environment:
       NODE_ENV: ci
       NSC__MONGOOSE__URI: mongodb://mongo:27017/lt-test
@@ -175,21 +198,48 @@ services:
     command: sh -c "<job script joined with && >"
 ```
 
+The file publishes no `ports:`: the job reaches its services by service name, as on the runner, and no fixed host
+port collides with a peer's run. One Bash call per job run creates the copy and the stack and removes both in its
+`trap`, so a red job or a failing step cleans up too:
+
 ```bash
-docker compose -f docker-compose.ci.yml run --rm job
+mkdir -p tmp/ci-local
+run="$(date +%s)-$$"; proj="ci-$run"; ci_dir="$(mktemp -d)"
+cleanup() {
+  docker compose -p "$proj" -f "$ci_dir/docker-compose.ci.yml" down -v --remove-orphans
+  # Linux: the container wrote root-owned files into the copy, so remove them through the job image
+  rm -rf "$ci_dir" 2>/dev/null || { docker run --rm -v "$ci_dir:/x" <job-image> rm -rf /x/src; rm -rf "$ci_dir"; }
+}
+trap cleanup EXIT
+echo "$proj $ci_dir" >> tmp/ci-local/resources.txt   # for Step 9, when the trap cannot fire
+git clone --quiet --no-checkout "$(git rev-parse --show-toplevel)" "$ci_dir/src"
+git -C "$ci_dir/src" checkout --quiet --detach "$(git rev-parse HEAD)"
+git diff --quiet HEAD || git diff --binary HEAD | git -C "$ci_dir/src" apply   # uncommitted changes to tracked files
+# write "$ci_dir/docker-compose.ci.yml" as above, then:
+docker compose -p "$proj" -f "$ci_dir/docker-compose.ci.yml" run --rm job > tmp/ci-local/<job-name>.log 2>&1
+echo $? > tmp/ci-local/<job-name>.exit
+# copy artifacts.paths out of "$ci_dir/src" here, before the trap removes the copy (Step 7)
 ```
 
-This is the most faithful reproduction and works for any runner version.
+`run --rm` removes only the job container; `down -v --remove-orphans` with the run's `-p` removes the services
+`depends_on` started, their anonymous volumes (the `mongo` image declares two) and the network. Files not yet added to
+git stay out of the copy, as they would stay out of the push: `git add` new files first. Path B works for any job and
+any runner version.
 
 ### Path C — `act` for GitHub Actions
 
 ```bash
-act -j <job-name> \
+act -j <job-name> --rm \
   --env-file .env.ci.example \
   --container-architecture linux/amd64    # required on Apple Silicon for x86 actions
 ```
 
 Use the medium image (`-P ubuntu-latest=catthehacker/ubuntu:act-latest`) for parity with GitHub-hosted runners.
+
+act copies the checkout into the job container, so it writes nothing there. A green job's containers and volumes are
+removed either way; `--rm` removes those of a failed job too, which act otherwise keeps and the retry loop piles up.
+Leave out `--reuse`, which keeps them on purpose. The `act-toolcache` volume is a cache every act run on the machine
+shares; it stays.
 
 ## Step 6 — Env-var handling (never commit secrets)
 
@@ -208,11 +258,11 @@ Local runs do not have GitLab's cache/artifact storage. Substitute as follows:
 
 | Concern | Local strategy |
 |---------|----------------|
-| `cache.paths` (e.g. `node_modules/`) | Persist across runs in a host-mounted volume; warm before first job |
-| `artifacts.paths` (e.g. `coverage/`, `dist/`) | Copy out of the container after the job to `tmp/ci-artifacts/<job>/` |
-| `dependencies:` (downstream job consumes upstream artifacts) | Stage artifacts on the host between jobs; mount into next job |
+| `cache.paths` (e.g. `node_modules/`) | Not carried between runs: each job starts cold, like a CI job whose cache missed. A cache volume kept across runs would be shared with every parallel session on the daemon and never removed |
+| `artifacts.paths` (e.g. `coverage/`, `dist/`) | Copy out after the job to `tmp/ci-artifacts/<job>/`; in Path B from `"$ci_dir/src/<path>"`, in the same Bash call, before the trap removes the copy |
+| `dependencies:` (downstream job consumes upstream artifacts) | Stage artifacts on the host between jobs; copy them into the next job's copy before it runs |
 
-If the pipeline depends on a stage's artifact, run the prior stage first, copy artifacts out, then run the dependent stage with that directory mounted.
+If the pipeline depends on a stage's artifact, run the prior stage first, copy artifacts out, then run the dependent stage with them copied into its copy.
 
 ## Step 8 — Per-job verdict & retry loop
 
@@ -236,19 +286,41 @@ For `FAIL` outcomes, the consumer (when called from `/lt-dev:production-ready`) 
 | Service health-check timeout | Increase the compose-level `healthcheck.start_period`; investigate slow startup |
 | Missing image (`pull error`) | Pre-pull with `docker pull <image>`; check for typo / private registry auth |
 
-Re-run the failed job after each remediation. Stop when GREEN or after the configured `--max-iterations` limit.
+Re-run the failed job after each remediation. Each re-run is a new Path B run with its own name, a fresh copy that
+picks up the fix, and its own trap. Stop when GREEN or after the configured `--max-iterations` limit.
 
-## Step 9 — Output & evidence
+## Step 9 — Remove what the run created
+
+Run this whatever the outcome: all green, a job still red at the iteration cap, a `BLOCKED` classification, or a stop.
+Each Path B run removes its stack and copy in its trap; this step catches the runs whose trap could not fire (a killed
+shell, a Bash timeout):
+
+```bash
+[ -f tmp/ci-local/resources.txt ] && while read -r proj dir; do
+  [ -d "$dir" ] || continue   # the trap already removed this run
+  docker compose -p "$proj" -f "$dir/docker-compose.ci.yml" down -v --remove-orphans
+  rm -rf "$dir"
+done < tmp/ci-local/resources.txt
+rm -f tmp/ci-local/resources.txt
+```
+
+Paths A and C clean up after themselves (see their notes). Only names this run created are touched: no prune, no
+removal by name pattern, no `docker compose down` without the run's own `-p`, because every session on the machine
+shares the Docker daemon (the `managing-dev-servers` skill, section Docker resources, worktrees and clones). Whatever
+stays, such as the containers of a runner killed hard, goes into the report's `Left behind:` line.
+
+## Step 10 — Output & evidence
 
 Save the following to `tmp/ci-local/`:
 
 - `<job-name>.log` — full stdout/stderr per job
 - `<job-name>.exit` — exit code per job
+- `resources.txt` — compose project and copy of each Path B run, until Step 9 has removed them
 - `report.md` — the canonical report block (below)
 
 The directory is gitignored; treat it as scratch state.
 
-## Step 10 — Report block (canonical)
+## Step 11 — Report block (canonical)
 
 Every consumer ends Phase 7 with this block:
 
@@ -271,13 +343,14 @@ Image parity: <PASS|FAIL>  (mismatch: <comma-separated jobs>)
 Global verdict: <PASS|PARTIAL|FAIL>
 Failing jobs: <comma-separated or "none">
 Skipped jobs: <comma-separated or "none">
+Left behind: <"none" or each container, volume or copy that stays, and why>
 ```
 
 ## Related Skills
 
 - **Runnability:** `running-check-script` (called from inside any `pnpm run check` job)
 - **DevOps configuration baseline:** `lt-dev:devops-reviewer` agent (architectural review of CI configs)
-- **Server lifecycle (when a job needs an API up):** `managing-dev-servers`
+- **Server lifecycle (when a job needs an API up) and Docker cleanup:** `managing-dev-servers` (section Docker resources, worktrees and clones)
 - **Production gate (parent):** `validating-production-readiness` (CI PASS is one of the entry criteria)
 - **Deployment:** `deploying-to-turboops` (run this skill before a push that triggers a TurboOps deploy, so a red deploy is never a CI surprise)
 - **Authoring CI configs:** `lt-dev:devops` agent (writes and changes `.gitlab-ci.yml`; this skill only runs it)

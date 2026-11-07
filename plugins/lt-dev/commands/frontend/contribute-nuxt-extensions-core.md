@@ -130,8 +130,10 @@ Execute the contributor workflow:
 4. Categorize remaining commits as upstream-candidate, project-specific,
    or unclear
 5. Check upstream HEAD for already-applied changes
-6. Prepare candidate branches in /tmp/nuxt-extensions-head (1:1 path mapping,
-   no reverse flatten-fix needed)
+6. Prepare candidate branches in a fresh upstream clone of this run's own
+   (/tmp/nuxt-extensions-head.<id>, 1:1 path mapping, no reverse flatten-fix
+   needed); it stays as the hand-off and the summary says to delete it once
+   every branch is pushed
 7. Generate PR body drafts
 8. Present a final summary with branch paths and gh-cli commands
 

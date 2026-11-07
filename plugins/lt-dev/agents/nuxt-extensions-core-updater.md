@@ -74,7 +74,7 @@ Work through these phases in order; the final report states each phase's outcome
 ```
 Phase 1: Verify project is vendored (VENDOR.md exists)
 Phase 2: Determine target version
-Phase 3: Fetch upstream baseline + target in /tmp
+Phase 3: Fetch upstream baseline + target into a run directory of its own
 Phase 4: Generate diffs (upstream-delta, local-changes)
 Phase 5: Categorize hunks (clean pick / conflict / not applicable)
 Phase 6: Present curation proposal for human review
@@ -83,6 +83,7 @@ Phase 7b: Sync npm dependencies to the upstream baseline (+ maintenance)
 Phase 8: Run nuxt build / lint
 Phase 9: Sync upstream CLAUDE.md into project
 Phase 10: Update VENDOR.md + commit
+Last: remove the run directory (on every outcome, Phase 3)
 ```
 
 ---
@@ -116,7 +117,7 @@ git ls-remote --tags https://github.com/lenneTech/nuxt-extensions \
 
 Store as `TARGET_VERSION`.
 
-### Phase 3: Fetch Upstream in /tmp
+### Phase 3: Fetch Upstream into a Run Directory
 
 Read `VENDOR.md` for baseline SHA + version:
 
@@ -125,33 +126,48 @@ BASELINE_SHA=$(grep -oE '[a-f0-9]{40}' app/core/VENDOR.md | head -1)
 BASELINE_VERSION=$(grep -oE 'Baseline-Version:[[:space:]]*\S+' app/core/VENDOR.md | awk '{print $2}')
 ```
 
-Clone both:
+Create the run directory in a call of its own; it holds both clones and the Phase 4 patches:
 
 ```bash
-rm -rf /tmp/nuxt-extensions-baseline /tmp/nuxt-extensions-target
-git clone --depth 50 https://github.com/lenneTech/nuxt-extensions /tmp/nuxt-extensions-baseline
-git -C /tmp/nuxt-extensions-baseline checkout $BASELINE_SHA
+mktemp -d /tmp/nuxt-extensions-sync.XXXXXX   # prints the run directory, e.g. /tmp/nuxt-extensions-sync.k3J9aQ
+```
 
-git clone --depth 1 --branch $TARGET_VERSION https://github.com/lenneTech/nuxt-extensions /tmp/nuxt-extensions-target
+Clone both into it, writing the printed path into each later call (shell variables do not survive
+between Bash calls):
+
+```bash
+git clone --depth 50 https://github.com/lenneTech/nuxt-extensions <run-dir>/baseline
+git -C <run-dir>/baseline checkout $BASELINE_SHA
+
+git clone --depth 1 --branch $TARGET_VERSION https://github.com/lenneTech/nuxt-extensions <run-dir>/target
 ```
 
 **Tag format:** nuxt-extensions tags have **no** `v` prefix. Use
 `--branch 1.5.3`, not `--branch v1.5.3`.
+
+**The run directory belongs to this run alone.** A failed clone is an error to report, never a reason
+to work in a `/tmp/nuxt-extensions-*` folder this run did not create, and no such folder is removed: a
+parallel session may be syncing another project from it. Remove the run directory with
+`rm -rf <run-dir>` before the run's final message, whatever the outcome (success, `--dry-run`, an abort
+from Error Handling). A pause that asks the user and expects to be resumed (Phase 6 review, Phase 9
+confirmation) keeps it and names it in the pause message, so the caller can remove it when the sync
+ends there. The `managing-dev-servers` skill, section Docker resources, worktrees and clones, has the
+shared rule.
 
 ### Phase 4: Generate Diffs
 
 ```bash
 # Upstream delta: what changed in upstream between baseline and target
 diff -urN \
-  /tmp/nuxt-extensions-baseline/src \
-  /tmp/nuxt-extensions-target/src \
-  > /tmp/upstream-delta.patch || true
+  <run-dir>/baseline/src \
+  <run-dir>/target/src \
+  > <run-dir>/upstream-delta.patch || true
 
 # Local changes: diff between upstream baseline and our vendored tree
 diff -urN \
-  /tmp/nuxt-extensions-baseline/src/runtime \
+  <run-dir>/baseline/src/runtime \
   app/core \
-  > /tmp/local-changes.patch || true
+  > <run-dir>/local-changes.patch || true
 ```
 
 Note: the file mapping is direct (1:1) -- no flatten needed. Upstream's
@@ -192,7 +208,7 @@ Write a structured report (output it to the user, no file needed):
 ### Phase 6: Human Review
 
 Unless `--force` or `--dry-run`, pause and ask the user to review
-the report. Accept:
+the report; the pause message names the run directory it keeps for the resumed run. Accept:
 
 - `approve all` -> adopt all clean picks + all conflicts as-is from upstream
 - `approve clean` -> adopt only clean picks
@@ -224,7 +240,7 @@ Phase 8 may fail against stale transitive deps.
 
 1. Read the upstream target manifest:
    ```bash
-   cat /tmp/nuxt-extensions-target/package.json
+   cat <run-dir>/target/package.json
    ```
 2. For every `dependencies` / `peerDependencies` entry the upstream declares
    that the project also lists in its `package.json`, raise the project range to
@@ -283,7 +299,7 @@ the project's frontend CLAUDE.md.
 
 1. Check if upstream target has a CLAUDE.md:
    ```bash
-   test -f /tmp/nuxt-extensions-target/CLAUDE.md && echo "HAS_CLAUDE_MD" || echo "NO_CLAUDE_MD"
+   test -f <run-dir>/target/CLAUDE.md && echo "HAS_CLAUDE_MD" || echo "NO_CLAUDE_MD"
    ```
 2. If it exists, compare with the current frontend `CLAUDE.md`.
 3. Apply section-level merge (same logic as `/lt-dev:fullstack:sync-claude-md`):
@@ -332,6 +348,7 @@ Update `VENDOR.md`:
 | Patch application fails                                 | Show conflict, ask human for manual resolve   |
 | Build red after patch application                       | Rollback last patch, loop to next             |
 | Changelog breaking change on consumer code              | Delegate to `developing-lt-frontend` skill    |
+| Any abort or blocker that ends the run                  | Remove the run directory, then report         |
 
 ## Known Edge Cases
 
@@ -395,6 +412,7 @@ At end of run, produce a report:
 **Baseline:** 1.4.0 (0f827bd...)
 **Target:**   1.5.3 (abc1234...)
 **Completed:** 2026-04-12T10:42:00Z
+**Run directory:** /tmp/nuxt-extensions-sync.k3J9aQ removed
 
 ## Summary
 - Clean picks applied: N

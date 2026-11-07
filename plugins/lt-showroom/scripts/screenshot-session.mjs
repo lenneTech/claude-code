@@ -11,9 +11,9 @@
 //   session.json     everything the run started, so cleanup can stop exactly that and nothing else
 //
 // Cleanup only touches what session.json records: process groups started through `run` (checked
-// against their start time, so a reused PID is never hit), the `lt ticket` stack, Compose projects,
-// containers and volumes the run created, and the work folder minus its deliverables. It never
-// searches for processes by name or port.
+// against their start time, so a reused PID is never hit), the `lt ticket` stack, Compose projects
+// with the images their builds created, containers and volumes the run created, and the work folder
+// minus its deliverables. It never searches for processes by name or port.
 //
 // Usage: node screenshot-session.mjs <command> [args]   (see USAGE below)
 
@@ -52,9 +52,18 @@ Session
                                              start a long-running process in its own process group
   compose-file <slug> --cwd <dir> [--files a.yml,b.yml]
                                              write an isolated copy of the Compose project and record it
-                                             (no fixed volume, network or container names; refuses bind
+                                             (no fixed volume, network or container names; services with
+                                             build: build as showroom-<slug>-<service>; refuses bind
                                              mounts outside the clone)
-  record <slug> <type> <value> [--cwd <dir>] record a resource: lt-ticket | compose | container | volume
+  compose <slug> up|ps|logs [--service <name>] [--tail <n>]
+                                             run the recorded Compose project under its own -p and
+                                             isolated -f: up -d, ps -a, or logs (default tail 200)
+  record <slug> <type> <value> [--cwd <dir>] record a resource, also before it exists:
+                                             lt-ticket | compose | container | volume
+  db <slug> mongo|postgres|mysql|redis [--port <n>]
+                                             record and start the run's own database container
+                                             showroom-<slug>-<engine> on 127.0.0.1 (free port unless
+                                             --port); prints name, port and connection URL
   elapsed <slug>                             minutes used of the time budget (LT_SHOWROOM_BUDGET_MIN, default 45)
   status [<slug>]                            show open sessions
   verify-source <slug>                       exit 2 if the local checkout given to start changed since then
@@ -405,6 +414,12 @@ export function webpSize(buf) {
   return null;
 }
 
+/** An image reference with its implied tag, so `api` and `api:latest` compare equal. */
+function imageRef(ref) {
+  const s = String(ref);
+  return s.includes('@') || /:[^/]*$/.test(s) ? s : `${s}:latest`;
+}
+
 /**
  * Makes a resolved Compose config (`docker compose config --format json`) safe to start next to the
  * developer's own stack: a volume or network with a fixed `name:` or `external: true` would otherwise
@@ -412,6 +427,14 @@ export function webpSize(buf) {
  * would land in their database, and a shared network lets a service name resolve to their
  * container. Fixed `container_name`s are dropped too, so nothing collides. Bind mounts outside
  * `cloneDir` are reported as `unsafeBinds`: the caller refuses to start them.
+ *
+ * A service with `build:` is tagged with its `image:` name, which may be the developer's own local
+ * image (`myapp-api:latest`): the run's build would take that tag over, so the developer's next start
+ * would run the clone's code, and removing the run's image would delete theirs. Every build is named
+ * `<project>-<service>` instead and builds from the clone on every `up` (`pull_policy: build`), so
+ * neither a registry image nor a stale build stands in for it. A service without `build:` that used
+ * a renamed image (it shared another service's build) follows the rename. `images` lists the run's
+ * image names, the only images cleanup removes.
  */
 export function isolateCompose(config, cloneDir) {
   const cfg = JSON.parse(JSON.stringify(config));
@@ -441,7 +464,38 @@ export function isolateCompose(config, cloneDir) {
       }
     }
   }
-  return { config: cfg, changes, unsafeBinds };
+  const images = [];
+  const renamed = new Map();
+  for (const [name, svc] of Object.entries(cfg.services ?? {})) {
+    if (!svc?.build) continue;
+    let image = `${cfg.name}-${slugify(name)}`;
+    if (images.includes(image)) image = `${image}-${createHash('sha256').update(name).digest('hex').slice(0, 8)}`;
+    if (svc.image && imageRef(svc.image) !== imageRef(image)) {
+      changes.push(`services.${name}: builds as ${image}, not as ${svc.image}`);
+      if (!renamed.has(imageRef(svc.image))) renamed.set(imageRef(svc.image), image);
+    }
+    if (svc.pull_policy && svc.pull_policy !== 'build') {
+      changes.push(`services.${name}: pull_policy ${svc.pull_policy} replaced by build`);
+    }
+    // Extra tags would name the run's build after the project's images too, and a cache export writes
+    // to a registry or a folder outside the run.
+    for (const key of ['tags', 'cache_to']) {
+      if (typeof svc.build === 'object' && svc.build[key]) {
+        changes.push(`services.${name}: build.${key} ${[].concat(svc.build[key]).join(', ')} dropped`);
+        delete svc.build[key];
+      }
+    }
+    svc.image = image;
+    svc.pull_policy = 'build';
+    images.push(image);
+  }
+  for (const [name, svc] of Object.entries(cfg.services ?? {})) {
+    const image = !svc?.build && svc?.image ? renamed.get(imageRef(svc.image)) : undefined;
+    if (!image) continue;
+    changes.push(`services.${name}: uses ${image}, the run's build of ${svc.image}`);
+    svc.image = image;
+  }
+  return { config: cfg, changes, unsafeBinds, images };
 }
 
 // ── state ────────────────────────────────────────────────────────────────────────────────
@@ -900,6 +954,65 @@ function cmdRun(slug, name, flags) {
   out({ name, pid: child.pid, log });
 }
 
+/**
+ * The database containers `db` starts, each with fixed flags. A run that needs a database of its own
+ * gets it through this table instead of a `docker run` of its choosing, so no bind mount, host
+ * network or privileged flag can come along (a `docker run -d --name showroom-*` grant would admit
+ * `-v /:/host` as well). The port is published on 127.0.0.1 only; the throwaway credentials never
+ * leave the machine.
+ */
+export const DB_ENGINES = {
+  mongo: { image: 'mongo:7', port: 27017, env: {}, url: (p) => `mongodb://127.0.0.1:${p}` },
+  postgres: {
+    image: 'postgres:17-alpine',
+    port: 5432,
+    env: { POSTGRES_USER: 'showroom', POSTGRES_PASSWORD: 'showroom', POSTGRES_DB: 'showroom' },
+    url: (p) => `postgres://showroom:showroom@127.0.0.1:${p}/showroom`,
+  },
+  mysql: {
+    image: 'mysql:8.4',
+    port: 3306,
+    env: { MYSQL_ROOT_PASSWORD: 'showroom', MYSQL_DATABASE: 'showroom' },
+    url: (p) => `mysql://root:showroom@127.0.0.1:${p}/showroom`,
+  },
+  redis: { image: 'redis:7-alpine', port: 6379, env: {}, url: (p) => `redis://127.0.0.1:${p}` },
+};
+
+/** Name and `docker` arguments of the database container `db` starts for <slug>. */
+export function dbRunArgs(slug, engine, hostPort) {
+  const e = DB_ENGINES[engine];
+  const name = `showroom-${slug}-${engine}`;
+  const env = Object.entries(e.env).flatMap(([k, v]) => ['-e', `${k}=${v}`]);
+  return { name, args: ['run', '-d', '--name', name, '-p', `127.0.0.1:${hostPort}:${e.port}`, ...env, e.image] };
+}
+
+function freePort() {
+  return new Promise((resolve) => {
+    const srv = net.createServer();
+    srv.listen(0, '127.0.0.1', () => {
+      const { port } = srv.address();
+      srv.close(() => resolve(port));
+    });
+  });
+}
+
+async function cmdDb(slug, engine, flags) {
+  const s = loadSession(slug);
+  if (!Object.hasOwn(DB_ENGINES, engine ?? '')) fail(`usage: db <slug> ${Object.keys(DB_ENGINES).join('|')} [--port <n>]`);
+  const port = flags.port ? Number(flags.port) : await freePort();
+  if (!Number.isInteger(port) || port < 1024 || port > 65535) fail('--port takes a port from 1024 to 65535');
+  const { name, args } = dbRunArgs(slug, engine, port);
+  // Recorded before `docker run`: a crash in between leaves a name cleanup knows, and a container that
+  // was never created counts as removed.
+  if (!s.resources.some((r) => r.type === 'container' && r.value === name)) {
+    s.resources.push({ type: 'container', value: name, cwd: null });
+    saveSession(slug, s);
+  }
+  const r = spawnSync('docker', args, { encoding: 'utf8', timeout: 300_000 });
+  if (r.status !== 0) fail(`docker run failed: ${(r.stderr || r.error?.message || '').trim()}`);
+  out({ name, port, url: DB_ENGINES[engine].url(port) });
+}
+
 function cmdRecord(slug, type, value, flags) {
   const s = loadSession(slug);
   if (!['lt-ticket', 'compose', 'container', 'volume'].includes(type) || !value) {
@@ -920,17 +1033,51 @@ function cmdComposeFile(slug, flags) {
   const args = ['compose', '-p', project, ...files.flatMap((f) => ['-f', f]), 'config', '--format', 'json'];
   const r = spawnSync('docker', args, { cwd, encoding: 'utf8', timeout: 120_000 });
   if (r.status !== 0) fail(`docker compose config failed: ${(r.stderr || r.error?.message || '').trim()}`);
-  const { config, changes, unsafeBinds } = isolateCompose(JSON.parse(r.stdout), cwd);
+  // `-p` decides the project name, and the run's image names derive from it.
+  const { config, changes, unsafeBinds, images } = isolateCompose({ ...JSON.parse(r.stdout), name: project }, cwd);
   if (unsafeBinds.length) {
     fail(`bind mounts outside the clone, not started:\n  ${unsafeBinds.join('\n  ')}`, 2);
   }
   const file = path.join(workDir(slug), 'compose.showroom.json');
   writeJson(file, config);
-  if (!s.resources.some((x) => x.type === 'compose' && x.value === project)) {
-    s.resources.push({ type: 'compose', value: project, cwd, file });
+  const recorded = s.resources.find((x) => x.type === 'compose' && x.value === project);
+  if (recorded) {
+    // A second call (other --files) adds its images: an image built under the first file still needs removing.
+    Object.assign(recorded, { cwd, file, images: [...new Set([...(recorded.images ?? []), ...images])] });
+  } else {
+    s.resources.push({ type: 'compose', value: project, cwd, file, images });
   }
   saveSession(slug, s);
-  out({ file, changes, up: `docker compose -p ${project} -f ${file} up -d` });
+  out({ file, changes, images, up: `node "${fileURLToPath(import.meta.url)}" compose ${slug} up` });
+}
+
+/**
+ * Runs the recorded Compose project of the run with one of a few fixed verbs, always under its own
+ * `-p` and its isolated `-f`. A `docker compose -p showroom-*` grant would admit any further
+ * argument (`run -v /:/host …`, another file, another project after the prefix), so the command
+ * grants only this script.
+ */
+function cmdCompose(slug, verb, flags) {
+  const s = loadSession(slug);
+  const r = s.resources.find((x) => x.type === 'compose' && x.file);
+  if (!r) fail('no isolated Compose project for this run: `compose-file <slug> --cwd <dir>` writes and records it');
+  const base = ['compose', '-p', r.value, '-f', r.file];
+  let args;
+  if (verb === 'up') args = [...base, 'up', '-d'];
+  else if (verb === 'ps') args = [...base, 'ps', '-a'];
+  else if (verb === 'logs') {
+    const tail = flags.tail === undefined ? 200 : Number(flags.tail);
+    if (!Number.isInteger(tail) || tail < 1 || tail > 10000) fail('--tail takes a number from 1 to 10000');
+    args = [...base, 'logs', '--no-color', '--tail', String(tail)];
+    if (flags.service !== undefined) {
+      const services = Object.keys(readJson(r.file)?.services ?? {});
+      if (!services.includes(String(flags.service))) fail(`--service takes one of: ${services.join(', ') || '(none)'}`);
+      args.push(String(flags.service));
+    }
+  } else fail('usage: compose <slug> up|ps|logs [--service <name>] [--tail <n>]');
+  const cwd = r.cwd && existsSync(r.cwd) ? r.cwd : undefined;
+  const res = spawnSync('docker', args, { cwd, stdio: 'inherit', timeout: verb === 'up' ? 1_800_000 : 120_000 });
+  process.exit(res.status ?? 1);
 }
 
 function elapsedInfo(s) {
@@ -1026,12 +1173,27 @@ function stopProcess(r) {
   return { done: !pidAlive(r.pid), note: '' };
 }
 
-function composeLeftovers(project) {
-  const ps = runQuiet('docker', ['ps', '-aq', '--filter', `label=com.docker.compose.project=${project}`]);
-  const vols = runQuiet('docker', ['volume', 'ls', '-q', '--filter', `label=com.docker.compose.project=${project}`]);
+/**
+ * What is left of a Compose project of the run. Compose labels every image it builds with the project
+ * name, so a labelled image was built by the run: `images` are the names `compose-file` gave the run's
+ * builds that still exist, `dangling` the run's builds a rebuild left without a name, and `foreign`
+ * the run's builds under a name the run did not choose (a stack started from the project's own
+ * compose file, whose `image:` may be the developer's tag). Only the first two are the run's to remove.
+ */
+function composeLeftovers(project, runImages = []) {
+  const label = `label=com.docker.compose.project=${project}`;
+  const ps = runQuiet('docker', ['ps', '-aq', '--filter', label]);
+  const vols = runQuiet('docker', ['volume', 'ls', '-q', '--filter', label]);
+  const tagged = runQuiet('docker', ['images', '--filter', label, '--filter', 'dangling=false', '--format', '{{.Repository}}:{{.Tag}}']);
+  const dangling = runQuiet('docker', ['images', '-q', '--filter', label, '--filter', 'dangling=true']);
+  const lines = (r) => (r.ok ? r.out.split('\n').map((l) => l.trim()).filter(Boolean) : []);
+  const own = new Set(runImages.map(imageRef));
   return {
-    containers: ps.ok ? ps.out.split('\n').filter(Boolean) : [],
-    volumes: vols.ok ? vols.out.split('\n').filter(Boolean) : [],
+    containers: lines(ps),
+    volumes: lines(vols),
+    images: runImages.filter((name) => runQuiet('docker', ['image', 'inspect', '--format', '{{.Id}}', name]).ok),
+    dangling: [...new Set(lines(dangling))],
+    foreign: lines(tagged).filter((ref) => !own.has(imageRef(ref))),
     dockerMissing: ps.missing,
   };
 }
@@ -1051,19 +1213,31 @@ function stopResource(r, s) {
       const args = ['compose', '-p', r.value, ...fileArgs, 'down', '-v', '--remove-orphans', '--timeout', '20'];
       const cwd = r.cwd && existsSync(r.cwd) ? r.cwd : undefined;
       const d = runQuiet('docker', args, { cwd, timeout: 300_000 });
-      const left = composeLeftovers(r.value);
+      const runImages = r.images ?? [];
+      const left = composeLeftovers(r.value, runImages);
       if (left.containers.length) runQuiet('docker', ['rm', '-f', '-v', ...left.containers]);
       if (left.volumes.length) runQuiet('docker', ['volume', 'rm', '-f', ...left.volumes]);
-      const after = composeLeftovers(r.value);
-      return {
-        done: !after.dockerMissing && after.containers.length === 0 && after.volumes.length === 0,
-        note: after.dockerMissing ? 'docker not available' : d.ok ? '' : d.out.split('\n').pop(),
-      };
+      // By name and never forced: a name only drops its own tag, and an image a container still uses stays.
+      // Pulled images (services with only `image:`) are not the run's: other projects share them.
+      if (left.images.length) runQuiet('docker', ['image', 'rm', ...left.images]);
+      if (left.dangling.length) runQuiet('docker', ['image', 'rm', ...left.dangling]);
+      const after = composeLeftovers(r.value, runImages);
+      const notes = [];
+      if (after.dockerMissing) notes.push('docker not available');
+      else if (!d.ok) notes.push(d.out.split('\n').pop());
+      if (after.images.length || after.dangling.length) notes.push(`images not removed: ${[...after.images, ...after.dangling].join(', ')}`);
+      if (after.foreign.length) {
+        notes.push(`built under the run's project with a name from the project's compose file, left alone: ${after.foreign.join(', ')}`);
+      }
+      const clear = ['containers', 'volumes', 'images', 'dangling', 'foreign'].every((k) => after[k].length === 0);
+      return { done: !after.dockerMissing && clear, note: notes.join(' | ') };
     }
     case 'container': {
+      // Recorded before `docker run`, so a crash in between leaves a name cleanup knows; one that was
+      // never created counts as removed.
       const d = runQuiet('docker', ['rm', '-f', '-v', r.value]);
-      const gone = runQuiet('docker', ['inspect', r.value]);
-      return { done: !gone.ok, note: d.ok ? '' : d.out };
+      const present = runQuiet('docker', ['inspect', '--type', 'container', r.value]);
+      return { done: !present.ok, note: present.ok ? d.out : '' };
     }
     case 'volume': {
       runQuiet('docker', ['volume', 'rm', '-f', r.value]);
@@ -1218,12 +1392,8 @@ function cmdWaitHttp(url, flags) {
   })();
 }
 
-function cmdFreePort() {
-  const srv = net.createServer();
-  srv.listen(0, '127.0.0.1', () => {
-    const { port } = srv.address();
-    srv.close(() => out(String(port)));
-  });
+async function cmdFreePort() {
+  out(String(await freePort()));
 }
 
 function cmdCapturePath(slug, feature, device) {
@@ -1401,6 +1571,10 @@ function main(argv) {
       return cmdRun(positional[0], positional[1], flags);
     case 'record':
       return cmdRecord(positional[0], positional[1], positional[2], flags);
+    case 'db':
+      return cmdDb(positional[0], positional[1], flags);
+    case 'compose':
+      return cmdCompose(positional[0], positional[1], flags);
     case 'compose-file':
       return cmdComposeFile(positional[0], flags);
     case 'elapsed':

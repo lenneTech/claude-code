@@ -289,6 +289,12 @@ Per round:
 
 ### Phase 7 — Cleanup (complete, in this order)
 
+Phase 7 runs at the end of every run that does not pass `--keep` or `--skip-cleanup`: after a
+green run, after a phase that failed and stopped the run, and with `--skip-deploy` too, where
+only its local steps (4, 5, 7 for the local resources) apply. Each step removes what this run
+created under `<name>`, so a failed run leaves no stack, database or folder behind for the next
+one to trip over.
+
 1. TurboOps: `delete_deployment_stage` ×2 (confirmName is required), then `delete_deployment_project` (cascades tokens/deployments; registry images belong to the project).
 2. Check that the swarm stacks are gone from the server (`list_server_containers`); remove leftovers via `docker stack rm <stack>` (exec_in_container).
 3. GitLab: `glab repo delete <group>/<name> --yes` — **this does not delete, it only schedules deletion.**
@@ -332,7 +338,7 @@ the Nuxt release gate.
 ## Flags
 
 - `--keep` — skip the cleanup (debugging); project and stages stay up.
-- `--skip-deploy` — phases 0–2 only (local validation), no GitLab/TurboOps.
+- `--skip-deploy` — phases 0–2 only (local validation), no GitLab/TurboOps; Phase 7 still removes the local project, stacks and databases.
 - `--skip-cleanup` — like `--keep`, but the report lists the remaining resources explicitly.
 - `--rounds=<n>` — number of MR rounds (default 1; the reference run did 2).
 - `--frontend=<nuxt|angular>` — frontend of the scaffolded project (default `nuxt`). `angular` scaffolds

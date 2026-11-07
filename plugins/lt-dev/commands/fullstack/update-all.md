@@ -453,9 +453,11 @@ Generate a comprehensive report:
 - Verify in browser
 ```
 
-**Cleanup:**
-```bash
-rm -rf /tmp/nest-server-starter-ref /tmp/nuxt-base-starter-ref
-rm -rf /tmp/nest-server-baseline /tmp/nest-server-target
-rm -rf /tmp/nuxt-extensions-baseline /tmp/nuxt-extensions-target
-```
+**Cleanup** (here, and wherever the run ends before Phase 8): every spawned agent clones into a
+`mktemp -d` directory of its own run, keeps its patch files there, removes it whatever the outcome and
+names it in its report. Remove only a directory a report names as kept (a core updater that stopped
+for review and was not resumed), by that exact path
+(`rm -rf /tmp/nuxt-extensions-sync.k3J9aQ`). No fixed `/tmp` paths and no patterns: a parallel session
+on the same machine may be syncing another project from `/tmp/nest-server-*`, `/tmp/nuxt-extensions-*`
+or `/tmp/ng-base-*` at the same time (the `managing-dev-servers` skill, section Docker resources, worktrees
+and clones).
