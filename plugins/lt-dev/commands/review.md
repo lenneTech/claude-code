@@ -1009,9 +1009,11 @@ becoming ten. Dropped means judged not worth acting on, and a tracking ticket re
 judgement by the back door while looking diligent.
 
 A ticket is filed only where something cleared Part 0 of
-[`filing-ai-proposed-tickets`](${CLAUDE_PLUGIN_ROOT}/skills/filing-ai-proposed-tickets/SKILL.md) —
-demonstrated, standalone, and genuinely worse left undone. In a review that almost only ever means
-a Gate 4 failure: a real Critical or High whose only remedy is a redesign. Follow that skill in
+[`filing-ai-proposed-tickets`](${CLAUDE_PLUGIN_ROOT}/skills/filing-ai-proposed-tickets/SKILL.md):
+the fix needs access this run does not have, a decision only the user can make, or clearly more
+effort than the ticket, and the finding is demonstrated, standalone, and genuinely worse left
+undone. In a review that almost only ever means a Gate 4 failure: a real Critical or High whose
+only remedy is a redesign. Follow that skill in
 full, including the duplicate search, the Triage state, and the AI label. Its cap of three per run
 applies, and in practice a review should file zero.
 

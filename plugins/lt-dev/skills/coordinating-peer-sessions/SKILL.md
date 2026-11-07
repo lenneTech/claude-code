@@ -23,7 +23,7 @@ Reach for the cheapest channel that carries the information. Messaging is the la
 
 The first two answer questions without anyone noticing, and their answers are still there tomorrow. Reading them before sending anything is what keeps the message count low.
 
-**Linear is the claim protocol for tickets.** A ticket on `In Progress` with an assignee is taken. That rule already exists in `take-ticket` STEP 3 and does not change. Never message a peer to ask which ticket it has; read Linear.
+**Linear is the claim protocol for tickets.** A ticket on `In Progress` with an assignee is taken. That rule already exists in `take-ticket` STEP 3 and does not change. Never message a peer to ask which ticket it has; read Linear. The claim ends with the work: a fully implemented ticket goes to Done with no assignee, in one `save_issue` call with `assignee` as JSON `null`, also when a session closes it outside a command. An assignee reads as somebody still working on it (Kai, 2026-11-07).
 
 **Git is the claim protocol for branches.** `git ls-remote --heads origin`, `git worktree list`, and `git branch -vv` answer who holds what. Never message a peer to ask which branch it is on.
 

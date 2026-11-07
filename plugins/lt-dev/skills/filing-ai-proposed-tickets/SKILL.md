@@ -14,7 +14,8 @@ filed differently: it lands in **Triage**, it is **labelled** as an AI proposal,
 
 ## When this applies
 
-Any ticket whose origin is Claude rather than the user:
+Any ticket whose origin is Claude rather than the user, and only after Part 0's first check found that the running
+task cannot fix it:
 
 - an improvement, refactor, or feature idea noticed while doing something else
 - an improvement idea from `/lt-dev:review` or the browser walk that is real but outside the current ticket
@@ -34,7 +35,24 @@ Ask before anything else, because the failure mode here is not a badly filed tic
 hundred well-filed ones. One task that spawns a dozen follow-ups has not helped anybody; it has
 moved the work into a backlog and added the cost of triaging it.
 
-File a proposal only when all three hold:
+**First check: can the running task fix it? Then fix it there, and file nothing.** A finding gets a ticket only
+when fixing it in this run needs one of three things:
+
+- **Access this run does not have:** another team's service, a third-party dependency, a system or a credential
+  the session cannot reach.
+- **A decision only the user can make:** a product or scope choice, or a contract or data-model change nobody
+  decided. Ask now when the user can answer in this run; a ticket only when the answer cannot come here.
+- **Clearly more effort than the task itself:** a redesign or a codebase-wide refactor next to a small ticket.
+
+Being independent of the task, or workable in parallel, is not one of them: the context to fix it is loaded now,
+while a ticket costs a triage decision, a pick and a context rebuild before anyone starts. A finding worth acting on
+that none of the three covers is fixed in the task that found it. Worth acting on means a demonstrated defect, cost or
+missing capability. Work with no concrete benefit (a dependency upgrade that fixes nothing, rework this task does not
+need, a review finding below the bar, a walk idea nobody would miss) is neither fixed nor filed: it is dropped, or stays a line in the caller's
+summary, where the user decides. Decided by Kai, 2026-11-07, because new tickets kept arriving faster than the team
+worked them off.
+
+When one of the three applies, file a proposal only when all three of these hold as well:
 
 - **It is demonstrated, not suspected.** You can name the concrete failure, the concrete cost, or
   the concrete missing capability. "Könnte man schöner machen" is not a ticket.
@@ -175,6 +193,9 @@ Rules for the body:
 
 ## Hard Rules
 
+- **Fix first.** A finding worth acting on that the running task can fix is fixed there. A ticket only when the fix
+  needs access this run does not have, a decision only the user can make, or clearly more effort than the task itself.
+  Work with no concrete benefit is neither fixed nor filed.
 - **Search before filing, and report what the search found.**
 - **Triage, or the unstarted state when the team has no Triage. Never Backlog.**
 - **Always labelled.** An unlabelled AI ticket is indistinguishable from a commitment somebody made.

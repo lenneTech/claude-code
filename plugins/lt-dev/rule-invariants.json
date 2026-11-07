@@ -11,6 +11,35 @@
   ],
   "phrases": [
     {
+      "name": "fix-first covers findings worth acting on; work with no concrete benefit is neither fixed nor filed",
+      "phrase": "finding worth acting on",
+      "files": [
+        "skills/filing-ai-proposed-tickets/SKILL.md",
+        "commands/take-ticket.md",
+        "commands/resolve-ticket.md"
+      ]
+    },
+    {
+      "name": "a fully implemented ticket is closed without an assignee, wherever lt-dev sets Done",
+      "phrase": "a fully implemented ticket goes to Done with no assignee",
+      "files": [
+        "commands/take-ticket.md",
+        "skills/coordinating-peer-sessions/SKILL.md"
+      ]
+    },
+    {
+      "name": "a finding gets a ticket only for missing access, a user decision, or clearly more effort; everything else is fixed in the running task",
+      "phrase": "access this run does not have, a decision only the user can make, or clearly more effort than",
+      "files": [
+        "skills/filing-ai-proposed-tickets/SKILL.md",
+        "commands/take-ticket.md",
+        "commands/resolve-ticket.md",
+        "commands/ticket-cycle.md",
+        "commands/review.md",
+        "skills/validating-changes-in-browser/SKILL.md"
+      ]
+    },
+    {
       "name": "a hasBin repair in a pnpm workspace needs -r at the root, without it pnpm answers Already up to date and repairs nothing",
       "phrase": "pnpm -r update <pkg> --depth Infinity",
       "files": [
