@@ -2,6 +2,9 @@ name: Plugin CI
 on:
   push:
   pull_request:
+  # Repeats a run on demand, e.g. to prove a fix for a hang that shows up only now and then on
+  # one runner (gh workflow run plugin-ci.yml --ref <branch>).
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

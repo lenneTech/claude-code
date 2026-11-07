@@ -103,6 +103,59 @@ export class CdpConnection {
   }
 }
 
+/** Every process below `root`, from one `ps` snapshot (macOS, Linux). */
+function processTreeBelow(root) {
+  const r = spawnSync('ps', ['-A', '-o', 'pid=,ppid='], { encoding: 'utf8', timeout: 5000 });
+  if (r.status !== 0 || !r.stdout) return { rows: [], below: [] };
+  const rows = r.stdout
+    .split('\n')
+    .map((line) => line.trim().split(/\s+/).map(Number))
+    .filter(([pid, ppid]) => pid > 0 && ppid >= 0);
+  const tree = new Set([root]);
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const [pid, ppid] of rows) {
+      if (tree.has(ppid) && !tree.has(pid)) {
+        tree.add(pid);
+        grew = true;
+      }
+    }
+  }
+  tree.delete(root);
+  return { rows, below: [...tree] };
+}
+
+// Chrome is ended together with every process it started. child.kill() reaches only the
+// browser process, and its GPU, network and utility processes can outlive it with their
+// connections still open, so a server waiting for them never closes and the test file
+// waiting for that server never exits. Observed 2026-11-07 (Plugin CI run 42397928214,
+// windows-latest): the lt-tools tests printed nothing for 19 minutes until the job timeout,
+// while the same commit passed in 2.5 minutes on the next run.
+function endChrome(child, helpers) {
+  if (process.platform === 'win32') {
+    // taskkill /T finds the children through the browser process, so it runs while that
+    // process is still alive.
+    if (child.exitCode === null && child.signalCode === null) {
+      spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true, timeout: 10000 });
+    }
+    return;
+  }
+  if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+  // A helper whose browser has gone is reparented, so the tree snapshot taken before the
+  // close names them. Only a PID still listed under the browser or under init (1) is
+  // killed, never one the system has given to an unrelated process since.
+  if (!helpers.length) return;
+  const { rows } = processTreeBelow(child.pid);
+  const known = new Set([child.pid, 1, ...helpers]);
+  for (const [pid, ppid] of rows) {
+    if (helpers.includes(pid) && known.has(ppid)) {
+      try {
+        process.kill(pid, 'SIGKILL');
+      } catch {}
+    }
+  }
+}
+
 export async function launchChrome({ chromePath, extraArgs = [] } = {}) {
   const binary = findChrome(chromePath);
   if (!binary) throw new Error('Chrome/Chromium not found (set CHROME_PATH or pass --chrome <path>)');
@@ -134,7 +187,7 @@ export async function launchChrome({ chromePath, extraArgs = [] } = {}) {
       throw new Error(`Chrome exited (${child.exitCode ?? child.signalCode}) before opening a DevTools port`);
     }
     if (Date.now() > deadline) {
-      child.kill();
+      endChrome(child, process.platform === 'win32' ? [] : processTreeBelow(child.pid).below);
       throw new Error('Chrome did not open a DevTools port within 40 s');
     }
     await new Promise((r) => setTimeout(r, 100));
@@ -147,19 +200,24 @@ export async function launchChrome({ chromePath, extraArgs = [] } = {}) {
   });
   const conn = new CdpConnection(ws);
   const close = async () => {
-    try {
-      await conn.send('Browser.close', {}, undefined, { timeout: 2000 });
-    } catch {}
+    const helpers = process.platform === 'win32' ? [] : processTreeBelow(child.pid).below;
+    // On Windows the browser process has to stay alive until taskkill has walked its tree,
+    // so it gets no graceful Browser.close first.
+    if (process.platform !== 'win32') {
+      try {
+        await conn.send('Browser.close', {}, undefined, { timeout: 2000 });
+      } catch {}
+    }
     try {
       ws.close();
     } catch {}
-    if (child.exitCode === null) child.kill();
+    endChrome(child, helpers);
     await new Promise((r) => setTimeout(r, 300));
     try {
       rmSync(profile, { recursive: true, force: true, maxRetries: 3 });
     } catch {}
   };
-  return { conn, close, binary };
+  return { conn, close, binary, pid: child.pid };
 }
 
 /**

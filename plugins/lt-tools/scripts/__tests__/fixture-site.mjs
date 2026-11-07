@@ -195,7 +195,16 @@ export async function startFixtureServer({ evil = false, ssrf = false } = {}) {
   const origin = `http://127.0.0.1:${server.address().port}`;
   files = fixtureFiles(origin);
   addTraps(files, origin, { evil, ssrf });
-  return { origin, close: () => new Promise((r) => server.close(r)) };
+  // closeAllConnections: a keep-alive socket a browser process still holds would otherwise
+  // keep close() waiting, and with it the after() hook of the test file.
+  return {
+    origin,
+    close: () =>
+      new Promise((r) => {
+        server.close(r);
+        server.closeAllConnections();
+      }),
+  };
 }
 
 /** A server that accepts connections and never answers (for timeout tests). */

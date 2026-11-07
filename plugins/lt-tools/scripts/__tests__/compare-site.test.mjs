@@ -19,7 +19,13 @@ import { after, before, test } from 'node:test';
 import { compareSite } from '../compare-site.mjs';
 import { findChrome } from '../lib/cdp.mjs';
 import { esbuildAvailable, mirrorSite } from '../mirror-site.mjs';
+import { exitAfter } from './exit-after.mjs';
 import { startFixtureServer, startHangingServer } from './fixture-site.mjs';
+
+// The outer timeout sits above the sum of the test timeouts below (11 minutes) and inside the
+// CI job's 20, so a browser process that outlives its test fails this file instead of stalling
+// the job (exit-after.mjs).
+exitAfter(12 * 60 * 1000, 'compare-site.test.mjs');
 
 const chrome = findChrome();
 const canBundle = esbuildAvailable();
@@ -64,10 +70,13 @@ before(async () => {
   tmp = mkdtempSync(path.join(os.tmpdir(), 'lt-compare-test-'));
 });
 
-after(async () => {
-  await server?.close();
-  if (tmp) rmSync(tmp, { recursive: true, force: true });
-});
+after(
+  async () => {
+    await server?.close();
+    if (tmp) rmSync(tmp, { recursive: true, force: true });
+  },
+  { timeout: 30000 },
+);
 
 test('Chrome and esbuild are available in CI', { skip: !ci && 'only enforced in CI' }, () => {
   assert.ok(chrome, 'Chrome/Chromium is required in CI; otherwise the comparison tests would be skipped');
