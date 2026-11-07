@@ -12,7 +12,7 @@ import { createUrlMapper, isCacheBusterQuery, relativeHref, siteHostsFor, stripT
 import { existsSync } from 'node:fs';
 import { addressAllowed, isPrivateAddress } from '../lib/net-guard.mjs';
 import { listZip, verifyZip, zipDirectory } from '../lib/zip.mjs';
-import { launchChrome } from '../lib/cdp.mjs';
+import { launchChrome, readDevToolsPort } from '../lib/cdp.mjs';
 import { classicScriptTag, isInside, parseRobots, parseSitemap, robotsAllows, stripLocalSri } from '../mirror-site.mjs';
 
 const mapper = createUrlMapper(siteHostsFor('https://www.example.com/'));
@@ -228,4 +228,17 @@ test('a browser that exits at once is reported as exited, not as a missing DevTo
   const started = Date.now();
   await assert.rejects(launchChrome({ chromePath: process.execPath }), /Chrome exited \(\d+\) before opening a DevTools port/);
   assert.ok(Date.now() - started < 10000, 'an exited browser is reported without waiting for the deadline');
+});
+
+test('a DevTools port file that is missing, locked or half written reads as not ready yet', () => {
+  const failWith = (code) => () => {
+    throw Object.assign(new Error(code), { code });
+  };
+  // Windows refuses the open with EBUSY (or EPERM / EACCES) while Chrome is still writing the
+  // file; that once made launchChrome give up and leave its Chrome running (Plugin CI runs
+  // 42403319959 and 42403314929, windows-latest, 2026-11-07).
+  for (const code of ['ENOENT', 'EBUSY', 'EPERM', 'EACCES']) assert.equal(readDevToolsPort('x', failWith(code)), null, code);
+  assert.equal(readDevToolsPort('x', () => '9222\n'), null, 'the port without its path');
+  assert.deepEqual(readDevToolsPort('x', () => '9222\n/devtools/browser/abc\n'), { port: '9222', wsPath: '/devtools/browser/abc' });
+  assert.throws(() => readDevToolsPort('x', failWith('EIO')), /EIO/, 'any other error is a real failure');
 });

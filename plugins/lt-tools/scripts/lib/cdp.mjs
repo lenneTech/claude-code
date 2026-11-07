@@ -127,11 +127,8 @@ function processTreeBelow(root) {
 
 // Chrome is ended together with every process it started. child.kill() reaches only the
 // browser process, and its GPU, network and utility processes can outlive it with their
-// connections still open, so a server waiting for them never closes and the test file
-// waiting for that server never exits. Observed 2026-11-07 (Plugin CI run 42397928214,
-// attempt 1, windows-latest): once the lt-tools tests started, nothing was printed for 17.5
-// minutes until the job hit its 20-minute timeout, while the same commit passed in 2.5
-// minutes in the run for its release tag.
+// connections still open; a Chrome that is never ended keeps the caller's process alive
+// (see launchChrome below for the case that hung CI).
 function endChrome(child, helpers) {
   if (process.platform === 'win32') {
     // taskkill /T finds the children through the browser process, so it runs while that
@@ -157,7 +154,25 @@ function endChrome(child, helpers) {
   }
 }
 
-export async function launchChrome({ chromePath, extraArgs = [] } = {}) {
+// Windows can refuse to open DevToolsActivePort while Chrome is still writing it (EBUSY, or
+// EPERM / EACCES for a sharing violation). That means "not ready yet", like a missing file.
+const PORT_FILE_NOT_READY = new Set(['ENOENT', 'EBUSY', 'EPERM', 'EACCES']);
+
+/** The DevTools port and path from DevToolsActivePort, or null while Chrome is still writing it. */
+export function readDevToolsPort(portFile, read = readFileSync) {
+  let text;
+  try {
+    text = read(portFile, 'utf8');
+  } catch (err) {
+    if (PORT_FILE_NOT_READY.has(err.code)) return null;
+    throw err;
+  }
+  const [port, wsPath] = text.trim().split('\n');
+  return port && wsPath ? { port, wsPath } : null;
+}
+
+// `readPortFile` replaces readFileSync in tests that simulate a locked or broken port file.
+export async function launchChrome({ chromePath, extraArgs = [], readPortFile = readFileSync } = {}) {
   const binary = findChrome(chromePath);
   if (!binary) throw new Error('Chrome/Chromium not found (set CHROME_PATH or pass --chrome <path>)');
   const profile = mkdtempSync(path.join(os.tmpdir(), 'lt-cdp-'));
@@ -180,25 +195,40 @@ export async function launchChrome({ chromePath, extraArgs = [] } = {}) {
     { stdio: 'ignore' },
   );
   const portFile = path.join(profile, 'DevToolsActivePort');
-  // 40 s, not 20: a cold headless start on a slow windows-latest runner used up 20 s on
-  // 2026-10-14 (Plugin CI run 38569489103) while the same test passed on the next run.
-  const deadline = Date.now() + 40000;
-  while (!existsSync(portFile) || readFileSync(portFile, 'utf8').split('\n').length < 2) {
-    if (child.exitCode !== null || child.signalCode !== null) {
-      throw new Error(`Chrome exited (${child.exitCode ?? child.signalCode}) before opening a DevTools port`);
+  let ws;
+  try {
+    // 40 s, not 20: a cold headless start on a slow windows-latest runner used up 20 s on
+    // 2026-10-14 (Plugin CI run 38569489103) while the same test passed on the next run.
+    const deadline = Date.now() + 40000;
+    let devtools;
+    while (!(devtools = readDevToolsPort(portFile, readPortFile))) {
+      if (child.exitCode !== null || child.signalCode !== null) {
+        throw new Error(`Chrome exited (${child.exitCode ?? child.signalCode}) before opening a DevTools port`);
+      }
+      if (Date.now() > deadline) throw new Error('Chrome did not open a DevTools port within 40 s');
+      await new Promise((r) => setTimeout(r, 100));
     }
-    if (Date.now() > deadline) {
-      endChrome(child, process.platform === 'win32' ? [] : processTreeBelow(child.pid).below);
-      throw new Error('Chrome did not open a DevTools port within 40 s');
-    }
-    await new Promise((r) => setTimeout(r, 100));
+    ws = new WebSocket(`ws://127.0.0.1:${devtools.port}${devtools.wsPath}`);
+    await new Promise((resolve, reject) => {
+      ws.addEventListener('open', resolve, { once: true });
+      ws.addEventListener('error', () => reject(new Error('DevTools WebSocket failed')), { once: true });
+    });
+  } catch (err) {
+    // A launch that fails after Chrome has started ends that Chrome before it reports the
+    // failure. Observed 2026-11-07 (Plugin CI runs 42403319959 and 42403314929,
+    // windows-latest): reading the port file threw EBUSY, launchChrome gave up and left the
+    // Chrome it had started running, and that Chrome kept the test file's process alive until
+    // the file's outer timeout. Run 42397928214 (attempt 1), before that timeout existed,
+    // showed the same pattern: 17.5 minutes without output until the 20-minute job limit.
+    try {
+      ws?.close();
+    } catch {}
+    endChrome(child, process.platform === 'win32' ? [] : processTreeBelow(child.pid).below);
+    try {
+      rmSync(profile, { recursive: true, force: true, maxRetries: 3 });
+    } catch {}
+    throw err;
   }
-  const [port, wsPath] = readFileSync(portFile, 'utf8').trim().split('\n');
-  const ws = new WebSocket(`ws://127.0.0.1:${port}${wsPath}`);
-  await new Promise((resolve, reject) => {
-    ws.addEventListener('open', resolve, { once: true });
-    ws.addEventListener('error', () => reject(new Error('DevTools WebSocket failed')), { once: true });
-  });
   const conn = new CdpConnection(ws);
   const close = async () => {
     const helpers = process.platform === 'win32' ? [] : processTreeBelow(child.pid).below;

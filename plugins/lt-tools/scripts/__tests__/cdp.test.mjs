@@ -1,14 +1,20 @@
-// cdp.test.mjs — closing Chrome leaves none of its processes behind.
+// cdp.test.mjs — Chrome's start and teardown leave nothing running.
 //
-// The test lists the processes itself instead of trusting the helper it checks. Locally it
-// skips without Chrome; in CI Chrome is required (compare-site.test.mjs enforces that), so the
-// windows leg proves that taskkill /T ends what child.kill() alone left running.
+// Proves three things: closing Chrome ends every process it started (the test lists the
+// processes itself instead of trusting the helper it checks); a port file that Windows keeps
+// locked for a moment still leads to a running Chrome; and a launch that fails after Chrome
+// started leaves nothing that keeps the caller's process alive, the case that hung Plugin CI
+// on windows-latest. Locally the tests skip without Chrome; in CI Chrome is required
+// (compare-site.test.mjs enforces that).
 //
 // Run: node --test plugins/lt-tools/scripts/__tests__/cdp.test.mjs
 
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { findChrome, launchChrome } from '../lib/cdp.mjs';
 import { exitAfter } from './exit-after.mjs';
 
@@ -86,4 +92,45 @@ test('close() ends Chrome together with every process it started', { skip, timeo
     left = stillRunning(tree);
   }
   assert.deepEqual(left, [], `still running after close(): ${left.join(', ')} of ${tree.map((p) => p.pid).join(', ')}`);
+});
+
+test('a port file Windows keeps locked for a moment still leads to a running Chrome', { skip, timeout: 120000 }, async () => {
+  let refusals = 0;
+  const lockedAtFirst = (file, encoding) => {
+    if (refusals < 3) {
+      refusals += 1;
+      throw Object.assign(new Error(`EBUSY: resource busy or locked, open '${file}'`), { code: 'EBUSY' });
+    }
+    return readFileSync(file, encoding);
+  };
+  const chrome = await launchChrome({ readPortFile: lockedAtFirst });
+  try {
+    assert.equal(refusals, 3);
+    const version = await chrome.conn.send('Browser.getVersion', {});
+    assert.ok(version.product, 'the DevTools connection answers');
+  } finally {
+    await chrome.close();
+  }
+});
+
+test('a launch that fails after Chrome started leaves nothing that keeps the process alive', { skip, timeout: 120000 }, async () => {
+  const script = path.join(path.dirname(fileURLToPath(import.meta.url)), 'launch-fails.mjs');
+  const res = await new Promise((resolve) => {
+    const child = spawn(process.execPath, [script], { stdio: ['ignore', 'pipe', 'pipe'] });
+    let out = '';
+    let killed = false;
+    child.stdout.on('data', (d) => (out += d));
+    child.stderr.on('data', (d) => (out += d));
+    const timer = setTimeout(() => {
+      killed = true;
+      child.kill('SIGKILL');
+    }, 60000);
+    child.on('exit', (code) => {
+      clearTimeout(timer);
+      resolve({ code, killed, out });
+    });
+  });
+  assert.match(res.out, /rejected: simulated port file failure/);
+  assert.equal(res.killed, false, `the process was still running 60 s after launchChrome rejected:\n${res.out}`);
+  assert.equal(res.code, 0);
 });
