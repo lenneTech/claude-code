@@ -129,8 +129,9 @@ function processTreeBelow(root) {
 // browser process, and its GPU, network and utility processes can outlive it with their
 // connections still open, so a server waiting for them never closes and the test file
 // waiting for that server never exits. Observed 2026-11-07 (Plugin CI run 42397928214,
-// windows-latest): the lt-tools tests printed nothing for 19 minutes until the job timeout,
-// while the same commit passed in 2.5 minutes on the next run.
+// attempt 1, windows-latest): once the lt-tools tests started, nothing was printed for 17.5
+// minutes until the job hit its 20-minute timeout, while the same commit passed in 2.5
+// minutes in the run for its release tag.
 function endChrome(child, helpers) {
   if (process.platform === 'win32') {
     // taskkill /T finds the children through the browser process, so it runs while that

@@ -195,8 +195,10 @@ export async function startFixtureServer({ evil = false, ssrf = false } = {}) {
   const origin = `http://127.0.0.1:${server.address().port}`;
   files = fixtureFiles(origin);
   addTraps(files, origin, { evil, ssrf });
-  // closeAllConnections: a keep-alive socket a browser process still holds would otherwise
-  // keep close() waiting, and with it the after() hook of the test file.
+  // closeAllConnections: server.close() drops idle keep-alive sockets itself (Node 19 and
+  // later), but not a socket a browser process opened without sending a request, or left in
+  // the middle of one. Such a socket keeps close() waiting, and with it the test file's after()
+  // hook (measured on Node 22: still pending after 5 s without it, released in 3 ms with it).
   return {
     origin,
     close: () =>

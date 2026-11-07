@@ -17,49 +17,54 @@ exitAfter(5 * 60 * 1000, 'cdp.test.mjs');
 const skip = !findChrome() && !process.env.CI && 'Chrome/Chromium not found';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/** [pid, ppid] of every process on the machine. */
+/** { pid, ppid, name } of every process on the machine (the name on Windows only). */
 function processTable() {
   const r =
     process.platform === 'win32'
       ? spawnSync(
           'powershell',
-          ['-NoProfile', '-NonInteractive', '-Command', 'Get-CimInstance Win32_Process | ForEach-Object { "$($_.ProcessId) $($_.ParentProcessId)" }'],
+          ['-NoProfile', '-NonInteractive', '-Command', 'Get-CimInstance Win32_Process | ForEach-Object { "$($_.ProcessId) $($_.ParentProcessId) $($_.Name)" }'],
           { encoding: 'utf8', windowsHide: true, timeout: 60000 },
         )
       : spawnSync('ps', ['-A', '-o', 'pid=,ppid='], { encoding: 'utf8', timeout: 10000 });
   assert.equal(r.status, 0, `process listing failed: ${r.stderr || r.error}`);
   return r.stdout
     .split('\n')
-    .map((line) => line.trim().split(/\s+/).map(Number))
-    .filter(([pid, ppid]) => pid > 0 && ppid >= 0);
+    .map((line) => {
+      const [pid, ppid, ...name] = line.trim().split(/\s+/);
+      return { pid: Number(pid), ppid: Number(ppid), name: name.join(' ') };
+    })
+    .filter((p) => p.pid > 0 && p.ppid >= 0);
 }
 
-/** [pid, ppid] of the root and of every process below it. */
+/** The root and every process below it. */
 function treeOf(root) {
   const rows = processTable();
-  const tree = new Map(rows.filter(([pid]) => pid === root));
+  const tree = new Map(rows.filter((p) => p.pid === root).map((p) => [p.pid, p]));
   for (let grew = true; grew; ) {
     grew = false;
-    for (const [pid, ppid] of rows) {
-      if (tree.has(ppid) && !tree.has(pid)) {
-        tree.set(pid, ppid);
+    for (const p of rows) {
+      if (tree.has(p.ppid) && !tree.has(p.pid)) {
+        tree.set(p.pid, p);
         grew = true;
       }
     }
   }
-  return [...tree];
+  return [...tree.values()];
 }
 
-// Windows hands a freed PID to the next process quickly, but keeps a process's parent PID
-// after the parent has gone: a survivor matches on both. macOS and Linux reparent a survivor
-// and rarely reuse a PID within seconds: there the PID alone decides.
+// Windows hands a freed PID to the next process quickly and keeps a process's parent PID after
+// the parent has gone, so a survivor matches on PID, parent PID and name. The name keeps the
+// powershell this test starts for its listing, whose parent is the test process like the
+// browser's, from passing for the browser when it gets the browser's freed PID. macOS and Linux
+// reparent a survivor and rarely reuse a PID within seconds: there the PID alone decides.
 const stillRunning = (tree) => {
   const now = processTable();
-  const match =
+  const same =
     process.platform === 'win32'
-      ? ([pid, ppid]) => now.some(([p, pp]) => p === pid && pp === ppid)
-      : ([pid]) => now.some(([p]) => p === pid);
-  return tree.filter(match).map(([pid]) => pid);
+      ? (a, b) => a.pid === b.pid && a.ppid === b.ppid && a.name === b.name
+      : (a, b) => a.pid === b.pid;
+  return tree.filter((t) => now.some((n) => same(t, n))).map((t) => t.pid);
 };
 
 test('close() ends Chrome together with every process it started', { skip, timeout: 180000 }, async () => {
@@ -71,7 +76,7 @@ test('close() ends Chrome together with every process it started', { skip, timeo
       tree = treeOf(chrome.pid);
       if (tree.length > 1) break;
     }
-    assert.ok(tree.length > 1, `Chrome started no helper processes; nothing to prove (tree: ${tree.map(([p]) => p).join(', ')})`);
+    assert.ok(tree.length > 1, `Chrome started no helper processes; nothing to prove (tree: ${tree.map((p) => p.pid).join(', ')})`);
   } finally {
     await chrome.close();
   }
@@ -80,5 +85,5 @@ test('close() ends Chrome together with every process it started', { skip, timeo
     await sleep(250);
     left = stillRunning(tree);
   }
-  assert.deepEqual(left, [], `still running after close(): ${left.join(', ')} of ${tree.map(([p]) => p).join(', ')}`);
+  assert.deepEqual(left, [], `still running after close(): ${left.join(', ')} of ${tree.map((p) => p.pid).join(', ')}`);
 });
