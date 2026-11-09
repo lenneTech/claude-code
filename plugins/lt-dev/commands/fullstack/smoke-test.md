@@ -170,14 +170,26 @@ the missing, stale or wrong `paths` keys, which the CLI derives from every `ng-p
 
 ### Phase 3 — GitLab
 
+In the project root (`<name>`):
+
 ```bash
 GITLAB_HOST=<gitlab-host> glab repo create <group>/<name> --private \
   --description "Temporärer Fullstack-Smoke-Test (wird gelöscht)"
+# origin over HTTPS, whether or not the create above set a remote
+if git remote get-url origin >/dev/null 2>&1; then
+  git remote set-url origin https://<gitlab-host>/<group>/<name>.git
+else
+  git remote add origin https://<gitlab-host>/<group>/<name>.git
+fi
+git config credential.helper '!glab auth git-credential'
+git remote -v   # origin must name the HTTPS URL before Phase 5 pushes
 ```
 
-SSH agent trap: if `git push` hangs with `communication with agent failed`, fall
-back to HTTPS: `git remote set-url origin https://<gitlab-host>/<group>/<name>.git`
-and `git config credential.helper '!glab auth git-credential'`.
+`glab repo create` does not reliably set a remote: on 2026-11-09 it created the project and left the checkout without
+`origin`, so Phase 5's `git push -u origin dev` would have failed, and a `git remote set-url` fallback had nothing to
+change. HTTPS through glab's credential helper is the default, not a fallback: on the same day pushes through the SSH
+agent were refused in several sessions (`communication with agent failed`), and a push that hangs on the agent stalls
+Phase 5 without an error.
 
 ### Phase 4 — TurboOps (fully automated, no web UI step)
 
