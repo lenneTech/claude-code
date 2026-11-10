@@ -280,6 +280,10 @@ plain `.ts` changes decide whether a synced project still starts:
 | `bin/package.json` (`"type": "commonjs"`) next to `bin/migrate.js` | `bin/` is no part of `src/core/`, so no sync brings it; an ESM project would read the CommonJS shim as ESM | every `migrate:*` fails in an ESM project; harmless to add in a CommonJS one |
 | `migrate/migration.helper.ts` (moved from `migrate/helpers/`) | the old path forwards, so `migrations-utils/migrate.js` keeps working | nothing, as long as the forwarder is synced too |
 
+From 12.8.7 on, `bin/check-unified-field-types.js` belongs next to `bin/migrate.js` for the same reason: no sync brings
+`bin/`, and the package bin `nest-check-unified-field-types` leaves with the npm dependency. Until the lt CLI copies the
+file, the project runs the check once through `npx` instead of from `check` (running-check-script, Step 6.10).
+
 Tests: ts-jest does not map `./x.js` either (`moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$':
 '$1' }`, or move to vitest), and every vitest config needs `resolve.extensions` with
 `.js` before `.mjs`, or Vite loads a second graphql copy (`modernizing-toolchain`).

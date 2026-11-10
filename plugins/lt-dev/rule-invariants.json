@@ -11,6 +11,35 @@
   ],
   "phrases": [
     {
+      "name": "an enum @UnifiedField declares enum and type together, because the Mongoose path takes its type from type or design:type, not from enum",
+      "phrase": "together with `type: () => String` / `Number`",
+      "files": [
+        "skills/generating-nest-servers/reference/verification-checklist.md",
+        "agents/backend-dev.md",
+        "agents/backend-reviewer.md"
+      ]
+    },
+    {
+      "name": "from nest-server 12.8.7 the @UnifiedField type check writes the clear cases with --fix; one command name across the stack",
+      "phrase": "check:unified-field-types -- --fix",
+      "files": [
+        "skills/running-check-script/SKILL.md",
+        "skills/generating-nest-servers/reference/framework-guide.md",
+        "agents/backend-dev.md",
+        "agents/backend-reviewer.md"
+      ]
+    },
+    {
+      "name": "@UnifiedField sets type or enum where SWC (dev start) and tsc (build) write different design:type; same wording across the stack",
+      "phrase": "declare the type where the compilers disagree",
+      "files": [
+        "skills/generating-nest-servers/reference/framework-guide.md",
+        "skills/generating-nest-servers/reference/verification-checklist.md",
+        "agents/backend-dev.md",
+        "agents/backend-reviewer.md"
+      ]
+    },
+    {
       "name": "fix-first covers findings worth acting on; work with no concrete benefit is neither fixed nor filed",
       "phrase": "finding worth acting on",
       "files": [
@@ -380,6 +409,16 @@
     }
   ],
   "forbidden": [
+    {
+      "name": "enum alone does not type the Mongoose path; the corrected @UnifiedField table pairs enum with type",
+      "pattern": "the enum option decides the type",
+      "files": [
+        "skills/generating-nest-servers/reference/framework-guide.md",
+        "skills/generating-nest-servers/reference/verification-checklist.md",
+        "agents/backend-dev.md",
+        "agents/backend-reviewer.md"
+      ]
+    },
     {
       "name": "review sections /lt-dev:review no longer writes",
       "pattern": "Remediation Catalog|Action Roadmap",

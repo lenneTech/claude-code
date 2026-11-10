@@ -149,29 +149,35 @@ What does **not** go over messages: which repos exist and in which order they go
 
 ## Cross-cutting rules (all repos)
 
-- **Wire-critical packages move in BOTH framework repos, in one go.** Some
-  dependencies are not one repo's business — they are one protocol with two
-  ends, and nest-server and nuxt-extensions each own one end. `better-auth` is
-  the case that taught us; treat any package both frameworks import the same
-  way.
+- **Wire-critical packages move in every framework repo, in one go.** Some
+  dependencies are not one repo's business — they are one protocol with an API
+  end and a client end: nest-server owns the API end, nuxt-extensions and ng-base
+  each own a client end (Nuxt and Angular apps talk to the same backend).
+  `better-auth` is the case that taught us; treat any package the frameworks
+  import the same way.
 
-  Both declare it as a **peer** with a range that is byte-identical in the two
-  manifests, and narrow: `>=<lowest known-good> <<next minor>`, never `^`.
+  All three declare it as a **peer** with a range that is byte-identical in the
+  three manifests, and narrow: `>=<lowest known-good> <<next minor>`, never `^`.
   better-auth breaks in MINOR releases, so a caret invites the same split one
-  release later. Read the current range out of the manifests rather than from
-  here — it moves, and a version written into this skill is a version that goes
-  stale:
+  release later. ng-base declares the range in its library manifest
+  `projects/ng-base/package.json` (the root `package.json` pins the version its
+  own build runs against), and its `scripts/check-package-manifest.mjs` holds the
+  same range and fails on any other. Read the current range out of the manifests
+  rather than from here — it moves, and a version written into this skill is a
+  version that goes stale:
 
   ```bash
-  node -e 'for (const p of ["nest-server","nuxt-extensions"]) console.log(p, require(`${process.env.HOME}/code/lenneTech/${p}/package.json`).peerDependencies["better-auth"])'
+  node -e 'const h=`${process.env.HOME}/code/lenneTech`; for (const [p, f] of [["nest-server","package.json"],["nuxt-extensions","package.json"],["ng-base","projects/ng-base/package.json"]]) console.log(p, require(`${h}/${p}/${f}`).peerDependencies["better-auth"])'
   ```
 
-  Bumping it means: raise the range in nest-server AND nuxt-extensions, pin the
-  new version in nest-server-starter AND nuxt-base-starter, release all four.
-  Never half of it, not even "just to unblock the frontend". Raising only the
-  LOWER bound is a bump too — it is what says which patch is known-good, and a
-  lower bound that disagrees between the two repos is the same defect as a
-  version split, one release earlier.
+  Bumping it means: raise the range in nest-server, nuxt-extensions AND ng-base
+  (in ng-base also in `check-package-manifest.mjs`), pin the new version in
+  nest-server-starter, nuxt-base-starter AND ng-base-starter, release all six.
+  Never part of it, not even "just to unblock the frontend": an Angular app on an
+  ng-base that still allows the old minor splits from its API exactly like a Nuxt
+  app does. Raising only the LOWER bound is a bump too — it is what says which
+  patch is known-good, and a lower bound that disagrees between the repos is the
+  same defect as a version split, one release earlier.
 
   **The floor is not a matter of taste: it must satisfy the SIBLING peers too.**
   A package like `better-auth` ships with companions (`@better-auth/passkey`,
@@ -215,12 +221,14 @@ What does **not** go over messages: which repos exist and in which order they go
     safe direction for a version.
   - **In the assembled workspace** (`lt-monorepo/scripts/check-workspace-consistency.mjs`,
     since 3.10.0). Fails when api and app resolve a wire-critical package
-    differently, when the two frameworks promise different peer ranges, or when a
+    differently, when the frameworks promise different peer ranges (nest-server
+    against nuxt-extensions or ng-base, whichever the workspace holds), or when a
     member has the package installed but pins it nowhere — `autoInstallPeers`
     defaults to true, so an unpinned peer agrees today and is free to drift on
     the next install.
   - **In behaviour** (`nuxt-base-starter/.github/workflows/test.yml`, job
-    `e2e-auth`, green since 2.22.3). Boots MongoDB and nest-server-starter and
+    `e2e-auth`, green since 2.22.3; ng-base-starter has the same job,
+    "E2E Auth (against a real API)"). Boots MongoDB and nest-server-starter and
     runs the auth suite against a real API. The only layer that sees a broken
     contract rather than a version diff — the other one compares declarations,
     and declarations were green throughout the split.

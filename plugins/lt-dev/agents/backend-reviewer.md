@@ -364,6 +364,7 @@ that module's `INTEGRATION-CHECKLIST.md` (the four project classes as one table)
 
 - [ ] Properties in **alphabetical order** (Model, CreateInput, UpdateInput)
 - [ ] `@UnifiedField({ description: '...' })` on EVERY property
+- [ ] **`@UnifiedField`: declare the type where the compilers disagree.** A field without `type` or `enum` whose declared type is a null union (`null | number`, `boolean | null`), a type alias or an enum is a finding: the dev start (SWC) and the build (`tsc`) read different `design:type`, so the dev API rejects input the deployed one accepts (`max: 5` on `max?: null | number`). Fix: `type: () => Number` / `Boolean` / `String`, `enum: X` together with `type: () => String` / `Number` for an enum, a class with `type: () => X` or `isAny: true` for interface, `Record` and mixed fields (generating-nest-servers `reference/framework-guide.md`). An enum field with `mongoose` and no `type`, neither on the field nor in the `mongoose` object, is a finding even with `enum` set: the schema takes the enum object from `design:type`, and the dev start fails with `Invalid schema configuration: … is not a valid type` while the build boots. Read the field for this case rather than relying on the check; from nest-server 12.8.7 on, `pnpm run check:unified-field-types -- --fix` writes the clear cases
 - [ ] **Same description** in all 3 files (Model + CreateInput + UpdateInput)
 - [ ] Bilingual descriptions: `'English text (Deutsche Übersetzung)'`
 - [ ] Class decorators have descriptions: `@ObjectType({ description: '...' })`

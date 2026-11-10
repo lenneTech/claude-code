@@ -371,6 +371,33 @@ The `nest-server-starter` unit row is the cautionary one, and it is worth readin
 
 An Angular app's `check` chain runs `node scripts/check-ng-base-pin.mjs`. It warns and passes in a plain local `check`, and fails when `CI` is set or under `LT_RELEASE=true` (what `check:release` sets), whenever the dependency is not an exact `x.y.z` version (`file:`, `link:`, `workspace:`, a range) or `dependenciesMeta["@lenne.tech/ng-base"].injected` is set. That state is the injected local build used to test an unreleased ng-base (`contributing-to-lt-framework`); the fix is the exact released version plus `pnpm install`, never a looser guard. A vendored core (`src/core/VENDOR.md`) has no dependency to pin and passes.
 
+### Step 6.10 — `check:unified-field-types` (nest-server 12.8.7 and later)
+
+From `@lenne.tech/nest-server` 12.8.7 on, the API's `check` runs `pnpm run check:unified-field-types` before the tests,
+and `check:fix` / `check:naf` run it with `-- --fix` before `format`. The script calls the package bin
+`nest-check-unified-field-types`. In vendor mode that bin leaves with the npm dependency, and `bin/` is no part of
+`src/core/`, so no core sync brings the script either: the script value becomes `node ./bin/check-unified-field-types.js`
+once the lt CLI copies that file next to `bin/migrate.js`. Until then the project has no such step, and its fields are
+fixed once with `npx -p @lenne.tech/nest-server@12.8.7 nest-check-unified-field-types --fix` in the API project
+(nest-server guide `12.8.6-to-12.8.7.md`). It finds every `@UnifiedField` without `type` or `enum` whose
+declared type the dev start (SWC) and the build (`tsc`) read differently: a null union, a type alias, an enum,
+`boolean | null` (generating-nest-servers `reference/framework-guide.md`, "`@UnifiedField`: declare the type where the
+compilers disagree"). A string-literal union written in place is read the same by both and is not reported.
+
+- **Exit 1** means findings. Run `pnpm run check:unified-field-types -- --fix`: it writes `type: () => Number` /
+  `String` / `Boolean` / `Date` or a class imported as a value, the type the field declares. For most fields `tsc`
+  already reads that type, so the deployed build validates as before. A field marked `[changes the deployed build]` is
+  the exception: the build has written a different type for it until now (`Object` for a union with `null` under
+  `strictNullChecks`, a generic alias, a field without annotation), so from now on the deployed API validates it
+  differently. Review each marked field before it ships.
+- **Exit 1 after `--fix`** means fields remain or a file was skipped. What it cannot decide (interface, `Record`,
+  mixed, `any` and type-only imported fields) stays reported with a hint: declare a class with `type: () => X`,
+  `type: () => Object`, or `isAny: true`. A skipped file changed while the check ran and was left untouched; run the
+  fix again.
+- **Exit 2** means a usage error, such as an unknown option or no `tsconfig.json` where it runs. Options:
+  `--project <tsconfig>` (default `tsconfig.json`), `--include <dir>` (default `src`, repeatable). Spec and test files
+  are skipped.
+
 ### Step 7 — Test-duplication avoidance
 
 Tests must not run twice if `check` already covered them on an unchanged working tree.

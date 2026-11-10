@@ -358,6 +358,32 @@ export class Offer extends CorePersistenceModel {
 - **Inputs need NOT extend `CoreInput`.** The CrudService never calls `input.map()`; `prepareInput` runs `plainToInstanceClean(InputClass, input)` when the class has no static `map()`, using the `@UnifiedField`-emitted `@Type`/`@ValidateNested` metadata. Do not flag an input merely for not extending `CoreInput`.
 - **Embedded sub-documents:** when an embedded sub-class already carries `@MongooseSchema({ _id: false })`, declare it slim in the parent — `@UnifiedField({ type: () => SubClass, mongoose: true })` (arrays: `mongoose: { type: [SubClass] }`). A verbose `mongoose: { field: {...}, ... }` block **next to** a `type: () => Class` whose class has its own schema is dead code (Mongoose derives the embedded schema from the class) and drifts (e.g. a sub-index defined only on the class gets silently dropped from the verbose copy).
 
+### `@UnifiedField`: declare the type where the compilers disagree
+
+Without `type`, `@UnifiedField` takes a field's type from the `design:type` metadata. The build (`tsc`) writes it
+with the type checker, the SWC loader of the dev start (`pnpm start`) file by file, and for some declarations the two
+differ. The dev API then validates, documents and generates client types differently from the deployed one: with
+`max?: null | number` it refuses `max: 5` as "not an object", while the build accepts it.
+
+| Declared type | SWC (dev start) | `tsc` (build) | Declare |
+|---|---|---|---|
+| `null \| number`, `boolean \| null` | `Object` | `Number`, `Boolean` | `type: () => Number` / `Boolean` |
+| a type alias (`kind?: Kind`) | `Object` | what the alias resolves to | that runtime type, e.g. `type: () => String` |
+| an enum (`status?: Status`) | the enum object | `String` / `Number` | `enum: Status` and `type: () => String` / `Number` |
+| an interface, a `Record`, a mixed union | `Object` | `Object` | a class with `type: () => X`, or `isAny: true` |
+
+An enum needs both: `enum` drives validation, Swagger and GraphQL, but the Mongoose path of a field with `mongoose`
+still takes its type from `type`, else from `design:type`. With the enum object there, the dev start fails building
+the schema (`Invalid schema configuration: … is not a valid type`) while the build boots.
+
+`number`, `string`, `boolean`, `Date`, a class imported as a value and a union of string literals written in place
+come out the same in both and need nothing. Code the lt CLI generates is safe already: such fields carry `type`, and
+an enum field carries `enum` together with an explicit `mongoose: { …, type: String }`.
+
+From nest-server 12.8.7 on, `@UnifiedField` warns at start for each field in the table, and the API's `check` runs
+`check:unified-field-types`; `pnpm run check:unified-field-types -- --fix` writes the type for the clear cases
+(running-check-script, Step 6.10).
+
 ---
 
 ## Key Takeaways
