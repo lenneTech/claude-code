@@ -55,6 +55,32 @@ Two consequences, both easy to get wrong:
    *Real case:* a customer project's API test suite kept failing at random under parallel runs because all working copies shared one e2e database that the global setup drops on start. `nest-server` and `nest-server-starter` had solved this long before (a database per test RUN, plus a lifecycle reporter that cleans up). The project had simply never adopted it. The fix was to port the framework solution — not to invent a third scheme.
 2. **Push project-grown improvements back up.** A guard, fix, or hardening that was written in a project because the framework lacked it is a **contribution owed upstream** (see the workflows below). Same case: the project had a safety guard refusing to drop a database that is not recognizably a test DB — the base repos did **not** have it, and without it a running `lt dev` session (which points `MONGODB_URI` / `NSC__MONGOOSE__URI` at the DEVELOPMENT database) would let a test run wipe the developer's data.
 
+### The two frontend lines are kept in step
+
+The Nuxt line (`nuxt-extensions`, `nuxt-base-starter`) and the Angular line (`ng-base`, `ng-base-starter`) are equal
+alternatives on the same backend, so they are maintained in parallel. A change to one line gets its equivalent in the
+other, in either direction, wherever the other line has the same concern: auth flow, API wiring, runtime config,
+security headers, CI and test gates, tooling, dependency floors. Decided by Kai, 2026-11-10.
+
+| Nuxt line | Angular line |
+|---|---|
+| `nuxt-extensions` (composables, plugins, `app/core/` when vendored) | `ng-base` (services, `inject…()` functions, `src/core/` when vendored) |
+| `nuxt-base-starter` (`nuxt-base-template/`) | `ng-base-starter` |
+| runtime config: `NUXT_*` server only, `NUXT_PUBLIC_*` browser | runtime config: `NG_*` server only, `NG_PUBLIC_*` browser |
+| lt-dev: `developing-lt-frontend`, `nuxt-extensions-core-vendoring`, `/lt-dev:frontend:update-nuxt-extensions-core` | lt-dev: `developing-lt-angular-frontend`, `ng-base-core-vendoring`, `/lt-dev:frontend:update-ng-base-core` |
+
+A ported runtime value keeps its side: a server-only key becomes the other line's server-only key, never a browser
+key, because a browser key is sent to every visitor.
+
+Before a change counts as done, check the counterpart: does the other line have the same file, script, setting or
+behaviour? Then run `bash "${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh" <path in the other repository>`. On
+`HANDOVER-QUESTION` or `UNKNOWN`, ask the user whether the equivalent change goes to that session, recommending the
+handover (`coordinating-peer-sessions`, the expert rule: only the user redistributes work between sessions). On
+`NONE`, or when the user decides to implement it here, claim it first (the ledger, plus a `CLAIM` to the expert session
+if there is one) and make it there too, uncommitted, by the base-repo house rule.
+Where the other line has no counterpart, or the change is specific to one framework (a Nuxt module option, an Angular
+SSR detail), the report says so in one line instead of porting it.
+
 ## Parallel sessions on the base repos
 
 Base-repo work is the one place in this stack where **Git shows a parallel session nothing at all.** The house rule is to work directly on the checked-out branch and leave the change uncommitted for the user to integrate, so there is no commit, no branch, and no push for anyone else to read. Meanwhile a `pnpm build` in the framework repo republishes `dist/` to **every** linked consumer on the machine, including the starter that a completely different session is running tests against.

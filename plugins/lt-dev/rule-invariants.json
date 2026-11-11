@@ -11,6 +11,14 @@
   ],
   "phrases": [
     {
+      "name": "the Nuxt and the Angular frontend line are equal alternatives and are maintained in parallel (Kai, 2026-11-10)",
+      "phrase": "The two frontend lines are kept in step",
+      "files": [
+        "skills/contributing-to-lt-framework/SKILL.md",
+        "skills/maintaining-lt-stack/SKILL.md"
+      ]
+    },
+    {
       "name": "an enum @UnifiedField declares enum and type together, because the Mongoose path takes its type from type or design:type, not from enum",
       "phrase": "together with `type: () => String` / `Number`",
       "files": [

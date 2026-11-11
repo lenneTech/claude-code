@@ -244,6 +244,9 @@ What does **not** go over messages: which repos exist and in which order they go
   it is the one place a wire split shows up as a failing flow rather than as a
   version diff.
 
+- **The two frontend lines are kept in step.** A change to nuxt-extensions / nuxt-base-starter gets its equivalent in
+  ng-base / ng-base-starter and the other way round, wherever the other line has the same concern; a release round
+  names per change whether the counterpart was made, handed over, or has none (contributing-to-lt-framework). Kai, 2026-11-10.
 - **Nothing is published before `/lt-dev:review` ran** over that repo's release diff
   (`/lt-dev:review --base=<last release tag>`, which includes uncommitted and untracked files),
   after its maintenance and before its version bump. Take the tag from `origin/main`:
