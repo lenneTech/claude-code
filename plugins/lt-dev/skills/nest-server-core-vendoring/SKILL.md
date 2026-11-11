@@ -277,12 +277,26 @@ plain `.ts` changes decide whether a synced project still starts:
 |---|---|---|
 | Dev start through the core's loader: `nodemon.json` `"exec": "node -r ./src/core/modules/migrate/helpers/ts-compiler.js src/main.ts"`, the same in `nodemon-debug.json` (`node --inspect-brk -r …`), `docs:ci` and `start:nodemon`; keep a `-r tsconfig-paths/register` where the project declares `paths` | ts-node does not map `./x.js` to `x.ts` | `pnpm start` fails with `Cannot find module './core.module.js'` while build, `migrate:*` and tests pass |
 | The non-TypeScript files of `src/core/modules/migrate/helpers/`: `package.json` (`"type": "commonjs"`), `ts-compiler.cjs`, `ts-compiler-hooks.mjs` | the loader is CommonJS in every project, and its hooks reach ES module sources | the loader fails to load, or `.ts` imported from ESM is not compiled |
-| `bin/package.json` (`"type": "commonjs"`) next to `bin/migrate.js` | `bin/` is no part of `src/core/`, so no sync brings it; an ESM project would read the CommonJS shim as ESM | every `migrate:*` fails in an ESM project; harmless to add in a CommonJS one |
+| `bin/package.json` (`"type": "commonjs"`) next to `bin/migrate.js` | `bin/` is no part of `src/core/`, so the core diff never brings it (the sync copies it from the target, see below); an ESM project would read the CommonJS shim as ESM | every `migrate:*` fails in an ESM project; harmless to add in a CommonJS one |
 | `migrate/migration.helper.ts` (moved from `migrate/helpers/`) | the old path forwards, so `migrations-utils/migrate.js` keeps working | nothing, as long as the forwarder is synced too |
 
-From 12.8.7 on, `bin/check-unified-field-types.js` belongs next to `bin/migrate.js` for the same reason: no sync brings
-`bin/`, and the package bin `nest-check-unified-field-types` leaves with the npm dependency. Until the lt CLI copies the
-file, the project runs the check once through `npx` instead of from `check` (running-check-script, Step 6.10).
+From 12.8.7 on, `bin/check-unified-field-types.js` belongs next to `bin/migrate.js` for the same reason: the package
+bin `nest-check-unified-field-types` leaves with the npm dependency. The lt CLI (1.58.5 and later) copies it on vendor
+init and `convert-mode --to vendor` and points `check:unified-field-types` at `node ./bin/check-unified-field-types.js`.
+Nothing renews `bin/` afterwards, `lt fullstack update` included, so **every sync copies `bin/migrate.js`,
+`bin/package.json` and, when the target has it, `bin/check-unified-field-types.js` from the target clone**:
+
+- **A stale copy passes `check` and fails the start.** The check moves with the decorator. Observed 2026-11-11 while
+  nest-server 12.9.0 was prepared: its check also reads `*.spec.ts` / `*.test.ts` and reports enums that mix strings and
+  numbers, which `@UnifiedField` rejects at boot, so a project synced to it with the 12.8.7 file would pass `check`
+  with fields the server refuses to start with.
+- **A target below 12.8.7 has no such file.** The sync then removes the project's copy, the `check:unified-field-types`
+  script and every `&&` link that calls it, as the CLI's vendor init does (a chain calling a missing file fails).
+- **A script brought in from the starter** (core-updater Phase 7c) takes the vendor form
+  `node ./bin/check-unified-field-types.js`, never the package bin.
+
+A project vendored before cli 1.58.5 whose sync has not brought the file yet runs the check once through `npx` instead
+of from `check` (running-check-script, Step 6.10).
 
 Tests: ts-jest does not map `./x.js` either (`moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$':
 '$1' }`, or move to vitest), and every vitest config needs `resolve.extensions` with
@@ -322,9 +336,9 @@ silent skip before the deploy does.
 
 ### The stale-shim trap: migrations that run and then hang forever
 
-`bin/migrate.js` is **not** under `src/core/`, so **no core sync ever updates
-it**. It is copied once, by `lt fullstack convert-mode`, and from then on it
-drifts. That matters because the CLI's entry contract changed: `main()` does the
+`bin/migrate.js` is **not** under `src/core/`, so **the core diff never updates
+it**. `lt fullstack convert-mode` copies it once, and only the core-updater's
+Phase 7d renews it; a core synced any other way leaves it to drift. That matters because the CLI's entry contract changed: `main()` does the
 work, and **`runCli()` is what terminates the process** — it drains stdout and
 then exits explicitly, so a handle left behind by MongoDB or GridFS cannot keep
 Node alive after the work is done. A stale shim calls `main()`.

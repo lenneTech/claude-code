@@ -109,3 +109,14 @@ jobs:
         run: |
           npm install -g @anthropic-ai/claude-code
           for p in plugins/*/; do claude plugin validate "$p"; done
+      # A plugin whose hooks.json loads a hooks module (a mod) carries *.test.ts files for it;
+      # `claude plugin test` runs them without a session, sign-in or network.
+      - name: Mod tests
+        if: ${{ !cancelled() }}
+        run: |
+          fail=0
+          for hooks in plugins/*/hooks/hooks.json; do
+            grep -q '"modules"' "$hooks" || continue
+            (cd "$(dirname "$(dirname "$hooks")")" && claude plugin test) || fail=1
+          done
+          exit "$fail"

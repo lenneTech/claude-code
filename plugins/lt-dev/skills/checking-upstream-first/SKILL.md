@@ -155,7 +155,9 @@ the case most likely to be missed.
 For anything in the lt stack, check whether a base repo already solved it before solving it in
 a customer project — `nest-server`, `nest-server-starter`, `nuxt-extensions`,
 `nuxt-base-starter`, `lt-monorepo`, `cli`, and for an Angular app `ng-base` and `ng-base-starter`. A fix that belongs in a base repo and lands in a
-customer project instead is inherited by nobody and re-discovered by everybody.
+customer project instead is inherited by nobody and re-discovered by everybody. A frontend fix proposed for a base repo
+covers both frontend lines, whichever one the project uses (`contributing-to-lt-framework`,
+"The two frontend lines are kept in step").
 
 **Know which repo the file came from.** Backend and frontend have separate lineages, and the
 frontend one is the one people forget. All repos are public under

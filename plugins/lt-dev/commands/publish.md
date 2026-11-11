@@ -167,13 +167,19 @@ What differs from the npm/template recipes:
   per the skill), `claude-code-internal` to the self-hosted GitLab its `origin` names — `gh` does not
   apply there, and there is no GitHub release to create.
 
-Afterwards, tell the user how to pull the new version:
+Afterwards, once the bump commit and the tag are verified on the remote, run this yourself on this machine; the
+release is not done without it (Kai, 2026-11-11):
 
 ```bash
 lt claude plugins        # updates the marketplace cache, then every plugin
 ```
 
-A restart of Claude Code is required — running sessions keep the old version.
+Confirm in the output, or in `~/.claude/plugins/installed_plugins.json`, that the plugins of this marketplace now
+carry the new version, and put that in the step 7 report. Interactive sessions on this machine then reload within ten
+minutes on their own (the lt-dev hooks module, `hooks/plugin-updates.js`), a running turn first ends; a session the
+module does not reach (headless, the Desktop app, a Claude Code without mods) applies it with `/reload-plugins` or a
+restart. Other machines install the release on their next session start or within twelve hours while a session runs,
+through the same `lt claude plugins`.
 
 1. **Preflight** (skill rules): correct branch (nest-server: `develop`),
    `git pull` current, `gh auth`, and the push channel via

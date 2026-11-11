@@ -29,9 +29,11 @@ mkdir -p "$DATA"
 # CLAUDE_PLUGIN_ROOT is unset for the same reason.
 date +%s > "$DATA/update-last-run"
 
+# $1 = the SessionStart source Claude Code sends on stdin (default startup).
 run_hook() {
-  env -u CLAUDE_PLUGIN_ROOT CLAUDE_CODE_ENTRYPOINT= LT_PLUGIN_HOOKS_SKIP= CLAUDE_PLUGIN_DATA="$DATA" \
-    "$BASH" "$HOOK" < /dev/null 2>/dev/null
+  printf '{"hook_event_name":"SessionStart","source":"%s"}' "${1:-startup}" \
+    | env -u CLAUDE_PLUGIN_ROOT CLAUDE_CODE_ENTRYPOINT= LT_PLUGIN_HOOKS_SKIP= CLAUDE_PLUGIN_DATA="$DATA" \
+      "$BASH" "$HOOK" 2>/dev/null
 }
 
 printf '[lt-dev] auto-update applied:\n- Claude Code plugins updated:\n    lt-dev@lenneTech: 8.25.0 → 8.25.1\n' > "$DATA/update-notification.txt"
@@ -52,10 +54,25 @@ for needle in 'lt-dev@lenneTech: 8.25.0 → 8.25.1' 'lt-dev Auto-Update' 'Folgen
   case "$CTX" in *"$needle"*) pass "context contains: $needle" ;; *) fail "context contains: $needle" ;; esac
 done
 [ ! -e "$DATA/update-notification.txt" ] && pass "the notification is consumed" || fail "the notification is consumed"
-# Only a person can run /reload-plugins (the Skill tool does not reach it), so the notice asks the
-# user to type it instead of telling Claude to run it (observed 2026-10-18).
-case "$CTX" in *'Tippe `/reload-plugins` ein'*) pass "the info block asks the user to type /reload-plugins" ;; *) fail "the info block asks the user to type /reload-plugins" ;; esac
+# A fresh process (source startup) loaded the installed versions, so the block says this
+# session already runs them, and the lt-dev hooks module reloads the running ones. It no longer
+# asks for /reload-plugins, which it did until 2026-11-11.
+case "$CTX" in *'Diese Session nutzt sie bereits'*) pass "on startup the info block says this session already runs the new versions" ;; *) fail "on startup the info block says this session already runs the new versions" ;; esac
+case "$CTX" in *'Tippe `/reload-plugins` ein'*) fail "the info block no longer asks the user to type /reload-plugins" ;; *) pass "the info block no longer asks the user to type /reload-plugins" ;; esac
 case "$CTX" in *'run the slash command'*) fail "Claude is not told to run /reload-plugins itself" ;; *) pass "Claude is not told to run /reload-plugins itself" ;; esac
+
+# /clear and an in-session /resume fire SessionStart too, but keep the versions the session
+# started with; there the block must not claim the new versions are active (review finding
+# 2026-11-11), and it names /reload-plugins for a session the hooks module does not reach.
+for src in clear resume; do
+  printf '[lt-dev] auto-update applied:\n- Claude Code plugins updated:\n    lt-dev@lenneTech: 8.25.0 → 8.25.1\n' > "$DATA/update-notification.txt"
+  SRC_CTX=$(run_hook "$src" | node -e '
+    const o = JSON.parse(require("fs").readFileSync(0, "utf8")).hookSpecificOutput;
+    process.stdout.write(o.additionalContext);' 2>/dev/null)
+  [ -n "$SRC_CTX" ] || SRC_CTX=$(run_hook "$src")
+  case "$SRC_CTX" in *'Diese Session nutzt sie bereits'*) fail "on $src the block does not claim the session runs the new versions" ;; *) pass "on $src the block does not claim the session runs the new versions" ;; esac
+  case "$SRC_CTX" in *'Falls diese Session noch die alten Versionen nutzt'*'/reload-plugins'*) pass "on $src the block says the session reloads them or names /reload-plugins" ;; *) fail "on $src the block says the session reloads them or names /reload-plugins" ;; esac
+done
 
 echo "wording at normal volume"
 for loud in 'ACTION REQUIRED' 'MUST' 'CRITICAL' 'IMPORTANT'; do

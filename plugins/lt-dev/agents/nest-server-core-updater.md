@@ -81,6 +81,8 @@ Phase 5: Categorize hunks (clean pick / conflict / not applicable)
 Phase 6: Present curation proposal for human review
 Phase 7: Apply approved changes + reapply flatten-fix
 Phase 7b: Sync npm dependencies to the upstream baseline (+ maintenance)
+Phase 7c: Sync starter toolchain scripts
+Phase 7d: Renew bin/ from the target
 Phase 8: Run tsc / lint / tests
 Phase 9: Sync upstream CLAUDE.md into project
 Phase 10: Update VENDOR.md + commit
@@ -347,6 +349,22 @@ against the latest `nest-server-starter` and adopt upstream changes:
 - Lint/format config (`.oxlintrc.json`, `.oxlintignore`): adopt upstream rule
   changes — a stale `no-underscore-dangle` allow-list makes the vendored core
   emit dozens of warnings that upstream lints clean.
+
+### Phase 7d: Renew `bin/` from the Target
+
+`bin/` sits outside `src/core/`, so the core diff never reaches it, and the lt CLI
+writes it only on vendor init and `convert-mode --to vendor`. Copy from
+`<run-dir>/target`, overwriting the project's files:
+
+- `bin/migrate.js` and `bin/package.json`, always.
+- `bin/check-unified-field-types.js` when the target has it (12.8.7 and later). Without
+  it in the target, remove the project's copy, the `check:unified-field-types` script and
+  every `&&` link that calls it. A script that Phase 7c brought in from the starter
+  takes the vendor form `node ./bin/check-unified-field-types.js`.
+
+A copy left at an older version passes `check` and fails the start once the decorator
+learns a rule its check did not (`nest-server-core-vendoring` → "Core 12.x: what the
+sync has to carry"). The report lists the three files with the target version.
 
 ### Phase 8: Validate
 

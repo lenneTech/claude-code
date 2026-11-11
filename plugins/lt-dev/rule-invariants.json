@@ -11,11 +11,16 @@
   ],
   "phrases": [
     {
-      "name": "the Nuxt and the Angular frontend line are equal alternatives and are maintained in parallel (Kai, 2026-11-10)",
+      "name": "the Nuxt and the Angular frontend line are equal alternatives and are maintained in parallel, also when a project proposes a base-repo change (Kai, 2026-11-10 and 2026-11-11)",
       "phrase": "The two frontend lines are kept in step",
       "files": [
         "skills/contributing-to-lt-framework/SKILL.md",
-        "skills/maintaining-lt-stack/SKILL.md"
+        "skills/maintaining-lt-stack/SKILL.md",
+        "skills/checking-upstream-first/SKILL.md",
+        "agents/nuxt-extensions-core-contributor.md",
+        "agents/ng-base-core-contributor.md",
+        "commands/frontend/contribute-nuxt-extensions-core.md",
+        "commands/frontend/contribute-ng-base-core.md"
       ]
     },
     {

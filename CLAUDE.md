@@ -178,7 +178,9 @@ claude-code/
 │   │   ├── agents/           # Autonomous agents (.md files)
 │   │   ├── commands/         # Slash commands (.md files, can be nested)
 │   │   ├── hooks/            # Event hooks
-│   │   │   ├── hooks.json    # Hook definitions
+│   │   │   ├── hooks.json    # Hook definitions; `modules` loads register.js as a mod
+│   │   │   ├── register.js   # Hooks module (mod): plugin-updates.js keeps lenne.Tech plugins current
+│   │   │   ├── __tests__/    # *.test.ts for the module, run by `claude plugin test` in plugins/lt-dev
 │   │   │   └── scripts/      # Hook handler scripts (.sh, .ts) with __tests__/
 │   │   ├── scripts/          # Plugin helper scripts referenced by commands/agents/skills
 │   │   │                     # (e.g. discover-check-scripts.sh); commands grant each one by exact name per

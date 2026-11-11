@@ -20,6 +20,11 @@ An Angular app with a vendored `@lenne.tech/ng-base` core (`src/core/VENDOR.md` 
 **Never auto-pushes.** Every candidate becomes a prepared branch + PR body
 that the human explicitly reviews and submits via normal GitHub flow.
 
+**Both frontend lines.** A candidate goes to `ng-base` / `ng-base-starter` too, wherever the
+Angular line has the same concern: the agent prepares the counterpart branch and draft next to
+the Nuxt one, or names why there is none (`contributing-to-lt-framework`, "The two frontend
+lines are kept in step").
+
 ## Why This Exists (Modification Policy)
 
 The vendored `app/core/` is a **comprehension aid**, not a fork. Per the

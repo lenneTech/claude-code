@@ -1,5 +1,6 @@
 {
-  "description": "Project detection, post-compaction context, safety guards, circuit breaker, file protection, peer-session coordination, Claude Desktop sessions left in another account, and lt-plugin auto-update",
+  "description": "Project detection, post-compaction context, safety guards, circuit breaker, file protection, peer-session coordination, Claude Desktop sessions left in another account, and lt-plugin auto-update; the module reloads running sessions after a lenne.Tech plugin release",
+  "modules": ["./register.js"],
   "hooks": {
     "SessionStart": [
       {

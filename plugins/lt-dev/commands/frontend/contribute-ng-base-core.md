@@ -14,6 +14,10 @@ reviews every draft and pushes it.
 
 **Only for apps that vendored ng-base.** A Nuxt app uses `/lt-dev:frontend:contribute-nuxt-extensions-core`.
 
+**Both frontend lines.** A candidate goes to `nuxt-extensions` / `nuxt-base-starter` too, wherever the Nuxt
+line has the same concern: the agent prepares the counterpart branch and draft next to the ng-base one, or
+names why there is none (`contributing-to-lt-framework`, "The two frontend lines are kept in step").
+
 ## Usage
 
 ```

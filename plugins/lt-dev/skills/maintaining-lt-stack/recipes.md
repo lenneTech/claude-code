@@ -469,4 +469,7 @@ it as one argument; `npm run` forwards it without a `--` separator.
   above); `claude-code-internal` → the self-hosted GitLab its `origin` names,
   where `gh` does not apply and no GitHub release is created.
 - **Consumers:** `lt claude plugins` refreshes the marketplace cache and updates
-  every plugin; a Claude Code restart applies it.
+  every plugin. The release run executes it on its own machine right after the
+  push (`/lt-dev:publish`, "Marketplace repos"). Every machine also runs it at
+  session start and twice a day while an interactive session is open, and those
+  sessions reload the new versions on their own (lt-dev `hooks/plugin-updates.js`).

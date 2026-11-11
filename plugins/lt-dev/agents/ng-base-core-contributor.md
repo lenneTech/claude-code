@@ -71,6 +71,7 @@ Phase 4: Categorize substantial commits
 Phase 5: Check upstream for duplicates
 Phase 6: Clone upstream + prepare candidate branches (with specs)
 Phase 7: Generate PR drafts
+Phase 7b: Carry each candidate to the Nuxt line (nuxt-extensions, nuxt-base-starter)
 Phase 8: Present summary for human review
 ```
 
@@ -197,6 +198,29 @@ Generated with Claude Code via `lt-dev:ng-base-core-contributor`
 Leave the project's name out of the PR unless the user wants it there: ng-base is public. Save the body to
 `<head-dir>/.git/PR-DRAFTS/<branch>.md`.
 
+### Phase 7b: Carry Each Candidate to the Nuxt Line
+
+The Angular line and the Nuxt line are equal alternatives and are kept in step
+(`contributing-to-lt-framework`, "The two frontend lines are kept in step"), so a contribution proposed
+from an Angular project goes to `nuxt-extensions` / `nuxt-base-starter` too, wherever the Nuxt line has the
+same concern. Decided by Kai, 2026-11-11. For each prepared candidate:
+
+1. **Find the counterpart** with that section's mapping table: a service or `inject…()` function becomes a
+   composable or plugin under `src/runtime/` in `nuxt-extensions`, `ng-base-starter` becomes
+   `nuxt-base-starter` (`nuxt-base-template/`), an `NG_*` key becomes the `NUXT_*` key on the same side
+   (server-only stays server-only). Read the current nuxt-extensions on GitHub (a shallow clone), not a
+   local checkout.
+2. **Same concern there:** clone it into a fresh `mktemp -d /tmp/nuxt-extensions-head.XXXXXX`, port the
+   change on a branch of the same name, add or adapt the test, run `pnpm install && pnpm run check`, and
+   write its PR draft the same way. Each draft names the other under `## Related`, so the maintainers
+   review the pair together. A port that needs a design decision the Angular change does not answer becomes
+   a draft body with the concrete change and `port pending: <question>` instead of a branch.
+3. **Already in nuxt-extensions, or no counterpart** (an Angular SSR or signal detail): one line in the
+   report saying which, with the nuxt-extensions path that settles it.
+
+The nuxt-extensions clone follows the same hand-off rule as the ng-base clone: kept while it holds branches
+or drafts, removed when it holds none. Nothing is committed to a local nuxt-extensions checkout.
+
 ### Phase 8: Present Summary for Human Review
 
 Your final message is the report the caller acts on. Write it when every phase is done or a named blocker
@@ -220,7 +244,12 @@ stops you. Interim status goes in the same message as your next tool call, so th
 Next steps (the user's):
   git -C /tmp/ng-base-head.k3J9aQ push origin contribute/fix-tus-upload-resume
   gh pr create --repo lenneTech/ng-base --draft --base main --title "..." --body-file ...
-  once every branch is pushed: rm -rf /tmp/ng-base-head.k3J9aQ
+  once every branch is pushed: rm -rf /tmp/ng-base-head.k3J9aQ /tmp/nuxt-extensions-head.x7Pq2L
+
+## Nuxt Line (Phase 7b)
+- `contribute/fix-tus-upload-resume` -> `/tmp/nuxt-extensions-head.x7Pq2L` @ same branch (check green), draft names the ng-base PR
+- `contribute/...` -> port pending: <question>
+- `contribute/...` -> no counterpart: <reason, nuxt-extensions path>
 
 ## Project-Specific (Not Contributed)
 - `a4714b4`: custom form rules (project-specific)

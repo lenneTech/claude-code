@@ -9,6 +9,7 @@ LT_PLUGINS_LOCK_DIR="$LT_PLUGINS_STATE_DIR/update.lock.d"
 LT_PLUGINS_LOG_FILE="$LT_PLUGINS_STATE_DIR/update.log"
 
 LT_PLUGINS_THROTTLE_SECONDS=3600           # 1 hour between successful runs
+LT_PLUGINS_SCHEDULE_SECONDS=43200          # 12 hours: the running-session update (hooks/plugin-updates.js UPDATE_INTERVAL_MS)
 LT_PLUGINS_RETRY_AFTER_FAILURE_SECONDS=300 # 5 min retry after a failed run
 LT_PLUGINS_STALE_LOCK_SECONDS=600          # 10 min before a stale lock is reclaimed
 
