@@ -290,9 +290,7 @@ where it differs from the steps below, the workflow wins, because it is what run
 Released like nuxt-base-starter: an annotated tag `vX.Y.Z` plus a GitHub release, no npm package. **It
 follows ng-base, release for release** (SKILL.md, "Version scheme", rule 2): its `version` equals the
 `@lenne.tech/ng-base` version it pins, every ng-base version gets its starter release, and a starter change
-without one is pushed to `main` with `version` unchanged, no release commit and no tag. The one exception
-is inherited: `v22.0.3` from its earlier own numbering next to ng-base `22.0.2`, closed by ng-base's next
-release (at least `22.0.4`, a patch skips `22.0.3`) and the starter release that follows it. Unlike
+without one is pushed to `main` with `version` unchanged, no release commit and no tag. Unlike
 nuxt-base-starter it is **flat**: the repository root is the app, with `package.json` and `pnpm-lock.yaml`
 at the root and no `*-template/` folder.
 
@@ -301,10 +299,12 @@ at the root and no `*-template/` folder.
 1. Pin the new version **exactly** (`"@lenne.tech/ng-base": "X.Y.Z"`, no range) in the root
    `package.json`, set the root `version` to the same `X.Y.Z` in the same commit (the same PR), then
    `pnpm i`. `node -p "const p=require('./package.json');p.version===p.dependencies['@lenne.tech/ng-base']"`
-   prints `true`. A guard like nuxt-base-starter's `starter-version.test.mjs` fits here only in a path
-   `lt fullstack init` strips from Angular apps (`.github`, `CHANGELOG.md`, `extras`, `migration-guides`,
-   the CLI's `ANGULAR_STARTER_REPO_ONLY`): the repository root is the app, so a check under `scripts/`
-   would travel into every generated project and fail on its correctly different version.
+   prints `true` as a quick check. `tests/unit/starter-version.test.ts` (part of `check`) fails on a
+   mismatch. It runs only where `origin` is lenneTech/ng-base-starter (this checkout, CI, a release
+   worktree): a project generated from the starter (`lt fullstack init` or `lt frontend angular`) starts at
+   version `0.0.0` without the starter's `.git`, and the test file is copied either way. The CLI strips the
+   starter's repo files (`ANGULAR_STARTER_REPO_ONLY`) on both paths from 1.58.6 on, an older CLI kept them,
+   so the files cannot tell a generated project from the starter.
 2. Maintenance (`/lt-dev:maintenance:maintain`, when the step-2 answer asks for it) → `pnpm run check`
    green, and `pnpm run test:e2e` before UI-library bumps, as in nuxt-base-starter.
 3. **Gate: the starter resolves ng-base from the registry.** Local integration may run on an injected

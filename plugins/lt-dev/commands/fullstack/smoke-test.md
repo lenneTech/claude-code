@@ -1,6 +1,6 @@
 ---
-description: End-to-end smoke test of the lt stack. Creates a vendor-mode fullstack project, validates it locally, deploys it through GitLab and TurboOps (dev and production), verifies both stages online, fixes errors in the base repos and cleans up everything.
-argument-hint: '[--name=<name>] [--frontend=nuxt|angular] [--domain=<smoke-domain>] [--group=<gitlab-group>] [--server=<turboops-server>] [--rounds=1] [--keep] [--skip-deploy] [--skip-cleanup]'
+description: End-to-end smoke test of the lt stack. Creates vendor-mode fullstack projects (Nuxt, Angular), validates them locally, deploys them through GitLab and TurboOps (dev and production), verifies both stages online, fixes base-repo errors and cleans up.
+argument-hint: '[--name=<name>] [--frontend=both|nuxt|angular] [--domain=<smoke-domain>] [--group=<gitlab-group>] [--server=<turboops-server>] [--rounds=1] [--keep] [--skip-deploy] [--skip-cleanup]'
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, Agent, AskUserQuestion, ToolSearch
 disable-model-invocation: false
 ---
@@ -28,21 +28,40 @@ disable-model-invocation: false
 CLI surface is too broad and too dependent on what each phase discovers to
 enumerate as individual patterns.
 
-Runs the complete lifecycle of an lt fullstack project, from
+Runs the complete lifecycle of lt fullstack projects, from
 `lt fullstack init` to a production TurboOps deployment and back. Every error
 on the way counts as a **base-repo finding** (base repos = Grund-Repos): the fix
 belongs in `nest-server` / `nest-server-starter` / `nuxt-extensions` /
-`nuxt-base-starter` / `lt-monorepo` / `cli` / `lt-dev` (uncommitted, current
-branch), not in the throwaway project. The goal: a fresh project works without
-any rework.
+`nuxt-base-starter` / `ng-base` / `ng-base-starter` / `lt-monorepo` / `cli` /
+`lt-dev` (uncommitted, current branch), not in the throwaway project. The goal:
+a fresh project works without any rework, whichever frontend it has.
 
-### Frontend: Nuxt by default, Angular on `--frontend=angular`
+### Frontends: Nuxt and Angular by default, one of them on `--frontend`
 
-Without the flag, or with `--frontend=nuxt`, the run scaffolds a Nuxt app and every step below applies as
-written. `--frontend=angular` scaffolds the Angular line (ng-base-starter with a vendored `@lenne.tech/ng-base`)
-on the same backend and runs the same phases; only the steps marked **On `--frontend=angular`** differ, and each
-of them sits next to the unchanged Nuxt text. In that run the frontend findings belong in `ng-base` /
-`ng-base-starter` instead of `nuxt-extensions` / `nuxt-base-starter`.
+Without the flag, or with `--frontend=both`, the run tests both frontend lines, each together with nest-server, in
+two complete fullstack projects: one with a Nuxt app (nuxt-base-starter with a vendored
+`@lenne.tech/nuxt-extensions`) and one with an Angular app (ng-base-starter with a vendored `@lenne.tech/ng-base`).
+`--frontend=nuxt` runs only the Nuxt project, `--frontend=angular` (or `--frontend=ng`) only the Angular project.
+
+| | Nuxt project | Angular project |
+|---|---|---|
+| `<name>`: folder, GitLab repo, TurboOps slug, swarm stacks | `--name`, default `lt-smoke-test` | the Nuxt name with `-ng` appended, `lt-smoke-test-ng` by default |
+| `<domain>`: stage `production`; stage `dev` is `dev.<domain>`, each API `api.` in front | `<smoke-domain>` | `ng.<smoke-domain>` |
+
+In every step below, `<name>` and `<domain>` stand for the project at hand. Steps without a mark apply to both
+projects, and the Nuxt project follows every one of them exactly as written; a step marked **Angular project**
+replaces or extends the Nuxt-specific text next to it for the Angular project only. The wildcard `*.<smoke-domain>`
+also covers the Angular hosts (`api.dev.ng.<smoke-domain>` included, per RFC 4592), and `<name>-ng` keeps the
+reserved `lt-smoke-test` prefix that `lt dev prune` sweeps.
+
+**Both projects in one run.** One session drives both. Phases 1 and 2 run one project after the other: two builds and
+two Playwright suites at once compete for the same machine, and a timeout caused by that load would look like a
+finding. The first project's `lt dev down` comes before the second one's `lt dev up`; the later phases need its
+folder, not its running stack. Phases 3 to 7 run side by side, each phase for both projects before the next,
+because most of that time is waiting on pipelines and deploys and each project waits on its own. A finding in one
+project does not stop the other. Its fix goes into the base repo that caused it and into every project it affects: a backend fix into both, a
+frontend fix into its own. Frontend findings belong in `nuxt-extensions` / `nuxt-base-starter` or in `ng-base` /
+`ng-base-starter`, backend findings in `nest-server` / `nest-server-starter`, whichever project showed them.
 
 **Reference run:** 2026-07-17 (`lt-smoke-test`). Findings: duplicate unhead
 version (SSR 500 in the built app), standalone-layout assumptions in the pnpm
@@ -60,7 +79,7 @@ Traefik mismatch (see `deploying-to-turboops` Trap 5).
 | MongoDB running locally | `pgrep mongod` |
 | mongosh installed (needed for DB cleanup) | `which mongosh` — otherwise `brew install mongosh` |
 | Caddy daemon (lt dev) | `curl -s http://localhost:2019/config/` |
-| DNS: apex + wildcard → target server IP | `dig +short <domain>` and `dig +short api.dev.<domain>` — per RFC 4592 a wildcard `*.<domain>` also covers `api.dev.<domain>`, as long as no explicit intermediate record exists |
+| DNS: apex + wildcard → target server IP | `dig +short <domain>` and `dig +short api.dev.<domain>` for the `<domain>` of each project the run covers — per RFC 4592 a wildcard `*.<smoke-domain>` also covers `api.dev.<domain>`, as long as no explicit intermediate record exists |
 
 ### When the TurboOps MCP is missing
 
@@ -99,8 +118,8 @@ A   *.<smoke-domain>   <server-ip>
 | Target server | Name + provider + IP, and the TurboOps server ID for the MCP calls |
 | Workspace | TurboOps workspace ID |
 | GitLab | `<gitlab-host>` — the self-hosted instance the throwaway repo is created on |
-| Stages | dev → `dev.<smoke-domain>` · production → `<smoke-domain>` |
-| API per stage | `api.dev.<smoke-domain>` · `api.<smoke-domain>` |
+| Stages | Nuxt project: dev → `dev.<smoke-domain>` · production → `<smoke-domain>`; Angular project: dev → `dev.ng.<smoke-domain>` · production → `ng.<smoke-domain>` |
+| API per stage | `api.` in front of each stage host, e.g. `api.dev.<smoke-domain>` · `api.ng.<smoke-domain>` |
 
 > **Where the concrete values live.** Server addresses, TurboOps server and workspace IDs, the GitLab host
 > and the real domain are infrastructure assignments. They therefore do **not** belong in
@@ -118,9 +137,11 @@ applies as well, after **every** deploy.
 
 ### Turn endings
 
-This command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; waiting on a pipeline or a deploy means polling again, not reporting, and a base-repo fix is followed by the repeated step. The run stops only at the handoff points this command defines (a Phase 0 prerequisite the run cannot establish itself, such as the `turbo login` browser flow or a missing DNS record, an unreachable TurboOps MCP (after Phase 2, see "When the TurboOps MCP is missing"), and the Phase 8 report; when an orchestrating command invoked this one, the report returns to that caller, which carries on), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation. Deleting the throwaway resources this run created, and the leftovers of earlier smoke-test runs under the same `<name>` (a `-deletion_scheduled-` GitLab project, orphaned `<stack>_mongo_data` volumes), is part of the job, not such an action — Phase 7 must end with zero hits, earlier runs included.
+This command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; waiting on a pipeline or a deploy means polling again, not reporting, and a base-repo fix is followed by the repeated step. The run stops only at the handoff points this command defines (a Phase 0 prerequisite the run cannot establish itself, such as the `turbo login` browser flow or a missing DNS record, an unreachable TurboOps MCP (after Phase 2, see "When the TurboOps MCP is missing"), and the Phase 8 report; when an orchestrating command invoked this one, the report returns to that caller, which carries on), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation. Deleting the throwaway resources this run created, and the leftovers of earlier smoke-test runs under the run's project names (a `-deletion_scheduled-` GitLab project, orphaned `<stack>_mongo_data` volumes), is part of the job, not such an action — Phase 7 must end with zero hits, earlier runs included.
 
 ### Phase 1 — Scaffold (vendor mode)
+
+**Nuxt project:**
 
 ```bash
 SMOKE_DIR="${LT_SMOKE_DIR:-$HOME/lt-smoke}"   # no fixed workspace path — differs per machine
@@ -130,7 +151,7 @@ lt fullstack init --name <name> --frontend nuxt --api-mode Rest \
 cd <name> && git add -A && { git diff --cached --quiet || git commit -m "chore: lt dev URL blocks"; }
 ```
 
-**On `--frontend=angular`:**
+**Angular project:**
 
 ```bash
 SMOKE_DIR="${LT_SMOKE_DIR:-$HOME/lt-smoke}"
@@ -156,17 +177,17 @@ the missing, stale or wrong `paths` keys, which the CLI derives from every `ng-p
 
 1. `lt dev up` → probe both URLs (`https://<slug>.localhost`, `https://api.<slug>.localhost/health-check`).
 2. `lt dev test` — **all** Playwright E2E tests must pass (25/25 in the starter state of 2026-07). The test stack runs the **built** app, which is exactly where build-only errors show up (e.g. SSR 500 from a duplicate unhead version) that dev mode swallows.
-   **On `--frontend=angular`:** every spec under the starter's `tests/e2e/` must pass or be skipped by a condition the
+   **Angular project:** every spec under the starter's `tests/e2e/` must pass or be skipped by a condition the
    spec itself declares. The `ssr-proxy-headers.spec.ts` tests skip under `lt dev test`
    (`test.skip(!!process.env['LT_DEV_ACTIVE'], …)`), because Caddy sets the forwarded headers itself; the starter's CI
    and the online check cover them. A failure, or a skip the spec does not declare, is a finding. The test stack builds the app
    into its own `NG_OUTPUT_DIR` and starts it through the `.output/server/index.mjs` shim that ng-base-starter's
    `scripts/build.mjs` writes, so a server that fails only when built shows up here as well.
 3. `pnpm run check` — fully green including audit (0 vulns) and a **clean** lint (0 warnings; a flood of warnings in the vendored core means a gap in the starter's oxlintrc).
-   **On `--frontend=angular`:** the app lints with `oxlint --type-aware` plus `eslint src`, and the vendored core sits
+   **Angular project:** the app lints with `oxlint --type-aware` plus `eslint src`, and the vendored core sits
    in `projects/app/src/core/`; a flood of warnings from there means a gap in ng-base-starter's `.oxlintrc.json` or
    `eslint.config.js`.
-4. Fix each finding right away in the matching base repo, in its local clone. The path differs per machine, so search for it (`find "$HOME" -maxdepth 5 -type d -name nest-server-starter -not -path '*/node_modules/*'`) or ask instead of guessing. Mirror the fix into the smoke project and repeat the step until it is green. Commit nothing in the base repos, because the user reviews the changes.
+4. Fix each finding right away in the matching base repo, in its local clone. The path differs per machine, so search for it (`find "$HOME" -maxdepth 5 -type d -name nest-server-starter -not -path '*/node_modules/*'`) or ask instead of guessing. Mirror the fix into every smoke project it affects and repeat the step until it is green. Commit nothing in the base repos, because the user reviews the changes.
 
 ### Phase 3 — GitLab
 
@@ -217,7 +238,7 @@ skill `deploying-to-turboops`):
    - TurboOps rewrites the host `<stack>_mongo` to the service's real name `<stack>_<hash>-mongo` at deploy time
      (`printenv` in the api container shows it); the bare stack name does not resolve. Write the URI with
      `<stack>_mongo` as above.
-   - **On `--frontend=angular`** the app service gets the `NG_*` set instead of the `NUXT_*` one, the list
+   - **Angular project:** the app service gets the `NG_*` set instead of the `NUXT_*` one, the list
      `lt deployment create` prints for an Angular app: `NG_PUBLIC_APP_ENV` (develop/production), `NG_API_URL`,
      `NG_PUBLIC_API_URL`, `NG_PUBLIC_SITE_URL`, `NG_PUBLIC_API_PROXY=false`. The SSR server reads them at request
      time, so the same image serves both stages. `NG_PUBLIC_SITE_URL` is mandatory here: Angular's SSR engine
@@ -241,7 +262,7 @@ skill `deploying-to-turboops`):
    broken template and is the opposite. Protect first, then run
    `git branch main dev && git push -u origin main` → deploy-prod.
 3. **Probe the real URLs after every deploy.** A green `--wait` does not prove reachability (Trap 5): app 200/302, `api.<domain>/health-check` 200, `/meta` commit == CI SHA, cert issuer Let's Encrypt.
-   **On `--frontend=angular`:** a `400` from the app while its container is healthy is the SSR host guard:
+   **Angular project:** a `400` from the app while its container is healthy is the SSR host guard:
    `NG_PUBLIC_SITE_URL` is missing on that stage or names another host (step 6 of Phase 4).
 3b. **Sign-up deep check with a run-unique email** (e.g. `smoke-test+<runid>@lenne.tech`): orphaned `<stack>_mongo_data` volumes from earlier runs (see Phase 7, step 5b; they survive stage deletion) are reused by the new stack. A fixed test email then wrongly returns `400 Email already registered`, although the API is healthy.
     **The 201 does not prove that the mail went out.** The API answers `201` with `emailVerificationRequired: true`
@@ -262,7 +283,7 @@ skill `deploying-to-turboops`):
 
 Per round:
 1. Feature branch from `dev` with a visible change (e.g. a badge `SMOKE-R<n>` with `data-testid="smoke-marker"` on the landing page).
-   **On `--frontend=angular`:** the landing page is `projects/app/src/app/home/home-page.html`. Its route renders on
+   **Angular project:** the landing page is `projects/app/src/app/home/home-page.html`. Its route renders on
    the server (`RenderMode.Server` in `app.routes.server.ts`), so the `curl … | grep` check in step 3 sees the badge.
 2. `glab mr create --source-branch … --target-branch dev` → wait for the green MR pipeline → `glab mr merge <iid> --auto-merge=false --remove-source-branch --yes`.
 
@@ -309,9 +330,10 @@ Per round:
 
 Phase 7 runs at the end of every run that does not pass `--keep` or `--skip-cleanup`: after a
 green run, after a phase that failed and stopped the run, and with `--skip-deploy` too, where
-only its local steps (4, 5, 7 for the local resources) apply. Each step removes what this run
-created under `<name>`, so a failed run leaves no stack, database or folder behind for the next
-one to trip over.
+only its local steps (4, 5, 7 for the local resources) apply. Each step runs for every project
+of the run and removes what the run created under its `<name>`, so a failed run leaves no stack,
+database or folder behind for the next one to trip over. A project that failed early is cleaned
+up as well, not only the one that got further.
 
 1. TurboOps: `delete_deployment_stage` ×2 (confirmName is required), then `delete_deployment_project` (cascades tokens/deployments; registry images belong to the project).
 2. Check that the swarm stacks are gone from the server (`list_server_containers`); remove leftovers via `docker stack rm <stack>` (exec_in_container).
@@ -337,11 +359,14 @@ one to trip over.
    to the search as if the project were gone.
    The search belongs in every run, not only for the current one: a project scheduled for
    deletion by an earlier run otherwise blocks the name and stays unnoticed.
+   The search for the Nuxt project's `<name>` also lists `<name>-ng`. In a run that left the Angular project out,
+   such a hit counts only when it is a `-deletion_scheduled-` leftover, which goes the same way; a live
+   `<name>-ng` may belong to a run in another session and is reported, never deleted.
 4. Local: `lt dev down` in the project, `lt dev test down` (if anything is left), delete the project folder, check the registry entry (`~/.lenneTech/projects.json`; `lt dev down` removes the Caddy block; clean orphaned entries via `lt dev prune`/registry check).
 5. Local Mongo: `lt dev prune --noConfirm` also removes orphaned smoke-test DBs (reserved `lt-smoke-test` prefix) automatically since CLI 1.38.0; the same sweep also runs on every `lt dev up` of any project. Direct drop commands may be blocked by a hook policy. In that case do not work around it; prune is the canonical way.
 5b. Server volumes: orphaned `<stack>_mongo_data` volumes remain after stage deletion and are reused by the next run. That is a data leak between runs, and the reason a fixed test email wrongly returns `400 Email already registered`. **They can be deleted through the TurboOps MCP, without SSH** (verified 2026-08-23): `exec_in_container` in a container with the Docker CLI and a read-write socket (on a deploy.party server the task container of the `deploy-party_api` service: pass its ID or full `deploy-party_api.1.<task>` name from `list_server_containers`, since the bare service name answers `No such container`), with `allowWrite: true` and `confirmHostname: <server-IP>`. Pass **the IP, not the server name**; a server name is rejected with "confirmHostname mismatch". First list with `volume ls --filter name=<name>`, then run `volume rm` on the two stack volumes. `exec_in_container` rejects `sh -c …` and every other shell wrapper, so pass one docker command per call instead of chaining them in a shell. An earlier version of this document claimed this was blocked by a blocklist and required SSH. That is not (or no longer) true: the command is classified as `needs-write` and runs with `allowWrite`. SSH remains the fallback when the MCP is unreachable.
 6. `turbo logout` is not needed (the user login stays); the project's CI/CD token dies with the project.
-7. Final check: all four stage URLs must return 404/default cert again, `glab repo view` 404, the TurboOps project list without `<name>`, no `<name>` DBs, no `$SMOKE_DIR/<name>`.
+7. Final check, for every project of the run: its four stage URLs must return 404/default cert again, `glab repo view` 404, the TurboOps project list without `<name>`, no `<name>` DBs, no `$SMOKE_DIR/<name>`.
 
 ### Phase 8 — Report
 
@@ -350,18 +375,20 @@ pipeline/deploy times, online verifications, open infrastructure
 recommendations (e.g. Traefik migration of the target server). Base-repo changes
 stay uncommitted for review.
 
-**On `--frontend=angular`** the report names the frontend in its first line, so an Angular run is never read as
-the Nuxt release gate.
+The first line names the frontends the run covered (`Nuxt + Angular`, `Nuxt only` or `Angular only`), so a run
+with one frontend is never read as the gate for both lines. Each finding and each online verification names the
+project that showed it.
 
 ## Flags
 
-- `--keep` — skip the cleanup (debugging); project and stages stay up.
-- `--skip-deploy` — phases 0–2 only (local validation), no GitLab/TurboOps; Phase 7 still removes the local project, stacks and databases.
+- `--frontend=<both|nuxt|angular>` — frontends the run covers (default `both`): `both` runs a Nuxt and an Angular
+  project, each with nest-server; `nuxt` runs only the Nuxt project, `angular` (alias `ng`) only the Angular
+  project, which follows the steps marked **Angular project**.
+- `--name=<name>` — name of the Nuxt project (default `lt-smoke-test`); the Angular project appends `-ng`.
+- `--keep` — skip the cleanup (debugging); projects and stages stay up.
+- `--skip-deploy` — phases 0–2 only (local validation), no GitLab/TurboOps; Phase 7 still removes the local projects, stacks and databases.
 - `--skip-cleanup` — like `--keep`, but the report lists the remaining resources explicitly.
-- `--rounds=<n>` — number of MR rounds (default 1; the reference run did 2).
-- `--frontend=<nuxt|angular>` — frontend of the scaffolded project (default `nuxt`). `angular` scaffolds
-  ng-base-starter with a vendored `@lenne.tech/ng-base` and follows the steps marked **On `--frontend=angular`**;
-  everything else is the same run.
+- `--rounds=<n>` — number of MR rounds per project (default 1; the reference run did 2).
 
 ## Related Skills / Commands
 
@@ -369,5 +396,5 @@ the Nuxt release gate.
 - Skill `using-lt-cli` — `lt fullstack init`, `lt dev`, `--noConfirm` rule.
 - Skill `validating-ci-pipelines-locally` — reproduce the pipeline locally before pushing.
 - Skills `developing-lt-angular-frontend` and `ng-base-core-vendoring` — the Angular app and its vendored core, for
-  the findings of a `--frontend=angular` run.
+  the Angular project's findings.
 - `/lt-dev:production-ready` — the in-depth release gate for real projects (not for the throwaway smoke test).

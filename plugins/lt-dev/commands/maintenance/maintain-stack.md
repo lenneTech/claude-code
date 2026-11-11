@@ -95,9 +95,9 @@ exactly (lock-step for all three starters), follow the commit convention, releas
 
 Run `/lt-dev:fullstack:smoke-test` (via the `Skill` tool: `lt-dev:fullstack:smoke-test`) with `--rounds=<--smoke-rounds>` (default 1)
 to completion. The test clones the freshly released states from GitHub, so it
-validates exactly what customers get. When the round released `ng-base` or
-`ng-base-starter`, a second run with `--frontend=angular` follows the default
-Nuxt run, which stays the gate for every round.
+validates exactly what customers get. Its default run covers both frontend lines,
+a Nuxt and an Angular project, each with nest-server, so the gate is the same
+whichever repos the round released.
 
 ### Phase 5 — Findings → patch releases (loop)
 
@@ -105,7 +105,10 @@ Fix each smoke-test finding in the base repo that **caused** it, never only in
 the throwaway project. Release it as a patch using the repo recipe, after the
 review gate (Phase 1), wait for npm
 propagation and repeat the smoke-test phase until no findings remain (at most 3
-iterations, then report the open items). A fix in a starter passes the
+iterations, then report the open items). A repeat narrows to `--frontend=nuxt` or
+`--frontend=angular` when every fix of the iteration sits in that frontend line
+(nuxt-extensions and nuxt-base-starter, or ng-base and ng-base-starter); a fix
+anywhere else repeats both. A fix in a starter passes the
 same review gate but gets no patch release: a starter's version moves only with
 its library's version, so it is committed and pushed with `version` unchanged, no
 bump and no tag (skill, "Version scheme"), and the push is what the next smoke round clones.

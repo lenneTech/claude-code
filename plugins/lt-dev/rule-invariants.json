@@ -336,8 +336,13 @@
       "files": ["agents/a11y-reviewer.md", "agents/frontend-dev.md", "agents/frontend-reviewer.md", "agents/ux-reviewer.md"]
     },
     {
-      "name": "Nuxt gate: the smoke test runs Nuxt unless --frontend=angular is passed",
-      "phrase": "Without the flag, or with `--frontend=nuxt`, the run scaffolds a Nuxt app and every step below applies as written.",
+      "name": "the smoke test covers both frontend lines, each with nest-server, unless --frontend narrows it to one",
+      "phrase": "Without the flag, or with `--frontend=both`, the run tests both frontend lines, each together with nest-server",
+      "files": ["commands/fullstack/smoke-test.md"]
+    },
+    {
+      "name": "Nuxt gate: the smoke test's Nuxt project follows every unmarked step exactly as written",
+      "phrase": "Steps without a mark apply to both projects, and the Nuxt project follows every one of them exactly as written",
       "files": ["commands/fullstack/smoke-test.md"]
     },
     {

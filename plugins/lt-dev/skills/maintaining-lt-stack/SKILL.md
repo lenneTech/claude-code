@@ -30,7 +30,7 @@ Wave 1 (parallelizable):   nuxt-extensions   ng-base           nest-server      
 Wave 2 (parallelizable):   nuxt-base-starter  ng-base-starter   nest-server-starter
                                  │
                                  ▼
-Validation:                /lt-dev:fullstack:smoke-test  (exercises ALL repos live; Nuxt run by default)
+Validation:                /lt-dev:fullstack:smoke-test  (exercises ALL repos live; Nuxt and Angular by default)
                                  │
                                  ▼
 Wave 3 (only on findings): patch fixes → re-release affected repos (starters: push only)
@@ -79,9 +79,8 @@ version of the library it builds on (Kai). Every library version gets its starte
 also when the bump is the only change. A starter's version moves only with its library's version: a
 change to the starter alone is committed and pushed to `main` with `version` unchanged (no release, no
 tag) and ships with the next library release. `lt fullstack init` clones `main`, so new projects get it
-at once. One inherited gap stays as it is: ng-base-starter `v22.0.3` from its earlier own numbering,
-next to ng-base `22.0.2`. ng-base's next release is therefore at least `22.0.4` (a patch skips `22.0.3`,
-because a starter tag is never set twice), and from its starter release on the two are back in step.
+at once. In nuxt-base-starter and ng-base-starter a `starter-version` test in `check` fails any commit
+whose `version` and library pin differ (recipes.md).
 
 **3. Repos without a core package:** cli, lt-monorepo, claude-code (lt-dev and its sibling plugins,
 which share one version), claude-code-internal. MAJOR stays: neither a breaking change nor a derived

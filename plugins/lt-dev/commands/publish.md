@@ -81,8 +81,8 @@ ng-base-starter always carry the version of the library they pin (`@lenne.tech/n
 `@lenne.tech/nuxt-extensions`, `@lenne.tech/ng-base`), every library version gets its starter
 release, and nothing else raises it (skill, "Version scheme", rule 2). The commit that raises the
 pin raises the starter's `version` with it, in the same PR where the change goes through one:
-nuxt-base-starter's `scripts/starter-version.test.mjs` fails `check` on any commit that has them
-apart. The release commit of nuxt-base-starter and ng-base-starter then adds only the CHANGELOG
+nuxt-base-starter's `scripts/starter-version.test.mjs` and ng-base-starter's
+`tests/unit/starter-version.test.ts` fail `check` on any commit that has them apart. The release commit of nuxt-base-starter and ng-base-starter then adds only the CHANGELOG
 section before the tag; nest-server-starter has no release commit, its one bump commit
 `Updated to nest-server version <X.Y.Z>` is tagged by `tag.yml`. Two consequences for this
 command:
@@ -96,9 +96,7 @@ command:
   missing version, oldest first. Otherwise the change is an interim one: never raise `version`
   and refuse `--release-as`; it passes the step 2b review, is committed with a normal message
   and pushed, with no release commit, no release and no tag. It ships with the next library
-  version. The one inherited mismatch, ng-base-starter `v22.0.3` next to ng-base `22.0.2`, stays
-  until ng-base's next release, which is at least `22.0.4` (a patch skips `22.0.3`); its starter
-  release brings the two back in step.
+  version.
 
 ## Choosing the version
 
@@ -359,8 +357,10 @@ through the same `lt claude plugins`.
    repos it is `claude plugin validate` per changed plugin. With
    `--smoke-test`, run `/lt-dev:fullstack:smoke-test` afterwards (recommended
    when the change touches scaffold-critical paths: build wiring, auth, SSR,
-   deploy contract). For `ng-base` and `ng-base-starter` it runs with
-   `--frontend=angular`; every other repo keeps the default Nuxt run. The smoke
+   deploy contract). It runs with `--frontend=nuxt` for `nuxt-extensions` and
+   `nuxt-base-starter`, with `--frontend=angular` for `ng-base` and
+   `ng-base-starter`, and with its default, both frontend lines, for every other
+   repo, since nest-server, its starter, lt-monorepo and cli reach both. The smoke
    test does not apply to marketplace repos.
 7. **Report**: versions old→new per repo with the reason for the jump ("Choosing the version"), release links, the review result
    per repo, the route per downstream repo (checkout, worktree with `CLAIM` and
