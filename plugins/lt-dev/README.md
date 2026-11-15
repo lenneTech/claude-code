@@ -142,6 +142,12 @@ This applies everywhere a ticket is created — the guided `/lt-dev:create-*`
 commands, follow-ups spun off during `take-ticket` / `ticket-cycle` / `review`,
 and ad-hoc tickets created directly via the Linear MCP.
 
+**Before a new ticket is created, the team is searched for one that already covers it.** The
+guided `/lt-dev:create-story`, `/lt-dev:create-task` and `/lt-dev:create-bug` search with three to
+five phrases, read every candidate, and on a match let the user extend the existing ticket, link
+the new one to it, or create it anyway. Tickets Claude proposes on its own run the same search and
+extend a match without asking (see below).
+
 Two deliberate exceptions:
 
 - **A ticket Claude proposes on its own initiative goes to `Triage`, not `Open`,** with a

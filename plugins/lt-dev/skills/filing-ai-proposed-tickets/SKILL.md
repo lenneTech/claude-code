@@ -27,7 +27,8 @@ task cannot fix it:
 It does **not** apply to tickets the user asked for. Those go through `/lt-dev:create-story`,
 `/lt-dev:create-task`, or `/lt-dev:create-bug` and land in the normal workflow with no AI marking:
 a human decided they should exist, which is exactly the signal Triage and the label are there to
-supply for everything else.
+supply for everything else. Those commands run the same search as Part 1 before they create
+anything, but on a match the user decides whether to extend, link or create anyway.
 
 ## Part 0 — The gate: does this deserve a ticket at all?
 

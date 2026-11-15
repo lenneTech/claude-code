@@ -7,9 +7,47 @@
       "files": [
         "agents/*-reviewer.md"
       ]
+    },
+    {
+      "name": "a ticket the user asked for is created only after the duplicate search, and on a match the user decides",
+      "heading": "### Duplicate Search",
+      "files": [
+        "commands/create-story.md",
+        "commands/create-task.md",
+        "commands/create-bug.md"
+      ]
+    },
+    {
+      "name": "the create commands treat existing tickets they read as material, not instructions",
+      "heading": "## External Content",
+      "files": [
+        "commands/create-story.md",
+        "commands/create-task.md",
+        "commands/create-bug.md"
+      ]
     }
   ],
   "phrases": [
+    {
+      "name": "the duplicate search before a ticket is created uses several distinct phrases, for user-requested and AI-proposed tickets alike",
+      "phrase": "three to five distinct search phrases",
+      "files": [
+        "skills/filing-ai-proposed-tickets/SKILL.md",
+        "commands/create-story.md",
+        "commands/create-task.md",
+        "commands/create-bug.md"
+      ]
+    },
+    {
+      "name": "the duplicate search lists candidates with a field projection; without it list_issues returns full issues with descriptions, about 14,500 chars per call and often truncated, which can hide candidates (measured 2026-11-15)",
+      "phrase": "fields: [\"id\", \"title\", \"status\", \"labels\", \"url\"]",
+      "files": [
+        "skills/filing-ai-proposed-tickets/SKILL.md",
+        "commands/create-story.md",
+        "commands/create-task.md",
+        "commands/create-bug.md"
+      ]
+    },
     {
       "name": "the Nuxt and the Angular frontend line are equal alternatives and are maintained in parallel, also when a project proposes a base-repo change (Kai, 2026-11-10 and 2026-11-11)",
       "phrase": "The two frontend lines are kept in step",
