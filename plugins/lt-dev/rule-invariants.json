@@ -462,6 +462,28 @@
       "files": [
         "skills/managing-dev-servers/SKILL.md"
       ]
+    },
+    {
+      "name": "what dev lacks of a hotfix reaches dev through its own MR; the back-merge stays content-neutral",
+      "phrase": "never through the back-merge",
+      "files": [
+        "commands/git/ship.md",
+        "skills/deploying-to-turboops/SKILL.md"
+      ]
+    },
+    {
+      "name": "the back-merge MR names the chore branch as its source: create-request would take the session's branch, which after STEP 9 is the stage",
+      "phrase": "glab mr create --source-branch \"<branch>\" --target-branch \"$DEV_BRANCH\"",
+      "files": [
+        "commands/git/ship.md"
+      ]
+    },
+    {
+      "name": "the back-merge proof judges every path the stage changed, deletions included: merge-tree's line 1 can equal dev's tree on a conflict that kept dev's side",
+      "phrase": "git diff --name-status \"$MB\" \"origin/$STAGE\"",
+      "files": [
+        "commands/git/ship.md"
+      ]
     }
   ],
   "forbidden": [

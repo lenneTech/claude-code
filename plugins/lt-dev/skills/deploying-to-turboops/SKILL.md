@@ -421,10 +421,16 @@ git side had been checked thoroughly; the deployment side had not.
 that is what keeps branch and deployment in agreement and what the no-squash
 promotion guards exist to protect.
 
-**For a genuine hotfix**, give the commit an image of its own:
+**For a genuine hotfix**, land it with `/lt-dev:git:ship --hotfix`: one fix
+branch per stage, cut from that stage, merged without squash, the stage deploy
+checked against `/meta`, and afterwards a content-neutral `-s ours` back-merge
+into dev, so the next `dev → test → main` promotion stays conflict-free. What dev
+lacks of the hotfix reaches dev first through its own MR, never through the
+back-merge. When the stage promotes instead of building, also give the commit an
+image of its own:
 
 1. Merge the fix into the promotion branch (no squash — promotion branches keep
-   their full history).
+   their full history; `git:ship` hotfix mode does this).
 2. Build an image **for that commit** — a `when: manual` + `allow_failure: true`
    build job on that branch, using `docker compose build` / `push` (never
    `buildx --push`, whose OCI media types TurboOps fails to resolve). Manual,

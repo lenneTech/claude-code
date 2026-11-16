@@ -1,6 +1,6 @@
 ---
-description: Ship the current feature branch into dev, or promote a base branch into a higher one. Commit, rebase, test, run check, open the MR/PR, move the Linear ticket to Dev Review, wait for CI, merge and delete the branch, retrying on pipeline failure.
-argument-hint: "[--base=<branch>] [--max-pipeline-retries=<n>] [--no-squash] [--keep-branch] [--auto-merge] [--skip-reanalysis] [--unattended] [--autopilot]"
+description: Ship a feature branch into dev, promote a base branch upward, or land a hotfix in test/main with a content-neutral back-merge into dev. Commit, rebase, test, check, MR/PR, Linear handoff, CI wait, merge, cleanup, retry on CI failure.
+argument-hint: "[--base=<branch>] [--hotfix] [--back-merge] [--max-pipeline-retries=<n>] [--no-squash] [--keep-branch] [--auto-merge] [--skip-reanalysis] [--unattended] [--autopilot]"
 allowed-tools: Agent, Read, Grep, Glob, Write, Edit, AskUserQuestion, ListAgents, SendMessage, Bash(git:*), Bash(gh:*), Bash(glab:*), Bash(echo:*), Bash(ls:*), Bash(cat:*), Bash(grep:*), Bash(jq:*), Bash(test:*), Bash(sleep:*), Bash(node:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run test:*), Bash(npm run test:*), Bash(yarn run test:*), Bash(pnpm test:*), Bash(npm test:*), Bash(yarn test:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Bash(pnpm run build:*), Bash(npm run build:*), Bash(yarn run build:*), Bash(pnpm install:*), Bash(npm install:*), Bash(yarn install:*), Bash(npx playwright:*), Bash(pnpm exec playwright:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__get_user, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document, mcp__plugin_lt-dev_linear__prepare_file_upload, Bash(curl:*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/find-vault-logins.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/find-vault-logins.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh":*)
 disable-model-invocation: false
 ---
@@ -25,6 +25,7 @@ disable-model-invocation: false
 - Implementation is finished locally and you want the branch landed in `dev` without manual hand-holding
 - You want auto-retry if the remote CI pipeline fails (re-rebase + re-push + re-wait)
 - You want squash-merge + branch cleanup automated, with a safety prompt before the irreversible step
+- A stage behind dev (`test`, `main`) needs a fix that cannot wait for the next promotion: `--hotfix` lands it in that stage and restores the branch chain with a content-neutral back-merge into dev ([Hotfix Mode](#hotfix-mode--step-overrides-fix-branch--stage))
 
 This command is the **closing bookend** to `/lt-dev:take-ticket`. It does **not** create MRs/PRs with Linear integration — for that, use `/lt-dev:dev-submit` instead (or run it before this command). This command focuses on the **landing pipeline**.
 
@@ -38,6 +39,8 @@ This command is the **closing bookend** to `/lt-dev:take-ticket`. It does **not*
 | `/lt-dev:git:rebase` | Standalone rebase onto dev; STEP 3 rebases through the `branch-rebaser` agent |
 | `/lt-dev:git:create-request` | Standalone MR/PR creation; STEP 6b follows its STEP 1-4 |
 | `/lt-dev:dev-submit` | MR/PR + Linear comment + Linear status → "Dev Review" (no merge, no pipeline wait) |
+| `/lt-dev:review` | Review of each hotfix branch before this command ships it (hotfix mode) |
+| [`deploying-to-turboops`](../../skills/deploying-to-turboops/SKILL.md) skill | BUILD vs. PROMOTE stages; the image a hotfix needs when its stage promotes instead of building (STEP 9b) |
 | [`managing-agent-memory`](../../skills/managing-agent-memory/SKILL.md) skill | Agent-memory commit policy + pre-commit curation (STEP 2) |
 | [`writing-qa-test-instructions`](../../skills/writing-qa-test-instructions/SKILL.md) skill | Testability classification + German QA test instructions for the Linear comment (STEP 10c) |
 
@@ -52,19 +55,21 @@ Parse `$ARGUMENTS` for these optional flags:
 | Flag | Meaning | Default |
 |------|---------|---------|
 | `--base=<branch>` | Target branch | auto-detect: `dev` → `develop` → `main` → `master` |
+| `--hotfix` | Land the current fix branch in a stage above dev (`test`/`staging`, `main`/`master`/`productive`), then restore the chain with a content-neutral back-merge into dev ([Hotfix Mode](#hotfix-mode--step-overrides-fix-branch--stage)). The stage comes from `--base`, else from the branch name's trailing `-<stage>`. A feature source with `--base` set to such a stage runs in hotfix mode without the flag | off |
+| `--back-merge` | Run only STEP 9c: back-merge every stage that dev does not yet contain, from any checkout. For a back-merge an earlier hotfix run deferred or stopped (STEP 9c.2, 9c.3) | off |
 | `--max-pipeline-retries=<n>` | Max full retry cycles if CI fails | `3` |
 | `--no-squash` | Force a regular merge instead of squash (feature source only; a base-branch promotion is always a regular merge regardless) | squash for feature sources |
 | `--keep-branch` | Don't delete feature branch after merge | delete enabled |
 | `--auto-merge` | Skip the STEP 8 confirmation prompt — squash-merge as soon as CI is green | off (always asks) |
 | `--skip-reanalysis` | Skip STEP 1.5 ticket re-analysis (use when called from an orchestrator that already did it) | off |
-| `--autopilot` | Set by `/lt-dev:ticket-cycle --autopilot`; implies `--unattended`. Nothing is asked at all: the questions `--unattended` keeps (a second infra flake in a row, the retry cap, a Linear state with no match, a missing E2E suite) take the defaults in the cycle's [question table](${CLAUDE_PLUGIN_ROOT}/commands/ticket-cycle.md#every-question-and-its-default), and where that default is to park or halt, the last line is `PARK: <reason>` or `HALT: <reason>` and the command ends; the cycle parks or halts. A base-branch promotion is refused with `HALT:` | off |
+| `--autopilot` | Set by `/lt-dev:ticket-cycle --autopilot`; implies `--unattended`. Nothing is asked at all: the questions `--unattended` keeps (a second infra flake in a row, the retry cap, a Linear state with no match, a missing E2E suite) take the defaults in the cycle's [question table](${CLAUDE_PLUGIN_ROOT}/commands/ticket-cycle.md#every-question-and-its-default), and where that default is to park or halt, the last line is `PARK: <reason>` or `HALT: <reason>` and the command ends; the cycle parks or halts. A base-branch promotion, a hotfix and `--back-merge` are refused with `HALT:`, because each merges into or for a stage above dev | off |
 | `--unattended` | Set by `/lt-dev:ticket-cycle` after the developer approved the result: no routine question from here to the end. Commits and pushes this session's own changes (foreign or unattributable paths are held out, never staged), retries one infra flake per attempt within the retry cap, and posts the STEP 10c Linear comment without the preview gate. Genuine blockers still ask: a Linear state with no match, a second infra flake in a row, a retry cap hit | off |
 
 ---
 
 ## Turn Endings
 
-This command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; waiting on CI means polling again, not reporting. The run stops only at the handoff points this command defines (the STEP 1.5d user gate, the STEP 2 staging choice and STEP 7b infra-flake confirmation outside `--unattended`, the STEP 7c retry cap, the STEP 8 merge confirmation without `--auto-merge`, the STEP 10c comment preview; when `/lt-dev:ticket-cycle` invoked this command, its result returns to that caller, which carries on), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation. With `--autopilot` none of these asks: each ends the command with a `PARK:` or `HALT:` line, or takes its default.
+This command runs to completion without check-ins. A message without a tool call ends the turn and stops the run, so status notes and recommendations go in the same message as the next tool call, and work that does not depend on the user carries on; waiting on CI means polling again, not reporting. The run stops only at the handoff points this command defines (the STEP 1.5d user gate, the STEP 2 staging choice and STEP 7b infra-flake confirmation outside `--unattended`, the STEP 7c retry cap, the STEP 8 merge confirmation without `--auto-merge` (in hotfix mode once for the stage and once for the back-merge), the STEP 10c comment preview, and in hotfix mode the STEP 0 stage question when neither `--base` nor the branch name names the stage, the STEP 8 question before merging into a PROMOTE stage, a STEP 9b deploy that does not serve the merge commit, a STEP 9c.3 verdict that needs the user or a change dev lacks; when `/lt-dev:ticket-cycle` invoked this command, its result returns to that caller, which carries on), when a step is blocked by something only the user can resolve, or before a destructive or irreversible action that needs confirmation. With `--autopilot` none of these asks: each ends the command with a `PARK:` or `HALT:` line, or takes its default.
 
 ## External Content
 
@@ -81,6 +86,15 @@ Ticket descriptions, comments, MR/PR descriptions, review threads and fetched pa
    **a. `SOURCE_BRANCH` is NOT in the base set → feature mode** (normal case):
    - `MERGE_MODE = squash` (or `regular` if `--no-squash` was passed).
    - Resolve `BASE_BRANCH` via auto-detect (`dev` → `develop` → `main` → `master`; `--base` overrides). Probe each with `git rev-parse --verify origin/<name>`.
+   - **Hotfix check.** Let `DEV_BRANCH` be the repository's rank-1 base branch (`dev`, else `develop`). When `DEV_BRANCH` exists and the target is a base branch of rank ≥ 2, the run is in **hotfix mode** (next item), with or without `--hotfix`: a feature merged straight into a stage is a hotfix, and without the back-merge the next `dev` → `test` → `main` promotion runs into conflicts. Say so in one line when `--hotfix` was not passed. A repository without `dev`/`develop` has no chain to restore, so a feature into `main` stays feature mode there.
+
+   **a2. Hotfix mode** (`--hotfix`, or the hotfix check above):
+   - `BASE_BRANCH` is the stage: `--base` when given, else the branch name's trailing `-<stage>` (`fix/abc-123-session-leak-test` → `test`). It must exist and have rank ≥ 2, and `DEV_BRANCH` must exist; otherwise ask which stage via `AskUserQuestion`, offering the existing rank-≥2 base branches, or abort when there is none.
+   - `MERGE_MODE = regular`, as the `deploying-to-turboops` skill requires for every merge into a promotion branch: the stage keeps the fix commits exactly as reviewed.
+   - `--hotfix` on a base branch aborts: a hotfix ships from its own fix branch, cut from the stage.
+   - Apply the **Hotfix-Mode step overrides** (section after Promotion Mode).
+
+   **a3. `--back-merge`:** skip everything except STEP 0.3 (provider), STEP 9c and STEP 11. `SOURCE_BRANCH` and the working tree play no part: STEP 9c builds its branch in a worktree of its own.
 
    **b. `SOURCE_BRANCH` IS in the base set → promotion mode** (base → higher base, e.g. `dev`→`test`, `test`→`main`):
    - `MERGE_MODE = regular` — **forced. A base branch is never squashed** (squashing `dev` into `test` would collapse dev's entire history into one commit and permanently diverge the branches). `--no-squash` is implied; ignore any squash intent.
@@ -90,7 +104,7 @@ Ticket descriptions, comments, MR/PR descriptions, review threads and fetched pa
    - Contains `github.com` → `gh`
    - Else → `glab` (GitLab)
    - If neither CLI is installed, abort and tell the user which CLI to install.
-4. Work through the 12 phases below in order; the final report states each phase's outcome (STEPs 0–11 plus STEP 1.5; STEP 1 = pre-flight check, STEP 1.5 = ticket re-analysis, STEP 10 = post-merge Linear handoff, STEP 11 = summary).
+4. Work through the 12 phases below in order; the final report states each phase's outcome (STEPs 0–11 plus STEP 1.5; STEP 1 = pre-flight check, STEP 1.5 = ticket re-analysis, STEP 10 = post-merge Linear handoff, STEP 11 = summary). Hotfix mode adds STEP 9b (stage deploy) and STEP 9c (restore the chain).
 
 ---
 
@@ -108,6 +122,30 @@ Applies **only** when STEP 0 classified the run as **promotion mode** (`SOURCE_B
 - **STEP 10 (Linear handoff):** skipped — no ticket.
 
 All other steps (STEP 1 pre-flight check, STEP 7 CI wait, STEP 11 summary) run unchanged.
+
+---
+
+## Hotfix Mode — Step Overrides (fix branch → stage)
+
+Applies when STEP 0 classified the run as **hotfix mode**: a fix branch goes into a stage above dev (`BASE_BRANCH` rank ≥ 2) while dev has moved on, for example dev on a new framework major and `test`/`main` still on the old one.
+
+**The rule:** every hotfix ends with a back-merge that leaves dev exactly as it is. Its strategy is always `ours`. Whatever dev lacks of the hotfix goes into dev first, as an ordinary MR of its own, never through the back-merge. Without the back-merge the next `dev` → `test` → `main` promotion runs into conflicts; a back-merge that takes content along brings stage code into dev. Observed 2026-11-11: a back-merge done as a normal merge with hand-resolved conflicts carried a test file from `test` into `dev`. The flow below was then run end to end on DEV-4235 (2026-11-15).
+
+**Preparing the branches** (before this command runs):
+
+- **One fix branch per stage**, each cut from its own stage: `fix/<ticket>-<slug>-test` from `origin/test`, `fix/<ticket>-<slug>-main` from `origin/main`. The same patch usually fits both; adapt it where the stages differ.
+- **Each in its own worktree** with its own install: `git worktree add -b fix/<ticket>-<slug>-<stage> <checkout>-<ticket>-<stage> origin/<stage>`, then the package manager's frozen install there. A stage's lockfile installed in the dev checkout prunes dev's `node_modules`.
+- **Review and ship per worktree:** `/lt-dev:review`, then `/lt-dev:git:ship --hotfix` (the stage comes from the branch name). With several stages, ship each; the back-merge runs once, after the last one (STEP 9c.2).
+
+**Step overrides:**
+
+- **STEP 1.5:** runs as usual; the ticket comes from the fix branch name.
+- **STEP 3:** rebase onto `origin/<stage>`, never onto dev. The branch-rebaser's conflict defaults ("accept dev versions") read as "accept the stage's versions" here.
+- **STEP 4:** tests and `check` run against the stage's dependencies, in the fix branch's worktree.
+- **STEP 6:** the MR/PR targets the stage. Title `Hotfix <stage>: <ticket title>`; the body names the other stages of this hotfix and states that dev receives the fix through its own MR or already holds it (STEP 9c.3 proves which).
+- **STEP 8:** regular merge (`MERGE_MODE = regular`, never `--squash`). The source is the fix branch, so deleting it after the merge is fine; the stage is the target and stays.
+- **STEP 9:** as written, then **STEP 9b** and **STEP 9c**.
+- **STEP 10:** runs once STEP 9b confirmed the stage serves the merge commit, after STEP 9c, and also when STEP 9c ends the run early (9c.2 waiting for another stage's hotfix, 9c.3 needing a port into dev): a `--back-merge` run later does not post it. The comment's `Umgebung` is the stage's URL, and its `## Status` block names the stage merge and how dev holds the fix: its own MR, already there with the STEP 9c.3 evidence, or still open (the port MR to come, the pending back-merge).
 
 ---
 
@@ -151,7 +189,7 @@ Before any push or MR/PR work, verify the branch actually delivers what the orig
 
 Extract the Linear identifier from `FEATURE_BRANCH`:
 
-- Pattern: prefix-digits after stripping the leading `feature/` segment (e.g. `feature/abc-123-...` → `ABC-123`).
+- Pattern: prefix-digits after stripping the leading `feature/` or `fix/` segment (e.g. `feature/abc-123-...` → `ABC-123`).
 - Uppercase the prefix.
 
 If extraction fails OR the branch has no Linear identifier (e.g. ad-hoc refactor branch), log `No Linear ticket linked — STEP 1.5 skipped` and continue to STEP 2.
@@ -510,6 +548,11 @@ On Option 1 — perform the merge. The merge verb comes from `MERGE_MODE` (STEP 
 
 `--no-squash` sets `MERGE_MODE = regular` for a feature source too; promotion mode is always `regular` regardless of flags.
 
+**Hotfix mode** merges regular and removes the fix branch (`glab mr merge "$REQUEST_ID" --auto-merge=false --remove-source-branch --yes`, `gh pr merge "$REQUEST_ID" --merge --delete-branch`). Two checks come before that merge:
+
+- **The back-merge in STEP 9c can land as a merge commit**; a hotfix in the stage without its back-merge is the half-done state this mode exists to prevent. GitLab: `glab api "projects/:id" | jq -r .squash_option` must not be `always`. GitHub: `gh api "repos/{owner}/{repo}" --jq .allow_merge_commit` must be `true`. Otherwise stop before the merge and ask the user to change the setting, or to name another way the back-merge reaches dev with its merge parents intact.
+- **The stage builds its own image.** Read the newest deploy job's log on the stage branch (GitLab: the newest pipeline from `glab api "projects/:id/pipelines?ref=<stage>&per_page=1"`, its jobs from `glab api "projects/:id/pipelines/<id>/jobs"`, then `glab ci trace <deploy-job-id>`; GitHub: `gh run view <id> --log`). A line like `Stage "<name>" uses promotion` marks a PROMOTE stage: its merge pipeline deploys the image of the stage before it, for a hotfix dev's build, migrations included, and rolling the image back does not roll the data back. On a PROMOTE stage, ask before the merge even with `--auto-merge`, naming that consequence, and agree with the user how this merge's automatic deploy is kept from running (cancel the deploy job in the merge pipeline before it starts, or another way they name); the image for the merge commit and its pinned redeploy follow in STEP 9b.3, as [`deploying-to-turboops`](${CLAUDE_PLUGIN_ROOT}/skills/deploying-to-turboops/SKILL.md) → "For a genuine hotfix" describes.
+
 **Commit message for the squash:** derive from MR/PR title + body. Prefix with the Linear ID if present. Carry the `Mitgenommen` list into the squash body, one line per take-along with its reason: the squash folds the separate commits into one, and on the base branch that body is the only remaining record of what came on top of the ticket.
 
 ---
@@ -540,7 +583,8 @@ On Option 1 — perform the merge. The merge verb comes from `MERGE_MODE` (STEP 
 6. **A ticket worktree goes with its branch.** `/lt-dev:take-ticket` gives a ticket in another
    repository its own linked worktree, `<checkout>-<issue-identifier-lower>`, when that checkout
    was in use. When this run shipped from such a worktree (`git rev-parse --git-dir` differs from
-   `git rev-parse --git-common-dir`, and the path ends in the ticket's identifier) and the feature
+   `git rev-parse --git-common-dir`, and the path ends in the ticket's identifier, or in hotfix mode
+   in `<identifier>-<stage>`) and the feature
    branch was deleted in step 4, the worktree has served its purpose. The session stands in it,
    and removing the session's own working directory breaks every later Bash call, so it is
    removed after the user has moved the session: the STEP 11 summary names the two lines,
@@ -561,6 +605,103 @@ Call `ListAgents`. With no live peer in this repository, skip the rest of this s
 
 Format and the full occasion list live in the [`coordinating-peer-sessions`](${CLAUDE_PLUGIN_ROOT}/skills/coordinating-peer-sessions/SKILL.md) skill. One message per merge, addressed to the peers it concerns, never a round of broadcasts. Nothing here waits on a reply: the ship is complete either way, and STEP 10 continues immediately.
 
+## STEP 9b — Hotfix Mode: Verify the Stage Deploy
+
+A merge into a stage is not yet a fix on that stage. Before the back-merge, confirm the stage runs the merge commit:
+
+1. Wait for the pipeline the merge triggered on the stage, located without free-text fields as in STEP 7a: GitLab `glab api "projects/:id/pipelines?ref=<stage>&sha=<MERGE_SHA>" | jq -r '.[0].id'`, then poll it; GitHub `gh run list --branch <stage> --commit <MERGE_SHA> --json databaseId --jq '.[0].databaseId'`, then `gh run watch <id> --exit-status`.
+2. Compare the running build with the merge: `curl -s https://<stage-api-host>/meta | jq -r .commit` equals `MERGE_SHA`. The host comes from the project's CLAUDE.md, README or deploy config; ask when none names it. Without a `/meta` endpoint, read the deployed image tag from the deploy job's log.
+3. **A different commit means the stage did not deploy the fix.** A PROMOTE stage deploys the image of the stage before it, which for a hotfix is dev's build. Follow [`deploying-to-turboops`](${CLAUDE_PLUGIN_ROOT}/skills/deploying-to-turboops/SKILL.md) → "For a genuine hotfix" (an image for this commit, a pinned redeploy), and ask the user before the pinned redeploy, because it replaces what a customer stage serves.
+
+A failed or mismatched deploy pauses the run before STEP 9c and STEP 10: the stage may still need a follow-up fix, and the back-merge waits until the stage is final. Once the stage serves the merge commit (a fixed deploy, the user's pinned redeploy), the run continues with STEP 9c.
+
+## STEP 9c — Restore the Chain: Content-Neutral Back-Merge into Dev
+
+Runs in hotfix mode after STEP 9b, and alone with `--back-merge`. `DEV_BRANCH` is `dev` (else `develop`); a **stage** is every existing base branch of rank ≥ 2. In the commands below `$STAGE` stands for each stage in turn.
+
+### 9c.1 Stages dev does not contain
+
+```bash
+git fetch origin --prune
+git merge-base --is-ancestor "origin/$STAGE" "origin/$DEV_BRANCH"   # exit 1: dev lacks this stage's history
+```
+
+When dev contains every stage, log `Chain intact — no back-merge needed` and continue with 9c.7. The set may include a stage this run did not touch, left open by an older hotfix; it goes through the same proof.
+
+### 9c.2 One back-merge, after the last stage hotfix
+
+When an MR/PR into a stage is still open from a branch carrying this run's ticket identifier (GitLab `glab mr list --target-branch "$STAGE"`, text output; GitHub `gh pr list --base "$STAGE" --json number,headRefName`), the back-merge waits for it. Report its URL and end; the run that ships the last stage does the back-merge for all of them, or `/lt-dev:git:ship --back-merge` once it has merged. Open MRs of other tickets do not hold it up.
+
+### 9c.3 Prove dev already holds every change
+
+Per stage from 9c.1:
+
+```bash
+MB=$(git merge-base "origin/$DEV_BRANCH" "origin/$STAGE")
+git diff --name-status "$MB" "origin/$STAGE"                                   # every path the stage changed, deletions included
+git merge-tree --write-tree --name-only "origin/$DEV_BRANCH" "origin/$STAGE"   # line 1: result tree (exit 1: conflicts)
+git rev-parse "origin/$DEV_BRANCH^{tree}"
+```
+
+- **Exit 0 and line 1 equals dev's tree:** a normal merge would change nothing; dev holds all of it identically. This is the only shortcut. With exit 1, line 1 can equal dev's tree while a conflict kept dev's side (a file the stage deleted and dev changed, a binary both changed), so it proves nothing.
+- **Otherwise** give every path of the `git diff --name-status "$MB" "origin/$STAGE"` list one verdict, with its evidence:
+  - `in dev, same or newer form`: for a dependency, dev's lockfile resolves the package at the stage's version or higher (`git show "origin/$DEV_BRANCH:pnpm-lock.yaml"` against the stage's); for code, dev carries the fix in its own shape (name `file:line`), and the hotfix's test, or an equivalent one, exists in dev; for a deletion, dev no longer has the path or no longer reaches it (name where).
+  - `missing`: everything else, including a test dev lacks.
+
+  A verdict the code does not settle goes to the user via `AskUserQuestion`, with the evidence for both readings.
+- **Any `missing` stops the back-merge.** Port it first as an ordinary change: a fix branch `fix/<ticket>-<slug>-<dev>` from `origin/$DEV_BRANCH` in its own worktree, the hotfix cherry-picked (`git cherry-pick -x <commit>`) or re-implemented for dev's code, shipped with `/lt-dev:git:ship` in feature mode. Once it has merged, `/lt-dev:git:ship --back-merge` continues here. The STEP 11 summary lists the missing paths and both commands.
+
+### 9c.4 Build the back-merge branch
+
+In a throwaway worktree. Nothing is installed or built there: the tree stays dev's.
+
+```bash
+BM="<checkout>-back-merge"
+git worktree add -b "chore/<ticket>-back-merge" "$BM" "origin/$DEV_BRANCH"
+git -C "$BM" merge -s ours --no-ff "origin/test" -m "chore(<TICKET>): back-merge test into dev, content-neutral"
+git -C "$BM" merge -s ours --no-ff "origin/main" -m "chore(<TICKET>): back-merge main into dev, content-neutral"
+test "$(git rev-parse "origin/$DEV_BRANCH^{tree}")" = "$(git -C "$BM" rev-parse 'HEAD^{tree}')"   # changes no file
+git -C "$BM" merge-base --is-ancestor "origin/test" HEAD && git -C "$BM" merge-base --is-ancestor "origin/main" HEAD
+```
+
+One `merge -s ours` per stage from 9c.1, lowest rank first. A back-merge without a ticket (`--back-merge` on a chain an older hotfix left open) is named `chore/back-merge-<stages>-<yyyymmdd>`. If either check fails, remove the worktree and the branch and stop with the diagnosis. No local `check`: the tree is byte-identical to `origin/$DEV_BRANCH`, and the MR pipeline runs dev's pipeline.
+
+### 9c.5 MR/PR into dev
+
+Push (`git -C "$BM" push -u origin <branch>`) and open the MR/PR with the chore branch named as its source:
+
+```bash
+glab mr create --source-branch "<branch>" --target-branch "$DEV_BRANCH" --title "<title>" --description "<body>" --yes   # GitLab
+gh pr create --head "<branch>" --base "$DEV_BRANCH" --title "<title>" --body "<body>"                                     # GitHub
+```
+
+Not through STEP 6b: `create-request` takes the session's current branch as the source, and after STEP 9 that is the stage, so it would open `<stage>` → dev, the content-carrying merge this step exists to prevent. Title `chore: back-merge <stages> into <dev> (<ticket>)`; the body, built from `git -C "$BM" log`, carries the 9c.3 verdicts, the tree proof and the sentence that the MR changes no file. Then STEP 7 and STEP 8 as written, with these differences:
+
+- **Only the proven commit from the chore branch merges.** Right before the merge, the MR's source and target read `<branch>` and `$DEV_BRANCH` (GitLab `glab api "projects/:id/merge_requests/<iid>" | jq -r '.source_branch, .target_branch'`, GitHub `gh pr view <n> --json headRefName,baseRefName`); anything else aborts. The merge pins the head 9c.4 proved, `HEAD_SHA=$(git -C "$BM" rev-parse HEAD)`. Removing the chore branch afterwards is fine; a stage is never the source of this MR.
+- **A merge commit, never squash, never rebase.** A squash drops the merge parents; a rebase replays the stage commits onto dev. Either way the MR loses the one thing it exists for. GitLab: `glab api "projects/:id/merge_requests/<iid>" | jq -r .squash` must be `false` (set it with `glab api --method PUT … -f squash=false`), then `glab mr merge <iid> --auto-merge=false --remove-source-branch --sha "$HEAD_SHA" --yes`. GitHub: `gh pr merge <n> --merge --delete-branch --match-head-commit "$HEAD_SHA"`.
+- **When dev moves before the merge** and the project demands an up-to-date source (GitLab `merge_method` `ff` or `rebase_merge`, GitHub "Require branches to be up to date"), rebuild the branch from the fresh `origin/$DEV_BRANCH` (9c.3 and 9c.4 again) and push with `--force-with-lease`. Never press "Rebase".
+- **A red pipeline is dev's own state**, since the MR changes no file. Fix it on dev through its own MR, then retry; the back-merge branch never takes a fix.
+
+### 9c.6 Verify the merge
+
+```bash
+git fetch origin --prune
+git merge-base --is-ancestor "origin/$STAGE" "origin/$DEV_BRANCH"   # each back-merged stage
+git diff --quiet "<MERGE_SHA>^1" "<MERGE_SHA>"                      # dev's content unchanged by the merge commit
+```
+
+After a fast-forward merge, compare the branch's base with its head instead. Then wait for dev's pipeline on that commit as in STEP 9b.1: the content is unchanged, but a red dev pipeline blocks everyone. Remove the throwaway worktree and its local branch (`git worktree remove "$BM"`, `git branch -D <branch>`).
+
+### 9c.7 Final probe
+
+For every stage, not only the back-merged ones:
+
+```bash
+git merge-tree --write-tree "origin/$STAGE" "origin/$DEV_BRANCH"   # exit 0, line 1 equals origin/$DEV_BRANCH^{tree}
+```
+
+An open promotion MR/PR `dev` → `<next stage>` shows no conflicts: GitLab `glab api "projects/:id/merge_requests/<iid>" | jq -r .has_conflicts` is `false`, GitHub `gh pr view <n> --json mergeable --jq .mergeable` is not `CONFLICTING`. After a hotfix into `main` alone, `main` contained in dev is enough: the next `dev` → `test` carries it into `test`.
+
 ## STEP 10 — Linear: Comment + "Dev Review" + Unassign (post-merge)
 
 This phase mirrors `/lt-dev:dev-submit` and runs **only after a successful merge into `$BASE_BRANCH`**. "Dev Review" here means functional / QA review on the dev deployment, not code review of an open MR/PR. Skipped automatically if no Linear identifier can be resolved.
@@ -568,7 +709,7 @@ This phase mirrors `/lt-dev:dev-submit` and runs **only after a successful merge
 ### 10a. Resolve Linear Issue ID
 
 Try to extract the Linear identifier from `FEATURE_BRANCH` (captured at STEP 0, still in memory even though the branch is gone):
-- Pattern: `<prefix>-<digits>` after stripping the leading `feature/` segment (e.g. `feature/abc-123-...` → `ABC-123`, `feature/lin-42-foo` → `LIN-42`).
+- Pattern: `<prefix>-<digits>` after stripping the leading `feature/` or `fix/` segment (e.g. `feature/abc-123-...` → `ABC-123`, `feature/lin-42-foo` → `LIN-42`).
 - Uppercase the prefix.
 
 **If extraction fails:**
@@ -738,6 +879,13 @@ Print a concise German block:
 - Pre-Flight (STEP 1): <ergebnis>
 - Post-Rebase (STEP 4b): <ergebnis / skipped>
 
+🚑 Hotfix  (nur im Hotfix-Modus und mit --back-merge)
+- Stage:        <stage>, Merge <sha-short>, /meta: <commit-short> (passt / passt nicht)
+- Dev-Abgleich: <n> Pfade identisch, <n> in neuerer Form (je Pfad der Beleg), <n> fehlend (Port-MR zuerst)
+- Rück-Merge:   <MR-URL>, Strategie ours, Tree von dev unverändert (<tree-short>)
+                (oder: wartet auf <MR-URL> / offen, weiter mit /lt-dev:git:ship --back-merge)
+- Probe:        <stage> → dev konfliktfrei, Ergebnis-Tree = dev-Tree (je Stage)
+
 Nächste Schritte:
 - Ticket-Status final updaten (z.B. via Linear UI oder Workflow-Automation)
 - Deployment beobachten (falls Auto-Deploy auf dev läuft)
@@ -752,7 +900,8 @@ Nächste Schritte:
 - **Limit local Playwright runs to new + affected specs to keep TDD loops fast.** Default to `lt dev test -- <spec>` (non-lt projects: `pnpm exec playwright test <spec>`); the full Playwright suite is slow and runs in **CI**. Only run the full local suite when the user explicitly asks.
 - **Pre-flight `check` is a hard gate** — STEP 1 must be green before STEP 2 runs. No "fix later", no "ignore for now".
 - **Never force-push to a base branch** (`dev`, `develop`, `test`, `staging`, `main`, `master`). Force-push (`--force-with-lease`) is only ever applied to a feature branch's own rewritten history; in promotion mode the base source is never rebased or force-pushed at all.
-- **Squash is only ever applied to a feature source.** Base branches (`dev`, `develop`, `test`, `staging`, `main`, `master`) are never squashed: promoting a base branch into a higher base branch (`dev`/`develop` → `test`/`staging` → `main`/`master`) always uses a **regular merge** (`MERGE_MODE = regular`), preserving each branch's commit history. STEP 0 classifies the source and derives `MERGE_MODE`; promotion mode additionally skips the rebase, force-push, and branch-delete of the base source.
+- **Squash is only ever applied to a feature source outside hotfix mode** (a hotfix into a stage is a regular merge, STEP 0 a2). Base branches (`dev`, `develop`, `test`, `staging`, `main`, `master`) are never squashed: promoting a base branch into a higher base branch (`dev`/`develop` → `test`/`staging` → `main`/`master`) always uses a **regular merge** (`MERGE_MODE = regular`), preserving each branch's commit history. STEP 0 classifies the source and derives `MERGE_MODE`; promotion mode additionally skips the rebase, force-push, and branch-delete of the base source.
+- **A hotfix ends with a back-merge that leaves dev exactly as it is** (STEP 9c): strategy always `ours`, dev's tree proven unchanged, merged as a merge commit, never squashed or rebased. What dev lacks of the hotfix goes into dev first through its own MR, never through the back-merge.
 - **Always `--force-with-lease`, never plain `--force`** when pushing rewritten feature-branch history.
 - **Merge requires explicit user confirmation** — even if the pipeline is green. This is the irreversible step.
 - **Branch deletion only after the merge is confirmed landed in `BASE_BRANCH`** (verified via `git log` or provider API).
