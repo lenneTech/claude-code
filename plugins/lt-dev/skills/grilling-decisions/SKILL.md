@@ -27,11 +27,13 @@ The ticket (or the plan or spec being grilled) is the order, and it takes preced
 
 **1. The ticket answers it clearly: implement it as written.** The point is settled and marked `[Ticket <ID>]`, also where a neighbouring feature does it differently or you would have chosen otherwise. Nobody is asked.
 
-**2. The ticket is imprecise, contradicts itself, or misses a consequence: the user decides.** Ask with the brief when its wording reads two ways or leaves open what done means; when description, comments, acceptance criteria, and design disagree; when its picture of the current code is not what the code shows; or when following it literally would break something it does not mention (behaviour other features rely on, security, existing data). What the ticket means is the user's call, so these go to them even where you lean one way.
+**2. The ticket is imprecise, contradicts itself, or misses a consequence: the user decides.** Ask with the brief when its wording reads two ways or leaves open what done means; when description, comments, acceptance criteria, and design disagree; when its picture of the current code is not what the code shows; when following it literally would break something it does not mention (behaviour other features rely on, security, existing data); or when it contradicts an accepted architecture decision without saying that it changes it. What the ticket means is the user's call, so these go to them even where you lean one way.
+
+**Architecture decisions are checked before the round.** In a repository with an ADR log, every requirement and every option you are about to recommend goes through the check of [`maintaining-architecture-decisions`](../maintaining-architecture-decisions/SKILL.md#checking-a-change-against-the-log). A ticket that designates the change as a change of the decision ("statt X künftig Y", the ADR named) is case 1: built as written, recorded as `[Ticket <ID>]`, with the note that it replaces ADR-NNN. A ticket that asks for what an accepted ADR rules out without saying so is case 2, asked with the skill's conflict brief, and only an explicit order or the developer's explicit approval changes the decision. An accepted ADR that answers a gap the ticket leaves is evidence for case 3 (`Beleg: ADR-NNN`). An option of your own that would contradict an ADR is never your recommendation unless the brief says so and why.
 
 **3. The ticket says nothing: settle the gap when the evidence is unambiguous, ask otherwise.** Settle it yourself when exactly one option holds up:
 
-- another source states the answer (a linked document, the design, the project docs), or the code handles this exact case one established way (`path:line`),
+- another source states the answer (a linked document, the design, the project docs, an accepted ADR), or the code handles this exact case one established way (`path:line`),
 - nothing in the sources or the code points the other way,
 - no other option has an advantage someone could reasonably rate higher, and
 - it has no lasting consequences (data model, migration, permission default, a contract another module or team consumes). Those go to the user whenever the ticket is silent, however confident your own reasoning is.
@@ -43,7 +45,7 @@ Record a settled gap as an `Annahme` with its evidence on a `Beleg:` line ([Deci
 A question that reaches the user asks them to decide, so before a round goes out, go back to the sources with its questions in mind. The first reading looked for the requirements; this one looks for the answer to one specific question, and finds what a general read passes over: a reply deep in a comment thread, a second frame in the design, an acceptance criterion that only works one way.
 
 1. **Read the ticket again in full**, with the round's questions in mind: description, acceptance criteria, every comment and reply (not only the newest), and the images in them.
-2. **Search the other sources for each question's terms**, in German and English and with synonyms (the entity, field, role, screen, or state it is about): parent, sub-, and linked issues, attached documents, earlier decisions comments and questions documents, every frame and state of the design, the flows, the project docs.
+2. **Search the other sources for each question's terms**, in German and English and with synonyms (the entity, field, role, screen, or state it is about): parent, sub-, and linked issues, attached documents, earlier decisions comments and questions documents, every frame and state of the design, the flows, the project docs and its ADR log.
 3. **Look for an answer that follows from what is already fixed**: another acceptance criterion that works with only one option, a decision taken earlier in this grilling, a test or validation that already pins behaviour the ticket leaves unchanged.
 
 Then sort each question again by [Settle or ask](#settle-or-ask): an answer the ticket states clearly settles it as written; an answer in another source can settle a gap, with its `Beleg:`; a contradiction the re-check turned up stays a question, now with both quotes. Only a question that survives goes into the round, and part 3 of its brief names what the re-check covered, so the user sees the question is real.
@@ -54,7 +56,7 @@ Five parts in this order, each answered from evidence you gathered in this sessi
 
 1. **Ist-Stand im Code**: what the code does today where the decision lands, with `path:line`. For something that does not exist yet, say so and name where you looked. Where the ticket describes the current behaviour differently than the code shows, state both: that gap is often the real question.
 2. **Geplante Änderung**: what is changed, added, or removed, how, and why (the acceptance criterion or source that demands it). Separate what is already fixed from the fork the options settle.
-3. **Ticket und Quellen**: what the ticket, its comments, linked tickets and documents, the design, and the project docs say about this point, the ticket first, quoted verbatim in „…“ with the source in parentheses (ticket and section, comment date, document title, Figma node, `CLAUDE.md:<line>`). Quote the sentence that matters, not the paragraph. Where sources disagree, quote each side. When no source addresses the point, say so and list what the [re-check](#re-check-before-asking) covered: that silence is why it is a question.
+3. **Ticket und Quellen**: what the ticket, its comments, linked tickets and documents, the design, the project docs, and the ADRs the point touches say about this point, the ticket first, quoted verbatim in „…“ with the source in parentheses (ticket and section, comment date, document title, Figma node, `CLAUDE.md:<line>`, `ADR-012`). Quote the sentence that matters, not the paragraph. Where sources disagree, quote each side. When no source addresses the point, say so and list what the [re-check](#re-check-before-asking) covered: that silence is why it is a question.
 4. **Optionen**: two to four, the same ones the question offers, each with what it means concretely, its advantage, its drawback, and its impact: files and modules touched, existing data, other roles or consumers, tests, effort, and whether it is hard to undo later. An option the framework already ships is one of them.
 5. **Empfehlung**: the option you would pick and why, argued from parts 1 to 3.
 
@@ -107,7 +109,7 @@ Reach for Read, Grep, Glob, the Linear MCP, and the Figma MCP before you reach f
 
 - **Probe the edges, not the happy path.** Empty, null, very large, concurrent, unauthorised, offline. The happy path is the part everyone already agrees on.
 - **Surface consequences that outlive the ticket:** a data model that is hard to migrate later, a permission default that becomes the precedent, a contract other teams will consume.
-- **A new nest-server project settles its database in this round.** Unless the ticket or a `## Database` section in the root `CLAUDE.md` names it, the database and SQL engine are a question (they outlive every ticket), briefed by the procedure in `generating-nest-servers` → [reference/choosing-a-database.md](../generating-nest-servers/reference/choosing-a-database.md): the signal from the sources in part 3, the deciding step in part 5, and for MySQL / MariaDB what the project gives up. A new module with data of its own stays in the project's database without a question; it becomes one only when the sources point at another database (hybrid). The confirmed answer goes into the decision record and, as `## Database`, into the root `CLAUDE.md`.
+- **A new nest-server project settles its database in this round.** Unless the ticket or a `## Database` section in the root `CLAUDE.md` names it, the database and SQL engine are a question (they outlive every ticket), briefed by the procedure in `generating-nest-servers` → [reference/choosing-a-database.md](../generating-nest-servers/reference/choosing-a-database.md): the signal from the sources in part 3, the deciding step in part 5, and for MySQL / MariaDB what the project gives up. A new module with data of its own stays in the project's database without a question; it becomes one only when the sources point at another database (hybrid). The confirmed answer goes into the decision record, as `## Database` into the root `CLAUDE.md`, and as an ADR into the project's log.
 - **Cover what the implementation would otherwise stop for.** Before closing, walk the planned work once in your head (models, endpoints, permissions, UI states, tests) and put every point where you would otherwise pause through [Settle or ask](#settle-or-ask). That is what makes the run afterwards question-free.
 
 ## When the user is unreachable
@@ -129,12 +131,16 @@ question:
   marked `[Ticket <ID>]`.
 - **Every open decision takes its brief's recommendation**, also the ones [Settle or ask](#settle-or-ask) would send to
   the user, those with lasting consequences included. The sources rank in this order: the ticket (description, comments
-  that add to the order, linked tickets), then the project's concept documents (the Linear project's documents, a
-  linked concept), then the code and its precedents. Each such entry is an `Annahme` marked `[Claude]`, with its
-  `Beleg:` and one line of the brief's reasoning, so the reviewer sees what was chosen from what.
+  that add to the order, linked tickets), then the accepted ADRs, then the project's concept documents (the Linear
+  project's documents, a linked concept), then the code and its precedents. Each such entry is an `Annahme` marked
+  `[Claude]`, with its `Beleg:` and one line of the brief's reasoning, so the reviewer sees what was chosen from what.
+  A recommendation never contradicts an accepted ADR.
 - **A blocking contradiction is not decided**: the ticket contradicts itself or another higher-ranked source in a way
-  that a wrong pick would mean rework, or following it literally would break something it does not mention. The round
-  ends there, and the caller parks the ticket with the brief as its question (`ticket-cycle` → Park or halt).
+  that a wrong pick would mean rework, or following it literally would break something it does not mention. An
+  implicit conflict with an accepted ADR is always one: the autopilot never changes a recorded decision the ticket does
+  not designate as changed. The round ends there, and the caller parks the ticket with the brief as its question
+  (`ticket-cycle` → Park or halt). A ticket that does designate the change is built as written, with the superseding
+  ADR and the note the ADR skill describes.
 - **The record counts as confirmed** once the frontier is empty. The decisions comment goes to the ticket as usual, so
   the product owner can overturn any entry while the work runs; with no question asked there is no questions document.
 
@@ -166,6 +172,8 @@ Außerhalb des Scopes
 **A gap you settled keeps its evidence.** A gap that [Settle or ask](#settle-or-ask) let you settle carries a `Beleg:` line under its entry: the quote with its source, or the `path:line`. The user checks it in seconds when confirming the record, and that confirmation is where they overturn it; a corrected entry becomes their decision. The `Beleg:` line serves the developer; the ticket's decisions comment states the reason in plain language instead (`writing-linear-comments`).
 
 **The record is the current state, not a log.** It answers how the work got to where it is, so it only ever holds what produced the result. When a decision is revised later (a blocking stop, the scope round, a correction at the approval gate), its entry is replaced under the same number, never joined by a second one; an entry that no longer applies is deleted, and its question with it; an `Annahme` the user confirmed or corrected becomes a decision of theirs. A superseded entry costs every later reader time and contradicts what they will find in the code.
+
+**What outlives the ticket goes into the ADR log.** An `[Entwickler]` or `[Ticket]` entry with lasting consequences (data model, API contract, permission default, a library or tool, a deliberate deviation from a precedent), an answered ADR conflict, and an explicit change of an ADR become ADRs on the same branch as the code, by the rules of [`maintaining-architecture-decisions`](../maintaining-architecture-decisions/SKILL.md#recording-decisions); an autopilot `[Claude]` entry of that kind becomes a `proposed` ADR. The record answers how this ticket was built; the log answers why the system is the way it is, long after the ticket is closed.
 
 The record is the contract for the work that follows. Downstream steps treat a recorded decision as settled: they do not ask it again, and they do not silently deviate from it. When the implementation hits something the record does not cover, [Settle or ask](#settle-or-ask) decides first: what the ticket states clearly is built as written, and a gap the evidence settles becomes one more `Annahme` with its `Beleg:`, numbered on (`A3`, `A4`, …) and marked `[Claude]`. For a point that stays unclear, the [blocking vs non-blocking split](#when-the-user-is-unreachable) decides: a non-blocking one becomes an `Annahme` as well, and only a blocking one stops the run, presented with its brief.
 
@@ -202,6 +210,7 @@ The frontier is empty, what the ticket states clearly is recorded in its words, 
 - `/lt-dev:ticket-cycle` inherits all three via `take-ticket`
 
 **Works closely with:**
+- `maintaining-architecture-decisions` skill: the ADR log is a source of every round, an implicit conflict with it is a question, and the record's lasting entries become ADRs
 - `writing-linear-comments` skill: carries the record's `[Entwickler]` and `[Claude]` entries into the ticket's decisions comment for the product owner, posted early and kept current
 - `building-stories-with-tdd` skill: the seams agreed here are the seams its tests are written at
 - `validating-changes-in-browser` skill: the roles and states agreed here become the walked list

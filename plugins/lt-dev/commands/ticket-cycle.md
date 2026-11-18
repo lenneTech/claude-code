@@ -159,6 +159,9 @@ would ask anyway is parked (or halted, when it is environmental), never asked.
 | take-ticket STEP 5b: already solved / premise gone | question | park, with the evidence; the autopilot closes no ticket |
 | take-ticket STEP 5b: partly done | grill the remainder | implement what the evidence shows is missing; park when the remainder is unclear |
 | take-ticket STEP 5c: decision round and record | rounds plus confirmation | `grilling-decisions` [autopilot mode](${CLAUDE_PLUGIN_ROOT}/skills/grilling-decisions/SKILL.md#autopilot-mode): Claude settles every open point by its recommendation (ticket before concept documents before code), marks it `[Claude]`, posts the decisions comment; the record counts as confirmed. A blocking contradiction is parked |
+| take-ticket STEP 5c: the ticket contradicts an accepted ADR without designating the change (implicit conflict) | question with the conflict brief | park, the brief as the question; the autopilot never changes a recorded decision on its own judgement |
+| take-ticket STEP 5c: the ticket designates the change of an ADR (explicit change) | none | build it with the superseding ADR, and name the change in the decisions comment and the MR |
+| take-ticket STEP 5, STEP 6: no ADR log yet and `adr.mjs lang` answers `unclear` | question in the STEP 5c round | no bootstrap and no new ADR; the summary and the decisions comment name the decisions whose ADR waits for the language |
 | take-ticket STEP 5c.5: blocking discovery during the implementation | question | park |
 | take-ticket STEP 6c, ticket-cycle Phase B: fix in a repository a live expert session works in | handover question | handover as `SOLVED` without asking (standing approval); its paths stay untouched; park when this ticket cannot go green without that fix |
 | take-ticket STEP 6c: fix in another repository without an expert session | `/cd` request | park |
@@ -166,6 +169,7 @@ would ask anyway is parked (or halted, when it is environmental), never asked.
 | take-ticket STEP 9b: delta that puts the scope at stake | question | stay with the ticket: record an `Annahme`, never widen; an acceptance criterion that cannot be met is parked |
 | ticket-cycle STEP 2: review question (fallback) | question | review runs |
 | ticket-cycle Phase B: finding `review` could not fix | stop | park |
+| ticket-cycle Phase B: `review` finds the diff contradicting an accepted ADR without an order behind it | question (review Phase 6) | park, the conflict brief as the question |
 | ticket-cycle Phase C: `boot_failed`, `stall_guard_triggered` | stop | park; halt when `lt dev doctor` or Docker is the cause |
 | ticket-cycle STEP 3b: test package and approval | wait for "Getestet, bereitstellen" | build the package, attach it as the document `<ISSUE_IDENTIFIER> — Test-Paket` without local credentials and link it in one sentence of a comment; the approval stands when tests, `check`, review and walk are green; shut the stack down |
 | ticket-cycle STEP 4a: merge strategy | question | `--auto-merge` |
@@ -772,6 +776,7 @@ Ablauf
 - Entscheidungen und Hinweise der Entwickler: <je Zeile "E1 <kurz>" | "keine über das Ticket hinaus">
 - Annahmen von Claude: <je Zeile "A1 <kurz>", inkl. der während der Umsetzung ergänzten | "keine">
 - Nicht in diesem Ticket (bei der Umsetzung entschieden): <je Zeile | "nichts">
+- Architekturentscheidungen: <je Zeile "ADR-015 neu: <kurz>" | "Ändert eine Architekturentscheidung: ADR-015 löst ADR-004 ab (<kurz>)" | "ADR-004 bleibt (auf Frage F2)" | "Log rekonstruiert: <n> ADRs" | "keine berührt">
 - Kommentar „Entscheidungen und Annahmen“ im Ticket: <aktuell | fehlt: <Grund> | keiner nötig>
 - Freigabe: durch Entwickler nach eigenem Test
 - Ungeplante Rückfragen: <anzahl + Anlass | "keine">
@@ -834,6 +839,7 @@ Ablauf
 - Entscheidungen und Hinweise der Entwickler: <je Zeile "E1 <kurz>" | "keine über das Ticket hinaus">
 - Annahmen von Claude: <je Zeile "A1 <kurz>", inkl. der während der Umsetzung ergänzten | "keine">
 - Nicht in diesem Ticket (bei der Umsetzung entschieden): <je Zeile | "nichts">
+- Architekturentscheidungen: <je Zeile "ADR-015 neu: <kurz>" | "Ändert eine Architekturentscheidung: ADR-015 löst ADR-004 ab (<kurz>)" | "ADR-004 bleibt (auf Frage F2)" | "Log rekonstruiert: <n> ADRs" | "keine berührt">
 - Kommentar „Entscheidungen und Annahmen“ im Ticket: <aktuell | fehlt: <Grund> | keiner nötig>
 - Freigabe: durch Entwickler nach eigenem Test
 - Ungeplante Rückfragen: <anzahl + Anlass | "keine">

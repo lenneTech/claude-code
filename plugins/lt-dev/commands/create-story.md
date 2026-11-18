@@ -1,7 +1,7 @@
 ---
 description: Create a user story for TDD implementation
 argument-hint: "[story-idea]"
-allowed-tools: AskUserQuestion, Write, Read, Glob, mcp__plugin_lt-dev_linear__*
+allowed-tools: AskUserQuestion, Write, Read, Glob, Grep, Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/adr.mjs list:*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/adr.mjs" list:*), mcp__plugin_lt-dev_linear__*
 disable-model-invocation: false
 ---
 
@@ -187,6 +187,7 @@ Ask in **rounds**, and let each round cover the **frontier**: every open questio
 4. **Look facts up yourself** — which roles the affected services already allow, whether the entity exists, how the neighbouring feature solved it. Ask the user for **decisions**, never for facts the repo already holds (the `grilling-decisions` skill has the full split)
 5. **Recompute the frontier after each round** — settled answers unblock the next questions and often retire others entirely
 6. **Accept refusal gracefully** — when the user skips, fall through to the Proactive Suggestion Strategy below
+7. **Check the story against the recorded architecture decisions** — where the repository keeps an ADR log (`node "${CLAUDE_PLUGIN_ROOT}/scripts/adr.mjs" list --active`), run the check of the `maintaining-architecture-decisions` skill on the story. A point that contradicts an accepted ADR is a question in this round, with the ADR's decision and reason quoted: keep the decision (the story is adapted) or change it. A change the user confirms is written into the story **as a change** ("Ersetzt die Entscheidung ADR-004: …"), so the run that implements it reads it as an explicit order and does not stop to ask again
 
 **Example round (in German), each question carrying its recommendation:**
 "Deine Story-Idee ist klar bezüglich des Grundfeatures. Drei Punkte sind noch offen — mein Vorschlag steht jeweils dabei:

@@ -498,6 +498,32 @@
       "files": [
         "commands/git/ship.md"
       ]
+    },
+    {
+      "name": "an accepted architecture decision (ADR) changes only on an explicit order or with the developer's explicit approval; an implicit conflict is asked, never built on Claude's judgement (Kai, 2026-11-18)",
+      "phrase": "the developer's explicit approval",
+      "files": [
+        "skills/maintaining-architecture-decisions/SKILL.md",
+        "skills/grilling-decisions/SKILL.md",
+        "commands/take-ticket.md",
+        "commands/resolve-ticket.md",
+        "commands/review.md",
+        "agents/code-reviewer.md",
+        "agents/architect.md"
+      ]
+    },
+    {
+      "name": "an explicit change of an ADR is built without a question but never silently: the same note in the run's summary, the MR/PR description and the review report",
+      "phrase": "Ändert eine Architekturentscheidung",
+      "files": [
+        "skills/maintaining-architecture-decisions/SKILL.md",
+        "commands/take-ticket.md",
+        "commands/ticket-cycle.md",
+        "commands/review.md",
+        "commands/git/ship.md",
+        "commands/dev-submit.md",
+        "commands/git/create-request.md"
+      ]
     }
   ],
   "forbidden": [

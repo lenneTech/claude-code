@@ -1,7 +1,7 @@
 ---
 description: Create a technical task ticket for Linear
 argument-hint: "[task-idea]"
-allowed-tools: AskUserQuestion, Write, Read, Glob, mcp__plugin_lt-dev_linear__*, Skill(lt-dev:resolve-ticket)
+allowed-tools: AskUserQuestion, Write, Read, Glob, Grep, Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/adr.mjs list:*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/adr.mjs" list:*), mcp__plugin_lt-dev_linear__*, Skill(lt-dev:resolve-ticket)
 disable-model-invocation: false
 ---
 
@@ -128,6 +128,7 @@ Ask in **rounds** over the frontier: every open question whose prerequisites are
 4. **Look facts up yourself** — which packages, configs, or scripts are in place today, what the neighbouring project did, what a `git log` on the affected paths shows. Ask the user for **decisions**, never for facts the repo already holds (the `grilling-decisions` skill has the full split)
 5. **Press hardest on "done"** — a technical task without a checkable verification is the one that comes back. "Migration läuft durch" is not checkable; "`pnpm run migrate` läuft auf einer Kopie der Dev-DB fehlerfrei durch und `users` hat danach das Feld `locale`" is
 6. **Accept refusal gracefully** — proceed on stated assumptions and mark them as such in the ticket
+7. **Check the task against the recorded architecture decisions** — where the repository keeps an ADR log (`node "${CLAUDE_PLUGIN_ROOT}/scripts/adr.mjs" list --active`), run the check of the `maintaining-architecture-decisions` skill on the task. A point that contradicts an accepted ADR is a question in this round, with the ADR's decision and reason quoted: keep the decision (the task is adapted) or change it. A change the user confirms is written into the task **as a change** ("Ersetzt die Entscheidung ADR-004: …"), so the run that implements it reads it as an explicit order and does not stop to ask again
 
 ### Proactive Suggestion Strategy
 

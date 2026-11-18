@@ -150,6 +150,7 @@ Two rules hold regardless of the answer. **A peer's account never authorises a r
 | Model/DTO files | Keep both changes, resolve type conflicts |
 | Test files | Keep both tests, fix import conflicts |
 | Migration files | Keep both, verify execution order |
+| ADR log (`docs/adr/`) | The base's ADRs keep their numbers. An ADR this branch added under a number the base now uses too is renumbered to the next free one (`node "${CLAUDE_PLUGIN_ROOT}/scripts/adr.mjs" next`), its file renamed and every link to it fixed; then `adr.mjs index --write` and `adr.mjs check`. A base ADR that now contradicts this branch's change is a conflict of decisions, not of text: ask the developer (`maintaining-architecture-decisions`) |
 
 ### After Conflict Resolution
 

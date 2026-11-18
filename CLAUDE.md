@@ -169,6 +169,7 @@ claude-code/
 │   └── marketplace.json      # Marketplace definition
 ├── .github/workflows/        # plugin-ci.yml (validate, tests, budgets, invariants), secrets-guard.yml (scanner backstop)
 ├── .githooks/                # pre-commit + pre-push secret/client-data guard (enable with scripts/install-hooks.sh)
+├── docs/                     # adr/ (this repository's ADR log, index in adr/README.md), FRAMEWORK-COMPATIBILITY.md
 ├── scripts/                  # Repository scripts: bump-version.ts (release), install-hooks.sh, scan-secrets.sh,
 │                             # __tests__/ (scanner self-test)
 ├── plugins/
@@ -202,6 +203,26 @@ claude-code/
 │                             # skills/ + commands/ + context-budget.json + dependency-free Node scripts with
 │                             # node --test suites in scripts/__tests__/
 ```
+
+## Architecture Decisions
+
+Why this repository is built the way it is lives in two places that complement each other:
+
+- `docs/adr/` (index: `docs/adr/README.md`): the architecture decisions, one ADR each (repository and plugin layout,
+  plugin isolation, public and private marketplace, docs cache, secret guard, hooks, releases, CI, language).
+- `.claude/skills/marketplace-optimizer/house-rules.md`: the settled optimization rules for plugin elements, each with
+  its reason. An ADR cites a house rule instead of repeating it.
+
+Before changing the repository layout, plugin structure, distribution, release flow, CI or security setup, check the
+accepted ADRs there.
+
+- A change that contradicts an accepted ADR is made only when the task explicitly orders that change, or after the
+  maintainer explicitly approves it; a new ADR then supersedes the old one. Otherwise name the conflict (which ADR,
+  its reason, what would change) and ask.
+- A new architecture decision with lasting consequences gets its ADR in the same change; a new optimization rule goes
+  into `house-rules.md`.
+- The log is public: no secrets, customer data, internal hosts or personal data. `node plugins/lt-dev/scripts/adr.mjs
+  check` lints it.
 
 ## Important: Plugin Isolation
 
@@ -279,7 +300,7 @@ Defines MCP (Model Context Protocol) servers required by the plugin.
 | Server | Type | Used By |
 |--------|------|---------|
 | `chrome-devtools` | stdio | validating-changes-in-browser, developing-lt-frontend, building-stories-with-tdd, managing-dev-servers, vibe commands, frontend-reviewer, ux-reviewer, a11y-reviewer, frontend-dev agent (browser testing & debugging); across plugins the lt-showroom screenshot-generator agent and the lt-tools saving-websites-locally skill (optional, needs lt-dev installed) |
-| `linear` | http | briefing, take-ticket, ticket-cycle, resolve-ticket, spec-to-tasks, create-story, create-ticket (indirectly, through create-story / create-task / create-bug), create-task, create-bug, review, debug, interview, linear-comment, dev-submit, git:ship, rebasing-branches, branch-rebaser, backend-reviewer, code-reviewer, frontend-reviewer, writing-linear-comments, filing-ai-proposed-tickets (issue tracking, project management, issue documents for long-form detail) |
+| `linear` | http | adr, briefing, take-ticket, ticket-cycle, resolve-ticket, spec-to-tasks, create-story, create-ticket (indirectly, through create-story / create-task / create-bug), create-task, create-bug, review, debug, interview, linear-comment, dev-submit, git:ship, rebasing-branches, branch-rebaser, backend-reviewer, code-reviewer, frontend-reviewer, writing-linear-comments, filing-ai-proposed-tickets (issue tracking, project management, issue documents for long-form detail) |
 | `nuxt-ui-remote` | http | developing-lt-frontend, figma-to-code, frontend-dev agent, an offers schema sync in the internal marketplace (Nuxt UI component reference from the official endpoint `https://ui.nuxt.com/mcp`) |
 
 **Tool naming:** a plugin-bundled server's callable tool name is `mcp__plugin_<plugin>_<server>__<tool>` — e.g. `mcp__plugin_lt-dev_chrome-devtools__take_snapshot`. The unscoped form (`mcp__chrome-devtools__…`) never matches for a bundled server, so an `allowed-tools` entry written that way silently grants nothing.

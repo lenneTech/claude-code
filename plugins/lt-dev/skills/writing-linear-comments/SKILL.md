@@ -137,6 +137,19 @@ Annahmen von Claude
   Prüfen: ob sich ein alter Auftrag weiter normal öffnen lässt → Schritt 5 im Abschlusskommentar
 ```
 
+**A recorded architecture decision the work touches gets a line in this comment**, under the
+developers' entries, even when the ticket ordered it: the product owner learns that a standing
+decision changed, and a later run reads the change as settled. Plain language first, the ADR number
+after it:
+
+```markdown
+- Architekturentscheidung geändert: Rechnungen werden jetzt endgültig gelöscht statt nur ausgeblendet, wie im Ticket beauftragt (ADR-015 ersetzt ADR-009).
+- Architekturentscheidung bleibt: Das Reporting liefert seine Daten über die bestehende REST-Schnittstelle, nicht über GraphQL (ADR-004, auf Frage F2).
+```
+
+An entry for a conflict the developer answered keeps its question in the questions document like
+any other answered question ([`maintaining-architecture-decisions`](../maintaining-architecture-decisions/SKILL.md#after-the-answer)).
+
 ### The completion comment
 
 Exactly these, in this order. Nothing else.

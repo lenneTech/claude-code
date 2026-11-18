@@ -1,7 +1,7 @@
 ---
 description: Code review of what the current diff changed. Reports only proven Critical and High defects, plus security risks with a demonstrated attack path, and fixes them automatically, running the check script with auto-fix. Anything below that bar is dropped.
 argument-hint: "[issue-id] [--base=main] [--repo=<path>]"
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Bash(jq:*), Bash(cat:*), Bash(ls:*), Bash(test:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Agent, Skill(security-review), AskUserQuestion, ListAgents, SendMessage, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__save_issue_label, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document, Bash(curl:*), Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs:*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh":*)
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash(git:*), Bash(echo:*), Bash(grep:*), Bash(wc:*), Bash(jq:*), Bash(cat:*), Bash(ls:*), Bash(test:*), Bash(pnpm run check:*), Bash(npm run check:*), Bash(yarn run check:*), Bash(pnpm check:*), Bash(npm check:*), Bash(yarn check:*), Bash(pnpm run lint:*), Bash(npm run lint:*), Bash(yarn run lint:*), Bash(pnpm run typecheck:*), Bash(npm run typecheck:*), Bash(yarn run typecheck:*), Agent, Skill(security-review), AskUserQuestion, ListAgents, SendMessage, mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__save_issue_label, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__save_document, mcp__plugin_lt-dev_linear__get_document, Bash(curl:*), Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs:*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/ai-models.mjs":*), Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/adr.mjs:*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/adr.mjs":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/discover-check-scripts.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/peer-ledger.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/repo-expert.sh":*), Bash(bash ${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh:*), Bash(bash "${CLAUDE_PLUGIN_ROOT}/scripts/detect-frontend.sh":*)
 disable-model-invocation: false
 ---
 
@@ -373,7 +373,7 @@ After Phase 1.5 completes, carry the Step 8 report block into the Phase 5 report
 
 ### Small-Diff Optimization
 
-If the diff is small (**< 20 changed lines AND <= 2 changed files**), skip Phases 2-5 and spawn the single-pass `code-reviewer` agent instead:
+If the diff is small (**< 20 changed lines AND <= 2 changed files**), skip Phases 2-5 and spawn the single-pass `code-reviewer` agent instead. Phase 2 step 7 (Architecture Decisions) still runs here, in this command: a two-line diff can contradict an ADR as well as a large one, and its result goes to the report and Phase 6 outside the bar.
 
 ```
 Agent tool with subagent_type "lt-dev:code-reviewer":
@@ -397,6 +397,9 @@ Where a path is marked mid-slice or its intent is unknown, say so on the finding
 instead of reporting unfinished work as a defect.
 
 Cover all quality dimensions: content, security, code quality, tests, documentation, formatting.
+
+ADR conflicts (your Phase 2 step 7) are not findings under the bar below: return them in your
+"ADR Conflicts" section whatever the bar drops; the orchestrator asks the developer about them.
 
 REPORTING BAR — apply it to your own report before returning it:
 <paste the full "The Bar" section from this command here, verbatim>
@@ -456,6 +459,22 @@ finding.
    A `console.log` or `debugger` **added by this diff** is a High finding (it ships noise or a
    breakpoint to production). A pre-existing one, or a `TODO` that documents a known limitation,
    is not a finding — it fails Gate 3.
+
+7. **Architecture Decisions:** in a repository with an ADR log
+   (`node "${CLAUDE_PLUGIN_ROOT}/scripts/adr.mjs" list --active`), run the
+   [check](${CLAUDE_PLUGIN_ROOT}/skills/maintaining-architecture-decisions/SKILL.md#checking-a-change-against-the-log)
+   of `maintaining-architecture-decisions` on what this diff changed. This is not an architecture
+   opinion: it compares the diff with what the project recorded as decided, and its result does
+   not go through the four gates, because the remedy is the developer's decision, not a fix.
+   - A hunk that contradicts an accepted ADR, or revives one of its rejected alternatives, while
+     the diff carries no ADR that supersedes it and the ticket does not designate the change, is
+     an **ADR conflict**. It is reported in its own section and asked in Phase 6, never fixed in
+     one direction on the reviewer's judgement.
+   - A superseding ADR in the diff whose change the ticket orders is fine; the report names it in
+     one line. A superseding ADR with no order behind it is an ADR conflict too: the decision
+     changed without the developer's explicit approval on record.
+   - An ADR the diff adds or changes passes `adr.mjs check`; a lint error (number taken twice,
+     placeholder left, a credential) is a High finding and fixed in Phase 6.
 
 ---
 
@@ -912,6 +931,13 @@ sentences, so a reader who never saw the diff knows what was reviewed.>
 reason verbatim, and who gave it. These are the only entries in the report that are reported and
 not fixed — the user decides whether the reason holds.>
 
+### Architekturentscheidungen
+
+<Omit unless the diff touches the ADR log or Phase 2 step 7 found a conflict. One line per item:
+"ADR-015 neu: <Entscheidung>", "Ändert eine Architekturentscheidung: ADR-015 löst ADR-004 ab
+(<eine Zeile>), beauftragt in <ID>", or "Konflikt K1: <Datei:Zeile> widerspricht ADR-004 (<was die
+ADR festlegt>), Entscheidung in Phase 6".>
+
 ### Geprüft und in Ordnung
 
 <The verified non-findings from Phase 4 step 6. Three to eight lines, each naming what was checked
@@ -986,13 +1012,19 @@ doing — that decision was the gates.
 **2. Re-run the check script** after all fixes, per the `running-check-script` skill. Fixes that
 break the build are worse than the findings they addressed. Iterate until green.
 
-**3. Ask the user only in these four cases.** They are the only ones where the answer changes what
+**3. Ask the user only in these five cases.** They are the only ones where the answer changes what
 you do:
 
 - **A fix exceeds the ticket's scope** — it turns out to need a change to a shared module, a schema
   migration, or a public contract. Name the finding, the minimal fix, the wider fix, and ask which.
 - **A fix and the author's stated intent conflict** — Phase 4 step 4 came back with "deliberate,
   because …" and you still consider it a defect. Show both and let the user decide.
+- **The diff contradicts an accepted ADR** (Phase 2 step 7). Present the conflict brief of
+  [`maintaining-architecture-decisions`](${CLAUDE_PLUGIN_ROOT}/skills/maintaining-architecture-decisions/SKILL.md#the-conflict-brief)
+  and ask: keep the decision (the hunk is brought in line with it), change it (a superseding ADR
+  joins the diff), or a scoped exception (an ADR that partially supersedes it). Only the
+  developer's explicit approval changes a recorded decision; in a `/lt-dev:ticket-cycle --autopilot`
+  run the cycle parks the ticket with the brief instead of asking.
 - **The fix is in another session's unfinished code.** Do not edit it. Send that author one
   `SOLVED` message with the diagnosis (the expensive part, and it transfers perfectly), and report
   the finding as handed back. Exception: a trivial self-contained fix that cannot collide — a

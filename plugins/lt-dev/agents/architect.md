@@ -74,6 +74,14 @@ Before designing anything, understand what exists.
 10. Generated types:      ls projects/app/app/api-client/ 2>/dev/null
 ```
 
+**Recorded decisions come before the stack defaults.** Where the repository keeps an ADR log, list it
+(`node "${CLAUDE_PLUGIN_ROOT}/scripts/adr.mjs" list --active`) and read every accepted ADR the feature touches, by the
+rules of the `maintaining-architecture-decisions` skill (`${CLAUDE_PLUGIN_ROOT}/skills/maintaining-architecture-decisions/SKILL.md`).
+An accepted ADR outranks the defaults and FORBIDDEN list below wherever they differ: it is what this project decided.
+A design that would contradict an accepted ADR, or revive one of its rejected alternatives, is not chosen silently:
+the blueprint names the conflict, designs the variant that keeps the decision, and marks the change as a decision
+that needs the developer's explicit approval unless the requirement explicitly orders it.
+
 ### Phase 2: Architecture Design
 
 #### 2.1 Data Model Design
@@ -367,6 +375,11 @@ Deliver as structured blueprint:
 
 ## Build Sequence
 [Phased checklist — backend first, TDD]
+
+## Architecture Decisions
+[ADRs this design follows (ID, one line); conflicts with accepted ADRs and how the design resolves them, each marked
+"needs the developer's explicit approval" unless the requirement orders the change; new decisions with lasting
+consequences this design makes, as one-sentence ADR titles for the implementer to record. "No ADR log" when there is none.]
 
 ## Risks & Mitigations
 [What could go wrong and how to prevent it]

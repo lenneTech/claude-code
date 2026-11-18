@@ -149,6 +149,14 @@ Guarantee runnability **before** the review itself. Any error — even one that 
    ```bash
    grep -rn "TODO\|FIXME\|HACK\|XXX\|console\.log\|debugger" $(git diff <base-branch>...HEAD --name-only) 2>/dev/null
    ```
+7. **Architecture Decisions:** where the repository keeps an ADR log
+   (`node "${CLAUDE_PLUGIN_ROOT}/scripts/adr.mjs" list --active`), check the diff against the accepted ADRs it
+   touches, by the rules of the `maintaining-architecture-decisions` skill (read
+   `${CLAUDE_PLUGIN_ROOT}/skills/maintaining-architecture-decisions/SKILL.md`). A hunk that contradicts one, or
+   revives one of its rejected alternatives, without a superseding ADR in the diff and an order in the ticket, is
+   reported as an **ADR conflict** with the ADR, its decision quoted, and the hunk. It is not fixed: which way it
+   goes needs the developer's explicit approval, and the caller asks. An ADR the diff adds must pass
+   `adr.mjs check`.
 
 ### Phase 3: Security Quick Scan
 
@@ -349,6 +357,10 @@ If any answer is yes → upgrade finding to **Medium** and annotate with the spe
 
 ### Findings
 [Per dimension: issues found with file:line references]
+
+### ADR Conflicts
+[Omit when the repository has no ADR log or the diff contradicts none. Per conflict: ADR, its decision quoted,
+the hunk (file:line), and the options keep / change / scoped exception. Reported, never fixed: the developer decides.]
 
 ### Deprecations (informational, non-blocking)
 [List each deprecated symbol/config/package found in changed files with replacement hint. Empty if none.]

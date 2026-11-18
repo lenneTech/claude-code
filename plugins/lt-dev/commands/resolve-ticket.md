@@ -1,7 +1,7 @@
 ---
 description: Resolve a Linear ticket or story file with TDD-based implementation
 argument-hint: "[issue-id | story-file]"
-allowed-tools: Agent, Read, Grep, Glob, Bash(git:*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, AskUserQuestion, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__get_document, mcp__plugin_lt-dev_linear__list_documents, mcp__plugin_lt-dev_linear__get_attachment, mcp__plugin_lt-dev_linear__extract_images, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__save_issue_label, mcp__plugin_lt-dev_linear__list_projects
+allowed-tools: Agent, Read, Grep, Glob, Bash(git:*), Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/adr.mjs:*), Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/adr.mjs":*), mcp__plugin_lt-dev_linear__get_issue, mcp__plugin_lt-dev_linear__list_comments, AskUserQuestion, mcp__plugin_lt-dev_linear__list_issues, mcp__plugin_lt-dev_linear__get_document, mcp__plugin_lt-dev_linear__list_documents, mcp__plugin_lt-dev_linear__get_attachment, mcp__plugin_lt-dev_linear__extract_images, mcp__plugin_lt-dev_linear__save_issue, mcp__plugin_lt-dev_linear__save_comment, mcp__plugin_lt-dev_linear__list_issue_statuses, mcp__plugin_lt-dev_linear__list_issue_labels, mcp__plugin_lt-dev_linear__save_issue_label, mcp__plugin_lt-dev_linear__list_projects
 disable-model-invocation: false
 ---
 
@@ -98,6 +98,18 @@ ticket either way. Building a workaround for a problem the current version alrea
 a full design-and-review cycle and then has to be un-built.
 
 This gate does not apply to ordinary feature work the dependency was never meant to cover.
+
+### Architecture Decisions Before the First Line
+
+Check the requirements against the repository's ADR log with the
+[`maintaining-architecture-decisions`](${CLAUDE_PLUGIN_ROOT}/skills/maintaining-architecture-decisions/SKILL.md)
+skill (`node "${CLAUDE_PLUGIN_ROOT}/scripts/adr.mjs" list --active`; without a log, spawn the
+`lt-dev:adr-maintainer` agent to reconstruct it and check against `CLAUDE.md` meanwhile, in the language
+`adr.mjs lang` reports, or the one the developer names when it answers `unclear`). A ticket
+that designates the change of a decision is built with a superseding ADR and the note "Ändert eine
+Architekturentscheidung" in the summary; one that contradicts an accepted ADR without saying so
+waits for the developer's explicit approval, asked with the skill's conflict brief. Every decision
+with lasting consequences gets its ADR in the same change as the code.
 
 ### Implementation Workflow
 

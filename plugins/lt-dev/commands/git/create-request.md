@@ -117,6 +117,8 @@ Structure the description:
 - [commit messages from the branch]
 ```
 
+A diff that adds or changes an ADR (`docs/adr/`) adds an `## Architecture decisions` section with one line per ADR; an explicit change reads `Ändert eine Architekturentscheidung: ADR-015 löst ADR-004 ab (<one line>), ausdrücklich beauftragt in <ID>` ([`maintaining-architecture-decisions`](${CLAUDE_PLUGIN_ROOT}/skills/maintaining-architecture-decisions/SKILL.md#reporting-an-explicit-change)).
+
 ### STEP 5: Create MR/PR
 
 **GitHub:**

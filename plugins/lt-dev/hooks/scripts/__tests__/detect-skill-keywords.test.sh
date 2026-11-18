@@ -107,6 +107,10 @@ expect_skill checking-upstream-first 'Wir bauen uns den Upload selbst'
 expect_skill maintaining-ai-models 'Prüf mal, ob unsere KI-Modelle noch aktuell sind'
 expect_skill maintaining-ai-models 'mittwald schaltet ein LLM-Modell ab, was nehmen wir?'
 expect_skill maintaining-ai-models 'which AI model should the summary use now'
+expect_skill maintaining-architecture-decisions 'Leg für das Projekt ein ADR an'
+expect_skill maintaining-architecture-decisions 'Widerspricht das einer unserer Architekturentscheidungen?'
+expect_skill maintaining-architecture-decisions 'why is the code built this way?'
+expect_skill maintaining-architecture-decisions 'record this as an architecture decision'
 
 echo "near misses and unrelated prompts stay silent"
 for p in 'what time is it' 'Erklär mir den Unterschied zwischen TCP und UDP' \
@@ -116,7 +120,8 @@ for p in 'what time is it' 'Erklär mir den Unterschied zwischen TCP und UDP' \
          'deploy the docs to the wiki' 'patch the version in package.json' \
          'the job queue retries three times' 'run pnpm run check' 'where is the stack trace' \
          'check the slope of the chart' 'release notes for the customer' \
-         'add a field to the user model' 'the Mongoose model is deprecated'; do
+         'add a field to the user model' 'the Mongoose model is deprecated' \
+         'the address field is empty' 'draw a quadrant chart' 'Das Entscheidungsprotokoll passt so'; do
   expect_silent "$p"
 done
 
@@ -153,7 +158,8 @@ for dir in "$EVAL_DIR"/*/; do
   accepted=""
   for skill in deploying-to-turboops rebasing-branches validating-ci-pipelines-locally running-load-tests-with-k6 \
                cleaning-up-disk-space contributing-to-lt-framework modernizing-toolchain validating-production-readiness \
-               maintaining-lt-stack unslop validating-changes-in-browser checking-upstream-first; do
+               maintaining-lt-stack unslop validating-changes-in-browser checking-upstream-first \
+               maintaining-architecture-decisions; do
     grep -qE "[\"(|:?]$skill[\")|]" "$grader" && accepted="$accepted $skill"
   done
   [ -z "$accepted" ] && continue
