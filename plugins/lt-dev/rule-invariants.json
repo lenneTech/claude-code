@@ -484,6 +484,20 @@
       "files": [
         "commands/git/ship.md"
       ]
+    },
+    {
+      "name": "the hotfix back-merge merges without a question: every hotfix needs it and its checks prove it changes no file (Kai, 2026-11-17)",
+      "phrase": "No merge question, with or without `--auto-merge`.",
+      "files": [
+        "commands/git/ship.md"
+      ]
+    },
+    {
+      "name": "a hotfix in the top stage moves the ticket to Done with no assignee, and later runs of that hotfix leave a completed ticket there (Kai, 2026-11-17)",
+      "phrase": "After a hotfix the target is Done, not the review state.",
+      "files": [
+        "commands/git/ship.md"
+      ]
     }
   ],
   "forbidden": [
