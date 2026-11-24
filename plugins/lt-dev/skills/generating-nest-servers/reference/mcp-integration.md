@@ -10,6 +10,8 @@ The framework ships a **complete, production-ready MCP server out of the box** a
 
 If you find yourself writing files like `mcp.controller.ts`, `mcp.service.ts`, `mcp-oauth.provider.ts` in a consumer project: stop, delete them, and use the built-in instead.
 
+The one supported second endpoint: a project that serves its own tools with `@nestjs/mcp` uses the framework's OAuth server as that endpoint's identity provider (nest-server 12.10.0+, [Your own `@nestjs/mcp` endpoint](#your-own-nestjsmcp-endpoint-12100)), never an OAuth server of its own.
+
 ## What you actually do
 
 ### 1. Install the SDK in your project
@@ -36,27 +38,23 @@ ai: {
 
 That is the entire wiring. `CoreModule.forRoot()` registers `CoreAiMcpController` on `POST/GET/DELETE /ai/mcp`, role-filtered against the calling user.
 
-### 3. Mount the OAuth router (only when `ai.mcp.oauth: true`)
+### 3. OAuth endpoints (only when `ai.mcp.oauth: true`): nothing in `main.ts`
 
-```typescript
-// main.ts — after app.init(), before listen()
-import { mountAiMcpOAuth } from '@lenne.tech/nest-server';
+`CoreModule` mounts the SDK's `mcpAuthRouter` against `CoreAiMcpOAuthService.buildOAuthProvider()` itself during `app.init()` (nest-server 11.43.0+): discovery (`/.well-known/oauth-authorization-server`), dynamic client registration, authorize, token, refresh. A `mountAiMcpOAuth(app)` call in `main.ts` is a no-op that logs it can go; remove it. That is also why `main.ts` is the wrong place: mounted after `app.init()`, the router sits behind Nest's not-found handler and every OAuth endpoint answers 404.
 
-await mountAiMcpOAuth(app, { baseUrl: process.env.BASE_URL });
-```
+Set `NSC__BASE_URL` in every deployed environment: it is the issuer, and every URL in the discovery metadata. A deployed environment without it fails the boot instead of advertising `localhost`. `ai.mcp.oauthBaseUrl` only when MCP clients reach the server under another URL.
 
-`mountAiMcpOAuth` mounts the SDK's `mcpAuthRouter` against `CoreAiMcpOAuthService.buildOAuthProvider()` — handles discovery (`/.well-known/oauth-authorization-server`), dynamic client registration, authorize, token, refresh.
+### 4. Consent page: built in
 
-### 4. Provide your login/consent UI
+`/authorize` answers with the framework's consent page (nest-server 11.43.0+): sign-in through Better-Auth (password plus TOTP or backup code; passkey and social login through `ai.mcp.oauthLoginUrl`, default `<appUrl>/auth/login`), then Allow / Deny as a form POST with a CSRF token bound to user, client, redirect URI and PKCE challenge. It needs Better-Auth active; there is nothing to build.
 
-The interactive consent step is the only thing the framework cannot ship for you — it depends on your auth UI. Override `CoreAiMcpOAuthService.authorizeConsent()` (subclass it and pass via `CoreModule.forRoot(env, { ai: { /* … */ } })`). Inside:
-
-1. Authenticate the user via your existing session/login flow
-2. Show consent ("App X wants to act on your behalf — Allow / Deny")
-3. On approve: call `this.saveAuthorizationCode(code, { clientId, codeChallenge, userId })`
-4. Redirect to `redirect_uri?code=<code>&state=<state>`
+- **Restyle or replace it only when needed:** subclass `CoreAiMcpOAuthService`, override `renderConsentPage(view)` (wording and CSS through `renderMcpOAuthConsentPage(view, { texts, styles })`) or `authorizeConsent(client, params, res)`, and register it with `CoreModule.forRoot(envConfig, { ai: { mcpOAuthService: McpOAuthService } })`.
+- **A code is issued only on a POST.** The framework refuses a code saved while answering a GET to `/authorize` (the client gets `error=server_error`): a GET is what any link produces, and it carries the session cookie. An own consent page shows which client is approved and protects Allow and Deny with a CSRF token; Deny answers with `access_denied`.
+- **Who may use MCP** is `ai.mcp.roles` (or `mayUseMcp(user, req)` in the subclass), checked on every `/ai/mcp` request, the consent route and `/token` (nest-server 12.8.6+). Never in an `authorizeConsent()` override: a session or JWT bearer at `/ai/mcp` never passes `/authorize`.
 
 All other OAuth pieces — HMAC-signed access tokens with `timingSafeEqual`, PKCE S256, single-use code consumption, refresh-token rotation bound to `client_id` — are built in.
+
+**Tokens are bound to their resource (RFC 8707, nest-server 12.10.0+).** A client names the endpoint as `resource` at `/authorize` and `/token`; code, refresh token and access token carry it as audience, and a token is accepted only where it was issued for. A client that names none gets a token for `/ai/mcp`; tokens issued before 12.10.0 carry no audience and stay valid at `/ai/mcp` only. A `resource` this server does not serve is answered with `invalid_target`. An overridden `authorizeConsent()` needs no change: `saveAuthorizationCode()` takes the resource `/authorize` resolved. **SQL projects:** the MCP OAuth code and refresh-token tables gain a nullable `resource` column, which the boot adds through the owner connection (`ownerUrl`); without one, add it with a migration.
 
 ### 5. Register your project tools (this is opt-in!)
 
@@ -113,7 +111,8 @@ If a previous integration (or an older version of this document!) led to any of 
 - `modules/mcp/mcp.controller.ts` with `POST/GET/DELETE /mcp` → use built-in `CoreAiMcpController` at `/ai/mcp`
 - `modules/mcp/mcp.service.ts` wrapping `McpServer` lifecycle → use built-in `CoreAiMcpService`
 - `modules/mcp/mcp-oauth.provider.ts` implementing `OAuthServerProvider` → use built-in `CoreAiMcpOAuthService.buildOAuthProvider()`
-- `modules/mcp/mcp-auth.middleware.ts` mounting `mcpAuthRouter` → use built-in `mountAiMcpOAuth(app)`
+- `modules/mcp/mcp-auth.middleware.ts` mounting `mcpAuthRouter` → `CoreModule` mounts the built-in router itself (no `main.ts` code)
+- An own OAuth server for a `@nestjs/mcp` endpoint → `CoreAiMcpOAuthService.createMcpTokenVerifier({ resource })` (below)
 - A separate `mcp_oauth_clients` / `mcp_oauth_codes` / `mcp_oauth_refresh_tokens` MongoDB collection → the built-in uses `aiMcpOAuthClients` / `aiMcpOAuthCodes` / `aiMcpOAuthRefreshTokens` with TTL indexes
 - A handwritten `tools/` registry feeding `McpServer.tool(…)` → use the framework's `AiToolRegistry`, `AiTool` base class, and the role/mutating/destructive metadata so the same tools also power `POST /ai/prompt`
 
@@ -137,7 +136,30 @@ CoreModule.forRoot(envConfig, {
 });
 ```
 
-`authorizeConsent()` is the ONE method that virtually every consumer overrides — see "Provide your login/consent UI" above.
+Most projects override nothing here: the consent page is built in (step 4), and `ai.mcp.roles` covers who may use MCP.
+
+## Your own `@nestjs/mcp` endpoint (12.10.0)
+
+`@nestjs/mcp` is a resource server only. A project that serves tools of its own with it makes the framework's OAuth server (`ai.mcp.oauth: true`) its identity provider:
+
+```typescript
+McpModule.forRootAsync({
+  inject: [CoreAiMcpOAuthService],
+  useFactory: (oauth: CoreAiMcpOAuthService) => ({
+    name: 'my-api',
+    version: '1.0.0',
+    auth: {
+      authorizationServers: ['https://api.example.com'],
+      resource: 'https://api.example.com/mcp',
+      verifier: oauth.createMcpTokenVerifier({ resource: 'https://api.example.com/mcp' }),
+    },
+  }),
+});
+```
+
+- The verifier accepts a token whose signature and expiry hold, whose audience is that `resource` (creating the verifier registers it with the authorization server), and whose user exists and may use MCP (`ai.mcp.roles` / `mayUseMcp()`, on every request). `/ai/mcp` refuses a token for this endpoint and the verifier one for `/ai/mcp`.
+- The user reaches the tool's guards as `request.user`. With `@nestjs/mcp` (or `@nestjs/ai`) installed, the framework's global guards decide `@Tool()`, `@Resource()` and `@Prompt()` calls on the request the call runs in, never on the tool arguments: `@Roles()` works as over HTTP, tenant header included, and `@Restricted` plus secret-field filtering apply to the result. A request-less caller (MCP over stdio) is anonymous: public methods run, everything else answers 401.
+- `/ai/mcp` itself stays on `@modelcontextprotocol/sdk` 1.x: the v2 SDK ships no authorization-server router, and `@nestjs/mcp` serves statelessly (no elicitation, which the confirmation of destructive tools needs).
 
 ## Common pitfalls
 
@@ -147,7 +169,11 @@ CoreModule.forRoot(envConfig, {
 | `/ai/mcp` returns 401 with `WWW-Authenticate: Bearer` | No valid token in request | Send the user's session token / JWT in `Authorization: Bearer …`, or use the OAuth flow when `ai.mcp.oauth: true` |
 | `/ai/mcp` returns 404 | Server reachable but route not mapped | The AI module is not registered — verify `ai` config block is present and the server logs show `RoutesResolver CoreAiMcpController` at boot |
 | `tools/list` returns empty | No project tools registered, or all tools require a role the caller does not hold | Verify `AiToolsModule` is in `ServerModule.imports`; check tool `roles` against the calling user |
-| `authorizeConsent is not implemented` thrown on `/authorize` | OAuth enabled but project did not override the consent step | Subclass `CoreAiMcpOAuthService` and override `authorizeConsent()` |
+| Every OAuth endpoint answers 404 | `mountAiMcpOAuth(app)` called after `app.init()` on a version before 11.43.0 | Update nest-server; from 11.43.0 `CoreModule` mounts the router and the `main.ts` call can go |
+| The MCP client gets `error=server_error` after Allow in an own consent page | The code was saved while answering a GET to `/authorize` | Issue the code from the consent form's POST only, protected by a CSRF token |
+| `/token` or `/authorize` answers `invalid_target` | The client named a `resource` this server does not serve | Use `/ai/mcp`'s URL, or the `resource` of a `createMcpTokenVerifier()` endpoint exactly as configured |
+| A `@nestjs/mcp` tool answers 401 with an MCP OAuth token | The verifier refused it: token for another resource (e.g. `/ai/mcp`), expired, user not allowed by `ai.mcp.roles`, user unknown | Obtain a token with that endpoint as `resource`; check `ai.mcp.roles` |
+| `/ai/mcp` refuses a token that works at the project's `@nestjs/mcp` endpoint | Audience binding: the token was issued for the other resource | Each endpoint gets its own token |
 | Two MCP servers respond (one at `/mcp`, one at `/ai/mcp`) | Project still has a handwritten `modules/mcp/` from a pre-11.26.0 integration | Delete the handwritten module, keep `/ai/mcp` |
 | Confidential MCP client cannot authenticate at `/token` after secret leak rotation | Pre-fix `getClient()` stripped `client_secret` (bug fixed in 11.26.x) | Bump to the latest 11.26.x patch |
 
@@ -175,7 +201,7 @@ curl -X POST http://127.0.0.1:3000/ai/mcp \
 # → only tools the calling user's roles allow
 ```
 
-For the OAuth flow, the discovery document is at `GET /.well-known/oauth-authorization-server` once `mountAiMcpOAuth(app)` is mounted.
+For the OAuth flow, the discovery document is at `GET /.well-known/oauth-authorization-server` as soon as `ai.mcp.oauth` is on (`CoreModule` mounts it during `app.init()`).
 
 ## Automated MCP tests (required when MCP is enabled)
 
@@ -317,6 +343,9 @@ the built-in, which makes these tests shorter and the role filter shared.
 - `src/core/modules/ai/services/core-ai-mcp-oauth.service.ts` — OAuth implementation
 - `tests/unit/ai.spec.ts` — unit tests covering both the MCP controller HTTP path and the OAuth 2.1 store flow
 - `migration-guides/11.25.x-to-11.26.0.md` — migration notes
+- `migration-guides/11.42.x-to-11.43.x.md` — OAuth router mounted by `CoreModule`, built-in consent page
+- `migration-guides/12.9.x-to-12.10.x.md` — resource-bound tokens (RFC 8707), `createMcpTokenVerifier()`, guards on `@nestjs/mcp` calls, secret fields out of tool results
+- `docs/REQUEST-LIFECYCLE.md` → "Agent function and MCP calls"
 
 ---
 

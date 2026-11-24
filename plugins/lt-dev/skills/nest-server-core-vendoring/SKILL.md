@@ -408,8 +408,9 @@ When a new upstream version is available, the `nest-server-core-updater` agent:
 7. Applies approved clean-picks
 8. Interactive 3-way merge for conflicts
 9. Raises the project's npm dependencies to **at least** the upstream target's
-   versions (semver-max, never downgrade), adds any new runtime helpers from
-   `vendor-runtime-deps.json`, then — unless `--no-maintain` — refreshes the
+   versions (semver-max, never downgrade), adds every upstream `dependencies` entry the project
+   lacks (the core imports them itself, `busboy` & co. since 12.10.0) and the runtime helpers from
+   the CLI's `vendor-runtime-deps.json`, then — unless `--no-maintain` — refreshes the
    rest via `/lt-dev:maintenance:maintain`. A vendored project must never ship
    dependencies older than the upstream it mirrors.
 10. Runs `pnpm run test` — commits if green

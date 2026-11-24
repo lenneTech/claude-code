@@ -219,11 +219,18 @@ through the same `lt claude plugins`.
 2. **Maintenance gate — ask first (default).** This command never
    silently runs dependency maintenance. After the change summary, ask the
    user via `AskUserQuestion` how to proceed:
-   - **Publish directly** — skip the dependency refresh and release exactly
-     the current change (recommended for a focused fix / hotfix).
-   - **Maintain first** — run `/lt-dev:maintenance:maintain` (FULL: frameworks
-     first, then packages via the maintainer agent; no commit) so the release
-     ships on the latest dependency state, then release.
+   - **Publish directly** (German label: „Direkt veröffentlichen“) — skip the dependency refresh
+     and release exactly the current change (recommended for a focused fix / hotfix).
+   - **Maintain first** (German label: „Erst Abhängigkeiten aktualisieren“) — run
+     `/lt-dev:maintenance:maintain` (FULL: frameworks first, then packages via the maintainer agent;
+     no commit) so the release ships on the latest dependency state, then release.
+
+   **The labels are fixed.** A German session asks „Wie soll veröffentlicht werden?“ and offers
+   exactly the two German labels above, the English one exactly the English names; both map to the
+   answers in the table below. Never the verb „warten“ for maintenance: it also reads as „abwarten“,
+   and this answer decides what is committed and pushed. Observed 2026-11-19: a session offered
+   „Erst warten“ while it was open whether an upstream release would still come out, so the option
+   read as "wait for that release first" too, and the run had to state which one it meant.
 
    **The answer governs the ENTIRE chain, not just the source repo.** It is one
    decision about how much dependency movement this release is allowed to carry,
@@ -234,14 +241,15 @@ through the same `lt claude plugins`.
 
    | Answer | Source repo | Downstream repo(s) |
    |---|---|---|
-   | Maintain first | maintain + review + release | bump + **maintain** + `check` + review + release |
-   | Publish directly | review + release as-is | bump + `check` + review + release (**no** dependency refresh) |
+   | Maintain first („Erst Abhängigkeiten aktualisieren“) | maintain + review + release | bump + **maintain** + `check` + review + release |
+   | Publish directly („Direkt veröffentlichen“) | review + release as-is | bump + `check` + review + release (**no** dependency refresh) |
 
    Say which repos the answer will cover when asking, so the scope is visible
    before the choice (e.g. "applies to nest-server AND nest-server-starter").
 
    Recommend the option that fits the change (focused single-file fix →
-   "Publish directly"; broad or long-untouched repo → "Maintain first"), but
+   "Publish directly" / „Direkt veröffentlichen“; broad or long-untouched repo → "Maintain first" /
+   „Erst Abhängigkeiten aktualisieren“), but
    the user decides. Bypass the question ONLY when a flag makes the intent
    explicit: `--skip-maintenance` → publish directly (no ask), `--maintenance`
    → maintain first (no ask); `--dry-run` prints the plan without asking. When
@@ -255,11 +263,13 @@ through the same `lt claude plugins`.
    `HANDOVER-QUESTION` (or `UNKNOWN` with a `ListAgents` row named after that repo) a live session
    is its expert, and its checkout holds that session's uncommitted work. Ask which route the
    release takes there, naming the session:
-   - **Release here in a worktree** (recommended): this run releases the repo from a separate
-     worktree on `origin/main`, the expert's checkout stays untouched, and the chain finishes in
-     this run.
-   - **Hand over to `<session>`**: the expert session prepares the release, and its user types
-     one line there to publish it.
+   - **Release here in a worktree** (recommended; German label: „Hier im Worktree veröffentlichen“):
+     this run releases the repo from a separate worktree on `origin/main`, the expert's checkout
+     stays untouched, and the chain finishes in this run.
+   - **Hand over to `<session>`** (German label: „An `<session>` übergeben“): the expert session
+     prepares the release, and its user types one line there to publish it.
+
+   The same rule as for the maintenance labels: these words, nothing freely translated.
 
    On `NONE` or `SELF` there is nothing to ask; step 5 works in the checkout itself. The
    maintenance flags pre-answer only the maintenance question; `--dry-run` names the route
@@ -294,8 +304,8 @@ through the same `lt claude plugins`.
    library pin both become the new library version, in one commit; plus the
    migration guides for nest-server-starter), then **apply the step-2 answer here too** — run
    `/lt-dev:maintenance:maintain` (latest frameworks + packages) only when the
-   gate was answered "Maintain first" (or `--maintenance` was passed); on
-   "Publish directly" / `--skip-maintenance` do the lock-step bump WITHOUT the
+   gate was answered "Maintain first" / „Erst Abhängigkeiten aktualisieren“ (or `--maintenance` was
+   passed); on "Publish directly" / „Direkt veröffentlichen“ / `--skip-maintenance` do the lock-step bump WITHOUT the
    dependency refresh. Either way: iterate `check` green, pass the step-2b
    review gate over this repo's diff (`--repo=<path>` when it is not the working
    directory), commit only the paths the update changed (`git add <paths>`,
@@ -384,7 +394,7 @@ through the same `lt claude plugins`.
   for non-interactive / scripted runs:
   - `--skip-maintenance` — hotfix mode: publish directly, no ask. Downstream
     still gets its lock-step bump and its `check`, but NO dependency refresh —
-    same as answering "Publish directly".
+    same as answering "Publish directly" / „Direkt veröffentlichen“.
   - `--maintenance` — force the FULL dependency refresh on the source repo AND
     on every downstream repo, no ask.
 - `--smoke-test` — run the full smoke-test gate after the chain.

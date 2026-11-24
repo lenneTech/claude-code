@@ -149,6 +149,15 @@ Patterns 1 to 31 apply to German too. These are the tells that only show up ther
     | Separator in a page title | „Angebote – lenne.Tech“, „Angebote \| lenne.Tech“ works equally well |
 
     The test: if you would pause there when reading aloud, the dash is punctuation and goes. If it reads as „bis“, „nach“, „gegen“ or „nichts“, it stays.
+40. **Doppeldeutige Wörter in Entscheidungsfragen.** An option the user picks decides what happens next, so its label reads one way only. Name the action it triggers. Words with two meanings stay out of labels and of the question itself:
+
+    | Word | Reads as | Write instead |
+    |------|----------|---------------|
+    | warten | abwarten, or instand halten | „Erst Abhängigkeiten aktualisieren“, „Erst Wartung“; for waiting „Abwarten, bis …“ |
+    | aufheben | aufbewahren, or abbrechen | „Behalten“ / „Löschen“, „Sperre aufheben“ only with its object |
+    | freigeben | genehmigen, veröffentlichen, or entsperren | „Genehmigen“, „Veröffentlichen“, „Entsperren“ |
+
+    Where a command defines fixed German labels (`/lt-dev:publish`, `/lt-dev:ticket-cycle`), use them verbatim instead of translating the English option. Observed 2026-11-19: a free translation offered „Erst warten“ for dependency maintenance while an upstream release was still pending, and the choice read as "wait for that release" too.
 
 ## Self-audit before shipping
 
@@ -164,8 +173,8 @@ Run these three checks on the finished text:
 - `writing-linear-comments` skill. Every Linear comment gets this prose pass before it is posted.
 - `filing-ai-proposed-tickets` skill. Every AI-proposed ticket body gets this prose pass before it is filed.
 - `developing-claude-plugins` skill. Skill, command, and agent bodies are prose and go through this skill before release.
-- `developing-lt-frontend` skill. UI text in components and i18n files goes through patterns 32 to 39.
-- `lt-offers:creating-offers` and `lt-showroom:creating-showcases` skills. Customer-facing copy, where German patterns 32 to 39 matter most.
+- `developing-lt-frontend` skill. UI text in components and i18n files goes through patterns 32 to 40.
+- `lt-offers:creating-offers` and `lt-showroom:creating-showcases` skills. Customer-facing copy, where German patterns 32 to 40 matter most.
 - `/lt-dev:git:commit-message` and `/lt-dev:git:mr-description` commands. The body is prose, the subject line stays terse.
 
 ## Attribution

@@ -317,10 +317,21 @@ Phase 8 fails against stale transitive deps.
    patch never adds a static value import of `@nestjs/mongoose` or `mongoose` to `src/core/`: the
    core must load where they are not installed. Guides: `12.0.x-to-12.1.x.md`, and
    `12.1.0-to-12.1.1.md` §6 (Better-Auth on MySQL / MariaDB).
-3. Add any **runtime helper** the upstream now requires that the project is
-   missing. The CLI tracks these in `src/config/vendor-runtime-deps.json`
-   (e.g. `find-file-up`); mirror that list — a helper that lives in the
-   framework's own `devDependencies` must become a project `dependency`.
+3. Add what the vendored core needs and the project does not declare yet, in any section:
+   - **Every package in upstream `dependencies`** goes into the project's `dependencies` at the
+     upstream version. The core imports it itself, and pnpm hides a transitive copy from the
+     project, so step 2 (which only raises what the project already lists) never brings it in.
+     The lt CLI copies upstream `dependencies` the same way when it vendors, so this keeps an
+     updated project where a freshly vendored one starts. Observed with 12.10.0: `busboy` 1.6.0,
+     `fs-capacitor` 8.0.0, `http-errors` 2.0.1 and `object-path` 0.11.8, which the framework's own
+     GraphQL multipart parser imports; without them the API stops at start with
+     `Cannot find package 'busboy'` (guide `12.9.x-to-12.10.x.md`, Compatibility Notes).
+   - **The runtime helpers of the lt CLI's `src/config/vendor-runtime-deps.json`** (`lenneTech/cli`):
+     upstream `devDependencies` the core loads at runtime or names in a literal `import()`. Mirror
+     the list into the project's `dependencies`, with the upstream peer range where one exists
+     (as the CLI does), else the upstream version. From nest-server 12.10.0 it holds the
+     better-auth trio and the optional AI peers `ai`, `@nestjs/ai` and `@nestjs/resilience`;
+     without those three a vendored project's `tsc` fails with TS2307.
 4. After matching the baseline, refresh the remaining packages to their latest
    compatible versions by delegating to `/lt-dev:maintenance:maintain` (FULL npm
    maintenance via the `npm-package-maintainer` agent). Skip this step when

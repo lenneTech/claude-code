@@ -39,6 +39,8 @@ import {
   probesFor,
   runCheck,
   runInventory,
+  runProbes,
+  silentWav,
   summarize,
   summaryMarkdown,
   ticketContent,
@@ -49,6 +51,8 @@ import {
   textPng,
   twoColourPng,
   unknownNeeds,
+  unknownRoles,
+  KNOWN_ROLES,
   validateAdapter,
   valueEqual,
 } from './ai-models.mjs';
@@ -243,6 +247,106 @@ test('probesFor picks probes from needs and params', () => {
   assert.deepEqual(probesFor(summarizeUsage), ['basic', 'cache', 'reasoning-off', 'budget']);
   assert.deepEqual(probesFor(ocrUsage), ['basic', 'cache', 'vision', 'resolution', 'image-limit']);
   assert.deepEqual(probesFor({ needs: ['embeddings'] }), ['embeddings']);
+});
+
+test('rerank and audio usages get the probe of their own endpoint, never the chat probes', () => {
+  // Observed 2026-11-18 in a project on mittwald: a reranker and a Whisper model, both in the catalog,
+  // failed probe-basic with HTTP 404 "unknown model name", because basic asks /chat/completions.
+  assert.deepEqual(probesFor({ role: 'rerank' }), ['rerank']);
+  assert.deepEqual(probesFor({ role: 'audio' }), ['transcription']);
+  assert.deepEqual(probesFor({ needs: ['json'], params: { maxTokens: 64 }, role: 'audio' }), ['transcription']);
+  assert.deepEqual(probesFor({ role: 'chat' }), ['basic', 'cache']);
+});
+
+test('judgeProbes: a failed rerank or transcription probe is urgent, a wrong ranking is action', () => {
+  const usage = { id: 'rerank', model: 'Qwen3-VL-Reranker-2B' };
+  const codes = (results) => judgeProbes(usage, results).map((x) => `${x.code}:${x.level}`);
+  assert.deepEqual(codes({ rerank: { ok: false, status: 404 } }), ['probe-rerank-failed:2']);
+  assert.deepEqual(codes({ transcription: { ok: false, status: 404 } }), ['probe-transcription-failed:2']);
+  assert.deepEqual(codes({ rerank: { ok: true, status: 200, topIndex: 1 } }), ['rerank-order-wrong:1']);
+  assert.deepEqual(codes({ rerank: { ok: true, status: 200, topIndex: 0 } }), []);
+  assert.deepEqual(codes({ transcription: { ok: true, status: 200, text: '' } }), []);
+});
+
+test('silentWav is a valid one-second 16 kHz mono PCM file', () => {
+  const wav = silentWav();
+  assert.equal(wav.subarray(0, 4).toString(), 'RIFF');
+  assert.equal(wav.subarray(8, 12).toString(), 'WAVE');
+  assert.equal(wav.readUInt32LE(24), 16000);
+  assert.equal(wav.readUInt16LE(22), 1);
+  assert.equal(wav.readUInt32LE(40), 32000);
+  assert.equal(wav.length, 44 + 32000);
+});
+
+/**
+ * Runs `runProbes` for a reranker and a Whisper model against a fake provider. `answer(path)` returns
+ * the response for an authenticated call; a call without the Bearer key gets 401, as a real provider
+ * answers it, and a path `answer` leaves out gets the 404 a chat probe on such a model gets.
+ */
+async function probeRerankAndAudio(answer) {
+  const calls = [];
+  const realFetch = globalThis.fetch;
+  const realKey = process.env.EXAMPLE_KEY;
+  process.env.EXAMPLE_KEY = 'test-key';
+  globalThis.fetch = async (url, init) => {
+    const path = new URL(url).pathname;
+    const auth = init.headers?.Authorization;
+    calls.push({ auth, body: init.body, contentType: init.headers?.['Content-Type'], path });
+    if (auth !== 'Bearer test-key') return new Response('{"error":"unauthorized"}', { status: 401 });
+    return answer(path) ?? new Response('{"error":"Got unknown model name"}', { status: 404 });
+  };
+  try {
+    const out = await runProbes({
+      providers: [{ baseUrl: 'https://llm.example.test/v1', id: 'mw', keyEnv: 'EXAMPLE_KEY', kind: 'mittwald' }],
+      usages: [
+        { id: 'rerank', model: 'Qwen3-VL-Reranker-2B', provider: 'mw', role: 'rerank' },
+        { id: 'audio', model: 'whisper-large-v3-turbo', provider: 'mw', role: 'audio' },
+      ],
+    });
+    return { calls, codes: out.flatMap((o) => o.findings).map((x) => `${x.code}:${x.level}`) };
+  } finally {
+    globalThis.fetch = realFetch;
+    if (realKey === undefined) delete process.env.EXAMPLE_KEY;
+    else process.env.EXAMPLE_KEY = realKey;
+  }
+}
+
+test('runProbes asks a reranker on /rerank and a Whisper model on /audio/transcriptions', async () => {
+  const { calls, codes } = await probeRerankAndAudio((path) => {
+    if (path.endsWith('/rerank')) {
+      return new Response(JSON.stringify({ results: [{ index: 1, relevance_score: 0.02 }, { index: 0, relevance_score: 0.97 }] }), { status: 200 });
+    }
+    if (path.endsWith('/audio/transcriptions')) return new Response(JSON.stringify({ text: '' }), { status: 200 });
+    return undefined;
+  });
+  assert.deepEqual(codes, []);
+  assert.deepEqual(calls.map((c) => c.path), ['/v1/rerank', '/v1/audio/transcriptions']);
+  assert.deepEqual(calls.map((c) => c.auth), ['Bearer test-key', 'Bearer test-key']);
+  const rerank = JSON.parse(calls[0].body);
+  assert.equal(rerank.model, 'Qwen3-VL-Reranker-2B');
+  assert.equal(rerank.documents.length, 2);
+  assert.ok(calls[1].body instanceof FormData);
+  assert.equal(calls[1].body.get('model'), 'whisper-large-v3-turbo');
+  const file = calls[1].body.get('file');
+  assert.ok(file instanceof Blob, 'the audio goes up as a file field');
+  assert.equal(file.name, 'probe.wav');
+  assert.equal(file.size, 44 + 32000);
+  assert.equal(calls[1].contentType, undefined, 'the form sets its own multipart boundary');
+});
+
+test('runProbes reports a reranker or Whisper model that does not answer as urgent', async () => {
+  // A 404 on /rerank and a transcription without `text` are what a removed or wrongly routed model returns.
+  const broken = await probeRerankAndAudio((path) =>
+    path.endsWith('/audio/transcriptions') ? new Response('{}', { status: 200 }) : undefined,
+  );
+  assert.deepEqual(broken.codes, ['probe-rerank-failed:2', 'probe-transcription-failed:2']);
+  // A reranker that answers 200 with nothing ranked is just as broken.
+  const empty = await probeRerankAndAudio((path) => {
+    if (path.endsWith('/rerank')) return new Response('{"results":[]}', { status: 200 });
+    if (path.endsWith('/audio/transcriptions')) return new Response('{"text":" Vielen Dank."}', { status: 200 });
+    return undefined;
+  });
+  assert.deepEqual(empty.codes, ['probe-rerank-failed:2']);
 });
 
 test('looksCached needs identical usage and a far faster second call', () => {
@@ -503,6 +607,32 @@ test('unknownNeeds flags a need nothing checks and accepts every known one', () 
   const f = unknownNeeds(a);
   assert.deepEqual(f.map((x) => `${x.code}:${x.level}:${x.subject}`), ['unknown-need:1:typo']);
   assert.match(f[0].message, /need "visoin" is not checked by anything/);
+});
+
+test('unknownRoles flags a role probesFor does not know and accepts the known ones and none', () => {
+  const a = {
+    ...adapter(),
+    usages: [
+      ...KNOWN_ROLES.map((role) => ({ id: `ok-${role}`, model: 'm', provider: 'mw', role })),
+      { id: 'none', model: 'm', provider: 'mw' },
+      { id: 'typo', model: 'm', provider: 'mw', role: 'reranker' },
+    ],
+  };
+  const f = unknownRoles(a);
+  assert.deepEqual(f.map((x) => `${x.code}:${x.level}:${x.subject}`), ['unknown-role:1:typo']);
+  assert.match(f[0].message, /role "reranker" is not known, so it is probed as a chat model/);
+});
+
+test('a role named like an object property is a chat role, not a probe error', () => {
+  assert.deepEqual(probesFor({ role: 'constructor' }), ['basic', 'cache']);
+  assert.deepEqual(probesFor({ role: 'toString' }), ['basic', 'cache']);
+});
+
+test('runCheck reports unknown roles offline', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'ai-models-roles-'));
+  const a = { ...adapter(), usages: [{ id: 'typo', model: 'm', provider: 'mw', role: 'speech' }] };
+  const report = await runCheck(a, root, { noRuntime: true, offline: true });
+  assert.ok(report.findings.some((f) => f.code === 'unknown-role' && f.subject === 'typo'));
 });
 
 test('runCheck reports unknown needs offline', async () => {

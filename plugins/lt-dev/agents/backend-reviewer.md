@@ -148,7 +148,8 @@ done
   - [ ] Every mutating tool sets `readonly mutating = true`; every destructive tool sets `readonly destructive = true` (the confirmation gate and tool-grant logic key off these flags)
   - [ ] Tools that modify state implement `authorize(args, ctx)` so plan-mode pre-flight can refuse the run without partial execution
   - [ ] If `ai.mcp` is set: `@modelcontextprotocol/sdk` is in the project's dependencies (lazy-imported peer; otherwise `/ai/mcp` returns 503)
-  - [ ] If `ai.mcp.oauth: true`: `main.ts` calls `mountAiMcpOAuth(app)` AND `CoreAiMcpOAuthService.authorizeConsent()` is overridden with the project's login/consent UI
+  - [ ] If `ai.mcp.oauth: true`: `NSC__BASE_URL` is set for every deployed environment (the issuer; nest-server 11.43.0+ mounts the OAuth router and the consent page itself, so `main.ts` needs no `mountAiMcpOAuth(app)`). An own consent page (`authorizeConsent()` / `renderConsentPage()` override) issues a code only on the consent form's POST with a CSRF token, never on GET, and restricts who may use MCP through `ai.mcp.roles` / `mayUseMcp()`, not inside the consent step
+  - [ ] Tool results: no tool returns a secret-named field on purpose (nest-server 12.10.0+ strips them from every result, so a client relying on one breaks). If `ai.agentFunctions` is set: every agent function that is not for every signed-in user carries `@Roles()` or `@AiAgentFunction({ roles })`, every one that changes data `mutating` / `destructive`
   - [ ] Reference: `generating-nest-servers` skill → `reference/ai-module-integration.md`
 
 #### Layer 3b: Prefer Model Instances in Responses — Plain Objects Lose Model-Specific securityCheck

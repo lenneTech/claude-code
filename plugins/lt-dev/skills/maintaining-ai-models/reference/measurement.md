@@ -71,11 +71,21 @@ came from another model or more than one route. Group further with `--group conf
 - **Reasoning settings are measured, not assumed.** Each setting is its own configuration
   (`none`, `low`, default). Observed: `reasoning_effort: "none"` worked for Qwen3.6/3.8 on mittwald,
   `low` behaved like the default for Qwen3.6, `chat_template_kwargs` was ignored by the gateway,
-  and Qwen3.8 reasons at `xhigh` by default (33 s instead of 3 s).
+  and Qwen3.8 reasons at `xhigh` by default (33 s instead of 3 s). Probe a new model's switch
+  before the run: two models added in 2026-11 honoured a top-level `reasoning_effort: "none"`, so
+  the application needed no change; `low` doubled one of them's time for about two points.
+- **A model's capabilities limit its routes.** A text-only model is a candidate for the text
+  routes (text layer, the analysis after OCR) and for text tasks, never for the image route; set
+  up only the configurations it can serve.
 - **Time only first calls.** Repeats of an identical request may come from a gateway cache; vary
   the prompt or mark the row `cached`.
 - **Do not parallelise and do not retry.** Concurrent calls measure the queue; a retry quietly
-  improves a candidate's score.
+  improves a candidate's score. The one exception is the gateway's rate limit (HTTP 429): that
+  request never reached the model, so scoring it counts the provider's quota against the
+  candidate. Retry exactly that failure after a pause, and keep every other one as a result.
+  Observed: one provider allows 60 requests a minute per key; five parallel streams plus a
+  scratch script on the same key lost 13 cases, and the application reported each 429 inside its
+  own HTTP 500, so match the status in the error text, not the outer status code.
 - **Repeat.** One pass is a sample of one; three passes before moving production.
 - **Parallel streams only for quality.** Running several configurations at once shortens a long
   matrix, and the scores stay valid; the latencies do not. Re-measure the finalists' latency
@@ -103,6 +113,13 @@ counts depends on who waits, which the usage's `latency` class in the adapter re
 
 Measure latency where the user feels it: through the application path, first calls only, and as
 P90 as well as median, because the slow tail is what an interactive user remembers.
+
+For an assistant without ground truth, quality is whether the answer keeps the prompt's form
+rules: length, no list, the language, and the register. Count them per answer with simple
+patterns (sentences, list markers, "du"/"Sie" or the language's equivalent). Observed: the model
+in production addressed the user directly in most explanations and mixed the informal and the
+formal form, while the prompt asked for neither; measure a sharper prompt on the current model
+before switching models for it.
 
 Read the failures, not only the rates: swapping the customer's and the supplier's article number
 is worse than an empty field, because the empty field is visible and the swapped one looks right.

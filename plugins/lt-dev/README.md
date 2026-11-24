@@ -112,6 +112,22 @@ parking ticket after ticket. Each run ends with an `AUTOPILOT-RESULT:` line; `AU
 `commands/ticket-cycle.md` → "Autopilot". The autopilot never publishes content, never promotes `dev` into a higher
 branch, never sets a ticket to Done, and never bypasses a hook or gate.
 
+## A whole project in one run
+
+```
+/lt-dev:ticket-batch [<Linear project>]
+```
+
+Works every ticket of the project in Open or Fix needed that is yours or unassigned, each through
+`/lt-dev:ticket-cycle`; without a project it takes the one of the current repository. All questions come first: one
+`ticket-analyst` per ticket prepares the relevance check, the ADR check and a decision brief for every open point, read-only
+and in parallel, and you settle everything in a few rounds, including the review and the Linear status after the
+merge. The tickets are then built one after another without a question, each on top of the one before it, so the last
+branch is exactly what you test and what lands. You get one test package for all tickets on a prepared stack and
+approve once; only then are the tickets merged in order, each merge request with its own commits only, followed by one
+deploy check. A question that comes up during the build is set aside and asked in one round before the test. Content
+work and tickets of other repositories stay out, and the run's state survives a `/clear`.
+
 ## Framework consumption modes (nest-server)
 
 lenne.Tech API projects can consume `@lenne.tech/nest-server` in one of two modes:

@@ -212,11 +212,12 @@ export function runInventory(adapter, root, { catalogIds, noRuntime } = {}) {
 
 // ── HTTP ─────────────────────────────────────────────────────────────────────
 
-async function http(url, { body, headers = {}, method = 'GET', timeoutMs = 60_000 } = {}) {
+async function http(url, { body, form, headers = {}, method = 'GET', timeoutMs = 60_000 } = {}) {
   const started = Date.now();
+  // A multipart form (audio upload) sets its own Content-Type with the boundary.
   const res = await fetch(url, {
-    body: body === undefined ? undefined : JSON.stringify(body),
-    headers: { ...(body === undefined ? {} : { 'Content-Type': 'application/json' }), ...headers },
+    body: form ?? (body === undefined ? undefined : JSON.stringify(body)),
+    headers: { ...(body === undefined || form ? {} : { 'Content-Type': 'application/json' }), ...headers },
     method,
     signal: AbortSignal.timeout(timeoutMs),
   });
@@ -395,6 +396,8 @@ const NEED_TO_CAP = { embeddings: 'embeddings', ocr: 'ocr', tools: 'tools', visi
 
 /** The needs the probes and the catalog comparison understand; `max-images:<n>` is the one pattern. */
 export const KNOWN_NEEDS = ['embeddings', 'json', 'ocr', 'reasoning-off', 'tools', 'vision'];
+/** The roles `probesFor` tells apart; any other role would silently get the chat probes. */
+export const KNOWN_ROLES = ['audio', 'chat', 'embeddings', 'rerank', 'vision'];
 
 /** A need nobody checks is silent: a typo or an unknown word gets an action finding. */
 export function unknownNeeds(adapter) {
@@ -404,6 +407,20 @@ export function unknownNeeds(adapter) {
       if (KNOWN_NEEDS.includes(need) || /^max-images:\d+$/.test(need)) continue;
       findings.push(finding(1, 'unknown-need', u.id, `usage ${u.id}: need "${need}" is not checked by anything (known: ${KNOWN_NEEDS.join(', ')}, max-images:<n>)`, { model: u.model }));
     }
+  }
+  return findings;
+}
+
+/**
+ * A role nothing knows is probed as a chat model. A typo (`reranker`) or a role the script does not
+ * cover yet then fails the chat probe and reads as an urgent model problem, as a reranker and a
+ * Whisper model did on mittwald before their roles had probes (2026-11-18).
+ */
+export function unknownRoles(adapter) {
+  const findings = [];
+  for (const u of adapter.usages ?? []) {
+    if (u.role === undefined || KNOWN_ROLES.includes(u.role)) continue;
+    findings.push(finding(1, 'unknown-role', u.id, `usage ${u.id}: role "${u.role}" is not known, so it is probed as a chat model (known: ${KNOWN_ROLES.join(', ')})`, { model: u.model }));
   }
   return findings;
 }
@@ -748,11 +765,73 @@ const PROBES = {
     const want = ctx.usage.params?.dims;
     return { dims, ok: r.status < 400 && (!want || dims === want), status: r.status };
   },
+  // A reranker answers on the rerank endpoint (Cohere/Jina shape), never on /chat/completions:
+  // the chat probe got HTTP 404 "unknown model name" for a model the catalog lists (2026-11-18).
+  async rerank(ctx) {
+    const r = await ctx.post('/rerank', {
+      documents: ['Cats are small domesticated felines that people keep as pets.', 'The central bank raised its interest rate by a quarter point.'],
+      model: ctx.usage.model,
+      query: 'Which text is about a pet animal?',
+    });
+    const results = r.json?.results ?? r.json?.data;
+    const ranked = Array.isArray(results)
+      ? [...results].sort((a, b) => (b.relevance_score ?? b.score ?? 0) - (a.relevance_score ?? a.score ?? 0))
+      : [];
+    return {
+      ms: r.ms,
+      ok: r.status < 400 && ranked.length > 0,
+      status: r.status,
+      text: r.status < 400 ? undefined : r.text.slice(0, 80),
+      topIndex: ranked[0]?.index ?? null,
+    };
+  },
+  // A speech-to-text model answers on the transcription endpoint, with a short audio file. Only the
+  // shape is checked: Whisper invents text for silence (" Vielen Dank." from whisper-large-v3-turbo on
+  // mittwald, 2026-11-18), so a text comparison would always fail.
+  async transcription(ctx) {
+    const form = new FormData();
+    form.append('file', new Blob([silentWav()], { type: 'audio/wav' }), 'probe.wav');
+    form.append('model', ctx.usage.model);
+    const r = await ctx.postForm('/audio/transcriptions', form);
+    return {
+      ms: r.ms,
+      ok: r.status < 400 && typeof r.json?.text === 'string',
+      status: r.status,
+      text: String(r.json?.text ?? r.text).slice(0, 80),
+    };
+  },
 };
 
-/** The probes a usage gets: always basic and cache; the rest from `needs`. */
+/** One second of silence as a 16 kHz mono 16-bit WAV: the smallest valid upload for a transcription probe. */
+export function silentWav(seconds = 1, rate = 16000) {
+  const data = Buffer.alloc(seconds * rate * 2);
+  const header = Buffer.alloc(44);
+  header.write('RIFF', 0);
+  header.writeUInt32LE(36 + data.length, 4);
+  header.write('WAVE', 8);
+  header.write('fmt ', 12);
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20); // PCM
+  header.writeUInt16LE(1, 22); // mono
+  header.writeUInt32LE(rate, 24);
+  header.writeUInt32LE(rate * 2, 28);
+  header.writeUInt16LE(2, 32);
+  header.writeUInt16LE(16, 34);
+  header.write('data', 36);
+  header.writeUInt32LE(data.length, 40);
+  return Buffer.concat([header, data]);
+}
+
+/**
+ * Roles whose models are not chat models. Their one probe uses the endpoint the application calls;
+ * chat probes (basic, cache and the needs-driven ones) would only ask an endpoint that does not serve them.
+ */
+export const ROLE_PROBES = { audio: 'transcription', rerank: 'rerank' };
+
+/** The probes a usage gets: a chat usage basic and cache plus the rest from `needs`; other roles their own endpoint. */
 export function probesFor(usage) {
   if (usage.role === 'embeddings' || (usage.needs ?? []).includes('embeddings')) return ['embeddings'];
+  if (Object.hasOwn(ROLE_PROBES, usage.role ?? '')) return [ROLE_PROBES[usage.role]];
   const set = ['basic', 'cache'];
   for (const need of usage.needs ?? []) {
     if (PROBES[need] && !set.includes(need)) set.push(need);
@@ -805,8 +884,11 @@ export function judgeProbes(usage, results) {
       findings.push(finding(0, 'image-limit-headroom', usage.id, `usage ${usage.id}: ${usage.model} accepts more than the ${maxImagesOf(usage)} images per request the application sends; more pages per request are possible (measure before changing the batch size)`, { model: usage.model }));
     } else if (name === 'budget' && r.emptyOnLength) {
       findings.push(finding(1, 'budget-eaten-by-reasoning', usage.id, `usage ${usage.id}: at a small max_tokens the answer comes back EMPTY (reasoning consumed the budget) — check the usage's maxTokens against reasoning plus answer`, { model: usage.model }));
+    } else if (name === 'rerank' && r.ok && r.topIndex !== 0) {
+      // The model answers, but ranks a text about rates above the one the query asks for.
+      findings.push(finding(1, 'rerank-order-wrong', usage.id, `usage ${usage.id}: ${usage.model} ranked the unrelated document first (index ${r.topIndex}) — check that the ID still serves a reranker`, { model: usage.model }));
     } else if (!r.ok && !r.skipped) {
-      const urgent = ['basic', 'embeddings', 'ocr', 'vision'].includes(name);
+      const urgent = ['basic', 'embeddings', 'ocr', 'rerank', 'transcription', 'vision'].includes(name);
       findings.push(finding(urgent ? 2 : 1, `probe-${name}-failed`, usage.id, `usage ${usage.id}: probe ${name} failed (${JSON.stringify(r).slice(0, 160)})`, { model: usage.model }));
     }
   }
@@ -874,7 +956,8 @@ export async function runProbes(adapter, { only } = {}) {
     }
     const base = provider.baseUrl.replace(/\/$/, '');
     const post = (path, body) => http(`${base}${path}`, { body, headers: authHeaders(provider, key), method: 'POST', timeoutMs: 180_000 });
-    const ctx = { chat: (body) => post('/chat/completions', body), post, usage };
+    const postForm = (path, form) => http(`${base}${path}`, { form, headers: authHeaders(provider, key), method: 'POST', timeoutMs: 180_000 });
+    const ctx = { chat: (body) => post('/chat/completions', body), post, postForm, usage };
     const results = {};
     for (const name of probesFor(usage)) {
       try {
@@ -1067,7 +1150,7 @@ export function fingerprintOf(report) {
 }
 
 export async function runCheck(adapter, root, opts = {}) {
-  const findings = [...unknownNeeds(adapter), ...compareReview(adapter)];
+  const findings = [...unknownNeeds(adapter), ...unknownRoles(adapter), ...compareReview(adapter)];
   const catalogs = {};
   if (!opts.offline) {
     for (const p of adapter.providers) {

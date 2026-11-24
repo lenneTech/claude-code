@@ -68,11 +68,11 @@ holds one.
 | `project` | no | Name in reports and tickets; default `CI_PROJECT_PATH` or the folder name |
 | `providers[].id` | yes | Referenced by `usages[].provider` |
 | `providers[].kind` | yes | `openai` (any OpenAI-compatible endpoint), `mittwald` (OpenAI-compatible plus lifecycle from mittwald's developer portal), `anthropic` (catalog only) |
-| `providers[].baseUrl` | yes, except `anthropic` | Up to `/v1`; the script appends `/models`, `/chat/completions`, `/embeddings` |
+| `providers[].baseUrl` | yes, except `anthropic` | Up to `/v1`; the script appends `/models`, `/chat/completions`, `/embeddings`, `/rerank`, `/audio/transcriptions` |
 | `providers[].keyEnv` | yes | Name of the environment variable with the key. A key in the adapter is refused |
 | `usages[].id` | yes | One task the application gives a model (summarize, OCR, import mapping …) |
 | `usages[].model` | yes | The model ID exactly as the provider spells it |
-| `usages[].role` | no | `chat`, `vision`, `embeddings`, `audio`; candidates for a usage share its role |
+| `usages[].role` | no | `chat`, `vision`, `embeddings`, `rerank`, `audio` (speech to text); candidates for a usage share its role. It decides the probes: `embeddings`, `rerank` and `audio` get one probe on their own endpoint (`/embeddings`, `/rerank` with a query and two documents, `/audio/transcriptions` with a one-second WAV) and no chat probes, which those models do not serve. Any other word is reported as `unknown-role`, because it would be probed as a chat model |
 | `usages[].path` | no | The route through the application (e.g. `fast-path`, `text-layer`, `ocr+analysis`). Some routes accept only some models (a text route only text-only registered models); benchmark rows report the path they actually took |
 | `usages[].needs` | no | Capabilities the usage depends on, each one a probe: `vision` (answers a question about an image), `ocr` (transcribes the text in an image; a document-OCR model such as GLM-OCR is listed with `ocr`, not `vision`), `json` (`response_format: json_object`), `tools` (native tool calls, not JSON in the text), `reasoning-off`, `embeddings`, `max-images:<n>`. Any other word is reported as `unknown-need`, because nothing would check it |
 | `usages[].latency` | recommended | How much speed counts: `interactive` when a person waits for the answer (chat, assistant, inline generation, search), `background` when the call is one step of a longer process whose other steps take longer anyway (document analysis, import, batch). Decides how a measurement weighs latency against quality (`measurement.md`, "Reading the result") |
