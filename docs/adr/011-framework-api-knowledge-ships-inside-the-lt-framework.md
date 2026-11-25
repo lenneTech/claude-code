@@ -5,7 +5,7 @@
 
 ## Context
 
-`docs/FRAMEWORK-COMPATIBILITY.md`, added with version 7.9.0 (acde435, 2026-04-04, "guide agents to read framework
+`docs/FRAMEWORK-COMPATIBILITY.md` (since 2026-11-25 `docs/internal/`), added with version 7.9.0 (acde435, 2026-04-04, "guide agents to read framework
 source before guessing via hooks and skills"), records the problem: Claude Code treated `@lenne.tech/nest-server` and
 `@lenne.tech/nuxt-extensions` "as black boxes" and regularly failed at the correct use of framework APIs, at error
 diagnosis ("guesses instead of reading source code") and at extending core modules, although lt-dev carried "260+
@@ -13,7 +13,7 @@ KB, 14 reference documents".
 
 ## Decision
 
-A three-layer approach, recorded in `docs/FRAMEWORK-COMPATIBILITY.md`:
+A three-layer approach, recorded in `docs/internal/FRAMEWORK-COMPATIBILITY.md`:
 
 1. The framework packages ship their own knowledge in their npm `files`: nest-server publishes `CLAUDE.md`, a
    `FRAMEWORK-API.md` generated from its source, `.claude/rules/`, `docs/` and `migration-guides/`; nuxt-extensions
@@ -28,14 +28,14 @@ of the API.
 
 ## Rationale
 
-`docs/FRAMEWORK-COMPATIBILITY.md:24`, "Why the Plugin Alone Isn't Enough":
+`docs/internal/FRAMEWORK-COMPATIBILITY.md:24`, "Why the Plugin Alone Isn't Enough":
 
 - "Skills load only on trigger"
 - "260 KB exceeds context — even when loaded, much is compressed/discarded"
 - "The hook only says 'use Skill X'", giving "no concrete file paths or API info"
 - "Abstract pattern descriptions instead of actual TypeScript interfaces and method signatures"
 
-`docs/FRAMEWORK-COMPATIBILITY.md:66`: "Claude Code does NOT automatically read `CLAUDE.md` from `node_modules/`.
+`docs/internal/FRAMEWORK-COMPATIBILITY.md:66`: "Claude Code does NOT automatically read `CLAUDE.md` from `node_modules/`.
 That's why Layer 2 is needed."
 
 ## Rejected alternatives
@@ -53,6 +53,6 @@ That's why Layer 2 is needed."
 
 - acde435 (2026-04-04) "chore: bump version to 7.9.0", body "feat: guide agents to read framework source before
   guessing via hooks and skills": adds `docs/FRAMEWORK-COMPATIBILITY.md`
-- `docs/FRAMEWORK-COMPATIBILITY.md:24-30`, `:66`, sections "Layer 1" to "Layer 3" and "Option A" to "Option C"
+- `docs/internal/FRAMEWORK-COMPATIBILITY.md:24-30`, `:66`, sections "Layer 1" to "Layer 3" and "Option A" to "Option C"
 - `plugins/lt-dev/hooks/scripts/detect-nest-server.sh`, `detect-nuxt.sh`;
   `plugins/lt-dev/skills/generating-nest-servers/SKILL.md:317`, `plugins/lt-dev/skills/developing-lt-frontend/SKILL.md:60`
