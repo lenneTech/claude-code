@@ -128,7 +128,9 @@ The Chrome DevTools MCP (`mcp__…_chrome-devtools__*`) drives a **real Chrome i
 
 **Close the browser after the tests:**
 
-- When the browser work for the current task is finished, close every page you opened via `close_page` so the MCP can release the Chrome instance. **A browser must never linger idle after a test walk** — that is wasted memory for the rest of the session.
+- When the browser work for the current task is finished, close every page you opened via `close_page`. **A browser must never linger idle after a test walk** — that is wasted memory for the rest of the session.
+- chrome-devtools-mcp never closes its last page, so `about:blank` would keep a Chrome window open until the session ends. Once a `close_page` leaves only `about:blank`, the lt-dev hook `close-idle-chrome-mcp` ends this session's whole automation Chrome, window included, and never touches another session's browser or the developer's own profile. Do not call `list_pages` or another DevTools tool afterwards to check: any such call starts a fresh browser, which is also how the next walk gets one. `CHROME_MCP_KEEP_BROWSER=1` keeps the browser open for debugging by hand.
+- Claude in Chrome (the developer's own browser): close every tab of the tab group you opened, so its window closes with the last tab; the developer's browser itself stays open.
 - Do this **even when you leave the dev server (`lt dev up`) running** for the user's own re-test: the user opens their own browser against the live stack, so Claude's automation browser has no reason to stay open. Server-lifecycle and browser-lifecycle are decided independently.
 
 ## Docker resources, worktrees and clones: remove exactly what you created
@@ -268,7 +270,7 @@ Do NOT pick a random alternative port for non-migrated projects — their hardco
 Before reporting a task complete:
 
 - [ ] If `lt dev up` was used: `lt dev down` was called (or the user explicitly agreed to leave it running)
-- [ ] Every Chrome DevTools MCP tab opened during testing was closed via `close_page` — `list_pages` shows no leftover automation tab (this is independent of the dev-server keep/stop decision)
+- [ ] Every Chrome DevTools MCP tab opened during testing was closed via `close_page`, and the last `close_page` response listed only `about:blank`, so the hook closed the browser (this is independent of the dev-server keep/stop decision). No further DevTools call to check: it would start a fresh browser
 - [ ] All background servers started via `run_in_background: true` have been terminated with `pkill`
 - [ ] `pgrep -f "nuxt dev"` and `pgrep -f "nest start"` (and any `build --watch`) return no matches — or the user has been asked and agreed to leave them running
 - [ ] The active project's URLs are free (use `lt dev status` for lt-projects, `lsof -i :3000 -i :3001` for the default fallback) unless the user asked for a running server

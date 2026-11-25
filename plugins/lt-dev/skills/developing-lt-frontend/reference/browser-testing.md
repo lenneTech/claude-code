@@ -1,6 +1,6 @@
 # Browser Testing (Chrome DevTools MCP)
 
-**For direct browser testing and debugging, use the Chrome DevTools MCP (`mcp__plugin_lt-dev_chrome-devtools__*`) unless the user asks for another tool.** This applies to snapshots, navigation, interaction, network analysis, and performance traces. The Playwright-based Browser MCP (`mcp__MCP_DOCKER__browser_*`) is used for creating and running Playwright E2E tests.
+**For direct browser testing and debugging, use the Chrome DevTools MCP (`mcp__plugin_lt-dev_chrome-devtools__*`) unless the user asks for another tool.** This applies to snapshots, navigation, interaction, network analysis, and performance traces. The Playwright-based Browser MCP (`mcp__MCP_DOCKER__browser_*`) is used for creating and running Playwright E2E tests. The Claude and 1Password extensions in the developer's own browser are helpers next to it, for stage logins, sign-ins the temporary profile lacks and recordings, under the rules in [validating-changes-in-browser](../../validating-changes-in-browser/SKILL.md#helper-extensions-in-the-developers-browser).
 
 **After implementing each feature, verify it works in the browser.**
 
@@ -53,7 +53,7 @@
 The Chrome DevTools MCP drives a **real Chrome instance** — every `new_page` is a live tab consuming memory until closed. Keep the footprint minimal and release it when done:
 
 - **One tab, reused.** Open the app once with `new_page`, then move between pages with `navigate_page`. Do not stack a fresh tab per check. `list_pages` shows what is open; close any surplus with `close_page`.
-- **Close the browser after verifying.** When you finish verifying the feature(s), `close_page` every tab you opened so the browser does not linger idle for the rest of the session — the same discipline you apply to dev servers. See [managing-dev-servers](../../managing-dev-servers/SKILL.md).
+- **Close the browser after verifying.** When you finish verifying the feature(s), `close_page` every tab you opened so the browser does not linger idle for the rest of the session — the same discipline you apply to dev servers. Once only `about:blank` is left, the lt-dev hook closes the whole Chrome window; do not call another DevTools tool afterwards to check, it would start a fresh browser. See [managing-dev-servers](../../managing-dev-servers/SKILL.md).
 
 ## Nuxt UI MCP (Component Documentation)
 

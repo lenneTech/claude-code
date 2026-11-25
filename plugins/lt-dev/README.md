@@ -67,6 +67,12 @@ CHROME_MCP_CHANNEL=stable claude   # force stable even if Canary is installed
 CHROME_MCP_CHANNEL=canary claude   # force canary (only useful for testing the flag)
 ```
 
+chrome-devtools-mcp never closes its last page, so an `about:blank` window would stay open until the session ends. The PostToolUse hook `close-idle-chrome-mcp.sh` ends this session's automation Chrome, window included, as soon as a `close_page` leaves only `about:blank`; the next DevTools call starts a fresh one. It only touches Chrome on a temporary puppeteer profile below this session's own process, never another session's browser or the developer's profile. `CHROME_MCP_KEEP_BROWSER=1` keeps the browser open.
+
+### Helper extensions in the developer's browser
+
+The automated Chrome runs with a temporary profile and without extensions, which keeps walks reproducible and Lighthouse figures clean. Next to it, Claude may use two extensions in the developer's own browser, preferably in Canary: **Claude** (Claude in Chrome, connected with `/chrome`) for deployed stages and sign-ins the temporary profile lacks, batched actions and GIF recordings, and **1Password** to fill vault logins without a password ever reaching the transcript. When one is missing, Claude suggests it once with its install link. The rules are in the `validating-changes-in-browser` skill, section "Helper extensions in the developer's browser".
+
 ## Parallel sessions on one project
 
 Claude Code sessions can list and message each other (v2.1.224+, on by default). The plugin uses that sparingly and in a fixed order.

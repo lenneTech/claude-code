@@ -2,6 +2,26 @@
   "$comment": "Rules that live in more than one file. Checked by scripts/rule-invariants.mjs in Plugin CI and /lt-dev:plugin:check. When a rule changes on purpose, change every copy listed here in the same edit, or this config.",
   "identicalSections": [
     {
+      "name": "Helper extensions of the agents with browser access",
+      "heading": "## Helper Extensions",
+      "files": [
+        "agents/frontend-dev.md",
+        "agents/frontend-reviewer.md",
+        "agents/ux-reviewer.md",
+        "agents/a11y-reviewer.md"
+      ]
+    },
+    {
+      "name": "Browser cleanup of the agents with browser access: close the last page so the lt-dev hook ends the automation Chrome",
+      "heading": "## Browser Cleanup",
+      "files": [
+        "agents/frontend-dev.md",
+        "agents/frontend-reviewer.md",
+        "agents/ux-reviewer.md",
+        "agents/a11y-reviewer.md"
+      ]
+    },
+    {
       "name": "Reporting Bar of the reviewer agents",
       "heading": "## Reporting Bar",
       "files": [
@@ -527,6 +547,20 @@
     }
   ],
   "forbidden": [
+    {
+      "name": "no DevTools call after the walk's last close_page: the hook has closed the automation Chrome, and list_pages would start a fresh one that stays open",
+      "pattern": "`list_pages` (should )?shows? no leftover",
+      "files": [
+        "skills/managing-dev-servers/SKILL.md",
+        "skills/validating-changes-in-browser/SKILL.md",
+        "skills/developing-lt-frontend/reference/browser-testing.md",
+        "commands/ticket-cycle.md",
+        "agents/frontend-dev.md",
+        "agents/frontend-reviewer.md",
+        "agents/ux-reviewer.md",
+        "agents/a11y-reviewer.md"
+      ]
+    },
     {
       "name": "enum alone does not type the Mongoose path; the corrected @UnifiedField table pairs enum with type",
       "pattern": "the enum option decides the type",

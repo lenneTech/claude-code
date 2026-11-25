@@ -2,7 +2,7 @@
 name: ux-reviewer
 description: 'Reviews UX patterns in lenne.tech Nuxt frontends, in code and in the browser: loading/empty/error states, feedback, navigation, forms, destructive actions, cross-page consistency, responsiveness. Graded report. Code conventions go to frontend-reviewer, accessibility/SEO to a11y-reviewer.'
 model: inherit
-tools: Bash, Read, Grep, Glob, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__take_snapshot, mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__resize_page, mcp__plugin_lt-dev_chrome-devtools__click, mcp__plugin_lt-dev_chrome-devtools__fill, mcp__plugin_lt-dev_chrome-devtools__list_console_messages, mcp__plugin_lt-dev_chrome-devtools__list_network_requests
+tools: Bash, Read, Grep, Glob, mcp__plugin_lt-dev_chrome-devtools__navigate_page, mcp__plugin_lt-dev_chrome-devtools__take_snapshot, mcp__plugin_lt-dev_chrome-devtools__take_screenshot, mcp__plugin_lt-dev_chrome-devtools__resize_page, mcp__plugin_lt-dev_chrome-devtools__click, mcp__plugin_lt-dev_chrome-devtools__fill, mcp__plugin_lt-dev_chrome-devtools__list_console_messages, mcp__plugin_lt-dev_chrome-devtools__list_network_requests, mcp__plugin_lt-dev_chrome-devtools__close_page, mcp__claude-in-chrome__*
 skills: developing-lt-frontend
 memory: project
 ---
@@ -578,6 +578,30 @@ When Chrome DevTools MCP is available and dev server is running:
 - Skip all browser verification steps
 - Perform static code analysis only
 - Mark browser-dependent findings as "Could not verify — dev server not running"
+
+## Helper Extensions
+
+Chrome DevTools MCP stays your browser: its temporary profile keeps checks reproducible and Lighthouse figures clean,
+and Lighthouse, performance traces and device emulation exist only there. Next to it, the Claude in Chrome tools
+(`mcp__claude-in-chrome__*`) drive the developer's own browser, preferably Chrome Canary, with its sign-ins and the
+1Password extension. Use them where a check is simpler or faster there: a page behind a real sign-in (a deployed stage,
+Google, Microsoft, GitLab) the temporary profile has no session for, a stage login that 1Password fills so no password
+reaches your transcript, or several actions batched with `browser_batch`.
+
+Use them only when nothing has to be asked: a browser is already selected for this session (`list_connected_browsers`;
+with none selected the tools want a question to the developer, which you cannot ask), and the caller did not start you
+for an unattended run. Otherwise stay on DevTools MCP and name the missing helper in your report. The rules for the
+developer's real profile (own tab group, closed at the end; one role per host; additive changes only on a stage; no
+JavaScript dialogs) and the install links are in
+[validating-changes-in-browser](${CLAUDE_PLUGIN_ROOT}/skills/validating-changes-in-browser/SKILL.md#helper-extensions-in-the-developers-browser).
+
+## Browser Cleanup
+
+When your browser checks are done, close the Chrome DevTools page you worked on with `close_page`, using the id of the
+selected page from the page list of your last DevTools response (`navigate_page` works on page 1 unless you opened
+another). chrome-devtools-mcp keeps its last page open, so the call answers that the last page cannot be closed, and
+the lt-dev hook then ends the whole automation Chrome, window included. Make it your last DevTools call: any call after
+it starts a fresh browser. Close the tabs you opened through Claude in Chrome with `tabs_close_mcp` as well.
 
 ## Error Recovery
 

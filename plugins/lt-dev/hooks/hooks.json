@@ -124,6 +124,17 @@
             "if": "Edit(**/app/core/**)"
           }
         ]
+      },
+      {
+        "matcher": "^mcp__plugin_lt-dev_chrome-devtools__close_page$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/close-idle-chrome-mcp.sh\"",
+            "timeout": 10,
+            "statusMessage": "Closing the automation browser when no page is left"
+          }
+        ]
       }
     ],
     "PostToolUseFailure": [
