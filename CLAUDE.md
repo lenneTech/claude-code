@@ -169,7 +169,7 @@ claude-code/
 │   └── marketplace.json      # Marketplace definition
 ├── .github/workflows/        # plugin-ci.yml (validate, tests, budgets, invariants), secrets-guard.yml (scanner backstop)
 ├── .githooks/                # pre-commit + pre-push secret/client-data guard (enable with scripts/install-hooks.sh)
-├── docs/                     # adr/ (this repository's ADR log, index in adr/README.md), FRAMEWORK-COMPATIBILITY.md
+├── docs/                     # adr/ (this repository's ADR log, index in adr/README.md), user docs published on docs.lennetech.app, internal/ (not published, e.g. FRAMEWORK-COMPATIBILITY.md)
 ├── scripts/                  # Repository scripts: bump-version.ts (release), install-hooks.sh, scan-secrets.sh,
 │                             # __tests__/ (scanner self-test)
 ├── plugins/
