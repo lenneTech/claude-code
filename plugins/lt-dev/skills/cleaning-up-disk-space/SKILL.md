@@ -102,7 +102,7 @@ the LaunchAgents; run `install` again after an update to refresh them. macOS onl
 | `pnpm-store:vN` | `pnpm store prune` | is the active generation; no pnpm install running |
 | `pnpm-store-old:vN` | remove the generation | older than the active one; no `links/` (global virtual store) |
 | `npm-cache`, `yarn-cache`, `bun-cache` | clear the cache | `_npx` / yarn / bun not in use |
-| `docker-build-cache` | `docker builder prune -a` | — |
+| `docker-build-cache` | `docker builder prune -a`, stopped as soon as a build starts | nothing pulls, builds or creates right now |
 | `docker-images` | `docker image rm` of every image pulled from a registry that no container uses, never forced | nothing pulls, builds or creates right now; local builds stay |
 | `docker-image-local:<image id>` | `docker image rm` of one local build (or loaded image) | still unused by any container; still not a pulled image |
 | `docker-container:<name>` | `docker rm` | still stopped |
@@ -138,6 +138,12 @@ there — that is how dev servers of parallel sessions are protected.
   → `Identity` (`Pull` or `Build`), and that is what the image guard reads. A stopped container
   keeps its image, so remove stale containers first (`docker-container:` ids) when images
   should go.
+- **A build-cache prune gives way to builds.** BuildKit holds its lock for the whole prune, and a
+  build started meanwhile waits for it. On a Mac with full swap a prune ran 79 minutes and a
+  parallel session's build failed after an hour with `spawnSync docker ETIMEDOUT` (2026-11-25).
+  The executor therefore starts no prune next to a build and stops a running one as soon as a
+  build appears; what it pruned until then stays freed. Such a `refused` line means: run the id
+  again once the build is done.
 - **Local builds are decided one by one, never by the guard.** Measured 2026-11-07 after about 50
   builds in a week: one local build image on the machine, in use, and no untagged ones, because
   every rebuild had replaced its predecessor. An unattended removal would gain close to nothing

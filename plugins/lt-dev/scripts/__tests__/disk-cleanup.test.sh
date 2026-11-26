@@ -67,6 +67,8 @@ case \"\$*\" in
   *State.FinishedAt*) awk -F'\t' -v k=\"\${@: -1}\" '\$1 == k {print \$2}' \"\$f/finished.txt\" ;;
   *State.Status*) awk -F'\t' -v k=\"\${@: -1}\" '\$1 == k {print \$2}' \"\$f/status.txt\" ;;
   'volume ls -qf dangling=true') cat \"\$f/dangling.txt\" ;;
+  builder\ prune*) echo \"docker \$*\" >> '$TMP/calls.txt'; echo \$\$ > '$TMP/prune.pid'
+    [ -z \"\${PRUNE_SLEEP:-}\" ] || { sleep \"\$PRUNE_SLEEP\"; echo prune-finished >> '$TMP/calls.txt'; } ;;
   *) echo \"docker \$*\" >> '$TMP/calls.txt' ;;
 esac"
 # `docker image inspect` / `image rm` for the image guard: rows of image.txt are
@@ -250,6 +252,27 @@ assert_line "$out" $'^ok\tdocker-image-local:sha256:ddd\tdocker image rm demo-ap
 printf '/usr/local/bin/docker build -t x .\n' > "$TMP/ps.txt"
 out="$("${CLEAN[@]}" docker-images)"
 assert_line "$out" $'^refused\tdocker-images\tDocker is pulling, building' "no image removal while a build runs"
+# BuildKit holds its lock for the whole prune: a build that starts meanwhile waits for it. Under
+# a full swap a prune took 79 min and a parallel session's build timed out after 1 h (2026-11-25).
+out="$("${CLEAN[@]}" docker-build-cache)"
+assert_line "$out" $'^refused\tdocker-build-cache\tDocker is pulling, building' "no build-cache prune while a build runs"
+grep -q 'builder prune' "$TMP/calls.txt" && fail "the refused prune never starts" || ok "the refused prune never starts"
+: > "$TMP/ps.txt"
+out="$("${CLEAN[@]}" docker-build-cache)"
+assert_line "$out" $'^ok\tdocker-build-cache\tdocker builder prune -a' "prunes the build cache when nothing builds"
+grep -q '^docker builder prune -a -f$' "$TMP/calls.txt" && ok "prune runs with -a -f" || fail "prune runs with -a -f"
+: > "$TMP/calls.txt"; rm -f "$TMP/prune.pid"
+# The build appears once the prune runs, not after a fixed delay: on a loaded machine the executor
+# reached its pre-check late, saw the build there and never pruned (4 of 8 runs failed under full
+# swap, 2026-11-25). The fake prune lasts 20 s, so a prune that is waited for cannot pass for a
+# stopped one, and the check below looks at the prune process itself.
+start=$SECONDS
+( for _ in $(seq 300); do [ -s "$TMP/prune.pid" ] && break; sleep 0.1; done
+  printf '/usr/local/bin/docker compose build api\n' > "$TMP/ps.txt" ) &
+out="$(PRUNE_SLEEP=20 LT_DISK_POLL_SECONDS=0.2 "${CLEAN[@]}" docker-build-cache)"; wait
+assert_line "$out" $'^refused\tdocker-build-cache\tstopped: a Docker build started' "a build starting mid-prune stops the prune"
+[ $((SECONDS - start)) -lt 15 ] && ok "the prune is stopped, not waited for" || fail "the prune is stopped, not waited for" "took $((SECONDS - start)) s"
+kill -0 "$(cat "$TMP/prune.pid")" 2>/dev/null && fail "the stopped prune does not run on" "prune still running" || ok "the stopped prune does not run on"
 : > "$TMP/ps.txt"
 
 out="$("${CLEAN[@]}" pnpm-store-old:v9 pnpm-store-old:v12 pnpm-store-old:v10)"

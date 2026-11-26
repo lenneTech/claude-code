@@ -47,6 +47,34 @@ act() {
   if "$@" >/dev/null 2>&1; then report ok "$id" "$what"; else report failed "$id" "$what"; fi
 }
 
+# prune_build_cache <id> — `docker builder prune -a` that gives way to builds. BuildKit holds its
+# lock for the whole prune, so a build started meanwhile waits until the prune ends: on a Mac
+# with full swap a prune ran 79 min and a parallel session's build failed after 1 h with
+# `spawnSync docker ETIMEDOUT` (2026-11-25). The prune therefore runs in the background and is
+# stopped as soon as a build, pull or create appears. Stopping it frees the builder at once and
+# keeps what was pruned until then. The prune's own processes (`docker builder prune`,
+# `docker-buildx buildx prune`) carry no busy verb, so they never stop themselves.
+prune_build_cache() {
+  local id="$1" pid kids waiter rc
+  docker builder prune -a -f >/dev/null 2>&1 &
+  pid=$!
+  while kill -0 "$pid" 2>/dev/null; do
+    waiter="$(docker_busy | head -n 1 | cut -c1-80)"
+    if [ -n "$waiter" ]; then
+      # Collect the CLI's children (the buildx plugin) before signalling: once the CLI is
+      # gone they are reparented and `pgrep -P` no longer finds them.
+      kids="$(pgrep -P "$pid" 2>/dev/null | tr '\n' ' ')"
+      # shellcheck disable=SC2086  # kids is a space-separated pid list
+      { kill -TERM "$pid" $kids && wait "$pid"; } 2>/dev/null
+      report refused "$id" "stopped: a Docker build started ($waiter); what was pruned so far stays freed, run it again later"
+      return
+    fi
+    sleep "${LT_DISK_POLL_SECONDS:-5}"
+  done
+  wait "$pid"; rc=$?
+  if [ "$rc" = 0 ]; then report ok "$id" "docker builder prune -a"; else report failed "$id" "docker builder prune -a"; fi
+}
+
 # under_home <path> — a real path strictly below $HOME that is not a symlink.
 under_home() {
   case "$1" in "$HOME"/?*) ;; *) return 1 ;; esac
@@ -84,7 +112,10 @@ clean_one() {
         case "$kind:$f" in yarn-cache:*Yarn|yarn-cache:*yarn|bun-cache:*bun*) [ -d "$f" ] && act "$id" "remove $(tilde "$f")" rm -rf "$f" ;; esac
       done ;;
 
-    docker-build-cache) act "$id" "docker builder prune -a" docker builder prune -a -f ;;
+    docker-build-cache)
+      [ -z "$(docker_busy)" ] || { report refused "$id" "Docker is pulling, building or creating right now"; return; }
+      if [ "$DRY" = 1 ]; then report dry-run "$id" "would docker builder prune -a"; return; fi
+      prune_build_cache "$id" ;;
     docker-images)
       # Only images pulled from a registry: `docker image prune -a` would take local builds along,
       # which may be the only copy of a build. Those are docker-image-local ids, one decision each.
