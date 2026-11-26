@@ -135,7 +135,11 @@ and **every** `plugins/*/plugin.json` to the same version, then commits, tags
   changes with explicit paths (`git add <paths>`, never `git add .`), then run the script. Run it
   over uncommitted content and the release ships a version number with none of that
   content. 8.15.2 shows the intended shape: a content commit, then a bump commit that
-  touches only the version files.
+  touches only the version files. Only repository admins can push to its `main`: a ruleset
+  sends everyone else through a pull request, and the script commits and tags before it
+  pushes, so a rejected push leaves a local bump commit and tag behind. Check first with
+  `gh api repos/lenneTech/claude-code --jq .permissions.admin`; on `false`, hand the release
+  to the maintainer.
 - **`claude-code-internal`** still runs `git add .` and releases the whole tree in one
   step, so run it only once every change in the tree is final.
 

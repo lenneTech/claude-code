@@ -97,12 +97,15 @@ This repository is public. Customer names, internal hosts, tokens, `.env` files 
 in it; plugins ship anonymized examples only.
 
 - **Secret guard:** after cloning, run `scripts/install-hooks.sh` once. The pre-commit and pre-push hooks run
-  `scripts/scan-secrets.sh`; `.github/workflows/secrets-guard.yml` repeats the scan in CI.
+  `scripts/scan-secrets.sh`; `.github/workflows/secrets-guard.yml` repeats the scan in CI without the internal
+  denylist, which a scheduled job in the private repository checks instead ([ADR-020](docs/adr/020-main-is-protected-by-a-ruleset-and-the-internal-denylist.md)).
 - **Checks:** `claude plugin validate plugins/<plugin>` validates a plugin. Plugin CI (`.github/workflows/plugin-ci.yml`)
   also runs the script tests, the context budgets and the rule invariants.
 - **Release:** commit the content first, then run `bun run version:patch|minor|major "<description>"`. The script
   raises the version in `package.json`, `.claude-plugin/marketplace.json` and every `plugin.json`, commits only that
-  bump (it stops when the index already holds staged changes), tags `v<version>` and pushes branch and tag.
+  bump (it stops when the index already holds staged changes), tags `v<version>` and pushes branch and tag. Only
+  repository admins can push to `main`; a ruleset sends every other change through a pull request with a green
+  secret guard, and the maintainer releases.
 - **Working with Claude Code:** [CLAUDE.md](CLAUDE.md) holds the conventions for plugin elements, the documentation
   cache under `.claude/docs-cache/` and the `/optimize` command for this repository.
 

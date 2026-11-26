@@ -1,6 +1,6 @@
 # ADR-013: Secrets and client data are kept out of the public repository by one scanner run at three layers (pre-commit, pre-push, CI); a finding is fixed by removing the value
 
-**Date:** 2026-07-18 · **Status:** accepted · **Topic:** Security
+**Date:** 2026-07-18 · **Status:** partially superseded by [ADR-020](020-main-is-protected-by-a-ruleset-and-the-internal-denylist.md) (where the denylist check runs: its consequence that CI cannot read the denylist) · **Topic:** Security
 **Origin:** reconstructed 2026-11-18 from git history, scripts/scan-secrets.sh, .githooks/, .github/workflows/secrets-guard.yml, CLAUDE.md
 
 ## Context

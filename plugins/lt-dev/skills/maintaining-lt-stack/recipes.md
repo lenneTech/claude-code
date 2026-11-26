@@ -427,7 +427,10 @@ it as one argument; `npm run` forwards it without a `--` separator.
   - **`claude-code`** commits **only the version bump** on top of `HEAD` and refuses
     to start while anything is staged; it never sweeps the tree. The release content
     is what is already committed, so commit the final changes first, with explicit
-    paths, then bump:
+    paths, then bump. Only repository admins can push to its `main` (a ruleset sends
+    everyone else through a pull request), and the script tags before it pushes; check
+    `gh api repos/lenneTech/claude-code --jq .permissions.admin` first, and on `false` hand
+    the release to the maintainer:
 
     ```bash
     bash "${CLAUDE_PLUGIN_ROOT}/scripts/change-provenance.sh"   # whose work is in the tree
