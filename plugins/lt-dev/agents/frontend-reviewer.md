@@ -488,9 +488,12 @@ Validate CSS/Tailwind usage quality:
 - [ ] **Dark mode compatible** — use semantic colors, avoid `bg-white`/`text-black`
 - [ ] **No duplicate utility patterns** — repeated class combinations (3+ times) → extract to component
 - [ ] **Max class string length** — if class string exceeds ~10 utilities, consider component extraction
+- [ ] **No text width cap without a source** — `max-w-*` on a heading, a paragraph or the wrapper around them only where the design or the project's existing pages cap the same kind of text, or on long single-column running text; a change that widens something removes the cap, it does not move it onto the neighbouring element (`developing-lt-frontend` → Gotchas)
 
 **Grep patterns:**
 ```bash
+# Width caps (each hit on text needs a source: design, existing pages, long-form body)
+grep -nE "max-w-(prose|xs|sm|md|lg|[2-7]?xl|\[)" <vue-files>
 # @apply in components (should be in assets/css/)
 grep -rn "@apply" <vue-files>
 # Inline style attributes

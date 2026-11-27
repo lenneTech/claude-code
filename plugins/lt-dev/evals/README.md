@@ -7,8 +7,9 @@ Measures what lt-dev does on the current default model instead of assuming it. R
 # Skill triggering: does the right skill fire on natural phrasing? One arm, no baseline needed.
 claude plugin eval plugins/lt-dev --tag trigger --ablation none --trust-plugin --no-publish -j 4
 
-# Output quality with and without the plugin (the Δ column is what lt-dev contributes).
-claude plugin eval plugins/lt-dev --tag quality --allow-tools Write Edit --judge-model sonnet --trust-plugin --no-publish -j 4
+# Output quality with and without the plugin (the Δ column is what lt-dev contributes). The nuxt-text-width-*
+# cases seed a project through their scaffold script, so the quality runs pass --scaffold.
+claude plugin eval plugins/lt-dev --tag quality --scaffold --allow-tools Write Edit --judge-model sonnet --trust-plugin --no-publish -j 4
 
 # Multi-step agent work (slow: minutes per run). Run it when agents or their effort policy change.
 # Its judge-scored graders review security logic, so use a strong judge.
@@ -22,8 +23,8 @@ node plugins/lt-dev/evals/selftest/selftest.mjs verify
 
 # Effort comparison: the environment variable overrides session and frontmatter effort for every run,
 # subagents included. Swap `--tag quality` for `--tag agent` to compare on agent work.
-CLAUDE_CODE_EFFORT_LEVEL=medium claude plugin eval plugins/lt-dev --tag quality --allow-tools Write Edit --judge-model sonnet --trust-plugin --no-publish -j 4
-CLAUDE_CODE_EFFORT_LEVEL=high   claude plugin eval plugins/lt-dev --tag quality --allow-tools Write Edit --judge-model sonnet --trust-plugin --no-publish -j 4
+CLAUDE_CODE_EFFORT_LEVEL=medium claude plugin eval plugins/lt-dev --tag quality --scaffold --allow-tools Write Edit --judge-model sonnet --trust-plugin --no-publish -j 4
+CLAUDE_CODE_EFFORT_LEVEL=high   claude plugin eval plugins/lt-dev --tag quality --scaffold --allow-tools Write Edit --judge-model sonnet --trust-plugin --no-publish -j 4
 ```
 
 Pass `--model <id>` to pin the model when comparing runs over time. Every run and every `llm` grader is a real model
@@ -43,6 +44,9 @@ call that counts against the plan's usage; `--max-cost-usd` caps the list-price 
 | `quality/` | `unslop-copy` | A prose rewrite without AI tells that keeps every fact |
 | `quality/` | `nuxt-landing-design` | A landing page without a design mockup stays on Nuxt UI page components and semantic colors, free of the model's default styles |
 | `quality/` | `nuxt-landing-custom-design` | The same page with an explicit request for a distinctive look of its own, where the model writes its own Tailwind and its default styles show up |
+| `quality/` | `nuxt-text-width-edit` | A press page whose section intros sit in a `max-w-3xl` wrapper gets the review request "all headings full width, contact section in one column": the cap goes instead of moving onto the paragraphs or onto the contact text that leaves its column (`--scaffold`) |
+| `quality/` | `nuxt-text-width-blank` | A new press page in a project with neither a design nor another public page: no `max-w-*` on headings, paragraphs or the wrapper around them (`--scaffold`) |
+| `quality/` | `nuxt-text-width-new` | The same page next to an existing public page without text caps: the run follows that page (`--scaffold`) |
 | `agent/` | `nest-module-agent` | Multi-step agent work: the `backend-dev` agent builds a complete module (model, service, controller, inputs) to the conventions the `lt server module` generator produces |
 | `agent/` | `nuxt-feature-agent` | The `frontend-dev` agent builds a list page and a create modal against generated API types (`types.gen.ts`, `sdk.gen.ts`): Valibot, `UForm`, `useOverlay`, semantic colors, loading/empty/error states |
 | `agent/` | `code-review-agent` | The `code-reviewer` agent reviews a commit with five seeded defects (public write endpoints, `$where` injection, purchase price leak, wrong discount formula, missing tests); judge-scored recall plus a false-alarm check |
@@ -113,6 +117,7 @@ Compare new runs against these; a drop is a finding.
 | `nuxt-landing-custom-design` (4 runs per arm) | without lt-dev 8 of 10 default-style checks fail; before the "Design Without a Mockup" list lt-dev still let monospace labels through in 4/4; with the list 1.00 in 4/4 and no replacement pattern in the traces |
 | `code-review-blast-radius-agent`, `bugfix-shared-helper-agent`, `overbuild-date-field-agent` (2026-10-17, 5 runs, judge `claude-opus-5-5`) | 1.00 each on main: every review names the broken `CartService` caller although it sits outside the diff, every fix guards the shared `debit()` once, every date field reuses `FormDateField`; 145 s, 192 s and 96 s per run. Opus 5.5 with lt-dev does these by itself, so a rule aimed at them has no headroom to show |
 | `selftest` (2026-10-17, judge `claude-opus-5-5`, 1 run per reference) | 73 of 73 verdicts as expected; the 69 judge-scored ones by three unanimous votes, the 4 regex ones deterministic: all 15 references across the three code-review cases, the bug-fix case and the over-build case, including the near misses (right line, wrong problem) and the transfer-only fix; 167 s and $2.85 for the suite |
+| `nuxt-text-width-edit`, `nuxt-text-width-blank`, `nuxt-text-width-new` (2026-11-27, 5 runs per arm, regex graders) | main 0.50 / 0.93 / 1.00: in the edit case every run moved the `max-w-3xl` from the intro wrappers onto the paragraphs and gave one to the contact text that left its column, and one blank run capped its section intros at `max-w-2xl`. With the `developing-lt-frontend` text-width gotcha alone 0.50 / 1.00 / 1.00: the edit runs never loaded the skill. With the gotcha plus the `text-width-guard.sh` PostToolUse hook 1.00 / 1.00 / 1.00: every edit run wrote the cap, got the hint and removed it, 44-62 s against 32-39 s on main. Guard `nuxt-landing-custom-design` (4 runs per arm) 1.00 on main and with the hook; `nuxt-landing-design` 1.00 with the hook (4 runs), as in the row above |
 
 The plugin's measurable contribution is lt-specific convention (decorators, base classes); generic practice such as
 Valibot forms or plain prose the model already follows unaided. The `quality` graders check that conventions are

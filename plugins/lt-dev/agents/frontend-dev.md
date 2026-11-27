@@ -437,6 +437,7 @@ const { user, isAuthenticated, signIn, signOut } = useLtAuth()
 | Colors | Semantic only: `primary`, `error`, `success`, `warning`, `info`, `neutral` |
 | Responsive | Mobile-first with Tailwind breakpoints (`sm:`, `md:`, `lg:`) |
 | Components | Nuxt UI first — consult MCP before building custom |
+| Text width | No `max-w-*` on headings or paragraphs without a source (design, the project's existing pages, long-form running text); "make it wider" removes the cap instead of moving it (`developing-lt-frontend` → Gotchas) |
 
 **Use semantic colors** (`text-error`, `bg-primary`) instead of hardcoded ones (`text-red-500`, `bg-blue-600`).
 
