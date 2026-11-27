@@ -53,7 +53,7 @@ open_stdin_case() {
 
 SCRIPTS="_read-prompt.sh:detect-plugin-dev.sh post-compact-context.sh block-dangerous-bash.sh protect-files.sh
 circuit-breaker.sh circuit-breaker-reset.sh circuit-breaker-cleanup.sh validate-plugin-frontmatter.sh
-vendor-core-edit-guard.sh"
+vendor-core-edit-guard.sh text-width-guard.sh"
 
 BASH_CMD='{"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"rm -rf ~"}}'
 

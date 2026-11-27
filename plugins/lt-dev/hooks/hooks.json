@@ -122,6 +122,20 @@
             "timeout": 3,
             "statusMessage": "Checking vendor core policy",
             "if": "Edit(**/app/core/**)"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/text-width-guard.sh\"",
+            "timeout": 3,
+            "statusMessage": "Checking text width caps",
+            "if": "Write(**/*.vue)"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/text-width-guard.sh\"",
+            "timeout": 3,
+            "statusMessage": "Checking text width caps",
+            "if": "Edit(**/*.vue)"
           }
         ]
       },
