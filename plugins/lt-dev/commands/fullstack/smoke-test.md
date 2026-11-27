@@ -277,6 +277,14 @@ skill `deploying-to-turboops`):
     restart loop with `has no block in src/config.env.ts` or `NODE_ENV is set but empty` (`deploying-to-turboops`
     Trap 9). After the 3b sign-up, the same logs carry no `[EMAIL VERIFICATION]` or `[PASSWORD RESET]` line:
     those links hold a live token and are printed only in the local environments.
+3d. **Only production is indexable.** `curl -sI https://dev.<domain>/ | grep -i x-robots-tag` answers
+    `noindex, nofollow`, and `https://dev.<domain>/robots.txt` disallows everything (`indexing disabled` in the
+    Nuxt project's header line, `Disallow: /` in the Angular one); production answers `index, follow` or no
+    `X-Robots-Tag` at all. An indexable dev stage is a base-repo finding: search engines list the customer's dev
+    and test stages next to production. Found 2026-11-26 on the Nuxt project: `NUXT_PUBLIC_APP_ENV=develop` alone
+    left the stage indexable, because nuxt-site-config judges by its own site environment, `production` in every
+    build. nuxt-base-starter's `server/plugins/site-indexing.ts` derives it from the app environment since then,
+    as ng-base-starter has done since 22.0.0.
 4. 404 + `TRAEFIK DEFAULT CERT` ⇒ a server with its own Traefik: run the label pass from `deploying-to-turboops` Trap 5, and repeat it after **every** further deploy.
 
 ### Phase 6 — MR rounds (× `--rounds`)
